@@ -7,6 +7,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
+import 'success_modal.dart';
 import 'success_screen.dart';
 
 /// شاشة تعيين كلمة المرور - الخطوة 3
@@ -79,12 +80,8 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     setState(() => _isLoading = false);
 
     if (success && mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SuccessScreen(),
-        ),
-      );
+      // Use the new Unified Success Modal
+      showSuccessModal(context);
     }
   }
 

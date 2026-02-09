@@ -4,19 +4,15 @@ import 'package:confetti/confetti.dart';
 import 'dart:math';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/notification_service.dart';
+import '../../../data/models.dart';
+import 'booked_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
-  final double totalPrice;
-  final String paymentMethod;
-  final DateTime bookingDate;
-  final String timeRange;
+  final Booking booking;
 
   const BookingSuccessScreen({
     super.key,
-    required this.totalPrice,
-    required this.paymentMethod,
-    required this.bookingDate,
-    required this.timeRange,
+    required this.booking,
   });
 
   @override
@@ -28,7 +24,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   late ConfettiController _confettiController;
   late AnimationController _checkController;
   late Animation<double> _scaleAnimation;
-  final String _shareLink = 'Www.Untitlededu.Com/Blog';
 
   @override
   void initState() {
@@ -55,9 +50,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
   Future<void> _showBookingNotification() async {
     await NotificationService.showBookingConfirmation(
-      stadiumName: 'Santiago Bernabéu Stadium',
-      bookingDate: widget.bookingDate,
-      timeSlot: widget.timeRange,
+      stadiumName: widget.booking.stadiumName,
+      bookingDate: widget.booking.startTime,
+      timeSlot: widget.booking.formattedTimeRange,
     );
   }
 
@@ -69,7 +64,8 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   }
 
   void _copyLink() {
-    Clipboard.setData(ClipboardData(text: _shareLink));
+    final shareLink = 'https://vsp.app/booking/${widget.booking.id}';
+    Clipboard.setData(ClipboardData(text: shareLink));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Link copied!'),
@@ -84,7 +80,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.85), // Dimmed background
+      backgroundColor: Colors.black.withValues(alpha: 0.85),
       body: Stack(
         alignment: Alignment.topCenter,
         children: [
@@ -129,7 +125,39 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 24),
+
+                  // Booking Details Summary
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: const Color(0xFF3A3A3C),
+                      borderRadius: BorderRadius.circular(12),
+                    ),
+                    child: Column(
+                      children: [
+                        _buildDetailRow(Icons.stadium, widget.booking.stadiumName),
+                        const SizedBox(height: 12),
+                        _buildDetailRow(Icons.calendar_today, widget.booking.formattedDate),
+                        const SizedBox(height: 12),
+                        _buildDetailRow(Icons.access_time, widget.booking.formattedTimeRange),
+                        const SizedBox(height: 12),
+                        _buildDetailRow(
+                          Icons.payment, 
+                          '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
+                        ),
+                        if (widget.booking.bookingType == BookingType.challenge) ...[
+                          const SizedBox(height: 12),
+                          _buildDetailRow(
+                            Icons.sports_soccer, 
+                            'VS ${widget.booking.opponentTeamName ?? 'Opponent'}'
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
 
                   // Share Link
                   Align(
@@ -145,7 +173,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     ),
                     child: Row(
                       children: [
-                        Expanded(child: Text(_shareLink, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14))),
+                        Expanded(
+                          child: Text(
+                            'https://vsp.app/b/${widget.booking.id.substring(0, 8)}',
+                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                          ),
+                        ),
                         const SizedBox(width: 8),
                         InkWell(
                           onTap: _copyLink,
@@ -164,22 +197,50 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
                   const SizedBox(height: 24),
 
-                  // Home Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Reset to the very first screen (Dashboard)
-                        Navigator.of(context).popUntil((route) => route.isFirst);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonGreen,
-                        foregroundColor: AppTheme.darkBackground,
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  // Action Buttons
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: OutlinedButton(
+                            onPressed: () {
+                              // Navigate to bookings screen
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (context) => const BookedScreen()),
+                                (route) => route.isFirst,
+                              );
+                            },
+                            style: OutlinedButton.styleFrom(
+                              side: const BorderSide(color: AppTheme.neonGreen),
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text(
+                              'My Bookings',
+                              style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ),
                       ),
-                      child: const Text('Home', style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold)),
-                    ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: SizedBox(
+                          height: 50,
+                          child: ElevatedButton(
+                            onPressed: () {
+                              // Reset to the very first screen (Dashboard)
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: AppTheme.neonGreen,
+                              foregroundColor: AppTheme.darkBackground,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                            ),
+                            child: const Text('Home', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -204,6 +265,21 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDetailRow(IconData icon, String text) {
+    return Row(
+      children: [
+        Icon(icon, color: AppTheme.neonGreen, size: 20),
+        const SizedBox(width: 12),
+        Expanded(
+          child: Text(
+            text,
+            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+          ),
+        ),
+      ],
     );
   }
 }

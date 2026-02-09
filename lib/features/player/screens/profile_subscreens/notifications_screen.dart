@@ -88,7 +88,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
            value: value,
            onChanged: onChanged,
            activeColor: AppTheme.neonGreen,
-           activeTrackColor: AppTheme.neonGreen.withOpacity(0.3),
+           activeTrackColor: AppTheme.neonGreen.withValues(alpha: 0.3),
            inactiveThumbColor: Colors.white,
            inactiveTrackColor: Colors.grey[800],
          ),

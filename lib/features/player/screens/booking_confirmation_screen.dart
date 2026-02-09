@@ -2,16 +2,18 @@ import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
-import '../widgets/payment_selection_modal.dart';
+import 'payment_gateway_screen.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; // Assuming we need stadium info later
   final String bookingType; // 'Personal', 'Team', 'Challenge'
+  final Team? opponentTeam;
 
   const BookingConfirmationScreen({
     super.key,
     required this.stadium,
     this.bookingType = 'Personal',
+    this.opponentTeam,
   });
 
   @override
@@ -56,7 +58,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void _showCalendarModal() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.8), // Dimmed background
+      barrierColor: Colors.black.withValues(alpha: 0.8), // Dimmed background
       builder: (context) {
         DateTime tempSelectedDate = _selectedDate; // Local state for modal
         DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month); // For page navigation
@@ -295,7 +297,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       decoration: BoxDecoration(
                         color: AppTheme.cardBackground,
                         borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.textSecondary.withOpacity(0.3)),
+                        border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.3)),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
@@ -350,7 +352,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   color: isSelected ? AppTheme.neonGreen : Colors.transparent,
                                   borderRadius: BorderRadius.circular(12),
                                   border: Border.all(
-                                    color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withOpacity(0.3),
+                                    color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3),
                                   ),
                                 ),
                                 child: Column(
@@ -428,7 +430,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           color: isSelected ? const Color(0xFF1C3A00) : Colors.transparent, // Dark Green bg for selected
                           borderRadius: BorderRadius.circular(12),
                           border: Border.all(
-                            color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withOpacity(0.3),
+                            color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3),
                           ),
                         ),
                         child: Row(
@@ -482,7 +484,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       value: _isPrivate,
                       onChanged: (val) => setState(() => _isPrivate = val),
                       activeColor: AppTheme.neonGreen,
-                      activeTrackColor: AppTheme.neonGreen.withOpacity(0.3),
+                      activeTrackColor: AppTheme.neonGreen.withValues(alpha: 0.3),
                     ),
                   ],
                 ),
@@ -563,15 +565,81 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     ),
                     ElevatedButton(
                       onPressed: _selectedTimeSlots.isEmpty ? null : () {
-                        showDialog(
-                          context: context,
-                          barrierDismissible: false,
-                          builder: (context) => PaymentSelectionModal(
-                            totalPrice: _totalPrice,
-                            bookingType: widget.bookingType,
-                            selectedDate: _selectedDate,
-                            selectedTimeSlots: _selectedTimeSlots,
-                            stadiumName: widget.stadium.name,
+                        // Build start and end times from selected slots
+                        final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                        final firstSlot = sortedSlots.first;
+                        final lastSlot = sortedSlots.last;
+                        
+                        // Parse times (simplified - assumes PM times)
+                        int parseHour(String time) {
+                          final parts = time.split(':');
+                          int hour = int.parse(parts[0]);
+                          if (time.toLowerCase().contains('pm') && hour != 12) hour += 12;
+                          return hour;
+                        }
+                        int parseMinute(String time) {
+                          final parts = time.split(':');
+                          return int.parse(parts[1].replaceAll(RegExp(r'[^0-9]'), '').substring(0, 2));
+                        }
+                        
+                        final startHour = parseHour(firstSlot);
+                        final startMinute = parseMinute(firstSlot);
+                        final endHour = parseHour(lastSlot);
+                        final endMinute = parseMinute(lastSlot) + 30; // Add 30 mins for slot duration
+                        
+                        final startTime = DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          startHour,
+                          startMinute,
+                        );
+                        
+                        final endTime = DateTime(
+                          _selectedDate.year,
+                          _selectedDate.month,
+                          _selectedDate.day,
+                          endMinute >= 60 ? endHour + 1 : endHour,
+                          endMinute >= 60 ? endMinute - 60 : endMinute,
+                        );
+
+                        // Convert string bookingType to enum
+                        BookingType bookingTypeEnum;
+                        switch (widget.bookingType.toLowerCase()) {
+                          case 'team':
+                            bookingTypeEnum = BookingType.team;
+                            break;
+                          case 'challenge':
+                            bookingTypeEnum = BookingType.challenge;
+                            break;
+                          default:
+                            bookingTypeEnum = BookingType.personal;
+                        }
+
+                        // Create BookingDraft
+                        final draft = BookingDraft(
+                          stadiumId: widget.stadium.id,
+                          stadiumName: widget.stadium.name,
+                          stadiumImageUrl: widget.stadium.imageUrl,
+                          ownerId: '', // Would come from stadium data
+                          startTime: startTime,
+                          endTime: endTime,
+                          bookingType: bookingTypeEnum,
+                          opponentTeamId: widget.opponentTeam?.id,
+                          opponentTeamName: widget.opponentTeam?.name,
+                          isPrivate: _isPrivate,
+                          rentBall: _isBallRented,
+                          totalPrice: _totalPrice,
+                          currency: 'EGP',
+                        );
+
+                        // Navigate to PaymentGatewayScreen
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => PaymentGatewayScreen(
+                              bookingDraft: draft,
+                            ),
                           ),
                         );
                       },

@@ -58,6 +58,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final code = _getCode();
     
     if (code.length != 5) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter the complete 5-digit code'),
@@ -77,7 +78,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       Navigator.push(
         context,
         MaterialPageRoute(

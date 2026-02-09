@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import 'owner_dashboard_screen.dart';
-import 'owner_stadiums_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
 import 'create_tournament_screen.dart';
@@ -68,7 +67,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
           decoration: BoxDecoration(
             color: const Color(0xFF1E1E1E),
             border: Border(
-              top: BorderSide(color: Colors.white.withOpacity(0.1)),
+              top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
             ),
           ),
           child: Row(

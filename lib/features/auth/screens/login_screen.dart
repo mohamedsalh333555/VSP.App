@@ -4,7 +4,6 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -47,6 +46,7 @@ class _LoginScreenState extends State<LoginScreen> {
         password: _passwordController.text
     );
     
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
     if (success) {
@@ -63,37 +63,6 @@ class _LoginScreenState extends State<LoginScreen> {
     }
   }
 
-  void _showRoleSelectionDialog() {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text('Select Role (Demo)', style: TextStyle(color: AppTheme.textPrimary)),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: AppTheme.neonGreen),
-              onPressed: () {
-                Provider.of<AuthProvider>(context, listen: false).setUserType('player');
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PlayerHomeScreen()), (r) => false);
-              },
-              child: const Text('Player', style: TextStyle(color: Colors.black)),
-            ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-              onPressed: () {
-                Provider.of<AuthProvider>(context, listen: false).setUserType('owner');
-                Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const OwnerHomeScreen()), (r) => false);
-              },
-              child: const Text('Owner', style: TextStyle(color: Colors.black)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

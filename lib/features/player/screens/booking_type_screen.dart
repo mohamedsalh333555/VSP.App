@@ -1,15 +1,23 @@
 import 'package:flutter/material.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
-import 'booking_time_slot_screen.dart';
+import 'booking_confirmation_screen.dart';
+import 'challenge_select_team_screen.dart';
 
-class BookingTypeScreen extends StatelessWidget {
+class BookingTypeScreen extends StatefulWidget {
   final Stadium stadium;
 
   const BookingTypeScreen({
     super.key,
     required this.stadium,
   });
+
+  @override
+  State<BookingTypeScreen> createState() => _BookingTypeScreenState();
+}
+
+class _BookingTypeScreenState extends State<BookingTypeScreen> {
+  String? _selectedType;
 
   @override
   Widget build(BuildContext context) {
@@ -29,95 +37,137 @@ class BookingTypeScreen extends StatelessWidget {
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            Expanded(
-              child: _buildBookingOption(
-                context,
-                title: 'Full Pitch Booking',
-                subtitle: 'Book the entire pitch for a private match with your friends or team.',
-                imageUrl: 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=800&q=80', // Empty football pitch
-                onTap: () {
-                  Navigator.push(
+      body: Column(
+        children: [
+          Expanded(
+            child: SingleChildScrollView(
+              padding: const EdgeInsets.all(16.0),
+              child: Column(
+                children: [
+                  _buildBookingOption(
                     context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingTimeSlotScreen(
-                        stadium: stadium,
-                        bookingType: 'full',
-                      ),
-                    ),
-                  );
-                },
+                    id: 'Personal',
+                    title: 'Personal Booking',
+                    subtitle: 'Book the pitch for yourself and your friends.',
+                    imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80',
+                  ),
+                  const SizedBox(height: 24),
+                  _buildBookingOption(
+                    context,
+                    id: 'Team',
+                    title: 'Your Team',
+                    subtitle: 'Manage and play as a registered team.',
+                    imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Newcastle_United_Logo.svg/1200px-Newcastle_United_Logo.svg.png',
+                  ),
+                  const SizedBox(height: 24),
+                  _buildBookingOption(
+                    context,
+                    id: 'Challenge',
+                    title: 'Challenge',
+                    subtitle: 'Challenge another team for a competitive match.',
+                    imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
+                  ),
+                ],
               ),
             ),
-            const SizedBox(height: 24),
-            Expanded(
-              child: _buildBookingOption(
-                context,
-                title: 'Join as Individual',
-                subtitle: 'Join an existing match or challenge and meet new players.',
-                imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80', // Group of players
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingTimeSlotScreen(
-                        stadium: stadium,
-                        bookingType: 'individual',
-                      ),
-                    ),
-                  );
-                },
+          ),
+          // Continue Button
+          Container(
+            padding: const EdgeInsets.all(24),
+            decoration: const BoxDecoration(
+              color: Color(0xFF1C1C1E),
+              borderRadius: BorderRadius.only(
+                topLeft: Radius.circular(24),
+                topRight: Radius.circular(24),
               ),
             ),
-            const SizedBox(height: 24),
-          ],
-        ),
+            child: SizedBox(
+              width: double.infinity,
+              height: 56,
+              child: ElevatedButton(
+                onPressed: _selectedType == null ? null : _handleContinue,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: AppTheme.neonGreen,
+                  foregroundColor: Colors.black,
+                  disabledBackgroundColor: Colors.grey[800],
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(16),
+                  ),
+                ),
+                child: const Text(
+                  'Continue',
+                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
 
+  void _handleContinue() {
+    if (_selectedType == 'Challenge') {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChallengeSelectTeamScreen(
+            stadium: widget.stadium,
+            bookingType: _selectedType!,
+          ),
+        ),
+      );
+    } else {
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => BookingConfirmationScreen(
+            stadium: widget.stadium,
+            bookingType: _selectedType!,
+          ),
+        ),
+      );
+    }
+  }
+
   Widget _buildBookingOption(
     BuildContext context, {
+    required String id,
     required String title,
     required String subtitle,
     required String imageUrl,
-    required VoidCallback onTap,
   }) {
+    final bool isSelected = _selectedType == id;
+
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        setState(() {
+          _selectedType = id;
+        });
+      },
       child: Container(
         width: double.infinity,
+        height: 180,
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E), // Deep Grey
+          color: const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
-            color: AppTheme.neonGreen.withOpacity(0.5),
-            width: 1.5,
+            color: isSelected ? AppTheme.neonGreen : AppTheme.neonGreen.withValues(alpha: 0.2),
+            width: isSelected ? 2 : 1.5,
           ),
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withOpacity(0.3),
-              blurRadius: 10,
-              offset: const Offset(0, 4),
-            ),
-          ],
         ),
         child: ClipRRect(
           borderRadius: BorderRadius.circular(20),
           child: Stack(
             children: [
-              // Background Image with lowered opacity
               Positioned.fill(
                 child: ColorFiltered(
                   colorFilter: ColorFilter.mode(
-                    Colors.black.withOpacity(0.6),
+                    Colors.black.withValues(alpha: isSelected ? 0.4 : 0.6),
                     BlendMode.darken,
                   ),
                   child: Image.network(
@@ -127,8 +177,6 @@ class BookingTypeScreen extends StatelessWidget {
                   ),
                 ),
               ),
-              
-              // Highlight Gradient
               Positioned.fill(
                 child: Container(
                   decoration: BoxDecoration(
@@ -136,52 +184,45 @@ class BookingTypeScreen extends StatelessWidget {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withOpacity(0.9),
+                        Colors.black.withValues(alpha: 0.9),
                         Colors.transparent,
                       ],
                     ),
                   ),
                 ),
               ),
-
-              // Content
               Padding(
-                padding: const EdgeInsets.all(24.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.end,
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    // Icon placeholder or decoration
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(
-                        color: AppTheme.neonGreen.withOpacity(0.9),
-                        shape: BoxShape.circle,
-                      ),
-                      child: const Icon(
-                        Icons.arrow_forward,
-                        color: Colors.black,
-                        size: 24,
-                      ),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(
+                          title,
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 24,
+                            fontWeight: FontWeight.bold,
+                            fontFamily: 'Agency FB',
+                          ),
+                        ),
+                        if (isSelected)
+                          const CircleAvatar(
+                            radius: 12,
+                            backgroundColor: AppTheme.neonGreen,
+                            child: Icon(Icons.check, size: 16, color: Colors.black),
+                          ),
+                      ],
                     ),
-                    const SizedBox(height: 16),
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        color: Colors.white, // Text Primary
-                        fontSize: 28,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                        letterSpacing: 0.5,
-                      ),
-                    ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: const TextStyle(
-                        color: Color(0xFFCCCCCC), // Light grey text
-                        fontSize: 14,
-                        height: 1.4,
+                      style: TextStyle(
+                        color: Colors.white.withValues(alpha: 0.7),
+                        fontSize: 12,
                       ),
                     ),
                   ],

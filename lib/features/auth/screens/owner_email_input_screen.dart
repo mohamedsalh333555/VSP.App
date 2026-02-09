@@ -130,7 +130,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.neonGreen,
                       foregroundColor: Colors.black,
-                      disabledBackgroundColor: AppTheme.textSecondary.withOpacity(0.3),
+                      disabledBackgroundColor: AppTheme.textSecondary.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),

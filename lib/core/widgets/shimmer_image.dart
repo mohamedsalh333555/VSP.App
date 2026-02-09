@@ -46,7 +46,7 @@ class ShimmerImage extends StatelessWidget {
           child: Center(
             child: Icon(
               fit == BoxFit.cover ? Icons.stadium_outlined : Icons.sports_soccer_outlined,
-              color: AppTheme.textSecondary.withOpacity(0.5),
+              color: AppTheme.textSecondary.withValues(alpha: 0.5),
               size: 32,
             ),
           ),

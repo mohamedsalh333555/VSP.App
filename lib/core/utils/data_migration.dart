@@ -1,36 +1,34 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-
-import '../../data/models.dart';
-import 'package:uuid/uuid.dart';
 
 class DataMigration {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   Future<void> seedDatabase() async {
-    print('🌱 Starting Database Seeding...');
+    debugPrint('🌱 Starting Database Seeding...');
 
     try {
       // 1. Check if Stadiums exist
       final stadiumQuery = await _firestore.collection('stadiums').limit(1).get();
       if (stadiumQuery.docs.isEmpty) {
-        print('🏟️ Seeding Stadiums...');
+        debugPrint('🏟️ Seeding Stadiums...');
         await _seedStadiums();
       } else {
-        print('✅ Stadiums already seeded.');
+        debugPrint('✅ Stadiums already seeded.');
       }
 
       // 2. Check if Teams exist
       final teamQuery = await _firestore.collection('teams').limit(1).get();
       if (teamQuery.docs.isEmpty) {
-        print('⚽ Seeding Teams...');
+        debugPrint('⚽ Seeding Teams...');
         await _seedTeams();
       } else {
-        print('✅ Teams already seeded.');
+        debugPrint('✅ Teams already seeded.');
       }
 
-      print('🎉 Database Seeding Complete!');
+      debugPrint('🎉 Database Seeding Complete!');
     } catch (e) {
-      print('❌ Error during seeding: $e');
+      debugPrint('❌ Error during seeding: $e');
     }
   }
 

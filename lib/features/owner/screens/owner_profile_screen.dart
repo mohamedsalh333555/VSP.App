@@ -170,7 +170,7 @@ class OwnerProfileScreen extends StatelessWidget {
               width: 50,
               height: 50,
               decoration: BoxDecoration(
-                color: isLogout ? Colors.red.withOpacity(0.1) : AppTheme.neonGreen,
+                color: isLogout ? Colors.red.withValues(alpha: 0.1) : AppTheme.neonGreen,
                 borderRadius: BorderRadius.circular(12),
               ),
               child: Icon(
@@ -197,7 +197,7 @@ class OwnerProfileScreen extends StatelessWidget {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: isLogout ? Colors.red.withOpacity(0.7) : Colors.grey[400],
+                      color: isLogout ? Colors.red.withValues(alpha: 0.7) : Colors.grey[400],
                       fontSize: 12,
                     ),
                   ),

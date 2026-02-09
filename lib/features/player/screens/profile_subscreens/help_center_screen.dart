@@ -55,12 +55,12 @@ class HelpCenterScreen extends StatelessWidget {
                      decoration: BoxDecoration(
                        color: AppTheme.cardBackground,
                        borderRadius: BorderRadius.circular(25),
-                       border: Border.all(color: Colors.grey.withOpacity(0.5)),
+                       border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
                      ),
                      child: Row(
                        children: [
                          const Expanded(child: Text('Generate A Name Of ....', style: TextStyle(color: AppTheme.textSecondary))),
-                         Icon(Icons.upload_file, color: AppTheme.textSecondary.withOpacity(0.7)),
+                         Icon(Icons.upload_file, color: AppTheme.textSecondary.withValues(alpha: 0.7)),
                        ],
                      ),
                    ),

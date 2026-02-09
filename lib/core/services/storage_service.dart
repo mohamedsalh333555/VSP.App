@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_storage/firebase_storage.dart';
 
 class StorageService {
@@ -29,7 +30,7 @@ class StorageService {
       
       return downloadUrl;
     } catch (e) {
-      print('Error uploading file: $e');
+      debugPrint('Error uploading file: $e');
       return null;
     }
   }
@@ -91,7 +92,7 @@ class StorageService {
       await ref.delete();
       return true;
     } catch (e) {
-      print('Error deleting file: $e');
+      debugPrint('Error deleting file: $e');
       return false;
     }
   }
@@ -102,7 +103,7 @@ class StorageService {
       Reference ref = _storage.refFromURL(downloadUrl);
       return await ref.getMetadata();
     } catch (e) {
-      print('Error getting metadata: $e');
+      debugPrint('Error getting metadata: $e');
       return null;
     }
   }

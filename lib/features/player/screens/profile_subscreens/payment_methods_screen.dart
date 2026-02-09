@@ -76,7 +76,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         decoration: BoxDecoration(
           color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withOpacity(0.3)),
+          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [

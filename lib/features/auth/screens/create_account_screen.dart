@@ -4,25 +4,30 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/create_account_strings.dart';
 import '../../../core/providers/language_provider.dart';
-import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'add_email_screen.dart';
 
 /// شاشة إنشاء حساب جديد - تظهر بعد اختيار الدور
 class CreateAccountScreen extends StatelessWidget {
-  const CreateAccountScreen({super.key});
+  final bool isOwner;
+
+  const CreateAccountScreen({
+    super.key,
+    this.isOwner = false, // Default to player to be safe
+  });
 
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
+    // Use local isOwner parameter for stability, fallback to provider if needed
+    final bool isUserOwner = isOwner; 
 
     // تحديد النصوص بناءً على نوع المستخدم
-    final String greeting = authProvider.isPlayer
+    final String greeting = !isUserOwner
         ? languageProvider.getText(CreateAccountStrings.hiSporty)
         : languageProvider.getText(CreateAccountStrings.hiPitch);
 
-    final String subtitle = authProvider.isPlayer
+    final String subtitle = !isUserOwner
         ? languageProvider.getText(CreateAccountStrings.playerSubtitle)
         : languageProvider.getText(CreateAccountStrings.ownerSubtitle);
 
@@ -103,7 +108,7 @@ class CreateAccountScreen extends StatelessWidget {
                   child: Text(
                     subtitle,
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.6),
+                      color: Colors.white.withValues(alpha: 0.6),
                       fontSize: 14,
                       height: 1.3, // Tighter line height
                       fontWeight: FontWeight.w400,
@@ -239,7 +244,7 @@ class _NeonButton extends StatelessWidget {
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
           backgroundColor: AppTheme.neonGreen,
-          foregroundColor: AppTheme.darkBackground,
+          foregroundColor: Colors.black, // Explicitly Black Text
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(12),
           ),

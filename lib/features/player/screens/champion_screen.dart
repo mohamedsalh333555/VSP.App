@@ -9,16 +9,16 @@ import '../../../core/services/database_service.dart';
 import 'championship_details_screen.dart';
 import 'player_home_screen.dart'; // For ChampionshipCard
 
-final GlobalKey<_ChampionScreenState> championScreenKey = GlobalKey<_ChampionScreenState>();
+final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
 class ChampionScreen extends StatefulWidget {
   const ChampionScreen({super.key});
 
   @override
-  State<ChampionScreen> createState() => _ChampionScreenState();
+  State<ChampionScreen> createState() => ChampionScreenState();
 }
 
-class _ChampionScreenState extends State<ChampionScreen>
+class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTabIndex = 0;
@@ -118,7 +118,7 @@ class _ChampionScreenState extends State<ChampionScreen>
                       ),
                       alignment: Alignment.center,
                       child: Text(
-                        'Championships',
+                        'Championships', // Reverted Label
                         style: TextStyle(
                           color: _selectedTabIndex == 1
                               ? Colors.black
@@ -198,12 +198,12 @@ class _ChampionScreenState extends State<ChampionScreen>
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: const Color(0xFF39FF14).withOpacity(0.5)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: effectiveValue,
-          icon: const Icon(Icons.keyboard_arrow_down, color: Color(0xFF39FF14), size: 20),
+          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.neonGreen, size: 20),
           dropdownColor: const Color(0xFF1E1E1E),
           isExpanded: true,
           style: const TextStyle(
@@ -450,12 +450,23 @@ class _ChampionScreenState extends State<ChampionScreen>
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
         children: [
-          // Logo
-          ShimmerImage(
-            imageUrl: logo,
-            width: isCenter ? 65 : 45, // Larger for center
+          // Logo (Circular)
+          Container(
+            width: isCenter ? 65 : 45,
             height: isCenter ? 65 : 45,
-            fit: BoxFit.contain,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            padding: const EdgeInsets.all(4),
+            child: ClipOval(
+              child: ShimmerImage(
+                imageUrl: logo,
+                width: isCenter ? 57 : 37,
+                height: isCenter ? 57 : 37,
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
           SizedBox(height: isCenter ? 8 : 4), // Dynamic Spacing
           
@@ -521,18 +532,18 @@ class _ChampionScreenState extends State<ChampionScreen>
              ] else ...[
                  const SizedBox(height: 8), 
                  Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Icon(
-                      rank == 3 ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                      color: rank == 3 ? Colors.red : AppTheme.neonGreen,
-                      size: 16,
-                    ),
-                    Text(
-                      '$rank',
-                      style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
-                    )
-                  ],
+                   mainAxisAlignment: MainAxisAlignment.center,
+                   children: [
+                     Icon(
+                       rank == 3 ? Icons.arrow_drop_down : Icons.arrow_drop_up,
+                       color: rank == 3 ? Colors.red : AppTheme.neonGreen,
+                       size: 16,
+                     ),
+                     Text(
+                       '$rank',
+                       style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
+                     )
+                   ],
                  )
              ]
         ],
@@ -546,15 +557,26 @@ class _ChampionScreenState extends State<ChampionScreen>
       decoration: BoxDecoration(
         color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(15), // 15px
-        border: isMyTeam ? Border.all(color: AppTheme.neonGreen.withOpacity(0.5)) : null,
+        border: isMyTeam ? Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)) : null,
       ),
       child: Row(
         children: [
-          ShimmerImage(
-            imageUrl: logo,
+          Container(
             width: 40,
             height: 40,
-            fit: BoxFit.contain,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: Colors.white,
+            ),
+            padding: const EdgeInsets.all(3),
+            child: ClipOval(
+              child: ShimmerImage(
+                imageUrl: logo,
+                width: 34,
+                height: 34,
+                fit: BoxFit.contain,
+              ),
+            ),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -623,7 +645,7 @@ class _ChampionScreenState extends State<ChampionScreen>
                   Text(
                     '$points pts',
                     style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
+                      color: Colors.white.withValues(alpha: 0.5),
                       fontSize: 10,
                     ),
                   ),
@@ -633,6 +655,8 @@ class _ChampionScreenState extends State<ChampionScreen>
       ),
     );
   }
+
+
 
   Widget _buildChampionshipsTab() {
     final championships = Championship.getMockChampionships();

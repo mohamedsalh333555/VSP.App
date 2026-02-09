@@ -142,7 +142,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                       foregroundColor: Colors.black,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                       padding: const EdgeInsets.symmetric(vertical: 14),
-                      disabledBackgroundColor: AppTheme.neonGreen.withOpacity(0.3),
+                      disabledBackgroundColor: AppTheme.neonGreen.withValues(alpha: 0.3),
                     ),
                     child: const Text(
                       'Apply',
@@ -221,7 +221,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
           child: Container(
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.neonGreen : (inRange ? AppTheme.neonGreen.withOpacity(0.2) : Colors.transparent),
+              color: isSelected ? AppTheme.neonGreen : (inRange ? AppTheme.neonGreen.withValues(alpha: 0.2) : Colors.transparent),
               shape: BoxShape.circle,
               border: isToday && !isSelected && !inRange
                   ? Border.all(color: AppTheme.neonGreen, width: 1) // Glowing effect for today

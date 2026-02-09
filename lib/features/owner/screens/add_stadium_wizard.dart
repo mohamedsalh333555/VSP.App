@@ -4,7 +4,6 @@ import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/services/database_service.dart';
-import 'owner_stadiums_screen.dart';
 
 class AddStadiumWizard extends StatefulWidget {
   const AddStadiumWizard({super.key});
@@ -55,12 +54,14 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         await _uploadImage(File(pickedFile.path));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to pick image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   
@@ -75,26 +76,30 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       );
       
       if (url != null) {
-        setState(() {
-          _uploadedImageUrls.add(url);
-        });
-        
+        if (mounted) {
+          setState(() {
+            _uploadedImageUrls.add(url);
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Image uploaded successfully!'),
+              backgroundColor: AppTheme.neonGreen,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Image uploaded successfully!'),
-            backgroundColor: AppTheme.neonGreen,
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Upload failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
-      setState(() => _isUploading = false);
+      if (mounted) setState(() => _isUploading = false);
     }
   }
 
@@ -129,20 +134,24 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         },
       );
       
-      Navigator.pop(context);
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Stadium Added Successfully!'),
-          backgroundColor: AppTheme.neonGreen,
-        ),
-      );
+      if (mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Stadium Added Successfully!'),
+            backgroundColor: AppTheme.neonGreen,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save stadium: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save stadium: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -397,7 +406,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                         ),
                         Text(
                           'JPG, JPEG, PNG less than 10MB',
-                          style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12),
+                          style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 12),
                         ),
                       ],
                     ),
@@ -420,7 +429,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   uploaded,
                 ),
               );
-            }).toList(),
+            }),
 
           const SizedBox(height: 40),
           _buildPrimaryButton('Add Done', _nextPage),
@@ -552,7 +561,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [

@@ -39,7 +39,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             decoration: BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: AppTheme.textSecondary.withOpacity(0.1),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -74,10 +74,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 Container(
                   width: 110,
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBackground.withOpacity(0.3),
+                    color: AppTheme.cardBackground.withValues(alpha: 0.3),
                     border: Border(
                       right: BorderSide(
-                        color: AppTheme.textSecondary.withOpacity(0.1),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.1),
                         width: 1,
                       ),
                     ),
@@ -111,7 +111,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             decoration: BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: AppTheme.textSecondary.withOpacity(0.1),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
                   width: 1,
                 ),
               ),
@@ -129,7 +129,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     child: Container(
                       height: 50,
                       decoration: BoxDecoration(
-                        color: AppTheme.textSecondary.withOpacity(0.2),
+                        color: AppTheme.textSecondary.withValues(alpha: 0.2),
                         borderRadius: BorderRadius.circular(12),
                       ),
                       alignment: Alignment.center,
@@ -189,7 +189,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.1) : Colors.transparent,
           border: Border(
             left: BorderSide(
               color: isSelected ? AppTheme.neonGreen : Colors.transparent,
@@ -293,7 +293,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }

@@ -79,8 +79,8 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
-                        Colors.black.withOpacity(0.3),
-                        const Color(0xFF121212).withOpacity(0.8),
+                        Colors.black.withValues(alpha: 0.3),
+                        const Color(0xFF121212).withValues(alpha: 0.8),
                         const Color(0xFF121212),
                       ],
                       stops: const [0.0, 0.7, 1.0],
@@ -239,7 +239,7 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
         duration: const Duration(milliseconds: 200),
         height: isSmall ? 150 : 170, // Slight adjustments
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E).withOpacity(0.9), // Less transparent
+          color: const Color(0xFF1E1E1E).withValues(alpha: 0.9), // Less transparent
           borderRadius: BorderRadius.circular(15),
           border: Border.all(
             color: isSelected ? AppTheme.neonGreen : Colors.transparent,

@@ -2,7 +2,7 @@
 import 'package:url_launcher/url_launcher.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
-import '../widgets/booking_team_selection_sheet.dart';
+import 'booking_type_screen.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -60,7 +60,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppTheme.darkBackground.withOpacity(0.9),
+                          AppTheme.darkBackground.withValues(alpha: 0.9),
                         ],
                       ),
                     ),
@@ -205,11 +205,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               Expanded(
                 child: ElevatedButton(
                   onPressed: () {
-                    showModalBottomSheet(
-                      context: context,
-                      isScrollControlled: true,
-                      backgroundColor: Colors.transparent,
-                      builder: (context) => BookingTeamSelectionSheet(stadium: widget.stadium),
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => BookingTypeScreen(stadium: widget.stadium),
+                      ),
                     );
                   },
                   style: ElevatedButton.styleFrom(
@@ -273,7 +273,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.black.withOpacity(0.5),
+          color: Colors.black.withValues(alpha: 0.5),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: color, size: 20),
@@ -286,7 +286,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       width: isActive ? 12 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : Colors.grey.withOpacity(0.5),
+        color: isActive ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
       ),
     );

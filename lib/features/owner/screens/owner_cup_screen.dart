@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import 'create_tournament_screen.dart';
 
 class OwnerCupScreen extends StatefulWidget {
   const OwnerCupScreen({super.key});
@@ -215,9 +214,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                        width: 36,
                        height: 36,
                        decoration: BoxDecoration(
-                         color: AppTheme.neonGreen.withOpacity(0.1),
+                         color: AppTheme.neonGreen.withValues(alpha: 0.1),
                          shape: BoxShape.circle,
-                         border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+                         border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
                        ),
                        child: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 18),
                      ),

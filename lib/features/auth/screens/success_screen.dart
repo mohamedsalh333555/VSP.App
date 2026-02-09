@@ -64,11 +64,11 @@ class SuccessScreen extends StatelessWidget {
                   width: 120,
                   height: 120,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonGreen.withOpacity(0.1),
+                    color: AppTheme.neonGreen.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.neonGreen.withOpacity(0.3),
+                        color: AppTheme.neonGreen.withValues(alpha: 0.3),
                         blurRadius: 40,
                         spreadRadius: 10,
                       ),

@@ -273,7 +273,7 @@ class _AddStadiumScreenState extends State<AddStadiumScreen> {
                 ),
                 Text(
                   'JPG, JPEG, PNG less than 10MB',
-                  style: TextStyle(color: Colors.black.withOpacity(0.6), fontSize: 12),
+                  style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 12),
                 ),
               ],
             ),
@@ -418,7 +418,7 @@ class _AddStadiumScreenState extends State<AddStadiumScreen> {
       decoration: BoxDecoration(
         color: const Color(0xFF1E1E1E),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -437,7 +437,7 @@ class _AddStadiumScreenState extends State<AddStadiumScreen> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text('Click to view', style: TextStyle(color: AppTheme.neonGreen.withOpacity(0.8), fontSize: 12)),
+                Text('Click to view', style: TextStyle(color: AppTheme.neonGreen.withValues(alpha: 0.8), fontSize: 12)),
               ],
             ),
           ),

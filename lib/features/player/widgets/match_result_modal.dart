@@ -1,19 +1,24 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_image.dart';
+import '../../../data/models.dart';
 
 class MatchResultModal extends StatefulWidget {
-  final VoidCallback onConfirm;
+  final Booking booking;
+  final Function(MatchOutcome outcome) onConfirm;
 
-  const MatchResultModal({super.key, required this.onConfirm});
+  const MatchResultModal({
+    super.key, 
+    required this.booking,
+    required this.onConfirm,
+  });
 
   @override
   State<MatchResultModal> createState() => _MatchResultModalState();
 }
 
 class _MatchResultModalState extends State<MatchResultModal> {
-  int _selectedResult = -1; // -1: None, 0: Team A, 1: Team B, 2: Draw
+  int _selectedIndex = -1; // -1: None, 0: We Won, 1: Draw, 2: We Lost
 
   @override
   Widget build(BuildContext context) {
@@ -75,21 +80,21 @@ class _MatchResultModalState extends State<MatchResultModal> {
               ),
               child: Column(
                 children: [
-                  // Teams
+                  // Teams 
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
-                      _buildTeamInfo('Your Team', 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80'),
+                      _buildTeamDisplay(widget.booking.playerTeamName ?? 'Your Team'),
                       const Text(
                         'VS',
                         style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 20,
+                          color: AppTheme.neonGreen, 
+                          fontSize: 20, 
                           fontWeight: FontWeight.bold,
                           fontStyle: FontStyle.italic,
                         ),
                       ),
-                      _buildTeamInfo('Real Madrid', 'https://images.unsplash.com/photo-1517466787929-bc90951d0974?w=150&h=150&fit=crop&q=80'),
+                      _buildTeamDisplay(widget.booking.opponentTeamName ?? 'Opponent'),
                     ],
                   ),
                   const SizedBox(height: 20),
@@ -99,9 +104,9 @@ class _MatchResultModalState extends State<MatchResultModal> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      _buildDetailItem('Date', 'August 6th / pm7 to pm9'),
-                      _buildDetailItem('Stadium', 'Sal Acd'),
-                      _buildDetailItem('Pay', '120 eg'),
+                      _buildDetailItem('Date', widget.booking.formattedDate),
+                      _buildDetailItem('Stadium', widget.booking.stadiumName),
+                      _buildDetailItem('Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}'),
                     ],
                   ),
                 ],
@@ -109,34 +114,32 @@ class _MatchResultModalState extends State<MatchResultModal> {
             ),
             const SizedBox(height: 24),
 
-            // Selection Buttons
-            _buildSelectionButton(0, 'Team Aswan FC Win'),
+            // Selection Options
+            _buildSelectionOption(0, 'We Won', Icons.emoji_events_outlined, Colors.amber),
             const SizedBox(height: 12),
-            _buildSelectionButton(1, 'Team Real Madrid Win'),
+            _buildSelectionOption(1, 'Draw', Icons.sync_alt, Colors.blue),
             const SizedBox(height: 12),
-            _buildSelectionButton(2, 'Draw'),
+            _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, Colors.red),
 
-            const SizedBox(height: 24),
-            const Divider(color: Colors.grey, height: 1),
-            const SizedBox(height: 24),
+            const SizedBox(height: 32),
 
-            // Continue Button
+            // Submit Button
             SizedBox(
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: _selectedResult != -1 ? widget.onConfirm : null,
+                onPressed: _selectedIndex == -1 ? null : _handleSubmit,
                 style: ElevatedButton.styleFrom(
                   backgroundColor: AppTheme.neonGreen,
-                  disabledBackgroundColor: Colors.grey[800],
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(16),
                   ),
+                  disabledBackgroundColor: Colors.white10,
                 ),
                 child: Text(
-                  'Continue',
+                  'Submit Result',
                   style: TextStyle(
-                    color: _selectedResult != -1 ? Colors.black : Colors.white38,
+                    color: _selectedIndex == -1 ? Colors.white24 : Colors.black,
                     fontSize: 16,
                     fontWeight: FontWeight.bold,
                   ),
@@ -149,22 +152,81 @@ class _MatchResultModalState extends State<MatchResultModal> {
     );
   }
 
-  Widget _buildTeamInfo(String name, String imageUrl) {
+  void _handleSubmit() {
+    late MatchOutcome outcome;
+
+    final myTeamId = widget.booking.playerTeamId ?? 'team_1';
+    final isHome = myTeamId == widget.booking.playerTeamId;
+
+    if (_selectedIndex == 0) { // We Won
+      outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+    } else if (_selectedIndex == 1) { // Draw
+      outcome = MatchOutcome.draw;
+    } else { // We Lost
+      outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+    }
+
+    widget.onConfirm(outcome);
+  }
+
+  Widget _buildSelectionOption(int index, String label, IconData icon, Color activeColor) {
+    final isSelected = _selectedIndex == index;
+    return GestureDetector(
+      onTap: () => setState(() => _selectedIndex = index),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+        decoration: BoxDecoration(
+          color: isSelected ? activeColor.withValues(alpha: 0.2) : const Color(0xFF2C2C2E),
+          borderRadius: BorderRadius.circular(12),
+          border: Border.all(
+            color: isSelected ? activeColor : Colors.white10,
+            width: 1.5,
+          ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? activeColor : Colors.white54),
+            const SizedBox(width: 16),
+            Text(
+              label,
+              style: TextStyle(
+                color: isSelected ? Colors.white : Colors.white54,
+                fontSize: 16,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            const Spacer(),
+            if (isSelected)
+              Icon(Icons.check_circle, color: activeColor),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildTeamDisplay(String name) {
     return Column(
       children: [
-        ShimmerImage(
-          imageUrl: imageUrl,
-          width: 60,
-          height: 60,
-          borderRadius: 30,
+        Container(
+          width: 50,
+          height: 50,
+          decoration: BoxDecoration(
+            color: Colors.white10,
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24),
+          ),
+          child: const Icon(Icons.sports_soccer, color: Colors.white24),
         ),
         const SizedBox(height: 8),
-        Text(
-          name,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 16,
-            fontWeight: FontWeight.w500,
+        SizedBox(
+          width: 80,
+          child: Text(
+            name,
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
           ),
         ),
       ],
@@ -187,40 +249,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
           value,
           style: const TextStyle(
             color: Colors.white,
-            fontSize: 12, // Small for fits
+            fontSize: 10,
             fontWeight: FontWeight.bold,
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildSelectionButton(int value, String text) {
-    final isSelected = _selectedResult == value;
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedResult = value;
-        });
-      },
-      child: Container(
-        width: double.infinity,
-        padding: const EdgeInsets.symmetric(vertical: 16),
-        decoration: BoxDecoration(
-          color: isSelected ? Colors.grey[600] : const Color(0xFF2C2C2E), // Highlight or default
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: Colors.white) : null,
-        ),
-        alignment: Alignment.center,
-        child: Text(
-          text,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w500,
-          ),
-        ),
-      ),
     );
   }
 }

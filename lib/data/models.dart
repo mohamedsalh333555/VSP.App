@@ -350,29 +350,427 @@ class TimeSlot {
   }
 }
 
-/// Booking data model
-class Booking {
-  final String id;
+/// Booking Status Enum
+enum BookingStatus {
+  pending,    // Draft state before payment
+  confirmed,  // After successful payment, before match starts
+  upcoming,   // Same as confirmed (alias)
+  completed,  // After match time has passed
+  cancelled,  // User/owner cancelled
+}
+
+enum MatchResultStatus { noResult, waitingOpponent, confirmed, disputed }
+
+enum MatchOutcome { homeWin, draw, awayWin }
+enum MatchResultChoice { weWon, draw, weLost }
+
+/// Booking Type Enum
+enum BookingType {
+  personal,   // Solo booking
+  team,       // Booking with team
+  challenge,  // Challenge another team
+}
+
+/// Booking Draft - Used for passing data between screens before final save
+class BookingDraft {
   final String stadiumId;
-  final String date;
-  final TimeSlot timeSlot;
+  final String stadiumName;
+  final String stadiumImageUrl;
+  final String ownerId;
+
+  final DateTime startTime;
+  final DateTime endTime;
+
+  final BookingType bookingType;
+  final String? playerTeamId;
+  final String? playerTeamName;
+  final String? opponentTeamId;
+  final String? opponentTeamName;
+
   final bool isPrivate;
   final bool rentBall;
-  final String bookingType; // 'personal', 'team', 'challenge'
-  final String? teamId;
+
   final double totalPrice;
+  final String currency;
+
+  final String? paymentMethod;
+  final String? paymentTransactionId;
+
+  BookingDraft({
+    required this.stadiumId,
+    required this.stadiumName,
+    this.stadiumImageUrl = '',
+    required this.ownerId,
+    required this.startTime,
+    required this.endTime,
+    required this.bookingType,
+    this.playerTeamId,
+    this.playerTeamName,
+    this.opponentTeamId,
+    this.opponentTeamName,
+    required this.isPrivate,
+    required this.rentBall,
+    required this.totalPrice,
+    this.currency = 'EGP',
+    this.paymentMethod,
+    this.paymentTransactionId,
+  });
+
+  BookingDraft copyWith({
+    String? stadiumId,
+    String? stadiumName,
+    String? stadiumImageUrl,
+    String? ownerId,
+    DateTime? startTime,
+    DateTime? endTime,
+    BookingType? bookingType,
+    String? playerTeamId,
+    String? playerTeamName,
+    String? opponentTeamId,
+    String? opponentTeamName,
+    bool? isPrivate,
+    bool? rentBall,
+    double? totalPrice,
+    String? currency,
+    String? paymentMethod,
+    String? paymentTransactionId,
+  }) {
+    return BookingDraft(
+      stadiumId: stadiumId ?? this.stadiumId,
+      stadiumName: stadiumName ?? this.stadiumName,
+      stadiumImageUrl: stadiumImageUrl ?? this.stadiumImageUrl,
+      ownerId: ownerId ?? this.ownerId,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      bookingType: bookingType ?? this.bookingType,
+      playerTeamId: playerTeamId ?? this.playerTeamId,
+      playerTeamName: playerTeamName ?? this.playerTeamName,
+      opponentTeamId: opponentTeamId ?? this.opponentTeamId,
+      opponentTeamName: opponentTeamName ?? this.opponentTeamName,
+      isPrivate: isPrivate ?? this.isPrivate,
+      rentBall: rentBall ?? this.rentBall,
+      totalPrice: totalPrice ?? this.totalPrice,
+      currency: currency ?? this.currency,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentTransactionId: paymentTransactionId ?? this.paymentTransactionId,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'stadiumId': stadiumId,
+      'stadiumName': stadiumName,
+      'stadiumImageUrl': stadiumImageUrl,
+      'ownerId': ownerId,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'bookingType': bookingType.name,
+      'playerTeamId': playerTeamId,
+      'playerTeamName': playerTeamName,
+      'opponentTeamId': opponentTeamId,
+      'opponentTeamName': opponentTeamName,
+      'isPrivate': isPrivate,
+      'rentBall': rentBall,
+      'totalPrice': totalPrice,
+      'currency': currency,
+      'paymentMethod': paymentMethod,
+      'paymentTransactionId': paymentTransactionId,
+    };
+  }
+}
+
+/// Booking data model - Full booking record stored in DB
+class Booking {
+  final String id;
+  
+  // Stadium info
+  final String stadiumId;
+  final String stadiumName;
+  final String stadiumImageUrl;
+  final String ownerId;
+
+  // Timing
+  final DateTime startTime;
+  final DateTime endTime;
+
+  // Booking type
+  final BookingType bookingType;
+  final String? playerTeamId;
+  final String? playerTeamName;
+  final String? opponentTeamId;
+  final String? opponentTeamName;
+
+  // Options
+  final bool isPrivate;
+  final bool rentBall;
+
+  // Payment
+  final double totalPrice;
+  final String currency;
+  final String paymentMethod;
+  final String? paymentTransactionId;
+
+  // Status & Metadata
+  final BookingStatus status;
+  final String createdByUserId;
+  final DateTime createdAt;
+  final DateTime? updatedAt;
+
+  // Match Result (for Challenge bookings)
+  final int? homeScore;
+  final int? awayScore;
+  final String? resultSubmittedByTeamId;
+  final MatchResultStatus matchResultStatus;
+  final MatchOutcome? pendingOutcome;
+  final MatchOutcome? finalOutcome;
 
   Booking({
     required this.id,
     required this.stadiumId,
-    required this.date,
-    required this.timeSlot,
-    this.isPrivate = false,
-    this.rentBall = false,
+    required this.stadiumName,
+    this.stadiumImageUrl = '',
+    required this.ownerId,
+    required this.startTime,
+    required this.endTime,
     required this.bookingType,
-    this.teamId,
+    this.playerTeamId,
+    this.playerTeamName,
+    this.opponentTeamId,
+    this.opponentTeamName,
+    required this.isPrivate,
+    required this.rentBall,
     required this.totalPrice,
+    this.currency = 'EGP',
+    required this.paymentMethod,
+    this.paymentTransactionId,
+    required this.status,
+    required this.createdByUserId,
+    required this.createdAt,
+    this.updatedAt,
+    this.homeScore,
+    this.awayScore,
+    this.resultSubmittedByTeamId,
+    this.matchResultStatus = MatchResultStatus.noResult,
+    this.pendingOutcome,
+    this.finalOutcome,
   });
+
+  /// Create Booking from Firestore document
+  factory Booking.fromFirestore(Map<String, dynamic> data, String id) {
+    return Booking(
+      id: id,
+      stadiumId: data['stadiumId'] ?? '',
+      stadiumName: data['stadiumName'] ?? '',
+      stadiumImageUrl: data['stadiumImageUrl'] ?? '',
+      ownerId: data['ownerId'] ?? '',
+      startTime: data['startTime'] != null 
+          ? (data['startTime'] is DateTime 
+              ? data['startTime'] 
+              : DateTime.parse(data['startTime']))
+          : DateTime.now(),
+      endTime: data['endTime'] != null 
+          ? (data['endTime'] is DateTime 
+              ? data['endTime'] 
+              : DateTime.parse(data['endTime']))
+          : DateTime.now(),
+      bookingType: BookingType.values.firstWhere(
+        (e) => e.name == data['bookingType'],
+        orElse: () => BookingType.personal,
+      ),
+      playerTeamId: data['playerTeamId'],
+      playerTeamName: data['playerTeamName'],
+      opponentTeamId: data['opponentTeamId'],
+      opponentTeamName: data['opponentTeamName'],
+      isPrivate: data['isPrivate'] ?? false,
+      rentBall: data['rentBall'] ?? false,
+      totalPrice: (data['totalPrice'] ?? 0).toDouble(),
+      currency: data['currency'] ?? 'EGP',
+      paymentMethod: data['paymentMethod'] ?? 'card',
+      paymentTransactionId: data['paymentTransactionId'],
+      status: BookingStatus.values.firstWhere(
+        (e) => e.name == data['status'],
+        orElse: () => BookingStatus.pending,
+      ),
+      createdByUserId: data['createdByUserId'] ?? '',
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] is DateTime 
+              ? data['createdAt'] 
+              : DateTime.parse(data['createdAt']))
+          : DateTime.now(),
+      updatedAt: data['updatedAt'] != null 
+          ? (data['updatedAt'] is DateTime 
+              ? data['updatedAt'] 
+              : DateTime.parse(data['updatedAt']))
+          : null,
+      homeScore: data['homeScore'],
+      awayScore: data['awayScore'],
+      resultSubmittedByTeamId: data['resultSubmittedByTeamId'],
+      matchResultStatus: MatchResultStatus.values.firstWhere(
+        (e) => e.name == data['matchResultStatus'],
+        orElse: () => MatchResultStatus.noResult,
+      ),
+      pendingOutcome: data['pendingOutcome'] != null 
+          ? MatchOutcome.values.firstWhere((e) => e.name == data['pendingOutcome']) 
+          : null,
+      finalOutcome: data['finalOutcome'] != null 
+          ? MatchOutcome.values.firstWhere((e) => e.name == data['finalOutcome']) 
+          : null,
+    );
+  }
+
+  /// Convert Booking to Firestore map
+  Map<String, dynamic> toFirestore() {
+    return {
+      'stadiumId': stadiumId,
+      'stadiumName': stadiumName,
+      'stadiumImageUrl': stadiumImageUrl,
+      'ownerId': ownerId,
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
+      'bookingType': bookingType.name,
+      'playerTeamId': playerTeamId,
+      'playerTeamName': playerTeamName,
+      'opponentTeamId': opponentTeamId,
+      'opponentTeamName': opponentTeamName,
+      'isPrivate': isPrivate,
+      'rentBall': rentBall,
+      'totalPrice': totalPrice,
+      'currency': currency,
+      'paymentMethod': paymentMethod,
+      'paymentTransactionId': paymentTransactionId,
+      'status': status.name,
+      'createdByUserId': createdByUserId,
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String(),
+      'homeScore': homeScore,
+      'awayScore': awayScore,
+      'resultSubmittedByTeamId': resultSubmittedByTeamId,
+      'matchResultStatus': matchResultStatus.name,
+      'pendingOutcome': pendingOutcome?.name,
+      'finalOutcome': finalOutcome?.name,
+    };
+  }
+
+  /// Create Booking from BookingDraft (after payment success)
+  factory Booking.fromDraft({
+    required String id,
+    required BookingDraft draft,
+    required String userId,
+    required BookingStatus status,
+  }) {
+    return Booking(
+      id: id,
+      stadiumId: draft.stadiumId,
+      stadiumName: draft.stadiumName,
+      stadiumImageUrl: draft.stadiumImageUrl,
+      ownerId: draft.ownerId,
+      startTime: draft.startTime,
+      endTime: draft.endTime,
+      bookingType: draft.bookingType,
+      playerTeamId: draft.playerTeamId,
+      playerTeamName: draft.playerTeamName,
+      opponentTeamId: draft.opponentTeamId,
+      opponentTeamName: draft.opponentTeamName,
+      isPrivate: draft.isPrivate,
+      rentBall: draft.rentBall,
+      totalPrice: draft.totalPrice,
+      currency: draft.currency,
+      paymentMethod: draft.paymentMethod ?? 'card',
+      paymentTransactionId: draft.paymentTransactionId,
+      status: status,
+      createdByUserId: userId,
+      createdAt: DateTime.now(),
+    );
+  }
+
+  Booking copyWith({
+    String? id,
+    String? stadiumId,
+    String? stadiumName,
+    String? stadiumImageUrl,
+    String? ownerId,
+    DateTime? startTime,
+    DateTime? endTime,
+    BookingType? bookingType,
+    String? playerTeamId,
+    String? playerTeamName,
+    String? opponentTeamId,
+    String? opponentTeamName,
+    bool? isPrivate,
+    bool? rentBall,
+    double? totalPrice,
+    String? currency,
+    String? paymentMethod,
+    String? paymentTransactionId,
+    BookingStatus? status,
+    String? createdByUserId,
+    DateTime? createdAt,
+    DateTime? updatedAt,
+    int? homeScore,
+    int? awayScore,
+    String? resultSubmittedByTeamId,
+    MatchResultStatus? matchResultStatus,
+    MatchOutcome? pendingOutcome,
+    MatchOutcome? finalOutcome,
+  }) {
+    return Booking(
+      id: id ?? this.id,
+      stadiumId: stadiumId ?? this.stadiumId,
+      stadiumName: stadiumName ?? this.stadiumName,
+      stadiumImageUrl: stadiumImageUrl ?? this.stadiumImageUrl,
+      ownerId: ownerId ?? this.ownerId,
+      startTime: startTime ?? this.startTime,
+      endTime: endTime ?? this.endTime,
+      bookingType: bookingType ?? this.bookingType,
+      playerTeamId: playerTeamId ?? this.playerTeamId,
+      playerTeamName: playerTeamName ?? this.playerTeamName,
+      opponentTeamId: opponentTeamId ?? this.opponentTeamId,
+      opponentTeamName: opponentTeamName ?? this.opponentTeamName,
+      isPrivate: isPrivate ?? this.isPrivate,
+      rentBall: rentBall ?? this.rentBall,
+      totalPrice: totalPrice ?? this.totalPrice,
+      currency: currency ?? this.currency,
+      paymentMethod: paymentMethod ?? this.paymentMethod,
+      paymentTransactionId: paymentTransactionId ?? this.paymentTransactionId,
+      status: status ?? this.status,
+      createdByUserId: createdByUserId ?? this.createdByUserId,
+      createdAt: createdAt ?? this.createdAt,
+      updatedAt: updatedAt ?? this.updatedAt,
+      homeScore: homeScore ?? this.homeScore,
+      awayScore: awayScore ?? this.awayScore,
+      resultSubmittedByTeamId: resultSubmittedByTeamId ?? this.resultSubmittedByTeamId,
+      matchResultStatus: matchResultStatus ?? this.matchResultStatus,
+      pendingOutcome: pendingOutcome ?? this.pendingOutcome,
+      finalOutcome: finalOutcome ?? this.finalOutcome,
+    );
+  }
+
+  /// Check if booking is upcoming
+  bool get isUpcoming => 
+      status == BookingStatus.confirmed && 
+      startTime.isAfter(DateTime.now());
+
+  /// Check if booking is completed
+  bool get isCompleted => 
+      status == BookingStatus.completed || 
+      endTime.isBefore(DateTime.now());
+
+  /// Get formatted date string
+  String get formattedDate {
+    final months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 
+                    'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
+    return '${months[startTime.month - 1]} ${startTime.day}';
+  }
+
+  /// Get formatted time range
+  String get formattedTimeRange {
+    String formatTime(DateTime dt) {
+      final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour;
+      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      return '$hour:${dt.minute.toString().padLeft(2, '0')} $period';
+    }
+    return '${formatTime(startTime)} - ${formatTime(endTime)}';
+  }
 }
 
 
@@ -413,12 +811,14 @@ class Team {
         id: '1',
         name: 'Real Madrid CF',
         captainName: 'Mohamed Salah',
-        captainImageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80', // Real player portrait
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
         date: 'August 6th / 7pm',
         stadium: 'Santiago Bernabéu',
         pricePerPerson: 100,
         currentPlayers: 8,
         maxPlayers: 12,
+        points: 100,
+        trend: 'up',
         playerImages: [
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
@@ -430,12 +830,14 @@ class Team {
         id: '2',
         name: 'FC Barcelona',
         captainName: 'Robert Lewandowski',
-        captainImageUrl: 'https://images.unsplash.com/photo-1516567727245-ad8c68f3ec93?w=150&h=150&fit=crop&q=80', // Real athlete face
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
         date: 'August 7th / 8pm',
         stadium: 'Camp Nou',
         pricePerPerson: 120,
         currentPlayers: 10,
         maxPlayers: 14,
+        points: 95,
+        trend: 'up',
         playerImages: [
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&q=80',
@@ -447,17 +849,152 @@ class Team {
         id: '3',
         name: 'Manchester City',
         captainName: 'Kevin De Bruyne',
-        captainImageUrl: 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=150&h=150&fit=crop&q=80', // Real player on field
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
         date: 'August 8th / 9pm',
         stadium: 'Etihad Stadium',
         pricePerPerson: 110,
         currentPlayers: 5,
         maxPlayers: 10,
+        points: 88,
+        trend: 'down',
         playerImages: [
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '4',
+        name: 'Liverpool FC',
+        captainName: 'Virgil van Dijk',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
+        date: 'August 9th / 7pm',
+        stadium: 'Anfield',
+        pricePerPerson: 115,
+        currentPlayers: 9,
+        maxPlayers: 12,
+        points: 82,
+        trend: 'up',
+        playerImages: [
+          'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '5',
+        name: 'Bayern Munich',
+        captainName: 'Thomas Müller',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg',
+        date: 'August 10th / 8pm',
+        stadium: 'Allianz Arena',
+        pricePerPerson: 125,
+        currentPlayers: 11,
+        maxPlayers: 14,
+        points: 78,
+        trend: 'stable',
+        playerImages: [
+          'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1557862921-37829c790f19?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '6',
+        name: 'Paris Saint-Germain',
+        captainName: 'Marquinhos',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
+        date: 'August 11th / 9pm',
+        stadium: 'Parc des Princes',
+        pricePerPerson: 130,
+        currentPlayers: 7,
+        maxPlayers: 11,
+        points: 71,
+        trend: 'down',
+        playerImages: [
+          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '7',
+        name: 'Chelsea FC',
+        captainName: 'Reece James',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
+        date: 'August 12th / 7pm',
+        stadium: 'Stamford Bridge',
+        pricePerPerson: 105,
+        currentPlayers: 6,
+        maxPlayers: 11,
+        points: 65,
+        trend: 'up',
+        playerImages: [
+          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '8',
+        name: 'Juventus FC',
+        captainName: 'Leonardo Bonucci',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Juventus_FC_2017_logo.svg',
+        date: 'August 13th / 8pm',
+        stadium: 'Allianz Stadium',
+        pricePerPerson: 95,
+        currentPlayers: 8,
+        maxPlayers: 12,
+        points: 58,
+        trend: 'stable',
+        playerImages: [
+          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '9',
+        name: 'AC Milan',
+        captainName: 'Davide Calabria',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg',
+        date: 'August 14th / 9pm',
+        stadium: 'San Siro',
+        pricePerPerson: 90,
+        currentPlayers: 5,
+        maxPlayers: 10,
+        points: 45,
+        trend: 'down',
+        playerImages: [
+          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&q=80',
+        ],
+      ),
+      Team(
+        id: '10',
+        name: 'Atlético Madrid',
+        captainName: 'Koke Resurrección',
+        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg',
+        date: 'August 15th / 7pm',
+        stadium: 'Wanda Metropolitano',
+        pricePerPerson: 85,
+        currentPlayers: 4,
+        maxPlayers: 10,
+        points: 38,
+        trend: 'up',
+        playerImages: [
+          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80',
         ],
       ),
     ];

@@ -85,7 +85,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 decoration: BoxDecoration(
                   color: const Color(0xFF1E1E1E),
                   borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.grey.withOpacity(0.3), style: BorderStyle.solid), // Dashed border simulation needed? Solid looks cleaner for now or use dedicated package
+                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3), style: BorderStyle.solid), // Dashed border simulation needed? Solid looks cleaner for now or use dedicated package
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,

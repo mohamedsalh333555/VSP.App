@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 
@@ -14,23 +15,23 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      print('User granted permission');
+      debugPrint('User granted permission');
     } else {
-      print('User declined or has not accepted permission');
+      debugPrint('User declined or has not accepted permission');
     }
 
     // 2. Get Token
     String? token = await _firebaseMessaging.getToken();
-    print("FCM Token: $token");
+    debugPrint("FCM Token: $token");
     // TODO: Save token to Firestore User Profile for targeted notifications
 
     // 3. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      print('Got a message whilst in the foreground!');
-      print('Message data: ${message.data}');
+      debugPrint('Got a message whilst in the foreground!');
+      debugPrint('Message data: ${message.data}');
 
       if (message.notification != null) {
-        print('Message also contained a notification: ${message.notification}');
+        debugPrint('Message also contained a notification: ${message.notification}');
         // Show local notification
         _showLocalNotification(message);
       }
@@ -62,6 +63,6 @@ class NotificationService {
     required String timeSlot,
   }) async {
     // TODO: Implement actual local notification trigger
-    print("🔔 Booking Confirmed for $stadiumName on $bookingDate at $timeSlot");
+    debugPrint("🔔 Booking Confirmed for $stadiumName on $bookingDate at $timeSlot");
   }
 }

@@ -21,7 +21,6 @@ class AppTheme {
         primary: neonGreen,
         secondary: neonGreen,
         surface: cardBackground,
-        background: darkBackground,
       ),
       appBarTheme: const AppBarTheme(
         backgroundColor: darkBackground,
@@ -78,7 +77,7 @@ class AppTheme {
       elevatedButtonTheme: ElevatedButtonThemeData(
         style: ElevatedButton.styleFrom(
           backgroundColor: neonGreen,
-          foregroundColor: darkBackground,
+          foregroundColor: Colors.black, // Pure black text as requested
           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(8),

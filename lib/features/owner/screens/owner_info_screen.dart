@@ -67,6 +67,13 @@ class OwnerInfoScreen extends StatelessWidget {
             Container(
               height: 180,
               width: double.infinity,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
+              clipBehavior: Clip.antiAlias,
               child: Stack(
                 children: [
                    ShimmerImage(
@@ -79,13 +86,6 @@ class OwnerInfoScreen extends StatelessWidget {
                   ),
                 ],
               ),
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
-              ),
-              clipBehavior: Clip.antiAlias,
             ),
             // Address Text Input (Immediately below map)
             Container(

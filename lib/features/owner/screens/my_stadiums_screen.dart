@@ -30,9 +30,7 @@ class MyStadiumsScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: hasStadiums 
-          ? const Center(child: Text('List of stadiums here')) 
-          : _buildEmptyState(context),
+      body: _buildEmptyState(context),
     );
   }
 

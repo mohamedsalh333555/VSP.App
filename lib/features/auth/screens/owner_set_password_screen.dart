@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:confetti/confetti.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../owner/screens/owner_stadiums_screen.dart';
+import 'success_modal.dart';
 
 /// Owner Set Password Screen - Step 3/3
 class OwnerSetPasswordScreen extends StatefulWidget {
@@ -36,21 +35,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
   bool get _isValid => _hasMinLength && _hasNumber && _hasSymbol;
 
   void _showSuccessModal() {
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => _OwnerSuccessModal(
-        onDone: () {
-          Navigator.of(context).popUntil((route) => route.isFirst);
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => const OwnerStadiumsScreen(),
-            ),
-          );
-        },
-      ),
-    );
+    showSuccessModal(context);
   }
 
   @override
@@ -178,7 +163,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                     style: ElevatedButton.styleFrom(
                       backgroundColor: AppTheme.neonGreen,
                       foregroundColor: Colors.black,
-                      disabledBackgroundColor: AppTheme.textSecondary.withOpacity(0.3),
+                      disabledBackgroundColor: AppTheme.textSecondary.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(12),
                       ),
@@ -292,143 +277,6 @@ class _ProgressIndicator extends StatelessWidget {
         color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
         borderRadius: BorderRadius.circular(2),
       ),
-    );
-  }
-}
-
-class _OwnerSuccessModal extends StatefulWidget {
-  final VoidCallback onDone;
-
-  const _OwnerSuccessModal({required this.onDone});
-
-  @override
-  State<_OwnerSuccessModal> createState() => _OwnerSuccessModalState();
-}
-
-class _OwnerSuccessModalState extends State<_OwnerSuccessModal> {
-  late ConfettiController _confettiController;
-
-  @override
-  void initState() {
-    super.initState();
-    _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _confettiController.play();
-  }
-
-  @override
-  void dispose() {
-    _confettiController.dispose();
-    super.dispose();
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Stack(
-      children: [
-        // Semi-transparent background
-        Container(
-          color: Colors.black.withOpacity(0.8),
-        ),
-        
-        // Confetti
-        Align(
-          alignment: Alignment.topCenter,
-          child: ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirectionality: BlastDirectionality.explosive,
-            colors: const [
-              AppTheme.neonGreen,
-              Colors.white,
-              Color(0xFF39FF14),
-            ],
-            numberOfParticles: 30,
-            gravity: 0.3,
-          ),
-        ),
-
-        // Success Card
-        Center(
-          child: Container(
-            margin: const EdgeInsets.symmetric(horizontal: 32),
-            padding: const EdgeInsets.all(32),
-            decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
-              borderRadius: BorderRadius.circular(24),
-            ),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                // Shield Icon
-                Container(
-                  width: 80,
-                  height: 80,
-                  decoration: BoxDecoration(
-                    color: AppTheme.neonGreen.withOpacity(0.2),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.check_circle,
-                    color: AppTheme.neonGreen,
-                    size: 48,
-                  ),
-                ),
-
-                const SizedBox(height: 24),
-
-                // Title
-                const Text(
-                  'Your account was\nsuccessfully created!',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 22,
-                    fontWeight: FontWeight.bold,
-                    height: 1.3,
-                  ),
-                ),
-
-                const SizedBox(height: 12),
-
-                // Subtitle
-                const Text(
-                  'Add your stadium now',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
-                ),
-
-                const SizedBox(height: 32),
-
-                // Done Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: widget.onDone,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      elevation: 0,
-                    ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-      ],
     );
   }
 }

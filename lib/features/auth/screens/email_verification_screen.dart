@@ -59,6 +59,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
     final code = _getCode();
     
     if (code.length != 6) {
+      if (!mounted) return;
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter the complete code'),
@@ -78,7 +79,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
     setState(() => _isLoading = false);
 
-    if (success && mounted) {
+    if (!mounted) return;
+    if (success) {
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -279,7 +281,7 @@ class _OTPBox extends StatelessWidget {
         color: AppTheme.cardBackground,
         borderRadius: BorderRadius.circular(12),
         border: Border.all(
-          color: AppTheme.neonGreen.withOpacity(0.3),
+          color: AppTheme.neonGreen.withValues(alpha: 0.3),
           width: 1,
         ),
       ),

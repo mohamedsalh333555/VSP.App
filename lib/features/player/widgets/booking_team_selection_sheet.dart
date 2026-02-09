@@ -3,6 +3,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 import '../screens/booking_confirmation_screen.dart';
+import '../screens/challenge_select_team_screen.dart';
 import 'create_team_sheet.dart';
 
 class BookingTeamSelectionSheet extends StatefulWidget {
@@ -63,7 +64,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.3),
+                color: Colors.white.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -87,7 +88,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
               Text(
                 'Choose What Suits You To Finish Your Booking Easily',
                 style: TextStyle(
-                  color: AppTheme.textSecondary.withOpacity(0.7),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.7),
                   fontSize: 14,
                 ),
               ),
@@ -112,7 +113,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                     width: 48,
                     height: 48,
                     decoration: BoxDecoration(
-                      color: AppTheme.textSecondary.withOpacity(0.1),
+                      color: AppTheme.textSecondary.withValues(alpha: 0.1),
                       shape: BoxShape.circle,
                     ),
                     child: const Icon(Icons.groups_outlined, color: AppTheme.neonGreen),
@@ -134,7 +135,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                         Text(
                           'Create A New Team Now To Confirm Your Booking.',
                           style: TextStyle(
-                            color: AppTheme.textSecondary.withOpacity(0.7),
+                            color: AppTheme.textSecondary.withValues(alpha: 0.7),
                             fontSize: 12,
                           ),
                         ),
@@ -207,15 +208,28 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             child: ElevatedButton(
               onPressed: () {
                 Navigator.pop(context); // Close modal
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => BookingConfirmationScreen(
-                      stadium: widget.stadium,
-                      bookingType: _selectedOption,
+                
+                if (_selectedOption == 'Challenge') {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChallengeSelectTeamScreen(
+                        stadium: widget.stadium,
+                        bookingType: _selectedOption,
+                      ),
                     ),
-                  ),
-                );
+                  );
+                } else {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => BookingConfirmationScreen(
+                        stadium: widget.stadium,
+                        bookingType: _selectedOption,
+                      ),
+                    ),
+                  );
+                }
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: AppTheme.neonGreen,
@@ -259,7 +273,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
         margin: const EdgeInsets.only(bottom: 16),
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withOpacity(0.05) : AppTheme.cardBackground,
+          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.05) : AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
             color: isSelected ? AppTheme.neonGreen : Colors.transparent,
@@ -281,7 +295,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: AppTheme.textSecondary.withOpacity(0.1),
+                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
                 ),
                 child: Icon(iconData, color: AppTheme.neonGreen),
@@ -306,7 +320,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                   Text(
                     subtitle,
                     style: TextStyle(
-                      color: AppTheme.textSecondary.withOpacity(0.7),
+                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),

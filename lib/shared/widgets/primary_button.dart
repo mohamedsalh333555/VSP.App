@@ -4,13 +4,13 @@ import '../../core/theme/app_theme.dart';
 /// زر أساسي مخصص بتصميم نيون أخضر
 class PrimaryButton extends StatelessWidget {
   final String text;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed;
   final bool isLoading;
 
   const PrimaryButton({
     super.key,
     required this.text,
-    required this.onPressed,
+    this.onPressed,
     this.isLoading = false,
   });
 

@@ -50,19 +50,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                   Icons.arrow_back, 
                   () => Navigator.of(context).pop(),
                 ),
-                StatefulBuilder(
-                  builder: (context, setState) {
-                    bool isFav = false; // Local state for demo, ideally passed from parent or provider
-                    return _buildInteractiveCircleIcon(
-                      context, 
-                       isFav ? Icons.favorite : Icons.favorite_border,
-                      () {
-                         setState(() => isFav = !isFav); // Toggle local state
-                      },
-                      color: isFav ? Colors.red : Colors.white,
-                    );
-                  }
-                ),
+                const _FavoriteButton(),
               ],
             ),
           ),
@@ -105,7 +93,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                              Text(
                                'Schedule',
                                style: TextStyle(
-                                 color: AppTheme.textPrimary.withOpacity(0.9), 
+                                 color: AppTheme.textPrimary.withValues(alpha: 0.9), 
                                  fontWeight: FontWeight.bold,
                                  fontSize: 16
                                )
@@ -113,7 +101,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                              Container(
                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                decoration: BoxDecoration(
-                                 color: Colors.white.withOpacity(0.05),
+                                 color: Colors.white.withValues(alpha: 0.05),
                                  borderRadius: BorderRadius.circular(8),
                                ),
                                child: const Text('Expand', style: TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
@@ -199,7 +187,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
           Text(
             content,
             style: TextStyle(
-              color: AppTheme.textSecondary.withOpacity(0.7),
+              color: AppTheme.textSecondary.withValues(alpha: 0.7),
               fontSize: 14,
               height: 1.6,
               fontFamily: 'Inter',
@@ -223,7 +211,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.white : Colors.grey.withOpacity(0.3),
+                    color: isActive ? Colors.white : Colors.grey.withValues(alpha: 0.3),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -231,7 +219,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: Colors.white.withOpacity(0.2),
+                      color: Colors.white.withValues(alpha: 0.2),
                     ),
                   ),
               ],
@@ -265,7 +253,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                       Text(
                         title,
                         style: TextStyle(
-                          color: isActive ? Colors.white.withOpacity(0.7) : Colors.grey,
+                          color: isActive ? Colors.white.withValues(alpha: 0.7) : Colors.grey,
                           fontSize: 12,
                         ),
                       ),
@@ -285,13 +273,49 @@ class ChampionshipDetailsScreen extends StatelessWidget {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: Colors.black.withOpacity(0.6),
+        color: Colors.black.withValues(alpha: 0.6),
         shape: BoxShape.circle,
       ),
       child: IconButton(
         padding: EdgeInsets.zero,
         icon: Icon(icon, color: color, size: 20),
         onPressed: onTap,
+      ),
+    );
+  }
+}
+
+class _FavoriteButton extends StatefulWidget {
+  const _FavoriteButton();
+
+  @override
+  State<_FavoriteButton> createState() => _FavoriteButtonState();
+}
+
+class _FavoriteButtonState extends State<_FavoriteButton> {
+  bool isFav = false;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: 40,
+      height: 40,
+      decoration: BoxDecoration(
+        color: Colors.black.withValues(alpha: 0.6),
+        shape: BoxShape.circle,
+      ),
+      child: IconButton(
+        padding: EdgeInsets.zero,
+        icon: Icon(
+          isFav ? Icons.favorite : Icons.favorite_border,
+          color: isFav ? Colors.red : Colors.white,
+          size: 20,
+        ),
+        onPressed: () {
+          setState(() {
+            isFav = !isFav;
+          });
+        },
       ),
     );
   }

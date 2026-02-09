@@ -38,7 +38,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            ...languages.map((lang) => _buildLanguageItem(lang)).toList(),
+            ...languages.map((lang) => _buildLanguageItem(lang)),
             
             const Spacer(),
             
@@ -71,7 +71,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         decoration: BoxDecoration(
           color: AppTheme.cardBackground,
           borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withOpacity(0.3)),
+          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,

@@ -19,11 +19,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   );
   
   // Stats Values
-  double _revenue = 0;
-  int _bookingsCount = 0;
-  int _totalTimeBooked = 0;
-  int _visitors = 0;
-  double _rating = 4.8; 
+  final double _rating = 4.8; 
 
   // Mock Data
   final List<String> _stadiumList = ['All Stadium', 'Stadium A', 'Stadium B', 'Stadium C'];
@@ -34,11 +30,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     // Stats will be recalculated when StreamBuilder receives data
   }
   
-  // No local state variables needed for transaction list, we'll fetch them directly
-    double totalRev = 0;
-    int totalBookings = 0;
-    int totalDur = 0;
-    int totalVis = 0;
 
 
 
@@ -433,7 +424,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ],
                     ),
                     borderRadius: BorderRadius.circular(15), // Standard 15.0 Radius
-                    border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+                    border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
                   ),
                   child: Row(
                     children: [

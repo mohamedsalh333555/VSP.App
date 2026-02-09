@@ -11,7 +11,7 @@ class CreateTeamSheet extends StatefulWidget {
 
 class _CreateTeamSheetState extends State<CreateTeamSheet> {
   final _nameController = TextEditingController();
-  String _selectedSport = 'Football';
+  final String _selectedSport = 'Football';
   final List<String> _members = [];
   final _memberController = TextEditingController();
 
@@ -22,14 +22,6 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     super.dispose();
   }
 
-  void _addMember() {
-    if (_memberController.text.isNotEmpty) {
-      setState(() {
-        _members.add(_memberController.text);
-        _memberController.clear();
-      });
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -79,7 +71,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   Text(
                     'Create Your Team To Have Your Favorite Friends Join You.',
                     style: TextStyle(
-                      color: AppTheme.textSecondary.withOpacity(0.7),
+                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
                       fontSize: 12,
                     ),
                   ),
@@ -101,7 +93,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             style: const TextStyle(color: AppTheme.textPrimary),
             decoration: InputDecoration(
               hintText: 'El Mokatm', // Match reference placeholder
-              hintStyle: TextStyle(color: AppTheme.textSecondary.withOpacity(0.5)),
+              hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
               filled: true,
               fillColor: AppTheme.cardBackground,
               border: OutlineInputBorder(
@@ -143,7 +135,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                 decoration: BoxDecoration(
                   color: AppTheme.cardBackground,
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: AppTheme.textSecondary.withOpacity(0.1)),
+                  border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.1)),
                 ),
                 child: const Icon(Icons.add_photo_alternate_outlined, color: AppTheme.neonGreen),
               ),
@@ -205,7 +197,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   width: MediaQuery.of(context).size.width / 2.5, // Rough half width-ish
                   padding: const EdgeInsets.fromLTRB(4, 4, 12, 4),
                   decoration: BoxDecoration(
-                    color: AppTheme.textSecondary.withOpacity(0.2), // Grey pill
+                    color: AppTheme.textSecondary.withValues(alpha: 0.2), // Grey pill
                     borderRadius: BorderRadius.circular(30),
                   ),
                   child: Row(

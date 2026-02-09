@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
@@ -17,7 +16,6 @@ class WelcomeScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
@@ -51,7 +49,7 @@ class WelcomeScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.neonGreen.withOpacity(0.08), // Subtle
+                            color: AppTheme.neonGreen.withValues(alpha: 0.08), // Subtle
                             blurRadius: 120, // Increased for more diffusion
                             spreadRadius: 40,
                           ),
@@ -129,41 +127,41 @@ class WelcomeScreen extends StatelessWidget {
                 // User Type Buttons
                 Column(
                   children: [
-                    // Player Button - Correct Shadow Padding
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 4), // Breathing room for shadow
-                      child: _AuthButton(
-                        label: 'I am a Player',
-                        backgroundColor: AppTheme.neonGreen,
-                        textColor: Colors.black,
+                      // Player Button
+                      Padding(
+                        padding: const EdgeInsets.only(bottom: 4),
+                        child: _AuthButton(
+                          label: 'I am a Player',
+                          backgroundColor: AppTheme.neonGreen,
+                          textColor: Colors.black,
+                          onTap: () {
+                            authProvider.setUserType('player');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateAccountScreen(isOwner: false),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 16),
+                      // Owner Button
+                      _AuthButton(
+                        label: 'I am Stadium Owner',
+                        backgroundColor: Colors.transparent,
+                        textColor: Colors.white,
+                        isOutlined: true,
                         onTap: () {
-                          authProvider.setUserType('player');
+                          authProvider.setUserType('owner');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CreateAccountScreen(),
+                              builder: (context) => const OwnerEntryScreen(isOwner: true),
                             ),
                           );
                         },
                       ),
-                    ),
-                    const SizedBox(height: 16),
-                    // Owner Button - Exact 12 radius and 1.5 border
-                    _AuthButton(
-                      label: 'I am Stadium Owner',
-                      backgroundColor: Colors.transparent,
-                      textColor: Colors.white,
-                      isOutlined: true,
-                      onTap: () {
-                        authProvider.setUserType('owner');
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const OwnerEntryScreen(),
-                          ),
-                        );
-                      },
-                    ),
                   ],
                 ),
 
@@ -177,7 +175,7 @@ class WelcomeScreen extends StatelessWidget {
                     Text(
                       'Already have an account?',
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.7),
+                        color: Colors.white.withValues(alpha: 0.7),
                         fontSize: 14,
                       ),
                     ),
@@ -269,7 +267,7 @@ class _AuthButton extends StatelessWidget {
           backgroundColor: backgroundColor,
           foregroundColor: textColor,
           elevation: 4,
-          shadowColor: backgroundColor.withOpacity(0.3),
+          shadowColor: backgroundColor.withValues(alpha: 0.3),
           shape: shape,
         ),
         child: Text(

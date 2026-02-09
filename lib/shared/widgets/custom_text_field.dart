@@ -36,7 +36,7 @@ class CustomTextField extends StatelessWidget {
       decoration: InputDecoration(
         hintText: hintText,
         hintStyle: TextStyle(
-          color: AppTheme.textSecondary.withOpacity(0.5),
+          color: AppTheme.textSecondary.withValues(alpha: 0.5),
           fontSize: 16,
         ),
         filled: true,
@@ -55,7 +55,7 @@ class CustomTextField extends StatelessWidget {
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(12),
           borderSide: BorderSide(
-            color: AppTheme.neonGreen.withOpacity(0.3),
+            color: AppTheme.neonGreen.withValues(alpha: 0.3),
             width: 1,
           ),
         ),

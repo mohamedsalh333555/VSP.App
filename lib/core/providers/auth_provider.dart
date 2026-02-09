@@ -34,6 +34,7 @@ class AuthProvider with ChangeNotifier {
   bool get isAuthenticated => _firebaseUser != null;
   bool get isPlayer => _userModel?.role == 'player';
   bool get isOwner => _userModel?.role == 'owner';
+  User? get currentUser => _firebaseUser; // Alias for convenience
 
   AuthProvider() {
     // Listen to auth state changes

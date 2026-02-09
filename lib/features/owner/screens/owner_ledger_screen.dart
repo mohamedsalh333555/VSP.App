@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/services/database_service.dart';
+
 
 class OwnerLedgerScreen extends StatelessWidget {
   const OwnerLedgerScreen({super.key});
@@ -49,12 +50,12 @@ class OwnerLedgerScreen extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.all(10),
                       decoration: BoxDecoration(
-                        color: isWin ? Colors.amber.withOpacity(0.2) : Colors.green.withOpacity(0.2),
+                        color: isWin ? Colors.amber.withValues(alpha: 0.2) : AppTheme.neonGreen.withValues(alpha: 0.2),
                         shape: BoxShape.circle,
                       ),
                       child: Icon(
                         isWin ? Icons.emoji_events : Icons.attach_money,
-                        color: isWin ? Colors.amber : Colors.green,
+                        color: isWin ? Colors.amber : AppTheme.neonGreen,
                         size: 24,
                       ),
                     ),
@@ -69,7 +70,7 @@ class OwnerLedgerScreen extends StatelessWidget {
                           ),
                           Text(
                             DateFormat('MMM d, yyyy • h:mm a').format(date),
-                            style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                            style: TextStyle(color: Colors.white.withValues(alpha: 0.5), fontSize: 12),
                           ),
                         ],
                       ),

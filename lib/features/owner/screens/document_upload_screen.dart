@@ -229,7 +229,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
              child:  Center(
               child: Container(
                 padding: const EdgeInsets.all(8),
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 child: const Text('Add Address', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ),
@@ -277,9 +277,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2D5016).withOpacity(0.4), // Darker Greenish background
+        color: const Color(0xFF2D5016).withValues(alpha: 0.4), // Darker Greenish background
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -287,7 +287,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.neonGreen.withOpacity(0.1),
+              color: AppTheme.neonGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
             ),
              child: const Icon(Icons.insert_drive_file, color: Colors.white, size: 20),
@@ -299,7 +299,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
               children: [
                 Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                 Text(size, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                 Text('Click to view', style: TextStyle(color: AppTheme.neonGreen.withOpacity(0.8), fontSize: 10)),
+                 Text('Click to view', style: TextStyle(color: AppTheme.neonGreen.withValues(alpha: 0.8), fontSize: 10)),
               ],
             ),
           ),

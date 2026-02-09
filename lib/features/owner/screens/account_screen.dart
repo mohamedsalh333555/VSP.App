@@ -64,6 +64,13 @@ class AccountScreen extends StatelessWidget {
              Container(
               height: 150,
               width: double.infinity,
+              clipBehavior: Clip.antiAlias,
+              decoration: const BoxDecoration(
+                borderRadius: BorderRadius.only(
+                  topLeft: Radius.circular(12),
+                  topRight: Radius.circular(12),
+                ),
+              ),
               child: Stack(
                 children: [
                    ShimmerImage(
@@ -75,13 +82,6 @@ class AccountScreen extends StatelessWidget {
                     child: Icon(Icons.location_on, size: 40, color: Colors.red),
                   ),
                 ],
-              ),
-              clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
-                ),
               ),
             ),
             Container(
@@ -168,7 +168,7 @@ class AccountScreen extends StatelessWidget {
               height: 200,
               decoration: BoxDecoration(
                 borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withOpacity(0.4),
+                color: Colors.black.withValues(alpha: 0.4),
                 border: Border.all(color: AppTheme.neonGreen),
               ),
             ),
@@ -273,7 +273,7 @@ class AccountScreen extends StatelessWidget {
       decoration: BoxDecoration(
           color: const Color(0xFF335500), // Dark Green background for docs
           borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.neonGreen.withOpacity(0.5)),
+          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [

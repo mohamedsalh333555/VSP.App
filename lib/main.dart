@@ -9,6 +9,7 @@ import 'core/theme/app_theme.dart';
 import 'core/providers/language_provider.dart';
 import 'core/providers/auth_provider.dart' as app_auth;
 import 'core/providers/stadium_provider.dart';
+import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/utils/data_migration.dart';
 import 'features/auth/screens/splash_screen.dart';
@@ -25,24 +26,24 @@ void main() async {
     await Firebase.initializeApp(
       options: DefaultFirebaseOptions.currentPlatform,
     );
-    print("✅✅✅ FIREBASE INITIALIZED SUCCESSFULLY ✅✅✅");
+    debugPrint("✅✅✅ FIREBASE INITIALIZED SUCCESSFULLY ✅✅✅");
     
     // ONE-TIME DATABASE SEEDING
     try {
         await DataMigration().seedDatabase();
-        print("✅ Database seeding attempt complete");
+        debugPrint("✅ Database seeding attempt complete");
     } catch (e) {
-        print("⚠️ Database seeding failed: $e");
+        debugPrint("⚠️ Database seeding failed: $e");
     }
   } catch (e) {
-    print("❌❌❌ FIREBASE INIT FAILED: $e");
+    debugPrint("❌❌❌ FIREBASE INIT FAILED: $e");
   }
   
   // Initialize Notifications
   try {
     await NotificationService().initialize();
   } catch (e) {
-    print("⚠️ Warning: Notification service failed: $e");
+    debugPrint("⚠️ Warning: Notification service failed: $e");
   }
   
   // System UI Style
@@ -68,6 +69,7 @@ class VSPApplication extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => LanguageProvider()),
         ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
         ChangeNotifierProvider(create: (_) => StadiumProvider()),
+        ChangeNotifierProvider(create: (_) => BookingProvider()),
       ],
       child: Consumer<LanguageProvider>(
         builder: (context, languageProvider, child) {
@@ -177,7 +179,7 @@ class _RoleCheckState extends State<_RoleCheck> {
          );
       }
     } catch (e) {
-      print("Auth Navigation Error: $e");
+      debugPrint("Auth Navigation Error: $e");
       if (mounted) {
         Navigator.of(context).pushReplacement(
              MaterialPageRoute(builder: (_) => const WelcomeScreen())

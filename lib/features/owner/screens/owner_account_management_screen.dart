@@ -264,12 +264,12 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               begin: Alignment.centerLeft,
               end: Alignment.centerRight,
               colors: [
-                 const Color(0xFF2D5016).withOpacity(0.8), // Dark Green
+                 const Color(0xFF2D5016).withValues(alpha: 0.8), // Dark Green
                  const Color(0xFF1E1E1E), 
               ],
             ),
         borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.5)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
       ),
       child: Row(
         children: [
@@ -329,7 +329,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -356,7 +356,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 width: 32,
                 height: 32,
                 decoration: BoxDecoration(
-                  color: Colors.black.withOpacity(0.6),
+                  color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
                   border: Border.all(color: AppTheme.neonGreen),
                 ),
@@ -377,7 +377,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                   bottomLeft: Radius.circular(18), // Slightly less than 20 due to border
                   bottomRight: Radius.circular(18),
                 ),
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,

@@ -5,7 +5,6 @@ import 'dart:io';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/providers/auth_provider.dart';
-import 'owner_stadiums_screen.dart';
 import 'owner_main_screen.dart';
 
 class OwnerDocumentationWizard extends StatefulWidget {
@@ -55,12 +54,14 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         await _uploadDocument(docType, File(pickedFile.path));
       }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to pick image: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to pick image: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
   
@@ -78,29 +79,35 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       );
       
       if (url != null) {
-        setState(() {
-          _uploadedDocUrls[docType] = url;
-        });
-        
+        if (mounted) {
+          setState(() {
+            _uploadedDocUrls[docType] = url;
+          });
+          
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Document uploaded successfully!'),
+              backgroundColor: AppTheme.neonGreen,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Document uploaded successfully!'),
-            backgroundColor: AppTheme.neonGreen,
+          SnackBar(
+            content: Text('Upload failed: $e'),
+            backgroundColor: Colors.red,
           ),
         );
       }
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Upload failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
-      setState(() {
-        _isUploading = false;
-        _uploadingDoc = null;
-      });
+      if (mounted) {
+        setState(() {
+          _isUploading = false;
+          _uploadingDoc = null;
+        });
+      }
     }
   }
 
@@ -137,26 +144,30 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         });
       }
       
-      // Navigate to Dashboard
-      Navigator.pushAndRemoveUntil(
-        context,
-        MaterialPageRoute(builder: (context) => const OwnerMainScreen()),
-        (route) => false,
-      );
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Information Completed! Welcome to your Dashboard.'),
-          backgroundColor: AppTheme.neonGreen,
-        ),
-      );
+      if (mounted) {
+        // Navigate to Dashboard
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const OwnerMainScreen()),
+          (route) => false,
+        );
+        
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Information Completed! Welcome to your Dashboard.'),
+            backgroundColor: AppTheme.neonGreen,
+          ),
+        );
+      }
     } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Failed to save: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Failed to save: $e'),
+            backgroundColor: Colors.red,
+          ),
+        );
+      }
     }
   }
 
@@ -268,7 +279,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
                 : Container(
                     height: 70,
                     decoration: BoxDecoration(
-                      color: AppTheme.neonGreen.withOpacity(0.2),
+                      color: AppTheme.neonGreen.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(15),
                       border: Border.all(color: AppTheme.neonGreen, width: 2, style: BorderStyle.solid),
                     ),
@@ -332,7 +343,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               child: Container(
                 height: 70,
                 decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withOpacity(0.2),
+                  color: AppTheme.neonGreen.withValues(alpha: 0.2),
                   borderRadius: BorderRadius.circular(15),
                   border: Border.all(color: AppTheme.neonGreen, width: 2),
                 ),
@@ -388,7 +399,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
              child:  Center(
               child: Container(
                 padding: const EdgeInsets.all(8),
-                color: Colors.white.withOpacity(0.8),
+                color: Colors.white.withValues(alpha: 0.8),
                 child: const Text('Add Address', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
               ),
             ),
@@ -450,9 +461,9 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
-        color: const Color(0xFF2D5016).withOpacity(0.4),
+        color: const Color(0xFF2D5016).withValues(alpha: 0.4),
         borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
+        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
@@ -461,7 +472,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             width: 40,
             height: 40,
             decoration: BoxDecoration(
-              color: AppTheme.neonGreen.withOpacity(0.1),
+              color: AppTheme.neonGreen.withValues(alpha: 0.1),
               borderRadius: BorderRadius.circular(10),
               image: DecorationImage(
                 image: FileImage(file),
@@ -498,41 +509,6 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     );
   }
 
-  Widget _buildUploadedItem(String name, String size) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF2D5016).withOpacity(0.4), // Darker Greenish background
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3)),
-      ),
-      child: Row(
-        children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              color: AppTheme.neonGreen.withOpacity(0.1),
-              borderRadius: BorderRadius.circular(10),
-            ),
-             child: const Icon(Icons.insert_drive_file, color: Colors.white, size: 20),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                Text(size, style: TextStyle(color: Colors.grey[400], fontSize: 12)),
-                 Text('Click to view', style: TextStyle(color: AppTheme.neonGreen.withOpacity(0.8), fontSize: 10)),
-              ],
-            ),
-          ),
-          
-        ],
-      ),
-    );
-  }
 
  Widget _buildTextField(String label, String hint, {TextEditingController? controller}) {
     return Column(

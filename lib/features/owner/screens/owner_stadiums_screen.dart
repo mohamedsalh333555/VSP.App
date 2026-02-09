@@ -170,7 +170,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
             child: Container(
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 borderRadius: BorderRadius.circular(20),
               ),
               child: Row(
@@ -203,7 +203,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
               width: 32,
               height: 32,
               decoration: BoxDecoration(
-                color: Colors.black.withOpacity(0.6),
+                color: Colors.black.withValues(alpha: 0.6),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
@@ -226,7 +226,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
                   bottomLeft: Radius.circular(20),
                   bottomRight: Radius.circular(20),
                 ),
-                color: Colors.black.withOpacity(0.7),
+                color: Colors.black.withValues(alpha: 0.7),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -316,7 +316,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
             color: AppTheme.darkBackground,
             boxShadow: [
               BoxShadow(
-                color: Colors.black.withOpacity(0.2),
+                color: Colors.black.withValues(alpha: 0.2),
                 blurRadius: 10,
                 offset: const Offset(0, -2),
               ),

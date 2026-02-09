@@ -42,7 +42,7 @@ class _YourTeamModalState extends State<YourTeamModal> {
           color: const Color(0xFF1A1A1A), // Dark grey background
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: Colors.white.withOpacity(0.1),
+            color: Colors.white.withValues(alpha: 0.1),
             width: 1,
           ),
         ),

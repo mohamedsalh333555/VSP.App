@@ -3,7 +3,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
-import 'dart:ui'; // For verifying UI imports
+ // For verifying UI imports
 import '../../../core/providers/language_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -40,21 +40,41 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   }
 
   void _checkAndShowMatchResultModal() async {
-    // Simulate delay for checking backend
+    // This was a simulation for demo purposes
+    /* 
     await Future.delayed(const Duration(seconds: 2));
     if (mounted) {
        showDialog(
          context: context,
          builder: (context) => MatchResultModal(
-           onConfirm: () {
+           booking: Booking(
+             id: 'demo_match',
+             stadiumId: '1',
+             stadiumName: 'Santiago Bernabéu',
+             ownerId: 'owner_1',
+             startTime: DateTime.now().subtract(const Duration(hours: 3)),
+             endTime: DateTime.now().subtract(const Duration(hours: 1)),
+             bookingType: BookingType.challenge,
+             playerTeamName: 'Your Team',
+             opponentTeamName: 'Real Madrid',
+             isPrivate: false,
+             rentBall: true,
+             totalPrice: 120,
+             paymentMethod: 'card',
+             status: BookingStatus.completed,
+             createdByUserId: 'demo_user',
+             createdAt: DateTime.now().subtract(const Duration(days: 1)),
+           ),
+           onConfirm: (outcome) {
              Navigator.pop(context);
               ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Result Confirmed!')),
+               const SnackBar(content: Text('Result Submitted Successfully!')),
              );
            },
          ),
        );
     }
+    */
   }
 
   @override
@@ -195,7 +215,7 @@ class StadiumCard extends StatelessWidget {
           borderRadius: BorderRadius.circular(15), // Unified 15px
           boxShadow: [
             BoxShadow(
-              color: Colors.black.withOpacity(0.4),
+              color: Colors.black.withValues(alpha: 0.4),
               blurRadius: 10,
               offset: const Offset(0, 5),
             ),
@@ -214,7 +234,7 @@ class StadiumCard extends StatelessWidget {
                   color: const Color(0xFF1E1E1E),
                   child: const Center(
                     child: CircularProgressIndicator(
-                      color: Color(0xFF39FF14),
+                      color: AppTheme.neonGreen,
                       strokeWidth: 2,
                     ),
                   ),
@@ -234,7 +254,7 @@ class StadiumCard extends StatelessWidget {
                     stops: const [0.5, 0.95],
                     colors: [
                       Colors.transparent,
-                      Colors.black.withOpacity(0.9),
+                      Colors.black.withValues(alpha: 0.9),
                     ],
                   ),
                 ),
@@ -251,13 +271,13 @@ class StadiumCard extends StatelessWidget {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on, color: Color(0xFF39FF14), size: 14),
+                          const Icon(Icons.location_on, color: AppTheme.neonGreen, size: 14),
                           const SizedBox(width: 4),
                           Text(
                             stadium.location,
@@ -270,9 +290,9 @@ class StadiumCard extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.6),
+                        color: Colors.black.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                       ),
                       child: Icon(
                         stadium.isFavorite ? Icons.favorite : Icons.favorite_border,
@@ -309,7 +329,7 @@ class StadiumCard extends StatelessWidget {
                         Text(
                           '${stadium.size} • ${stadium.type}',
                           style: TextStyle(
-                            color: Colors.white.withOpacity(0.8),
+                            color: Colors.white.withValues(alpha: 0.8),
                             fontSize: 12,
                             fontWeight: FontWeight.w500,
                           ),
@@ -318,13 +338,13 @@ class StadiumCard extends StatelessWidget {
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                           decoration: BoxDecoration(
-                            color: const Color(0xFF39FF14).withOpacity(0.15),
+                            color: AppTheme.neonGreen.withValues(alpha: 0.15),
                             borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             '${stadium.pricePerHour.toInt()} eg',
                             style: const TextStyle(
-                              color: Color(0xFF39FF14),
+                              color: AppTheme.neonGreen,
                               fontSize: 13,
                               fontWeight: FontWeight.w900,
                             ),
@@ -438,7 +458,7 @@ class _MatchCardState extends State<MatchCard> {
         borderRadius: BorderRadius.circular(15), // Unified 15px
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25), 
+            color: Colors.black.withValues(alpha: 0.25), 
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -487,7 +507,7 @@ class _MatchCardState extends State<MatchCard> {
                     Text(
                       widget.team.captainName,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -504,10 +524,10 @@ class _MatchCardState extends State<MatchCard> {
                       height: 30,
                       margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.share_outlined, color: Color(0xFF39FF14), size: 14),
+                      child: const Icon(Icons.share_outlined, color: AppTheme.neonGreen, size: 14),
                     ),
                   ),
                   GestureDetector(
@@ -515,7 +535,7 @@ class _MatchCardState extends State<MatchCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _isJoined ? const Color(0xFF2A2A2A) : const Color(0xFF39FF14),
+                        color: _isJoined ? const Color(0xFF2A2A2A) : AppTheme.neonGreen,
                         borderRadius: BorderRadius.circular(10),
                         border: _isJoined ? Border.all(color: Colors.white24, width: 1) : null,
                       ),
@@ -538,7 +558,7 @@ class _MatchCardState extends State<MatchCard> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -587,7 +607,7 @@ class _MatchCardState extends State<MatchCard> {
               Expanded(
                 child: RichText(
                   text: TextSpan(
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 12),
+                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
                     children: [
                       const TextSpan(text: 'Number of remaining '),
                       TextSpan(
@@ -614,7 +634,7 @@ class _MatchCardState extends State<MatchCard> {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
@@ -727,7 +747,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
         borderRadius: BorderRadius.circular(15), // Unified 15px
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.25),
+            color: Colors.black.withValues(alpha: 0.25),
             blurRadius: 10,
             offset: const Offset(0, 4),
           ),
@@ -777,7 +797,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                     Text(
                       widget.championship.type,
                       style: TextStyle(
-                        color: Colors.white.withOpacity(0.6),
+                        color: Colors.white.withValues(alpha: 0.6),
                         fontSize: 12,
                       ),
                     ),
@@ -794,10 +814,10 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                       height: 30,
                       margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
+                        color: Colors.white.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.share_outlined, color: Color(0xFF39FF14), size: 14),
+                      child: const Icon(Icons.share_outlined, color: AppTheme.neonGreen, size: 14),
                     ),
                   ),
                   GestureDetector(
@@ -805,7 +825,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _isJoined ? const Color(0xFF2A2A2A) : const Color(0xFF39FF14),
+                        color: _isJoined ? const Color(0xFF2A2A2A) : AppTheme.neonGreen,
                         borderRadius: BorderRadius.circular(10),
                         border: _isJoined ? Border.all(color: Colors.white24, width: 1) : null,
                       ),
@@ -828,7 +848,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
           Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withOpacity(0.2),
+              color: Colors.black.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
@@ -878,7 +898,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                 child: Text(
                    '$_teamsJoined/${widget.championship.maxTeams} Teams Joined',
                    style: TextStyle(
-                     color: Colors.white.withOpacity(0.6),
+                     color: Colors.white.withValues(alpha: 0.6),
                      fontSize: 12,
                      fontWeight: FontWeight.w500,
                    ),
@@ -899,7 +919,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
         Text(
           label.toUpperCase(),
           style: TextStyle(
-            color: Colors.white.withOpacity(0.5),
+            color: Colors.white.withValues(alpha: 0.5),
             fontSize: 10,
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
@@ -951,31 +971,31 @@ class CustomPlayerNavBar extends StatefulWidget {
 }
 
 class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
-  // Navigation bar item list (English Only)
+  // Navigation bar item list
   final List<NavItem> _navItems = [
     NavItem(
-      activeIcon: Icons.home,
+      activeIcon: Icons.home_rounded,
       inactiveIcon: Icons.home_outlined, 
       label: 'Home',
     ),
     NavItem(
-      activeIcon: Icons.sports_soccer, 
-      inactiveIcon: Icons.sports_soccer_outlined,
-      label: 'Matches',
+      activeIcon: Icons.groups_rounded, 
+      inactiveIcon: Icons.groups_outlined,
+      label: 'Team',
     ),
     NavItem(
-      activeIcon: Icons.leaderboard,
-      inactiveIcon: Icons.leaderboard_outlined,
+      activeIcon: Icons.emoji_events_rounded,
+      inactiveIcon: Icons.emoji_events_outlined,
       label: 'Champion',
     ),
     NavItem(
-      activeIcon: Icons.bookmark,
-      inactiveIcon: Icons.bookmark_outline,
+      activeIcon: Icons.bookmark_rounded,
+      inactiveIcon: Icons.bookmark_outline_rounded,
       label: 'Booked',
     ),
     NavItem(
-      activeIcon: Icons.person,
-      inactiveIcon: Icons.person_outline,
+      activeIcon: Icons.person_rounded,
+      inactiveIcon: Icons.person_outline_rounded,
       label: 'Profile',
     ),
   ];
@@ -985,15 +1005,15 @@ class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
     return Container(
       decoration: const BoxDecoration(
         color: AppTheme.darkBackground,
-        boxShadow: [],
+        border: Border(top: BorderSide(color: Colors.white12, width: 0.5)),
       ),
       child: SafeArea(
         top: false,
         child: Container(
           height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 16.0),
+          padding: const EdgeInsets.symmetric(horizontal: 8.0),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: _navItems.asMap().entries.map((entry) {
               final index = entry.key;
               final item = entry.value;
@@ -1006,32 +1026,40 @@ class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
                   highlightColor: Colors.transparent,
                   child: Column(
                     mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisSize: MainAxisSize.min,
                     children: [
+                      // Dot Indicator - Only when selected
                       if (isSelected)
                         Container(
-                          width: 8,
-                          height: 8,
+                          width: 6,
+                          height: 6,
+                          margin: const EdgeInsets.only(bottom: 4),
                           decoration: const BoxDecoration(
                             color: AppTheme.neonGreen,
                             shape: BoxShape.circle,
                           ),
                         )
                       else
-                        const SizedBox(height: 8),
-                      const SizedBox(height: 6),
+                        const SizedBox(height: 10), // Placeholder to keep height consistent
+
+                      // Icon
                       Icon(
                         isSelected ? item.activeIcon : item.inactiveIcon,
-                        color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
+                        color: isSelected ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
                         size: 26,
                       ),
+                      
                       const SizedBox(height: 4),
+                      
+                      // Label
                       Text(
                         item.label,
                         style: TextStyle(
-                          color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
-                          fontSize: 12,
-                          fontFamily: 'Agency FB', // As requested
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                          color: isSelected ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
+                          fontSize: 11,
+                          fontFamily: 'Agency FB', 
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                          letterSpacing: 0.5,
                         ),
                       ),
                     ],
@@ -1138,7 +1166,7 @@ class _HomeContent extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: const Color(0xFF1E1E1E),
                               borderRadius: BorderRadius.circular(30), // Circular as requested
-                              border: Border.all(color: Colors.white.withOpacity(0.08)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                             ),
                             child: TextField(
                               controller: searchController,
@@ -1148,7 +1176,7 @@ class _HomeContent extends StatelessWidget {
                               decoration: InputDecoration(
                                 hintText: 'Search...',
                                 hintStyle: TextStyle(
-                                  color: AppTheme.textSecondary.withOpacity(0.5),
+                                  color: AppTheme.textSecondary.withValues(alpha: 0.5),
                                 ),
                                 prefixIcon: Padding(
                                   padding: const EdgeInsets.all(8.0),
@@ -1156,9 +1184,9 @@ class _HomeContent extends StatelessWidget {
                                     width: 34,
                                     height: 34,
                                     decoration: BoxDecoration(
-                                      color: Colors.white.withOpacity(0.05),
+                                      color: Colors.white.withValues(alpha: 0.05),
                                       shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white.withOpacity(0.15)),
+                                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
                                     ),
                                     child: const Icon(
                                       Icons.search,
@@ -1192,11 +1220,11 @@ class _HomeContent extends StatelessWidget {
                             decoration: BoxDecoration(
                               color: const Color(0xFF1E1E1E), // Dark Grey
                               borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: const Color(0xFF39FF14).withOpacity(0.3)), // Subtle Neon border
+                              border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)), // Subtle Neon border
                             ),
                             child: const Icon(
                               Icons.tune,
-                              color: Color(0xFF39FF14), // Green icon
+                              color: AppTheme.neonGreen, // Green icon
                               size: 24,
                             ),
                           ),
@@ -1240,7 +1268,7 @@ class _HomeContent extends StatelessWidget {
                                width: 320,
                                margin: const EdgeInsets.only(right: 16),
                                decoration: BoxDecoration(
-                                 color: Colors.white.withOpacity(0.05),
+                                 color: Colors.white.withValues(alpha: 0.6),
                                  borderRadius: BorderRadius.circular(15),
                                ),
                              ),

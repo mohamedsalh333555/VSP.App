@@ -297,7 +297,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                  children: [
                     _buildMiniAvatar(0, Colors.red),
                     _buildMiniAvatar(1, Colors.blue),
-                    _buildMiniAvatar(2, Colors.green),
+                    _buildMiniAvatar(2, AppTheme.neonGreen),
                  ],
                ),
              ),

@@ -1,9 +1,14 @@
 // Example: How to integrate Firebase Authentication in Signup Screen
 // This is a reference implementation - adapt to your actual signup screens
 
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
+import '../../../core/services/database_service.dart';
+import '../../../core/services/storage_service.dart';
+import '../../../core/providers/stadium_provider.dart';
 
 class SignupIntegrationExample extends StatefulWidget {
   final String role; // 'player' or 'owner'
@@ -48,9 +53,11 @@ class _SignupIntegrationExampleState extends State<SignupIntegrationExample> {
       // Navigate based on role
       if (widget.role == 'player') {
         // Navigate to Player Home
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/player-home');
       } else {
         // Navigate to Owner Dashboard or Documentation Wizard
+        if (!mounted) return;
         Navigator.pushReplacementNamed(context, '/owner-dashboard');
       }
     } else {
@@ -153,8 +160,6 @@ class StadiumListIntegrationExample extends StatelessWidget {
 // Example: How to integrate Match Join Logic
 // ============================================
 
-import '../../../core/services/database_service.dart';
-
 class MatchCardIntegrationExample extends StatefulWidget {
   final String matchId;
   final String userId;
@@ -217,10 +222,6 @@ class _MatchCardIntegrationExampleState extends State<MatchCardIntegrationExampl
 // Example: How to integrate Storage Service
 // ============================================
 
-import 'dart:io';
-import 'package:image_picker/image_picker.dart';
-import '../../../core/services/storage_service.dart';
-
 class DocumentUploadIntegrationExample extends StatefulWidget {
   final String ownerId;
   
@@ -258,6 +259,7 @@ class _DocumentUploadIntegrationExampleState extends State<DocumentUploadIntegra
 
     if (url != null) {
       // Save URL to Firestore user profile
+      if (!mounted) return;
       final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
       await authProvider.updateProfile({
         'documents': {

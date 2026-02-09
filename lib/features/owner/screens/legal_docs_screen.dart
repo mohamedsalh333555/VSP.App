@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/config/app_config.dart';
 import 'id_verification_screen.dart';
 
 class LegalDocsScreen extends StatelessWidget {
@@ -73,7 +72,7 @@ class LegalDocsScreen extends StatelessWidget {
                    const Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.black),
                    const SizedBox(height: 8),
                    const Text('Click to upload', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                   Text('JPG, JPEG, PNG less than 10MB', style: TextStyle(color: Colors.black.withOpacity(0.7), fontSize: 10)),
+                   Text('JPG, JPEG, PNG less than 10MB', style: TextStyle(color: Colors.black.withValues(alpha: 0.7), fontSize: 10)),
                 ],
               ),
             ),
@@ -129,7 +128,7 @@ class LegalDocsScreen extends StatelessWidget {
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
         border: Border.all(color: AppTheme.neonGreen),
-        color: AppTheme.neonGreen.withOpacity(0.1),
+        color: AppTheme.neonGreen.withValues(alpha: 0.1),
       ),
       child: Row(
         children: [

@@ -1,15 +1,25 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart'; // Import Provider
+import '../../../core/constants/create_account_strings.dart'; // Import Strings
+import '../../../core/providers/language_provider.dart'; // Import LanguageProvider
 import '../../../core/theme/app_theme.dart';
 import '../../owner/screens/owner_stadiums_screen.dart';
 import 'owner_email_input_screen.dart';
 
-/// Owner Entry Screen - "Hi Pitch"
+/// Owner Entry Screen
 class OwnerEntryScreen extends StatelessWidget {
-  const OwnerEntryScreen({super.key});
+  final bool isOwner;
+
+  const OwnerEntryScreen({
+    super.key,
+    this.isOwner = true,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -37,7 +47,7 @@ class OwnerEntryScreen extends StatelessWidget {
 
                 const SizedBox(height: 60),
 
-                // Title - "Hi Pitch" with Dev Shortcut
+                // Title - "Hi Owner" (Dynamic) with Dev Shortcut
                 GestureDetector(
                   onDoubleTap: () {
                     // Dev Mode Shortcut
@@ -57,9 +67,9 @@ class OwnerEntryScreen extends StatelessWidget {
                       ),
                     );
                   },
-                  child: const Text(
-                    'Hi Pitch',
-                    style: TextStyle(
+                  child: Text(
+                    languageProvider.getText(CreateAccountStrings.hiPitch), // Use Dynamic String
+                    style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontSize: 48,
                       fontWeight: FontWeight.w900,
@@ -72,9 +82,9 @@ class OwnerEntryScreen extends StatelessWidget {
                 const SizedBox(height: 12),
 
                 // Subtitle
-                const Text(
-                  'Create new account',
-                  style: TextStyle(
+                Text(
+                  languageProvider.getText(CreateAccountStrings.createNewAccount),
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 18,
                     fontWeight: FontWeight.w500,
@@ -84,9 +94,9 @@ class OwnerEntryScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Description
-                const Text(
-                  'Start By Creating An Account. This Makes It Easier To Book Your Own Stadium.',
-                  style: TextStyle(
+                Text(
+                  languageProvider.getText(CreateAccountStrings.ownerSubtitle), // Use Dynamic String
+                  style: const TextStyle(
                     color: AppTheme.textSecondary,
                     fontSize: 14,
                     height: 1.6,
@@ -206,7 +216,7 @@ class _SocialButton extends StatelessWidget {
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(12),
           border: Border.all(
-            color: AppTheme.textSecondary.withOpacity(0.3),
+            color: AppTheme.textSecondary.withValues(alpha: 0.3),
             width: 1.5,
           ),
         ),

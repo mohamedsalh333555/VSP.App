@@ -2,24 +2,24 @@
 class CreateAccountStrings {
   // Player
   static const Map<String, String> hiSporty = {
-    'ar': 'مرحباً أيها الرياضي',
-    'en': 'Hi sporty',
+    'ar': 'مرحباً أيها اللاعب',
+    'en': 'Hi Player',
   };
 
   static const Map<String, String> playerSubtitle = {
-    'ar': 'ابدأ بإنشاء حساب. هذا يجعل عملية الحجز أسهل.',
-    'en': 'Start By Creating An Account. This Makes The Booking Process Easier.',
+    'ar': 'ابدأ بإنشاء حساب. هذا يجعل حجز مباراتك القادمة أسهل.',
+    'en': 'Start By Creating An Account. This Makes It Easier To Book Your Next Match.',
   };
 
   // Owner
   static const Map<String, String> hiPitch = {
     'ar': 'مرحباً بصاحب الملعب',
-    'en': 'Hi Pitch',
+    'en': 'Hi Owner',
   };
 
   static const Map<String, String> ownerSubtitle = {
-    'ar': 'ابدأ بإنشاء حساب. هذا يسهل حجز ملعبك الخاص.',
-    'en': 'Start By Creating An Account. This Makes It Easier To Book Your Own Stadium.',
+    'ar': 'ابدأ بإنشاء حساب. هذا يسهل إدارة ملعبك الخاص.',
+    'en': 'Start By Creating An Account. This Makes It Easier To Manage Your Stadium.',
   };
 
   // Common

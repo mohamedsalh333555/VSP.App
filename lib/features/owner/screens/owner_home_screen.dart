@@ -80,7 +80,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
             child: Text(
               'Show more',
               style: TextStyle(
-                color: AppTheme.textSecondary.withOpacity(0.7),
+                color: AppTheme.textSecondary.withValues(alpha: 0.7),
                 fontSize: 14,
               ),
             ),
@@ -111,7 +111,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
             Text(
               'You have 3 stadium',
               style: TextStyle(
-                color: AppTheme.textSecondary.withOpacity(0.8),
+                color: AppTheme.textSecondary.withValues(alpha: 0.8),
                 fontSize: 14,
               ),
             ),
@@ -301,7 +301,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
         decoration: BoxDecoration(
           color: const Color(0xFF1E3A1E), // Dark Greenish tint
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.neonGreen.withOpacity(0.3), width: 1),
+          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3), width: 1),
         ),
         child: Row(
           children: [
@@ -345,14 +345,14 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
   Widget _buildBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withOpacity(0.95),
+        color: AppTheme.darkBackground.withValues(alpha: 0.95),
          borderRadius: const BorderRadius.only(
             topLeft: Radius.circular(24),
             topRight: Radius.circular(24),
          ),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.5),
+            color: Colors.black.withValues(alpha: 0.5),
             blurRadius: 20,
             offset: const Offset(0, -5),
           ),
