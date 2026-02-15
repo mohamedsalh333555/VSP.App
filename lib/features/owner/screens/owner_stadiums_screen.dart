@@ -3,8 +3,9 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/stadium_provider.dart';
-import 'add_stadium_screen.dart';
-import 'document_upload_screen.dart';
+import '../../../core/providers/auth_provider.dart';
+import 'add_stadium_wizard.dart';
+import 'owner_documentation_wizard.dart';
 
 class OwnerStadiumsScreen extends StatefulWidget {
   final bool isDevMode;
@@ -23,9 +24,16 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
   @override
   void initState() {
     super.initState();
-    // Fetch stadiums when screen loads
+    // Fetch stadiums for the current owner
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<StadiumProvider>(context, listen: false).listenToStadiums();
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.isAuthenticated) {
+        Provider.of<StadiumProvider>(context, listen: false)
+          .listenToOwnerStadiums(auth.firebaseUser!.uid);
+      } else if (widget.isDevMode) {
+        // Fallback for dev mode shortcut if no live user
+        Provider.of<StadiumProvider>(context, listen: false).listenToStadiums();
+      }
     });
   }
 
@@ -335,7 +343,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const AddStadiumScreen(),
+                          builder: (context) => const AddStadiumWizard(),
                         ),
                       );
                     },
@@ -368,7 +376,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder: (context) => const DocumentUploadScreen(),
+                            builder: (context) => const OwnerDocumentationWizard(),
                           ),
                         );
                       },

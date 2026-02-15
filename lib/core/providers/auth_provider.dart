@@ -1,10 +1,13 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
+import '../services/cloudinary_service.dart'; // ✅ Added CloudinaryService import
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
+  final CloudinaryService _cloudinaryService = CloudinaryService(); // ✅ Added CloudinaryService instance
   
   // Firebase user
   User? _firebaseUser;
@@ -17,6 +20,7 @@ class AuthProvider with ChangeNotifier {
   String? _password;
   String? _name;
   String? _phone;
+  String? _position = 'GK';
   
   // Loading and error states
   bool _isLoading = false;
@@ -27,22 +31,32 @@ class AuthProvider with ChangeNotifier {
   UserModel? get userModel => _userModel;
   String? get userType => _userType;
   String get email => _email ?? '';
-  String? get name => _name;
+  String? get name => _name ?? _userModel?.name;
   String? get phone => _phone;
+  String get position => _userModel?.position ?? _position ?? 'GK';
+  String? get profileImageUrl => _userModel?.profileImageUrl;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _firebaseUser != null;
-  bool get isPlayer => _userModel?.role == 'player';
-  bool get isOwner => _userModel?.role == 'owner';
+  bool get isPlayer => _userModel?.role == 'player' || _userType == 'player';
+  bool get isOwner => _userModel?.role == 'owner' || _userType == 'owner';
   User? get currentUser => _firebaseUser; // Alias for convenience
 
   AuthProvider() {
     // Listen to auth state changes
-    _authService.authStateChanges.listen((User? user) {
+    _authService.authStateChanges.listen((User? user) async {
       _firebaseUser = user;
-      if (user == null) {
+      
+      if (user != null) {
+        // Fetch User Data from Firestore
+        final userData = await _authService.getUserData(user.uid);
+        if (userData != null) {
+          _userModel = UserModel.fromFirestore(userData);
+        }
+      } else {
         _userModel = null;
       }
+      
       notifyListeners();
     });
   }
@@ -70,6 +84,12 @@ class AuthProvider with ChangeNotifier {
   /// Set phone
   void setPhone(String phone) {
     _phone = phone;
+    notifyListeners();
+  }
+
+  /// Set position
+  void setPosition(String position) {
+    _position = position;
     notifyListeners();
   }
 
@@ -152,6 +172,7 @@ class AuthProvider with ChangeNotifier {
         userData: {
           'name': _name ?? '',
           'phone': _phone ?? '',
+          'position': _position ?? 'GK',
         },
       );
 
@@ -163,6 +184,7 @@ class AuthProvider with ChangeNotifier {
           role: _userType!,
           name: _name,
           phone: _phone,
+          position: _position,
         );
         _isLoading = false;
         notifyListeners();
@@ -222,6 +244,7 @@ class AuthProvider with ChangeNotifier {
           role: role,
           name: userData?['name'],
           phone: userData?['phone'],
+          position: userData?['position'] ?? 'GK',
         );
         _isLoading = false;
         notifyListeners();
@@ -312,6 +335,7 @@ class AuthProvider with ChangeNotifier {
           name: data['name'] ?? _userModel!.name,
           phone: data['phone'] ?? _userModel!.phone,
           profileImageUrl: data['profileImageUrl'] ?? _userModel!.profileImageUrl,
+          position: data['position'] ?? _userModel!.position,
         );
       }
       _isLoading = false;
@@ -322,6 +346,37 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Update Profile Photo (now uses Cloudinary instead of Firebase Storage)
+  Future<void> updateProfilePhoto(XFile file) async {
+     if (_firebaseUser == null) return;
+     
+     _isLoading = true;
+     _errorMessage = null; // ✅ Reset error message
+     notifyListeners();
+
+     try {
+       final uid = _firebaseUser!.uid;
+
+       // 1) Upload image to Cloudinary in a specific user folder
+       final url = await _cloudinaryService.uploadImage(
+         file,
+         folder: 'users/$uid/profile',
+       );
+
+       // 2) Update profile data in Firestore + local model
+       final success = await updateProfile({'profileImageUrl': url});
+       
+       if (!success) {
+         _errorMessage = 'Failed to update profile image record.';
+       }
+     } catch (e) {
+       _errorMessage = 'Failed to upload profile image: $e';
+     } finally {
+       _isLoading = false;
+       notifyListeners();
+     }
   }
 
   /// Send password reset email

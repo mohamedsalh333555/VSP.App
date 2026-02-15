@@ -1,13 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
 import 'login_screen.dart';
-import 'owner_entry_screen.dart';
 
 
 /// Welcome Screen - Initial landing page
@@ -31,7 +29,7 @@ class WelcomeScreen extends StatelessWidget {
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
-          bottom: false,
+          bottom: true,
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
             child: Column(
@@ -150,14 +148,14 @@ class WelcomeScreen extends StatelessWidget {
                       _AuthButton(
                         label: 'I am Stadium Owner',
                         backgroundColor: Colors.transparent,
-                        textColor: Colors.white,
+                        textColor: Colors.white, // Active color
                         isOutlined: true,
                         onTap: () {
                           authProvider.setUserType('owner');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const OwnerEntryScreen(isOwner: true),
+                              builder: (context) => const CreateAccountScreen(isOwner: true),
                             ),
                           );
                         },

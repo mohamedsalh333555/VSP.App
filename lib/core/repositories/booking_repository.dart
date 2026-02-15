@@ -49,11 +49,15 @@ class FirestoreBookingRepository implements BookingRepository {
     try {
       final docRef = _bookingsCollection.doc();
       
+      final status = draft.paymentMethod == 'cash' 
+          ? BookingStatus.pending 
+          : BookingStatus.confirmed;
+
       final booking = Booking.fromDraft(
         id: docRef.id,
         draft: draft,
         userId: userId,
-        status: BookingStatus.confirmed,
+        status: status,
       );
 
       await docRef.set(booking.toFirestore());
@@ -218,11 +222,15 @@ class MockBookingRepository implements BookingRepository {
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     await Future.delayed(const Duration(milliseconds: 500)); // Simulate network
     
+    final status = draft.paymentMethod == 'cash' 
+        ? BookingStatus.pending 
+        : BookingStatus.confirmed;
+
     final booking = Booking.fromDraft(
       id: 'mock_${DateTime.now().millisecondsSinceEpoch}',
       draft: draft,
       userId: userId,
-      status: BookingStatus.confirmed,
+      status: status,
     );
 
     _bookings.add(booking);

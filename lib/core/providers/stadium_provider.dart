@@ -1,83 +1,123 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../services/database_service.dart';
 
 class StadiumProvider with ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
+  StreamSubscription? _stadiumSubscription;
   
   List<Stadium> _stadiums = [];
   bool _isLoading = false;
   String? _errorMessage;
 
+  // Getters
   List<Stadium> get stadiums => _stadiums;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
 
-  // Listen to stadiums stream
-  void listenToStadiums() {
-    _isLoading = true;
-    notifyListeners();
+  // Private helpers to manage state consistently
+  void _setLoading(bool value) {
+    if (_isLoading != value) {
+      _isLoading = value;
+      notifyListeners();
+    }
+  }
 
-    _databaseService.getStadiums().listen(
-      (stadiums) {
-        _stadiums = stadiums;
-        _isLoading = false;
+  void _setError(String? message) {
+    _errorMessage = message;
+    notifyListeners();
+  }
+
+  // Listen to stadiums stream with lifecycle management
+  void listenToStadiums() {
+    _stadiumSubscription?.cancel();
+    
+    _setError(null);
+    _setLoading(true);
+
+    _stadiumSubscription = _databaseService.getStadiums().listen(
+      (data) {
+        _stadiums = data;
         _errorMessage = null;
-        notifyListeners();
+        _setLoading(false);
       },
       onError: (error) {
-        _errorMessage = error.toString();
-        _isLoading = false;
-        notifyListeners();
+        _setError('Failed to fetch stadiums: ${error.toString()}');
+        _setLoading(false);
+      },
+    );
+  }
+
+  // Listen specifically to owner's stadiums
+  void listenToOwnerStadiums(String ownerId) {
+    _stadiumSubscription?.cancel();
+    
+    _setError(null);
+    _setLoading(true);
+
+    _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
+      (data) {
+        _stadiums = data;
+        _errorMessage = null;
+        _setLoading(false);
+      },
+      onError: (error) {
+        _setError('Failed to fetch your stadiums: ${error.toString()}');
+        _setLoading(false);
       },
     );
   }
 
   // Get stadium by ID
   Future<Stadium?> getStadiumById(String stadiumId) async {
-    return await _databaseService.getStadiumById(stadiumId);
+    try {
+      return await _databaseService.getStadiumById(stadiumId);
+    } catch (e) {
+      debugPrint('Error fetching stadium by ID: $e');
+      return null;
+    }
   }
 
   // Add stadium (Owner)
   Future<String?> addStadium(Stadium stadium) async {
-    _isLoading = true;
-    notifyListeners();
+    _setError(null);
+    _setLoading(true);
 
     try {
       String? stadiumId = await _databaseService.addStadium(stadium.toFirestore());
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
       return stadiumId;
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
+      _setError('Failed to add stadium: ${e.toString()}');
+      _setLoading(false);
       return null;
     }
   }
 
   // Update stadium
   Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
-    _isLoading = true;
-    notifyListeners();
+    _setError(null);
+    _setLoading(true);
 
     try {
       bool success = await _databaseService.updateStadium(stadiumId, data);
-      _isLoading = false;
-      notifyListeners();
+      _setLoading(false);
       return success;
     } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
+      _setError('Failed to update stadium: ${e.toString()}');
+      _setLoading(false);
       return false;
     }
   }
 
-  // Filter stadiums by location
+  // Filter stadiums by location (Robust)
   List<Stadium> filterByLocation(String location) {
+    final query = location.trim().toLowerCase();
+    if (query.isEmpty) return _stadiums;
+    
     return _stadiums.where((stadium) => 
-      stadium.location.toLowerCase().contains(location.toLowerCase())
+      stadium.location.toLowerCase().contains(query)
     ).toList();
   }
 
@@ -88,17 +128,25 @@ class StadiumProvider with ChangeNotifier {
     ).toList();
   }
 
-  // Search stadiums
+  // Search stadiums (Robust)
   List<Stadium> searchStadiums(String query) {
+    final cleanQuery = query.trim().toLowerCase();
+    if (cleanQuery.isEmpty) return _stadiums;
+
     return _stadiums.where((stadium) => 
-      stadium.name.toLowerCase().contains(query.toLowerCase()) ||
-      stadium.location.toLowerCase().contains(query.toLowerCase())
+      stadium.name.toLowerCase().contains(cleanQuery) ||
+      stadium.location.toLowerCase().contains(cleanQuery)
     ).toList();
   }
 
   // Clear error
   void clearError() {
-    _errorMessage = null;
-    notifyListeners();
+    _setError(null);
+  }
+
+  @override
+  void dispose() {
+    _stadiumSubscription?.cancel();
+    super.dispose();
   }
 }

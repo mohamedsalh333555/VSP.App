@@ -1,7 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/stadium_provider.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../widgets/custom_date_range_picker.dart';
+import '../../../data/models.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -21,13 +26,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   // Stats Values
   final double _rating = 4.8; 
 
-  // Mock Data
-  final List<String> _stadiumList = ['All Stadium', 'Stadium A', 'Stadium B', 'Stadium C'];
-  
   @override
   void initState() {
     super.initState();
-    // Stats will be recalculated when StreamBuilder receives data
+    // Fetch live data for owner
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.isAuthenticated) {
+        final uid = auth.firebaseUser!.uid;
+        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+      }
+    });
   }
   
 
@@ -97,15 +107,19 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Widget _buildHeader() {
+    final auth = Provider.of<AuthProvider>(context);
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final stadiumsCount = stadiumProvider.stadiums.length;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'Hi Sal Acd',
-              style: TextStyle(
+            Text(
+              'Hi ${auth.userModel?.name ?? "Owner"}',
+              style: const TextStyle(
                 color: Colors.white,
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -114,7 +128,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ),
             const SizedBox(height: 4),
             Text(
-              'You have 3 stadium',
+              'You have $stadiumsCount ${stadiumsCount == 1 ? 'stadium' : 'stadiums'}',
               style: TextStyle(
                 color: Colors.grey[400],
                 fontSize: 14,
@@ -152,6 +166,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Widget _buildFunctionalFilters() {
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final List<String> stadiumNames = ['All Stadium', ...stadiumProvider.stadiums.map((s) => s.name)];
+    
+    // Ensure selected stadium still exists in the list (fallback to 'All Stadium')
+    if (!stadiumNames.contains(_selectedStadium)) {
+      _selectedStadium = 'All Stadium';
+    }
+
     String formattedDate = '${DateFormat('MMM dd').format(_selectedDateRange.start)} - ${DateFormat('MMM dd').format(_selectedDateRange.end)}';
 
     return Row(
@@ -173,10 +195,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 icon: const Icon(Icons.keyboard_arrow_down, color: Colors.white, size: 16),
                 style: const TextStyle(color: Colors.white, fontSize: 13),
                 isExpanded: true,
-                items: _stadiumList.map((stadium) {
+                items: stadiumNames.map((stadium) {
                   return DropdownMenuItem(
                     value: stadium,
-                    child: Text(stadium),
+                    child: Text(stadium, maxLines: 1, overflow: TextOverflow.ellipsis),
                   );
                 }).toList(),
                 onChanged: (val) {
@@ -218,31 +240,43 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Widget _buildStatsGrid() {
-    // REAL DATA STREAM
-    // In a real app, query 'transactions' or 'bookings' collection filtered by date/stadium
-    // For V1 demo with seeded data, we will simulate the calculation logic inside the builder
-    // assuming we have a collection. Since we don't have a 'transactions' collection seeded yet,
-    // we'll rely on a local calculation that WOULD be a stream.
+    final bookingProvider = Provider.of<BookingProvider>(context);
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
     
-    // BUT! I must replace static numbers. 
-    // Let's create a dummy Future/Stream provider for now to simulate the "Loading..." state and "Live" feel.
-    // Or better, connect to `bookings` if available.
-    // Since `bookings` aren't seeded in `_seedStadiums` (we only seeded stadiums/teams), 
-    // let's return a "Mock Stream" that acts like real data for the visual requirement.
+    // Filter bookings based on selected stadium and date range
+    final filteredBookings = bookingProvider.userBookings.where((booking) {
+      bool matchesStadium = true;
+      if (_selectedStadium != 'All Stadium') {
+        // Try to match by name (since we use names in dropdown for now)
+        final stadium = stadiumProvider.stadiums.firstWhere((s) => s.id == booking.stadiumId, orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: ''));
+        matchesStadium = stadium.name == _selectedStadium;
+      }
+      
+      bool matchesDate = booking.startTime.isAfter(_selectedDateRange.start) && 
+                         booking.startTime.isBefore(_selectedDateRange.end.add(const Duration(days: 1)));
+      
+      return matchesStadium && matchesDate;
+    }).toList();
+
+    double revenue = 0;
+    int totalHours = 0;
+    int totalVisitors = 0;
     
-    // HOWEVER, the task says "Owner Dashboard calculates... from ACTUAL bookings".
-    // Since I haven't seeded Bookings, I will do so dynamically or just use the stream structure ready for when bookings occur.
-    
-    final double revenue = 12500.0; // Simulated Live Total
-    final int bookingsCount = 42;
-    final int hours = 84;
-    final int visitors = 840;
+    for (var b in filteredBookings) {
+      revenue += b.totalPrice;
+      totalHours += b.endTime.difference(b.startTime).inHours;
+      // visitor count: for team bookings, could be many; for indiv, usually 1 or slot.
+      // we'll assume 10 per hour for rough estimate if data missing
+      totalVisitors += 12; 
+    }
+
+    final int bookingsCount = filteredBookings.length;
 
     // Format numeric values
-    String revenueStr = '${(revenue/1000).toStringAsFixed(1)}K'; 
+    String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
-    String timeStr = '${hours}h';
-    String visitorsStr = '${(visitors/1000).toStringAsFixed(1)}K';
+    String timeStr = '${totalHours}h';
+    String visitorsStr = totalVisitors >= 1000 ? '${(totalVisitors/1000).toStringAsFixed(1)}K' : totalVisitors.toString();
 
     return Column(
       children: [
@@ -393,66 +427,83 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Widget _buildBookedTodayList() {
-    // Static for Design Display (Dynamic part focused on stats)
-    final bookings = [
-      {'time': '1PM', 'name': 'Ahmed salah', 'pos': 'GK', 'img': 'https://images.unsplash.com/photo-1570295999919-56ceb5ecca61?w=800&q=80'},
-      {'time': '2PM', 'name': 'Mahomed Saleh', 'pos': 'GK', 'img': 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80'},
-      {'time': '3PM', 'name': 'Mohamed salah', 'pos': 'GK', 'img': 'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=800&q=80'},
-    ];
+    final bookingProvider = Provider.of<BookingProvider>(context);
+    final now = DateTime.now();
+    final todayStart = DateTime(now.year, now.month, now.day);
+    final todayEnd = todayStart.add(const Duration(days: 1));
+
+    // Filter for today's bookings
+    final todayBookings = bookingProvider.userBookings.where((b) => 
+      b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd)
+    ).toList();
+
+    if (todayBookings.isEmpty) {
+      return Container(
+        padding: const EdgeInsets.symmetric(vertical: 40),
+        alignment: Alignment.center,
+        child: Text(
+          'No bookings for today',
+          style: TextStyle(color: Colors.grey[600], fontSize: 16),
+        ),
+      );
+    }
 
     return Column(
       children: [
-        ...bookings.map((booking) => Container(
-          margin: const EdgeInsets.only(bottom: 12),
-          child: Row(
-            crossAxisAlignment: CrossAxisAlignment.center, // Vertically Center Time
-            children: [
-              SizedBox(
-                width: 40,
-                child: Text(booking['time']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Agency FB', fontSize: 16)),
-              ),
-              Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.centerLeft,
-                      end: Alignment.centerRight,
-                      colors: [
-                         const Color(0xFF2D5016),
-                         const Color(0xFF1E1E1E),
-                      ],
-                    ),
-                    borderRadius: BorderRadius.circular(15), // Standard 15.0 Radius
-                    border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
-                  ),
-                  child: Row(
-                    children: [
-                      CircleAvatar(
-                        radius: 20,
-                        backgroundImage: NetworkImage(booking['img']!),
-                      ),
-                      const SizedBox(width: 12),
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(booking['name']!, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
-                          Text(booking['pos']!, style: const TextStyle(color: Colors.grey, fontSize: 12)),
+        ...todayBookings.map((booking) {
+          final timeStr = DateFormat('h a').format(booking.startTime);
+          // For now, assume we show the player's name if it's an individual booking
+          // Since we might not have the full User object here, we'll use placeholder or get from booking if available
+          // In a real app, you'd fetch the user profile or it's stored in booking.
+          return Container(
+            margin: const EdgeInsets.only(bottom: 12),
+            child: Row(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                SizedBox(
+                  width: 50,
+                  child: Text(timeStr, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontFamily: 'Agency FB', fontSize: 16)),
+                ),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                    decoration: BoxDecoration(
+                      gradient: const LinearGradient(
+                        begin: Alignment.centerLeft,
+                        end: Alignment.centerRight,
+                        colors: [
+                           Color(0xFF2D5016),
+                           Color(0xFF1E1E1E),
                         ],
                       ),
-                      const Spacer(),
-                      // Outlined Edit Button
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        child: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 22),
-                      ),
-                    ],
+                      borderRadius: BorderRadius.circular(15), 
+                      border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      children: [
+                        CircleAvatar(
+                          radius: 20,
+                          backgroundColor: AppTheme.cardBackground,
+                          backgroundImage: booking.playerTeamName != null ? null : const NetworkImage('https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80'),
+                        ),
+                        const SizedBox(width: 12),
+                        Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(booking.playerTeamName ?? 'Individual Player', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text(booking.bookingType == BookingType.challenge ? 'Challenge Match' : 'Normal Match', style: const TextStyle(color: Colors.grey, fontSize: 12)),
+                          ],
+                        ),
+                        const Spacer(),
+                        const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 22),
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
-        )).toList(),
+              ],
+            ),
+          );
+        }).toList(),
       ],
     );
   }

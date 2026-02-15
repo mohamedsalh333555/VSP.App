@@ -6,7 +6,7 @@ import '../../../core/theme/app_theme.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
-import 'document_upload_screen.dart';
+import 'owner_documentation_wizard.dart';
 
 /// شاشة تسجيل بيانات الملعب - للمالك فقط
 class FacilityOnboardingScreen extends StatefulWidget {
@@ -41,7 +41,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => const DocumentUploadScreen(),
+            builder: (context) => const OwnerDocumentationWizard(),
           ),
         );
       }
@@ -69,7 +69,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
       Navigator.push(
         context,
         MaterialPageRoute(
-          builder: (context) => const DocumentUploadScreen(),
+          builder: (context) => const OwnerDocumentationWizard(),
         ),
       );
     }

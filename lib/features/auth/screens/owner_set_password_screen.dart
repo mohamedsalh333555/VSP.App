@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'success_modal.dart';
 
@@ -17,6 +19,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
   bool _hasMinLength = false;
   bool _hasNumber = false;
   bool _hasSymbol = false;
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -34,8 +37,27 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
 
   bool get _isValid => _hasMinLength && _hasNumber && _hasSymbol;
 
-  void _showSuccessModal() {
-    showSuccessModal(context);
+  Future<void> _handleCreateAccount() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.setPassword(_passwordController.text.trim());
+
+    setState(() => _isLoading = true);
+
+    final success = await authProvider.createAccount();
+
+    if (!mounted) return;
+    setState(() => _isLoading = false);
+
+    if (success) {
+      showSuccessModal(context, isOwner: true);
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(authProvider.errorMessage ?? 'Account creation failed'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    }
   }
 
   @override
@@ -155,9 +177,9 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                   width: double.infinity,
                   height: 56,
                   child: ElevatedButton(
-                    onPressed: _isValid
+                    onPressed: (_isValid && !_isLoading)
                         ? () {
-                            _showSuccessModal();
+                            _handleCreateAccount();
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
@@ -169,13 +191,22 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
-                      'Continue',
-                      style: TextStyle(
-                        fontSize: 16,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            height: 24,
+                            width: 24,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                            ),
+                          )
+                        : const Text(
+                            'Continue',
+                            style: TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                   ),
                 ),
 

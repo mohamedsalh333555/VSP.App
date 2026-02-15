@@ -3,9 +3,11 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/create_account_strings.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import 'add_email_screen.dart';
+import '../../owner/screens/owner_email_input_screen.dart';
 
 /// شاشة إنشاء حساب جديد - تظهر بعد اختيار الدور
 class CreateAccountScreen extends StatelessWidget {
@@ -19,6 +21,7 @@ class CreateAccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
     // Use local isOwner parameter for stability, fallback to provider if needed
     final bool isUserOwner = isOwner; 
 
@@ -44,7 +47,7 @@ class CreateAccountScreen extends StatelessWidget {
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
-          bottom: false, // Allow background to extend
+          bottom: true, // Allow background to extend
           child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
@@ -124,12 +127,23 @@ class CreateAccountScreen extends StatelessWidget {
               _NeonButton(
                 text: languageProvider.getText(CreateAccountStrings.continueWithEmail),
                 onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const AddEmailScreen(),
-                    ),
-                  );
+                  if (isUserOwner) {
+                    authProvider.setUserType('owner');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const OwnerEmailInputScreen(),
+                      ),
+                    );
+                  } else {
+                    authProvider.setUserType('player');
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const AddEmailScreen(),
+                      ),
+                    );
+                  }
                 },
               ),
 

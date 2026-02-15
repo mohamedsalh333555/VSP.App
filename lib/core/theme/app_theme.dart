@@ -88,6 +88,22 @@ class AppTheme {
           ),
         ),
       ),
+      textSelectionTheme: const TextSelectionThemeData(
+        cursorColor: neonGreen,
+        selectionColor: Color(0x669FDF02), // neonGreen with 0.4 opacity
+        selectionHandleColor: neonGreen,
+      ),
+      inputDecorationTheme: InputDecorationTheme(
+        hintStyle: TextStyle(color: textSecondary.withValues(alpha: 0.5)),
+        focusedBorder: OutlineInputBorder(
+          borderSide: const BorderSide(color: neonGreen, width: 2),
+          borderRadius: BorderRadius.circular(30),
+        ),
+        enabledBorder: OutlineInputBorder(
+          borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+          borderRadius: BorderRadius.circular(30),
+        ),
+      ),
     );
   }
 }

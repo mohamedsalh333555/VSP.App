@@ -287,12 +287,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             // Wallet/Cash info
             if (_selectedPaymentMethod == 'wallet') ...[
               Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardBackground,
+                  color: const Color(0xFF111111),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(Icons.account_balance_wallet, color: AppTheme.neonGreen, size: 48),
                     SizedBox(height: 12),
@@ -313,12 +316,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
             if (_selectedPaymentMethod == 'cash') ...[
               Container(
+                width: double.infinity,
+                margin: const EdgeInsets.only(top: 8),
                 padding: const EdgeInsets.all(20),
                 decoration: BoxDecoration(
-                  color: AppTheme.cardBackground,
+                  color: const Color(0xFF111111),
                   borderRadius: BorderRadius.circular(16),
                 ),
                 child: Column(
+                  mainAxisSize: MainAxisSize.min,
                   children: const [
                     Icon(Icons.money, color: AppTheme.neonGreen, size: 48),
                     SizedBox(height: 12),

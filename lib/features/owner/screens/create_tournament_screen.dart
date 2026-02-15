@@ -189,26 +189,25 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               ),
               const SizedBox(height: 24),
               
-              // --- Instructions ---
-              _buildInputLabel('Championship instructions'),
-              Container(
-                height: 120,
-                 decoration: BoxDecoration(
-                  color: const Color(0xFF2C2C2C),
-                  borderRadius: BorderRadius.circular(12),
-                ),
-                child: TextField(
-                  controller: _instructionsController,
-                  maxLines: 5,
-                  style: const TextStyle(color: Colors.white, fontSize: 12),
-                  decoration: const InputDecoration(
-                    border: InputBorder.none,
-                    contentPadding: EdgeInsets.all(16),
-                    hintText: 'Welcome everyone, Before We Begin The Tournament I Would Like To Clarify Some Important Instructions To Ensure Fair Competition...',
-                    hintStyle: TextStyle(color: Colors.grey),
-                  ),
-                ),
-              ),
+               _buildInputLabel('Championship instructions'),
+               Container(
+                 height: 120,
+                  decoration: BoxDecoration(
+                   color: const Color(0xFF2C2C2C),
+                   borderRadius: BorderRadius.circular(12),
+                 ),
+                 child: TextField(
+                   controller: _instructionsController,
+                   maxLines: 5,
+                   style: const TextStyle(color: Colors.white, fontSize: 12),
+                   decoration: const InputDecoration(
+                     border: InputBorder.none,
+                     contentPadding: EdgeInsets.all(16),
+                     hintText: 'Welcome everyone, Before We Begin The Tournament I Would Like To Clarify Some Important Instructions To Ensure Fair Competition...',
+                     hintStyle: TextStyle(color: Colors.grey),
+                   ),
+                 ),
+               ),
             ],
           ),
         ),
@@ -275,7 +274,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12), // 8.0 requested for inputs, but 12 looks better pill-ish, sticking to req 8 if strict, but design implies mostly pill. I'll stick to 12 to match prior screens.
+        borderRadius: BorderRadius.circular(12),
       ),
       child: TextField(
         controller: controller,

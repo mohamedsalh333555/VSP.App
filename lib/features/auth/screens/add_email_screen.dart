@@ -19,30 +19,35 @@ class AddEmailScreen extends StatefulWidget {
 
 class _AddEmailScreenState extends State<AddEmailScreen> {
   final _emailController = TextEditingController();
+  final _nameController = TextEditingController();
+  final _phoneController = TextEditingController();
+  String? _selectedPosition = 'GK'; // Default
+  final List<String> _positions = ['GK', 'DF', 'MF', 'FW'];
   bool _isLoading = false;
 
   @override
   void dispose() {
     _emailController.dispose();
+    _nameController.dispose();
+    _phoneController.dispose();
     super.dispose();
   }
 
   Future<void> _handleContinue() async {
-    // Demo Mode Bypass
-    if (AppConfig.demoMode) {
-      if (mounted) {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const VerifyEmailScreen(),
-          ),
-        );
-      }
+    final name = _nameController.text.trim();
+    final email = _emailController.text.trim();
+    final phone = _phoneController.text.trim();
+    
+    if (name.isEmpty || !name.contains(' ')) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter your full name (First and Last name)'),
+          backgroundColor: Colors.red,
+        ),
+      );
       return;
     }
 
-    final email = _emailController.text.trim();
-    
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
@@ -53,24 +58,63 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
       return;
     }
 
+    if (phone.isEmpty || phone.length < 8) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please enter a valid phone number'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    if (_selectedPosition == null) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Please select your position'),
+          backgroundColor: Colors.red,
+        ),
+      );
+      return;
+    }
+
+    // Demo Mode Bypass
+    if (AppConfig.demoMode) {
+      if (mounted) {
+        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+        authProvider.setName(name);
+        authProvider.setEmail(email);
+        authProvider.setPhone(phone);
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const VerifyEmailScreen(),
+          ),
+        );
+      }
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.setName(name);
     authProvider.setEmail(email);
+    authProvider.setPhone(phone);
+    authProvider.setPosition(_selectedPosition!);
 
     // محاكاة إرسال رمز التحقق
     await authProvider.sendVerificationCode();
 
+    if (!mounted) return;
     setState(() => _isLoading = false);
 
-    if (mounted) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const VerifyEmailScreen(),
-        ),
-      );
-    }
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => const VerifyEmailScreen(),
+      ),
+    );
   }
 
   @override
@@ -134,6 +178,27 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
 
               const SizedBox(height: 40),
 
+              // Name Label
+              Text(
+                languageProvider.isArabic ? 'الاسم الثنائي' : 'Full Name',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Name Input
+              CustomTextField(
+                controller: _nameController,
+                hintText: languageProvider.isArabic ? 'الاسم الأول والأخير' : 'First and Last Name',
+                keyboardType: TextInputType.name,
+              ),
+
+              const SizedBox(height: 24),
+
               // Email Label
               Text(
                 languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email',
@@ -151,6 +216,70 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                 controller: _emailController,
                 hintText: 'Example@Example',
                 keyboardType: TextInputType.emailAddress,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Phone Label
+              Text(
+                languageProvider.isArabic ? 'رقم الموبايل' : 'Phone Number',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Phone Input
+              CustomTextField(
+                controller: _phoneController,
+                hintText: languageProvider.isArabic ? '0100 000 0000' : 'Phone Number',
+                keyboardType: TextInputType.phone,
+              ),
+
+              const SizedBox(height: 24),
+
+              // Position Label
+              Text(
+                languageProvider.isArabic ? 'المركز في الملعب' : 'Position',
+                style: const TextStyle(
+                  color: AppTheme.textPrimary,
+                  fontSize: 14,
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+
+              const SizedBox(height: 12),
+
+              // Position Dropdown
+              DropdownButtonFormField<String>(
+                value: _selectedPosition,
+                dropdownColor: AppTheme.darkBackground,
+                decoration: InputDecoration(
+                  filled: true,
+                  fillColor: const Color(0xFF1E1E1E),
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                  border: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide.none,
+                  ),
+                  enabledBorder: OutlineInputBorder(
+                    borderRadius: BorderRadius.circular(12),
+                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                  ),
+                ),
+                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                items: _positions
+                    .map((pos) => DropdownMenuItem(
+                          value: pos,
+                          child: Text(pos),
+                        ))
+                    .toList(),
+                onChanged: (value) {
+                  setState(() => _selectedPosition = value);
+                },
               ),
 
               const Spacer(),

@@ -19,22 +19,49 @@ class AuthService {
     required String role,
     required Map<String, dynamic> userData,
   }) async {
+    UserCredential? credential;
     try {
-      final credential = await _auth.createUserWithEmailAndPassword(
+      credential = await _auth.createUserWithEmailAndPassword(
         email: email,
         password: password,
       );
       
       // Create User Document
-      await _firestore.collection('users').doc(credential.user!.uid).set({
-        'uid': credential.user!.uid,
-        'email': email,
-        'role': role,
-        ...userData,
-        'createdAt': FieldValue.serverTimestamp(),
-      });
+      try {
+        await _firestore.collection('users').doc(credential.user!.uid).set({
+          'uid': credential.user!.uid,
+          'email': email,
+          'role': role,
+          'name': userData['name'] ?? '',
+          'position': userData['position'] ?? 'GK',
+          'phone': userData['phone'] ?? '',
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      } catch (firestoreError) {
+        // CLEANUP: If Firestore fails, we MUST delete the newly created auth user
+        // so they can try again with the same email.
+        await credential.user?.delete();
+        return {'success': false, 'message': 'Failed to save profile: $firestoreError'};
+      }
 
       return {'success': true, 'user': credential.user};
+    } on FirebaseAuthException catch (e) {
+      String message;
+      switch (e.code) {
+        case 'email-already-in-use':
+          message = 'هذا البريد مسجَّل بالفعل. إذا كان هذا حسابك، يرجى تسجيل الدخول أو استخدام بريد آخر.';
+          break;
+        case 'invalid-email':
+          message = 'صيغة البريد الإلكتروني غير صحيحة.';
+          break;
+        case 'weak-password':
+          message = 'كلمة المرور ضعيفة، يرجى اختيار كلمة أقوى.';
+          break;
+        default:
+          message = 'حدث خطأ أثناء إنشاء الحساب، حاول مرة أخرى.';
+          break;
+      }
+      return {'success': false, 'message': message};
     } catch (e) {
       return {'success': false, 'message': e.toString()};
     }

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/navigation/root_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   const SplashScreen({super.key});
@@ -40,7 +41,9 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     // Navigate after delay
     Future.delayed(const Duration(seconds: 3), () {
       if (mounted) {
-        Navigator.of(context).pushReplacementNamed('/auth');
+        Navigator.of(context).pushReplacement(
+          MaterialPageRoute(builder: (_) => const RootScreen()),
+        );
       }
     });
   }

@@ -7,8 +7,8 @@ class DatabaseService {
 
   // ==================== STADIUMS ====================
   
-  // Get all stadiums (with basic limit for performance)
-  Stream<List<Stadium>> getStadiums({int limit = 10}) {
+  // Get all stadiums (with expanded limit)
+  Stream<List<Stadium>> getStadiums({int limit = 50}) {
     return _firestore
         .collection('stadiums')
         .limit(limit)
@@ -31,12 +31,37 @@ class DatabaseService {
     }
   }
 
+  // Get raw stadium data for editing
+  Future<Map<String, dynamic>?> getStadiumSnapshot(String stadiumId) async {
+    try {
+      DocumentSnapshot doc = await _firestore.collection('stadiums').doc(stadiumId).get();
+      if (doc.exists) {
+        return doc.data() as Map<String, dynamic>?;
+      }
+      return null;
+    } catch (e) {
+      return null;
+    }
+  }
+
+  // Get stadiums for a specific owner
+  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
+     return _firestore
+        .collection('stadiums')
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Stadium.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
   // Add new stadium (Owner)
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
       DocumentReference ref = await _firestore.collection('stadiums').add({
         ...stadiumData,
         'createdAt': FieldValue.serverTimestamp(),
+        // ownerId should already be in stadiumData, but safety fallbacks can be handled in calling method
       });
       return ref.id;
     } catch (e) {
@@ -61,6 +86,8 @@ class DatabaseService {
     required double pricePerHour,
     required int seatsCapacity,
     required String imageUrl,
+    required String ownerId,
+    String notes = '', // ✅ Added notes
     Map<String, dynamic>? features,
   }) async {
     return await addStadium({
@@ -69,6 +96,8 @@ class DatabaseService {
       'pricePerHour': pricePerHour,
       'seatsCapacity': seatsCapacity,
       'imageUrl': imageUrl,
+      'ownerId': ownerId,
+      'notes': notes, // ✅ Added notes
       'features': features ?? {},
     });
   }

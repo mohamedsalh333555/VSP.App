@@ -1,6 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../data/models.dart';
 
 class OwnerBookedScreen extends StatefulWidget {
   const OwnerBookedScreen({super.key});
@@ -10,19 +14,18 @@ class OwnerBookedScreen extends StatefulWidget {
 }
 
 class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
-  int _selectedDayIndex = 2; // Default to 3rd day for demo
+  int _selectedDayIndex = 0; // Default to today
 
-  // Mock Data for Time Slots
-  // Types: 'empty', 'team', 'individual'
-  List<Map<String, dynamic>> _timeSlots = [
-    {'time': '12PM', 'type': 'team', 'name': 'AL Moktam', 'subtitle': 'Team', 'logo': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/52/Leeds_United_F.C._logo.svg/1200px-Leeds_United_F.C._logo.svg.png'},
-    {'time': '1PM', 'type': 'individual', 'name': 'Ahmed salah', 'subtitle': 'GK', 'image': 'https://randomuser.me/api/portraits/men/32.jpg'},
-    {'time': '2PM', 'type': 'individual', 'name': 'Mahomed Saleh', 'subtitle': 'GK', 'image': 'https://randomuser.me/api/portraits/men/44.jpg'},
-    {'time': '3PM', 'type': 'individual', 'name': 'Mohamed salah', 'subtitle': 'GK', 'image': 'https://randomuser.me/api/portraits/men/85.jpg', 'isManaged': true},
-    {'time': '4PM', 'type': 'empty'},
-    {'time': '5PM', 'type': 'empty'},
-    {'time': '6PM', 'type': 'empty'},
-  ];
+  @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.isAuthenticated) {
+        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(auth.firebaseUser!.uid);
+      }
+    });
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -82,12 +85,11 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              itemCount: 7, // Week
+              itemCount: 7, // Current Week
               itemBuilder: (context, index) {
-                // Mock dates starting from 16th
-                int day = 16 + index;
+                final date = DateTime.now().add(Duration(days: index));
                 bool isSelected = index == _selectedDayIndex;
-                List<String> days = ['FRI', 'SAT', 'SUN', 'MON', 'TUE', 'WED', 'THU'];
+                String dayName = DateFormat('EEE').format(date).toUpperCase();
 
                 return GestureDetector(
                   onTap: () {
@@ -110,16 +112,16 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
                         Text(
-                          '$day',
+                          '${date.day}',
                           style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.grey[400],
+                            color: isSelected ? Colors.black : Colors.white,
                             fontSize: 18,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                         const SizedBox(height: 4),
                         Text(
-                          days[index % 7],
+                          dayName,
                           style: TextStyle(
                             color: isSelected ? Colors.black : Colors.grey[600],
                             fontSize: 12,
@@ -139,14 +141,68 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
           
           // 3. Time Slots List
           Expanded(
-            child: ListView.separated(
-              padding: const EdgeInsets.all(16),
-              itemCount: _timeSlots.length,
-              separatorBuilder: (c, i) => const SizedBox(height: 20),
-              itemBuilder: (context, index) {
-                final slot = _timeSlots[index];
-                return _buildTimeSlotRow(slot);
-              },
+            child: Consumer<BookingProvider>(
+               builder: (context, bookingProvider, _) {
+                 final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
+                 final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+                 final endOfDay = startOfDay.add(const Duration(days: 1));
+
+                 final dayBookings = bookingProvider.userBookings.where((b) => 
+                    b.startTime.isAfter(startOfDay) && b.startTime.isBefore(endOfDay)
+                 ).toList();
+
+                 // Generate time slots from 12 PM to 11 PM
+                 List<Map<String, dynamic>> slots = [];
+                 for (int i = 12; i <= 23; i++) {
+                   final hour = i > 12 ? i - 12 : i;
+                   final period = i >= 12 ? 'PM' : 'AM';
+                   final timeStr = '$hour$period';
+                   
+                   final booking = dayBookings.firstWhere(
+                     (b) => b.startTime.hour == i,
+                     orElse: () => Booking(
+                       id: 'none',
+                       stadiumId: '',
+                       stadiumName: '',
+                       ownerId: '',
+                       startTime: DateTime.now(),
+                       endTime: DateTime.now(),
+                       totalPrice: 0,
+                       status: BookingStatus.confirmed,
+                       createdAt: DateTime.now(),
+                       bookingType: BookingType.personal,
+                       createdByUserId: '',
+                       isPrivate: false,
+                       rentBall: false,
+                       paymentMethod: 'cash',
+                     ),
+                   );
+
+                   if (booking.id == 'none') {
+                     slots.add({'time': timeStr, 'type': 'empty'});
+                   } else {
+                     slots.add({
+                       'time': timeStr,
+                       'type': booking.playerTeamName != null ? 'team' : 'individual',
+                       'name': booking.playerTeamName ?? 'Individual Player',
+                       'subtitle': booking.bookingType == BookingType.challenge ? 'Challenge' : 'Match',
+                       'image': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150&h=150&fit=crop&q=80',
+                       'logo': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150&h=150&fit=crop&q=80',
+                       'isManaged': true,
+                     });
+                   }
+                 }
+
+                 return ListView.separated(
+                    padding: const EdgeInsets.all(16),
+                    itemCount: slots.length,
+                    separatorBuilder: (c, i) => const SizedBox(height: 20),
+                    itemBuilder: (context, index) {
+                      final slot = slots[index];
+                      return _buildTimeSlotRow(slot);
+                    },
+                  );
+               },
             ),
           ),
         ],

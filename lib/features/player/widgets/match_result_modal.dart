@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 
 class MatchResultModal extends StatefulWidget {

@@ -5,6 +5,7 @@ class UserModel {
   final String? name;
   final String? phone;
   final String? profileImageUrl;
+  final String? position;
   final Map<String, dynamic>? additionalData;
   final DateTime? createdAt;
 
@@ -15,6 +16,7 @@ class UserModel {
     this.name,
     this.phone,
     this.profileImageUrl,
+    this.position,
     this.additionalData,
     this.createdAt,
   });
@@ -28,6 +30,7 @@ class UserModel {
       name: data['name'],
       phone: data['phone'],
       profileImageUrl: data['profileImageUrl'],
+      position: data['position'],
       additionalData: data['additionalData'],
       createdAt: data['createdAt']?.toDate(),
     );
@@ -42,6 +45,7 @@ class UserModel {
       'name': name,
       'phone': phone,
       'profileImageUrl': profileImageUrl,
+      'position': position,
       'additionalData': additionalData,
     };
   }
@@ -54,6 +58,7 @@ class UserModel {
     String? name,
     String? phone,
     String? profileImageUrl,
+    String? position,
     Map<String, dynamic>? additionalData,
     DateTime? createdAt,
   }) {
@@ -64,6 +69,7 @@ class UserModel {
       name: name ?? this.name,
       phone: phone ?? this.phone,
       profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      position: position ?? this.position,
       additionalData: additionalData ?? this.additionalData,
       createdAt: createdAt ?? this.createdAt,
     );

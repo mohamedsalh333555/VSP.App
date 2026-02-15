@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
@@ -111,6 +113,18 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
   }
 
   void _handleContinue() {
+    if (_selectedType == null) return;
+
+    // Save choice to BookingProvider
+    final bookingProvider = context.read<BookingProvider>();
+    
+    // Map string to BookingType enum
+    BookingType type = BookingType.personal;
+    if (_selectedType == 'Team') type = BookingType.team;
+    if (_selectedType == 'Challenge') type = BookingType.challenge;
+
+    bookingProvider.updateDraft(bookingType: type);
+
     if (_selectedType == 'Challenge') {
       Navigator.push(
         context,

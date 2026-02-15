@@ -1,9 +1,69 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/theme/app_theme.dart';
-import 'owner_info_screen.dart';
+import '../../../core/services/owner_document_service.dart';
+import '../../../../shared/widgets/vsp_upload_widgets.dart';
+import 'owner_main_screen.dart';
 
-class IdVerificationScreen extends StatelessWidget {
+class IdVerificationScreen extends StatefulWidget {
   const IdVerificationScreen({super.key});
+
+  @override
+  State<IdVerificationScreen> createState() => _IdVerificationScreenState();
+}
+
+class _IdVerificationScreenState extends State<IdVerificationScreen> {
+  final OwnerDocumentService _documentService = OwnerDocumentService();
+
+  // State
+  String? _idFrontUrl;
+  bool _isUploadingFront = false;
+
+  String? _idBackUrl;
+  bool _isUploadingBack = false;
+
+  Future<void> _handleUpload(OwnerDocumentType type) async {
+    try {
+      final XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
+      if (pickedFile == null) return;
+
+      setState(() {
+        if (type == OwnerDocumentType.nationalIdFront) {
+          _isUploadingFront = true;
+        } else if (type == OwnerDocumentType.nationalIdBack) {
+          _isUploadingBack = true;
+        }
+      });
+
+      final url = await _documentService.uploadAndSave(type: type, file: pickedFile);
+
+      if (mounted) {
+        setState(() {
+          if (type == OwnerDocumentType.nationalIdFront) {
+            _idFrontUrl = url;
+          } else if (type == OwnerDocumentType.nationalIdBack) {
+            _idBackUrl = url;
+          }
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
+        );
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          if (type == OwnerDocumentType.nationalIdFront) {
+            _isUploadingFront = false;
+          } else if (type == OwnerDocumentType.nationalIdBack) {
+            _isUploadingBack = false;
+          }
+        });
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -36,7 +96,7 @@ class IdVerificationScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {
                 return Container(
-                  width: 30,
+                  width: index == 1 ? 30 : 8,
                   height: 4,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
@@ -58,91 +118,72 @@ class IdVerificationScreen extends StatelessWidget {
             ),
              const SizedBox(height: 16),
 
-             // Main Upload Button
-            Container(
-              width: double.infinity,
-              height: 150,
-              decoration: BoxDecoration(
-                color: AppTheme.neonGreen, 
-                borderRadius: BorderRadius.circular(16),
+            // Front ID
+            VspUploadMainCard(
+              title: 'National ID Front',
+              isLoading: _isUploadingFront,
+              onTap: () => _handleUpload(OwnerDocumentType.nationalIdFront),
+            ),
+            
+            if (_idFrontUrl != null) ...[
+              const SizedBox(height: 16),
+              VspUploadedItemRow(
+                title: 'ID Front',
+                subtitle: 'Uploaded Successfully',
+                thumbnailUrl: _idFrontUrl,
+                onDelete: () => setState(() => _idFrontUrl = null),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   const Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.black),
-                   const SizedBox(height: 8),
-                   const Text('Click to upload', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                   Text('JPG, JPEG, PNG less than 10MB', style: TextStyle(color: Colors.black.withValues(alpha: 0.7), fontSize: 10)),
-                ],
-              ),
+            ],
+            
+            const SizedBox(height: 24),
+            
+            // Back ID
+            VspUploadMainCard(
+              title: 'National ID Back',
+              isLoading: _isUploadingBack,
+              onTap: () => _handleUpload(OwnerDocumentType.nationalIdBack),
             ),
 
-            const SizedBox(height: 32),
-
-            _buildLabel('National ID front'),
-            _buildUploadedFile('National ID front', '200 KB'),
-
-            const SizedBox(height: 16),
-
-            _buildLabel('National ID back'),
-             _buildUploadedFile('National ID Back', '200 KB'),
+            if (_idBackUrl != null) ...[
+              const SizedBox(height: 16),
+              VspUploadedItemRow(
+                title: 'ID Back',
+                subtitle: 'Uploaded Successfully',
+                thumbnailUrl: _idBackUrl,
+                onDelete: () => setState(() => _idBackUrl = null),
+              ),
+            ],
 
             const SizedBox(height: 40),
 
             SizedBox(
               width: double.infinity,
-              height: 50,
+              height: 56,
               child: ElevatedButton(
-                onPressed: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OwnerInfoScreen()),
-                  );
-                },
+                onPressed: (_idFrontUrl != null && _idBackUrl != null) 
+                  ? () {
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(builder: (_) => const OwnerMainScreen()),
+                      (route) => false,
+                    );
+                  }
+                  : null,
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
+                  backgroundColor: (_idFrontUrl != null && _idBackUrl != null) 
+                    ? AppTheme.neonGreen 
+                    : Colors.grey[800],
+                  foregroundColor: (_idFrontUrl != null && _idBackUrl != null) 
+                    ? Colors.black 
+                    : Colors.white38,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                  elevation: 0,
                 ),
-                child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
               ),
             ),
           ],
         ),
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) {
-     return Padding(
-       padding: const EdgeInsets.only(bottom: 8),
-       child: Text(
-         text,
-         style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-       ),
-     );
-  }
-
-  Widget _buildUploadedFile(String name, String size) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.neonGreen),
-        color: AppTheme.neonGreen.withValues(alpha: 0.1),
-      ),
-      child: Row(
-        children: [
-          const Icon(Icons.image_outlined, color: Colors.white),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(name, style: const TextStyle(color: Colors.white, fontSize: 14)),
-              Text(size, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-              const Text('Click to view', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline, fontSize: 12)),
-            ],
-          ),
-        ],
       ),
     );
   }

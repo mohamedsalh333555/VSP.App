@@ -10,6 +10,7 @@ class Stadium {
   final int cafeteria;
   final int seatsCapacity;
   final double pricePerHour;
+  final double basePrice; // Unified price source
   final String area; // Jeresh, etc.
   final bool isFavorite;
   
@@ -25,6 +26,7 @@ class Stadium {
   final bool hasSeats;
   final bool hasBall;
   final double ballRentPrice;
+  final String notes; // ✅ Owner's custom pitch condition notes
 
   Stadium({
     required this.id,
@@ -37,6 +39,7 @@ class Stadium {
     required this.cafeteria,
     required this.seatsCapacity,
     required this.pricePerHour,
+    double? basePrice,
     required this.area,
     this.isFavorite = false,
     this.address = '',
@@ -50,7 +53,8 @@ class Stadium {
     this.hasSeats = true,
     this.hasBall = false,
     this.ballRentPrice = 20,
-  });
+    this.notes = '', // ✅ Default empty notes
+  }) : basePrice = basePrice ?? pricePerHour;
 
   // Mock data
   static List<Stadium> getMockStadiums() {
@@ -200,13 +204,14 @@ class Stadium {
       id: id,
       name: data['name'] ?? '',
       location: data['location'] ?? '',
-      imageUrl: data['imageUrl'] ?? 'https://via.placeholder.com/150',
       type: data['type'] ?? 'Football',
-      size: data['size'] ?? '5x5',
+      size: data['size'] ?? '5 VS 5',
+      imageUrl: data['imageUrl'] ?? '',
       baths: data['baths'] ?? 0,
       cafeteria: data['cafeteria'] ?? 0,
       seatsCapacity: data['seatsCapacity'] ?? 0,
       pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
+      basePrice: (data['basePrice'] ?? data['pricePerHour'] ?? 0).toDouble(),
       area: data['area'] ?? '',
       isFavorite: data['isFavorite'] ?? false,
       address: data['address'] ?? '',
@@ -220,6 +225,7 @@ class Stadium {
       hasSeats: data['hasSeats'] ?? false,
       hasBall: data['hasBall'] ?? false,
       ballRentPrice: (data['ballRentPrice'] ?? 0).toDouble(),
+      notes: (data['notes'] as String?) ?? '', // ✅ Read notes from Firestore
     );
   }
 
@@ -234,6 +240,7 @@ class Stadium {
       'cafeteria': cafeteria,
       'seatsCapacity': seatsCapacity,
       'pricePerHour': pricePerHour,
+      'basePrice': basePrice,
       'area': area,
       'isFavorite': isFavorite,
       'address': address,
@@ -247,6 +254,7 @@ class Stadium {
       'hasSeats': hasSeats,
       'hasBall': hasBall,
       'ballRentPrice': ballRentPrice,
+      'notes': notes, // ✅ Save notes to Firestore
     };
   }
 }

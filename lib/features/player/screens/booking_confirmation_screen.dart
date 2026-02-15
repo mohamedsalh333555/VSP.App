@@ -1,8 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/booking_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 import 'payment_gateway_screen.dart';
+import 'booking_success_screen.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; // Assuming we need stadium info later
@@ -25,9 +30,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   final List<String> _selectedTimeSlots = []; // Storing slot IDs or start times
   bool _isBallRented = false;
   bool _isPrivate = false;
+  bool _isLoading = false;
   
   // Pricing Constants
-  static const double _slotPrice = 60.0; // 60 EGP per 30 mins
+  // Pricing will be derived from stadium
+  double get _slotPrice => widget.stadium.basePrice / 2;
   static const double _ballPrice = 20.0;
 
   // Mock Time Slots (30 min intervals)
@@ -409,7 +416,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ...List.generate(_timeSlots.length - 1, (index) {
                     final startTime = _timeSlots[index];
                     final endTime = _timeSlots[index + 1];
-                    final slotLabel = '$startTime   <   $endTime'; // Visual match: 06:30 Pm < 06:00 Pm (Arabic/RTL style usually puts start on right? Or just graphical arrow)
+                    final slotLabel = '$startTime  -  $endTime';
                                                                     // Image shows: 06:30 Pm < 06:00 Pm. Wait, standard english is 6:00 - 6:30.
                                                                     // The image 1 shows "06:30 Pm < 06:00 Pm" which is odd. It represents the interval.
                                                                     // I will follow the image format literally: End < Start or Start < End?
@@ -564,7 +571,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ],
                     ),
                     ElevatedButton(
-                      onPressed: _selectedTimeSlots.isEmpty ? null : () {
+                      onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
                         // Build start and end times from selected slots
                         final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
                         final firstSlot = sortedSlots.first;
@@ -585,7 +592,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         final startHour = parseHour(firstSlot);
                         final startMinute = parseMinute(firstSlot);
                         final endHour = parseHour(lastSlot);
-                        final endMinute = parseMinute(lastSlot) + 30; // Add 30 mins for slot duration
+                        final endMinute = parseMinute(lastSlot) + 30;
                         
                         final startTime = DateTime(
                           _selectedDate.year,
@@ -602,7 +609,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           endMinute >= 60 ? endHour + 1 : endHour,
                           endMinute >= 60 ? endMinute - 60 : endMinute,
                         );
-
+ 
                         // Convert string bookingType to enum
                         BookingType bookingTypeEnum;
                         switch (widget.bookingType.toLowerCase()) {
@@ -615,13 +622,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           default:
                             bookingTypeEnum = BookingType.personal;
                         }
-
+ 
                         // Create BookingDraft
                         final draft = BookingDraft(
                           stadiumId: widget.stadium.id,
                           stadiumName: widget.stadium.name,
                           stadiumImageUrl: widget.stadium.imageUrl,
-                          ownerId: '', // Would come from stadium data
+                          ownerId: widget.stadium is Map && (widget.stadium as dynamic).containsKey('ownerId') 
+                              ? (widget.stadium as dynamic)['ownerId'] ?? '' : '', // Fallback for ownerId
                           startTime: startTime,
                           endTime: endTime,
                           bookingType: bookingTypeEnum,
@@ -632,16 +640,57 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           totalPrice: _totalPrice,
                           currency: 'EGP',
                         );
-
-                        // Navigate to PaymentGatewayScreen
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => PaymentGatewayScreen(
-                              bookingDraft: draft,
+ 
+                        if (AppConfig.enableOnlinePayment) {
+                          // Navigate to PaymentGatewayScreen
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentGatewayScreen(
+                                bookingDraft: draft,
+                              ),
                             ),
-                          ),
-                        );
+                          );
+                        } else {
+                          // DIRECT BOOKING (Cash-only production logic)
+                          setState(() => _isLoading = true);
+                          try {
+                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                            final userId = authProvider.currentUser?.uid ?? 'demo_user';
+                            
+                            // Explicitly set payment to cash
+                            final cashDraft = draft.copyWith(
+                              paymentMethod: 'cash',
+                              paymentTransactionId: 'CASH_${DateTime.now().millisecondsSinceEpoch}',
+                            );
+                            
+                            final booking = await bookingProvider.createBooking(cashDraft, userId);
+                            
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                              if (booking != null) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => BookingSuccessScreen(booking: booking),
+                                  ),
+                                );
+                              } else {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to confirm booking')),
+                                );
+                              }
+                            }
+                          } catch (e) {
+                            if (mounted) {
+                              setState(() => _isLoading = false);
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(content: Text('Error: $e')),
+                              );
+                            }
+                          }
+                        }
                       },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: AppTheme.neonGreen,
@@ -650,10 +699,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
                         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
                       ),
-                      child: const Text(
-                        'Booking Confirmation',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
+                      child: _isLoading 
+                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : Text(
+                            AppConfig.enableOnlinePayment ? 'Booking Confirmation' : 'Confirm Cash Booking',
+                            style: const TextStyle(fontWeight: FontWeight.bold),
+                          ),
                     ),
                   ],
                 ),

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shimmer_image.dart';
+import '../../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 
@@ -209,6 +211,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 onPressed: _selectedTeam == null
                     ? null
                     : () {
+                        // Save opponent to draft
+                        context.read<BookingProvider>().updateDraft(
+                          opponentTeamId: _selectedTeam!.id,
+                          opponentTeamName: _selectedTeam!.name,
+                        );
+
                         Navigator.push(
                           context,
                           MaterialPageRoute(

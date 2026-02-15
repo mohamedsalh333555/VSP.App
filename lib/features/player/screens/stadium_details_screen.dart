@@ -1,5 +1,6 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
@@ -42,14 +43,16 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: Image.network(
-                    widget.stadium.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[800],
-                      child: const Center(child: Icon(Icons.stadium, size: 50, color: Colors.white)),
-                    ),
-                  ),
+                  child: widget.stadium.imageUrl.isNotEmpty
+                      ? CachedNetworkImage(
+                          imageUrl: widget.stadium.imageUrl,
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(
+                            color: const Color(0xFF1E1E1E),
+                          ),
+                          errorWidget: (context, url, error) => _buildVspLogoBackground(),
+                        )
+                      : _buildVspLogoBackground(),
                 ),
                 // Gradient Overlay
                 Positioned.fill(
@@ -180,7 +183,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '${widget.stadium.pricePerHour.toStringAsFixed(0)} ',
+                          text: '${widget.stadium.basePrice.toStringAsFixed(0)} ',
                           style: const TextStyle(
                             color: Colors.white,
                             fontSize: 24,
@@ -288,6 +291,21 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       decoration: BoxDecoration(
         color: isActive ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
+      ),
+    );
+  }
+
+  Widget _buildVspLogoBackground() {
+    return Container(
+      color: const Color(0xFF1E1E1E),
+      child: Center(
+        child: Image.asset(
+          'assets/images/logo.png', // VSP logo
+          width: 80,
+          height: 80,
+          color: Colors.white.withValues(alpha: 0.06),
+          colorBlendMode: BlendMode.modulate,
+        ),
       ),
     );
   }
@@ -480,38 +498,86 @@ class _PitchConditionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16),
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(16),
-        ),
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildPolicySection(
-              'Punctuality:',
-              'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.',
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          // ✅ Owner Notes Section (Priority Display)
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+              border: Border.all(
+                color: AppTheme.neonGreen.withOpacity(0.4),
+                width: 1,
+              ),
             ),
-            const SizedBox(height: 16),
-            _buildPolicySection(
-              'Reservation Duration:',
-              'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Text(
+                  'Owner Notes',
+                  style: TextStyle(
+                    color: AppTheme.neonGreen,
+                    fontSize: 14,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  hasOwnerNotes
+                      ? stadium.notes
+                      : 'No specific notes have been added by the stadium owner.',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 13,
+                    height: 1.5,
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: 16),
-            _buildPolicySection(
-              'Cancellation And Refund Policy:',
-              'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.',
+          ),
+
+          const SizedBox(height: 24),
+
+          // Standard Policies Section
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
             ),
-            const SizedBox(height: 16),
-             _buildPolicySection(
-              'Liability:',
-              'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.',
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                _buildPolicySection(
+                  'Punctuality:',
+                  'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.',
+                ),
+                const SizedBox(height: 16),
+                _buildPolicySection(
+                  'Reservation Duration:',
+                  'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).',
+                ),
+                const SizedBox(height: 16),
+                _buildPolicySection(
+                  'Cancellation And Refund Policy:',
+                  'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.',
+                ),
+                const SizedBox(height: 16),
+                _buildPolicySection(
+                  'Liability:',
+                  'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.',
+                ),
+              ],
             ),
-          ],
-        ),
+          ),
+        ],
       ),
     );
   }
@@ -523,7 +589,7 @@ class _PitchConditionsTab extends StatelessWidget {
         Text(
           title,
           style: const TextStyle(
-            color: AppTheme.neonGreen, // Updated to Neon Green
+            color: AppTheme.neonGreen,
             fontSize: 14,
             fontWeight: FontWeight.bold,
           ),
@@ -532,7 +598,7 @@ class _PitchConditionsTab extends StatelessWidget {
         Text(
           content,
           style: const TextStyle(
-            color: Colors.white, // Updated to White
+            color: Colors.white,
             fontSize: 13,
             height: 1.5,
           ),

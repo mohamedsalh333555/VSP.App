@@ -51,6 +51,9 @@ dependencies:
   firebase_messaging: ^15.1.6
   flutter_localizations:
     sdk: flutter
+  geolocator: ^13.0.2
+  http: ^1.1.0
+  path: ^1.9.0
 
 dev_dependencies:
   flutter_test:
@@ -68,11 +71,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#121212"
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/images/logo.png"
+  adaptive_icon_foreground_inset: 160
   min_sdk_android: 21
-  # Safe zone configuration - logo will be scaled to 60-65% of icon area
-  adaptive_icon_foreground_inset: 80  # Adds padding around the logo
 
 # For information on the generic Dart part of this file, see the
 # following page: https://dart.dev/tools/pub/pubspec

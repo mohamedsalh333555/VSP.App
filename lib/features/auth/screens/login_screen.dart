@@ -92,7 +92,7 @@ class _LoginScreenState extends State<LoginScreen> {
           ),
       ),
       body: SafeArea(
-        bottom: false,
+        bottom: true,
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(

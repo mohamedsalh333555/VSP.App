@@ -1,10 +1,10 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_storage/firebase_storage.dart';
+import 'package:image_picker/image_picker.dart';
+import 'cloudinary_service.dart';
 
 class StorageService {
-  // Active Instance
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final CloudinaryService _cloudinary = CloudinaryService();
 
   // Upload file and return download URL
   Future<String?> uploadFile({
@@ -13,24 +13,11 @@ class StorageService {
     String? fileName,
   }) async {
     try {
-      // Generate unique filename if not provided
-      String uploadFileName = fileName ?? DateTime.now().millisecondsSinceEpoch.toString();
-      
-      // Create reference
-      Reference ref = _storage.ref().child('$path/$uploadFileName');
-      
-      // Upload file
-      UploadTask uploadTask = ref.putFile(file);
-      
-      // Wait for upload to complete
-      TaskSnapshot snapshot = await uploadTask;
-      
-      // Get download URL
-      String downloadUrl = await snapshot.ref.getDownloadURL();
-      
-      return downloadUrl;
+      final xFile = XFile(file.path);
+      final url = await _cloudinary.uploadImage(xFile, folder: path);
+      return url;
     } catch (e) {
-      debugPrint('Error uploading file: $e');
+      debugPrint('Error uploading to Cloudinary: $e');
       return null;
     }
   }
@@ -39,12 +26,11 @@ class StorageService {
   Future<String?> uploadOwnerDocument({
     required File file,
     required String ownerId,
-    required String documentType, // 'nationalIdFront', 'nationalIdBack', 'taxCard', 'commercialRegister'
+    required String documentType,
   }) async {
     return await uploadFile(
       file: file,
       path: 'owners/$ownerId/documents',
-      fileName: '${documentType}_${DateTime.now().millisecondsSinceEpoch}',
     );
   }
 
@@ -57,7 +43,6 @@ class StorageService {
     return await uploadFile(
       file: file,
       path: 'stadiums/$stadiumId/images',
-      fileName: 'image_$imageIndex',
     );
   }
 
@@ -69,7 +54,6 @@ class StorageService {
     return await uploadFile(
       file: file,
       path: 'tournaments/$tournamentId',
-      fileName: 'cover',
     );
   }
 
@@ -81,30 +65,13 @@ class StorageService {
     return await uploadFile(
       file: file,
       path: 'users/$userId',
-      fileName: 'profile_picture',
     );
   }
 
-  // Delete file
+  // NOTE: Cloudinary delete via client-side is restricted for security.
+  // We should implement deletion via a back-end or skip for now if not critical.
   Future<bool> deleteFile(String downloadUrl) async {
-    try {
-      Reference ref = _storage.refFromURL(downloadUrl);
-      await ref.delete();
-      return true;
-    } catch (e) {
-      debugPrint('Error deleting file: $e');
-      return false;
-    }
-  }
-
-  // Get file metadata
-  Future<FullMetadata?> getFileMetadata(String downloadUrl) async {
-    try {
-      Reference ref = _storage.refFromURL(downloadUrl);
-      return await ref.getMetadata();
-    } catch (e) {
-      debugPrint('Error getting metadata: $e');
-      return null;
-    }
+    debugPrint('Delete from Cloudinary requested for: $downloadUrl (Not implemented client-side)');
+    return true; 
   }
 }

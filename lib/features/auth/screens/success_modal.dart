@@ -3,21 +3,22 @@ import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../owner/screens/facility_onboarding_screen.dart';
-import '../../player/screens/player_home_screen.dart';
+import '../../../core/navigation/root_screen.dart';
+import '../../owner/screens/my_stadiums_screen.dart';
 
 /// Show success modal dialog
-void showSuccessModal(BuildContext context) {
+void showSuccessModal(BuildContext context, {bool isOwner = false}) {
   showDialog(
     context: context,
     barrierDismissible: false,
     barrierColor: Colors.black.withValues(alpha: 0.8),
-    builder: (context) => const _UnifiedSuccessDialog(),
+    builder: (context) => _UnifiedSuccessDialog(isOwner: isOwner),
   );
 }
 
 class _UnifiedSuccessDialog extends StatefulWidget {
-  const _UnifiedSuccessDialog();
+  final bool isOwner;
+  const _UnifiedSuccessDialog({this.isOwner = false});
 
   @override
   State<_UnifiedSuccessDialog> createState() => _UnifiedSuccessDialogState();
@@ -50,8 +51,7 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final isOwner = authProvider.isOwner;
+    final isOwner = widget.isOwner;
 
     return BackdropFilter(
       filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
@@ -145,20 +145,21 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    Navigator.of(context).pop(); // Close dialog
                     if (isOwner) {
+                      // Owner → go to My Stadiums (onboarding)
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const FacilityOnboardingScreen(),
+                          builder: (context) => const MyStadiumsScreen(),
                         ),
                         (route) => false,
                       );
                     } else {
+                      // Player → go to auth/home (RootScreen handles state)
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => const PlayerHomeScreen(),
+                          builder: (context) => const RootScreen(),
                         ),
                         (route) => false,
                       );

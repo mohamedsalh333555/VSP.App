@@ -5,6 +5,9 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart'; // For HapticFeedback
  // For verifying UI imports
 import '../../../core/providers/language_provider.dart';
+import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
@@ -15,8 +18,8 @@ import 'team_dashboard_screen.dart';
 import 'booked_screen.dart';
 import 'champion_screen.dart';
 import 'profile_screen.dart';
-import '../widgets/match_result_modal.dart';
 import '../widgets/filter_bottom_sheet.dart';
+import '../../../shared/widgets/stadium_card.dart';
 
 /// Player Home Page (English Only)
 class PlayerHomeScreen extends StatefulWidget {
@@ -85,8 +88,6 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       body: IndexedStack(
@@ -190,179 +191,6 @@ class _SectionHeader extends StatelessWidget {
   }
 }
 
-/// Stadium Card with Real Image Background and Glass Effect
-class StadiumCard extends StatelessWidget {
-  final Stadium stadium;
-
-  const StadiumCard({super.key, required this.stadium});
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => StadiumDetailsScreen(stadium: stadium),
-          ),
-        );
-      },
-      child: Container(
-        width: 320,
-        height: 230,
-        margin: const EdgeInsets.only(right: 16),
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15), // Unified 15px
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
-        ),
-        child: ClipRRect(
-          borderRadius: BorderRadius.circular(15), // Unified 15px
-          child: Stack(
-            fit: StackFit.expand,
-            children: [
-              // REAL PHOTOGRAPHY BACKGROUND
-              CachedNetworkImage(
-                imageUrl: stadium.imageUrl,
-                fit: BoxFit.cover,
-                placeholder: (context, url) => Container(
-                  color: const Color(0xFF1E1E1E),
-                  child: const Center(
-                    child: CircularProgressIndicator(
-                      color: AppTheme.neonGreen,
-                      strokeWidth: 2,
-                    ),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Image.network(
-                  'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&q=80',
-                  fit: BoxFit.cover,
-                ),
-              ),
-
-              // DARK GRADIENT OVERLAY
-              DecoratedBox(
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    stops: const [0.5, 0.95],
-                    colors: [
-                      Colors.transparent,
-                      Colors.black.withValues(alpha: 0.9),
-                    ],
-                  ),
-                ),
-              ),
-
-              // TOP ACTIONS
-              Positioned(
-                top: 15,
-                left: 15,
-                right: 15,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Icons.location_on, color: AppTheme.neonGreen, size: 14),
-                          const SizedBox(width: 4),
-                          Text(
-                            stadium.location,
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                    Container(
-                      width: 34,
-                      height: 34,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                      ),
-                      child: Icon(
-                        stadium.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: stadium.isFavorite ? Colors.red : Colors.white,
-                        size: 18,
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              // BOTTOM INFO
-              Positioned(
-                bottom: 15,
-                left: 15,
-                right: 15,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      stadium.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
-                        letterSpacing: 0.5,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        Text(
-                          '${stadium.size} • ${stadium.type}',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
-                          ),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                          decoration: BoxDecoration(
-                            color: AppTheme.neonGreen.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
-                          ),
-                          child: Text(
-                            '${stadium.pricePerHour.toInt()} eg',
-                            style: const TextStyle(
-                              color: AppTheme.neonGreen,
-                              fontSize: 13,
-                              fontWeight: FontWeight.w900,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}
-
 /// Match Card - High-Fidelity Professional Design
 class MatchCard extends StatefulWidget {
   final Team team;
@@ -451,7 +279,7 @@ class _MatchCardState extends State<MatchCard> {
     
     return Container(
       width: widget.width ?? double.infinity, 
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Unified 20px
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       margin: widget.margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
         color: bgColor,
@@ -740,7 +568,7 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
   Widget build(BuildContext context) {
     return Container(
       width: widget.width ?? double.infinity,
-      padding: const EdgeInsets.symmetric(vertical: 20, horizontal: 20), // Unified 20px
+      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       margin: widget.margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2E),
@@ -1085,156 +913,209 @@ class _HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
+    final authProvider = Provider.of<AuthProvider>(context);
+    final user = authProvider.userModel;
 
     return SafeArea(
       child: Column(
         children: [
-          // Main Content
+          // 🔹 FIXED HEADER SECTION
+          Container(
+            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
+            decoration: const BoxDecoration(
+              color: AppTheme.darkBackground,
+              border: Border(bottom: BorderSide(color: Colors.white10)),
+            ),
+            child: Column(
+              children: [
+                // Profile & Welcome Row
+                Row(
+                  children: [
+                    // Profile Image with Upload Trigger
+                    GestureDetector(
+                      onTap: () async {
+                        final picker = ImagePicker();
+                        final XFile? image = await picker.pickImage(
+                          source: ImageSource.gallery,
+                          imageQuality: 70,
+                        );
+                        if (image != null) {
+                          authProvider.updateProfilePhoto(image);
+                        }
+                      },
+                      child: Stack(
+                        children: [
+                          user?.profileImageUrl != null
+                              ? CircleAvatar(
+                                  radius: 25,
+                                  backgroundImage: NetworkImage(user!.profileImageUrl!),
+                                )
+                              : ShimmerImage(
+                                  imageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
+                                  width: 50,
+                                  height: 50,
+                                  borderRadius: 25,
+                                ),
+                          if (authProvider.isLoading)
+                            Positioned.fill(
+                              child: Container(
+                                decoration: const BoxDecoration(
+                                  color: Colors.black45,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    valueColor: AlwaysStoppedAnimation(AppTheme.neonGreen),
+                                  ),
+                                ),
+                              ),
+                            ),
+                          Positioned(
+                            bottom: 0,
+                            right: 0,
+                            child: Container(
+                                padding: const EdgeInsets.all(2),
+                                decoration: const BoxDecoration(
+                                  color: AppTheme.neonGreen,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Icon(Icons.add, size: 12, color: Colors.black)),
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Welcome Text
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Hi ${authProvider.name ?? "Player"}',
+                            style: const TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            'Player (${authProvider.position})',
+                            style: const TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    // Notification Icon
+                    Container(
+                      width: 40,
+                      height: 40,
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardBackground,
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: const Icon(
+                        Icons.notifications_outlined,
+                        color: AppTheme.textPrimary,
+                        size: 24,
+                      ),
+                    ),
+                  ],
+                ),
+
+                const SizedBox(height: 16),
+
+                // Search & Filter
+                Row(
+                  children: [
+                    // Search Bar
+                    Expanded(
+                      child: Container(
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(30),
+                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                        ),
+                        child: TextField(
+                          controller: searchController,
+                          style: const TextStyle(
+                            color: AppTheme.textPrimary,
+                          ),
+                          decoration: InputDecoration(
+                            hintText: 'Search...',
+                            hintStyle: TextStyle(
+                              color: AppTheme.textSecondary.withValues(alpha: 0.5),
+                            ),
+                            prefixIcon: Padding(
+                              padding: const EdgeInsets.all(8.0),
+                              child: Container(
+                                width: 34,
+                                height: 34,
+                                decoration: BoxDecoration(
+                                  color: Colors.white.withValues(alpha: 0.05),
+                                  shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                                ),
+                                child: const Icon(
+                                  Icons.search,
+                                  color: Colors.white,
+                                  size: 18,
+                                ),
+                              ),
+                            ),
+                            border: InputBorder.none,
+                            contentPadding: const EdgeInsets.symmetric(
+                              vertical: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    // Filter Button
+                    InkWell(
+                      onTap: () {
+                        showModalBottomSheet(
+                          context: context,
+                          backgroundColor: Colors.transparent,
+                          isScrollControlled: true,
+                          builder: (context) => const FilterBottomSheet(),
+                        );
+                      },
+                      child: Container(
+                        width: 50,
+                        height: 50,
+                        decoration: BoxDecoration(
+                          color: const Color(0xFF1E1E1E),
+                          borderRadius: BorderRadius.circular(12),
+                          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                        ),
+                        child: const Icon(
+                          Icons.tune,
+                          color: AppTheme.neonGreen,
+                          size: 24,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+                const SizedBox(height: 8),
+              ],
+            ),
+          ),
+
+          // 🔹 SCROLLABLE CONTENT SECTION
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 16),
+              padding: const EdgeInsets.symmetric(vertical: 24),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Header
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        // Profile Image
-                        ShimmerImage(
-                          imageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80', // Real player portrait
-                          width: 50,
-                          height: 50,
-                          borderRadius: 25,
-                        ),
-                        const SizedBox(width: 12),
-                        // Welcome Text
-                        Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                'Hi Mohamed Salah',
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                              const SizedBox(height: 2),
-                              Text(
-                                'Player (GK)',
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12,
-                                ),
-                              ),
-                            ],
-                          ),
-                        ),
-                        // Notification Icon
-                        Container(
-                          width: 40,
-                          height: 40,
-                          decoration: BoxDecoration(
-                            color: AppTheme.cardBackground,
-                            borderRadius: BorderRadius.circular(10),
-                          ),
-                          child: const Icon(
-                            Icons.notifications_outlined,
-                            color: AppTheme.textPrimary,
-                            size: 24,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Search & Filter
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    child: Row(
-                      children: [
-                        // Search Bar
-                        Expanded(
-                          child: Container(
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E),
-                              borderRadius: BorderRadius.circular(30), // Circular as requested
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                            ),
-                            child: TextField(
-                              controller: searchController,
-                              style: const TextStyle(
-                                color: AppTheme.textPrimary,
-                              ),
-                              decoration: InputDecoration(
-                                hintText: 'Search...',
-                                hintStyle: TextStyle(
-                                  color: AppTheme.textSecondary.withValues(alpha: 0.5),
-                                ),
-                                prefixIcon: Padding(
-                                  padding: const EdgeInsets.all(8.0),
-                                  child: Container(
-                                    width: 34,
-                                    height: 34,
-                                    decoration: BoxDecoration(
-                                      color: Colors.white.withValues(alpha: 0.05),
-                                      shape: BoxShape.circle,
-                                      border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
-                                    ),
-                                    child: const Icon(
-                                      Icons.search,
-                                      color: Colors.white,
-                                      size: 18,
-                                    ),
-                                  ),
-                                ),
-                                border: InputBorder.none,
-                                contentPadding: const EdgeInsets.symmetric(
-                                  vertical: 14,
-                                ),
-                              ),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        // Filter Button
-                        InkWell(
-                          onTap: () {
-                            showModalBottomSheet(
-                              context: context,
-                              backgroundColor: Colors.transparent,
-                              isScrollControlled: true,
-                              builder: (context) => const FilterBottomSheet(),
-                            );
-                          },
-                          child: Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: const Color(0xFF1E1E1E), // Dark Grey
-                              borderRadius: BorderRadius.circular(12),
-                              border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)), // Subtle Neon border
-                            ),
-                            child: const Icon(
-                              Icons.tune,
-                              color: AppTheme.neonGreen, // Green icon
-                              size: 24,
-                            ),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-
-                  const SizedBox(height: 24),
-
                   // Stadium Section
                   _SectionHeader(
                     title: 'Stadium',
@@ -1246,17 +1127,30 @@ class _HomeContent extends StatelessWidget {
                     child: StreamBuilder<List<Stadium>>(
                       stream: DatabaseService().getStadiums(), // REAL DATA
                       builder: (context, snapshot) {
-                         // Demo Mode Fallback
                          if (AppConfig.demoMode) {
-                              final mockStadiums = Stadium.getMockStadiums();
-                              return ListView.builder(
-                               scrollDirection: Axis.horizontal,
-                               padding: const EdgeInsets.symmetric(horizontal: 16),
-                               itemCount: mockStadiums.length,
-                               itemBuilder: (context, index) {
-                                 return StadiumCard(stadium: mockStadiums[index]);
-                               },
-                             );
+                           final mockStadiums = Stadium.getMockStadiums();
+                           return ListView.builder(
+                             scrollDirection: Axis.horizontal,
+                             padding: const EdgeInsets.symmetric(horizontal: 16),
+                             itemCount: mockStadiums.length,
+                             itemBuilder: (context, index) {
+                               return Container(
+                                 width: 320,
+                                 margin: const EdgeInsets.only(right: 16),
+                                 child: StadiumCard(
+                                   stadium: mockStadiums[index],
+                                   onTap: () {
+                                     Navigator.push(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (context) => StadiumDetailsScreen(stadium: mockStadiums[index]),
+                                       ),
+                                     );
+                                   },
+                                 ),
+                               );
+                             },
+                           );
                          }
 
                          if (snapshot.connectionState == ConnectionState.waiting) {
@@ -1270,25 +1164,39 @@ class _HomeContent extends StatelessWidget {
                                decoration: BoxDecoration(
                                  color: Colors.white.withValues(alpha: 0.6),
                                  borderRadius: BorderRadius.circular(15),
-                               ),
-                             ),
+                                ),
+                              ),
+                            );
+                          }
+                          
+                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                            return const Center(child: Text("No stadiums found", style: TextStyle(color: Colors.white)));
+                          }
+                          
+                           final stadiums = snapshot.data!;
+                           return ListView.builder(
+                             scrollDirection: Axis.horizontal,
+                             padding: const EdgeInsets.symmetric(horizontal: 16),
+                             itemCount: stadiums.length,
+                             itemBuilder: (context, index) {
+                               return Container(
+                                 width: 320,
+                                 margin: const EdgeInsets.only(right: 16),
+                                 child: StadiumCard(
+                                   stadium: stadiums[index],
+                                   onTap: () {
+                                     Navigator.push(
+                                       context,
+                                       MaterialPageRoute(
+                                         builder: (context) => StadiumDetailsScreen(stadium: stadiums[index]),
+                                       ),
+                                     );
+                                   },
+                                 ),
+                               );
+                             },
                            );
-                         }
-                         
-                         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                           return const Center(child: Text("No stadiums found", style: TextStyle(color: Colors.white)));
-                         }
-                         
-                         final stadiums = snapshot.data!;
-                         return ListView.builder(
-                           scrollDirection: Axis.horizontal,
-                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                           itemCount: stadiums.length,
-                           itemBuilder: (context, index) {
-                             return StadiumCard(stadium: stadiums[index]);
-                           },
-                         );
-                      },
+                       },
                     ),
                   ),
 
@@ -1301,62 +1209,38 @@ class _HomeContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 200,
-                    child: StreamBuilder<QuerySnapshot>(
-                      stream: DatabaseService().getMatchesStream(), // Need a stream for matches/teams
-                      builder: (context, snapshot) {
-                         // Fallback to mocks for V1 if stream not ready or empty
-                         // But we want to confirm Real Data switch. 
-                         // Since I seeded 'teams', I should fetch teams.
-                         // But MatchCard expects a 'Team' object which usually represents a Match in this UI context?
-                         // Let's look at MatchCard... it takes a 'Team' object. 
-                         // The prompt says "replace mockMatches". 
-                         // Check DatabaseService for matches stream.
-                         // Assuming getTeams() is what we want here as "Matches" in this app seem to be Team-based or 1vs1?
-                         // Let's use getTeams for now as seeded.
-                         
-                         return StreamBuilder<List<Team>>(
-                            stream: DatabaseService().getTeams(),
-                            builder: (context, teamSnapshot) {
-                                if (teamSnapshot.connectionState == ConnectionState.waiting) {
-                                   return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
-                                }
-                                
-                                final teams = teamSnapshot.hasData ? teamSnapshot.data! : [];
-                                
-                                if (teams.isEmpty) {
-                                    // Fallback to avoid empty screen during demo
-                                    return ListView.builder(
-                                      scrollDirection: Axis.horizontal,
-                                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                                      itemCount: Team.getMockTeams().length,
-                                      itemBuilder: (context, index) {
-                                        final team = Team.getMockTeams()[index];
-                                        return MatchCard(
-                                          team: team,
-                                          index: index,
-                                          width: 320,
-                                          margin: const EdgeInsets.only(right: 16),
-                                        );
-                                      },
-                                    );
-                                }
+                    height: 190,
+                    child: StreamBuilder<List<Team>>(
+                      stream: DatabaseService().getTeams(),
+                      builder: (context, teamSnapshot) {
+                          if (teamSnapshot.connectionState == ConnectionState.waiting) {
+                             return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+                          }
+                          
+                          final teams = teamSnapshot.hasData ? teamSnapshot.data! : [];
+                          
+                          if (teams.isEmpty) {
+                            return const Center(
+                              child: Text(
+                                "No matches found near you",
+                                style: TextStyle(color: AppTheme.textSecondary),
+                              ),
+                            );
+                          }
 
-                                return ListView.builder(
-                                  scrollDirection: Axis.horizontal,
-                                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                                  itemCount: teams.length,
-                                  itemBuilder: (context, index) {
-                                    return MatchCard(
-                                      team: teams[index],
-                                      index: index,
-                                      width: 320,
-                                      margin: const EdgeInsets.only(right: 16),
-                                    );
-                                  },
-                                );
+                          return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: teams.length,
+                            itemBuilder: (context, index) {
+                              return MatchCard(
+                                team: teams[index],
+                                index: index,
+                                width: 320,
+                                margin: const EdgeInsets.only(right: 16),
+                              );
                             },
-                         );
+                          );
                       },
                     ),
                   ),
@@ -1370,24 +1254,30 @@ class _HomeContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 200,
-                    child: ListView.builder(
-                      scrollDirection: Axis.horizontal,
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      itemCount: Championship.getMockChampionships().length,
-                      itemBuilder: (context, index) {
-                        final championship =
-                            Championship.getMockChampionships()[index];
-                        return ChampionshipCard(
-                          championship: championship,
-                          width: 320,
-                          margin: const EdgeInsets.only(right: 16),
-                        );
-                      },
-                    ),
+                    height: 190,
+                    child: AppConfig.demoMode 
+                      ? ListView.builder(
+                          scrollDirection: Axis.horizontal,
+                          padding: const EdgeInsets.symmetric(horizontal: 16),
+                          itemCount: Championship.getMockChampionships().length,
+                          itemBuilder: (context, index) {
+                            final championship = Championship.getMockChampionships()[index];
+                            return ChampionshipCard(
+                              championship: championship,
+                              width: 320,
+                              margin: const EdgeInsets.only(right: 16),
+                            );
+                          },
+                        )
+                      : const Center(
+                          child: Text(
+                            "No championships active",
+                            style: TextStyle(color: AppTheme.textSecondary),
+                          ),
+                        ),
                   ),
 
-                  const SizedBox(height: 100),
+                  const SizedBox(height: 16),
                 ],
               ),
             ),

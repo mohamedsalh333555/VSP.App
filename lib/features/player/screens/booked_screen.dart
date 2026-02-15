@@ -3,6 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../data/models.dart';
 import '../widgets/match_result_modal.dart';
 
@@ -19,8 +20,13 @@ class _BookedScreenState extends State<BookedScreen> {
     super.initState();
     // Load bookings when screen initializes
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-      bookingProvider.loadUserBookings('demo_user'); // Use actual user ID in production
+      
+      final userId = authProvider.currentUser?.uid;
+      if (userId != null) {
+        bookingProvider.loadUserBookings(userId);
+      }
     });
   }
 
