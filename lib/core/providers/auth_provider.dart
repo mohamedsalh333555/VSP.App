@@ -1,13 +1,16 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
-import '../services/cloudinary_service.dart'; // ✅ Added CloudinaryService import
+import '../services/cloudinary_service.dart';
+import '../services/notification_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  final CloudinaryService _cloudinaryService = CloudinaryService(); // ✅ Added CloudinaryService instance
+  final CloudinaryService _cloudinaryService = CloudinaryService();
+  final NotificationService _notificationService = NotificationService();
   
   // Firebase user
   User? _firebaseUser;
@@ -21,6 +24,7 @@ class AuthProvider with ChangeNotifier {
   String? _name;
   String? _phone;
   String? _position = 'GK';
+  String _governorate = 'Cairo';
   
   // Loading and error states
   bool _isLoading = false;
@@ -34,6 +38,7 @@ class AuthProvider with ChangeNotifier {
   String? get name => _name ?? _userModel?.name;
   String? get phone => _phone;
   String get position => _userModel?.position ?? _position ?? 'GK';
+  String get governorate => _userModel?.governorate ?? _governorate;
   String? get profileImageUrl => _userModel?.profileImageUrl;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
@@ -52,13 +57,38 @@ class AuthProvider with ChangeNotifier {
         final userData = await _authService.getUserData(user.uid);
         if (userData != null) {
           _userModel = UserModel.fromFirestore(userData);
+          _updateFcmToken(user.uid); // Silent update
+        } else {
+          // 🚨 SAFETY VALVE: User exists in Auth but NO data in Firestore
+          // Force logout to prevent stuck Splash Screen
+          await _authService.signOut();
+          _firebaseUser = null;
+          _userModel = null;
         }
       } else {
         _userModel = null;
+        _userType = null; // Clear cached userType if NOT logged in
       }
       
+      _isLoading = false; // Ensure loading stops
       notifyListeners();
     });
+  }
+
+  /// Silently update FCM token in Firestore
+  Future<void> _updateFcmToken(String uid) async {
+    try {
+      final token = await _notificationService.getToken();
+      if (token != null) {
+        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+          'fcmToken': token,
+          'lastSeen': FieldValue.serverTimestamp(),
+        });
+        debugPrint('FCM Token updated successfully');
+      }
+    } catch (e) {
+      debugPrint('Error updating FCM Token: $e');
+    }
   }
 
   // ==================== Registration Flow Methods ====================
@@ -93,6 +123,11 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  void setGovernorate(String gov) {
+    _governorate = gov;
+    notifyListeners();
+  }
+
   /// Set verification code (for mock verification)
   void setVerificationCode(String code) {
     _verificationCode = code;
@@ -103,89 +138,62 @@ class AuthProvider with ChangeNotifier {
     _password = password;
   }
 
-  /// Send verification code (mock implementation)
-  Future<bool> sendVerificationCode() async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      // Mock: Generate a 6-digit code
-      _verificationCode = '123456'; // In production, send via email/SMS
-      
-      await Future.delayed(const Duration(seconds: 1)); // Simulate network delay
-      
-      _isLoading = false;
-      notifyListeners();
-      return true;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// Verify code
-  Future<bool> verifyCode(String code) async {
-    _isLoading = true;
-    _errorMessage = null;
-    notifyListeners();
-
-    try {
-      await Future.delayed(const Duration(milliseconds: 500));
-      
-      bool isValid = code == _verificationCode;
-      
-      if (!isValid) {
-        _errorMessage = 'Invalid verification code';
-      }
-      
-      _isLoading = false;
-      notifyListeners();
-      return isValid;
-    } catch (e) {
-      _errorMessage = e.toString();
-      _isLoading = false;
-      notifyListeners();
-      return false;
-    }
-  }
-
-  /// Create account - Final step
+  /// Finalize account creation / Update password and flags
   Future<bool> createAccount() async {
-    if (_email == null || _password == null || _userType == null) {
-      _errorMessage = 'Missing required information';
-      notifyListeners();
-      return false;
-    }
-
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await _authService.signUpWithEmail(
-        email: _email!,
-        password: _password!,
-        role: _userType!,
-        userData: {
-          'name': _name ?? '',
-          'phone': _phone ?? '',
-          'position': _position ?? 'GK',
-        },
-      );
+      // If we have a stored password (from signup or set password screen), update it
+      if (_password != null && _password!.isNotEmpty) {
+        final success = await _authService.updatePassword(_password!);
+        if (!success) {
+          _errorMessage = 'Failed to update password. Please try again.';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
+      }
+
+      // Update Firestore flag
+      final updateSuccess = await updateProfile({
+        'isRegistrationComplete': true,
+      });
+
+      if (updateSuccess) {
+        // Locally update model to prevent loop
+        if (_userModel != null) {
+          _userModel = _userModel!.copyWith(isRegistrationComplete: true);
+        }
+      }
+
+      _isLoading = false;
+      notifyListeners();
+      return updateSuccess;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sign In with Google
+  Future<bool> signInWithGoogle() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.signInWithGoogle(role: _userType);
 
       if (result['success']) {
         _firebaseUser = result['user'];
-        _userModel = UserModel(
-          uid: _firebaseUser!.uid,
-          email: _email!,
-          role: _userType!,
-          name: _name,
-          phone: _phone,
-          position: _position,
-        );
+        final userData = await _authService.getUserData(_firebaseUser!.uid);
+        if (userData != null) {
+          _userModel = UserModel.fromFirestore(userData);
+        }
         _isLoading = false;
         notifyListeners();
         return true;
@@ -207,11 +215,11 @@ class AuthProvider with ChangeNotifier {
   void reset() {
     _userType = null;
     _email = null;
-    _verificationCode = null;
     _password = null;
     _name = null;
     _phone = null;
     _errorMessage = null;
+    _position = 'GK';
     notifyListeners();
   }
 
@@ -233,7 +241,10 @@ class AuthProvider with ChangeNotifier {
         email: email,
         password: password,
         role: role,
-        userData: userData ?? {},
+        userData: {
+          ...userData ?? {},
+          'governorate': _governorate,
+        },
       );
 
       if (result['success']) {
@@ -336,6 +347,10 @@ class AuthProvider with ChangeNotifier {
           phone: data['phone'] ?? _userModel!.phone,
           profileImageUrl: data['profileImageUrl'] ?? _userModel!.profileImageUrl,
           position: data['position'] ?? _userModel!.position,
+          isEmailVerified: data['isEmailVerified'] ?? _userModel!.isEmailVerified,
+          hasStadium: data['hasStadium'] ?? _userModel!.hasStadium,
+          isIdentityVerified: data['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
+          isRegistrationComplete: data['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
         );
       }
       _isLoading = false;
@@ -365,11 +380,22 @@ class AuthProvider with ChangeNotifier {
          folder: 'users/$uid/profile',
        );
 
-       // 2) Update profile data in Firestore + local model
-       final success = await updateProfile({'profileImageUrl': url});
-       
-       if (!success) {
-         _errorMessage = 'Failed to update profile image record.';
+       if (url != null) {
+         // 2) IMMEDIATELY update local model (Optimistic Update)
+         if (_userModel != null) {
+           _userModel = _userModel!.copyWith(profileImageUrl: url);
+           notifyListeners();
+         }
+
+         // 3) Update profile data in Firestore in background
+         updateProfile({'profileImageUrl': url}).then((success) {
+           if (!success) {
+               _errorMessage = 'Failed to update profile image record.';
+               notifyListeners();
+           }
+         });
+       } else {
+         _errorMessage = 'Failed to upload profile image to cloud.';
        }
      } catch (e) {
        _errorMessage = 'Failed to upload profile image: $e';
@@ -377,6 +403,112 @@ class AuthProvider with ChangeNotifier {
        _isLoading = false;
        notifyListeners();
      }
+  }
+
+  Future<bool> completeSocialRegistration({
+    required String phone,
+    required String password,
+    String? position,
+    String? governorate,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // 1. Update Password in Firebase Auth
+      final passSuccess = await _authService.updatePassword(password);
+      if (!passSuccess) {
+        _errorMessage = 'Failed to set password. Your session might have expired. Please log in again.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
+      // 2. Prepare update data
+      final Map<String, dynamic> updateData = {
+        'phone': phone,
+        'governorate': governorate ?? _governorate,
+        'isRegistrationComplete': true,
+      };
+      if (position != null) {
+        updateData['position'] = position;
+      }
+
+      // 3. Locally update _userModel IMMEDIATELY to prevent RootScreen loop
+      if (_userModel != null) {
+        _userModel = _userModel!.copyWith(
+          phone: phone,
+          governorate: governorate ?? _governorate,
+          position: position ?? _userModel!.position,
+          isRegistrationComplete: true,
+        );
+      }
+
+      // 4. Sync to Firestore in the background
+      await updateProfile(updateData);
+
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+
+
+  /// Simulate sending verification code
+  Future<bool> sendVerificationCode() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      // Logic for sending code (could be cloud function or backend)
+      // For now, in Demo Mode we just simulate success
+      await Future.delayed(const Duration(seconds: 1));
+      
+      _verificationCode = '123456'; // Mock code
+      _isLoading = false;
+      notifyListeners();
+      return true;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Verify code
+  Future<bool> verifyCode(String code) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      await Future.delayed(const Duration(seconds: 1));
+      
+      if (code == _verificationCode || code == '123456') { // Allow 123456 as master bypass
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = 'Invalid verification code';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Send password reset email

@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import 'profile_subscreens/my_team_screen.dart';
@@ -15,6 +16,9 @@ class ProfileScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final userProfileUrl = auth.userModel?.profileImageUrl;
+
     return Scaffold(
       backgroundColor: AppTheme.darkBackground,
       appBar: AppBar(
@@ -60,12 +64,14 @@ class ProfileScreen extends StatelessWidget {
                           shape: BoxShape.circle,
                           border: Border.all(color: AppTheme.neonGreen, width: 2),
                         ),
-                        child: ClipOval(
-                          child: ShimmerImage(
-                            imageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
-                            width: 88,
-                            height: 88,
-                          ),
+                        child: CircleAvatar(
+                          backgroundColor: Colors.transparent,
+                          backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
+                              ? NetworkImage(userProfileUrl) 
+                              : null,
+                          child: (userProfileUrl == null || userProfileUrl.isEmpty)
+                              ? const Icon(Icons.person, size: 40, color: Colors.white54)
+                              : null,
                         ),
                       ),
                       const SizedBox(width: 16),
@@ -80,17 +86,26 @@ class ProfileScreen extends StatelessWidget {
                         ),
                       ),
                       // Edit Button
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: AppTheme.darkBackground,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
-                        ),
-                        child: const Icon(
-                          Icons.edit_outlined,
-                          color: AppTheme.neonGreen,
-                          size: 20,
+                      GestureDetector(
+                        onTap: () => _pickAndUploadImage(context, auth),
+                        child: Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: AppTheme.darkBackground,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                          ),
+                          child: auth.isLoading
+                              ? const SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonGreen),
+                                )
+                              : const Icon(
+                                  Icons.edit_outlined,
+                                  color: AppTheme.neonGreen,
+                                  size: 20,
+                                ),
                         ),
                       ),
                     ],
@@ -98,8 +113,8 @@ class ProfileScreen extends StatelessWidget {
                   const SizedBox(height: 16),
                   // Info Text - REFINED (Aligned with Avatar left edge)
                   Text(
-                    'Name / Mohamed Salah  |  Nickname / Soghir  |  Position / GK',
-                    style: TextStyle(
+                    'Name / ${auth.userModel?.name ?? "Player"}  |  Position / ${auth.userModel?.position ?? "GK"}',
+                    style: const TextStyle(
                       color: AppTheme.textPrimary,
                       fontSize: 11,
                       letterSpacing: 0.2,
@@ -220,12 +235,14 @@ class ProfileScreen extends StatelessWidget {
               title: 'Logout',
               subtitle: 'Sign out of your account',
               isLogout: true,
-              onTap: () {
-                Provider.of<AuthProvider>(context, listen: false).reset();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                  (route) => false,
-                );
+              onTap: () async {
+                await Provider.of<AuthProvider>(context, listen: false).signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                    (route) => false,
+                  );
+                }
               },
             ),
             
@@ -235,6 +252,19 @@ class ProfileScreen extends StatelessWidget {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndUploadImage(BuildContext context, AuthProvider auth) async {
+    final ImagePicker picker = ImagePicker();
+    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      await auth.updateProfilePhoto(image);
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Profile photo updated!'), backgroundColor: AppTheme.neonGreen),
+        );
+      }
+    }
   }
 
   Widget _buildStatItem(String label, String value, {required bool hasArrow}) {

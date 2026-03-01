@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
+import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 import '../../../core/config/app_config.dart';
@@ -25,7 +27,6 @@ class ChampionScreenState extends State<ChampionScreen>
   // Filter states
   String _selectedLocation = 'Cairo'; 
   String _selectedSport = 'Football'; 
-  // Removed global state for Type since we are removing that filter
 
   @override
   void initState() {
@@ -35,6 +36,14 @@ class ChampionScreenState extends State<ChampionScreen>
       setState(() {
         _selectedTabIndex = _tabController.index;
       });
+    });
+
+    // Default to user's governorate
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final userGov = Provider.of<AuthProvider>(context, listen: false).governorate;
+      if (userGov.isNotEmpty) {
+        setState(() => _selectedLocation = userGov);
+      }
     });
   }
   
@@ -135,6 +144,10 @@ class ChampionScreenState extends State<ChampionScreen>
 
           const SizedBox(height: 16),
 
+          const SizedBox(height: 16),
+
+          const SizedBox(height: 16),
+
           // Filters Row - Symmetrical Dropdowns
           Container(
             padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -225,128 +238,48 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _buildRankingTab() {
     return StreamBuilder<List<Team>>(
-      stream: DatabaseService().getTeams(), // Fetches streams
+      stream: DatabaseService().getTeams(governorate: _selectedLocation),
       builder: (context, snapshot) {
+        List<Team> teams = [];
         
-        // Demo Mode Logic
         if (AppConfig.demoMode) {
-           var teams = Team.getMockTeams();
-           teams.sort((a, b) => b.points.compareTo(a.points));
-           
-           // Copy-paste the rest of rendering logic
-            // Split Top 3 and Rest
-            final top3 = teams.take(3).toList();
-            final rest = teams.skip(3).toList();
-            
-            if (teams.length < 3) {
-                 return ListView.builder(
-                   itemCount: teams.length,
-                   itemBuilder: (ctx, i) => _buildRankListItem(i + 1, teams[i].name, teams[i].captainImageUrl, false, i + 1, teams[i].points),
-                 );
-            }
-            
-            return SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-              child: Column(
-                children: [
-                  // Podium
-                  SizedBox(
-                    height: 280, 
-                    child: Row(
-                      crossAxisAlignment: CrossAxisAlignment.end,
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                         // Rank 2 - Left
-                         Expanded(
-                           flex: 1,
-                           child: _buildTopRankItem(
-                             rank: 2,
-                             name: top3[1].name, 
-                             logo: top3[1].captainImageUrl,
-                             points: top3[1].points,
-                             isCenter: false,
-                             color: AppTheme.cardBackground,
-                           ),
-                         ),
-                         
-                         const SizedBox(width: 8),
-
-                         // Rank 1 - Center
-                         Expanded(
-                           flex: 1, 
-                           child: _buildTopRankItem(
-                             rank: 1,
-                             name: top3[0].name,
-                             logo: top3[0].captainImageUrl, 
-                             points: top3[0].points,
-                             isCenter: true,
-                             color: AppTheme.neonGreen,
-                           ),
-                         ),
-
-                         const SizedBox(width: 8),
-
-                         // Rank 3 - Right
-                         Expanded(
-                           flex: 1, 
-                           child: _buildTopRankItem(
-                             rank: 3,
-                             name: top3[2].name, 
-                             logo: top3[2].captainImageUrl,
-                             points: top3[2].points,
-                             isCenter: false,
-                             color: AppTheme.cardBackground,
-                           ),
-                         ),
-                      ],
-                    ),
-                  ),
-                  
-                  const SizedBox(height: 32),
-                  
-                  // Expanded Ranking List
-                  ...List.generate(rest.length, (index) {
-                     final team = rest[index];
-                     final rank = index + 4;
-                     return Padding(
-                       padding: const EdgeInsets.only(bottom: 12),
-                       child: _buildRankListItem(rank, team.name, team.captainImageUrl, false, rank, team.points),
-                     );
-                  }),
-
-                  const SizedBox(height: 100),
-                ],
-              ),
-            );
+          teams = Team.getMockTeams()
+              .where((t) => t.governorate == _selectedLocation)
+              .toList();
+        } else {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+          }
+          teams = snapshot.data ?? [];
         }
 
-        if (!snapshot.hasData) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+        if (teams.isEmpty) {
+          return Center(
+            child: Text(
+              "No teams in $_selectedLocation yet", 
+              style: const TextStyle(color: Colors.grey)
+            ),
+          );
         }
 
         // Sort by points desc
-        var teams = snapshot.data!;
         teams.sort((a, b) => b.points.compareTo(a.points)); 
 
-        if (teams.isEmpty) return const Center(child: Text("No rankings yet", style: TextStyle(color: Colors.grey)));
-
-        // Split Top 3 and Rest
+        final totalTeams = teams.length;
         final top3 = teams.take(3).toList();
         final rest = teams.skip(3).toList();
         
-        // Ensure we have enough data for podium logic (Safe checks)
-        // If less than 3, we just show what we have in list or simplified podium
-        // Simplified: if < 3, just list. Else Podium.
         if (teams.length < 3) {
-             return ListView.builder(
-               itemCount: teams.length,
-               itemBuilder: (ctx, i) => _buildRankListItem(i + 1, teams[i].name, teams[i].captainImageUrl, false, i + 1, teams[i].points),
-             );
+          return ListView.builder(
+            padding: const EdgeInsets.all(16),
+            itemCount: teams.length,
+            itemBuilder: (ctx, i) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: _buildRankListItem(teams[i], i + 1, totalTeams: totalTeams),
+            ),
+          );
         }
 
-        // Mapping Podium: Center=Rank 1 (index 0), Left=Rank 2 (index 1), Right=Rank 3 (index 2)
-        // Adjust indices for visual order: Left(1), Center(0), Right(2)
-        
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
           child: Column(
@@ -412,7 +345,7 @@ class ChampionScreenState extends State<ChampionScreen>
                  final rank = index + 4;
                  return Padding(
                    padding: const EdgeInsets.only(bottom: 12),
-                   child: _buildRankListItem(rank, team.name, team.captainImageUrl, false, rank, team.points),
+                   child: _buildRankListItem(team, rank, totalTeams: totalTeams),
                  );
               }),
 
@@ -550,27 +483,44 @@ class ChampionScreenState extends State<ChampionScreen>
     );
   }
 
-  Widget _buildRankListItem(int rank, String name, String logo, bool isMyTeam, int currentRank, int points) {
+  Widget _buildRankListItem(Team team, int rank, {bool isMyTeam = false, int totalTeams = 10}) {
+    // Promotion/Relegation status color code
+    Color? statusColor;
+    if (rank <= 3) statusColor = Colors.green.withOpacity(0.08); // Promotion zone
+    if (rank >= totalTeams - 2 && totalTeams > 5) statusColor = Colors.red.withOpacity(0.08); // Relegation zone
+
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(15), // 15px
-        border: isMyTeam ? Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)) : null,
+        color: statusColor ?? AppTheme.cardBackground,
+        borderRadius: BorderRadius.circular(15),
+        border: isMyTeam ? Border.all(color: AppTheme.neonGreen.withOpacity(0.5)) : null,
       ),
       child: Row(
         children: [
+          // Visual Indicator Line for Promotion/Relegation
+          if (statusColor != null)
+            Container(
+              width: 3,
+              height: 25,
+              margin: const EdgeInsets.only(right: 12),
+              decoration: BoxDecoration(
+                color: rank <= 3 ? Colors.green : Colors.red,
+                borderRadius: BorderRadius.circular(2),
+              ),
+            ),
+
           Container(
             width: 40,
             height: 40,
-            decoration: BoxDecoration(
+            decoration: const BoxDecoration(
               shape: BoxShape.circle,
               color: Colors.white,
             ),
             padding: const EdgeInsets.all(3),
             child: ClipOval(
               child: ShimmerImage(
-                imageUrl: logo,
+                imageUrl: team.captainImageUrl,
                 width: 34,
                 height: 34,
                 fit: BoxFit.contain,
@@ -583,7 +533,7 @@ class ChampionScreenState extends State<ChampionScreen>
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  name,
+                  team.name,
                   style: const TextStyle(
                     color: AppTheme.textPrimary,
                     fontSize: 16,
@@ -591,31 +541,11 @@ class ChampionScreenState extends State<ChampionScreen>
                     fontFamily: 'Agency FB',
                   ),
                 ),
-                // Real Faces Stack
-                SizedBox(
-                  width: 80,
-                  height: 20,
-                  child: Stack(
-                    children: List.generate(4, (index) => Positioned(
-                         left: index * 14.0, 
-                         child: Container(
-                           width: 20,
-                           height: 20,
-                           decoration: BoxDecoration(
-                             border: Border.all(color: AppTheme.cardBackground, width: 1.5),
-                             shape: BoxShape.circle,
-                           ),
-                           child: ClipRRect(
-                             borderRadius: BorderRadius.circular(10),
-                             child: CachedNetworkImage(
-                               imageUrl: 'https://randomuser.me/api/portraits/men/${index + rank * 5}.jpg',
-                               fit: BoxFit.cover,
-                               placeholder: (context, url) => Container(color: Colors.grey[800]),
-                               errorWidget: (context, url, error) => Container(color: Colors.grey[600]), 
-                             ),
-                           ),
-                         )
-                       ),)
+                Text(
+                  'MP: ${team.matchesPlayed} | W: ${team.wins} | D: ${team.draws} | L: ${team.losses}',
+                  style: TextStyle(
+                    color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                    fontSize: 10,
                   ),
                 ),
               ],
@@ -642,9 +572,9 @@ class ChampionScreenState extends State<ChampionScreen>
                     ),
                   ),
                   Text(
-                    '$points pts',
+                    '${team.points} pts',
                     style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.5),
+                      color: Colors.white.withOpacity(0.5),
                       fontSize: 10,
                     ),
                   ),
@@ -658,25 +588,54 @@ class ChampionScreenState extends State<ChampionScreen>
 
 
   Widget _buildChampionshipsTab() {
-    final championships = Championship.getMockChampionships();
-    return ListView.builder(
-      padding: const EdgeInsets.symmetric(vertical: 16),
-      itemCount: championships.length,
-      itemBuilder: (context, index) {
-        final championship = championships[index];
-        return Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8), // Margin fix: 16 horz, 8 vert
-          child: GestureDetector(
-            onTap: () {
-               Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => ChampionshipDetailsScreen(championship: championship),
+    return StreamBuilder<List<Championship>>(
+      stream: DatabaseService().getChampionshipsStream(
+        governorate: _selectedLocation,
+        sportType: _selectedSport,
+      ),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+        }
+
+        final championships = snapshot.data ?? [];
+
+        if (championships.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                Icon(Icons.emoji_events_outlined, color: Colors.white.withOpacity(0.1), size: 64),
+                const SizedBox(height: 16),
+                Text(
+                  "No championships in $_selectedLocation yet",
+                  style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 16),
                 ),
-              );
-            },
-            child: ChampionshipCard(championship: championship), 
-          ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          itemCount: championships.length,
+          itemBuilder: (context, index) {
+            final championship = championships[index];
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              child: GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => ChampionshipDetailsScreen(championship: championship),
+                    ),
+                  );
+                },
+                child: ChampionshipCard(championship: championship),
+              ),
+            );
+          },
         );
       },
     );

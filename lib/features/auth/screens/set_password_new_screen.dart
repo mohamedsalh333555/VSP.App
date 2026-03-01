@@ -108,182 +108,184 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
-          bottom: false,
-          child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
+          bottom: true,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  const SizedBox(height: 20),
 
-              // Back Button
-              IconButton(
-                  icon: const Icon(
-                    Icons.arrow_back,
-                    color: AppTheme.textPrimary,
+                  // Back Button
+                  IconButton(
+                      icon: const Icon(
+                        Icons.arrow_back,
+                        color: AppTheme.textPrimary,
+                      ),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
                   ),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
 
-              const SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-              // Title
-              Center(
-                child: const Text(
-                  'Set Your Password',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Progress Indicator
-              _ProgressIndicator(currentStep: 3),
-
-              const SizedBox(height: 40),
-
-              // Password Label
-              const Text(
-                'Password',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // Password Input
-              CustomTextField(
-                controller: _passwordController,
-                hintText: '******************',
-                obscureText: _obscurePassword,
-                suffixIcon: IconButton(
-                  icon: Icon(
-                    _obscurePassword
-                        ? Icons.visibility_off_outlined
-                        : Icons.visibility_outlined,
-                    color: AppTheme.textSecondary,
-                  ),
-                  onPressed: () {
-                    setState(() => _obscurePassword = !_obscurePassword);
-                  },
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Password Requirements
-              _PasswordRequirement(
-                text: 'Must be at least 8 characters',
-                isMet: _hasMinLength,
-              ),
-              const SizedBox(height: 12),
-              _PasswordRequirement(
-                text: 'Must contain at least 1 number',
-                isMet: _hasNumber,
-              ),
-              const SizedBox(height: 12),
-              _PasswordRequirement(
-                text: 'Must contain at least 1 symbol',
-                isMet: _hasSymbol,
-              ),
-
-              const Spacer(),
-
-              // Continue Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: (_isLoading || (!_isPasswordValid && !AppConfig.demoMode))
-                      ? null
-                      : () {
-                          _handleContinue();
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: (_isPasswordValid || AppConfig.demoMode)
-                        ? AppTheme.neonGreen
-                        : AppTheme.textSecondary,
-                    foregroundColor: AppTheme.darkBackground,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                  // Title
+                  Center(
+                    child: const Text(
+                      'Set Your Password',
+                      style: TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 32,
+                        fontWeight: FontWeight.bold,
+                      ),
                     ),
-                    elevation: 0,
                   ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.darkBackground,
+
+                  const SizedBox(height: 16),
+
+                  // Progress Indicator
+                  _ProgressIndicator(currentStep: 3),
+
+                  const SizedBox(height: 40),
+
+                  // Password Label
+                  const Text(
+                    'Password',
+                    style: TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 14,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+
+                  const SizedBox(height: 12),
+
+                  // Password Input
+                  CustomTextField(
+                    controller: _passwordController,
+                    hintText: '******************',
+                    obscureText: _obscurePassword,
+                    suffixIcon: IconButton(
+                      icon: Icon(
+                        _obscurePassword
+                            ? Icons.visibility_off_outlined
+                            : Icons.visibility_outlined,
+                        color: AppTheme.textSecondary,
+                      ),
+                      onPressed: () {
+                        setState(() => _obscurePassword = !_obscurePassword);
+                      },
+                    ),
+                  ),
+
+                  const SizedBox(height: 24),
+
+                  // Password Requirements
+                  _PasswordRequirement(
+                    text: 'Must be at least 8 characters',
+                    isMet: _hasMinLength,
+                  ),
+                  const SizedBox(height: 12),
+                  _PasswordRequirement(
+                    text: 'Must contain at least 1 number',
+                    isMet: _hasNumber,
+                  ),
+                  const SizedBox(height: 12),
+                  _PasswordRequirement(
+                    text: 'Must contain at least 1 symbol',
+                    isMet: _hasSymbol,
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Continue Button
+                  SizedBox(
+                    width: double.infinity,
+                    height: 56,
+                    child: ElevatedButton(
+                      onPressed: (_isLoading || (!_isPasswordValid && !AppConfig.demoMode))
+                          ? null
+                          : () {
+                              _handleContinue();
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: (_isPasswordValid || AppConfig.demoMode)
+                            ? AppTheme.neonGreen
+                            : AppTheme.textSecondary,
+                        foregroundColor: AppTheme.darkBackground,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        elevation: 0,
+                      ),
+                      child: _isLoading
+                          ? const SizedBox(
+                              height: 24,
+                              width: 24,
+                              child: CircularProgressIndicator(
+                                strokeWidth: 2,
+                                valueColor: AlwaysStoppedAnimation<Color>(
+                                  AppTheme.darkBackground,
+                                ),
+                              ),
+                            )
+                          : const Text(
+                              'Continue',
+                              style: TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+
+                  const SizedBox(height: 40),
+
+                  // Terms and Privacy
+                  Center(
+                    child: RichText(
+                      textAlign: TextAlign.center,
+                      text: const TextSpan(
+                        style: TextStyle(
+                          color: AppTheme.textSecondary,
+                          fontSize: 12,
+                        ),
+                        children: [
+                          TextSpan(
+                              text: 'By using VSP , you agree to the\nTerms and '),
+                          TextSpan(
+                            text: 'Privacy Policy.',
+                            style: TextStyle(
+                              color: AppTheme.neonGreen,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
-                        )
-                      : const Text(
-                          'Continue',
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Terms and Privacy
-              Center(
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: const TextSpan(
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                    ),
-                    children: [
-                      TextSpan(
-                          text: 'By using VSP , you agree to the\nTerms and '),
-                      TextSpan(
-                        text: 'Privacy Policy.',
-                        style: TextStyle(
-                          color: AppTheme.neonGreen,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        ],
                       ),
-                    ],
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 40),
+                  const SizedBox(height: 40),
 
-              // Bottom Indicator
-              Center(
-                child: Container(
-                  width: 134,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: AppTheme.textPrimary,
-                    borderRadius: BorderRadius.circular(100),
+                  // Bottom Indicator
+                  Center(
+                    child: Container(
+                      width: 134,
+                      height: 5,
+                      decoration: BoxDecoration(
+                        color: AppTheme.textPrimary,
+                        borderRadius: BorderRadius.circular(100),
+                      ),
+                    ),
                   ),
-                ),
-              ),
 
-              const SizedBox(height: 20),
-            ],
+                  const SizedBox(height: 20),
+                ],
+              ),
+            ),
           ),
         ),
-      ),
       ),
     );
   }

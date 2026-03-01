@@ -6,7 +6,6 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
-import 'payment_gateway_screen.dart';
 import 'booking_success_screen.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
@@ -31,18 +30,106 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isBallRented = false;
   bool _isPrivate = false;
   bool _isLoading = false;
+  int _currentPlayers = 1;
+
+  @override
+  void initState() {
+    super.initState();
+    _generateDynamicTimeSlots();
+  }
   
   // Pricing Constants
   // Pricing will be derived from stadium
   double get _slotPrice => widget.stadium.basePrice / 2;
-  static const double _ballPrice = 20.0;
+  double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
 
-  // Mock Time Slots (30 min intervals)
-  final List<String> _timeSlots = [
-    '06:00 Pm', '06:30 Pm', '07:00 Pm', '07:30 Pm',
-    '08:00 Pm', '08:30 Pm', '09:00 Pm', '09:30 Pm',
-    '10:00 Pm', '10:30 Pm'
-  ];
+  // Dynamic Time Slots
+  List<String> _timeSlots = [];
+
+  void _generateDynamicTimeSlots() {
+    try {
+      final features = widget.stadium.features;
+      String startStr = '02:00 PM';
+      String endStr = '11:00 PM';
+
+      if (features is Map) {
+        if (features['workingHours'] != null) {
+          startStr = features['workingHours']['start'] ?? startStr;
+          endStr = features['workingHours']['end'] ?? endStr;
+        }
+      }
+
+      int startMinutes = _parseTimeToMinutes(startStr);
+      int endMinutes = _parseTimeToMinutes(endStr);
+
+      // Handle overnight operating hours (e.g., 2 PM to 2 AM)
+      if (endMinutes < startMinutes) {
+        endMinutes += 24 * 60;
+      }
+
+      // Check for break time
+      int? breakStart;
+      int? breakEnd;
+      if (features is Map && features['breakTime'] != null) {
+        breakStart = _parseTimeToMinutes(features['breakTime']['start'] ?? '');
+        breakEnd = _parseTimeToMinutes(features['breakTime']['end'] ?? '');
+      }
+
+      final List<String> slots = [];
+      for (int m = startMinutes; m <= endMinutes; m += 30) {
+        // Check if this slot overlaps with break time
+        if (breakStart != null && breakEnd != null) {
+          // Check if m (start of slot) or m+30 (end of slot) is within break
+          // If break is during the slot, we skip it
+          if ((m >= breakStart && m < breakEnd) || (m + 30 > breakStart && m + 30 <= breakEnd)) {
+            continue;
+          }
+        }
+
+        slots.add(_formatMinutesToTime(m % (24 * 60)));
+      }
+
+      setState(() {
+        _timeSlots = slots;
+      });
+    } catch (e) {
+      debugPrint('Error generating time slots: $e');
+      // Fallback
+      setState(() {
+        _timeSlots = ['02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'];
+      });
+    }
+  }
+
+  int _parseTimeToMinutes(String timeStr) {
+    if (timeStr.isEmpty) return 0;
+    try {
+      final time = timeStr.trim().toUpperCase();
+      final isPm = time.contains('PM');
+      final isAm = time.contains('AM');
+      
+      final cleanTime = time.replaceAll('PM', '').replaceAll('AM', '').trim();
+      final parts = cleanTime.split(':');
+      int hour = int.parse(parts[0]);
+      int minute = parts.length > 1 ? int.parse(parts[1]) : 0;
+
+      if (isPm && hour != 12) hour += 12;
+      if (isAm && hour == 12) hour = 0;
+      
+      return hour * 60 + minute;
+    } catch (e) {
+      return 0;
+    }
+  }
+
+  String _formatMinutesToTime(int totalMinutes) {
+    int hour = totalMinutes ~/ 60;
+    int minute = totalMinutes % 60;
+    final period = hour >= 12 ? 'PM' : 'AM';
+    if (hour > 12) hour -= 12;
+    if (hour == 0) hour = 12;
+    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
+  }
 
   double get _totalPrice {
     double total = _selectedTimeSlots.length * _slotPrice;
@@ -52,7 +139,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return total;
   }
 
-  void _onTimeSlotTap(String slot) {
+  void _onTimeSlotTap(String slot, bool isBooked) {
+    if (isBooked) return;
     setState(() {
       if (_selectedTimeSlots.contains(slot)) {
         _selectedTimeSlots.remove(slot);
@@ -60,6 +148,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         _selectedTimeSlots.add(slot);
       }
     });
+  }
+
+  DateTime _getSlotDateTime(String slot) {
+    final startMin = _parseTimeToMinutes(slot);
+    return DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, startMin ~/ 60, startMin % 60);
+  }
+
+  bool _isSlotBooked(String slot, List<Booking> existingBookings) {
+    final slotStartTime = _getSlotDateTime(slot);
+    final slotEndTime = slotStartTime.add(const Duration(hours: 1));
+
+    for (var booking in existingBookings) {
+      // Overlap logic: (StartA < EndB) && (EndA > StartB)
+      if (slotStartTime.isBefore(booking.endTime) && slotEndTime.isAfter(booking.startTime)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   void _showCalendarModal() {
@@ -413,49 +519,84 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                   const SizedBox(height: 16),
                   
-                  ...List.generate(_timeSlots.length - 1, (index) {
-                    final startTime = _timeSlots[index];
-                    final endTime = _timeSlots[index + 1];
-                    final slotLabel = '$startTime  -  $endTime';
-                                                                    // Image shows: 06:30 Pm < 06:00 Pm. Wait, standard english is 6:00 - 6:30.
-                                                                    // The image 1 shows "06:30 Pm < 06:00 Pm" which is odd. It represents the interval.
-                                                                    // I will follow the image format literally: End < Start or Start < End?
-                                                                    // Image: "06:30 Pm < 06:00 Pm". This implies End Time < Start Time visually? That's confusing. 
-                                                                    // Or maybe it's RTL UI? "Start < End"? 06:00 < 06:30?
-                                                                    // If RTL: 06:00 > 06:30. 
-                                                                    // Let's assume the text is "End Time  <  Start Time" or just stick to "Start - End".
-                                                                    // I'll stick to image literal: "06:30 Pm < 06:00 Pm". 
-                    
-                    final isSelected = _selectedTimeSlots.contains(startTime); // Using startTime as Key
+                  StreamBuilder<List<Booking>>(
+                    stream: Provider.of<BookingProvider>(context, listen: false)
+                        .getBookingsForStadium(widget.stadium.id, _selectedDate),
+                    builder: (context, snapshot) {
+                      final existingBookings = snapshot.data ?? [];
+                      
+                      return Column(
+                        children: List.generate(_timeSlots.isEmpty ? 0 : _timeSlots.length - 1, (index) {
+                          final startTime = _timeSlots[index];
+                          final endTime = _timeSlots[index + 1];
+                          final slotLabel = '$startTime  -  $endTime';
+                          
+                          final isBooked = _isSlotBooked(startTime, existingBookings);
+                          final isSelected = _selectedTimeSlots.contains(startTime);
 
-                    return GestureDetector(
-                      onTap: () => _onTimeSlotTap(startTime),
-                      child: Container(
-                        margin: const EdgeInsets.only(bottom: 12),
-                        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
-                        decoration: BoxDecoration(
-                          color: isSelected ? const Color(0xFF1C3A00) : Colors.transparent, // Dark Green bg for selected
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(
-                            color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3),
-                          ),
-                        ),
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.center,
-                          children: [
-                            Text(
-                              slotLabel, // I'll refine this string construction
-                              style: TextStyle(
-                                color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
+                          final slotDateTime = _getSlotDateTime(startTime);
+                          final isPast = slotDateTime.isBefore(DateTime.now());
+
+                          return GestureDetector(
+                            onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, isBooked),
+                            child: Container(
+                              alignment: Alignment.center,
+                              margin: const EdgeInsets.only(bottom: 12),
+                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                              decoration: BoxDecoration(
+                                color: (isBooked || isPast)
+                                    ? Colors.grey.withValues(alpha: 0.1) 
+                                    : (isSelected ? const Color(0xFF1C3A00) : Colors.transparent),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(
+                                  color: (isBooked || isPast)
+                                      ? Colors.grey.withValues(alpha: 0.2)
+                                      : (isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3)),
+                                ),
+                              ),
+                              child: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Text(
+                                    slotLabel,
+                                    style: TextStyle(
+                                      color: (isBooked || isPast)
+                                          ? Colors.grey.withValues(alpha: 0.4) 
+                                          : (isSelected ? AppTheme.neonGreen : AppTheme.textSecondary),
+                                      fontSize: 16,
+                                      fontWeight: FontWeight.bold,
+                                      decoration: isBooked ? TextDecoration.lineThrough : null,
+                                    ),
+                                  ),
+                                  if (isBooked) ...[
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'BOOKED',
+                                      style: TextStyle(
+                                        color: Colors.red,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ] else if (isPast) ...[
+                                    const SizedBox(width: 12),
+                                    const Text(
+                                      'EXPIRED',
+                                      style: TextStyle(
+                                        color: Colors.grey,
+                                        fontSize: 12,
+                                        fontWeight: FontWeight.bold,
+                                      ),
+                                    ),
+                                  ],
+                                ],
                               ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  }),
+                          );
+                        }),
+                      );
+                    },
+                  ),
                 ],
               ),
             ),
@@ -496,6 +637,58 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ],
                 ),
                 const SizedBox(height: 12),
+
+                // Current Players Counter (ONLY for Public Matches)
+                if (widget.bookingType.toLowerCase() == 'team') ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Current Players with You',
+                            style: TextStyle(
+                              color: AppTheme.textPrimary,
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              fontFamily: 'Agency FB',
+                            ),
+                          ),
+                          Text(
+                            'How many players are already in your group?',
+                            style: TextStyle(
+                              color: AppTheme.textSecondary,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      Row(
+                        children: [
+                          _buildCounterButton(Icons.remove, () {
+                            if (_currentPlayers > 1) setState(() => _currentPlayers--);
+                          }),
+                          Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            child: Text(
+                              '$_currentPlayers',
+                              style: const TextStyle(
+                                color: AppTheme.textPrimary,
+                                fontSize: 18,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          _buildCounterButton(Icons.add, () {
+                            if (_currentPlayers < 22) setState(() => _currentPlayers++);
+                          }),
+                        ],
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 24),
+                ],
                 
                 // Rent Ball Toggle
                 GestureDetector(
@@ -507,7 +700,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rent Ball / +${_ballPrice.toInt()} EGP',
+                            'Rent Ball (+${_ballPrice.toInt()} EGP)',
                             style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 18,
@@ -570,89 +763,81 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                       ],
                     ),
-                    ElevatedButton(
-                      onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
-                        // Build start and end times from selected slots
-                        final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
-                        final firstSlot = sortedSlots.first;
-                        final lastSlot = sortedSlots.last;
-                        
-                        // Parse times (simplified - assumes PM times)
-                        int parseHour(String time) {
-                          final parts = time.split(':');
-                          int hour = int.parse(parts[0]);
-                          if (time.toLowerCase().contains('pm') && hour != 12) hour += 12;
-                          return hour;
-                        }
-                        int parseMinute(String time) {
-                          final parts = time.split(':');
-                          return int.parse(parts[1].replaceAll(RegExp(r'[^0-9]'), '').substring(0, 2));
-                        }
-                        
-                        final startHour = parseHour(firstSlot);
-                        final startMinute = parseMinute(firstSlot);
-                        final endHour = parseHour(lastSlot);
-                        final endMinute = parseMinute(lastSlot) + 30;
-                        
-                        final startTime = DateTime(
-                          _selectedDate.year,
-                          _selectedDate.month,
-                          _selectedDate.day,
-                          startHour,
-                          startMinute,
-                        );
-                        
-                        final endTime = DateTime(
-                          _selectedDate.year,
-                          _selectedDate.month,
-                          _selectedDate.day,
-                          endMinute >= 60 ? endHour + 1 : endHour,
-                          endMinute >= 60 ? endMinute - 60 : endMinute,
-                        );
- 
-                        // Convert string bookingType to enum
-                        BookingType bookingTypeEnum;
-                        switch (widget.bookingType.toLowerCase()) {
-                          case 'team':
-                            bookingTypeEnum = BookingType.team;
-                            break;
-                          case 'challenge':
-                            bookingTypeEnum = BookingType.challenge;
-                            break;
-                          default:
-                            bookingTypeEnum = BookingType.personal;
-                        }
- 
-                        // Create BookingDraft
-                        final draft = BookingDraft(
-                          stadiumId: widget.stadium.id,
-                          stadiumName: widget.stadium.name,
-                          stadiumImageUrl: widget.stadium.imageUrl,
-                          ownerId: widget.stadium is Map && (widget.stadium as dynamic).containsKey('ownerId') 
-                              ? (widget.stadium as dynamic)['ownerId'] ?? '' : '', // Fallback for ownerId
-                          startTime: startTime,
-                          endTime: endTime,
-                          bookingType: bookingTypeEnum,
-                          opponentTeamId: widget.opponentTeam?.id,
-                          opponentTeamName: widget.opponentTeam?.name,
-                          isPrivate: _isPrivate,
-                          rentBall: _isBallRented,
-                          totalPrice: _totalPrice,
-                          currency: 'EGP',
-                        );
- 
-                        if (AppConfig.enableOnlinePayment) {
-                          // Navigate to PaymentGatewayScreen
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentGatewayScreen(
-                                bookingDraft: draft,
-                              ),
-                            ),
+                    const SizedBox(width: 16),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+                          // Build start and end times from selected slots
+                          final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                          final firstSlot = sortedSlots.first;
+                          final lastSlot = sortedSlots.last;
+                          
+                          // Parse times
+                          int parseHour(String time) {
+                            final parts = time.split(':');
+                            int hour = int.parse(parts[0]);
+                            if (time.toLowerCase().contains('pm') && hour != 12) hour += 12;
+                            return hour;
+                          }
+                          int parseMinute(String time) {
+                            final parts = time.split(':');
+                            return int.parse(parts[1].replaceAll(RegExp(r'[^0-9]'), '').substring(0, 2));
+                          }
+                          
+                          final startHour = parseHour(firstSlot);
+                          final startMinute = parseMinute(firstSlot);
+                          final endHour = parseHour(lastSlot);
+                          final endMinute = parseMinute(lastSlot) + 30;
+                          
+                          final startTime = DateTime(
+                            _selectedDate.year,
+                            _selectedDate.month,
+                            _selectedDate.day,
+                            startHour,
+                            startMinute,
                           );
-                        } else {
-                          // DIRECT BOOKING (Cash-only production logic)
+                          
+                          final endTime = DateTime(
+                            _selectedDate.year,
+                            _selectedDate.month,
+                            _selectedDate.day,
+                            endMinute >= 60 ? endHour + (endMinute ~/ 60) : endHour,
+                            endMinute % 60,
+                          );
+  
+                          // Convert string bookingType to enum
+                          BookingType bookingTypeEnum;
+                          switch (widget.bookingType.toLowerCase()) {
+                            case 'team':
+                              bookingTypeEnum = BookingType.team;
+                              break;
+                            case 'challenge':
+                              bookingTypeEnum = BookingType.challenge;
+                              break;
+                            default:
+                              bookingTypeEnum = BookingType.personal;
+                          }
+  
+                          // Create BookingDraft
+                          final draft = BookingDraft(
+                            stadiumId: widget.stadium.id,
+                            stadiumName: widget.stadium.name,
+                            stadiumImageUrl: widget.stadium.imageUrl,
+                            ownerId: widget.stadium.ownerId,
+                            startTime: startTime,
+                            endTime: endTime,
+                            bookingType: bookingTypeEnum,
+                            opponentTeamId: widget.opponentTeam?.id,
+                            opponentTeamName: widget.opponentTeam?.name,
+                            isPrivate: _isPrivate,
+                            rentBall: _isBallRented,
+                            totalPrice: _totalPrice,
+                            currency: 'EGP',
+                            currentPlayers: _currentPlayers,
+                            maxPlayers: (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10,
+                          );
+  
+                          // DIRECT BOOKING (Cash-only)
                           setState(() => _isLoading = true);
                           try {
                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -690,21 +875,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               );
                             }
                           }
-                        }
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonGreen,
-                        foregroundColor: AppTheme.darkBackground,
-                        disabledBackgroundColor: Colors.grey[800],
-                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.neonGreen,
+                          foregroundColor: AppTheme.darkBackground,
+                          disabledBackgroundColor: Colors.grey[800],
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                        ),
+                        child: _isLoading 
+                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                          : const Text(
+                              'Confirm Booking',
+                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                            ),
                       ),
-                      child: _isLoading 
-                        ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text(
-                            AppConfig.enableOnlinePayment ? 'Booking Confirmation' : 'Confirm Cash Booking',
-                            style: const TextStyle(fontWeight: FontWeight.bold),
-                          ),
                     ),
                   ],
                 ),
@@ -712,6 +897,22 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildCounterButton(IconData icon, VoidCallback onTap) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          color: AppTheme.cardBackground,
+          borderRadius: BorderRadius.circular(8),
+          border: Border.all(color: Colors.white24),
+        ),
+        child: Icon(icon, color: AppTheme.neonGreen, size: 20),
       ),
     );
   }

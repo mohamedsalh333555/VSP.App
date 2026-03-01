@@ -1,5 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/database_service.dart';
 
 class CreateTournamentScreen extends StatefulWidget {
   const CreateTournamentScreen({super.key});
@@ -33,6 +36,101 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _trophyMedals = true;
   bool _redCardSuspension = true;
   bool _fairPlayScoring = false;
+  bool _isLoading = false;
+
+  DateTime _startDate = DateTime.now().add(const Duration(days: 7));
+  DateTime _endDate = DateTime.now().add(const Duration(days: 37));
+
+  Future<void> _selectDate(BuildContext context, bool isStart) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: isStart ? _startDate : _endDate,
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: ThemeData.dark().copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: AppTheme.neonGreen,
+              onPrimary: Colors.black,
+              surface: AppTheme.cardBackground,
+              onSurface: Colors.white,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        if (isStart) _startDate = picked;
+        else _endDate = picked;
+      });
+    }
+  }
+
+  Future<void> _handleCreateTournament() async {
+    if (_nameController.text.trim().isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text('Please enter a tournament name')),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final champData = {
+        'name': _nameController.text.trim(),
+        'type': _selectedTypeTournament,
+        'sportType': _selectedSport,
+        'startDate': _startDate.toIso8601String(),
+        'endDate': _endDate.toIso8601String(),
+        'governorate': auth.governorate,
+        'ownerId': auth.currentUser?.uid,
+        'image': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+        'teamsCount': int.parse(_selectedNumTeams),
+        'maxTeams': int.parse(_selectedNumTeams),
+        'joinedTeams': [],
+        'prize': _prizeController.text,
+        'fees': _feesController.text,
+        'rules': _instructionsController.text,
+        'settings': {
+          'maxPlayers': _selectedMaxPlayers,
+          'minPlayers': _selectedMinPlayers,
+          'winningPoints': _winningPointsController.text,
+          'drawPoints': _breakEvenPointsController.text,
+          'lossPoints': _lossPointsController.text,
+          'matchDuration': _durationController.text,
+          'isBackAndForth': _selectedBackForth == 'Yes',
+          'trophyMedals': _trophyMedals,
+          'redCardSuspension': _redCardSuspension,
+          'fairPlayScoring': _fairPlayScoring,
+        }
+      };
+
+      final id = await DatabaseService().createChampionship(champData);
+      
+      if (id != null && mounted) {
+        Navigator.pop(context);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Tournament Created Successfully!', style: TextStyle(color: Colors.black)),
+            backgroundColor: AppTheme.neonGreen,
+          ),
+        );
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e')),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -73,6 +171,39 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 16),
               _buildInputLabel('Type Sport'),
               _buildDropdown(['Football', 'Basketball', 'Tennis'], _selectedSport, (v) => setState(() => _selectedSport = v!)),
+              const SizedBox(height: 24),
+
+              // --- Dates ---
+              _buildSectionTitle('Tournament Dates'),
+              Row(
+                children: [
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputLabel('Start Date'),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, true),
+                          child: _buildDateDisplay(_startDate),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 16),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildInputLabel('End Date'),
+                        GestureDetector(
+                          onTap: () => _selectDate(context, false),
+                          child: _buildDateDisplay(_endDate),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
               const SizedBox(height: 24),
 
               // --- Upload Cover ---
@@ -219,7 +350,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           width: double.infinity,
           height: 56,
           child: ElevatedButton(
-            onPressed: () => Navigator.pop(context),
+            onPressed: _isLoading ? null : _handleCreateTournament,
             style: ElevatedButton.styleFrom(
               backgroundColor: AppTheme.neonGreen,
               foregroundColor: Colors.black,
@@ -228,13 +359,15 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               ),
               elevation: 0,
             ),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
+            child: _isLoading 
+              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
+              : const Text(
+                  'Confirm',
+                  style: TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
           ),
         ),
       ),
@@ -312,6 +445,26 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           }).toList(),
           onChanged: onChanged,
         ),
+      ),
+    );
+  }
+
+  Widget _buildDateDisplay(DateTime date) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(12),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+        children: [
+          Text(
+            "${date.day}/${date.month}/${date.year}",
+            style: const TextStyle(color: Colors.white),
+          ),
+          const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 18),
+        ],
       ),
     );
   }

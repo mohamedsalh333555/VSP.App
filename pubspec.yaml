@@ -41,19 +41,24 @@ dependencies:
   confetti: ^0.7.0
   cached_network_image: ^3.3.1
   shimmer: ^3.0.0
+  share_plus: ^12.0.1
   
   # Firebase
   firebase_core: ^3.8.1
   firebase_auth: ^5.3.3
+  google_sign_in: ^6.2.1
   cloud_firestore: ^5.5.2
   firebase_storage: ^12.3.6
   image_picker: ^1.0.7
   firebase_messaging: ^15.1.6
+  file_picker: ^8.0.0
   flutter_localizations:
     sdk: flutter
   geolocator: ^13.0.2
   http: ^1.1.0
   path: ^1.9.0
+  timeago: ^3.7.1
+  image: ^4.8.0
 
 dev_dependencies:
   flutter_test:
@@ -71,9 +76,11 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
-  adaptive_icon_background: "#000000"
-  adaptive_icon_foreground: "assets/images/logo.png"
-  adaptive_icon_foreground_inset: 160
+  # إعدادات Adaptive Icon (أندرويد 8+)
+  adaptive_icon_background: "#000000"  # خلفية سوداء (مثل ثيم التطبيق)
+  adaptive_icon_foreground: "assets/images/logo_foreground.png"
+  # هذا الرقم هو السر: كلما قل الرقم، كبر اللوجو. (الافتراضي 160، سنجعله 80)
+  adaptive_icon_foreground_inset: 80 
   min_sdk_android: 21
 
 # For information on the generic Dart part of this file, see the

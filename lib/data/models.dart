@@ -1,9 +1,12 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 /// Stadium data model
 class Stadium {
   final String id;
   final String name;
   final String location;
   final String imageUrl;
+  final List<String> images;
   final String type; // Football, Basketball, etc.
   final String size; // 11 VS 11, 5 VS 5, etc.
   final int baths;
@@ -19,20 +22,25 @@ class Stadium {
   final double rating;
   final int reviewsCount;
   final String description;
-  final List<String> features;
+  final dynamic features; // Can be List<String> or Map<String, dynamic>
   final List<String> policies;
   final String pitchCondition;
   final bool hasJerash;
   final bool hasSeats;
   final bool hasBall;
-  final double ballRentPrice;
+  final double ballPrice;
   final String notes; // ✅ Owner's custom pitch condition notes
+  final String? contractUrl;
+  final String? ownerIdUrl;
+  final bool isVerified;
+  final String ownerId; // ✅ Stadium owner's UID
 
   Stadium({
     required this.id,
     required this.name,
     required this.location,
     required this.imageUrl,
+    this.images = const [],
     required this.type,
     required this.size,
     required this.baths,
@@ -46,15 +54,50 @@ class Stadium {
     this.rating = 4.5,
     this.reviewsCount = 52,
     this.description = '',
-    this.features = const [],
+    this.features = const {},
     this.policies = const [],
     this.pitchCondition = 'Excellent',
     this.hasJerash = true,
     this.hasSeats = true,
     this.hasBall = false,
-    this.ballRentPrice = 20,
+    this.ballPrice = 0.0,
     this.notes = '', // ✅ Default empty notes
+    this.contractUrl,
+    this.ownerIdUrl,
+    this.isVerified = false,
+    this.ownerId = '', // ✅ Default empty ownerId
   }) : basePrice = basePrice ?? pricePerHour;
+
+  static List<String> parseFeatures(dynamic data) {
+    if (data is List) return List<String>.from(data);
+    if (data is! Map) return [];
+    
+    final List<String> result = [];
+    final map = data as Map<String, dynamic>;
+    
+    map.forEach((key, value) {
+      if (value == true) {
+        // Capitalize key
+        String label = key[0].toUpperCase() + key.substring(1);
+        // Special case for Jerash
+        if (key == 'hasJerash') label = 'Professional Lighting';
+        if (key == 'hasSeats') label = 'Spectator Seats';
+        
+        // Don't add if it's technical bool like hasBall (handled separately in UI)
+        if (key != 'hasBall' && key != 'hasJerash' && key != 'hasSeats') {
+           result.add(label);
+        }
+      } else if (key == 'bathOption' && value is String && value != 'None' && value != 'no') {
+        result.add('Bathrooms ($value)');
+      }
+    });
+
+    // Add lighting/seats if bools are true
+    if (map['hasJerash'] == true) result.add('Professional Lighting');
+    if (map['hasSeats'] == true) result.add('Spectator Seats');
+    
+    return result;
+  }
 
   // Mock data
   static List<Stadium> getMockStadiums() {
@@ -87,7 +130,13 @@ class Stadium {
         hasJerash: true,
         hasSeats: true,
         hasBall: true,
-        ballRentPrice: 20,
+        ballPrice: 20,
+        isVerified: true,
+        images: [
+          'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&h=600&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&h=600&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80',
+        ],
       ),
       Stadium(
         id: '2',
@@ -116,7 +165,12 @@ class Stadium {
         hasJerash: false,
         hasSeats: true,
         hasBall: true,
-        ballRentPrice: 25,
+        ballPrice: 25,
+        isVerified: true,
+        images: [
+          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80',
+          'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&h=600&fit=crop&q=80',
+        ],
       ),
       Stadium(
         id: '3',
@@ -141,7 +195,8 @@ class Stadium {
         hasJerash: true,
         hasSeats: true,
         hasBall: true,
-        ballRentPrice: 30,
+        ballPrice: 20,
+        isVerified: true,
       ),
       Stadium(
         id: '4',
@@ -166,7 +221,7 @@ class Stadium {
         hasJerash: true,
         hasSeats: true,
         hasBall: true,
-        ballRentPrice: 25,
+        ballPrice: 25,
       ),
       Stadium(
         id: '5',
@@ -191,7 +246,7 @@ class Stadium {
         hasJerash: true,
         hasSeats: true,
         hasBall: true,
-        ballRentPrice: 35,
+        ballPrice: 20,
       ),
     ];
   }
@@ -207,6 +262,9 @@ class Stadium {
       type: data['type'] ?? 'Football',
       size: data['size'] ?? '5 VS 5',
       imageUrl: data['imageUrl'] ?? '',
+      images: (data['features'] is Map && data['features']['allImages'] is List && (data['features']['allImages'] as List).isNotEmpty)
+          ? List<String>.from(data['features']['allImages'])
+          : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl']] : []),
       baths: data['baths'] ?? 0,
       cafeteria: data['cafeteria'] ?? 0,
       seatsCapacity: data['seatsCapacity'] ?? 0,
@@ -218,14 +276,18 @@ class Stadium {
       rating: (data['rating'] ?? 0.0).toDouble(),
       reviewsCount: data['reviewsCount'] ?? 0,
       description: data['description'] ?? '',
-      features: (data['features'] is List) ? List<String>.from(data['features']) : [],
+      features: data['features'] ?? {},
       policies: (data['policies'] is List) ? List<String>.from(data['policies']) : [],
       pitchCondition: data['pitchCondition'] ?? 'Good',
-      hasJerash: data['hasJerash'] ?? false,
-      hasSeats: data['hasSeats'] ?? false,
-      hasBall: data['hasBall'] ?? false,
-      ballRentPrice: (data['ballRentPrice'] ?? 0).toDouble(),
+      hasJerash: data['hasJerash'] ?? (data['features'] is Map ? data['features']['hasJerash'] ?? false : false),
+      hasSeats: data['hasSeats'] ?? (data['features'] is Map ? data['features']['hasSeats'] ?? false : false),
+      hasBall: data['hasBall'] ?? (data['features'] is Map ? data['features']['hasBall'] ?? false : false),
+      ballPrice: (data['ballPrice'] ?? (data['features'] is Map ? data['features']['ballPrice'] ?? 0 : 0)).toDouble(),
       notes: (data['notes'] as String?) ?? '', // ✅ Read notes from Firestore
+      contractUrl: data['contractUrl'],
+      ownerIdUrl: data['ownerIdUrl'],
+      isVerified: data['isVerified'] ?? false,
+      ownerId: data['ownerId'] ?? '', // ✅ Read ownerId from Firestore
     );
   }
 
@@ -234,6 +296,7 @@ class Stadium {
       'name': name,
       'location': location,
       'imageUrl': imageUrl,
+      'images': images,
       'type': type,
       'size': size,
       'baths': baths,
@@ -253,8 +316,12 @@ class Stadium {
       'hasJerash': hasJerash,
       'hasSeats': hasSeats,
       'hasBall': hasBall,
-      'ballRentPrice': ballRentPrice,
+      'ballPrice': ballPrice,
       'notes': notes, // ✅ Save notes to Firestore
+      'contractUrl': contractUrl,
+      'ownerIdUrl': ownerIdUrl,
+      'isVerified': isVerified,
+      'ownerId': ownerId, // ✅ Save ownerId to Firestore
     };
   }
 }
@@ -403,6 +470,8 @@ class BookingDraft {
 
   final String? paymentMethod;
   final String? paymentTransactionId;
+  final int currentPlayers;
+  final int maxPlayers;
 
   BookingDraft({
     required this.stadiumId,
@@ -422,6 +491,8 @@ class BookingDraft {
     this.currency = 'EGP',
     this.paymentMethod,
     this.paymentTransactionId,
+    this.currentPlayers = 1,
+    this.maxPlayers = 10,
   });
 
   BookingDraft copyWith({
@@ -442,6 +513,8 @@ class BookingDraft {
     String? currency,
     String? paymentMethod,
     String? paymentTransactionId,
+    int? currentPlayers,
+    int? maxPlayers,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -461,6 +534,8 @@ class BookingDraft {
       currency: currency ?? this.currency,
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paymentTransactionId: paymentTransactionId ?? this.paymentTransactionId,
+      currentPlayers: currentPlayers ?? this.currentPlayers,
+      maxPlayers: maxPlayers ?? this.maxPlayers,
     );
   }
 
@@ -483,6 +558,8 @@ class BookingDraft {
       'currency': currency,
       'paymentMethod': paymentMethod,
       'paymentTransactionId': paymentTransactionId,
+      'currentPlayers': currentPlayers,
+      'maxPlayers': maxPlayers,
     };
   }
 }
@@ -532,6 +609,11 @@ class Booking {
   final MatchOutcome? pendingOutcome;
   final MatchOutcome? finalOutcome;
 
+  // Public Match Fields
+  final int currentPlayers;
+  final int maxPlayers;
+  final List<String> joinedUserIds;
+
   Booking({
     required this.id,
     required this.stadiumId,
@@ -561,6 +643,9 @@ class Booking {
     this.matchResultStatus = MatchResultStatus.noResult,
     this.pendingOutcome,
     this.finalOutcome,
+    this.currentPlayers = 1,
+    this.maxPlayers = 10,
+    this.joinedUserIds = const [],
   });
 
   /// Create Booking from Firestore document
@@ -572,14 +657,18 @@ class Booking {
       stadiumImageUrl: data['stadiumImageUrl'] ?? '',
       ownerId: data['ownerId'] ?? '',
       startTime: data['startTime'] != null 
-          ? (data['startTime'] is DateTime 
-              ? data['startTime'] 
-              : DateTime.parse(data['startTime']))
+          ? (data['startTime'] is Timestamp 
+              ? (data['startTime'] as Timestamp).toDate()
+              : (data['startTime'] is DateTime 
+                  ? data['startTime'] 
+                  : DateTime.parse(data['startTime'])))
           : DateTime.now(),
       endTime: data['endTime'] != null 
-          ? (data['endTime'] is DateTime 
-              ? data['endTime'] 
-              : DateTime.parse(data['endTime']))
+          ? (data['endTime'] is Timestamp 
+              ? (data['endTime'] as Timestamp).toDate()
+              : (data['endTime'] is DateTime 
+                  ? data['endTime'] 
+                  : DateTime.parse(data['endTime'])))
           : DateTime.now(),
       bookingType: BookingType.values.firstWhere(
         (e) => e.name == data['bookingType'],
@@ -601,14 +690,18 @@ class Booking {
       ),
       createdByUserId: data['createdByUserId'] ?? '',
       createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] is DateTime 
-              ? data['createdAt'] 
-              : DateTime.parse(data['createdAt']))
+          ? (data['createdAt'] is Timestamp 
+              ? (data['createdAt'] as Timestamp).toDate()
+              : (data['createdAt'] is DateTime 
+                  ? data['createdAt'] 
+                  : DateTime.parse(data['createdAt'])))
           : DateTime.now(),
       updatedAt: data['updatedAt'] != null 
-          ? (data['updatedAt'] is DateTime 
-              ? data['updatedAt'] 
-              : DateTime.parse(data['updatedAt']))
+          ? (data['updatedAt'] is Timestamp 
+              ? (data['updatedAt'] as Timestamp).toDate()
+              : (data['updatedAt'] is DateTime 
+                  ? data['updatedAt'] 
+                  : DateTime.parse(data['updatedAt'])))
           : null,
       homeScore: data['homeScore'],
       awayScore: data['awayScore'],
@@ -623,6 +716,9 @@ class Booking {
       finalOutcome: data['finalOutcome'] != null 
           ? MatchOutcome.values.firstWhere((e) => e.name == data['finalOutcome']) 
           : null,
+      currentPlayers: data['currentPlayers'] ?? 1,
+      maxPlayers: data['maxPlayers'] ?? 10,
+      joinedUserIds: List<String>.from(data['joinedUserIds'] ?? []),
     );
   }
 
@@ -633,8 +729,8 @@ class Booking {
       'stadiumName': stadiumName,
       'stadiumImageUrl': stadiumImageUrl,
       'ownerId': ownerId,
-      'startTime': startTime.toIso8601String(),
-      'endTime': endTime.toIso8601String(),
+      'startTime': Timestamp.fromDate(startTime),
+      'endTime': Timestamp.fromDate(endTime),
       'bookingType': bookingType.name,
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
@@ -648,14 +744,17 @@ class Booking {
       'paymentTransactionId': paymentTransactionId,
       'status': status.name,
       'createdByUserId': createdByUserId,
-      'createdAt': createdAt.toIso8601String(),
-      'updatedAt': updatedAt?.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
+      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : FieldValue.serverTimestamp(),
       'homeScore': homeScore,
       'awayScore': awayScore,
       'resultSubmittedByTeamId': resultSubmittedByTeamId,
       'matchResultStatus': matchResultStatus.name,
       'pendingOutcome': pendingOutcome?.name,
       'finalOutcome': finalOutcome?.name,
+      'currentPlayers': currentPlayers,
+      'maxPlayers': maxPlayers,
+      'joinedUserIds': joinedUserIds,
     };
   }
 
@@ -688,6 +787,9 @@ class Booking {
       status: status,
       createdByUserId: userId,
       createdAt: DateTime.now(),
+      currentPlayers: draft.currentPlayers,
+      maxPlayers: draft.maxPlayers,
+      joinedUserIds: [userId],
     );
   }
 
@@ -720,6 +822,9 @@ class Booking {
     MatchResultStatus? matchResultStatus,
     MatchOutcome? pendingOutcome,
     MatchOutcome? finalOutcome,
+    int? currentPlayers,
+    int? maxPlayers,
+    List<String>? joinedUserIds,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -750,6 +855,9 @@ class Booking {
       matchResultStatus: matchResultStatus ?? this.matchResultStatus,
       pendingOutcome: pendingOutcome ?? this.pendingOutcome,
       finalOutcome: finalOutcome ?? this.finalOutcome,
+      currentPlayers: currentPlayers ?? this.currentPlayers,
+      maxPlayers: maxPlayers ?? this.maxPlayers,
+      joinedUserIds: joinedUserIds ?? this.joinedUserIds,
     );
   }
 
@@ -796,6 +904,18 @@ class Team {
   final List<String> playerImages;
   final int points;
   final String trend;
+  final String? captainPhone;
+
+  // ── Governorate & League Fields ──
+  final String governorate;
+  final int matchesPlayed;
+  final int wins;
+  final int draws;
+  final int losses;
+  final List<String> playedOpponents;
+  final List<String> unlockedBadges;
+  final int currentWinningStreak;
+  final List<String> memberUids;
 
   Team({
     required this.id,
@@ -807,10 +927,117 @@ class Team {
     required this.pricePerPerson,
     required this.currentPlayers,
     required this.maxPlayers,
-    required this.playerImages,
+    this.playerImages = const [],
     this.points = 0,
     this.trend = 'stable',
+    this.captainPhone,
+    this.governorate = 'Cairo',
+    this.matchesPlayed = 0,
+    this.wins = 0,
+    this.draws = 0,
+    this.losses = 0,
+    this.playedOpponents = const [],
+    this.unlockedBadges = const [],
+    this.currentWinningStreak = 0,
+    this.memberUids = const [],
   });
+
+  factory Team.fromFirestore(Map<String, dynamic> data, String docId) {
+    return Team(
+      id: docId,
+      name: data['name'] ?? '',
+      captainName: data['captainName'] ?? 'Captain',
+      captainImageUrl: data['logoUrl'] ?? data['captainImageUrl'] ?? '',
+      date: data['date'] ?? 'Upcoming',
+      stadium: data['stadium'] ?? 'TBD',
+      pricePerPerson: (data['pricePerPerson'] ?? 50).toDouble(),
+      currentPlayers: data['playersCount'] ?? data['currentPlayers'] ?? 11,
+      maxPlayers: data['maxPlayers'] ?? 11,
+      playerImages: List<String>.from(data['members'] ?? []),
+      points: data['points'] ?? 0,
+      trend: data['trend'] ?? 'stable',
+      captainPhone: data['captainPhone'],
+      governorate: data['governorate'] ?? 'Cairo',
+      matchesPlayed: data['matchesPlayed'] ?? 0,
+      wins: data['wins'] ?? 0,
+      draws: data['draws'] ?? 0,
+      losses: data['losses'] ?? 0,
+      playedOpponents: List<String>.from(data['playedOpponents'] ?? []),
+      unlockedBadges: List<String>.from(data['unlockedBadges'] ?? []),
+      currentWinningStreak: data['currentWinningStreak'] ?? 0,
+      memberUids: List<String>.from(data['memberUids'] ?? []),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'captainName': captainName,
+      'captainImageUrl': captainImageUrl,
+      'date': date,
+      'stadium': stadium,
+      'pricePerPerson': pricePerPerson,
+      'currentPlayers': currentPlayers,
+      'maxPlayers': maxPlayers,
+      'members': playerImages,
+      'points': points,
+      'trend': trend,
+      'captainPhone': captainPhone,
+      'governorate': governorate,
+      'matchesPlayed': matchesPlayed,
+      'wins': wins,
+      'draws': draws,
+      'losses': losses,
+      'playedOpponents': playedOpponents,
+      'unlockedBadges': unlockedBadges,
+      'currentWinningStreak': currentWinningStreak,
+      'memberUids': memberUids,
+    };
+  }
+
+  Team copyWith({
+    String? id,
+    String? name,
+    String? captainName,
+    String? captainImageUrl,
+    String? date,
+    String? stadium,
+    double? pricePerPerson,
+    int? currentPlayers,
+    int? maxPlayers,
+    List<String>? playerImages,
+    int? points,
+    String? trend,
+    String? captainPhone,
+    String? governorate,
+    int? matchesPlayed,
+    int? wins,
+    int? draws,
+    int? losses,
+    List<String>? playedOpponents,
+  }) {
+    return Team(
+      id: id ?? this.id,
+      name: name ?? this.name,
+      captainName: captainName ?? this.captainName,
+      captainImageUrl: captainImageUrl ?? this.captainImageUrl,
+      date: date ?? this.date,
+      stadium: stadium ?? this.stadium,
+      pricePerPerson: pricePerPerson ?? this.pricePerPerson,
+      currentPlayers: currentPlayers ?? this.currentPlayers,
+      maxPlayers: maxPlayers ?? this.maxPlayers,
+      playerImages: playerImages ?? this.playerImages,
+      points: points ?? this.points,
+      trend: trend ?? this.trend,
+      captainPhone: captainPhone ?? this.captainPhone,
+      governorate: governorate ?? this.governorate,
+      matchesPlayed: matchesPlayed ?? this.matchesPlayed,
+      wins: wins ?? this.wins,
+      draws: draws ?? this.draws,
+      losses: losses ?? this.losses,
+      playedOpponents: playedOpponents ?? this.playedOpponents,
+    );
+  }
 
   // Mock data
   static List<Team> getMockTeams() {
@@ -825,8 +1052,14 @@ class Team {
         pricePerPerson: 100,
         currentPlayers: 8,
         maxPlayers: 12,
-        points: 100,
+        points: 34,
         trend: 'up',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 10,
+        draws: 4,
+        losses: 0,
+        playedOpponents: ['2', '3', '4', '5', '6', '7', '8'],
         playerImages: [
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
@@ -844,8 +1077,14 @@ class Team {
         pricePerPerson: 120,
         currentPlayers: 10,
         maxPlayers: 14,
-        points: 95,
+        points: 30,
         trend: 'up',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 9,
+        draws: 3,
+        losses: 2,
+        playedOpponents: ['1', '3', '4', '5', '6', '7', '9'],
         playerImages: [
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&q=80',
@@ -863,8 +1102,14 @@ class Team {
         pricePerPerson: 110,
         currentPlayers: 5,
         maxPlayers: 10,
-        points: 88,
-        trend: 'down',
+        points: 28,
+        trend: 'up',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 8,
+        draws: 4,
+        losses: 2,
+        playedOpponents: ['1', '2', '4', '5', '6'],
         playerImages: [
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
@@ -882,8 +1127,14 @@ class Team {
         pricePerPerson: 115,
         currentPlayers: 9,
         maxPlayers: 12,
-        points: 82,
-        trend: 'up',
+        points: 25,
+        trend: 'stable',
+        governorate: 'Alexandria',
+        matchesPlayed: 14,
+        wins: 7,
+        draws: 4,
+        losses: 3,
+        playedOpponents: ['1', '2', '3', '5', '7', '8'],
         playerImages: [
           'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&h=150&fit=crop&q=80',
@@ -901,8 +1152,14 @@ class Team {
         pricePerPerson: 125,
         currentPlayers: 11,
         maxPlayers: 14,
-        points: 78,
-        trend: 'stable',
+        points: 22,
+        trend: 'down',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 6,
+        draws: 4,
+        losses: 4,
+        playedOpponents: ['1', '2', '3', '4', '6'],
         playerImages: [
           'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1557862921-37829c790f19?w=150&h=150&fit=crop&q=80',
@@ -920,8 +1177,14 @@ class Team {
         pricePerPerson: 130,
         currentPlayers: 7,
         maxPlayers: 11,
-        points: 71,
+        points: 19,
         trend: 'down',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 5,
+        draws: 4,
+        losses: 5,
+        playedOpponents: ['1', '2', '3', '5'],
         playerImages: [
           'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&q=80',
@@ -939,8 +1202,14 @@ class Team {
         pricePerPerson: 105,
         currentPlayers: 6,
         maxPlayers: 11,
-        points: 65,
+        points: 16,
         trend: 'up',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 4,
+        draws: 4,
+        losses: 6,
+        playedOpponents: ['1', '2', '4'],
         playerImages: [
           'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
@@ -958,8 +1227,14 @@ class Team {
         pricePerPerson: 95,
         currentPlayers: 8,
         maxPlayers: 12,
-        points: 58,
-        trend: 'stable',
+        points: 12,
+        trend: 'down',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 3,
+        draws: 3,
+        losses: 8,
+        playedOpponents: ['1', '4'],
         playerImages: [
           'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
@@ -977,8 +1252,14 @@ class Team {
         pricePerPerson: 90,
         currentPlayers: 5,
         maxPlayers: 10,
-        points: 45,
+        points: 9,
         trend: 'down',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 2,
+        draws: 3,
+        losses: 9,
+        playedOpponents: ['2'],
         playerImages: [
           'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&h=150&fit=crop&q=80',
@@ -996,8 +1277,14 @@ class Team {
         pricePerPerson: 85,
         currentPlayers: 4,
         maxPlayers: 10,
-        points: 38,
-        trend: 'up',
+        points: 7,
+        trend: 'down',
+        governorate: 'Cairo',
+        matchesPlayed: 14,
+        wins: 1,
+        draws: 4,
+        losses: 9,
+        playedOpponents: [],
         playerImages: [
           'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
           'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
@@ -1023,6 +1310,10 @@ class Championship {
   final int maxTeams;
   final List<String> teamLogos;
 
+  final String ownerId;
+  final String governorate;
+  final String sportType;
+
   Championship({
     required this.id,
     required this.name,
@@ -1035,7 +1326,48 @@ class Championship {
     required this.teamsJoined,
     required this.maxTeams,
     required this.teamLogos,
+    this.ownerId = '',
+    this.governorate = 'Cairo',
+    this.sportType = 'Football',
   });
+
+  factory Championship.fromFirestore(Map<String, dynamic> data, String id) {
+    return Championship(
+      id: id,
+      name: data['name'] ?? '',
+      type: data['type'] ?? '',
+      logoUrl: data['logoUrl'] ?? '',
+      startDate: data['startDate'] ?? '',
+      endDate: data['endDate'] ?? '',
+      entryFee: (data['entryFee'] ?? 0).toDouble(),
+      grandPrize: (data['grandPrize'] ?? 0).toDouble(),
+      teamsJoined: data['teamsJoined'] ?? 0,
+      maxTeams: data['maxTeams'] ?? 16,
+      teamLogos: List<String>.from(data['teamLogos'] ?? []),
+      ownerId: data['ownerId'] ?? '',
+      governorate: data['governorate'] ?? 'Cairo',
+      sportType: data['sportType'] ?? 'Football',
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'type': type,
+      'logoUrl': logoUrl,
+      'startDate': startDate,
+      'endDate': endDate,
+      'entryFee': entryFee,
+      'grandPrize': grandPrize,
+      'teamsJoined': teamsJoined,
+      'maxTeams': maxTeams,
+      'teamLogos': teamLogos,
+      'ownerId': ownerId,
+      'governorate': governorate,
+      'sportType': sportType,
+      'createdAt': FieldValue.serverTimestamp(),
+    };
+  }
 
   // Mock data
   static List<Championship> getMockChampionships() {
@@ -1095,5 +1427,49 @@ class Championship {
         ],
       ),
     ];
+  }
+}
+
+/// Notification data model
+class AppNotification {
+  final String id;
+  final String title;
+  final String body;
+  final String type; // 'info', 'result_confirmation'
+  final bool isRead;
+  final DateTime createdAt;
+
+  AppNotification({
+    required this.id,
+    required this.title,
+    required this.body,
+    required this.type,
+    this.isRead = false,
+    required this.createdAt,
+  });
+
+  factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
+    return AppNotification(
+      id: id,
+      title: data['title'] ?? '',
+      body: data['body'] ?? '',
+      type: data['type'] ?? 'info',
+      isRead: data['isRead'] ?? false,
+      createdAt: data['createdAt'] != null 
+          ? (data['createdAt'] is Timestamp 
+              ? (data['createdAt'] as Timestamp).toDate() 
+              : DateTime.parse(data['createdAt']))
+          : DateTime.now(),
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'title': title,
+      'body': body,
+      'type': type,
+      'isRead': isRead,
+      'createdAt': createdAt.toIso8601String(),
+    };
   }
 }

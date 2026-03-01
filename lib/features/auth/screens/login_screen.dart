@@ -7,8 +7,7 @@ import '../../../core/providers/language_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../player/screens/player_home_screen.dart';
-import '../../owner/screens/owner_home_screen.dart';
+import '../../../core/navigation/root_screen.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -50,16 +49,23 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-        // Navigate based on role
-        if (authProvider.isPlayer) {
-             Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const PlayerHomeScreen()), (r) => false);
-        } else {
-             Navigator.pushAndRemoveUntil(context, MaterialPageRoute(builder: (_) => const OwnerHomeScreen()), (r) => false);
+        // ✅ RootScreen handles all navigation gates:
+        // - isRegistrationComplete → VerifyEmailScreen (OTP)
+        // - hasStadium, isIdentityVerified → Owner onboarding
+        // - phone check → SocialOnboardingScreen
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context, 
+            MaterialPageRoute(builder: (_) => const RootScreen()), 
+            (r) => false
+          );
         }
     } else {
-        ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(authProvider.errorMessage ?? 'Login Failed'), backgroundColor: Colors.red),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(authProvider.errorMessage ?? 'Login Failed'), backgroundColor: Colors.red),
+          );
+        }
     }
   }
 
@@ -93,12 +99,21 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       body: SafeArea(
         bottom: true,
-        child: Padding(
+        child: SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               const SizedBox(height: 20),
+              // App Logo
+              Center(
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  height: 100,
+                  fit: BoxFit.contain,
+                ),
+              ),
+              const SizedBox(height: 30),
               Text(
                 languageProvider.getText(AppStrings.login),
                 style: const TextStyle(
@@ -129,6 +144,76 @@ class _LoginScreenState extends State<LoginScreen> {
                   _handleLogin();
                 },
                 isLoading: _isLoading,
+              ),
+
+              const SizedBox(height: 30),
+
+              // ── Divider ──
+              Row(
+                children: [
+                  Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 12),
+                    child: Text(
+                      languageProvider.isArabic ? 'أو' : 'Or continue with',
+                      style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 13),
+                    ),
+                  ),
+                  Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                ],
+              ),
+
+              const SizedBox(height: 20),
+
+              // ── Google Sign-In Button ──
+              SizedBox(
+                width: double.infinity,
+                height: 52,
+                child: OutlinedButton.icon(
+                  icon: const Text(
+                    'G',
+                    style: TextStyle(
+                      fontSize: 22,
+                      fontWeight: FontWeight.w900,
+                      color: Color(0xFF4285F4), // Google blue
+                    ),
+                  ),
+                  label: Text(
+                    languageProvider.isArabic ? 'تسجيل الدخول عبر جوجل' : 'Sign in with Google',
+                    style: const TextStyle(
+                      color: AppTheme.textPrimary,
+                      fontSize: 15,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                  style: OutlinedButton.styleFrom(
+                    side: BorderSide(color: Colors.white.withOpacity(0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
+                    backgroundColor: Colors.white.withOpacity(0.04),
+                  ),
+                  onPressed: _isLoading ? null : () async {
+                    setState(() => _isLoading = true);
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final success = await authProvider.signInWithGoogle();
+
+                    if (!mounted) return;
+                    setState(() => _isLoading = false);
+
+                    if (success) {
+                      Navigator.of(context).pushAndRemoveUntil(
+                        MaterialPageRoute(builder: (context) => const RootScreen()),
+                        (route) => false,
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        SnackBar(
+                          content: Text(authProvider.errorMessage ?? 'Google Sign-In failed'),
+                          backgroundColor: Colors.red,
+                        ),
+                      );
+                    }
+                  },
+                ),
               ),
             ],
           ),

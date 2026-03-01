@@ -92,10 +92,11 @@ class VSPApplication extends StatelessWidget {
               Locale('ar'),
             ],
             locale: languageProvider.currentLocale,
-            home: const RootScreen(),
+            home: const SplashScreen(), // Branding first
             routes: {
               '/splash': (context) => const SplashScreen(),
               '/welcome': (context) => const WelcomeScreen(),
+              '/root': (context) => const RootScreen(),
             },
           );
         },

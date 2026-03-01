@@ -38,8 +38,8 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
 
     _controller.forward();
 
-    // Navigate after delay
-    Future.delayed(const Duration(seconds: 3), () {
+    // Navigate after delay to RootScreen which handles the logic
+    Future.delayed(const Duration(milliseconds: 2000), () {
       if (mounted) {
         Navigator.of(context).pushReplacement(
           MaterialPageRoute(builder: (_) => const RootScreen()),

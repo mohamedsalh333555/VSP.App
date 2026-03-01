@@ -4,7 +4,7 @@ import '../../../data/models.dart';
 
 class MatchResultModal extends StatefulWidget {
   final Booking booking;
-  final Function(MatchOutcome outcome) onConfirm;
+  final Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
 
   const MatchResultModal({
     super.key, 
@@ -18,6 +18,14 @@ class MatchResultModal extends StatefulWidget {
 
 class _MatchResultModalState extends State<MatchResultModal> {
   int _selectedIndex = -1; // -1: None, 0: We Won, 1: Draw, 2: We Lost
+  double _rating = 0;
+  final TextEditingController _reviewController = TextEditingController();
+
+  @override
+  void dispose() {
+    _reviewController.dispose();
+    super.dispose();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -120,6 +128,13 @@ class _MatchResultModalState extends State<MatchResultModal> {
             const SizedBox(height: 12),
             _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, Colors.red),
 
+            const SizedBox(height: 24),
+            const Divider(color: Colors.white10),
+            const SizedBox(height: 24),
+
+            // Rating Section
+            _buildRatingSection(),
+
             const SizedBox(height: 32),
 
             // Submit Button
@@ -165,7 +180,65 @@ class _MatchResultModalState extends State<MatchResultModal> {
       outcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
     }
 
-    widget.onConfirm(outcome);
+    widget.onConfirm(
+      outcome,
+      _rating > 0 ? _rating : null,
+      _reviewController.text.trim().isNotEmpty ? _reviewController.text.trim() : null,
+    );
+    
+    // Trigger rating update logic (could be passed back via the callback in a future iteration,
+    // but for now, we assume the callback handles the outcome and the provider handles the rating)
+  }
+
+  Widget _buildRatingSection() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          'Rate the Stadium (Optional)',
+          style: TextStyle(
+            color: Colors.white,
+            fontSize: 14,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: List.generate(5, (index) {
+            return GestureDetector(
+              onTap: () {
+                setState(() {
+                  _rating = index + 1.0;
+                });
+              },
+              child: Icon(
+                index < _rating ? Icons.star : Icons.star_border,
+                color: Colors.amber,
+                size: 32,
+              ),
+            );
+          }),
+        ),
+        const SizedBox(height: 16),
+        TextField(
+          controller: _reviewController,
+          style: const TextStyle(color: Colors.white, fontSize: 13),
+          maxLines: 2,
+          decoration: InputDecoration(
+            hintText: 'Write a review...',
+            hintStyle: const TextStyle(color: Colors.white24),
+            filled: true,
+            fillColor: const Color(0xFF2C2C2E),
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(12),
+              borderSide: BorderSide.none,
+            ),
+            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          ),
+        ),
+      ],
+    );
   }
 
   Widget _buildSelectionOption(int index, String label, IconData icon, Color activeColor) {

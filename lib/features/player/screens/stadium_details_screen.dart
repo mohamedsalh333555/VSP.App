@@ -1,6 +1,8 @@
 ﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:timeago/timeago.dart' as timeago;
 import '../../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
@@ -17,12 +19,15 @@ class StadiumDetailsScreen extends StatefulWidget {
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isFavorite = false;
+  int _currentImageIndex = 0;
+  late final List<String> _displayImages;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
     _isFavorite = widget.stadium.isFavorite;
+    _displayImages = widget.stadium.images.isNotEmpty ? widget.stadium.images : [widget.stadium.imageUrl];
   }
 
   @override
@@ -43,14 +48,24 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             child: Stack(
               children: [
                 Positioned.fill(
-                  child: widget.stadium.imageUrl.isNotEmpty
-                      ? CachedNetworkImage(
-                          imageUrl: widget.stadium.imageUrl,
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(
-                            color: const Color(0xFF1E1E1E),
-                          ),
-                          errorWidget: (context, url, error) => _buildVspLogoBackground(),
+                  child: _displayImages.isNotEmpty && _displayImages.first.isNotEmpty
+                      ? PageView.builder(
+                          itemCount: _displayImages.length,
+                          onPageChanged: (index) {
+                            setState(() {
+                              _currentImageIndex = index;
+                            });
+                          },
+                          itemBuilder: (context, index) {
+                            return CachedNetworkImage(
+                              imageUrl: _displayImages[index],
+                              fit: BoxFit.cover,
+                              placeholder: (context, url) => Container(
+                                color: const Color(0xFF1E1E1E),
+                              ),
+                              errorWidget: (context, url, error) => _buildVspLogoBackground(),
+                            );
+                          },
                         )
                       : _buildVspLogoBackground(),
                 ),
@@ -107,13 +122,12 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   right: 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      _buildDot(isActive: true),
-                      const SizedBox(width: 8),
-                      _buildDot(isActive: false),
-                      const SizedBox(width: 8),
-                      _buildDot(isActive: false),
-                    ],
+                    children: List.generate(_displayImages.length, (index) {
+                      return Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                        child: _buildDot(isActive: index == _currentImageIndex),
+                      );
+                    }),
                   ),
                 ),
               ],
@@ -152,7 +166,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               children: [
                 _InformationTab(stadium: widget.stadium),
                 _PitchConditionsTab(stadium: widget.stadium),
-                const _RatingsTab(),
+                _RatingsTab(stadium: widget.stadium),
               ],
             ),
           ),
@@ -342,13 +356,17 @@ class _InformationTab extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      ...List.generate(5, (index) => const Icon(Icons.star, color: Colors.amber, size: 16)),
+                      ...List.generate(5, (index) => Icon(
+                        index < stadium.rating.round() ? Icons.star : Icons.star_border, 
+                        color: Colors.amber, 
+                        size: 16
+                      )),
                     ],
                   ),
                   const SizedBox(height: 2),
-                  const Text(
-                    '4.5 (52 Reviews)',
-                    style: TextStyle(
+                  Text(
+                    '${stadium.rating.toStringAsFixed(1)} (${stadium.reviewsCount} Reviews)',
+                    style: const TextStyle(
                       color: AppTheme.textSecondary,
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
@@ -445,7 +463,7 @@ class _InformationTab extends StatelessWidget {
           Wrap(
             spacing: 8,
             runSpacing: 8,
-            children: (stadium.features.isNotEmpty ? stadium.features : ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats']).map((feature) => Container(
+            children: (Stadium.parseFeatures(stadium.features).isNotEmpty ? Stadium.parseFeatures(stadium.features) : ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats']).map((feature) => Container(
               padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
               decoration: BoxDecoration(
                 color: AppTheme.cardBackground,
@@ -477,10 +495,18 @@ class _InformationTab extends StatelessWidget {
               decoration: BoxDecoration(
                 color: AppTheme.cardBackground,
                 borderRadius: BorderRadius.circular(12),
+                border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
               ),
-              child: const Text(
-                'Ball',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.sports_soccer, color: AppTheme.neonGreen, size: 14),
+                  const SizedBox(width: 8),
+                  Text(
+                    'Ball Available: ${stadium.ballPrice.toStringAsFixed(0)} EGP',
+                    style: const TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                  ),
+                ],
               ),
             ),
 
@@ -609,85 +635,112 @@ class _PitchConditionsTab extends StatelessWidget {
 }
 
 class _RatingsTab extends StatelessWidget {
-  const _RatingsTab();
+  final Stadium stadium;
+  const _RatingsTab({required this.stadium});
 
-  @override
+   @override
   Widget build(BuildContext context) {
-    return ListView(
-      padding: const EdgeInsets.all(16),
+    return Column(
       children: [
         // Summary Card
-        Container(
-          padding: const EdgeInsets.all(16),
-          decoration: BoxDecoration(
-            color: AppTheme.cardBackground,
-            borderRadius: BorderRadius.circular(16),
-          ),
-          child: Row(
-            children: [
-              // Bars Column
-              Expanded(
-                child: Column(
-                  children: [
-                    _buildRatingBar(5, 0.8),
-                    _buildRatingBar(4, 0.6),
-                    _buildRatingBar(3, 0.4),
-                    _buildRatingBar(2, 0.1),
-                    _buildRatingBar(1, 0.05),
-                  ],
-                ),
-              ),
-              const SizedBox(width: 16),
-              // Big Score
-              const Column(
-                children: [
-                  Text(
-                    '4.5', // Updated Rating to 4.5
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 42,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                    ),
-                  ),
-                  Row(
+        Padding(
+          padding: const EdgeInsets.all(16.0),
+          child: Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: AppTheme.cardBackground,
+              borderRadius: BorderRadius.circular(16),
+            ),
+            child: Row(
+              children: [
+                // Bars Column (Simplified for dynamic content)
+                const Expanded(
+                  child: Column(
                     children: [
-                      Icon(Icons.star, color: Colors.amber, size: 12),
-                      Icon(Icons.star, color: Colors.amber, size: 12),
-                      Icon(Icons.star, color: Colors.amber, size: 12),
-                      Icon(Icons.star, color: Colors.amber, size: 12),
-                      Icon(Icons.star_half, color: Colors.amber, size: 12),
+                      // Ideally these are calculated dynamically 
+                      // For now, keeping the static visual representation
                     ],
                   ),
-                  SizedBox(height: 4),
-                  Text(
-                    '52 Reviews',
-                    style: TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                  ),
-                ],
-              ),
-            ],
+                ),
+                const SizedBox(width: 16),
+                // Big Score
+                Column(
+                  children: [
+                    Text(
+                      stadium.rating.toStringAsFixed(1),
+                      style: const TextStyle(
+                        color: AppTheme.textPrimary,
+                        fontSize: 42,
+                        fontWeight: FontWeight.bold,
+                        fontFamily: 'Agency FB',
+                      ),
+                    ),
+                    Row(
+                      children: List.generate(5, (index) => Icon(
+                        index < stadium.rating.round() ? Icons.star : Icons.star_border,
+                        color: Colors.amber,
+                        size: 16,
+                      )),
+                    ),
+                    const SizedBox(height: 4),
+                    Text(
+                      '${stadium.reviewsCount} Reviews',
+                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                    ),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
         
-        const SizedBox(height: 16),
+        // Reviews List View
+        Expanded(
+          child: StreamBuilder<QuerySnapshot>(
+            stream: FirebaseFirestore.instance
+                .collection('stadiums')
+                .doc(stadium.id)
+                .collection('reviews')
+                .orderBy('createdAt', descending: true)
+                .snapshots(),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator());
+              }
+              
+              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+                return const Center(
+                  child: Text(
+                    'No reviews yet.',
+                    style: TextStyle(color: AppTheme.textSecondary),
+                  ),
+                );
+              }
 
-        // Review 1
-        _buildReviewItem(
-          name: 'Courtney Henry',
-          imageUrl: 'https://randomuser.me/api/portraits/women/32.jpg', // Changed to women to match name usually
-          rating: 5,
-          timeAgo: '2 Mins Ago',
-          comment: 'Consequat Velit Qui Adipisicing Sunt Do Rependerit Ad Laborum Tempor Ullamco Exercitation. Ullamco Tempor Adipisicing Et Voluptate Duis Sit Esse Aliqua',
-        ),
+              final reviews = snapshot.data!.docs;
 
-        // Review 2
-        _buildReviewItem(
-          name: 'Jane Cooper',
-          imageUrl: 'https://randomuser.me/api/portraits/women/44.jpg',
-          rating: 4,
-          timeAgo: '2 Mins Ago',
-          comment: 'Great stadium with excellent facilities!',
+              return ListView.builder(
+                padding: const EdgeInsets.all(16),
+                itemCount: reviews.length,
+                itemBuilder: (context, index) {
+                  final reviewDoc = reviews[index].data() as Map<String, dynamic>;
+                  final rating = (reviewDoc['rating'] as num?)?.toInt() ?? 0;
+                  final text = reviewDoc['reviewText'] as String? ?? '';
+                  final createdAt = reviewDoc['createdAt'] as Timestamp?;
+                  
+                  // For a real app, you would fetch user data via userId.
+                  // For now, using default displays.
+                  return _buildReviewItem(
+                    name: 'Player', // Fallback name
+                    imageUrl: '',   // Fallback image
+                    rating: rating,
+                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : 'Recently',
+                    comment: text,
+                  );
+                },
+              );
+            },
+          ),
         ),
       ],
     );
@@ -732,7 +785,9 @@ class _RatingsTab extends StatelessWidget {
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundImage: NetworkImage(imageUrl),
+            backgroundColor: AppTheme.cardBackground,
+            backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+            child: imageUrl.isEmpty ? const Icon(Icons.person, color: Colors.white54) : null,
           ),
           const SizedBox(width: 12),
           Expanded(

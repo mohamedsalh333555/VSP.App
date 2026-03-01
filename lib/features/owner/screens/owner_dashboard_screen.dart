@@ -248,7 +248,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       bool matchesStadium = true;
       if (_selectedStadium != 'All Stadium') {
         // Try to match by name (since we use names in dropdown for now)
-        final stadium = stadiumProvider.stadiums.firstWhere((s) => s.id == booking.stadiumId, orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: ''));
+        final stadium = stadiumProvider.stadiums.firstWhere((s) => s.id == booking.stadiumId, orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: ''));
         matchesStadium = stadium.name == _selectedStadium;
       }
       
@@ -271,12 +271,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }
 
     final int bookingsCount = filteredBookings.length;
+    final double commission = revenue * 0.05;
 
     // Format numeric values
     String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
     String timeStr = '${totalHours}h';
     String visitorsStr = totalVisitors >= 1000 ? '${(totalVisitors/1000).toStringAsFixed(1)}K' : totalVisitors.toString();
+    String commissionStr = commission >= 1000 ? '${(commission/1000).toStringAsFixed(1)}K' : commission.toStringAsFixed(0);
 
     return Column(
       children: [
@@ -301,18 +303,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
                const SizedBox(width: 16),
                Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text('Revenue', style: TextStyle(color: Colors.grey, fontSize: 12)),
-                  Row(
-                    children: [
-                       Text(revenueStr, style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.bold, fontFamily: 'Agency FB')),
-                       const SizedBox(width: 8),
-                       const Icon(Icons.arrow_upward, color: AppTheme.neonGreen, size: 10),
-                       const Text('34%', style: TextStyle(color: AppTheme.neonGreen, fontSize: 11, fontWeight: FontWeight.bold)),
-                    ],
-                  )
-                ],
+                 crossAxisAlignment: CrossAxisAlignment.start,
+                 children: [
+                   const Text('Revenue (Cash at Stadium)', style: TextStyle(color: Colors.grey, fontSize: 11)),
+                   Text('${revenueStr} EGP', style: const TextStyle(color: AppTheme.neonGreen, fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Agency FB')),
+                   const SizedBox(height: 4),
+                   Text(
+                     'App Commission Pending (5%): $commissionStr EGP',
+                     style: const TextStyle(color: Colors.orangeAccent, fontSize: 10, fontWeight: FontWeight.bold),
+                   ),
+                 ],
                ),
                const Spacer(),
                // Details Button

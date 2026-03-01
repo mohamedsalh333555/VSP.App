@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../core/services/owner_document_service.dart';
@@ -34,12 +34,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   
   Future<void> _pickAndUpload(OwnerDocumentType type, String key) async {
     try {
-      final XFile? pickedFile = await ImagePicker().pickImage(
-        source: ImageSource.gallery,
-        imageQuality: 85,
+      FilePickerResult? result = await FilePicker.platform.pickFiles(
+        type: FileType.custom,
+        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
       );
       
-      if (pickedFile == null) return;
+      if (result == null || result.files.single.path == null) return;
 
       setState(() {
         _uploadingStatus[key] = true;
@@ -47,7 +47,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       
       final url = await _documentService.uploadAndSave(
         type: type,
-        file: pickedFile,
+        filePath: result.files.single.path!,
       );
       
       if (mounted) {
@@ -98,6 +98,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       
       if (authProvider.firebaseUser != null) {
         await authProvider.updateProfile({
+          'isIdentityVerified': true,
           'isRegistrationComplete': true,
         });
       }

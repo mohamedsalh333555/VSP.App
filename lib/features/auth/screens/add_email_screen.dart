@@ -134,13 +134,14 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
-          bottom: false,
-          child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
+          bottom: true,
+          child: SingleChildScrollView(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 24.0),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                   const SizedBox(height: 20),
 
               // Back Button
               IconButton(
@@ -282,7 +283,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                 },
               ),
 
-              const Spacer(),
+              const SizedBox(height: 40),
 
               // Continue Button
               SizedBox(
@@ -369,10 +370,11 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               ),
 
               const SizedBox(height: 20),
-            ],
+                ],
+              ),
+            ),
           ),
         ),
-      ),
       ),
     );
   }

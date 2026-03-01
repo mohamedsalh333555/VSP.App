@@ -16,6 +16,9 @@ class WelcomeScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
+    // Clear stale userType to prevent auto-skip issues
+    WidgetsBinding.instance.addPostFrameCallback((_) => authProvider.reset());
+
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -166,35 +169,65 @@ class WelcomeScreen extends StatelessWidget {
                 const SizedBox(height: 32),
 
                 // Footer - English
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                Column(
                   children: [
-                    Text(
-                      'Already have an account?',
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
-                    ),
-                    const SizedBox(width: 8),
-                    GestureDetector(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => const LoginScreen(),
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          'Already have an account?',
+                          style: TextStyle(
+                            color: Colors.white.withValues(alpha: 0.7),
+                            fontSize: 14,
                           ),
-                        );
-                      },
-                      child: const Text(
-                        'Login',
-                        style: TextStyle(
-                          color: AppTheme.neonGreen, // #9FDF02 from theme
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold, // Bold as requested
                         ),
-                      ),
+                        const SizedBox(width: 8),
+                        GestureDetector(
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const LoginScreen(),
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                              color: AppTheme.neonGreen, // #9FDF02 from theme
+                              fontSize: 14,
+                              fontWeight: FontWeight.bold, // Bold as requested
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                    
+                    // Stuck User Escape Hatch
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, child) {
+                        if (auth.isAuthenticated) {
+                          return Padding(
+                            padding: const EdgeInsets.only(top: 12.0),
+                            child: TextButton(
+                              onPressed: () async {
+                                await auth.signOut();
+                                if (context.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(content: Text('Signed out successfully')),
+                                  );
+                                }
+                              },
+                              child: const Text(
+                                'Sign out of current account',
+                                style: TextStyle(color: Colors.white38, fontSize: 12),
+                              ),
+                            ),
+                          );
+                        }
+                        return const SizedBox.shrink();
+                      },
                     ),
                   ],
                 ),

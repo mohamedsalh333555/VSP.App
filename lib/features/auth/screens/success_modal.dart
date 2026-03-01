@@ -145,25 +145,15 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                 height: 56,
                 child: ElevatedButton(
                   onPressed: () {
-                    if (isOwner) {
-                      // Owner → go to My Stadiums (onboarding)
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const MyStadiumsScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    } else {
-                      // Player → go to auth/home (RootScreen handles state)
-                      Navigator.pushAndRemoveUntil(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => const RootScreen(),
-                        ),
-                        (route) => false,
-                      );
-                    }
+                    // Always navigate to RootScreen - it's the "Source of Truth"
+                    // It will handle players vs owners onboarding state automatically
+                    Navigator.pushAndRemoveUntil(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const RootScreen(),
+                      ),
+                      (route) => false,
+                    );
                   },
                   style: ElevatedButton.styleFrom(
                     backgroundColor: AppTheme.neonGreen,

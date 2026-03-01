@@ -128,13 +128,15 @@ class OwnerProfileScreen extends StatelessWidget {
               title: 'Logout',
               subtitle: 'Sign out of your account',
               isLogout: true,
-              onTap: () {
+              onTap: () async {
                 // Clear session and navigate to Welcome Screen
-                Provider.of<AuthProvider>(context, listen: false).reset();
-                Navigator.of(context).pushAndRemoveUntil(
-                  MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                  (route) => false,
-                );
+                await Provider.of<AuthProvider>(context, listen: false).signOut();
+                if (context.mounted) {
+                  Navigator.of(context).pushAndRemoveUntil(
+                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                    (route) => false,
+                  );
+                }
               },
             ),
             

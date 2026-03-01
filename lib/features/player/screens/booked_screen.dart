@@ -53,18 +53,20 @@ class _BookedScreenState extends State<BookedScreen> {
           ),
         ),
       ),
-      body: Consumer<BookingProvider>(
-        builder: (context, bookingProvider, child) {
-          if (bookingProvider.isLoading) {
+      body: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, bool loading})>(
+        selector: (_, provider) => (
+          upcoming: provider.upcomingBookings,
+          history: provider.historyBookings,
+          loading: provider.isLoading,
+        ),
+        builder: (context, data, child) {
+          if (data.loading) {
             return const Center(
               child: CircularProgressIndicator(color: AppTheme.neonGreen),
             );
           }
 
-          final upcomingBookings = bookingProvider.upcomingBookings;
-          final historyBookings = bookingProvider.historyBookings;
-
-          if (upcomingBookings.isEmpty && historyBookings.isEmpty) {
+          if (data.upcoming.isEmpty && data.history.isEmpty) {
             return _buildEmptyState();
           }
 
@@ -72,7 +74,7 @@ class _BookedScreenState extends State<BookedScreen> {
             padding: const EdgeInsets.all(16),
             children: [
               // Upcoming Section
-              if (upcomingBookings.isNotEmpty) ...[
+              if (data.upcoming.isNotEmpty) ...[
                 const Text(
                   'Upcoming',
                   style: TextStyle(
@@ -82,7 +84,7 @@ class _BookedScreenState extends State<BookedScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                ...upcomingBookings.map((booking) => Padding(
+                ...data.upcoming.map((booking) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _BookingCard(booking: booking, isHistory: false),
                 )),
@@ -90,7 +92,7 @@ class _BookedScreenState extends State<BookedScreen> {
               ],
 
               // History Section
-              if (historyBookings.isNotEmpty) ...[
+              if (data.history.isNotEmpty) ...[
                 const Text(
                   'History',
                   style: TextStyle(
@@ -100,7 +102,7 @@ class _BookedScreenState extends State<BookedScreen> {
                   ),
                 ),
                 const SizedBox(height: 16),
-                ...historyBookings.map((booking) => Padding(
+                ...data.history.map((booking) => Padding(
                   padding: const EdgeInsets.only(bottom: 16),
                   child: _BookingCard(booking: booking, isHistory: true),
                 )),
@@ -256,6 +258,8 @@ class _BookingCard extends StatelessWidget {
               ] else ...[
                 if (booking.bookingType == BookingType.challenge)
                   _buildChallengeStatusBadge()
+                else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
+                  _buildStatusBadge('Submit Result', Colors.orange)
                 else
                   _buildStatusBadge('Completed', Colors.grey),
               ],
@@ -348,8 +352,9 @@ class _BookingCard extends StatelessWidget {
             ),
           ],
 
-          // Result button/status for history (challenge type)
-          if (isHistory && booking.bookingType == BookingType.challenge) ...[
+          // Result button/status for history (challenge type ONLY)
+          if (isHistory && booking.bookingType == BookingType.challenge && 
+             (booking.status == BookingStatus.completed || booking.endTime.isBefore(DateTime.now()))) ...[
             const SizedBox(height: 16),
             _buildChallengeResultAction(context),
           ],
@@ -405,7 +410,7 @@ class _BookingCard extends StatelessWidget {
             context: context,
             builder: (context) => MatchResultModal(
               booking: booking,
-              onConfirm: (outcome) async {
+              onConfirm: (outcome, rating, review) async {
                 final provider = Provider.of<BookingProvider>(context, listen: false);
                 final currentTeamId = booking.playerTeamId ?? 'team_1';
                 
@@ -413,6 +418,8 @@ class _BookingCard extends StatelessWidget {
                   bookingId: booking.id,
                   teamId: currentTeamId,
                   outcome: outcome,
+                  rating: rating,
+                  review: review,
                 );
 
                 if (!context.mounted) return;

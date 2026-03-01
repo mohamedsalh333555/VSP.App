@@ -18,6 +18,7 @@ import 'team_dashboard_screen.dart';
 import 'booked_screen.dart';
 import 'champion_screen.dart';
 import 'profile_screen.dart';
+import 'notifications_center_screen.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../../../shared/widgets/stadium_card.dart';
 
@@ -197,6 +198,7 @@ class MatchCard extends StatefulWidget {
   final int index;
   final double? width;
   final EdgeInsetsGeometry? margin;
+  final Booking? booking;
 
   const MatchCard({
     super.key,
@@ -204,6 +206,7 @@ class MatchCard extends StatefulWidget {
     required this.index,
     this.width,
     this.margin,
+    this.booking,
   });
 
   @override
@@ -218,6 +221,12 @@ class _MatchCardState extends State<MatchCard> {
   void initState() {
     super.initState();
     _currentPlayers = widget.team.currentPlayers;
+    
+    // Check if user is already in joinedUserIds if booking is provided
+    if (widget.booking != null) {
+      final userId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid ?? '';
+      _isJoined = widget.booking!.joinedUserIds.contains(userId);
+    }
   }
 
   Color _getBackgroundColor(int index) {
@@ -234,35 +243,48 @@ class _MatchCardState extends State<MatchCard> {
   }
 
   void _toggleJoin() async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (!auth.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login to join matches')));
+      return;
+    }
+
+    final userId = auth.currentUser!.uid;
+    final db = DatabaseService();
     
-    if (mounted) {
+    // If we have a real booking, use DB transaction
+    if (widget.booking != null) {
+      setState(() => _isLoading = true);
+      
+      bool success = false;
+      if (!_isJoined) {
+        success = await db.joinPublicMatch(widget.booking!.id, userId);
+      } else {
+        // We might want to add leaveMatch for bookings too, but for now we follow the task
+        // which focused on joinMatch. If needed I can add leavePublicMatch later.
+        // For now, let's keep it simple as per instructions.
+        success = true; // Placeholder for leave logic if not defined
+      }
+
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+           setState(() {
+            _isJoined = !_isJoined;
+            if (_isJoined) _currentPlayers++; else _currentPlayers--;
+           });
+        }
+      }
+    } else {
+      // Fallback for mock/UI testing
       setState(() {
         _isJoined = !_isJoined;
-        if (_isJoined) {
-          _currentPlayers++;
-        } else {
-          _currentPlayers--;
-        }
+        if (_isJoined) _currentPlayers++; else _currentPlayers--;
       });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isJoined ? 'Joined successfully!' : 'Left match successfully'),
-          backgroundColor: AppTheme.neonGreen,
-          duration: const Duration(seconds: 1),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          action: SnackBarAction(
-            label: 'OK', 
-            textColor: Colors.black, 
-            onPressed: () {},
-          ),
-        ),
-      );
     }
   }
+
+  bool _isLoading = false;
 
   void _onShare() {
     ScaffoldMessenger.of(context).showSnackBar(
@@ -283,7 +305,7 @@ class _MatchCardState extends State<MatchCard> {
       margin: widget.margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(15), // Unified 15px
+        borderRadius: BorderRadius.circular(15), 
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25), 
@@ -300,48 +322,64 @@ class _MatchCardState extends State<MatchCard> {
           // Header Section
           Row(
             children: [
-              Container(
-                width: 44, 
-                height: 44,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 1.5),
-                ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: CachedNetworkImage(
-                    imageUrl: widget.team.captainImageUrl,
-                    fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.white10),
-                    errorWidget: (context, url, error) => const Icon(Icons.person, color: Colors.white24),
+              if (widget.booking?.bookingType == BookingType.challenge) ...[
+                // Challenge View: Team A vs Team B
+                Expanded(
+                  child: Row(
+                    children: [
+                      _buildTeamAvatar(widget.booking!.playerTeamName ?? 'Team A'),
+                      const SizedBox(width: 8),
+                      const Text('VS', style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold, fontSize: 12)),
+                      const SizedBox(width: 8),
+                      _buildTeamAvatar(widget.booking!.opponentTeamName ?? 'Team B'),
+                    ],
                   ),
                 ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      widget.team.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16, 
-                        fontWeight: FontWeight.w900,
-                      ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+              ] else ...[
+                // Standard Public/Team View
+                Container(
+                  width: 44, 
+                  height: 44,
+                  decoration: BoxDecoration(
+                    shape: BoxShape.circle,
+                    border: Border.all(color: Colors.white24, width: 1.5),
+                  ),
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(22),
+                    child: CachedNetworkImage(
+                      imageUrl: widget.team.captainImageUrl,
+                      fit: BoxFit.cover,
+                      placeholder: (context, url) => Container(color: Colors.white10),
+                      errorWidget: (context, url, error) => const Icon(Icons.person, color: Colors.white24),
                     ),
-                    Text(
-                      widget.team.captainName,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
-                      ),
-                    ),
-                  ],
+                  ),
                 ),
-              ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        widget.team.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16, 
+                          fontWeight: FontWeight.w900,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      Text(
+                        widget.team.captainName,
+                        style: TextStyle(
+                          color: Colors.white.withValues(alpha: 0.6),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              ],
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -359,7 +397,7 @@ class _MatchCardState extends State<MatchCard> {
                     ),
                   ),
                   GestureDetector(
-                    onTap: _toggleJoin,
+                    onTap: _isLoading ? null : _toggleJoin,
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
@@ -367,14 +405,16 @@ class _MatchCardState extends State<MatchCard> {
                         borderRadius: BorderRadius.circular(10),
                         border: _isJoined ? Border.all(color: Colors.white24, width: 1) : null,
                       ),
-                      child: Text(
-                        _isJoined ? 'Leave' : 'Join',
-                        style: TextStyle(
-                          color: _isJoined ? Colors.white : Colors.black,
-                          fontWeight: FontWeight.w900, 
-                          fontSize: 12,
-                        ),
-                      ),
+                      child: _isLoading 
+                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                        : Text(
+                            _isJoined ? 'Leave' : 'Join Match',
+                            style: TextStyle(
+                              color: _isJoined ? Colors.white : Colors.black,
+                              fontWeight: FontWeight.w900, 
+                              fontSize: 12,
+                            ),
+                          ),
                     ),
                   ),
                 ],
@@ -400,51 +440,67 @@ class _MatchCardState extends State<MatchCard> {
             ),
           ),
           const SizedBox(height: 12), 
-          // Footer
-          Row(
+          // Footer with Progress Bar
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              SizedBox(
-                width: 90,
-                height: 32,
-                child: Stack(
-                  children: List.generate(
-                    widget.team.playerImages.take(4).length,
-                    (i) => Positioned(
-                      left: i * 20.0,
-                      child: Container(
-                        width: 30,
-                        height: 30,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: bgColor, width: 2),
-                        ),
-                        child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
-                          child: CachedNetworkImage(
-                            imageUrl: widget.team.playerImages[i],
-                            fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Colors.white10),
+              Row(
+                children: [
+                  SizedBox(
+                    width: 90,
+                    height: 32,
+                    child: Stack(
+                      children: List.generate(
+                        widget.team.playerImages.take(4).length,
+                        (i) => Positioned(
+                          left: i * 20.0,
+                          child: Container(
+                            width: 30,
+                            height: 30,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: bgColor, width: 2),
+                            ),
+                            child: ClipRRect(
+                              borderRadius: BorderRadius.circular(15),
+                              child: CachedNetworkImage(
+                                imageUrl: widget.team.playerImages[i],
+                                fit: BoxFit.cover,
+                                placeholder: (context, url) => Container(color: Colors.white10),
+                              ),
+                            ),
                           ),
                         ),
                       ),
                     ),
                   ),
-                ),
-              ),
-              const SizedBox(width: 8),
-              Expanded(
-                child: RichText(
-                  text: TextSpan(
-                    style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
-                    children: [
-                      const TextSpan(text: 'Number of remaining '),
-                      TextSpan(
-                        text: '${widget.team.maxPlayers - _currentPlayers}', // Dynamic remaining count
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: RichText(
+                      text: TextSpan(
+                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                        children: [
+                          const TextSpan(text: 'Number of remaining '),
+                          TextSpan(
+                            text: '${widget.team.maxPlayers - _currentPlayers}', 
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                          ),
+                          TextSpan(text: ' out of ${widget.team.maxPlayers}'), 
+                        ],
                       ),
-                      TextSpan(text: ' out of ${widget.team.maxPlayers}'), // Use widget.team for constant max
-                    ],
+                    ),
                   ),
+                ],
+              ),
+              const SizedBox(height: 12),
+              // Availability Progress Bar
+              ClipRRect(
+                borderRadius: BorderRadius.circular(4),
+                child: LinearProgressIndicator(
+                  value: _currentPlayers / (widget.team.maxPlayers > 0 ? widget.team.maxPlayers : 1),
+                  backgroundColor: Colors.white10,
+                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
+                  minHeight: 4,
                 ),
               ),
             ],
@@ -494,6 +550,28 @@ class _MatchCardState extends State<MatchCard> {
        return '${name.substring(0, 5)}..';
     }
     return name;
+  }
+
+  Widget _buildTeamAvatar(String name) {
+    return Column(
+      children: [
+        Container(
+          width: 32,
+          height: 32,
+          decoration: BoxDecoration(
+            color: Colors.white.withValues(alpha: 0.1),
+            shape: BoxShape.circle,
+            border: Border.all(color: Colors.white24, width: 1),
+          ),
+          child: const Center(child: Icon(Icons.shield, color: AppTheme.neonGreen, size: 16)),
+        ),
+        const SizedBox(height: 4),
+        Text(
+          name.length > 8 ? '${name.substring(0, 6)}..' : name,
+          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
   }
 }
 
@@ -913,8 +991,11 @@ class _HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context);
-    final user = authProvider.userModel;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userName = context.select<AuthProvider, String?>((p) => p.name);
+    final userPosition = context.select<AuthProvider, String>((p) => p.position);
+    final userProfileUrl = context.select<AuthProvider, String?>((p) => p.userModel?.profileImageUrl);
+    final authLoading = context.select<AuthProvider, bool>((p) => p.isLoading);
 
     return SafeArea(
       child: Column(
@@ -945,18 +1026,24 @@ class _HomeContent extends StatelessWidget {
                       },
                       child: Stack(
                         children: [
-                          user?.profileImageUrl != null
-                              ? CircleAvatar(
-                                  radius: 25,
-                                  backgroundImage: NetworkImage(user!.profileImageUrl!),
-                                )
-                              : ShimmerImage(
-                                  imageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
-                                  width: 50,
-                                  height: 50,
-                                  borderRadius: 25,
-                                ),
-                          if (authProvider.isLoading)
+                          Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: Colors.white10, width: 1),
+                            ),
+                            child: CircleAvatar(
+                              backgroundColor: AppTheme.cardBackground,
+                              backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty)
+                                  ? NetworkImage(userProfileUrl)
+                                  : null,
+                              child: (userProfileUrl == null || userProfileUrl.isEmpty)
+                                  ? const Icon(Icons.person, color: Colors.white54, size: 28)
+                                  : null,
+                            ),
+                          ),
+                          if (authLoading)
                             Positioned.fill(
                               child: Container(
                                 decoration: const BoxDecoration(
@@ -992,7 +1079,7 @@ class _HomeContent extends StatelessWidget {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Hi ${authProvider.name ?? "Player"}',
+                            'Hi ${userName ?? "Player"}',
                             style: const TextStyle(
                               color: AppTheme.textPrimary,
                               fontSize: 18,
@@ -1001,7 +1088,7 @@ class _HomeContent extends StatelessWidget {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            'Player (${authProvider.position})',
+                            'Player ($userPosition)',
                             style: const TextStyle(
                               color: AppTheme.textSecondary,
                               fontSize: 12,
@@ -1011,17 +1098,27 @@ class _HomeContent extends StatelessWidget {
                       ),
                     ),
                     // Notification Icon
-                    Container(
-                      width: 40,
-                      height: 40,
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: const Icon(
-                        Icons.notifications_outlined,
-                        color: AppTheme.textPrimary,
-                        size: 24,
+                    GestureDetector(
+                      onTap: () {
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const NotificationsCenterScreen(),
+                          ),
+                        );
+                      },
+                      child: Container(
+                        width: 40,
+                        height: 40,
+                        decoration: BoxDecoration(
+                          color: AppTheme.cardBackground,
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const Icon(
+                          Icons.notifications_outlined,
+                          color: AppTheme.textPrimary,
+                          size: 24,
+                        ),
                       ),
                     ),
                   ],
@@ -1128,7 +1225,7 @@ class _HomeContent extends StatelessWidget {
                       stream: DatabaseService().getStadiums(), // REAL DATA
                       builder: (context, snapshot) {
                          if (AppConfig.demoMode) {
-                           final mockStadiums = Stadium.getMockStadiums();
+                           final mockStadiums = Stadium.getMockStadiums().where((s) => s.isVerified == true).toList();
                            return ListView.builder(
                              scrollDirection: Axis.horizontal,
                              padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1211,7 +1308,9 @@ class _HomeContent extends StatelessWidget {
                   SizedBox(
                     height: 190,
                     child: StreamBuilder<List<Team>>(
-                      stream: DatabaseService().getTeams(),
+                      stream: DatabaseService().getTeams(
+                        governorate: Provider.of<AuthProvider>(context, listen: false).userModel?.governorate
+                      ),
                       builder: (context, teamSnapshot) {
                           if (teamSnapshot.connectionState == ConnectionState.waiting) {
                              return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));

@@ -1,8 +1,10 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/theme/app_theme.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../../core/providers/booking_provider.dart';
+import '../../../../core/services/database_service.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 
@@ -24,21 +26,50 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   Team? _selectedTeam;
+  Timer? _debounce;
+  bool _isSearching = false;
+  List<Team> _searchedTeams = [];
+  Map<String, int>? _h2hStats;
+  bool _isLoadingH2H = false;
 
-  // Mock History Teams
+  // Mock History Teams (Should eventually come from Firestore too)
   final List<Team> _historyTeams = Team.getMockTeams().take(3).toList();
   
-  // Results filtered by search
-  List<Team> get _searchResults {
-    if (_searchQuery.isEmpty) return [];
-    return Team.getMockTeams().where((team) => 
-      team.name.toLowerCase().contains(_searchQuery.toLowerCase())
-    ).toList();
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    
+    setState(() {
+      _searchQuery = query;
+    });
+
+    if (query.isEmpty) {
+      setState(() {
+        _searchedTeams = [];
+        _isSearching = false;
+      });
+      return;
+    }
+
+    _debounce = Timer(const Duration(milliseconds: 500), () async {
+      setState(() => _isSearching = true);
+      
+      final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
+      final results = await DatabaseService().searchOpponentTeams(query);
+      
+      if (mounted) {
+        setState(() {
+          // Filter out the player's own team
+          _searchedTeams = results.where((team) => team.id != myTeamId).toList();
+          _isSearching = false;
+        });
+      }
+    });
   }
 
   @override
   void dispose() {
     _searchController.dispose();
+    _debounce?.cancel();
     super.dispose();
   }
 
@@ -101,13 +132,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                     child: TextField(
                       controller: _searchController,
                       style: const TextStyle(color: Colors.white),
-                      onChanged: (value) {
-                        setState(() {
-                          _searchQuery = value;
-                        });
-                      },
+                      onChanged: _onSearchChanged,
                       decoration: InputDecoration(
-                        hintText: 'Search by team name',
+                        hintText: "Search by Team Name or Captain's Phone",
                         hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
                         prefixIcon: const Icon(Icons.search, color: AppTheme.neonGreen),
                         border: InputBorder.none,
@@ -130,7 +157,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       ),
                     ),
                     const SizedBox(height: 16),
-                    if (_searchResults.isEmpty)
+                    if (_isSearching)
+                      const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: CircularProgressIndicator(color: AppTheme.neonGreen),
+                        ),
+                      )
+                    else if (_searchedTeams.isEmpty)
                       Center(
                         child: Padding(
                           padding: const EdgeInsets.symmetric(vertical: 40),
@@ -147,7 +181,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         ),
                       )
                     else
-                      ..._searchResults.map((team) => _buildTeamCard(team)),
+                      ..._searchedTeams.map((team) => _buildTeamCard(team)),
                   ] else ...[
                     const Text(
                       'Teams You Played Against',
@@ -256,60 +290,183 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     final bool isSelected = _selectedTeam?.id == team.id;
 
     return GestureDetector(
-      onTap: () {
+      onTap: () async {
+        if (isSelected) return;
+        
         setState(() {
           _selectedTeam = team;
+          _isLoadingH2H = true;
+          _h2hStats = null;
         });
+
+        final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
+        if (myTeamId != null) {
+          final stats = await DatabaseService().getHeadToHeadStats(myTeamId, team.id);
+          if (mounted) {
+            setState(() {
+              _h2hStats = stats;
+              _isLoadingH2H = false;
+            });
+          }
+        } else {
+          if (mounted) setState(() => _isLoadingH2H = false);
+        }
       },
-      child: Container(
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.1) : const Color(0xFF1E1E1E),
+          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.05) : const Color(0xFF1E1E1E),
           borderRadius: BorderRadius.circular(16),
           border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent,
+            color: isSelected ? AppTheme.neonGreen : Colors.white.withValues(alpha: 0.05),
             width: 1.5,
           ),
         ),
-        child: Row(
+        child: Column(
           children: [
-            ShimmerImage(
-              imageUrl: team.captainImageUrl,
-              width: 50,
-              height: 50,
-              borderRadius: 25,
+            Row(
+              children: [
+                ShimmerImage(
+                  imageUrl: team.captainImageUrl,
+                  width: 50,
+                  height: 50,
+                  borderRadius: 25,
+                ),
+                const SizedBox(width: 16),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        team.name,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        "Matches played: ${team.matchesPlayed}",
+                        style: TextStyle(
+                          color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                          fontSize: 12,
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                if (isSelected)
+                  const Icon(Icons.check_circle, color: AppTheme.neonGreen)
+                else
+                  Icon(Icons.circle_outlined, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+              ],
             ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    team.name,
-                    style: const TextStyle(
-                      color: Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
+            if (isSelected) ...[
+              const Divider(color: Colors.white10, height: 32),
+              if (_isLoadingH2H)
+                const Center(
+                  child: Padding(
+                    padding: EdgeInsets.all(8.0),
+                    child: SizedBox(
+                      width: 20,
+                      height: 20,
+                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonGreen),
                     ),
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    "Matches played: ${team.currentPlayers}", // Using currentPlayers as mock for matches played
-                    style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            if (isSelected)
-              const Icon(Icons.check_circle, color: AppTheme.neonGreen)
-            else
-              Icon(Icons.circle_outlined, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                )
+              else if (_h2hStats != null && _h2hStats!['totalMatches']! > 0)
+                _buildH2HContent()
+              else if (_h2hStats != null)
+                const Text(
+                  "First time playing against them. Set the tone!",
+                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
+                ),
+            ],
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildH2HContent() {
+    final wins = _h2hStats!['teamAWins']!;
+    final opposingWins = _h2hStats!['teamBWins']!;
+    final draws = _h2hStats!['draws']!;
+    
+    String hypeMessage = "The series is tied! Break the deadlock!";
+    if (wins > opposingWins) {
+      hypeMessage = "You dominate them. Keep the streak alive!";
+    } else if (wins < opposingWins) {
+      hypeMessage = "Time for revenge! They have the upper hand.";
+    }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        const Text(
+          "HEAD-TO-HEAD HISTORY",
+          style: TextStyle(
+            color: Colors.white70,
+            fontSize: 10,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 1.2,
+          ),
+        ),
+        const SizedBox(height: 16),
+        Row(
+          children: [
+            _buildH2HStatItem("YOUR WINS", wins, AppTheme.neonGreen),
+            _buildH2HStatItem("DRAWS", draws, Colors.white60),
+            _buildH2HStatItem("THEIR WINS", opposingWins, Colors.redAccent),
+          ],
+        ),
+        const SizedBox(height: 16),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+          decoration: BoxDecoration(
+            color: AppTheme.neonGreen.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(8),
+          ),
+          child: Text(
+            hypeMessage,
+            textAlign: TextAlign.center,
+            style: const TextStyle(
+              color: AppTheme.neonGreen,
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildH2HStatItem(String label, int value, Color color) {
+    return Expanded(
+      child: Column(
+        children: [
+          Text(
+            value.toString(),
+            style: TextStyle(
+              color: color,
+              fontSize: 24,
+              fontWeight: FontWeight.w900,
+              fontFamily: 'Agency FB',
+            ),
+          ),
+          Text(
+            label,
+            style: TextStyle(
+              color: AppTheme.textSecondary.withValues(alpha: 0.6),
+              fontSize: 9,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
       ),
     );
   }

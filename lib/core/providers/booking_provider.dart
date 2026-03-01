@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
@@ -12,6 +13,7 @@ class BookingProvider with ChangeNotifier {
   List<Booking> _historyBookings = [];
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
+  StreamSubscription? _bookingSubscription; // ✅ Added tracking
   
   bool _isLoading = false;
   String? _errorMessage;
@@ -133,7 +135,8 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   void loadUserBookings(String userId) {
-    _repository.getUserBookings(userId).listen(
+    _bookingSubscription?.cancel();
+    _bookingSubscription = _repository.getUserBookings(userId).listen(
       (bookings) {
         _userBookings = bookings;
         // Split into upcoming and history
@@ -159,7 +162,8 @@ class BookingProvider with ChangeNotifier {
 
   /// Load owner's bookings (for stadium owners)
   void loadOwnerBookings(String ownerId) {
-    _repository.getOwnerBookings(ownerId).listen(
+    _bookingSubscription?.cancel();
+    _bookingSubscription = _repository.getOwnerBookings(ownerId).listen(
       (bookings) {
         _userBookings = bookings;
         final now = DateTime.now();
@@ -214,6 +218,8 @@ class BookingProvider with ChangeNotifier {
     required String bookingId,
     required String teamId,
     required MatchOutcome outcome,
+    double? rating,
+    String? review,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -224,6 +230,8 @@ class BookingProvider with ChangeNotifier {
         bookingId: bookingId,
         teamId: teamId,
         outcome: outcome,
+        rating: rating,
+        review: review,
       );
       
       if (!success) {
@@ -241,9 +249,20 @@ class BookingProvider with ChangeNotifier {
     }
   }
 
+  /// Get bookings for a specific stadium and date (Stream)
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
+    return _repository.getBookingsForStadium(stadiumId, date);
+  }
+
   /// Clear error message
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  @override
+  void dispose() {
+    _bookingSubscription?.cancel();
+    super.dispose();
   }
 }

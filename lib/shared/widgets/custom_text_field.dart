@@ -4,6 +4,7 @@ import '../../core/theme/app_theme.dart';
 /// حقل إدخال نص مخصص بتصميم داكن
 class CustomTextField extends StatelessWidget {
   final String? hintText;
+  final String? errorText; // ✅ Added errorText
   final TextEditingController controller;
   final TextInputType keyboardType;
   final bool obscureText;
@@ -14,6 +15,7 @@ class CustomTextField extends StatelessWidget {
   const CustomTextField({
     super.key,
     this.hintText,
+    this.errorText, // ✅ Added errorText
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
@@ -35,6 +37,7 @@ class CustomTextField extends StatelessWidget {
       ),
       decoration: InputDecoration(
         hintText: hintText,
+        errorText: errorText, // ✅ Pass errorText here
         hintStyle: TextStyle(
           color: AppTheme.textSecondary.withValues(alpha: 0.5),
           fontSize: 16,

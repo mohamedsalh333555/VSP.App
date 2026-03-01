@@ -31,7 +31,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
     // 1. Setup Confetti
     _confettiController = ConfettiController(duration: const Duration(seconds: 3));
-    _confettiController.play();
 
     // 2. Setup Checkmark Animation
     _checkController = AnimationController(
@@ -44,8 +43,14 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     );
     _checkController.forward();
 
-    // 3. Trigger Notification
-    _showBookingNotification();
+    // 3. Trigger Post-Write Effects with a small delay for better UX
+    Future.delayed(const Duration(milliseconds: 500), () {
+      if (mounted) {
+        _confettiController.play();
+        _showBookingNotification();
+        HapticFeedback.heavyImpact();
+      }
+    });
   }
 
   Future<void> _showBookingNotification() async {

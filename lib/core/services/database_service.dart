@@ -1,9 +1,29 @@
+import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../../core/models/user_model.dart';
 import '../../data/models.dart';
 
 class DatabaseService {
   // Active Instance
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+
+  // ==================== USERS ====================
+
+  Future<UserModel?> getUserByPhone(String phone) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .where('phone', isEqualTo: phone)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      return UserModel.fromFirestore(snapshot.docs.first.data());
+    } catch (e) {
+      debugPrint('Error getting user by phone: $e');
+      return null;
+    }
+  }
 
   // ==================== STADIUMS ====================
   
@@ -11,6 +31,7 @@ class DatabaseService {
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
     return _firestore
         .collection('stadiums')
+        .where('isVerified', isEqualTo: true) // ✅ Only show verified stadiums to players
         .limit(limit)
         .snapshots()
         .map((snapshot) => snapshot.docs
@@ -61,10 +82,10 @@ class DatabaseService {
       DocumentReference ref = await _firestore.collection('stadiums').add({
         ...stadiumData,
         'createdAt': FieldValue.serverTimestamp(),
-        // ownerId should already be in stadiumData, but safety fallbacks can be handled in calling method
       });
       return ref.id;
     } catch (e) {
+      debugPrint('Error adding stadium: $e');
       return null;
     }
   }
@@ -88,6 +109,8 @@ class DatabaseService {
     required String imageUrl,
     required String ownerId,
     String notes = '', // ✅ Added notes
+    String? contractUrl,
+    String? ownerIdUrl,
     Map<String, dynamic>? features,
   }) async {
     return await addStadium({
@@ -98,6 +121,9 @@ class DatabaseService {
       'imageUrl': imageUrl,
       'ownerId': ownerId,
       'notes': notes, // ✅ Added notes
+      'contractUrl': contractUrl,
+      'ownerIdUrl': ownerIdUrl,
+      'isVerified': false, // Default to false for new stadiums
       'features': features ?? {},
     });
   }
@@ -181,14 +207,33 @@ class DatabaseService {
   // ==================== CHAMPIONSHIPS ====================
   
   // Get all championships
-  Stream<List<Map<String, dynamic>>> getChampionships() {
-    return _firestore
-        .collection('championships')
-        .orderBy('startDate', descending: false)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => {...doc.data(), 'id': doc.id})
-            .toList());
+  Stream<List<Championship>> getChampionshipsStream({String? governorate, String? sportType}) {
+    Query query = _firestore.collection('championships');
+    
+    if (governorate != null && governorate.isNotEmpty) {
+      query = query.where('governorate', isEqualTo: governorate);
+    }
+    
+    if (sportType != null && sportType.isNotEmpty) {
+      query = query.where('sportType', isEqualTo: sportType);
+    }
+
+    return query.snapshots().map((snapshot) => snapshot.docs
+        .map((doc) => Championship.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .toList());
+  }
+
+  Future<String?> createChampionship(Map<String, dynamic> data) async {
+    try {
+      final docRef = await _firestore.collection('championships').add({
+        ...data,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return docRef.id;
+    } catch (e) {
+      debugPrint('Error creating championship: $e');
+      return null;
+    }
   }
 
   // Join a championship
@@ -316,28 +361,53 @@ class DatabaseService {
     }
   }
   
-  // ==================== TEAMS & RANKING ====================
-  // Helper to fetch teams (used in PlayerHomeScreen for now until match structure is set)
-  Stream<List<Team>> getTeams() {
+  // ==================== BOOKINGS ====================
+
+  // Get bookings for a specific stadium and date
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
+    // Calculate start and end of the day in UTC/Local as per storage
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+
     return _firestore
-        .collection('teams')
+        .collection('bookings')
+        .where('stadiumId', isEqualTo: stadiumId)
+        .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
+        .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
         .snapshots()
-        .map((snapshot) => snapshot.docs.map((doc) {
-             final data = doc.data();
-             // Map Firestore data to Team model
-             return Team(
-               id: doc.id,
-               name: data['name'] ?? '',
-               stadium: 'TBD', // This info isn't in seeded team data, defaulting
-               date: 'Upcoming', 
-               captainName: 'Captain', // Mock if not joined
-               captainImageUrl: data['logoUrl'] ?? '',
-               playerImages: List<String>.from(data['members'] ?? []),
-               maxPlayers: 11,
-               currentPlayers: data['playersCount'] ?? 11,
-               pricePerPerson: 50.0,
-             );
-        }).toList());
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+            .where((b) => b.status != BookingStatus.cancelled) // Only active bookings
+            .toList());
+  }
+
+  // ==================== TEAMS & RANKING ====================
+  // Fetch teams with optional governorate filter
+  Stream<List<Team>> getTeams({String? governorate}) {
+    Query query = _firestore.collection('teams');
+    if (governorate != null && governorate.isNotEmpty) {
+      query = query.where('governorate', isEqualTo: governorate);
+    }
+    
+    return query.snapshots().map((snapshot) => snapshot.docs.map((doc) {
+      return Team.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    }).toList());
+  }
+
+  Future<Team?> getTeamByCaptainPhone(String phone) async {
+    try {
+      final snapshot = await _firestore
+          .collection('teams')
+          .where('captainPhone', isEqualTo: phone)
+          .limit(1)
+          .get();
+
+      if (snapshot.docs.isEmpty) return null;
+      return Team.fromFirestore(snapshot.docs.first.data() as Map<String, dynamic>, snapshot.docs.first.id);
+    } catch (e) {
+      debugPrint('Error getting team by captain phone: $e');
+      return null;
+    }
   }
 
   // Get Matches Stream (Placeholder for future structure)
@@ -345,32 +415,286 @@ class DatabaseService {
     return _firestore.collection('matches').snapshots();
   }
 
-  // Confirm Match Result & Update Ranking
-  Future<void> updateMatchResult(String matchId, String winningTeamId) async {
-    final batch = _firestore.batch();
-    
-    // 1. Update Match Status
-    // DocumentReference matchRef = _firestore.collection('matches').doc(matchId);
-    // batch.update(matchRef, {'status': 'completed', 'winner': winningTeamId});
-    // Note: Since we don't have matches seeded yet, we will focus on updating the Team Points directly for the demo.
-    
-    // 2. Increment Team Points
-    DocumentReference teamRef = _firestore.collection('teams').doc(winningTeamId);
-    batch.update(teamRef, {
-      'points': FieldValue.increment(3),
-      'trend': 'up'
-    });
-    
-    // 3. Create Transaction Record (Financial & Logic)
-    DocumentReference transRef = _firestore.collection('transactions').doc();
-    batch.set(transRef, {
-      'type': 'match_win',
-      'teamId': winningTeamId,
-      'amount': 0, // No money involved in win, just points
-      'createdAt': FieldValue.serverTimestamp(),
-    });
+  Future<String?> createTeam(Map<String, dynamic> teamData) async {
+    try {
+      DocumentReference ref = await _firestore.collection('teams').add({
+        ...teamData,
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return ref.id;
+    } catch (e) {
+      debugPrint('Error creating team: $e');
+      return null;
+    }
+  }
 
-    await batch.commit();
+  Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('teams').doc(teamId).update(data);
+      return true;
+    } catch (e) {
+      debugPrint('Error updating team: $e');
+      return false;
+    }
+  }
+
+  Future<void> updateMatchResult(String bookingId, String homeTeamId, String awayTeamId, MatchOutcome finalOutcome) async {
+    return _firestore.runTransaction((transaction) async {
+      final homeRef = _firestore.collection('teams').doc(homeTeamId);
+      final awayRef = _firestore.collection('teams').doc(awayTeamId);
+
+      final homeSnap = await transaction.get(homeRef);
+      final awaySnap = await transaction.get(awayRef);
+
+      if (!homeSnap.exists || !awaySnap.exists) return;
+
+      final homePlayed = List<String>.from(homeSnap.data()?['playedOpponents'] ?? []);
+      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
+
+      // ── New Opponent Algorithm ──
+      // If NO, bonus = 1, else bonus = 0
+      bool isNewForHome = !homePlayed.contains(awayTeamId);
+      bool isNewForAway = !awayPlayed.contains(homeTeamId);
+      int bonusHome = isNewForHome ? 1 : 0;
+      int bonusAway = isNewForAway ? 1 : 0;
+
+      int homePts = 0;
+      int awayPts = 0;
+      String homeTrend = 'stable';
+      String awayTrend = 'stable';
+
+      if (finalOutcome == MatchOutcome.homeWin) {
+        // Home Win: 3 pts + bonus; Away Loss: 0 pts + bonus
+        homePts = 3 + bonusHome;
+        awayPts = bonusAway;
+        homeTrend = 'up';
+        awayTrend = 'down';
+      } else if (finalOutcome == MatchOutcome.awayWin) {
+        // Home Loss: 0 pts + bonus; Away Win: 3 pts + bonus
+        homePts = bonusHome;
+        awayPts = 3 + bonusAway;
+        homeTrend = 'down';
+        awayTrend = 'up';
+      } else {
+        // Draw: 1 pt + bonus for both
+        homePts = 1 + bonusHome;
+        awayPts = 1 + bonusAway;
+        homeTrend = 'stable';
+        awayTrend = 'stable';
+      }
+
+      // ── Gamification: Streaks & Badges ──
+      
+      // Home Team Logic
+      int homeStreak = (finalOutcome == MatchOutcome.homeWin) 
+          ? (homeSnap.data()?['currentWinningStreak'] ?? 0) + 1 
+          : 0;
+      List<String> homeBadges = List<String>.from(homeSnap.data()?['unlockedBadges'] ?? []);
+      int homeMatchesTotal = (homeSnap.data()?['matchesPlayed'] ?? 0) + 1;
+      
+      if (homeMatchesTotal >= 10 && !homeBadges.contains('gladiator')) homeBadges.add('gladiator');
+      if (homeStreak >= 3 && !homeBadges.contains('streak_3')) homeBadges.add('streak_3');
+      if (homePlayed.length + (isNewForHome ? 1 : 0) >= 5 && !homeBadges.contains('explorer')) homeBadges.add('explorer');
+
+      // Away Team Logic
+      int awayStreak = (finalOutcome == MatchOutcome.awayWin) 
+          ? (awaySnap.data()?['currentWinningStreak'] ?? 0) + 1 
+          : 0;
+      List<String> awayBadges = List<String>.from(awaySnap.data()?['unlockedBadges'] ?? []);
+      int awayMatchesTotal = (awaySnap.data()?['matchesPlayed'] ?? 0) + 1;
+      
+      if (awayMatchesTotal >= 10 && !awayBadges.contains('gladiator')) awayBadges.add('gladiator');
+      if (awayStreak >= 3 && !awayBadges.contains('streak_3')) awayBadges.add('streak_3');
+      if (awayPlayed.length + (isNewForAway ? 1 : 0) >= 5 && !awayBadges.contains('explorer')) awayBadges.add('explorer');
+
+      // Update Home Team
+      transaction.update(homeRef, {
+        'points': FieldValue.increment(homePts),
+        'matchesPlayed': FieldValue.increment(1),
+        'wins': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
+        'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
+        'losses': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
+        'trend': homeTrend,
+        'currentWinningStreak': homeStreak,
+        'unlockedBadges': homeBadges,
+        if (isNewForHome) 'playedOpponents': FieldValue.arrayUnion([awayTeamId]),
+      });
+
+      // Update Away Team
+      transaction.update(awayRef, {
+        'points': FieldValue.increment(awayPts),
+        'matchesPlayed': FieldValue.increment(1),
+        'wins': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
+        'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
+        'losses': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
+        'trend': awayTrend,
+        'currentWinningStreak': awayStreak,
+        'unlockedBadges': awayBadges,
+        if (isNewForAway) 'playedOpponents': FieldValue.arrayUnion([homeTeamId]),
+      });
+      
+      // Update Booking status
+      transaction.update(_firestore.collection('bookings').doc(bookingId), {
+        'status': BookingStatus.completed.name,
+        'finalOutcome': finalOutcome.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+    });
+  }
+
+  Future<List<Team>> searchOpponentTeams(String query) async {
+    try {
+      if (query.isEmpty) return [];
+
+      final isPhone = RegExp(r'^[0-9]+$').hasMatch(query);
+      Query queryRef = _firestore.collection('teams');
+
+      if (isPhone) {
+        queryRef = queryRef.where('captainPhone', isEqualTo: query);
+      } else {
+        // Simple case-insensitive start-search
+        queryRef = queryRef
+            .where('name', isGreaterThanOrEqualTo: query)
+            .where('name', isLessThanOrEqualTo: query + '\uf8ff')
+            .limit(10);
+      }
+
+      final snapshot = await queryRef.get();
+      return snapshot.docs
+          .map((doc) => Team.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+    } catch (e) {
+      debugPrint('Error searching teams: $e');
+      return [];
+    }
+  }
+
+  Stream<List<AppNotification>> getUserNotifications(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => AppNotification.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<void> sendNotification(String userId, AppNotification notification) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .add(notification.toFirestore());
+    } catch (e) {
+      debugPrint('Error sending notification: $e');
+    }
+  }
+
+  Future<Map<String, int>> getHeadToHeadStats(String teamAId, String teamBId) async {
+    try {
+      final q1 = await _firestore.collection('bookings')
+          .where('status', isEqualTo: BookingStatus.completed.name)
+          .where('bookingType', isEqualTo: BookingType.challenge.name)
+          .where('playerTeamId', isEqualTo: teamAId)
+          .where('opponentTeamId', isEqualTo: teamBId)
+          .get();
+
+      final q2 = await _firestore.collection('bookings')
+          .where('status', isEqualTo: BookingStatus.completed.name)
+          .where('bookingType', isEqualTo: BookingType.challenge.name)
+          .where('playerTeamId', isEqualTo: teamBId)
+          .where('opponentTeamId', isEqualTo: teamAId)
+          .get();
+
+      int teamAWins = 0;
+      int teamBWins = 0;
+      int draws = 0;
+
+      for (var doc in q1.docs) {
+        final outcome = doc.data()['finalOutcome'];
+        if (outcome == MatchOutcome.homeWin.name) teamAWins++;
+        else if (outcome == MatchOutcome.awayWin.name) teamBWins++;
+        else draws++;
+      }
+
+      for (var doc in q2.docs) {
+        final outcome = doc.data()['finalOutcome'];
+        if (outcome == MatchOutcome.homeWin.name) teamBWins++;
+        else if (outcome == MatchOutcome.awayWin.name) teamAWins++;
+        else draws++;
+      }
+
+      return {
+        'teamAWins': teamAWins,
+        'teamBWins': teamBWins,
+        'draws': draws,
+        'totalMatches': teamAWins + teamBWins + draws,
+      };
+    } catch (e) {
+      debugPrint('Error fetching H2H stats: $e');
+      return {'teamAWins': 0, 'teamBWins': 0, 'draws': 0, 'totalMatches': 0};
+    }
+  }
+
+  Future<bool> addMemberToTeam(String teamId, String userId, String profileImageUrl) async {
+    try {
+      await _firestore.collection('teams').doc(teamId).update({
+        'memberUids': FieldValue.arrayUnion([userId]),
+        'playerImages': FieldValue.arrayUnion([profileImageUrl]),
+        'playersCount': FieldValue.increment(1),
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error adding member to team: $e');
+      return false;
+    }
+  }
+
+  // ==================== PUBLIC MATCHES ====================
+
+  Stream<List<Booking>> getPublicMatches() {
+    final now = DateTime.now();
+    return _firestore
+        .collection('bookings')
+        .where('isPrivate', isEqualTo: false)
+        .where('status', isEqualTo: BookingStatus.confirmed.name)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+            .where((b) => b.startTime.isAfter(now) && b.currentPlayers < b.maxPlayers)
+            .toList());
+  }
+
+  Future<bool> joinPublicMatch(String bookingId, String userId) async {
+    try {
+      final docRef = _firestore.collection('bookings').doc(bookingId);
+      
+      await _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        if (!doc.exists) throw 'Match not found';
+        
+        final data = doc.data() as Map<String, dynamic>;
+        final current = data['currentPlayers'] ?? 0;
+        final max = data['maxPlayers'] ?? 0;
+        final joined = List<String>.from(data['joinedUserIds'] ?? []);
+        
+        if (current >= max) throw 'Match is full';
+        if (joined.contains(userId)) throw 'Already joined';
+        
+        transaction.update(docRef, {
+          'currentPlayers': FieldValue.increment(1),
+          'joinedUserIds': FieldValue.arrayUnion([userId]),
+        });
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error joining public match: $e');
+      return false;
+    }
   }
 }
 

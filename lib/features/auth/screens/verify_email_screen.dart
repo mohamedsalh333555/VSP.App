@@ -1,13 +1,14 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/providers/language_provider.dart';
+import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
-import '../../../core/config/app_config.dart';
-import 'set_password_new_screen.dart';
+import '../../../core/navigation/root_screen.dart';
+import '../../owner/screens/add_stadium_wizard.dart';
 
-/// شاشة تأكيد البريد الإلكتروني - الخطوة 2/3
+/// شاشة التحقق من OTP - تعمل بنظام Mock في DEV والحقيقي في Production
 class VerifyEmailScreen extends StatefulWidget {
   const VerifyEmailScreen({super.key});
 
@@ -16,90 +17,151 @@ class VerifyEmailScreen extends StatefulWidget {
 }
 
 class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  final List<TextEditingController> _controllers = List.generate(
-    5,
-    (index) => TextEditingController(),
-  );
-  final List<FocusNode> _focusNodes = List.generate(
-    5,
-    (index) => FocusNode(),
-  );
+  // OTP Controllers (6 fields)
+  final List<TextEditingController> _controllers =
+      List.generate(6, (_) => TextEditingController());
+  final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
+
   bool _isLoading = false;
+  bool _canResend = false;
+  int _countdown = AppConfig.otpCountdownSeconds;
+  Timer? _timer;
+
+  @override
+  void initState() {
+    super.initState();
+    _startCountdown();
+  }
 
   @override
   void dispose() {
-    for (var controller in _controllers) {
-      controller.dispose();
+    _timer?.cancel();
+    for (final c in _controllers) {
+      c.dispose();
     }
-    for (var node in _focusNodes) {
-      node.dispose();
+    for (final f in _focusNodes) {
+      f.dispose();
     }
     super.dispose();
   }
 
-  String _getCode() {
-    return _controllers.map((c) => c.text).join();
+  void _startCountdown() {
+    _canResend = false;
+    _countdown = AppConfig.otpCountdownSeconds;
+    _timer?.cancel();
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (_countdown == 0) {
+        timer.cancel();
+        if (mounted) setState(() => _canResend = true);
+      } else {
+        if (mounted) setState(() => _countdown--);
+      }
+    });
   }
 
-  Future<void> _handleCreateAccount() async {
-    // 1. Check for Bypass Flag
-    if (AppConfig.bypassOtp) {
-      if (mounted) {
-         Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const SetPasswordNewScreen(),
-          ),
-        );
-      }
-      return;
-    }
+  String _getCode() =>
+      _controllers.map((c) => c.text).join();
 
+  Future<void> _handleVerify() async {
     final code = _getCode();
-    
-    if (code.length != 5) {
-      if (!mounted) return;
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter the complete 5-digit code'),
-          backgroundColor: Colors.red,
-        ),
-      );
+    if (code.length < 6) {
+      _showError('يرجى إدخال رمز التحقق كاملاً (6 أرقام)');
       return;
     }
 
     setState(() => _isLoading = true);
 
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    authProvider.setVerificationCode(code);
+    if (AppConfig.useMockOtp) {
+      // ✅ Mock OTP Verification
+      await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
 
-    // محاكاة التحقق من الرمز
-    final success = await authProvider.verifyCode(code);
+      if (code == AppConfig.mockOtpCode) {
+        final auth = Provider.of<AuthProvider>(context, listen: false);
 
-    setState(() => _isLoading = false);
+        // Mark registration as complete in Firestore
+        await auth.updateProfile({'isRegistrationComplete': true});
 
-    if (!mounted) return;
-    if (success) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(
-          builder: (context) => const SetPasswordNewScreen(),
-        ),
-      );
+        if (!mounted) return;
+        
+        // Role-based redirection
+        if (auth.isOwner) {
+          // Direct new owners to add their first stadium
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+            (route) => false,
+          );
+        } else {
+          // Players go home (RootScreen handles final destination)
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (_) => const RootScreen()),
+            (route) => false,
+          );
+        }
+      } else {
+        if (mounted) setState(() => _isLoading = false);
+        _showError('رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
+      }
     } else {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Invalid code'),
-          backgroundColor: Colors.red,
+      // 🔥 Production: Replace with real OTP verification
+      // final auth = Provider.of<AuthProvider>(context, listen: false);
+      // final verified = await auth.verifyOtpFromCloud(code);
+      // if (verified) { ... } else { ... }
+      if (mounted) setState(() => _isLoading = false);
+      _showError('OTP الحقيقي غير مفعّل بعد. استخدم وضع التطوير.');
+    }
+  }
+
+  void _showError(String message) {
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message),
+        backgroundColor: Colors.red.shade700,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      ),
+    );
+  }
+
+  void _handleResend() {
+    if (!_canResend) return;
+    _startCountdown();
+    // TODO: In production, call auth.resendOtp()
+    ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(
+          AppConfig.useMockOtp
+              ? 'رمز التحقق الوهمي: ${AppConfig.mockOtpCode}'
+              : 'تم إعادة إرسال رمز التحقق',
         ),
-      );
+        backgroundColor: AppTheme.neonGreen,
+        behavior: SnackBarBehavior.floating,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+      ),
+    );
+  }
+
+  // When a digit is entered, move focus to next field automatically
+  void _onChanged(int index, String value) {
+    if (value.isNotEmpty && index < 5) {
+      _focusNodes[index + 1].requestFocus();
+    }
+    if (value.isEmpty && index > 0) {
+      _focusNodes[index - 1].requestFocus();
+    }
+    // Auto-submit when all 6 digits are entered
+    if (_getCode().length == 6) {
+      FocusScope.of(context).unfocus();
+      _handleVerify();
     }
   }
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    final authProvider = Provider.of<AuthProvider>(context);
+    final auth = Provider.of<AuthProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: const SystemUiOverlayStyle(
@@ -107,346 +169,208 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: AppTheme.darkBackground,
         systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
         backgroundColor: AppTheme.darkBackground,
-        extendBody: true,
-        extendBodyBehindAppBar: true,
         body: SafeArea(
-          bottom: false,
           child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-
-              // Back Button
-              IconButton(
-                icon: Icon(
-                  languageProvider.isArabic
-                      ? Icons.arrow_forward
-                      : Icons.arrow_back,
-                  color: AppTheme.textPrimary,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 20),
+                // Back button
+                Align(
+                  alignment: Alignment.centerLeft,
+                  child: IconButton(
+                    icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                    onPressed: () => Navigator.pop(context),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
                 ),
-                onPressed: () => Navigator.pop(context),
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-              ),
 
-              const SizedBox(height: 40),
+                const SizedBox(height: 50),
 
-              // Title
-              Center(
-                child: Text(
-                  languageProvider.isArabic
-                      ? 'تأكيد بريدك الإلكتروني 2/3'
-                      : 'Verify your email 2/3',
-                  style: const TextStyle(
+                // Icon
+                Container(
+                  width: 100,
+                  height: 100,
+                  decoration: BoxDecoration(
+                    color: AppTheme.neonGreen.withOpacity(0.1),
+                    shape: BoxShape.circle,
+                  ),
+                  child: const Icon(
+                    Icons.verified_outlined,
+                    size: 52,
+                    color: AppTheme.neonGreen,
+                  ),
+                ),
+
+                const SizedBox(height: 32),
+
+                // Title
+                const Text(
+                  'أدخل رمز التحقق',
+                  style: TextStyle(
                     color: AppTheme.textPrimary,
-                    fontSize: 20,
+                    fontSize: 28,
                     fontWeight: FontWeight.bold,
                   ),
+                  textAlign: TextAlign.center,
                 ),
-              ),
+                const SizedBox(height: 12),
 
-              const SizedBox(height: 16),
+                // Subtitle
+                Text(
+                  auth.email.isNotEmpty
+                      ? 'تم إرسال رمز التحقق إلى:\n${auth.email}'
+                      : AppConfig.useMockOtp
+                          ? 'وضع التطوير: استخدم الرمز ${AppConfig.mockOtpCode}'
+                          : 'أدخل الرمز المُرسل إليك',
+                  textAlign: TextAlign.center,
+                  style: const TextStyle(
+                    color: AppTheme.textSecondary,
+                    fontSize: 15,
+                    height: 1.6,
+                  ),
+                ),
 
-              // Progress Indicator
-              _ProgressIndicator(currentStep: 2),
-
-              const SizedBox(height: 32),
-
-              // Subtitle
-              Center(
-                child: Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                  child: RichText(
-                    textAlign: TextAlign.center,
-                    text: TextSpan(
+                // DEV mode badge
+                if (AppConfig.useMockOtp) ...[
+                  const SizedBox(height: 12),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withOpacity(0.1),
+                      borderRadius: BorderRadius.circular(20),
+                      border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                    ),
+                    child: Text(
+                      'وضع التطوير - رمز التجربة: ${AppConfig.mockOtpCode}',
                       style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
-                        height: 1.5,
+                        color: Colors.orange,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
                       ),
-                      children: [
-                        TextSpan(
-                          text: languageProvider.isArabic
-                              ? 'لقد أرسلنا للتو رمزًا مكونًا من 5 أرقام إلى '
-                              : 'We Just Sent 5-Digit Code To ',
-                        ),
-                        TextSpan(
-                          text: authProvider.email,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                        TextSpan(
-                          text: languageProvider.isArabic
-                              ? '، أدخله أدناه:'
-                              : ', Enter It Bellow:',
-                        ),
-                      ],
                     ),
                   ),
-                ),
-              ),
+                ],
 
-              const SizedBox(height: 32),
+                const SizedBox(height: 48),
 
-              // Code Label
-              Text(
-                languageProvider.isArabic ? 'الرمز' : 'Code',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
-                  fontWeight: FontWeight.w500,
-                ),
-              ),
-
-              const SizedBox(height: 12),
-
-              // OTP Input
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: List.generate(5, (index) {
-                  return _OTPBox(
-                    controller: _controllers[index],
-                    focusNode: _focusNodes[index],
-                    onChanged: (value) {
-                      if (value.isNotEmpty && index < 4) {
-                        _focusNodes[index + 1].requestFocus();
-                      } else if (value.isEmpty && index > 0) {
-                        _focusNodes[index - 1].requestFocus();
-                      }
-                    },
-                  );
-                }),
-              ),
-
-              const SizedBox(height: 32),
-
-              // Create Account Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton(
-                  onPressed: _isLoading 
-                      ? null 
-                      : () {
-                          _handleCreateAccount();
-                        },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonGreen,
-                    foregroundColor: AppTheme.darkBackground,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: _isLoading
-                      ? const SizedBox(
-                          height: 24,
-                          width: 24,
-                          child: CircularProgressIndicator(
-                            strokeWidth: 2,
-                            valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.darkBackground,
-                            ),
-                          ),
-                        )
-                      : Text(
-                          languageProvider.isArabic
-                              ? 'إنشاء حساب جديد'
-                              : 'Create New Account',
-                          style: const TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                ),
-              ),
-
-              const SizedBox(height: 24),
-
-              // Wrong email link
-              Center(
-                child: Row(
+                // OTP Input Fields (6 boxes)
+                Row(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    Text(
-                      languageProvider.isArabic ? 'بريد خاطئ؟ ' : 'Wrong email? ',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
+                  children: List.generate(6, (index) {
+                    return Container(
+                      width: 48,
+                      height: 58,
+                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                      decoration: BoxDecoration(
+                        color: AppTheme.cardBackground,
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: _focusNodes[index].hasFocus
+                              ? AppTheme.neonGreen
+                              : Colors.white.withOpacity(0.1),
+                          width: 1.5,
+                        ),
                       ),
-                    ),
-                    GestureDetector(
-                      onTap: () => Navigator.pop(context),
-                      child: Text(
-                        languageProvider.isArabic
-                            ? 'إرسال إلى بريد مختلف'
-                            : 'Send to different email',
+                      child: TextField(
+                        controller: _controllers[index],
+                        focusNode: _focusNodes[index],
+                        textAlign: TextAlign.center,
+                        keyboardType: TextInputType.number,
+                        maxLength: 1,
+                        obscureText: false,
                         style: const TextStyle(
-                          color: AppTheme.neonGreen,
-                          fontSize: 14,
+                          color: Colors.white,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                         ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-
-              // Resend Code
-              Center(
-                child: GestureDetector(
-                  onTap: () {
-                    // TODO: Resend code
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Code sent again!'),
-                        backgroundColor: AppTheme.neonGreen,
-                        duration: Duration(seconds: 2),
+                        decoration: const InputDecoration(
+                          counterText: '',
+                          border: InputBorder.none,
+                        ),
+                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                        onChanged: (value) => _onChanged(index, value),
                       ),
                     );
-                  },
-                  child: Text(
-                    languageProvider.isArabic
-                        ? 'إعادة إرسال الرمز'
-                        : 'Send Code Again',
-                    style: const TextStyle(
-                      color: AppTheme.neonGreen,
-                      fontSize: 14,
-                      fontWeight: FontWeight.bold,
+                  }),
+                ),
+
+                const SizedBox(height: 40),
+
+                // Verify Button
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    onPressed: _isLoading ? null : _handleVerify,
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: AppTheme.neonGreen,
+                      foregroundColor: Colors.black,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      elevation: 0,
                     ),
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 24,
+                            height: 24,
+                            child: CircularProgressIndicator(
+                              color: Colors.black,
+                              strokeWidth: 2.5,
+                            ),
+                          )
+                        : const Text(
+                            'تحقق',
+                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                          ),
                   ),
                 ),
-              ),
 
-              const Spacer(),
+                const SizedBox(height: 24),
 
-              // Terms and Privacy
-              Center(
-                child: RichText(
-                  textAlign: TextAlign.center,
-                  text: const TextSpan(
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                    ),
-                    children: [
-                      TextSpan(text: 'By using VSP , you agree to the\nTerms and '),
-                      TextSpan(
-                        text: 'Privacy Policy.',
+                // Resend / Countdown
+                _canResend
+                    ? TextButton(
+                        onPressed: _handleResend,
+                        child: const Text(
+                          'إعادة إرسال الرمز',
+                          style: TextStyle(
+                            color: AppTheme.neonGreen,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 15,
+                          ),
+                        ),
+                      )
+                    : Text(
+                        'يمكنك إعادة الإرسال بعد $_countdown ثانية',
                         style: TextStyle(
-                          color: AppTheme.neonGreen,
-                          fontWeight: FontWeight.bold,
+                          color: Colors.white.withOpacity(0.45),
+                          fontSize: 13,
                         ),
                       ),
-                    ],
+
+                const Spacer(),
+
+                // Bottom indicator
+                Center(
+                  child: Container(
+                    width: 134,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: Colors.white.withOpacity(0.2),
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
                 ),
-              ),
-
-              const SizedBox(height: 40),
-
-              // Bottom Indicator
-              Center(
-                child: Container(
-                  width: 134,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: AppTheme.textPrimary,
-                    borderRadius: BorderRadius.circular(100),
-                  ),
-                ),
-              ),
-
-              const SizedBox(height: 20),
-            ],
+                const SizedBox(height: 20),
+              ],
+            ),
           ),
         ),
-      ),
-      ),
-    );
-  }
-}
-
-/// صندوق إدخال رقم واحد من OTP
-class _OTPBox extends StatelessWidget {
-  final TextEditingController controller;
-  final FocusNode focusNode;
-  final Function(String) onChanged;
-
-  const _OTPBox({
-    required this.controller,
-    required this.focusNode,
-    required this.onChanged,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      width: 60,
-      height: 60,
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        controller: controller,
-        focusNode: focusNode,
-        textAlign: TextAlign.center,
-        keyboardType: TextInputType.number,
-        maxLength: 1,
-        style: const TextStyle(
-          color: AppTheme.textPrimary,
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-        ),
-        decoration: const InputDecoration(
-          counterText: '',
-          border: InputBorder.none,
-        ),
-        onChanged: onChanged,
-      ),
-    );
-  }
-}
-
-/// مؤشر التقدم
-class _ProgressIndicator extends StatelessWidget {
-  final int currentStep;
-
-  const _ProgressIndicator({required this.currentStep});
-
-  @override
-  Widget build(BuildContext context) {
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.center,
-      children: [
-        _buildStep(1),
-        const SizedBox(width: 8),
-        _buildStep(2),
-        const SizedBox(width: 8),
-        _buildStep(3),
-      ],
-    );
-  }
-
-  Widget _buildStep(int step) {
-    final isActive = step <= currentStep;
-    return Container(
-      width: 60,
-      height: 4,
-      decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
       ),
     );
   }

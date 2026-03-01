@@ -6,8 +6,8 @@ class NotificationService {
   final FirebaseMessaging _firebaseMessaging = FirebaseMessaging.instance;
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
-  Future<void> initialize() async {
-    // 1. Request Permission
+  Future<String?> getToken() async {
+    // Request Permission (Required for iOS)
     NotificationSettings settings = await _firebaseMessaging.requestPermission(
       alert: true,
       badge: true,
@@ -15,17 +15,18 @@ class NotificationService {
     );
 
     if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      debugPrint('User granted permission');
-    } else {
-      debugPrint('User declined or has not accepted permission');
+      return await _firebaseMessaging.getToken();
     }
+    
+    debugPrint('Notification permission declined');
+    return null;
+  }
 
-    // 2. Get Token
-    String? token = await _firebaseMessaging.getToken();
-    debugPrint("FCM Token: $token");
-    // TODO: Save token to Firestore User Profile for targeted notifications
+  Future<void> initialize() async {
+    // 1. Get Token (Silent)
+    getToken().then((token) => debugPrint("FCM Token: $token"));
 
-    // 3. Foreground Handler
+    // 2. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       debugPrint('Got a message whilst in the foreground!');
       debugPrint('Message data: ${message.data}');

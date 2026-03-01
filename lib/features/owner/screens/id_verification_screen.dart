@@ -35,7 +35,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         }
       });
 
-      final url = await _documentService.uploadAndSave(type: type, file: pickedFile);
+      final url = await _documentService.uploadAndSave(type: type, filePath: pickedFile.path);
 
       if (mounted) {
         setState(() {

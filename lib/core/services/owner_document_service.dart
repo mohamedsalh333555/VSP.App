@@ -18,7 +18,7 @@ class OwnerDocumentService {
 
   Future<String> uploadAndSave({
     required OwnerDocumentType type,
-    required XFile file,
+    required String filePath,
   }) async {
     final user = _auth.currentUser;
     if (user == null) {
@@ -27,9 +27,9 @@ class OwnerDocumentService {
 
     final uid = user.uid;
 
-    // 1) رفع الصورة على Cloudinary
+    // 1) رفع الملف على Cloudinary
     final folder = 'users/$uid/documents';
-    final url = await _cloudinary.uploadImage(file, folder: folder);
+    final url = await _cloudinary.uploadRawFile(filePath, folder: folder);
 
     // 2) تحديد اسم الحقل في Firestore
     String fieldName;

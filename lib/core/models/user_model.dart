@@ -8,6 +8,13 @@ class UserModel {
   final String? position;
   final Map<String, dynamic>? additionalData;
   final DateTime? createdAt;
+  
+  // Owner Registration Flags
+  final bool isEmailVerified;
+  final bool hasStadium;
+  final bool isIdentityVerified;
+  final bool isRegistrationComplete;
+  final String? governorate;
 
   UserModel({
     required this.uid,
@@ -19,6 +26,11 @@ class UserModel {
     this.position,
     this.additionalData,
     this.createdAt,
+    this.isEmailVerified = false,
+    this.hasStadium = false,
+    this.isIdentityVerified = false,
+    this.isRegistrationComplete = false,
+    this.governorate,
   });
 
   // Create UserModel from Firestore document
@@ -33,6 +45,11 @@ class UserModel {
       position: data['position'],
       additionalData: data['additionalData'],
       createdAt: data['createdAt']?.toDate(),
+      isEmailVerified: data['isEmailVerified'] ?? false,
+      hasStadium: data['hasStadium'] ?? false,
+      isIdentityVerified: data['isIdentityVerified'] ?? false,
+      isRegistrationComplete: data['isRegistrationComplete'] ?? false,
+      governorate: data['governorate'],
     );
   }
 
@@ -47,6 +64,11 @@ class UserModel {
       'profileImageUrl': profileImageUrl,
       'position': position,
       'additionalData': additionalData,
+      'isEmailVerified': isEmailVerified,
+      'hasStadium': hasStadium,
+      'isIdentityVerified': isIdentityVerified,
+      'isRegistrationComplete': isRegistrationComplete,
+      'governorate': governorate,
     };
   }
 
@@ -61,6 +83,11 @@ class UserModel {
     String? position,
     Map<String, dynamic>? additionalData,
     DateTime? createdAt,
+    bool? isEmailVerified,
+    bool? hasStadium,
+    bool? isIdentityVerified,
+    bool? isRegistrationComplete,
+    String? governorate,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -72,6 +99,11 @@ class UserModel {
       position: position ?? this.position,
       additionalData: additionalData ?? this.additionalData,
       createdAt: createdAt ?? this.createdAt,
+      isEmailVerified: isEmailVerified ?? this.isEmailVerified,
+      hasStadium: hasStadium ?? this.hasStadium,
+      isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
+      isRegistrationComplete: isRegistrationComplete ?? this.isRegistrationComplete,
+      governorate: governorate ?? this.governorate,
     );
   }
 }

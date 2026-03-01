@@ -3,6 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/providers/stadium_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 
@@ -15,6 +16,7 @@ class OwnerBookedScreen extends StatefulWidget {
 
 class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   int _selectedDayIndex = 0; // Default to today
+  Stadium? _selectedStadium;
 
   @override
   void initState() {
@@ -22,7 +24,9 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated) {
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(auth.firebaseUser!.uid);
+        final uid = auth.firebaseUser!.uid;
+        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
       }
     });
   }
@@ -48,11 +52,57 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       ),
       body: Column(
         children: [
-          // 1. Month Picker Header
+          // 1. Stadium Picker & Month Selector
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
             child: Row(
               children: [
+                // Stadium Dropdown
+                Consumer<StadiumProvider>(
+                  builder: (context, stadiumProvider, _) {
+                    final stadiums = stadiumProvider.stadiums;
+                    if (stadiums.isEmpty) return const SizedBox.shrink();
+                    
+                    // Safe initial selection (only if currently null)
+                    if (_selectedStadium == null && stadiums.isNotEmpty) {
+                      _selectedStadium = stadiums.first;
+                    }
+                    
+                    // Ensure current selection is still valid in potentially updated list
+                    if (_selectedStadium != null && !stadiums.contains(_selectedStadium)) {
+                      _selectedStadium = stadiums.first;
+                    }
+
+                    return Container(
+                      margin: const EdgeInsets.only(right: 12),
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF1E1E1E),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<Stadium>(
+                          value: _selectedStadium,
+                          dropdownColor: const Color(0xFF1E1E1E),
+                          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.neonGreen),
+                          hint: const Text('Select Stadium', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                          items: stadiums.map((s) => DropdownMenuItem(
+                            value: s,
+                            child: Text(s.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                          )).toList(),
+                          onChanged: (val) {
+                            setState(() {
+                              _selectedStadium = val;
+                            });
+                          },
+                        ),
+                      ),
+                    );
+                  },
+                ),
+
+                // Date Picker (Visual)
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                   decoration: BoxDecoration(
@@ -61,17 +111,17 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                     border: Border.all(color: Colors.grey[800]!),
                   ),
                   child: Row(
-                    children: const [
+                    children: [
                       Text(
-                        'January, 2025',
-                        style: TextStyle(
+                        DateFormat('MMMM, yyyy').format(DateTime.now()),
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 14,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
-                      SizedBox(width: 8),
-                      Icon(Icons.calendar_today_outlined, color: Colors.white, size: 16),
+                      const SizedBox(width: 8),
+                      const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 16),
                     ],
                   ),
                 ),
@@ -147,51 +197,45 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                  final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
                  final endOfDay = startOfDay.add(const Duration(days: 1));
 
-                 final dayBookings = bookingProvider.userBookings.where((b) => 
+                  final dayBookings = bookingProvider.userBookings.where((b) => 
+                    b.stadiumId == _selectedStadium?.id &&
                     b.startTime.isAfter(startOfDay) && b.startTime.isBefore(endOfDay)
-                 ).toList();
+                  ).toList();
 
-                 // Generate time slots from 12 PM to 11 PM
-                 List<Map<String, dynamic>> slots = [];
-                 for (int i = 12; i <= 23; i++) {
-                   final hour = i > 12 ? i - 12 : i;
-                   final period = i >= 12 ? 'PM' : 'AM';
-                   final timeStr = '$hour$period';
-                   
-                   final booking = dayBookings.firstWhere(
-                     (b) => b.startTime.hour == i,
-                     orElse: () => Booking(
-                       id: 'none',
-                       stadiumId: '',
-                       stadiumName: '',
-                       ownerId: '',
-                       startTime: DateTime.now(),
-                       endTime: DateTime.now(),
-                       totalPrice: 0,
-                       status: BookingStatus.confirmed,
-                       createdAt: DateTime.now(),
-                       bookingType: BookingType.personal,
-                       createdByUserId: '',
-                       isPrivate: false,
-                       rentBall: false,
-                       paymentMethod: 'cash',
-                     ),
-                   );
+                  // Generate time slots from 8 AM to 12 AM
+                  List<Map<String, dynamic>> slots = [];
+                  for (int i = 8; i <= 24; i++) {
+                    final hourStr = i > 12 ? (i - 12).toString() : i.toString();
+                    final period = i >= 12 && i < 24 ? 'PM' : (i == 24 ? 'AM' : 'AM');
+                    final timeStr = '$hourStr:00 $period';
+                    
+                    final booking = dayBookings.firstWhere(
+                      (b) => b.startTime.hour == i,
+                      orElse: () => Booking(
+                        id: 'none', stadiumId: '', stadiumName: '', ownerId: '',
+                        startTime: DateTime.now(), endTime: DateTime.now(), totalPrice: 0,
+                        status: BookingStatus.confirmed, createdAt: DateTime.now(),
+                        bookingType: BookingType.personal, createdByUserId: '',
+                        isPrivate: false, rentBall: false, paymentMethod: 'cash',
+                      ),
+                    );
 
-                   if (booking.id == 'none') {
-                     slots.add({'time': timeStr, 'type': 'empty'});
-                   } else {
-                     slots.add({
-                       'time': timeStr,
-                       'type': booking.playerTeamName != null ? 'team' : 'individual',
-                       'name': booking.playerTeamName ?? 'Individual Player',
-                       'subtitle': booking.bookingType == BookingType.challenge ? 'Challenge' : 'Match',
-                       'image': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150&h=150&fit=crop&q=80',
-                       'logo': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150&h=150&fit=crop&q=80',
-                       'isManaged': true,
-                     });
-                   }
-                 }
+                    if (booking.id == 'none') {
+                      slots.add({'time': timeStr, 'hour': i, 'type': 'empty'});
+                    } else {
+                      slots.add({
+                        'time': timeStr,
+                        'hour': i,
+                        'type': booking.playerTeamName != null ? 'team' : 'individual',
+                        'name': booking.playerTeamName ?? 'Individual Player',
+                        'subtitle': booking.bookingType.name.toUpperCase(),
+                        'image': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150',
+                        'logo': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150',
+                        'isManaged': true,
+                        'booking': booking,
+                      });
+                    }
+                  }
 
                  return ListView.separated(
                     padding: const EdgeInsets.all(16),
@@ -386,132 +430,161 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   }
 
   Widget _buildBookingSheet(bool isEdit, Map<String, dynamic> slot) {
+    final nameController = TextEditingController(text: isEdit ? (slot['name'] ?? '') : '');
+    final phoneController = TextEditingController(text: isEdit ? '0111000222' : '');
+    bool isSaving = false;
+
+    return StatefulBuilder(
+      builder: (context, setModalState) {
+        return Container(
+          height: MediaQuery.of(context).size.height * 0.75,
+          padding: const EdgeInsets.all(20),
+          decoration: const BoxDecoration(
+            color: Color(0xFF1E1E1E),
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(25),
+              topRight: Radius.circular(25),
+            ),
+          ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.circular(2)),
+                ),
+              ),
+              const SizedBox(height: 20),
+              
+              Center(
+                child: Text(
+                  isEdit ? 'Booking Details' : 'Manual Booking',
+                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Agency FB'),
+                ),
+              ),
+               const SizedBox(height: 30),
+
+              _buildInputLabel('Stadium'),
+              _buildPillInput(initialValue: _selectedStadium?.name ?? 'No Stadium Selected', enabled: false),
+              const SizedBox(height: 15),
+
+              _buildInputLabel('Date'),
+              _buildPillInput(initialValue: DateFormat('yyyy/MM/dd').format(DateTime.now().add(Duration(days: _selectedDayIndex))), enabled: false),
+              const SizedBox(height: 15),
+
+              _buildInputLabel('Time Slot'),
+              _buildPillInput(initialValue: '${slot['time']} - ${slot['hour'] + 1}:00', enabled: false),
+              const SizedBox(height: 15),
+
+              _buildInputLabel('Customer Name'),
+              _buildPillTextField(controller: nameController, hint: 'Enter name'),
+              const SizedBox(height: 15),
+
+              _buildInputLabel('Phone Number'),
+              _buildPillTextField(controller: phoneController, hint: '01xxxxxxxxx'),
+              const SizedBox(height: 15),
+
+              const Spacer(),
+              
+              Row(
+                children: [
+                  Expanded(
+                    child: SizedBox(
+                       height: 50,
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.pop(context),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.white10,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                        child: const Text('Cancel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 15),
+                  Expanded(
+                    child: SizedBox(
+                      height: 50,
+                      child: ElevatedButton(
+                        onPressed: isSaving ? null : () async {
+                          if (nameController.text.isEmpty || _selectedStadium == null) {
+                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter name and select stadium')));
+                            return;
+                          }
+
+                          setModalState(() => isSaving = true);
+
+                          try {
+                            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                            final uid = authProvider.firebaseUser!.uid;
+
+                            final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
+                            final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
+                            final endTime = startTime.add(const Duration(hours: 1));
+
+                            final draft = BookingDraft(
+                              stadiumId: _selectedStadium!.id,
+                              stadiumName: _selectedStadium!.name,
+                              stadiumImageUrl: _selectedStadium!.imageUrl,
+                              ownerId: uid,
+                              startTime: startTime,
+                              endTime: endTime,
+                              bookingType: BookingType.personal,
+                              playerTeamName: nameController.text,
+                              isPrivate: true,
+                              rentBall: false,
+                              totalPrice: _selectedStadium!.pricePerHour.toDouble(),
+                              paymentMethod: 'cash',
+                              paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+                            );
+
+                            await bookingProvider.createBooking(draft, uid); // Use owner UID as creator for manual
+                            if (context.mounted) Navigator.pop(context);
+                          } catch (e) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          } finally {
+                            setModalState(() => isSaving = false);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: AppTheme.neonGreen,
+                          elevation: 0,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                        ),
+                        child: isSaving 
+                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                            : const Text('Confirm', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+               const SizedBox(height: 20),
+            ],
+          ),
+        );
+      }
+    );
+  }
+
+  Widget _buildPillTextField({required TextEditingController controller, required String hint}) {
     return Container(
-      height: MediaQuery.of(context).size.height * 0.75, // Tall modal
-      padding: const EdgeInsets.all(20),
-      decoration: const BoxDecoration(
-        color: Color(0xFF1E1E1E), // Dark Grey/Black
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(25),
-          topRight: Radius.circular(25),
-        ),
+      decoration: BoxDecoration(
+        color: const Color(0xFF2C2C2C),
+        borderRadius: BorderRadius.circular(15),
       ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          // Handle Bar
-          Center(
-            child: Container(
-              width: 40, height: 4,
-              decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.circular(2)),
-            ),
-          ),
-          const SizedBox(height: 20),
-          
-          // Title
-          Center(
-            child: Text(
-              isEdit ? 'Booked' : 'Add booking',
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Agency FB',
-              ),
-            ),
-          ),
-           const SizedBox(height: 30),
-
-          // Date Field
-          _buildInputLabel('Date'),
-          _buildPillInput(initialValue: '2025/1/18'),
-          const SizedBox(height: 15),
-
-          // Time Fields
-          _buildInputLabel('Time'),
-          Row(
-            children: [
-               Expanded(child: _buildPillInput(initialValue: slot['time'] ?? '2 pm')),
-               const SizedBox(width: 15),
-               Expanded(child: _buildPillInput(initialValue: '3 pm')),
-            ],
-          ),
-          const SizedBox(height: 15),
-
-          // Name
-          _buildInputLabel('Name'),
-          _buildPillInput(initialValue: isEdit ? (slot['name'] ?? 'Mohamed') : ''),
-          const SizedBox(height: 15),
-
-          // Number
-          _buildInputLabel('Number'),
-          _buildPillInput(initialValue: isEdit ? '0111000222' : ''),
-          const SizedBox(height: 15),
-
-          // Payment
-          _buildInputLabel('Payment'),
-          _buildPillInput(initialValue: isEdit ? 'Payment Made' : ''),
-          
-          const Spacer(),
-          
-          // Action Buttons
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                   height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                       // Delete or Cancel
-                       Navigator.pop(context);
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: isEdit ? Colors.red : Colors.white,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: Text(
-                      isEdit ? 'Delete' : 'Cancel',
-                      style: TextStyle(
-                        color: isEdit ? Colors.white : Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-              const SizedBox(width: 15),
-              Expanded(
-                child: SizedBox(
-                  height: 50,
-                  child: ElevatedButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                      // In a real app, logic to update sched here
-                    },
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                    ),
-                    child: const Text(
-                      'Done',
-                      style: TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                        fontSize: 18,
-                      ),
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-           const SizedBox(height: 20), // Bottom Safe Area space
-        ],
+      child: TextField(
+        controller: controller,
+        style: const TextStyle(color: Colors.white),
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: TextStyle(color: Colors.grey[600]),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+        ),
       ),
     );
   }
@@ -530,15 +603,17 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     );
   }
 
-  Widget _buildPillInput({String? initialValue}) {
+  Widget _buildPillInput({String? initialValue, bool enabled = true}) {
     return Container(
       decoration: BoxDecoration(
         color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(15), // Pill shape
+        borderRadius: BorderRadius.circular(15),
+        border: enabled ? null : Border.all(color: Colors.white12),
       ),
       child: TextFormField(
         initialValue: initialValue,
-        style: const TextStyle(color: Colors.white),
+        enabled: enabled,
+        style: TextStyle(color: enabled ? Colors.white : Colors.white54),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
