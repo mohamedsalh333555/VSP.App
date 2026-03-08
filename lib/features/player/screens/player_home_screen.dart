@@ -991,12 +991,6 @@ class _HomeContent extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final userName = context.select<AuthProvider, String?>((p) => p.name);
-    final userPosition = context.select<AuthProvider, String>((p) => p.position);
-    final userProfileUrl = context.select<AuthProvider, String?>((p) => p.userModel?.profileImageUrl);
-    final authLoading = context.select<AuthProvider, bool>((p) => p.isLoading);
-
     return SafeArea(
       child: Column(
         children: [
@@ -1012,89 +1006,103 @@ class _HomeContent extends StatelessWidget {
                 // Profile & Welcome Row
                 Row(
                   children: [
-                    // Profile Image with Upload Trigger
-                    GestureDetector(
-                      onTap: () async {
-                        final picker = ImagePicker();
-                        final XFile? image = await picker.pickImage(
-                          source: ImageSource.gallery,
-                          imageQuality: 70,
-                        );
-                        if (image != null) {
-                          authProvider.updateProfilePhoto(image);
-                        }
-                      },
-                      child: Stack(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white10, width: 1),
-                            ),
-                            child: CircleAvatar(
-                              backgroundColor: AppTheme.cardBackground,
-                              backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty)
-                                  ? NetworkImage(userProfileUrl)
-                                  : null,
-                              child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                  ? const Icon(Icons.person, color: Colors.white54, size: 28)
-                                  : null,
-                            ),
-                          ),
-                          if (authLoading)
-                            Positioned.fill(
-                              child: Container(
-                                decoration: const BoxDecoration(
-                                  color: Colors.black45,
+                    // Profile Image with Consumer for instant sync
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        final userProfileUrl = auth.userModel?.profileImageUrl;
+                        final authLoading = auth.isLoading;
+                        
+                        return GestureDetector(
+                          onTap: () async {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(
+                              source: ImageSource.gallery,
+                              imageQuality: 70,
+                            );
+                            if (image != null) {
+                              auth.updateProfilePhoto(image);
+                            }
+                          },
+                          child: Stack(
+                            children: [
+                              Container(
+                                width: 50,
+                                height: 50,
+                                decoration: BoxDecoration(
                                   shape: BoxShape.circle,
+                                  border: Border.all(color: Colors.white10, width: 1),
                                 ),
-                                child: const Center(
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation(AppTheme.neonGreen),
-                                  ),
+                                child: CircleAvatar(
+                                  backgroundColor: AppTheme.cardBackground,
+                                  backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty)
+                                      ? CachedNetworkImageProvider(userProfileUrl!)
+                                      : null,
+                                  child: (userProfileUrl == null || userProfileUrl.isEmpty)
+                                      ? const Icon(Icons.person, color: Colors.white54, size: 28)
+                                      : null,
                                 ),
                               ),
-                            ),
-                          Positioned(
-                            bottom: 0,
-                            right: 0,
-                            child: Container(
-                                padding: const EdgeInsets.all(2),
-                                decoration: const BoxDecoration(
-                                  color: AppTheme.neonGreen,
-                                  shape: BoxShape.circle,
+                              if (authLoading)
+                                Positioned.fill(
+                                  child: Container(
+                                    decoration: const BoxDecoration(
+                                      color: Colors.black45,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: CircularProgressIndicator(
+                                        strokeWidth: 2,
+                                        valueColor: AlwaysStoppedAnimation(AppTheme.neonGreen),
+                                      ),
+                                    ),
+                                  ),
                                 ),
-                                child: const Icon(Icons.add, size: 12, color: Colors.black)),
+                              Positioned(
+                                bottom: 0,
+                                right: 0,
+                                child: Container(
+                                    padding: const EdgeInsets.all(2),
+                                    decoration: const BoxDecoration(
+                                      color: AppTheme.neonGreen,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Icon(Icons.add, size: 12, color: Colors.black)),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
+                        );
+                      }
                     ),
                     const SizedBox(width: 12),
                     // Welcome Text
                     Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            'Hi ${userName ?? "Player"}',
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            'Player ($userPosition)',
-                            style: const TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
+                      child: Consumer<AuthProvider>(
+                        builder: (context, auth, _) {
+                          final userName = auth.userModel?.name;
+                          final userPosition = auth.userModel?.position ?? 'Player';
+                          
+                          return Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Hi ${userName ?? "Player"}',
+                                style: const TextStyle(
+                                  color: AppTheme.textPrimary,
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                'Player ($userPosition)',
+                                style: const TextStyle(
+                                  color: AppTheme.textSecondary,
+                                  fontSize: 12,
+                                ),
+                              ),
+                            ],
+                          );
+                        }
                       ),
                     ),
                     // Notification Icon

@@ -9,6 +9,7 @@ import 'profile_subscreens/privacy_policy_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/help_center_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../auth/screens/welcome_screen.dart';
 class ProfileScreen extends StatelessWidget {
@@ -67,7 +68,7 @@ class ProfileScreen extends StatelessWidget {
                         child: CircleAvatar(
                           backgroundColor: Colors.transparent,
                           backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
-                              ? NetworkImage(userProfileUrl) 
+                              ? CachedNetworkImageProvider(userProfileUrl) 
                               : null,
                           child: (userProfileUrl == null || userProfileUrl.isEmpty)
                               ? const Icon(Icons.person, size: 40, color: Colors.white54)
