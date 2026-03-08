@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/shimmer_image.dart';
+import 'package:vsp_application/core/widgets/shimmer_image.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
+import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 class YourTeamModal extends StatefulWidget {
   const YourTeamModal({super.key});
@@ -18,14 +19,14 @@ class _YourTeamModalState extends State<YourTeamModal> {
       'image': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=150&h=150&fit=crop&q=80',
     },
     {
-      'name': 'Omar Khaled',
+      'name': 'Mahmoud Hassan',
       'role': 'Forward',
-      'image': 'https://images.unsplash.com/photo-1551958219-acbc608c6377?w=150&h=150&fit=crop&q=80',
+      'image': 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
     },
     {
-      'name': 'Ahmed Hassan',
+      'name': 'Omar Ali',
       'role': 'Midfielder',
-      'image': 'https://images.unsplash.com/photo-1575361204480-aadea25e6e68?w=150&h=150&fit=crop&q=80',
+      'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
     },
   ];
 
@@ -36,12 +37,12 @@ class _YourTeamModalState extends State<YourTeamModal> {
       insetPadding: const EdgeInsets.all(16),
       child: Container(
         width: double.infinity,
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
         decoration: BoxDecoration(
-          color: const Color(0xFF1A1A1A), // Dark grey background
-          borderRadius: BorderRadius.circular(16),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: Colors.white.withValues(alpha: 0.05),
             width: 1,
           ),
         ),
@@ -49,42 +50,33 @@ class _YourTeamModalState extends State<YourTeamModal> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Your Team',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displayMedium,
                 ),
                 GestureDetector(
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
                     Icons.close,
-                    color: AppTheme.textPrimary,
-                    size: 24,
+                    color: Colors.white,
                   ),
                 ),
               ],
             ),
-            const SizedBox(height: 12),
-            const Text(
-              'These Are Your Friends In The Team. You Can Remove Anyone Or Add Other Friends As You Like',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-                height: 1.5,
-              ),
+            const SizedBox(height: VSPSpacing.sm),
+            Text(
+              'Manage your current team members and invite new ones.',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary,
+                  ),
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
 
-            // Members List
             ..._members.map((member) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: VSPSpacing.md),
                   child: Row(
                     children: [
                       ShimmerImage(
@@ -93,25 +85,18 @@ class _YourTeamModalState extends State<YourTeamModal> {
                         height: 48,
                         borderRadius: 24,
                       ),
-                      const SizedBox(width: 12),
+                      const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
                               member['name']!,
-                              style: const TextStyle(
-                                color: AppTheme.textPrimary,
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
+                              style: Theme.of(context).textTheme.titleMedium,
                             ),
                             Text(
                               member['role']!,
-                              style: const TextStyle(
-                                color: AppTheme.textSecondary,
-                                fontSize: 12,
-                              ),
+                              style: Theme.of(context).textTheme.labelSmall,
                             ),
                           ],
                         ),
@@ -122,11 +107,11 @@ class _YourTeamModalState extends State<YourTeamModal> {
                             _members.remove(member);
                           });
                         },
-                        child: const Text(
+                        child: Text(
                           'Remove',
                           style: TextStyle(
-                            color: Colors.red,
-                            fontSize: 14,
+                            color: Colors.redAccent.withValues(alpha: 0.8),
+                            fontSize: 12,
                           ),
                         ),
                       ),
@@ -134,104 +119,63 @@ class _YourTeamModalState extends State<YourTeamModal> {
                   ),
                 )),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
 
-            // Dropdown Label
-            const Text(
-              'Team Member',
-              style: TextStyle(
-                color: AppTheme.textSecondary,
-                fontSize: 14,
-              ),
+            Text(
+              'INVITE MEMBER',
+              style: Theme.of(context).textTheme.labelMedium,
             ),
-            const SizedBox(height: 8),
-
-            // Dropdown
+            const SizedBox(height: VSPSpacing.sm),
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 4),
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(
-                  color: AppTheme.textSecondary,
+                  color: Colors.white.withValues(alpha: 0.1),
                 ),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
                   Row(
-                    children: const [
+                    children: [
                       Icon(
                         Icons.people_outline,
-                        color: AppTheme.textPrimary,
+                        color: VSPColors.textSecondary,
                         size: 20,
                       ),
-                      SizedBox(width: 12),
+                      SizedBox(width: VSPSpacing.sm),
                       Text(
                         'Select Team Member',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 14,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium,
                       ),
                     ],
                   ),
                   const Icon(
                     Icons.keyboard_arrow_down,
-                    color: AppTheme.textPrimary,
+                    color: VSPColors.textSecondary,
                   ),
                 ],
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: VSPSpacing.xl),
 
-            // Buttons
             Row(
               children: [
                 Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonGreen,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Confirm',
-                        style: TextStyle(
-                          color: AppTheme.darkBackground,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  child: PrimaryButton(
+                    text: 'Cancel',
+                    color: Colors.white.withValues(alpha: 0.05),
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
-                const SizedBox(width: 16),
+                const SizedBox(width: VSPSpacing.md),
                 Expanded(
-                  child: SizedBox(
-                    height: 50,
-                    child: ElevatedButton(
-                      onPressed: () => Navigator.pop(context),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.grey[700],
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                      ),
-                      child: const Text(
-                        'Cancel',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  child: PrimaryButton(
+                    text: 'Invite',
+                    onPressed: () => Navigator.pop(context),
                   ),
                 ),
               ],

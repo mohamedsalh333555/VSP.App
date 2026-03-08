@@ -1,6 +1,7 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/theme/app_theme.dart';
+
 import 'owner_verify_email_screen.dart';
 
 /// Owner Email Input Screen - Step 1/3
@@ -35,7 +36,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -46,7 +47,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                 
                 // Back Button
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                  icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -55,12 +56,10 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                 const SizedBox(height: 40),
 
                 // Title
-                const Center(
+                Center(
                   child: Text(
                     'Add your email 1/3',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -74,11 +73,9 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                 const SizedBox(height: 40),
 
                 // Email Label
-                const Text(
+                Text(
                   'Email',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -88,17 +85,17 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                 // Email Input
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: TextField(
                     controller: _emailController,
                     keyboardType: TextInputType.emailAddress,
-                    style: const TextStyle(color: AppTheme.textPrimary),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     onChanged: _validateEmail,
-                    decoration: const InputDecoration(
+                    decoration: InputDecoration(
                       hintText: 'Enter your email',
-                      hintStyle: TextStyle(color: AppTheme.textSecondary),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: EdgeInsets.symmetric(
                         horizontal: 16,
@@ -128,18 +125,17 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor: AppTheme.textSecondary.withValues(alpha: 0.3),
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: VSPColors.background,
+                      disabledBackgroundColor: VSPColors.textSecondary.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Continue With Email',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -154,7 +150,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -195,9 +191,10 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
 }
+

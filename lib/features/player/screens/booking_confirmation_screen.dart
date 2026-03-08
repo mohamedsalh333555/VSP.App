@@ -1,12 +1,15 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import '../../../core/config/app_config.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/booking_provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../data/models.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import 'booking_success_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
+import '../../../data/models.dart';
+import '../../../core/providers/booking_provider.dart';
+import '../../../core/providers/auth_provider.dart';
+
+import '../../../core/services/database_service.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; // Assuming we need stadium info later
@@ -28,13 +31,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   DateTime _selectedDate = DateTime.now();
   final List<String> _selectedTimeSlots = []; // Storing slot IDs or start times
   bool _isBallRented = false;
-  bool _isPrivate = false;
+  bool _isPrivate = true;
   bool _isLoading = false;
   int _currentPlayers = 1;
 
   @override
   void initState() {
     super.initState();
+    if (widget.bookingType == 'Team') {
+      _isPrivate = false;
+    } else {
+      _isPrivate = true;
+    }
     _generateDynamicTimeSlots();
   }
   
@@ -185,17 +193,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
                   decoration: BoxDecoration(
                     color: Colors.transparent,
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[800]!),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
                   ),
                   child: Center(
                     child: Text(
                       dateText,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: VSPColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                          ),
                     ),
                   ),
                 ),
@@ -203,11 +210,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             }
 
             return Dialog(
-              backgroundColor: const Color(0xFF1E1E1E), // Dark grey card
-              insetPadding: const EdgeInsets.symmetric(horizontal: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(24)),
+              backgroundColor: VSPColors.surface, // Dark grey card
+              insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
               child: Padding(
-                padding: const EdgeInsets.all(20),
+                padding: const EdgeInsets.all(VSPSpacing.md),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
@@ -216,7 +223,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left, color: Colors.white70),
+                          icon: const Icon(Icons.chevron_left, color: VSPColors.textSecondary),
                           onPressed: () {
                             setModalState(() {
                               currentMonth = DateTime(currentMonth.year, currentMonth.month - 1);
@@ -225,15 +232,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                         Text(
                           DateFormat('MMMM yyyy').format(currentMonth),
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Agency FB',
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right, color: Colors.white70),
+                          icon: const Icon(Icons.chevron_right, color: VSPColors.textSecondary),
                           onPressed: () {
                             setModalState(() {
                               currentMonth = DateTime(currentMonth.year, currentMonth.month + 1);
@@ -243,14 +245,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ],
                     ),
                     
-                    const SizedBox(height: 16),
+                    const SizedBox(height: VSPSpacing.md),
                     
                     // Date Inputs (Visual only based on screenshot)
                     Row(
                       children: [
                         buildDateInput('Start', DateFormat('MMM d, yyyy').format(tempSelectedDate)),
                         const SizedBox(width: 8),
-                         const Text('-', style: TextStyle(color: Colors.grey)),
+                         const Text('-', style: TextStyle(color: VSPColors.textSecondary)),
                         const SizedBox(width: 8),
                         buildDateInput('End', DateFormat('MMM d, yyyy').format(tempSelectedDate.add(const Duration(days: 7)))),
                       ],
@@ -261,8 +263,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     // Days of Week Header
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sat', 'Su']
-                          .map((d) => Text(d, style: const TextStyle(color: Colors.white70, fontWeight: FontWeight.bold)))
+                      children: const ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sat', 'Su']
+                          .map((d) => Text(d, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)))
                           .toList(),
                     ),
                     
@@ -303,13 +305,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             child: Container(
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: isSelected ? AppTheme.neonGreen : Colors.transparent,
+                                color: isSelected ? VSPColors.accent : Colors.transparent,
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '$day',
                                 style: TextStyle(
-                                  color: isSelected ? Colors.black : Colors.white70,
+                                  color: isSelected ? VSPColors.background : VSPColors.textSecondary,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
@@ -325,36 +327,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     Row(
                       children: [
                         Expanded(
-                          child: SizedBox(
-                            height: 50,
-                            child: OutlinedButton(
-                              onPressed: () => Navigator.pop(context),
-                              style: OutlinedButton.styleFrom(
-                                side: BorderSide(color: Colors.grey[800]!),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: const Text('Cancel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                            ),
+                          child: PrimaryButton(
+                            text: 'Cancel',
+                            onPressed: () => Navigator.pop(context),
+                            color: VSPColors.surfaceAlt,
+                            textColor: VSPColors.textPrimary,
                           ),
                         ),
-                        const SizedBox(width: 16),
+                        const SizedBox(width: VSPSpacing.md),
                         Expanded(
-                          child: SizedBox(
-                            height: 50,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                setState(() {
-                                  _selectedDate = tempSelectedDate;
-                                });
-                                Navigator.pop(context);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: AppTheme.neonGreen,
-                                foregroundColor: Colors.black,
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                              ),
-                              child: const Text('Apply', style: TextStyle(fontWeight: FontWeight.bold)),
-                            ),
+                          child: PrimaryButton(
+                            text: 'Apply',
+                            onPressed: () {
+                              setState(() {
+                                _selectedDate = tempSelectedDate;
+                              });
+                              Navigator.pop(context);
+                            },
                           ),
                         ),
                       ],
@@ -372,77 +361,69 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Book Now',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Column(
         children: [
           // sticky Header Section
           Container(
-            color: AppTheme.darkBackground,
-            padding: const EdgeInsets.only(bottom: 16),
+            color: VSPColors.background,
+            padding: const EdgeInsets.only(bottom: VSPSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 // Date Selector Header with Calendar Icon
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: GestureDetector(
                     onTap: _showCalendarModal,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.divider),
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
                             DateFormat('MMMM, yyyy').format(_selectedDate),
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
-                          const SizedBox(width: 8),
-                          const Icon(Icons.calendar_month, color: AppTheme.textPrimary, size: 18),
+                          const SizedBox(width: VSPSpacing.xs),
+                          const Icon(Icons.calendar_month, color: VSPColors.textPrimary, size: 18),
                         ],
                       ),
                     ),
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.md),
                 
                 // Horizontal Date List
                 Padding(
-                  padding: const EdgeInsets.only(left: 16),
+                  padding: const EdgeInsets.only(left: VSPSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
                         'Select Date',
-                        style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
-                      const SizedBox(height: 12),
+                      const SizedBox(height: VSPSpacing.sm),
                       SizedBox(
                         height: 70,
                         child: ListView.builder(
@@ -460,12 +441,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               },
                               child: Container(
                                 width: 60,
-                                margin: const EdgeInsets.only(right: 12),
+                                margin: const EdgeInsets.only(right: VSPSpacing.sm),
                                 decoration: BoxDecoration(
-                                  color: isSelected ? AppTheme.neonGreen : Colors.transparent,
-                                  borderRadius: BorderRadius.circular(12),
+                                  color: isSelected ? VSPColors.accent : Colors.transparent,
+                                  borderRadius: BorderRadius.circular(VSPRadius.md),
                                   border: Border.all(
-                                    color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3),
+                                    color: isSelected ? VSPColors.accent : VSPColors.divider,
                                   ),
                                 ),
                                 child: Column(
@@ -474,7 +455,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     Text(
                                       '${date.day}',
                                       style: TextStyle(
-                                        color: isSelected ? AppTheme.darkBackground : AppTheme.textPrimary,
+                                        color: isSelected ? VSPColors.background : VSPColors.textPrimary,
                                         fontSize: 20,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -482,7 +463,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     Text(
                                       DateFormat('E').format(date).toUpperCase(),
                                       style: TextStyle(
-                                        color: isSelected ? AppTheme.darkBackground : AppTheme.textSecondary,
+                                        color: isSelected ? VSPColors.background : VSPColors.textSecondary,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
@@ -508,16 +489,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Select Time',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: VSPSpacing.md),
                   
                   StreamBuilder<List<Booking>>(
                     stream: Provider.of<BookingProvider>(context, listen: false)
@@ -534,38 +510,48 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           final isBooked = _isSlotBooked(startTime, existingBookings);
                           final isSelected = _selectedTimeSlots.contains(startTime);
 
+                          // BETA READY: Prevent past bookings for today's date
                           final slotDateTime = _getSlotDateTime(startTime);
-                          final isPast = slotDateTime.isBefore(DateTime.now());
+                          final isPast = _selectedDate.year == DateTime.now().year && 
+                                         _selectedDate.month == DateTime.now().month && 
+                                         _selectedDate.day == DateTime.now().day && 
+                                         slotDateTime.isBefore(DateTime.now());
 
                           return GestureDetector(
                             onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, isBooked),
-                            child: Container(
+                            child: AnimatedContainer(
+                              duration: const Duration(milliseconds: 200),
                               alignment: Alignment.center,
-                              margin: const EdgeInsets.only(bottom: 12),
-                              padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
+                              margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+                              padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
                                 color: (isBooked || isPast)
-                                    ? Colors.grey.withValues(alpha: 0.1) 
-                                    : (isSelected ? const Color(0xFF1C3A00) : Colors.transparent),
-                                borderRadius: BorderRadius.circular(12),
+                                    ? VSPColors.surface.withValues(alpha: 0.3)
+                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent),
+                                borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(
                                   color: (isBooked || isPast)
-                                      ? Colors.grey.withValues(alpha: 0.2)
-                                      : (isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3)),
+                                      ? Colors.transparent
+                                      : (isSelected ? VSPColors.accent : VSPColors.divider),
+                                  width: isSelected ? 2 : 1,
                                 ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
+                                  if (isSelected) ...[
+                                    const Icon(Icons.check_circle, size: 16, color: VSPColors.accent),
+                                    const SizedBox(width: 8),
+                                  ],
                                   Text(
                                     slotLabel,
                                     style: TextStyle(
                                       color: (isBooked || isPast)
-                                          ? Colors.grey.withValues(alpha: 0.4) 
-                                          : (isSelected ? AppTheme.neonGreen : AppTheme.textSecondary),
+                                          ? VSPColors.textSecondary.withValues(alpha: 0.3)
+                                          : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
                                       fontSize: 16,
-                                      fontWeight: FontWeight.bold,
-                                      decoration: isBooked ? TextDecoration.lineThrough : null,
+                                      fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                      decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                                     ),
                                   ),
                                   if (isBooked) ...[
@@ -573,22 +559,22 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     const Text(
                                       'BOOKED',
                                       style: TextStyle(
-                                        color: Colors.red,
+                                        color: VSPColors.error,
                                         fontSize: 12,
                                         fontWeight: FontWeight.bold,
                                       ),
                                     ),
-                                  ] else if (isPast) ...[
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'EXPIRED',
-                                      style: TextStyle(
-                                        color: Colors.grey,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                    ] else if (isPast) ...[
+                                      const SizedBox(width: 12),
+                                      Text(
+                                        'EXPIRED',
+                                        style: TextStyle(
+                                          color: VSPColors.textSecondary.withValues(alpha: 0.5),
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
-                                  ],
+                                    ],
                                 ],
                               ),
                             ),
@@ -602,65 +588,54 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             ),
           ),
 
-          // Bottom Fixed Section (Price & Confirmation)
           Container(
-            padding: const EdgeInsets.all(24),
-            decoration: const BoxDecoration(
-              color: Color(0xFF1C1C1E), // Slightly lighter dark
-              borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+            padding: const EdgeInsets.all(VSPSpacing.lg),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: const BorderRadius.only(
+                topLeft: Radius.circular(VSPRadius.xl),
+                topRight: Radius.circular(VSPRadius.xl),
               ),
+              boxShadow: VSPShadow.subtle,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Private Toggle
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    const Text(
-                      'Private',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                         fontFamily: 'Agency FB',
-                      ),
-                    ),
-                    Switch(
-                      value: _isPrivate,
-                      onChanged: (val) => setState(() => _isPrivate = val),
-                      activeColor: AppTheme.neonGreen,
-                      activeTrackColor: AppTheme.neonGreen.withValues(alpha: 0.3),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: 12),
-
-                // Current Players Counter (ONLY for Public Matches)
-                if (widget.bookingType.toLowerCase() == 'team') ...[
+                // Private Toggle (Hidden for Team Bookings to force Public)
+                if (widget.bookingType != 'Team') ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Column(
+                      Text(
+                        'Private',
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      Switch(
+                        value: _isPrivate,
+                        onChanged: (val) => setState(() => _isPrivate = val),
+                        activeColor: VSPColors.accent,
+                        activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: VSPSpacing.sm),
+                ],
+
+                // Current Players Counter (ONLY for Public Matches)
+                if (widget.bookingType == 'Team') ...[
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
                             'Current Players with You',
-                            style: TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              fontFamily: 'Agency FB',
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
                             'How many players are already in your group?',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                           ),
                         ],
                       ),
@@ -674,14 +649,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             child: Text(
                               '$_currentPlayers',
                               style: const TextStyle(
-                                color: AppTheme.textPrimary,
+                                color: VSPColors.textPrimary,
                                 fontSize: 18,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
                           ),
                           _buildCounterButton(Icons.add, () {
-                            if (_currentPlayers < 22) setState(() => _currentPlayers++);
+                            final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity * 2 : 10;
+                            if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++);
                           }),
                         ],
                       ),
@@ -701,35 +677,28 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         children: [
                           Text(
                             'Rent Ball (+${_ballPrice.toInt()} EGP)',
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 18,
-                               fontWeight: FontWeight.bold,
-                               fontFamily: 'Agency FB',
-                            ),
+                            style: Theme.of(context).textTheme.titleMedium,
                           ),
-                          const SizedBox(height: 4),
-                          const Text(
+                          const SizedBox(height: VSPSpacing.xs),
+                          Text(
                             'Pay Per Ball At This Pitch',
-                            style: TextStyle(
-                              color: AppTheme.textSecondary,
-                              fontSize: 12,
-                            ),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                           ),
                         ],
                       ),
-                      Container(
+                      AnimatedContainer(
+                        duration: const Duration(milliseconds: 200),
                         width: 24,
                         height: 24,
                         decoration: BoxDecoration(
-                          color: _isBallRented ? AppTheme.neonGreen : Colors.transparent,
-                          shape: BoxShape.circle,
+                          color: _isBallRented ? VSPColors.accent : Colors.transparent,
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
                           border: Border.all(
-                            color: _isBallRented ? AppTheme.neonGreen : AppTheme.textSecondary,
+                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
                           ),
                         ),
                         child: _isBallRented
-                            ? const Icon(Icons.check, size: 16, color: AppTheme.darkBackground)
+                            ? const Icon(Icons.check, size: 16, color: VSPColors.background)
                             : null,
                       ),
                     ],
@@ -737,8 +706,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
                 
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 24),
-                  child: Divider(color: Colors.grey, thickness: 0.5),
+                  padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg),
+                  child: Divider(color: VSPColors.divider, thickness: 1),
                 ),
 
                 // Total Price & Button
@@ -748,25 +717,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Price',
-                          style: TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         ),
                         Text(
                           '${_totalPrice.toInt()} EGP',
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 28,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Agency FB',
-                          ),
+                          style: Theme.of(context).textTheme.displayLarge,
                         ),
                       ],
                     ),
-                    const SizedBox(width: 16),
+                    const SizedBox(width: VSPSpacing.md),
                     Expanded(
-                      child: ElevatedButton(
+                      child: PrimaryButton(
+                        text: 'Confirm Booking',
+                        isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+  
                           // Build start and end times from selected slots
                           final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
                           final firstSlot = sortedSlots.first;
@@ -818,6 +785,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               bookingTypeEnum = BookingType.personal;
                           }
   
+                          // stadium.seatsCapacity actually stores "Players per Team"
+                          final int trueMaxPlayers = (widget.stadium.seatsCapacity > 0) 
+                              ? widget.stadium.seatsCapacity * 2 
+                              : 10; // Default to 5v5 (10 total)
+
                           // Create BookingDraft
                           final draft = BookingDraft(
                             stadiumId: widget.stadium.id,
@@ -834,7 +806,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             totalPrice: _totalPrice,
                             currency: 'EGP',
                             currentPlayers: _currentPlayers,
-                            maxPlayers: (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10,
+                            maxPlayers: trueMaxPlayers,
                           );
   
                           // DIRECT BOOKING (Cash-only)
@@ -843,16 +815,43 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
                             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
                             final userId = authProvider.currentUser?.uid ?? 'demo_user';
+
+                            // ── FIX: Attach playerTeamId for Challenge bookings ──
+                            String? myTeamId = draft.playerTeamId;
+                            String? myTeamName = draft.playerTeamName;
+
+                            // ── FIX: If personal/find-players hosting, inject user name as host name ──
+                            if (bookingTypeEnum != BookingType.challenge && myTeamName == null) {
+                              myTeamName = authProvider.userModel?.name;
+                            }
+
+                            if (bookingTypeEnum == BookingType.challenge && myTeamId == null) {
+                              final myTeam = await DatabaseService().getUserTeam(userId);
+                              if (myTeam != null) {
+                                myTeamId = myTeam.id;
+                                myTeamName = myTeam.name;
+                              } else {
+                                debugPrint('⚠️ Challenge booking: User has no team, proceeding without teamId');
+                              }
+                            }
                             
-                            // Explicitly set payment to cash
+                            final isChallenge = bookingTypeEnum == BookingType.challenge;
+                            final cleanOpponentId = isChallenge ? draft.opponentTeamId : null;
+                            final cleanOpponentName = isChallenge ? draft.opponentTeamName : null;
+                            
+                            // Explicitly set payment to cash + inject team info
                             final cashDraft = draft.copyWith(
                               paymentMethod: 'cash',
                               paymentTransactionId: 'CASH_${DateTime.now().millisecondsSinceEpoch}',
+                              playerTeamId: myTeamId,
+                              playerTeamName: myTeamName,
+                              opponentTeamId: cleanOpponentId,
+                              opponentTeamName: cleanOpponentName,
                             );
                             
                             final booking = await bookingProvider.createBooking(cashDraft, userId);
                             
-                            if (mounted) {
+                            if (mounted && context.mounted) {
                               setState(() => _isLoading = false);
                               if (booking != null) {
                                 Navigator.pushReplacement(
@@ -862,33 +861,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   ),
                                 );
                               } else {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to confirm booking')),
-                                );
+                                VSPFeedback.showError(context, bookingProvider.errorMessage ?? 'Failed to confirm booking');
                               }
                             }
                           } catch (e) {
-                            if (mounted) {
-                              setState(() => _isLoading = false);
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text('Error: $e')),
-                              );
-                            }
+                              if (mounted && context.mounted) {
+                                setState(() => _isLoading = false);
+                                VSPFeedback.showError(context, 'Booking failed. Please check your connection and try again.');
+                              }
                           }
                         },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.neonGreen,
-                          foregroundColor: AppTheme.darkBackground,
-                          disabledBackgroundColor: Colors.grey[800],
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 16),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                        ),
-                        child: _isLoading 
-                          ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                          : const Text(
-                              'Confirm Booking',
-                              style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                            ),
                       ),
                     ),
                   ],
@@ -905,14 +887,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 32,
-        height: 32,
+        width: 36,
+        height: 36,
         decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(8),
-          border: Border.all(color: Colors.white24),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.divider),
         ),
-        child: Icon(icon, color: AppTheme.neonGreen, size: 20),
+        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
     );
   }

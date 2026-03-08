@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+
+import '../../../shared/widgets/primary_button.dart';
 
 /// Filter Bottom Sheet Modal
 class FilterBottomSheet extends StatefulWidget {
@@ -25,21 +27,21 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Container(
       height: MediaQuery.of(context).size.height * 0.7,
       decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
+        color: VSPColors.background,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
         ),
       ),
       child: Column(
         children: [
           // Header
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(VSPSpacing.md),
+            decoration: const BoxDecoration(
               border: Border(
                 bottom: BorderSide(
-                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
+                  color: VSPColors.divider,
                   width: 1,
                 ),
               ),
@@ -47,19 +49,15 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Text(
+                Text(
                   'Filters',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displaySmall,
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(
                     Icons.close,
-                    color: AppTheme.textSecondary,
+                    color: VSPColors.textSecondary,
                   ),
                 ),
               ],
@@ -73,11 +71,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 // Left Sidebar - Categories
                 Container(
                   width: 110,
-                  decoration: BoxDecoration(
-                    color: AppTheme.cardBackground.withValues(alpha: 0.3),
+                  decoration: const BoxDecoration(
+                    color: VSPColors.surface,
                     border: Border(
                       right: BorderSide(
-                        color: AppTheme.textSecondary.withValues(alpha: 0.1),
+                        color: VSPColors.divider,
                         width: 1,
                       ),
                     ),
@@ -97,7 +95,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 // Right Content Area
                 Expanded(
                   child: Container(
-                    padding: const EdgeInsets.all(20),
+                     padding: const EdgeInsets.all(VSPSpacing.md),
                     child: _buildContentForCategory(),
                   ),
                 ),
@@ -107,67 +105,36 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
           // Footer Buttons
           Container(
-            padding: const EdgeInsets.all(20),
-            decoration: BoxDecoration(
+            padding: const EdgeInsets.all(VSPSpacing.md),
+            decoration: const BoxDecoration(
               border: Border(
                 top: BorderSide(
-                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
+                  color: VSPColors.divider,
                   width: 1,
                 ),
               ),
             ),
             child: Row(
               children: [
-                // Reset Button
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
+                  child: PrimaryButton(
+                    text: 'Reset',
+                    onPressed: () {
                       setState(() {
                         _sportsFilters.updateAll((key, value) => false);
                       });
                     },
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: AppTheme.textSecondary.withValues(alpha: 0.2),
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Reset',
-                        style: TextStyle(
-                          color: AppTheme.textPrimary,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
                   ),
                 ),
-                const SizedBox(width: 16),
-                // Apply Button
+                const SizedBox(width: VSPSpacing.md),
                 Expanded(
-                  child: InkWell(
-                    onTap: () {
-                      // Apply filters and close
+                  child: PrimaryButton(
+                    text: 'Apply',
+                    onPressed: () {
                       Navigator.pop(context, _sportsFilters);
                     },
-                    child: Container(
-                      height: 50,
-                      decoration: BoxDecoration(
-                        color: AppTheme.neonGreen,
-                        borderRadius: BorderRadius.circular(12),
-                      ),
-                      alignment: Alignment.center,
-                      child: const Text(
-                        'Apply',
-                        style: TextStyle(
-                          color: AppTheme.darkBackground,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
                   ),
                 ),
               ],
@@ -187,12 +154,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         });
       },
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 12),
+        padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.1) : Colors.transparent,
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent,
           border: Border(
             left: BorderSide(
-              color: isSelected ? AppTheme.neonGreen : Colors.transparent,
+              color: isSelected ? VSPColors.accent : Colors.transparent,
               width: 3,
             ),
           ),
@@ -202,18 +169,18 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           children: [
             Icon(
               icon,
-              color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
+              color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
               size: 24,
             ),
             const SizedBox(height: 4),
             Text(
               title,
               textAlign: TextAlign.center,
-              style: TextStyle(
-                color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    fontSize: 10,
+                  ),
             ),
           ],
         ),
@@ -242,18 +209,14 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Select Sports',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.titleMedium,
         ),
-        const SizedBox(height: 20),
+        const SizedBox(height: VSPSpacing.md),
         ..._sportsFilters.entries.map((entry) {
           return Padding(
-            padding: const EdgeInsets.only(bottom: 16),
+                  padding: const EdgeInsets.only(bottom: VSPSpacing.md),
             child: InkWell(
               onTap: () {
                 setState(() {
@@ -266,28 +229,25 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     width: 24,
                     height: 24,
                     decoration: BoxDecoration(
-                      color: entry.value ? AppTheme.neonGreen : Colors.transparent,
+                      color: entry.value ? VSPColors.accent : Colors.transparent,
                       border: Border.all(
-                        color: entry.value ? AppTheme.neonGreen : AppTheme.textSecondary,
+                        color: entry.value ? VSPColors.accent : VSPColors.textSecondary,
                         width: 2,
                       ),
-                      borderRadius: BorderRadius.circular(6),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                     child: entry.value
                         ? const Icon(
                             Icons.check,
-                            color: AppTheme.darkBackground,
+                            color: VSPColors.background,
                             size: 16,
                           )
                         : null,
                   ),
-                  const SizedBox(width: 12),
+                  const SizedBox(width: VSPSpacing.sm),
                   Text(
                     entry.key,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 15,
-                    ),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
                 ],
               ),
@@ -303,7 +263,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Text(
         'Price Range filters coming soon',
         style: TextStyle(
-          color: AppTheme.textSecondary,
+          color: VSPColors.textSecondary,
           fontSize: 14,
         ),
       ),
@@ -315,7 +275,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Text(
         'Time filters coming soon',
         style: TextStyle(
-          color: AppTheme.textSecondary,
+          color: VSPColors.textSecondary,
           fontSize: 14,
         ),
       ),
@@ -327,7 +287,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Text(
         'Ratings filters coming soon',
         style: TextStyle(
-          color: AppTheme.textSecondary,
+          color: VSPColors.textSecondary,
           fontSize: 14,
         ),
       ),
@@ -339,7 +299,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Text(
         'Services filters coming soon',
         style: TextStyle(
-          color: AppTheme.textSecondary,
+          color: VSPColors.textSecondary,
           fontSize: 14,
         ),
       ),

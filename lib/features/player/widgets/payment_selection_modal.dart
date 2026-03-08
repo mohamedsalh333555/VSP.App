@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../data/models.dart';
 import '../screens/payment_gateway_screen.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 /// Legacy modal - now redirects to new BookingDraft flow
 /// This modal is kept for backwards compatibility but should be phased out
@@ -34,10 +35,10 @@ class PaymentSelectionModal extends StatelessWidget {
     return Dialog(
       backgroundColor: Colors.transparent,
       child: Container(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
         decoration: BoxDecoration(
-          color: const Color(0xFF2C2C2E),
-          borderRadius: BorderRadius.circular(20),
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
         ),
         child: Column(
           mainAxisSize: MainAxisSize.min,
@@ -46,7 +47,7 @@ class PaymentSelectionModal extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                icon: const Icon(Icons.close, color: AppTheme.textPrimary, size: 24),
+                icon: const Icon(Icons.close, color: VSPColors.textPrimary, size: 24),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -58,93 +59,49 @@ class PaymentSelectionModal extends StatelessWidget {
               width: 64,
               height: 64,
               decoration: BoxDecoration(
-                color: AppTheme.neonGreen.withValues(alpha: 0.2),
+                color: VSPColors.accent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
               child: const Icon(
                 Icons.check_circle_outline,
-                color: AppTheme.neonGreen,
+                color: VSPColors.accent,
                 size: 40,
               ),
             ),
 
-            const SizedBox(height: 20),
+            const SizedBox(height: VSPSpacing.md),
 
             // Title
-            const Text(
+            Text(
               'Confirm Your Booking',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Agency FB',
-              ),
+              style: Theme.of(context).textTheme.displaySmall,
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
 
             // Booking Details
-            _buildDetailRow('Date', DateFormat('yyyy/MM/dd').format(selectedDate)),
-            const SizedBox(height: 12),
-            _buildDetailRow('Time', timeRange),
-            const SizedBox(height: 12),
-            _buildDetailRow('Price', '${totalPrice.toInt()} EGP'),
+            _buildDetailRow(context, 'Date', DateFormat('yyyy/MM/dd').format(selectedDate)),
+            const SizedBox(height: VSPSpacing.sm),
+            _buildDetailRow(context, 'Time', timeRange),
+            const SizedBox(height: VSPSpacing.sm),
+            _buildDetailRow(context, 'Price', '${totalPrice.toInt()} EGP'),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: VSPSpacing.xl),
 
             // Pay Upon Arrival Button (for non-challenge mode)
-            if (!isChallengeMode)
-              SizedBox(
-                width: double.infinity,
-                height: 50,
-                child: ElevatedButton(
-                  onPressed: () {
-                    _navigateToPayment(context, 'cash');
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: Colors.grey[700],
-                    foregroundColor: AppTheme.textPrimary,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
-                    ),
-                    elevation: 0,
-                  ),
-                  child: const Text(
-                    'Pay Upon Arrival',
-                    style: TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
+            if (!isChallengeMode) ...[
+              PrimaryButton(
+                text: 'Pay Upon Arrival',
+                onPressed: () => _navigateToPayment(context, 'cash'),
+                color: VSPColors.surface,
+                textColor: VSPColors.textPrimary,
               ),
+              const SizedBox(height: VSPSpacing.md),
+            ],
 
-            if (!isChallengeMode) const SizedBox(height: 12),
-
-            // Pay Now Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                  _navigateToPayment(context, 'card');
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  foregroundColor: AppTheme.darkBackground,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(12),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Pay Now',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            PrimaryButton(
+              text: 'Pay Now',
+              onPressed: () => _navigateToPayment(context, 'card'),
             ),
           ],
         ),
@@ -169,11 +126,6 @@ class PaymentSelectionModal extends StatelessWidget {
         return hour;
       }
       
-      int parseMinute(String time) {
-        final parts = time.split(':');
-        final minutePart = parts[1].replaceAll(RegExp(r'[^0-9]'), '');
-        return int.parse(minutePart.substring(0, minutePart.length >= 2 ? 2 : minutePart.length));
-      }
 
       try {
         startTime = DateTime(
@@ -181,16 +133,15 @@ class PaymentSelectionModal extends StatelessWidget {
           selectedDate.month,
           selectedDate.day,
           parseHour(firstSlot),
-          parseMinute(firstSlot),
+          0,
         );
         
-        final endMinute = parseMinute(lastSlot) + 30;
         endTime = DateTime(
           selectedDate.year,
           selectedDate.month,
           selectedDate.day,
-          endMinute >= 60 ? parseHour(lastSlot) + 1 : parseHour(lastSlot),
-          endMinute >= 60 ? endMinute - 60 : endMinute,
+          parseHour(lastSlot) + 1,
+          0,
         );
       } catch (_) {
         // Fallback to default
@@ -235,23 +186,21 @@ class PaymentSelectionModal extends StatelessWidget {
     );
   }
 
-  Widget _buildDetailRow(String label, String value) {
+  Widget _buildDetailRow(BuildContext context, String label, String value) {
     return Row(
       children: [
         Text(
           '$label - ',
-          style: TextStyle(
-            color: AppTheme.textSecondary.withValues(alpha: 0.8),
-            fontSize: 15,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: VSPColors.textSecondary.withValues(alpha: 0.8),
+              ),
         ),
         Text(
           value,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 15,
-            fontWeight: FontWeight.w500,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: VSPColors.textPrimary,
+                fontWeight: FontWeight.w600,
+              ),
         ),
       ],
     );

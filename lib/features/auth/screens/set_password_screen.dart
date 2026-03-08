@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
@@ -53,7 +54,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Password must be at least 6 characters'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -63,7 +64,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Passwords do not match'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -91,16 +92,16 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF0A0A0A),
-              Color(0xFF1A3A1A),
-              Color(0xFF0A0A0A),
+              VSPColors.background,
+              VSPColors.accent.withValues(alpha: 0.1),
+              VSPColors.background,
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -117,7 +118,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                     languageProvider.isArabic
                         ? Icons.arrow_forward
                         : Icons.arrow_back,
-                    color: AppTheme.textPrimary,
+                    color: VSPColors.textPrimary,
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -127,11 +128,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 // Title
                 Text(
                   languageProvider.getText(AppStrings.setPassword),
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displayLarge,
                 ),
 
                 const SizedBox(height: 12),
@@ -139,9 +136,8 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                 // Step Indicator
                 Text(
                   '3/4',
-                  style: TextStyle(
-                    color: AppTheme.neonGreen,
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -157,7 +153,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.textSecondary,
+                      color: VSPColors.textSecondary,
                     ),
                     onPressed: () {
                       setState(() => _obscurePassword = !_obscurePassword);
@@ -176,7 +172,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                   suffixIcon: IconButton(
                     icon: Icon(
                       _obscureConfirmPassword ? Icons.visibility_off : Icons.visibility,
-                      color: AppTheme.textSecondary,
+                      color: VSPColors.textSecondary,
                     ),
                     onPressed: () {
                       setState(() => _obscureConfirmPassword = !_obscureConfirmPassword);
@@ -205,7 +201,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -220,3 +216,4 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
     );
   }
 }
+

@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-// import '../../player/screens/player_home_screen.dart'; // Not needed if we duplicate local logic for visual consistency
 
 class OwnerAccountManagementScreen extends StatefulWidget {
   const OwnerAccountManagementScreen({super.key});
@@ -64,23 +65,18 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Pure Dark
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Account',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: SingleChildScrollView(
@@ -92,13 +88,13 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
             SizedBox(
               height: 220, // Height for card + padding
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
                 scrollDirection: Axis.horizontal,
                 itemCount: _stadiums.length,
                 itemBuilder: (context, index) {
                   return Container(
                     width: 300, // Fixed width for horizontal items
-                    margin: const EdgeInsets.only(right: 16),
+                    margin: const EdgeInsets.only(right: VSPSpacing.md),
                     child: _buildStadiumCard(_stadiums[index]),
                   );
                 },
@@ -131,29 +127,29 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      height: 150,
                      width: double.infinity,
                      decoration: BoxDecoration(
-                       borderRadius: BorderRadius.circular(15),
+                       borderRadius: BorderRadius.circular(VSPRadius.md),
                        image: const DecorationImage(
                          image: NetworkImage('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=800&q=80'), // Map placeholder
                          fit: BoxFit.cover,
                        ),
-                       border: Border.all(color: Colors.grey[800]!),
+                       border: Border.all(color: VSPColors.divider),
                      ),
                    ),
                    // Address formatted box below map
                    Container(
                      width: double.infinity,
                      padding: const EdgeInsets.all(12),
-                     decoration: const BoxDecoration(
-                       color: Color(0xFF2C2C2C), // Dark box
+                     decoration: BoxDecoration(
+                       color: VSPColors.surface, // Dark box
                        borderRadius: BorderRadius.only(
-                         bottomLeft: Radius.circular(15),
-                         bottomRight: Radius.circular(15),
+                         bottomLeft: Radius.circular(VSPRadius.md),
+                         bottomRight: Radius.circular(VSPRadius.md),
                        ),
                      ),
-                     child: const Text( // Arabic Address as plain text for now, right aligned if RTL, but keeping English LTR for structure
+                     child: Text( // Arabic Address as plain text for now, right aligned if RTL, but keeping English LTR for structure
                        'مصر - أسوان - مركز شباب الساحة',
                        textAlign: TextAlign.right,
-                       style: TextStyle(color: Colors.white, fontSize: 14),
+                       style: Theme.of(context).textTheme.bodyMedium,
                      ),
                    ),
                    
@@ -194,31 +190,13 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       ),
       // 4. Fixed Confirm Button
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        color: const Color(0xFF121212),
-        child: SizedBox(
-          width: double.infinity,
-          height: 56,
-          child: ElevatedButton(
-            onPressed: () {
-               Navigator.pop(context); // Go back on confirm
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonGreen,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 0,
-            ),
-            child: const Text(
-              'Confirm',
-              style: TextStyle(
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-              ),
-            ),
-          ),
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        color: VSPColors.background,
+        child: PrimaryButton(
+          text: 'Confirm',
+          onPressed: () {
+             Navigator.pop(context); // Go back on confirm
+          },
         ),
       ),
     );
@@ -226,14 +204,10 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   
   Widget _buildInputLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
       ),
     );
   }
@@ -241,15 +215,16 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   Widget _buildTextField(TextEditingController controller) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C), // Darker input bg
-        borderRadius: BorderRadius.circular(12), // Pill/Rounded as updated standard
+        color: VSPColors.surface, // Darker input bg
+        borderRadius: BorderRadius.circular(VSPRadius.md), 
+        border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: Theme.of(context).textTheme.bodyMedium,
         decoration: const InputDecoration(
           border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          contentPadding: EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
           isDense: true,
         ),
       ),
@@ -257,51 +232,37 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   }
 
   Widget _buildDocumentCard(String title, String size) {
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-         gradient: LinearGradient(
-              begin: Alignment.centerLeft,
-              end: Alignment.centerRight,
-              colors: [
-                 const Color(0xFF2D5016).withValues(alpha: 0.8), // Dark Green
-                 const Color(0xFF1E1E1E), 
-              ],
-            ),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
-      ),
+    return VSPCard(
+      padding: const EdgeInsets.all(VSPSpacing.md),
+      margin: EdgeInsets.zero,
+      color: VSPColors.accent.withValues(alpha: 0.05),
+      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       child: Row(
         children: [
-           Container(
-             padding: const EdgeInsets.all(8),
-             decoration: const BoxDecoration(
-               color: Colors.transparent, // Or slight background
-             ),
-             child: const Icon(Icons.image_outlined, color: Colors.white, size: 24),
-           ),
-           const SizedBox(width: 12),
-           Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               Text(title, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.normal)),
-               Text(size, style: TextStyle(color: Colors.grey[400], fontSize: 10)),
-               const SizedBox(height: 4),
-               GestureDetector(
-                 onTap: () {
-                   // View logic
-                 },
-                 child: const Text(
-                   'Click to view',
-                   style: TextStyle(
-                     color: Colors.white,
-                     fontSize: 12,
-                     fontWeight: FontWeight.bold,
-                     decoration: TextDecoration.underline,
+           const Icon(Icons.image_outlined, color: VSPColors.textPrimary, size: 24),
+           const SizedBox(width: VSPSpacing.md),
+           Expanded(
+             child: Column(
+               crossAxisAlignment: CrossAxisAlignment.start,
+               children: [
+                 Text(title, style: Theme.of(context).textTheme.titleSmall),
+                 Text(size, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                 const SizedBox(height: 4),
+                 GestureDetector(
+                   onTap: () {
+                     // View logic
+                   },
+                   child: Text(
+                     'Click to view',
+                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                       color: VSPColors.accent,
+                       fontWeight: FontWeight.bold,
+                       decoration: TextDecoration.underline,
+                     ),
                    ),
                  ),
-               ),
-             ],
+               ],
+             ),
            )
         ],
       ),
@@ -310,18 +271,30 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
 
   // Reuse logic from OwnerStadiumsScreen for visual consistency, simplified for horizontal list
   Widget _buildStadiumCard(Stadium stadium) {
-    return Container(
-      height: 200,
-      decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(20),
-        image: DecorationImage(
-          image: NetworkImage(stadium.imageUrl),
-          fit: BoxFit.cover,
-        ),
-        border: Border.all(color: AppTheme.neonGreen, width: 1.5), // Highlight selected or card style
-      ),
+    return VSPCard(
+      padding: EdgeInsets.zero,
+      margin: EdgeInsets.zero,
+      border: Border.all(color: VSPColors.accent),
       child: Stack(
         children: [
+          // Background Image
+          ClipRRect(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            child: Image.network(
+              stadium.imageUrl,
+              height: 200,
+              width: double.infinity,
+              fit: BoxFit.cover,
+            ),
+          ),
+          // Overlay
+          Container(
+            height: 200,
+            decoration: BoxDecoration(
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              color: Colors.black.withValues(alpha: 0.4),
+            ),
+          ),
           // Top Left: Location Badge
           Positioned(
             top: 12,
@@ -330,14 +303,14 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(20),
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.location_on, color: AppTheme.neonGreen, size: 14),
+                  const Icon(Icons.location_on, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 4),
-                  Text(stadium.location, style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600)),
+                  Text(stadium.location, style: Theme.of(context).textTheme.labelSmall),
                 ],
               ),
             ),
@@ -358,9 +331,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 decoration: BoxDecoration(
                   color: Colors.black.withValues(alpha: 0.6),
                   shape: BoxShape.circle,
-                  border: Border.all(color: AppTheme.neonGreen),
+                  border: Border.all(color: VSPColors.accent),
                 ),
-                child: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 18),
+                child: const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 18),
               ),
             ),
           ),
@@ -374,8 +347,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               padding: const EdgeInsets.all(12),
               decoration: BoxDecoration(
                 borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(18), // Slightly less than 20 due to border
-                  bottomRight: Radius.circular(18),
+                  bottomLeft: Radius.circular(VSPRadius.lg),
+                  bottomRight: Radius.circular(VSPRadius.lg),
                 ),
                 color: Colors.black.withValues(alpha: 0.7),
               ),
@@ -383,26 +356,26 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                   Text(stadium.name, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.normal), maxLines: 1),
+                   Text(stadium.name, style: Theme.of(context).textTheme.titleSmall, maxLines: 1),
                    const SizedBox(height: 4),
                    Row(
                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                      children: [
-                       Row(children: [
-                         const Icon(Icons.male, color: Colors.white, size: 14),
-                         const SizedBox(width: 4),
-                         const Icon(Icons.location_on_outlined, color: Colors.white, size: 14),
+                       Row(children: const [
+                         Icon(Icons.male, color: VSPColors.textPrimary, size: 14),
+                         SizedBox(width: 4),
+                         Icon(Icons.location_on_outlined, color: VSPColors.textPrimary, size: 14),
                        ]),
-                       const Text('Cafeteria', style: TextStyle(color: Colors.white, fontSize: 12)),
-                       Text('Seats K${(stadium.seatsCapacity/1000).toStringAsFixed(0)} person', style: const TextStyle(color: Colors.white, fontSize: 12)),
+                       Text('Cafeteria', style: Theme.of(context).textTheme.labelSmall),
+                       Text('Seats K${(stadium.seatsCapacity/1000).toStringAsFixed(0)} person', style: Theme.of(context).textTheme.labelSmall),
                      ],
                    ),
                     const SizedBox(height: 4),
                    Row(
                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                      children: [
-                        Text('Price ${NumberFormat('#,###').format(stadium.pricePerHour)} eu', style: const TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold)),
-                        Text(stadium.area, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                        Text('Price ${NumberFormat('#,###').format(stadium.pricePerHour)} eg', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                        Text(stadium.area, style: Theme.of(context).textTheme.labelSmall),
                      ],
                    )
                 ],
@@ -414,4 +387,5 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 }
+
 

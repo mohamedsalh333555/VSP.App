@@ -67,10 +67,37 @@ class FirestoreBookingRepository implements BookingRepository {
       );
 
       final bookingData = booking.toFirestore();
-      bookingData['createdAt'] = FieldValue.serverTimestamp(); // Ensure server side timestamp
+      bookingData['createdAt'] = FieldValue.serverTimestamp(); 
       bookingData['updatedAt'] = FieldValue.serverTimestamp();
 
-      await docRef.set(bookingData);
+      // Logic Fix: Prevent Double Booking (Race Condition) using Transaction
+      await _firestore.runTransaction((transaction) async {
+        // 1. Query the bookings collection for potential overlaps
+        // Note: We check by stadium and status first.
+        final snapshot = await _bookingsCollection
+            .where('stadiumId', isEqualTo: draft.stadiumId)
+            .get();
+
+        final overlappingBookings = snapshot.docs.where((doc) {
+          final data = doc.data() as Map<String, dynamic>;
+          // Skip cancelled bookings
+          if (data['status'] == BookingStatus.cancelled.name) return false;
+
+          final bStart = (data['startTime'] as Timestamp).toDate();
+          final bEnd = (data['endTime'] as Timestamp).toDate();
+
+          // Condition: (bStart < draft.endTime) AND (bEnd > draft.startTime)
+          return bStart.isBefore(draft.endTime) && bEnd.isAfter(draft.startTime);
+        });
+
+        // 2. If overlap exists, throw exception
+        if (overlappingBookings.isNotEmpty) {
+          throw Exception("This slot was just booked by someone else!");
+        }
+
+        // 3. If no overlap, proceed to write the new booking document
+        transaction.set(docRef, bookingData);
+      });
 
       // ── Challenge Notification Logic ──
       if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
@@ -172,7 +199,13 @@ class FirestoreBookingRepository implements BookingRepository {
 
   @override
   Future<bool> cancelBooking(String bookingId) async {
-    return updateBookingStatus(bookingId, BookingStatus.cancelled);
+    try {
+      await _bookingsCollection.doc(bookingId).delete();
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error cancelling booking: $e');
+      return false;
+    }
   }
 
   @override

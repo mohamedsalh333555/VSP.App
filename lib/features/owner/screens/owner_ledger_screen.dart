@@ -1,7 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
 
 
 class OwnerLedgerScreen extends StatelessWidget {
@@ -10,21 +11,22 @@ class OwnerLedgerScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
-        title: const Text('Financial Ledger', style: TextStyle(fontFamily: 'Agency FB', fontSize: 24, fontWeight: FontWeight.bold)),
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        title: Text('Financial Ledger', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
       body: StreamBuilder<QuerySnapshot>(
         stream: FirebaseFirestore.instance.collection('transactions').orderBy('createdAt', descending: true).snapshots(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
 
           if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-            return const Center(child: Text('No transactions yet.', style: TextStyle(color: Colors.white54)));
+            return Center(child: Text('No transactions yet.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)));
           }
 
           final transactions = snapshot.data!.docs;
@@ -41,45 +43,36 @@ class OwnerLedgerScreen extends StatelessWidget {
           return Column(
             children: [
               // ── Financial Summary Header ──
-              Container(
-                margin: const EdgeInsets.all(16),
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(
-                  gradient: LinearGradient(
-                    colors: [AppTheme.neonGreen.withOpacity(0.15), Colors.transparent],
-                    begin: Alignment.topLeft,
-                    end: Alignment.bottomRight,
-                  ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.neonGreen.withOpacity(0.2)),
-                ),
+              VSPCard(
+                margin: const EdgeInsets.all(VSPSpacing.md),
+                padding: const EdgeInsets.all(VSPSpacing.lg),
                 child: Column(
                   children: [
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('Total Cash Collected', style: TextStyle(color: Colors.white, fontSize: 14)),
+                        Text('Total Cash Collected', style: Theme.of(context).textTheme.bodyMedium),
                         Text('${totalCash.toStringAsFixed(0)} EGP', 
-                          style: const TextStyle(color: AppTheme.neonGreen, fontSize: 22, fontWeight: FontWeight.bold, fontFamily: 'Agency FB')
+                          style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent)
                         ),
                       ],
                     ),
                     const SizedBox(height: 12),
-                    Divider(color: Colors.white.withOpacity(0.1)),
+                    const Divider(color: VSPColors.divider),
                     const SizedBox(height: 12),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        const Text('App Commission Pending (5%)', style: TextStyle(color: Colors.white70, fontSize: 14)),
+                        Text('App Commission Pending (5%)', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
                         Text('${commission.toStringAsFixed(0)} EGP', 
-                          style: const TextStyle(color: Colors.orangeAccent, fontSize: 20, fontWeight: FontWeight.bold, fontFamily: 'Agency FB')
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.warning)
                         ),
                       ],
                     ),
                     const SizedBox(height: 8),
-                    const Text(
+                    Text(
                       'This amount is payable to VSP at the end of the month.',
-                      style: TextStyle(color: Colors.grey, fontSize: 10, fontStyle: FontStyle.italic),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontStyle: FontStyle.italic),
                     ),
                   ],
                 ),
@@ -88,6 +81,7 @@ class OwnerLedgerScreen extends StatelessWidget {
               Expanded(
                 child: ListView.separated(
                   padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
+                  physics: const BouncingScrollPhysics(),
                   itemCount: transactions.length,
                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
@@ -96,23 +90,20 @@ class OwnerLedgerScreen extends StatelessWidget {
                     final amount = trans['amount'] ?? 0;
                     final date = (trans['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
 
-                    return Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(15),
-                      ),
+                    return VSPCard(
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      margin: EdgeInsets.zero,
                       child: Row(
                         children: [
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: isWin ? Colors.amber.withOpacity(0.2) : AppTheme.neonGreen.withOpacity(0.2),
+                              color: (isWin ? VSPColors.warning : VSPColors.accent).withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
                               isWin ? Icons.emoji_events : Icons.attach_money,
-                              color: isWin ? Colors.amber : AppTheme.neonGreen,
+                              color: isWin ? VSPColors.warning : VSPColors.accent,
                               size: 24,
                             ),
                           ),
@@ -123,22 +114,20 @@ class OwnerLedgerScreen extends StatelessWidget {
                               children: [
                                 Text(
                                   isWin ? 'Match Win Reward' : 'Booking Payment',
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 Text(
                                   DateFormat('MMM d, yyyy • h:mm a').format(date),
-                                  style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 12),
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                 ),
                               ],
                             ),
                           ),
                           Text(
-                            isWin ? '+3 pts' : '+${amount} eg',
-                            style: TextStyle(
-                              color: isWin ? Colors.amber : AppTheme.neonGreen,
+                            isWin ? '+3 pts' : '+$amount eg',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: isWin ? VSPColors.warning : VSPColors.accent,
                               fontWeight: FontWeight.bold,
-                              fontSize: 18,
-                              fontFamily: 'Agency FB',
                             ),
                           ),
                         ],

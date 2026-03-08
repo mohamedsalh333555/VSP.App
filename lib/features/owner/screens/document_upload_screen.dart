@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../shared/widgets/primary_button.dart';
 import '../../../../core/services/owner_document_service.dart';
 import '../../../../shared/widgets/vsp_upload_widgets.dart';
 import 'owner_main_screen.dart';
@@ -45,7 +46,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         }
       });
 
-      final url = await _documentService.uploadAndSave(type: type, filePath: pickedFile.path);
+      final url = await _documentService.uploadAndSave(type: type, filePath: pickedFile.path, uid: '');
 
       if (mounted) {
         setState(() {
@@ -94,7 +95,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Information Completed! Welcome to your Dashboard.'),
-          backgroundColor: AppTheme.neonGreen,
+          backgroundColor: VSPColors.accent,
         ),
       );
     }
@@ -117,21 +118,17 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: _previousPage,
         ),
-        title: const Text(
+        title: Text(
           'Owner information',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -173,8 +170,8 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       width: _currentStep == index ? 24 : 8,
       height: 4,
       decoration: BoxDecoration(
-        color: _currentStep == index ? AppTheme.neonGreen : Colors.grey[800],
-        borderRadius: BorderRadius.circular(2),
+        color: _currentStep == index ? VSPColors.accent : VSPColors.divider,
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
@@ -186,9 +183,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Upload documents',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           
@@ -244,19 +241,18 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Upload an image',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
           
-          // NOTE: Step 2 in this simplified wizard might reuse IdVerificationScreen logic or separate components.
-          // Since the user request focuses on wiring existing screens, assuming this method is cleaner but IdVerificationScreen is separate.
-          // However, if this method is used, we should mock or implement similar logic.
-          // Given the user instructions focused on `id_verification_screen.dart`, we will leave this method as a placeholder or remove its contents 
-          // if it's not being used by the main flow anymore.
-          // But to be safe and consistent with previous refactors, let's just make it a simple placeholder message or similar.
-          const Center(child: Text("Please use ID Verification Screen")),
+          Center(
+            child: Text(
+              "Please use ID Verification Screen", 
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+            ),
+          ),
 
           const SizedBox(height: 40),
           _buildPrimaryButton('Save', _nextPage),
@@ -272,9 +268,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Add information',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
           ),
           const SizedBox(height: 20),
 
@@ -285,14 +281,14 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           _buildTextField('Email', 'sifaccom@gmail.com', controller: _emailController),
           
           const SizedBox(height: 20),
-          const Text('Add Address', style: TextStyle(color: Colors.grey, fontSize: 14)),
+          Text('Add Address', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
           const SizedBox(height: 10),
           // Mock Map
           Container(
             height: 150,
             width: double.infinity,
             decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(15),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
               image: const DecorationImage(
                 image: NetworkImage('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=800&q=80'), // Map mockup
                 fit: BoxFit.cover,
@@ -300,14 +296,23 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             ),
              child:  Center(
               child: Container(
-                padding: const EdgeInsets.all(8),
-                color: Colors.white.withValues(alpha: 0.8),
-                child: const Text('Add Address', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
+                decoration: BoxDecoration(
+                  color: VSPColors.background.withValues(alpha: 0.8),
+                  borderRadius: BorderRadius.circular(VSPRadius.sm),
+                ),
+                child: Text(
+                  'Add Address', 
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: VSPColors.textPrimary, 
+                        fontWeight: FontWeight.bold,
+                      ),
+                ),
               ),
             ),
           ),
            const SizedBox(height: 8),
-          const Text('مركز شباب السلام', style: TextStyle(color: Colors.white, fontSize: 12), textAlign: TextAlign.right),
+          Text('مركز شباب السلام', style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.right),
 
 
            const SizedBox(height: 20),
@@ -326,21 +331,22 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey, fontSize: 14)),
-        const SizedBox(height: 8),
+        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+        const SizedBox(height: VSPSpacing.xs),
         Container(
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.circular(12), // Pill shape
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md), 
+            border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
           ),
           child: TextField(
             controller: controller,
-            style: const TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
               hintText: hint,
-              hintStyle: TextStyle(color: Colors.grey[600]),
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
               border: InputBorder.none,
-              contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+              contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 16),
             ),
           ),
         ),
@@ -349,28 +355,9 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   }
 
   Widget _buildPrimaryButton(String text, VoidCallback onPressed, {bool isEnabled = true}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: isEnabled ? onPressed : null,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: isEnabled ? AppTheme.neonGreen : Colors.grey[800],
-          foregroundColor: isEnabled ? Colors.black : Colors.white38,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      text: text,
+      onPressed: isEnabled ? onPressed : () {}, 
     );
   }
-
 }

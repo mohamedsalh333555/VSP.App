@@ -1,27 +1,32 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import 'package:flutter/services.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 
 /// حقل إدخال نص مخصص بتصميم داكن
 class CustomTextField extends StatelessWidget {
   final String? hintText;
-  final String? errorText; // ✅ Added errorText
+  final String? errorText;
   final TextEditingController controller;
   final TextInputType keyboardType;
   final bool obscureText;
   final IconData? prefixIcon;
   final Widget? suffixIcon;
   final String? Function(String?)? validator;
+  final int? maxLength;
+  final List<TextInputFormatter>? inputFormatters;
 
   const CustomTextField({
     super.key,
     this.hintText,
-    this.errorText, // ✅ Added errorText
+    this.errorText,
     required this.controller,
     this.keyboardType = TextInputType.text,
     this.obscureText = false,
     this.prefixIcon,
     this.suffixIcon,
     this.validator,
+    this.maxLength,
+    this.inputFormatters,
   });
 
   @override
@@ -31,54 +36,53 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       obscureText: obscureText,
       validator: validator,
-      style: const TextStyle(
-        color: AppTheme.textPrimary,
-        fontSize: 16,
-      ),
+      maxLength: maxLength,
+      inputFormatters: inputFormatters,
+      style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hintText,
-        errorText: errorText, // ✅ Pass errorText here
-        hintStyle: TextStyle(
-          color: AppTheme.textSecondary.withValues(alpha: 0.5),
-          fontSize: 16,
-        ),
+        errorText: errorText,
+        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: VSPColors.textSecondary.withValues(alpha: 0.5),
+            ),
         filled: true,
-        fillColor: AppTheme.cardBackground,
+        fillColor: VSPColors.surface,
+        counterText: "",
         prefixIcon: prefixIcon != null
             ? Icon(
                 prefixIcon,
-                color: AppTheme.textSecondary,
+                color: VSPColors.textSecondary,
               )
             : null,
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           borderSide: BorderSide(
-            color: AppTheme.neonGreen.withValues(alpha: 0.3),
+            color: VSPColors.accent.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           borderSide: const BorderSide(
-            color: AppTheme.neonGreen,
-            width: 2,
+            color: VSPColors.accent,
+            width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           borderSide: const BorderSide(
-            color: Colors.red,
+            color: VSPColors.error,
             width: 1,
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
+          horizontal: VSPSpacing.md,
+          vertical: VSPSpacing.md,
         ),
       ),
     );

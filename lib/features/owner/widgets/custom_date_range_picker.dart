@@ -76,7 +76,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                     color: Colors.white,
                     fontSize: 20,
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Agency FB',
+                    
                   ),
                 ),
                 IconButton(
@@ -171,7 +171,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
           style: TextStyle(
             color: date != null ? Colors.white : Colors.grey,
             fontSize: 14,
-            fontFamily: 'Agency FB',
+            
           ),
         ),
       ),

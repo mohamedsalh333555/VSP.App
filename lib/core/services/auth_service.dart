@@ -138,7 +138,7 @@ class AuthService {
     }
   }
 
-  // Send Verification Email
+  // SECURITY PATCH: Redacted email address in console logs to protect user privacy.
   Future<bool> sendEmailVerification() async {
     try {
       final user = _auth.currentUser;
@@ -147,7 +147,7 @@ class AuthService {
         return false;
       }
       await user.sendEmailVerification();
-      debugPrint('[AUTH] Verification email sent to: ${user.email}');
+      debugPrint('[AUTH] Verification email sent to: USER_IDENTITY_PROTECTED');
       return true;
     } catch (e) {
       _logSecurityEvent('EMAIL_VERIFICATION_SENT_FAILED', e);
@@ -165,7 +165,7 @@ class AuthService {
     }
   }
 
-  // Sign In with Google - Hardened
+  // Sign In with Google - Forced Account Picker
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
     if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
       return {
@@ -175,7 +175,13 @@ class AuthService {
     }
 
     try {
-      final GoogleSignInAccount? googleUser = await GoogleSignIn().signIn();
+      final googleSignIn = GoogleSignIn();
+      
+      // 🔴 FIX: Force sign out first to clear previous session cache
+      // This ensures the account picker dialog shows up every time.
+      await googleSignIn.signOut(); 
+
+      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
       if (googleUser == null) return {'success': false, 'message': 'تم إلغاء العملية.'};
 
       final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
@@ -228,7 +234,7 @@ class AuthService {
     }
   }
 
-  // Update User Profile - REMOVED SENSITIVE FIELD UPDATES
+  // SECURITY PATCH: Stripped sensitive fields (role, points, walletBalance, etc.) to prevent privilege escalation or data manipulation.
   Future<bool> updateUserProfile(String uid, Map<String, dynamic> data) async {
     // SECURITY: Prevent users from updating sensitive fields like 'role' or 'uid' via client-side map
     final securedData = Map<String, dynamic>.from(data);
@@ -236,6 +242,11 @@ class AuthService {
     securedData.remove('uid');
     securedData.remove('email');
     securedData.remove('createdAt');
+    // SECURITY PATCH: Added additional protected fields
+    securedData.remove('isVerified');
+    securedData.remove('isIdentityVerified');
+    securedData.remove('points');
+    securedData.remove('walletBalance');
     
     securedData['updatedAt'] = FieldValue.serverTimestamp();
 

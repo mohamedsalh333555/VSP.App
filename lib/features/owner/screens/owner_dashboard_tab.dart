@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_stat_card.dart';
+import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
-import '../../../shared/widgets/stadium_card.dart';
 
 class OwnerDashboardTab extends StatefulWidget {
   const OwnerDashboardTab({super.key});
@@ -38,28 +39,28 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
     final uid = auth.firebaseUser?.uid;
 
     if (uid == null) {
-      return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
     }
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
+        title: Text(
           'Financial Overview',
-          style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontFamily: 'Agency FB', fontSize: 24),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         actions: [
           IconButton(
-            icon: Icon(_showRevenue ? Icons.visibility : Icons.visibility_off, color: Colors.white70),
+            icon: Icon(_showRevenue ? Icons.visibility : Icons.visibility_off, color: VSPColors.textSecondary),
             onPressed: () => setState(() => _showRevenue = !_showRevenue),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -72,8 +73,8 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: Padding(
-                    padding: EdgeInsets.all(20.0),
-                    child: CircularProgressIndicator(color: AppTheme.neonGreen),
+                    padding: EdgeInsets.all(VSPSpacing.lg),
+                    child: CircularProgressIndicator(color: VSPColors.accent),
                   ));
                 }
 
@@ -83,18 +84,18 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                 return Row(
                   children: [
                     Expanded(
-                      child: _buildFinancialCard(
-                        'Total Revenue',
-                        _showRevenue ? '${revenue.toStringAsFixed(0)} EGP' : '**** EGP',
-                        Icons.payments_outlined,
+                      child: VSPStatCard(
+                        label: 'Total Revenue',
+                        value: _showRevenue ? '${revenue.toStringAsFixed(0)} EGP' : '**** EGP',
+                        icon: Icons.payments_outlined,
                       ),
                     ),
-                    const SizedBox(width: 15),
+                    const SizedBox(width: VSPSpacing.md),
                     Expanded(
-                      child: _buildFinancialCard(
-                        'Booked Hours',
-                        '$hours hrs',
-                        Icons.timer_outlined,
+                      child: VSPStatCard(
+                        label: 'Booked Hours',
+                        value: '$hours hrs',
+                        icon: Icons.timer_outlined,
                       ),
                     ),
                   ],
@@ -105,22 +106,17 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
             const SizedBox(height: 32),
 
             // 🏟️ MY STADIUMS STATUS SECTION
-            const Text(
+            Text(
               'My Stadiums Status',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Agency FB',
-              ),
+              style: Theme.of(context).textTheme.displaySmall,
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
 
             StreamBuilder<List<Stadium>>(
               stream: _databaseService.getOwnerStadiums(uid),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                 }
 
                 final stadiums = snapshot.data ?? [];
@@ -142,42 +138,6 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
     );
   }
 
-  Widget _buildFinancialCard(String title, String value, IconData icon) {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withOpacity(0.2), width: 1.5),
-        boxShadow: [
-          BoxShadow(
-            color: AppTheme.neonGreen.withOpacity(0.05),
-            blurRadius: 10,
-            spreadRadius: 2,
-          ),
-        ],
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Icon(icon, color: AppTheme.neonGreen, size: 28),
-          const SizedBox(height: 16),
-          Text(title, style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13, fontWeight: FontWeight.w500)),
-          const SizedBox(height: 6),
-          Text(
-            value,
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Agency FB',
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildStatusStadiumCard(Stadium stadium) {
     final bool isVerified = stadium.isVerified;
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -193,13 +153,9 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
         .toList()
       ..sort((a, b) => a.startTime.compareTo(b.startTime));
 
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(15),
-        border: Border.all(color: Colors.white.withOpacity(0.05)),
-      ),
+    return VSPCard(
+      padding: EdgeInsets.zero,
+      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -208,35 +164,31 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
           // ✅ Upcoming Bookings Section
           if (upcomingBookings.isNotEmpty)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 15, vertical: 12),
+              padding: const EdgeInsets.all(VSPSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Divider(color: Colors.white24, height: 1),
-                  const SizedBox(height: 12),
-                  const Row(
+                  const Divider(color: VSPColors.divider, height: 1),
+                  const SizedBox(height: VSPSpacing.md),
+                  Row(
                     children: [
-                      Icon(Icons.event_note_outlined, color: Colors.white70, size: 16),
-                      SizedBox(width: 8),
+                      const Icon(Icons.event_note_outlined, color: VSPColors.textSecondary, size: 16),
+                      const SizedBox(width: VSPSpacing.xs),
                       Text(
                         "Upcoming Bookings",
-                        style: TextStyle(
-                          color: Colors.white70,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: VSPSpacing.md),
                   ...upcomingBookings.take(3).map((booking) {
                     return Container(
-                      margin: const EdgeInsets.only(bottom: 8),
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
                       decoration: BoxDecoration(
-                        color: Colors.black.withOpacity(0.2),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.white.withOpacity(0.03)),
+                        color: VSPColors.background.withValues(alpha: 0.2),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -247,33 +199,28 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                               children: [
                                 Text(
                                   booking.playerTeamName ?? "Individual Player",
-                                  style: const TextStyle(
-                                    color: Colors.white,
-                                    fontWeight: FontWeight.w600,
-                                    fontSize: 13,
-                                  ),
+                                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontSize: 13),
                                   overflow: TextOverflow.ellipsis,
                                 ),
                                 if (booking.bookingType == BookingType.challenge)
-                                  const Text(
+                                  Text(
                                     "Challenge Match",
-                                    style: TextStyle(color: Colors.orange, fontSize: 10, fontWeight: FontWeight.bold),
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.warning, fontWeight: FontWeight.bold),
                                   ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 10),
                           Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 4),
                             decoration: BoxDecoration(
-                              color: AppTheme.neonGreen.withOpacity(0.1),
-                              borderRadius: BorderRadius.circular(6),
+                              color: VSPColors.accent.withValues(alpha: 0.1),
+                              borderRadius: BorderRadius.circular(VSPRadius.sm),
                             ),
                             child: Text(
                               '${booking.startTime.hour}:${booking.startTime.minute.toString().padLeft(2, '0')} - ${booking.endTime.hour}:${booking.endTime.minute.toString().padLeft(2, '0')}',
-                              style: const TextStyle(
-                                color: AppTheme.neonGreen,
-                                fontSize: 11,
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.accent,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -286,7 +233,7 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                     Center(
                       child: Text(
                         "+ ${upcomingBookings.length - 3} more bookings",
-                        style: const TextStyle(color: Colors.white38, fontSize: 11),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ),
                 ],
@@ -304,7 +251,7 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
           children: [
             // Image
             ClipRRect(
-              borderRadius: const BorderRadius.vertical(top: Radius.circular(15)),
+              borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.lg)),
               child: Image.network(
                 stadium.imageUrl,
                 height: 140,
@@ -312,8 +259,8 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                 fit: BoxFit.cover,
                 errorBuilder: (context, error, stackTrace) => Container(
                   height: 140,
-                  color: Colors.grey[900],
-                  child: const Icon(Icons.broken_image, color: Colors.grey),
+                  color: VSPColors.surface,
+                  child: const Icon(Icons.broken_image, color: VSPColors.textSecondary),
                 ),
               ),
             ),
@@ -324,11 +271,11 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                 decoration: BoxDecoration(
-                  color: isVerified ? AppTheme.neonGreen : Colors.orange,
-                  borderRadius: BorderRadius.circular(20),
+                  color: isVerified ? VSPColors.accent : VSPColors.warning,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
                   boxShadow: [
                     BoxShadow(
-                      color: (isVerified ? AppTheme.neonGreen : Colors.orange).withOpacity(0.3),
+                      color: (isVerified ? VSPColors.accent : VSPColors.warning).withValues(alpha: 0.3),
                       blurRadius: 8,
                     ),
                   ],
@@ -343,10 +290,10 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                     const SizedBox(width: 4),
                     Text(
                       isVerified ? 'Published' : 'Under Review',
-                      style: const TextStyle(
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: Colors.black,
-                        fontSize: 11,
                         fontWeight: FontWeight.bold,
+                        fontSize: 10,
                       ),
                     ),
                   ],
@@ -356,7 +303,7 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
           ],
         ),
         Padding(
-          padding: const EdgeInsets.all(15),
+          padding: const EdgeInsets.all(VSPSpacing.md),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -365,17 +312,20 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
                 children: [
                   Text(
                     stadium.name,
-                    style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   Text(
                     stadium.location,
-                    style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                   ),
                 ],
               ),
               Text(
                 '${stadium.pricePerHour} EGP/hr',
-                style: const TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold, fontSize: 16),
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: VSPColors.accent,
+                  fontWeight: FontWeight.bold,
+                ),
               ),
             ],
           ),
@@ -387,27 +337,27 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
   Widget _buildEmptyState() {
     return Center(
       child: Padding(
-        padding: const EdgeInsets.symmetric(vertical: 60, horizontal: 40),
+        padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xxl, horizontal: 40),
         child: Column(
           children: [
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(VSPSpacing.lg),
               decoration: BoxDecoration(
-                color: Colors.white.withOpacity(0.05),
+                color: VSPColors.textPrimary.withValues(alpha: 0.05),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Icons.stadium_outlined, color: Colors.grey[600], size: 64),
+              child: Icon(Icons.stadium_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.5), size: 64),
             ),
-            const SizedBox(height: 24),
-            const Text(
+            const SizedBox(height: VSPSpacing.lg),
+            Text(
               'Welcome! Start Earning',
-              style: TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.displaySmall,
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: VSPSpacing.sm),
             Text(
               'Add your first stadium from the menu to start taking bookings and tracking your revenue.',
               textAlign: TextAlign.center,
-              style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 14, height: 1.5),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary, height: 1.5),
             ),
           ],
         ),
@@ -415,3 +365,4 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
     );
   }
 }
+

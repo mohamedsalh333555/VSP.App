@@ -1,0 +1,86 @@
+﻿Analyzing vsp_application...                                    
+
+   info - Don't invoke 'print' in production code - generate_logo.dart:7:5 - avoid_print
+   info - Don't invoke 'print' in production code - generate_logo.dart:14:5 - avoid_print
+   info - Don't invoke 'print' in production code - generate_logo.dart:18:3 - avoid_print
+   info - Don't invoke 'print' in production code - generate_logo.dart:33:3 - avoid_print
+   info - Unnecessary braces in a string interpolation - generate_logo.dart:33:45 - unnecessary_brace_in_string_interps
+   info - Don't invoke 'print' in production code - generate_logo.dart:44:3 - avoid_print
+warning - Unused import: 'package:image_picker/image_picker.dart' - lib\core\services\owner_document_service.dart:3:8 - unused_import
+warning - The value of the field '_auth' isn't used - lib\core\services\owner_document_service.dart:15:9 - unused_field
+warning - Unused import: '../tokens/vsp_tokens.dart' - lib\core\ui\components\vsp_section_title.dart:2:8 - unused_import
+warning - A value for optional parameter 'key' isn't ever given - lib\features\auth\screens\create_account_screen.dart:281:11 - unused_element_parameter
+warning - A value for optional parameter 'icon' isn't ever given - lib\features\auth\screens\create_account_screen.dart:282:10 - unused_element_parameter
+warning - Unused import: '../../../core/providers/language_provider.dart' - lib\features\auth\screens\email_input_screen.dart:4:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\email_verification_screen.dart:7:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\owner_set_password_screen.dart:6:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\owner_verify_email_screen.dart:4:8 - unused_import
+warning - Unused import: '../../../core/providers/language_provider.dart' - lib\features\auth\screens\set_password_new_screen.dart:5:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\set_password_new_screen.dart:7:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\set_password_screen.dart:7:8 - unused_import
+warning - Unused import: '../../../core/theme/app_theme.dart' - lib\features\auth\screens\signup_screen.dart:7:8 - unused_import
+warning - Unused import: '../../owner/screens/add_stadium_wizard.dart' - lib\features\auth\screens\social_onboarding_screen.dart:7:8 - unused_import
+warning - Unused import: '../../../core/navigation/root_screen.dart' - lib\features\auth\screens\social_onboarding_screen.dart:8:8 - unused_import
+   info - The private field _nameInitialized could be 'final' - lib\features\auth\screens\social_onboarding_screen.dart:25:8 - prefer_final_fields
+warning - The value of the field '_nameInitialized' isn't used - lib\features\auth\screens\social_onboarding_screen.dart:25:8 - unused_field
+warning - Unused import: '../../../core/navigation/root_screen.dart' - lib\features\auth\screens\splash_screen.dart:5:8 - unused_import
+warning - Unused import: 'package:provider/provider.dart' - lib\features\auth\screens\success_modal.dart:3:8 - unused_import
+warning - Unused import: '../../../core/providers/auth_provider.dart' - lib\features\auth\screens\success_modal.dart:5:8 - unused_import
+warning - Unused import: '../../owner/screens/my_stadiums_screen.dart' - lib\features\auth\screens\success_modal.dart:8:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\features\auth\screens\verify_email_screen.dart:81:48 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\auth\screens\verify_email_screen.dart:92:13 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\auth\screens\verify_email_screen.dart:99:13 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps - lib\features\auth\screens\verify_email_screen.dart:106:31 - use_build_context_synchronously
+warning - Unused import: '../../../core/ui/components/vsp_button.dart' - lib\features\auth\screens\welcome_screen.dart:10:8 - unused_import
+  error - The named parameter 'borderRadius' isn't defined - lib\features\owner\screens\account_screen.dart:152:15 - undefined_named_parameter
+  error - Expected to find ';' - lib\features\owner\screens\account_screen.dart:237:7 - expected_token
+warning - Dead code - lib\features\owner\screens\account_screen.dart:237:8 - dead_code
+  error - Expected an identifier - lib\features\owner\screens\account_screen.dart:237:8 - missing_identifier
+  error - Expected to find ';' - lib\features\owner\screens\account_screen.dart:237:8 - expected_token
+  error - Unexpected text ';' - lib\features\owner\screens\account_screen.dart:237:8 - unexpected_token
+  error - Expected an identifier - lib\features\owner\screens\account_screen.dart:238:5 - missing_identifier
+  error - Unexpected text ';' - lib\features\owner\screens\account_screen.dart:238:5 - unexpected_token
+   info - Unnecessary empty statement - lib\features\owner\screens\account_screen.dart:238:6 - empty_statements
+warning - The value of the field '_isLoadingData' isn't used - lib\features\owner\screens\add_stadium_wizard.dart:28:8 - unused_field
+warning - The value of the field '_breakStartTime' isn't used - lib\features\owner\screens\add_stadium_wizard.dart:53:14 - unused_field
+warning - The value of the field '_breakEndTime' isn't used - lib\features\owner\screens\add_stadium_wizard.dart:54:14 - unused_field
+   info - The private field _isUploading could be 'final' - lib\features\owner\screens\add_stadium_wizard.dart:58:8 - prefer_final_fields
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\add_stadium_wizard.dart:207:28 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\add_stadium_wizard.dart:207:54 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\add_stadium_wizard.dart:209:29 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\add_stadium_wizard.dart:209:60 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\create_tournament_screen.dart:84:22 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\create_tournament_screen.dart:85:14 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\create_tournament_screen.dart:102:45 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\create_tournament_screen.dart:103:52 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\create_tournament_screen.dart:104:12 - curly_braces_in_flow_control_structures
+warning - The declaration '_buildSectionTitle' isn't referenced - lib\features\owner\screens\create_tournament_screen.dart:378:10 - unused_element
+   info - Don't use 'BuildContext's across async gaps - lib\features\owner\screens\id_verification_screen.dart:42:54 - use_build_context_synchronously
+warning - The '!' will have no effect because the receiver can't be null - lib\features\owner\screens\my_stadiums_screen.dart:56:73 - unnecessary_non_null_assertion
+   info - Don't use 'BuildContext's across async gaps - lib\features\owner\screens\owner_booked_screen.dart:524:48 - use_build_context_synchronously
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\owner_cup_screen.dart:136:42 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\owner_cup_screen.dart:137:47 - curly_braces_in_flow_control_structures
+   info - Statements in an if should be enclosed in a block - lib\features\owner\screens\owner_cup_screen.dart:138:47 - curly_braces_in_flow_control_structures
+   info - Unnecessary braces in a string interpolation - lib\features\owner\screens\owner_dashboard_screen.dart:290:26 - unnecessary_brace_in_string_interps
+   info - Unnecessary use of 'toList' in a spread - lib\features\owner\screens\owner_dashboard_screen.dart:472:12 - unnecessary_to_list_in_spreads
+warning - Unused import: 'package:firebase_auth/firebase_auth.dart' - lib\features\owner\screens\owner_dashboard_tab.dart:3:8 - unused_import
+   info - Unnecessary use of 'toList' in a spread - lib\features\owner\screens\owner_dashboard_tab.dart:231:22 - unnecessary_to_list_in_spreads
+warning - Unused import: '../../../core/ui/components/vsp_card.dart' - lib\features\owner\screens\owner_documentation_wizard.dart:6:8 - unused_import
+warning - Unused import: '../../../data/models.dart' - lib\features\owner\screens\owner_documentation_wizard.dart:13:8 - unused_import
+   info - Don't use 'BuildContext's across async gaps - lib\features\owner\screens\owner_documentation_wizard.dart:101:54 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\owner\screens\owner_documentation_wizard.dart:116:31 - use_build_context_synchronously
+   info - Don't use 'BuildContext's across async gaps, guarded by an unrelated 'mounted' check - lib\features\owner\screens\owner_documentation_wizard.dart:155:11 - use_build_context_synchronously
+   info - 'Share' is deprecated and shouldn't be used. Use SharePlus instead - lib\features\player\widgets\add_player_sheet.dart:46:5 - deprecated_member_use
+   info - 'share' is deprecated and shouldn't be used. Use SharePlus.instance.share() instead - lib\features\player\widgets\add_player_sheet.dart:46:11 - deprecated_member_use
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:18:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:77:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:81:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:113:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:117:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\app_core_logic_test.dart:135:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\tournament_logic_test.dart:44:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\tournament_logic_test.dart:48:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\tournament_logic_test.dart:63:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\tournament_logic_test.dart:70:7 - avoid_print
+   info - Don't invoke 'print' in production code - test\tournament_logic_test.dart:91:7 - avoid_print
+

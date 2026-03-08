@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -16,21 +16,17 @@ class _LanguageScreenState extends State<LanguageScreen> {
     final languages = ['English', 'Arabic', 'Spanish', 'French', 'German', 'Chinese'];
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Language',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -48,10 +44,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
               child: ElevatedButton(
                 onPressed: () => Navigator.pop(context),
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  backgroundColor: VSPColors.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
-                child: const Text('Done', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text('Done', style: TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 20),
@@ -69,22 +65,22 @@ class _LanguageScreenState extends State<LanguageScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: isSelected ? Border.all(color: VSPColors.accent) : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
         ),
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(language, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+            Text(language, style: Theme.of(context).textTheme.bodyLarge),
             Container(
               width: 24,
               height: 24,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                border: Border.all(color: isSelected ? AppTheme.neonGreen : Colors.grey, width: 2),
+                border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider, width: 2),
               ),
-              child: isSelected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: AppTheme.neonGreen, shape: BoxShape.circle))) : null,
+              child: isSelected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle))) : null,
             )
           ],
         ),

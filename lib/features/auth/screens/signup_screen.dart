@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/language_provider.dart';
@@ -6,6 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import 'verify_email_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -46,37 +48,31 @@ class _SignupScreenState extends State<SignupScreen> {
     final confirmPassword = _confirmPasswordController.text;
 
     if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(Provider.of<LanguageProvider>(context, listen: false).isArabic 
+      VSPFeedback.showError(
+        context, 
+        Provider.of<LanguageProvider>(context, listen: false).isArabic 
             ? 'يرجى ملء جميع الحقول' 
-            : 'Please fill all fields'),
-          backgroundColor: Colors.red,
-        ),
+            : 'Please fill all fields'
       );
       return;
     }
 
     if (password != confirmPassword) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(Provider.of<LanguageProvider>(context, listen: false).isArabic 
+      VSPFeedback.showError(
+        context, 
+        Provider.of<LanguageProvider>(context, listen: false).isArabic 
             ? 'كلمات المرور غير متطابقة' 
-            : 'Passwords do not match'),
-          backgroundColor: Colors.red,
-        ),
+            : 'Passwords do not match'
       );
       return;
     }
 
     if (password.length < 6) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(Provider.of<LanguageProvider>(context, listen: false).isArabic 
+      VSPFeedback.showError(
+        context, 
+        Provider.of<LanguageProvider>(context, listen: false).isArabic 
             ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' 
-            : 'Password must be at least 6 characters'),
-          backgroundColor: Colors.red,
-        ),
+            : 'Password must be at least 6 characters'
       );
       return;
     }
@@ -110,12 +106,9 @@ class _SignupScreenState extends State<SignupScreen> {
       );
     } else {
       // Failed to sign up
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(authProvider.errorMessage ?? 'فشل إنشاء الحساب'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      if (mounted) {
+        VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إنشاء الحساب');
+      }
     }
     
     if (mounted) setState(() => _isLoading = false);
@@ -126,14 +119,14 @@ class _SignupScreenState extends State<SignupScreen> {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           bottom: true,
           child: SingleChildScrollView(
@@ -146,7 +139,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   IconButton(
                     icon: Icon(
                       languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.textPrimary,
                     ),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
@@ -164,18 +157,14 @@ class _SignupScreenState extends State<SignupScreen> {
                   const SizedBox(height: 16),
                   Text(
                     languageProvider.isArabic ? 'إنشاء حساب جديد' : 'Create New Account',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 28,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.displayMedium,
                   ),
                   const SizedBox(height: 4),
                   Text(
                     widget.isOwner 
                       ? (languageProvider.isArabic ? 'سجل كصاحب ملعب' : 'Register as Owner')
                       : (languageProvider.isArabic ? 'سجل كلاعب' : 'Register as Player'),
-                    style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textSecondary),
                   ),
                   const SizedBox(height: 24), // Tighter section spacing
                   
@@ -185,6 +174,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _nameController,
                     hintText: languageProvider.isArabic ? 'أدخل اسمك' : 'Enter your name',
                     prefixIcon: Icons.person_outline,
+                    maxLength: 50,
                   ),
                   
                   const SizedBox(height: 16),
@@ -194,6 +184,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: '01xxxxxxxxx',
                     keyboardType: TextInputType.phone,
                     prefixIcon: Icons.phone_outlined,
+                    maxLength: 15,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
 
                   const SizedBox(height: 16),
@@ -223,7 +215,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     obscureText: _obscurePassword,
                     prefixIcon: Icons.lock_outline,
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: AppTheme.textSecondary),
+                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
@@ -236,7 +228,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     obscureText: _obscureConfirmPassword,
                     prefixIcon: Icons.lock_clock_outlined,
                     suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: AppTheme.textSecondary),
+                      icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
@@ -247,10 +239,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     height: 56,
                     child: Container(
                       decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.neonGreen.withOpacity(0.2),
+                            color: VSPColors.accent.withValues(alpha: 0.2),
                             blurRadius: 15,
                             offset: const Offset(0, 4),
                           ),
@@ -259,20 +251,20 @@ class _SignupScreenState extends State<SignupScreen> {
                       child: ElevatedButton(
                         onPressed: _isLoading ? null : _handleSignup,
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.neonGreen,
-                          foregroundColor: AppTheme.darkBackground,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                          elevation: 0, // Elevation is handled by the Container boxshadow
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: VSPColors.background,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                          elevation: 0, 
                         ),
                         child: _isLoading 
                           ? const SizedBox(
                               height: 24,
                               width: 24,
-                              child: CircularProgressIndicator(color: AppTheme.darkBackground, strokeWidth: 3),
+                              child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 3),
                             )
                           : Text(
                               languageProvider.isArabic ? 'إنشاء الحساب' : 'Create Account',
-                              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                             ),
                       ),
                     ),
@@ -307,19 +299,18 @@ class _SignupScreenState extends State<SignupScreen> {
                   onSelected: (selected) {
                     if (selected) setState(() => _selectedPosition = pos);
                   },
-                  selectedColor: AppTheme.neonGreen,
-                  backgroundColor: AppTheme.cardBackground,
+                  selectedColor: VSPColors.accent,
+                  backgroundColor: VSPColors.surface,
                   showCheckmark: false,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                  labelStyle: TextStyle(
-                    color: isSelected ? Colors.black : Colors.white,
+                  labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: isSelected ? VSPColors.background : VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
-                    fontSize: 13,
                   ),
                   shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
                     side: BorderSide(
-                      color: isSelected ? AppTheme.neonGreen : Colors.white.withOpacity(0.05),
+                      color: isSelected ? VSPColors.accent : VSPColors.divider.withValues(alpha: 0.05),
                     ),
                   ),
                 ),
@@ -336,7 +327,7 @@ class _SignupScreenState extends State<SignupScreen> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -352,17 +343,17 @@ class _SignupScreenState extends State<SignupScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.05)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: auth.governorate.isEmpty ? 'Cairo' : auth.governorate,
-          dropdownColor: AppTheme.cardBackground,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+          dropdownColor: VSPColors.surface,
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
           isExpanded: true,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 15),
+          style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {
             if (newValue != null) {
               auth.setGovernorate(newValue);

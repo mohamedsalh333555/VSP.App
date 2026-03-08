@@ -16,6 +16,10 @@ class UserModel {
   final bool isRegistrationComplete;
   final String? governorate;
 
+  // 🔴 Kill Switch & Debt Flags
+  final bool isSuspended;
+  final double commissionDebt;
+
   UserModel({
     required this.uid,
     required this.email,
@@ -31,6 +35,8 @@ class UserModel {
     this.isIdentityVerified = false,
     this.isRegistrationComplete = false,
     this.governorate,
+    this.isSuspended = false,
+    this.commissionDebt = 0.0,
   });
 
   // Create UserModel from Firestore document
@@ -50,6 +56,8 @@ class UserModel {
       isIdentityVerified: data['isIdentityVerified'] ?? false,
       isRegistrationComplete: data['isRegistrationComplete'] ?? false,
       governorate: data['governorate'],
+      isSuspended: data['isSuspended'] ?? false,
+      commissionDebt: (data['commissionDebt'] ?? 0).toDouble(),
     );
   }
 
@@ -69,6 +77,8 @@ class UserModel {
       'isIdentityVerified': isIdentityVerified,
       'isRegistrationComplete': isRegistrationComplete,
       'governorate': governorate,
+      'isSuspended': isSuspended,
+      'commissionDebt': commissionDebt,
     };
   }
 
@@ -88,6 +98,8 @@ class UserModel {
     bool? isIdentityVerified,
     bool? isRegistrationComplete,
     String? governorate,
+    bool? isSuspended,
+    double? commissionDebt,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -104,6 +116,8 @@ class UserModel {
       isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
       isRegistrationComplete: isRegistrationComplete ?? this.isRegistrationComplete,
       governorate: governorate ?? this.governorate,
+      isSuspended: isSuspended ?? this.isSuspended,
+      commissionDebt: commissionDebt ?? this.commissionDebt,
     );
   }
 }

@@ -1,10 +1,14 @@
 import 'package:flutter/material.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/providers/booking_provider.dart';
+import '../../../core/providers/booking_provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/database_service.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
+import 'profile_subscreens/my_team_screen.dart';
 
 class BookingTypeScreen extends StatefulWidget {
   final Stadium stadium;
@@ -20,26 +24,53 @@ class BookingTypeScreen extends StatefulWidget {
 
 class _BookingTypeScreenState extends State<BookingTypeScreen> {
   String? _selectedType;
+  bool _isLoadingTeam = true;
+  bool _hasTeam = false;
+  int _teamPlayersCount = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    // Use Future.microtask to access Provider safely during init
+    Future.microtask(() {
+      if (mounted && context.mounted) {
+        context.read<BookingProvider>().clearDraft();
+      }
+    });
+    _checkUserTeam();
+  }
+
+  Future<void> _checkUserTeam() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.uid;
+    
+    if (uid != null) {
+      final team = await DatabaseService().getUserTeam(uid);
+      if (!context.mounted) return;
+      setState(() {
+        _hasTeam = team != null;
+        _teamPlayersCount = team?.currentPlayers ?? 0;
+        _isLoadingTeam = false;
+      });
+    } else {
+      if (context.mounted) setState(() => _isLoadingTeam = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        title: const Text(
+        title: Text(
           'Choose What Suits You',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -52,59 +83,38 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                 children: [
                   _buildBookingOption(
                     context,
-                    id: 'Personal',
-                    title: 'Personal Booking',
-                    subtitle: 'Book the pitch for yourself and your friends.',
+                    id: 'Book a Pitch',
+                    title: 'Book a Pitch',
+                    subtitle: 'Private booking for you and friends. No ranking.',
                     imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80',
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: VSPSpacing.md),
                   _buildBookingOption(
                     context,
-                    id: 'Team',
-                    title: 'Your Team',
-                    subtitle: 'Manage and play as a registered team.',
-                    imageUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Newcastle_United_Logo.svg/1200px-Newcastle_United_Logo.svg.png',
+                    id: 'Find Players',
+                    title: 'Find Players',
+                    subtitle: 'Public match. Allow others to join to complete numbers.',
+                    imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&q=80',
                   ),
-                  const SizedBox(height: 24),
-                  _buildBookingOption(
-                    context,
-                    id: 'Challenge',
-                    title: 'Challenge',
-                    subtitle: 'Challenge another team for a competitive match.',
-                    imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
-                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  _buildChallengeBookingOption(context),
                 ],
               ),
             ),
           ),
           // Continue Button
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(VSPSpacing.lg),
             decoration: const BoxDecoration(
-              color: Color(0xFF1C1C1E),
+              color: VSPColors.surface,
               borderRadius: BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+                topLeft: Radius.circular(VSPRadius.xl),
+                topRight: Radius.circular(VSPRadius.xl),
               ),
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _selectedType == null ? null : _handleContinue,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.grey[800],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                ),
-              ),
+            child: PrimaryButton(
+              text: 'Continue',
+              onPressed: _selectedType == null ? null : _handleContinue,
             ),
           ),
         ],
@@ -112,26 +122,59 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     );
   }
 
-  void _handleContinue() {
+  void _handleContinue() async {
     if (_selectedType == null) return;
+
+    if (_selectedType == 'Create Team to Compete' || _selectedType == 'Team Incomplete') {
+      if (_selectedType == 'Team Incomplete') {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('You need 5+ players to play ranked matches.'),
+            backgroundColor: VSPColors.warning,
+          ),
+        );
+        return;
+      }
+      // Must create a valid team first!
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (_) => const MyTeamScreen()),
+      ).then((_) => _checkUserTeam());
+      return;
+    }
 
     // Save choice to BookingProvider
     final bookingProvider = context.read<BookingProvider>();
     
-    // Map string to BookingType enum
+    // Map selection ID to correct BookingType and pass-through strings
     BookingType type = BookingType.personal;
-    if (_selectedType == 'Team') type = BookingType.team;
-    if (_selectedType == 'Challenge') type = BookingType.challenge;
+    String typeString = 'Personal';
 
-    bookingProvider.updateDraft(bookingType: type);
+    if (_selectedType == 'Find Players') {
+      type = BookingType.team;
+      typeString = 'Team';
+    } else if (_selectedType == 'Challenge Match') {
+      type = BookingType.challenge;
+      typeString = 'Challenge';
+    }
 
-    if (_selectedType == 'Challenge') {
+    debugPrint('🎯 Selection: $_selectedType -> Mapping to: $type (String: $typeString)');
+
+    // Save choice to BookingProvider
+    bookingProvider.updateDraft(
+      bookingType: type,
+      isPrivate: _selectedType == 'Book a Pitch', 
+      opponentTeamId: null,
+      opponentTeamName: null,
+    );
+
+    if (type == BookingType.challenge) {
       Navigator.push(
         context,
         MaterialPageRoute(
           builder: (_) => ChallengeSelectTeamScreen(
             stadium: widget.stadium,
-            bookingType: _selectedType!,
+            bookingType: typeString,
           ),
         ),
       );
@@ -141,7 +184,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         MaterialPageRoute(
           builder: (_) => BookingConfirmationScreen(
             stadium: widget.stadium,
-            bookingType: _selectedType!,
+            bookingType: typeString,
           ),
         ),
       );
@@ -154,6 +197,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     required String title,
     required String subtitle,
     required String imageUrl,
+    IconData? icon,
   }) {
     final bool isSelected = _selectedType == id;
 
@@ -167,27 +211,27 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         width: double.infinity,
         height: 180,
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(20),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : AppTheme.neonGreen.withValues(alpha: 0.2),
+            color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.2),
             width: isSelected ? 2 : 1.5,
           ),
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
           child: Stack(
             children: [
               Positioned.fill(
                 child: ColorFiltered(
                   colorFilter: ColorFilter.mode(
-                    Colors.black.withValues(alpha: isSelected ? 0.4 : 0.6),
+                    VSPColors.background.withValues(alpha: isSelected ? 0.4 : 0.6),
                     BlendMode.darken,
                   ),
                   child: Image.network(
                     imageUrl,
                     fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(color: const Color(0xFF1E1E1E)),
+                    errorBuilder: (context, error, stackTrace) => Container(color: VSPColors.surface),
                   ),
                 ),
               ),
@@ -198,7 +242,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                       begin: Alignment.bottomCenter,
                       end: Alignment.topCenter,
                       colors: [
-                        Colors.black.withValues(alpha: 0.9),
+                        VSPColors.background.withValues(alpha: 0.9),
                         Colors.transparent,
                       ],
                     ),
@@ -214,30 +258,30 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          title,
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Agency FB',
-                          ),
+                        Row(
+                          children: [
+                            if (icon != null) ...[
+                              Icon(icon, color: VSPColors.accent, size: 24),
+                              const SizedBox(width: VSPSpacing.sm),
+                            ],
+                            Text(
+                              title,
+                              style: Theme.of(context).textTheme.displaySmall,
+                            ),
+                          ],
                         ),
                         if (isSelected)
                           const CircleAvatar(
                             radius: 12,
-                            backgroundColor: AppTheme.neonGreen,
-                            child: Icon(Icons.check, size: 16, color: Colors.black),
+                            backgroundColor: VSPColors.accent,
+                            child: Icon(Icons.check, size: 16, color: VSPColors.background),
                           ),
                       ],
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: VSPSpacing.xs),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.7),
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textPrimary.withValues(alpha: 0.7)),
                     ),
                   ],
                 ),
@@ -246,6 +290,42 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
           ),
         ),
       ),
+    );
+  }
+  Widget _buildChallengeBookingOption(BuildContext context) {
+    if (_isLoadingTeam) {
+      return const Center(child: CircularProgressIndicator());
+    }
+
+    if (!_hasTeam) {
+      return _buildBookingOption(
+        context,
+        id: 'Create Team to Compete',
+        title: 'Create Team to Compete',
+        subtitle: 'You need a team of 5+ players to play competitive matches. Start here!',
+        imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
+        icon: Icons.lock_outline,
+      );
+    }
+    
+    if (_teamPlayersCount < 5) {
+      return _buildBookingOption(
+        context,
+        id: 'Team Incomplete',
+        title: 'Team Incomplete',
+        subtitle: 'You need 5+ players to play ranked matches. Add more players!',
+        imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
+        icon: Icons.warning_amber_rounded,
+      );
+    }
+
+    return _buildBookingOption(
+        context,
+        id: 'Challenge Match',
+        title: 'Challenge Match',
+        subtitle: 'Compete against other teams and rank up.',
+        imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
+        icon: Icons.emoji_events_outlined,
     );
   }
 }

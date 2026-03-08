@@ -1,17 +1,161 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../data/models.dart';
-import 'player_home_screen.dart'; // To access ChampionshipCard if needed or we build the specific uniform card here
+import 'package:provider/provider.dart';
+import 'package:intl/intl.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/database_service.dart';
+import '../../../data/models.dart';
+import 'player_home_screen.dart'; 
+import '../../owner/screens/tournament_brackets_screen.dart';
 
-class ChampionshipDetailsScreen extends StatelessWidget {
+class ChampionshipDetailsScreen extends StatefulWidget {
   final Championship championship;
 
   const ChampionshipDetailsScreen({super.key, required this.championship});
 
   @override
+  State<ChampionshipDetailsScreen> createState() => _ChampionshipDetailsScreenState();
+}
+
+class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
+  bool _isJoining = false;
+
+  Future<void> _handleJoin() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final db = DatabaseService();
+
+    if (!auth.isAuthenticated) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login first')));
+      return;
+    }
+
+    setState(() => _isJoining = true);
+
+    try {
+      // 1. Fetch User's Team
+      final userPhone = auth.userModel?.phone ?? '';
+      final team = await db.getTeamByCaptainPhone(userPhone);
+
+      if (team == null) {
+        if (mounted) {
+          _showErrorDialog('للانضمام للبطولة، يجب أن تكون قائد فريق.');
+        }
+        return;
+      }
+
+      // 2. Check Rule: Min 5 Players
+      if (team.memberUids.length < 5) {
+        if (mounted) {
+           _showErrorDialog('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
+        }
+        return;
+      }
+
+      // 3. Check if already joined
+      if (widget.championship.joinedTeams.contains(team.id)) {
+        if (mounted) {
+           _showErrorDialog('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
+        }
+        return;
+      }
+
+      // 4. Payment Confirmation / Dialog
+      if (mounted) {
+        final confirmed = await _showPaymentDialog(team);
+        if (confirmed == true) {
+          final success = await db.joinChampionship(widget.championship.id, team.id);
+          if (success && mounted) {
+            _showSuccessSnackBar('تم الانضمام للبطولة بنجاح! بالتوفيق فريق ${team.name} 🏆');
+            Navigator.pop(context); // Go back after joining
+          }
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        _showErrorDialog(e.toString().replaceAll('Exception: ', ''));
+      }
+    } finally {
+      if (mounted) setState(() => _isJoining = false);
+    }
+  }
+
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: Text('Error', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error)),
+        content: Text(message, style: Theme.of(context).textTheme.bodyMedium),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text('OK', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Future<bool?> _showPaymentDialog(Team team) async {
+    return showDialog<bool>(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Column(
+          children: [
+            const Icon(Icons.payment, color: VSPColors.accent, size: 48),
+            const SizedBox(height: VSPSpacing.md),
+            Text(
+              'Join Confirmation',
+              style: Theme.of(context).textTheme.titleLarge,
+            ),
+          ],
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+             Text(
+              'Entry Fee: ${widget.championship.entryFee.toInt()} EGP',
+              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent),
+            ),
+            const SizedBox(height: VSPSpacing.md),
+            Text(
+              'Payment will be made in Cash at the stadium when the tournament begins.',
+              textAlign: TextAlign.center,
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context, false),
+            child: Text('Cancel', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
+          ),
+          PrimaryButton(
+            text: 'Confirm & Pay Cash',
+            onPressed: () => Navigator.pop(context, true),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _showSuccessSnackBar(String message) {
+     ScaffoldMessenger.of(context).showSnackBar(
+      SnackBar(
+        content: Text(message, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold)),
+        backgroundColor: VSPColors.accent,
+        behavior: SnackBarBehavior.floating,
+      ),
+    );
+  }
+
+  @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       body: Stack(
         children: [
           // 1. Header Image
@@ -25,14 +169,16 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                 return const LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.black, Colors.transparent],
+                  colors: [VSPColors.background, Colors.transparent],
                 ).createShader(Rect.fromLTRB(0, 0, rect.width, rect.height));
               },
               blendMode: BlendMode.dstIn,
               child: Image.network(
-                'https://images.unsplash.com/photo-1577223625816-7546f13df25d?w=800&fit=crop', // Real stadium photo
+                widget.championship.logoUrl.isNotEmpty 
+                  ? widget.championship.logoUrl 
+                  : '', // BETA READY: Removed fake logo fallback
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(color: Colors.grey[900]),
+                errorBuilder: (context, error, stackTrace) => Container(color: VSPColors.surfaceAlt),
               ),
             ),
           ),
@@ -40,14 +186,14 @@ class ChampionshipDetailsScreen extends StatelessWidget {
           // Back & Favorite Buttons
           Positioned(
             top: MediaQuery.of(context).padding.top + 10,
-            left: 16,
-            right: 16,
+            left: VSPSpacing.md,
+            right: VSPSpacing.md,
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildInteractiveCircleIcon(
                   context, 
-                  Icons.arrow_back, 
+                  Icons.arrow_back_ios_new, 
                   () => Navigator.of(context).pop(),
                 ),
                 const _FavoriteButton(),
@@ -63,12 +209,12 @@ class ChampionshipDetailsScreen extends StatelessWidget {
               children: [
                 // 2. Overlapping Unified Championship Card - Width Fixed to Infinity
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: Hero(
-                    tag: 'champion_card_${championship.id}',
+                    tag: 'champion_card_${widget.championship.id}',
                     child: SizedBox(
                       width: double.infinity, // Force full width
-                      child: ChampionshipCard(championship: championship), 
+                      child: ChampionshipCard(championship: widget.championship), 
                     ),
                   ),
                 ),
@@ -77,13 +223,13 @@ class ChampionshipDetailsScreen extends StatelessWidget {
 
                 // 3. Tournament Timeline (Rounds)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2A2A2A),
-                      borderRadius: BorderRadius.circular(16),
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
                     ),
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
@@ -92,28 +238,24 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                            children: [
                              Text(
                                'Schedule',
-                               style: TextStyle(
-                                 color: AppTheme.textPrimary.withValues(alpha: 0.9), 
-                                 fontWeight: FontWeight.bold,
-                                 fontSize: 16
-                               )
+                               style: Theme.of(context).textTheme.titleMedium,
                              ),
                              Container(
                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                                decoration: BoxDecoration(
-                                 color: Colors.white.withValues(alpha: 0.05),
-                                 borderRadius: BorderRadius.circular(8),
+                                 color: VSPColors.surfaceAlt,
+                                 borderRadius: BorderRadius.circular(VSPRadius.sm),
                                ),
-                               child: const Text('Expand', style: TextStyle(color: AppTheme.textSecondary, fontSize: 10)),
+                               child: Text('Expand', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                              )
                            ],
                          ),
-                         const SizedBox(height: 16),
+                         const SizedBox(height: VSPSpacing.md),
                          // Vertical timeline
-                         _buildTimelineStep('Aug 6-7', 'First Round', true, true),
-                         _buildTimelineStep('Aug 9-10', 'Second Round', true, true),
-                         _buildTimelineStep('Aug 12-13', 'Third Round', true, true),
-                         _buildTimelineStep('Aug 15-16', 'Four Round', false, false),
+                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.startDate), 'Start Date', true, true),
+                         _buildTimelineStep('Match Day 1', 'Group Stage', true, true),
+                         _buildTimelineStep('Match Day 2', 'Quarter Finals', false, true),
+                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.endDate), 'Final Match', false, false),
                       ],
                     ),
                   ),
@@ -124,15 +266,17 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                 // 4. Content Sections
                 _buildSection(
                   'About The Tournament',
-                  'Welcome To The ACD Sal Football League!\nThis Tournament Is Organized By The ACD Public Stadium For Football Fans.\nThe Final Edition Will Be Held From August 6 To September 30, 2025.',
+                  widget.championship.rules.isNotEmpty 
+                    ? widget.championship.rules 
+                    : 'Welcome to the tournament! Details will be provided by the organizer.',
                 ),
                 _buildSection(
                   'Match Rules And Regulations',
-                  'Each Match Lasts 20 Minutes (Two Halves, Each Half Lasting 10 Minutes).\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.\nA Maximum Of 3 Substitutions Are Permitted Per Match.\nAny Unsportsmanlike Conduct Will Result In Immediate Disqualification.',
+                  'Each Match Lasts ${widget.championship.matchDuration} Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.',
                 ),
                 _buildSection(
                   'Important Instructions For Players',
-                  'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers\' Instructions.\nRespect The Referees, Organizers, And Other Participants.\nAny Team That Causes Disruption Or Trouble May Be Banned From Future Tournaments.',
+                  'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers\' Instructions.',
                 ),
 
                 const SizedBox(height: 100), // Space for Join Button
@@ -143,54 +287,47 @@ class ChampionshipDetailsScreen extends StatelessWidget {
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.symmetric(horizontal: 16),
-        child: SizedBox(
-          width: double.infinity,
-          height: 50,
-          child: ElevatedButton(
-            onPressed: () {},
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonGreen,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-              elevation: 4,
-            ),
-            child: const Text(
-              'Join',
-              style: TextStyle(
-                color: Colors.black,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+        child: (widget.championship.status == 'ongoing' || widget.championship.status == 'completed')
+            ? PrimaryButton(
+                text: 'View Tournament Brackets',
+                onPressed: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                      builder: (context) => TournamentBracketsScreen(
+                        championship: widget.championship,
+                        isOwner: false,
+                      ),
+                    ),
+                  );
+                },
+              )
+            : PrimaryButton(
+                text: 'Join',
+                isLoading: _isJoining,
+                onPressed: _handleJoin,
               ),
-            ),
-          ),
-        ),
       ),
     );
   }
 
   Widget _buildSection(String title, String content) {
     return Padding(
-      padding: const EdgeInsets.fromLTRB(20, 0, 20, 32),
+      padding: const EdgeInsets.fromLTRB(20, 0, 20, VSPSpacing.xl),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             title,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Agency FB', // Condensed look
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: VSPSpacing.sm),
           Text(
             content,
-            style: TextStyle(
-              color: AppTheme.textSecondary.withValues(alpha: 0.7),
-              fontSize: 14,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: VSPColors.textSecondary.withValues(alpha: 0.7),
               height: 1.6,
-              fontFamily: 'Inter',
             ),
           ),
         ],
@@ -211,7 +348,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                   width: 10,
                   height: 10,
                   decoration: BoxDecoration(
-                    color: isActive ? Colors.white : Colors.grey.withValues(alpha: 0.3),
+                    color: isActive ? VSPColors.textPrimary : VSPColors.divider.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                 ),
@@ -219,7 +356,7 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                   Expanded(
                     child: Container(
                       width: 2,
-                      color: Colors.white.withValues(alpha: 0.2),
+                      color: VSPColors.divider.withValues(alpha: 0.1),
                     ),
                   ),
               ],
@@ -234,10 +371,9 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                 children: [
                   Text(
                     date,
-                    style: TextStyle(
-                      color: isActive ? Colors.white : Colors.grey,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: isActive ? VSPColors.textPrimary : VSPColors.textSecondary,
                       fontWeight: FontWeight.bold,
-                      fontSize: 14,
                     ),
                   ),
                   const SizedBox(height: 4),
@@ -247,14 +383,13 @@ class ChampionshipDetailsScreen extends StatelessWidget {
                         width: 4,
                         height: 4,
                         decoration: const BoxDecoration(
-                            color: Colors.grey, shape: BoxShape.circle),
+                            color: VSPColors.textSecondary, shape: BoxShape.circle),
                       ),
                       const SizedBox(width: 8),
                       Text(
                         title,
-                        style: TextStyle(
-                          color: isActive ? Colors.white.withValues(alpha: 0.7) : Colors.grey,
-                          fontSize: 12,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: isActive ? VSPColors.textPrimary.withValues(alpha: 0.7) : VSPColors.textSecondary,
                         ),
                       ),
                     ],
@@ -268,17 +403,18 @@ class ChampionshipDetailsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildInteractiveCircleIcon(BuildContext context, IconData icon, VoidCallback onTap, {Color color = Colors.white}) {
+  Widget _buildInteractiveCircleIcon(BuildContext context, IconData icon, VoidCallback onTap, {Color? color}) {
+    final iconColor = color ?? VSPColors.textPrimary;
     return Container(
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: VSPColors.background.withValues(alpha: 0.6),
         shape: BoxShape.circle,
       ),
       child: IconButton(
         padding: EdgeInsets.zero,
-        icon: Icon(icon, color: color, size: 20),
+        icon: Icon(icon, color: iconColor, size: 20),
         onPressed: onTap,
       ),
     );
@@ -301,14 +437,14 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
       width: 40,
       height: 40,
       decoration: BoxDecoration(
-        color: Colors.black.withValues(alpha: 0.6),
+        color: VSPColors.background.withValues(alpha: 0.6),
         shape: BoxShape.circle,
       ),
       child: IconButton(
         padding: EdgeInsets.zero,
         icon: Icon(
           isFav ? Icons.favorite : Icons.favorite_border,
-          color: isFav ? Colors.red : Colors.white,
+          color: isFav ? VSPColors.error : VSPColors.textPrimary,
           size: 20,
         ),
         onPressed: () {

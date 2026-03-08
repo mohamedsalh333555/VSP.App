@@ -1,10 +1,11 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/create_account_strings.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import 'verify_email_screen.dart';
@@ -42,7 +43,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter your full name (First and Last name)'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -52,7 +53,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid email'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -62,7 +63,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid phone number'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -72,7 +73,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please select your position'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -122,15 +123,15 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
@@ -149,7 +150,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                   languageProvider.isArabic
                       ? Icons.arrow_forward
                       : Icons.arrow_back,
-                  color: AppTheme.textPrimary,
+                  color: VSPColors.textPrimary,
                 ),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
@@ -164,9 +165,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                   languageProvider.isArabic
                       ? 'أضف بريدك الإلكتروني 1/3'
                       : 'Add your email 1/3',
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 20,
+                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -182,9 +181,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               // Name Label
               Text(
                 languageProvider.isArabic ? 'الاسم الثنائي' : 'Full Name',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -203,9 +200,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               // Email Label
               Text(
                 languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -224,9 +219,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               // Phone Label
               Text(
                 languageProvider.isArabic ? 'رقم الموبايل' : 'Phone Number',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -245,9 +238,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               // Position Label
               Text(
                 languageProvider.isArabic ? 'المركز في الملعب' : 'Position',
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 14,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(
                   fontWeight: FontWeight.w500,
                 ),
               ),
@@ -257,21 +248,21 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
               // Position Dropdown
               DropdownButtonFormField<String>(
                 value: _selectedPosition,
-                dropdownColor: AppTheme.darkBackground,
+                dropdownColor: VSPColors.surface,
                 decoration: InputDecoration(
                   filled: true,
-                  fillColor: const Color(0xFF1E1E1E),
+                  fillColor: VSPColors.surface,
                   contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
                   border: OutlineInputBorder(
                     borderRadius: BorderRadius.circular(12),
                     borderSide: BorderSide.none,
                   ),
                   enabledBorder: OutlineInputBorder(
-                    borderRadius: BorderRadius.circular(12),
-                    borderSide: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    borderSide: const BorderSide(color: VSPColors.divider),
                   ),
                 ),
-                style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                style: Theme.of(context).textTheme.bodyMedium,
                 items: _positions
                     .map((pos) => DropdownMenuItem(
                           value: pos,
@@ -296,10 +287,10 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                           _handleContinue();
                         },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonGreen,
-                    foregroundColor: AppTheme.darkBackground,
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: VSPColors.background,
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
                     ),
                     elevation: 0,
                   ),
@@ -310,7 +301,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                           child: CircularProgressIndicator(
                             strokeWidth: 2,
                             valueColor: AlwaysStoppedAnimation<Color>(
-                              AppTheme.darkBackground,
+                              VSPColors.background,
                             ),
                           ),
                         )
@@ -318,8 +309,7 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                           languageProvider.isArabic
                               ? 'المتابعة بالبريد الإلكتروني'
                               : 'Continue With Email',
-                          style: const TextStyle(
-                            fontSize: 16,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -333,9 +323,8 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                 child: RichText(
                   textAlign: TextAlign.center,
                   text: TextSpan(
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: VSPColors.textSecondary,
                     ),
                     children: [
                       TextSpan(
@@ -343,10 +332,10 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
                             CreateAccountStrings.termsText),
                       ),
                       TextSpan(
-                        text: languageProvider.getText(
+                         text: languageProvider.getText(
                             CreateAccountStrings.privacyPolicy),
                         style: const TextStyle(
-                          color: AppTheme.neonGreen,
+                          color: VSPColors.accent,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -359,14 +348,14 @@ class _AddEmailScreenState extends State<AddEmailScreen> {
 
               // Bottom Indicator
               Center(
-                child: Container(
-                  width: 134,
-                  height: 5,
-                  decoration: BoxDecoration(
-                    color: AppTheme.textPrimary,
-                    borderRadius: BorderRadius.circular(100),
+                  child: Container(
+                    width: 134,
+                    height: 5,
+                    decoration: BoxDecoration(
+                      color: VSPColors.divider,
+                      borderRadius: BorderRadius.circular(100),
+                    ),
                   ),
-                ),
               ),
 
               const SizedBox(height: 20),
@@ -406,9 +395,10 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
 }
+

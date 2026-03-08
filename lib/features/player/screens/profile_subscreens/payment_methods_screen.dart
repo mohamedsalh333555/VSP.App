@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -14,21 +14,17 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Payment Methods',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -54,10 +50,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               child: ElevatedButton(
                 onPressed: () {},
                 style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+                  backgroundColor: VSPColors.accent,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
-                child: const Text('Add Payment', style: TextStyle(color: Colors.black, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: const Text('Add Payment', style: TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)),
               ),
             ),
             const SizedBox(height: 20),
@@ -74,9 +70,9 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
         decoration: BoxDecoration(
-          color: AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(12),
-          border: isSelected ? Border.all(color: AppTheme.neonGreen) : Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: isSelected ? Border.all(color: VSPColors.accent) : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
@@ -86,22 +82,22 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                height: 32,
                decoration: BoxDecoration(
                  color: Colors.white,
-                 borderRadius: BorderRadius.circular(4),
+                 borderRadius: BorderRadius.circular(VSPRadius.xs),
                ),
                // Placeholder for actual brand icons
-               child: Center(child: Text(title[0], style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold))), 
+               child: Center(child: Text(title[0], style: const TextStyle(color: VSPColors.background, fontWeight: FontWeight.bold))), 
              ),
              const SizedBox(width: 16),
-             Text(title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16)),
+             Text(title, style: Theme.of(context).textTheme.bodyLarge),
              const Spacer(),
              Container(
                width: 24,
                height: 24,
                decoration: BoxDecoration(
                  shape: BoxShape.circle,
-                 border: Border.all(color: isSelected ? AppTheme.neonGreen : Colors.grey, width: 2),
+                 border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider, width: 2),
                ),
-               child: isSelected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: AppTheme.neonGreen, shape: BoxShape.circle))) : null,
+               child: isSelected ? Center(child: Container(width: 12, height: 12, decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle))) : null,
              )
           ],
         ),

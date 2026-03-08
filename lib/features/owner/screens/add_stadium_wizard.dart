@@ -1,17 +1,17 @@
 import 'package:flutter/material.dart';
 import 'dart:io';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:file_picker/file_picker.dart';
+import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/services/storage_service.dart';
-import '../../../core/services/cloudinary_service.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import 'package:provider/provider.dart';
 import '../../../shared/widgets/vsp_upload_widgets.dart';
-import 'owner_main_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class AddStadiumWizard extends StatefulWidget {
   final String? stadiumId;
@@ -22,7 +22,8 @@ class AddStadiumWizard extends StatefulWidget {
 }
 
 class _AddStadiumWizardState extends State<AddStadiumWizard> {
-  final PageController _pageController = PageController();
+  final _ballPriceController = TextEditingController();
+  final _pageController = PageController();
   int _currentStep = 0;
   bool _isLoadingData = false;
 
@@ -36,7 +37,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _seatsController = TextEditingController();
   final _notesController = TextEditingController();
   bool _hasBall = false;
-  final _ballPriceController = TextEditingController();
 
   // State variables for features
   bool? _cafeteria;
@@ -57,17 +57,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final List<Map<String, dynamic>> _images = [];
   bool _isUploading = false;
   bool _isLocationLoading = false;
-
-  // Step 4: Legal Docs
-  String? _contractUrl;
-  String? _ownerIdUrl;
-  bool _isContractUploading = false;
-  bool _isOwnerIdUploading = false;
   bool _isSaving = false;
 
   final ImagePicker _imagePicker = ImagePicker();
   final StorageService _storageService = StorageService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
   final DatabaseService _databaseService = DatabaseService();
 
   @override
@@ -124,10 +117,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         }
 
         _notesController.text = data['notes'] ?? '';
-        
-        // Load Docs if exist (Edit Mode)
-        _contractUrl = data['contractUrl'];
-        _ownerIdUrl = data['ownerIdUrl'];
       }
     } catch (e) {
       debugPrint('Error loading stadium data: $e');
@@ -164,10 +153,15 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     _seatsController.dispose();
     _notesController.dispose();
     _pageController.dispose();
+    _ballPriceController.dispose();
     super.dispose();
   }
 
   // --- Actions ---
+
+  void _showError(String message) {
+     VSPFeedback.showError(context, message);
+  }
 
   Future<void> _getCurrentLocation() async {
     setState(() => _isLocationLoading = true);
@@ -196,8 +190,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       context: context,
       initialTime: TimeOfDay.now(),
       builder: (context, child) => Theme(
-        data: ThemeData.dark().copyWith(
-          colorScheme: const ColorScheme.dark(primary: AppTheme.neonGreen, onPrimary: Colors.black, surface: Color(0xFF1E1E1E), onSurface: Colors.white),
+        data: Theme.of(context).copyWith(
+          colorScheme: ColorScheme.dark(
+            primary: VSPColors.accent,
+            onPrimary: Colors.black,
+            surface: VSPColors.surface,
+            onSurface: VSPColors.textPrimary,
+          ),
         ),
         child: child!,
       ),
@@ -223,52 +222,18 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         
         // Upload
         final url = await _storageService.uploadFile(file: imageFile, path: 'stadiums/images', fileName: 'std_${DateTime.now().millisecondsSinceEpoch}.jpg');
-        if (mounted) {
-          setState(() {
-            imageEntry['url'] = url;
-            imageEntry['isUploading'] = false;
-          });
-        }
-      }
-    } catch (e) {
-      _showError('Upload failed');
-    }
-  }
-
-  Future<void> _uploadLegalDoc(bool isContract, String userId) async {
-    try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
-      );
-      
-      if (result == null || result.files.single.path == null) return;
-
-      setState(() {
-        if (isContract) _isContractUploading = true; else _isOwnerIdUploading = true;
-      });
-
-      // Use Cloudinary
-      final url = await _cloudinaryService.uploadRawFile(
-        result.files.single.path!,
-        folder: 'stadiums/legal_docs/$userId',
-      );
-
-      if (mounted) {
+        if (!mounted) return;
         setState(() {
-          if (isContract) _contractUrl = url; else _ownerIdUrl = url;
+          imageEntry['url'] = url;
+          imageEntry['isUploading'] = false;
         });
       }
     } catch (e) {
-      _showError('Document upload failed: $e');
-    } finally {
-      if (mounted) {
-        setState(() {
-          if (isContract) _isContractUploading = false; else _isOwnerIdUploading = false;
-        });
-      }
+      if (mounted) VSPFeedback.showError(context, 'Upload failed');
     }
   }
+
+
 
   void _nextPage() {
     if (_currentStep == 0) {
@@ -282,22 +247,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         return;
       }
     } else if (_currentStep == 2) {
-      // Validate Images
+      // Validate Images & Submit
       if (_images.isEmpty && (widget.stadiumId == null)) {
         _showError('Please upload at least one stadium image');
         return;
       }
-    } else if (_currentStep == 3) {
-      // Validate Docs
-      if (_contractUrl == null || _ownerIdUrl == null) {
-        _showError('Please upload both legal documents to verify your stadium');
-        return;
-      }
-      _saveStadium(); // Submit
+      _saveStadium(); // Submit immediately after images
       return;
     }
 
-    if (_currentStep < 3) {
+    if (_currentStep < 2) {
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       setState(() => _currentStep++);
     }
@@ -328,93 +287,65 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         return;
       }
 
+      final stadiumFeatures = {
+        'sportType': _selectedSportType,
+        'floorType': _selectedFloorType,
+        'bathOption': _selectedBathOption,
+        'cafeteria': _cafeteria,
+        'garage': _garage,
+        'changingRoom': _changingRoom,
+        'seats': _seatsController.text.trim(),
+        'length': _lengthController.text.trim(),
+        'width': _widthController.text.trim(),
+        'hasBall': _hasBall,
+        'ballPrice': double.tryParse(_ballPriceController.text) ?? 0.0,
+        'workingHours': {
+          'start': _formatTime(_startTime, ''),
+          'end': _formatTime(_endTime, ''),
+        },
+        'allImages': uploadedUrls,
+      };
+
       if (widget.stadiumId != null) {
           // Update Logic
           await _databaseService.updateStadium(widget.stadiumId!, {
-            'name': _nameController.text,
-            'location': _locationController.text,
-            'pricePerHour': double.parse(_priceController.text),
-            'seatsCapacity': int.parse(_capacityController.text),
+            'name': _nameController.text.trim(),
+            'location': _locationController.text.trim(),
+            'pricePerHour': double.parse(_priceController.text.trim()),
+            'seatsCapacity': int.parse(_capacityController.text.trim()),
             'imageUrl': uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
-            'contractUrl': _contractUrl,
-            'ownerIdUrl': _ownerIdUrl,
-            'notes': _notesController.text,
-            'features': {
-              'sportType': _selectedSportType,
-              'floorType': _selectedFloorType,
-              'bathOption': _selectedBathOption,
-              'cafeteria': _cafeteria,
-              'garage': _garage,
-              'changingRoom': _changingRoom,
-              'seats': _seatsController.text,
-              'length': _lengthController.text,
-              'width': _widthController.text,
-              'hasBall': _hasBall,
-              'ballPrice': double.tryParse(_ballPriceController.text) ?? 0.0,
-              'workingHours': {
-                'start': _formatTime(_startTime, ''),
-                'end': _formatTime(_endTime, ''),
-              },
-              'allImages': uploadedUrls,
-            }
+            'notes': _notesController.text.trim(),
+            'features': stadiumFeatures,
           });
       } else {
           // Create Logic
           final stadiumId = await _databaseService.createStadium(
-            name: _nameController.text,
-            location: _locationController.text,
-            pricePerHour: double.parse(_priceController.text),
-            seatsCapacity: int.parse(_capacityController.text),
+            name: _nameController.text.trim(),
+            location: _locationController.text.trim(),
+            pricePerHour: double.parse(_priceController.text.trim()),
+            seatsCapacity: int.parse(_capacityController.text.trim()),
             imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
             ownerId: user.uid,
-            contractUrl: _contractUrl,
-            ownerIdUrl: _ownerIdUrl,
-            notes: _notesController.text.isEmpty 
+            notes: _notesController.text.trim().isEmpty 
               ? "We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time."
-              : _notesController.text,
-            features: {
-              'floorType': _selectedFloorType,
-              'sportType': _selectedSportType,
-              'bathOption': _selectedBathOption,
-              'cafeteria': _cafeteria,
-              'garage': _garage,
-              'changingRoom': _changingRoom,
-              'seats': _seatsController.text,
-              'length': _lengthController.text,
-              'width': _widthController.text,
-              'hasBall': _hasBall,
-              'ballPrice': double.tryParse(_ballPriceController.text) ?? 0.0,
-              'workingHours': {
-                'start': _formatTime(_startTime, ''),
-                'end': _formatTime(_endTime, ''),
-              },
-              'allImages': uploadedUrls,
-            },
+              : _notesController.text.trim(),
+            features: stadiumFeatures,
           );
 
           if (stadiumId == null) {
             _showError("Failed to create stadium. Please check your data or permissions.");
             return;
           }
-          
-          // Update hasStadium flag in AuthProvider/Firestore
-          if (mounted) {
-            final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-            await auth.updateProfile({'hasStadium': true});
-          }
+          // NOTE: hasStadium flag is NOT set here.
+          // It will be set when the user taps "Confirm & Continue" on FacilityOnboardingScreen.
       }
       
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Stadium Submitted for Review!', style: TextStyle(color: Colors.black)),
-            backgroundColor: AppTheme.neonGreen,
-          ),
-        );
+        VSPFeedback.showSuccess(context, 'Stadium Submitted for Review!');
         Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
       }
     } catch (e) {
-      _showError('Failed to save: $e');
+      if (mounted) VSPFeedback.showError(context, 'Failed to save: $e');
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -422,9 +353,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     }
   }
 
-  void _showError(String msg) {
-    ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(msg), backgroundColor: Colors.red));
-  }
+  // use VSPFeedback directly instead of _showError helper
 
   String _formatTime(TimeOfDay? time, String defaultText) {
     if (time == null) return defaultText;
@@ -439,12 +368,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary), onPressed: _previousPage),
-        title: const Text('Add Stadium', style: TextStyle(color: AppTheme.textPrimary)),
+        backgroundColor: VSPColors.background,
+        leading: IconButton(icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary), onPressed: _previousPage),
+        title: Text('Add Stadium', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
+        elevation: 0,
       ),
       body: SafeArea(
         child: Column(
@@ -452,7 +382,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             const SizedBox(height: 10),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(4, (index) => _buildDot(index)),
+              children: List.generate(3, (index) => _buildDot(index)),
             ),
             const SizedBox(height: 20),
             Expanded(
@@ -463,7 +393,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   _buildStep1Details(),
                   _buildStep2Features(),
                   _buildStep3Images(),
-                  _buildStep4Documents(),
                 ],
               ),
             ),
@@ -479,8 +408,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       width: _currentStep == index ? 24 : 8,
       height: 4,
       decoration: BoxDecoration(
-        color: _currentStep == index ? AppTheme.neonGreen : Colors.grey[800],
-        borderRadius: BorderRadius.circular(2),
+        color: _currentStep == index ? VSPColors.accent : VSPColors.divider,
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
@@ -489,7 +418,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildStep1Details() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -497,18 +426,32 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 8),
           ElevatedButton.icon(
             onPressed: _getCurrentLocation,
-            icon: _isLocationLoading ? const SizedBox(width:16, height:16, child: CircularProgressIndicator(strokeWidth:2)) : const Icon(Icons.my_location),
+            icon: _isLocationLoading ? const SizedBox(width:16, height:16, child: CircularProgressIndicator(strokeWidth:2, color: VSPColors.accent)) : const Icon(Icons.my_location),
             label: const Text('Current Location'),
-            style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF1E1E1E), foregroundColor: AppTheme.neonGreen),
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.surface, foregroundColor: VSPColors.accent),
           ),
           const SizedBox(height: 16),
-          _buildTextField('Stadium Name', 'Ex: Anfield', controller: _nameController),
+          _buildTextField('Stadium Name', 'Ex: Anfield', controller: _nameController, maxLength: 50),
           const SizedBox(height: 16),
           _buildSportDropdown(),
           const SizedBox(height: 16),
-          _buildTextField('Price/Hour', '0.0', controller: _priceController),
+          _buildTextField(
+            'Price/Hour', 
+            '0.0', 
+            controller: _priceController, 
+            maxLength: 7,
+            keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+          ),
           const SizedBox(height: 16),
-          _buildTextField('Players/Team', '5', controller: _capacityController),
+          _buildTextField(
+            'Players/Team', 
+            '5', 
+            controller: _capacityController,
+            maxLength: 2,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
           const SizedBox(height: 16),
           
           const Text('Working Hours', style: TextStyle(color: Colors.grey)),
@@ -530,7 +473,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'Notes', 
             'Ex: We ensure a professional environment. Please arrive on time...', 
             controller: _notesController, 
-            maxLines: 3
+            maxLines: 3,
+            maxLength: 500,
           ),
 
           const SizedBox(height: 30),
@@ -542,7 +486,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildStep2Features() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         children: [
           _buildYesNoSection('Bathrooms', _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
@@ -553,22 +497,36 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 20),
           _buildYesNoSection('Changing Room', _changingRoom, (val) => setState(() => _changingRoom = val)),
           const SizedBox(height: 20),
-          _buildTextField('Seat Count', '0', controller: _seatsController),
+          _buildTextField(
+            'Seat Count', 
+            '0', 
+            controller: _seatsController,
+            maxLength: 5,
+            keyboardType: TextInputType.number,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
           
           const SizedBox(height: 30),
           const Divider(color: Colors.white24),
           const SizedBox(height: 20),
           
-          const Align(
+          Align(
             alignment: Alignment.centerLeft,
-            child: Text('Amenities', style: TextStyle(color: Colors.white70, fontSize: 16, fontWeight: FontWeight.bold)),
+            child: Text('Amenities', style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),
           _buildYesNoSection('Ball Available', _hasBall, (val) => setState(() => _hasBall = val)),
           
           if (_hasBall) ...[
             const SizedBox(height: 16),
-             _buildTextField('Ball Rental Price (EGP)', '20.0', controller: _ballPriceController),
+             _buildTextField(
+               'Ball Rental Price (EGP)', 
+               '20.0', 
+               controller: _ballPriceController,
+               maxLength: 5,
+               keyboardType: const TextInputType.numberWithOptions(decimal: true),
+               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+             ),
           ],
           const SizedBox(height: 40),
           _buildPrimaryButton('Continue', _nextPage),
@@ -579,25 +537,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildStep3Images() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         children: [
-          const Text(
+          Text(
             'Stadium Gallery',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context).textTheme.displaySmall,
           ),
-          const SizedBox(height: 8),
-          const Text(
+          const SizedBox(height: VSPSpacing.xs),
+          Text(
             'High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 13,
-              height: 1.4,
-            ),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           const SizedBox(height: 24),
           
@@ -636,91 +586,45 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             ),
 
           const SizedBox(height: 40),
-          _buildPrimaryButton('Continue', _nextPage),
+          _buildPrimaryButton('Submit Stadium', _nextPage, isLoading: _isSaving),
         ],
       ),
     );
   }
 
-  Widget _buildStep4Documents() {
-    final user = FirebaseAuth.instance.currentUser;
-    return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          const Text(
-            'Verify Your Stadium',
-            style: TextStyle(
-              color: Colors.white,
-              fontSize: 22,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          const Text(
-            'To activate your stadium and allow players to book, please upload your commercial register and a valid ID. These documents are private and only visible to VSP administrators.',
-            style: TextStyle(
-              color: Colors.grey,
-              fontSize: 13,
-              height: 1.4,
-            ),
-          ),
-          const SizedBox(height: 24),
 
-          // Commercial Register
-          _buildUploadCard(
-            title: "Commercial Register / Ownership Contract",
-            fileUrl: _contractUrl,
-            isUploading: _isContractUploading,
-            onTap: () => _uploadLegalDoc(true, user?.uid ?? 'unknown'),
-            onDelete: () => setState(() => _contractUrl = null),
-          ),
-
-          const SizedBox(height: 8),
-
-          // National ID
-          _buildUploadCard(
-            title: "National ID / Passport",
-            fileUrl: _ownerIdUrl,
-            isUploading: _isOwnerIdUploading,
-            onTap: () => _uploadLegalDoc(false, user?.uid ?? 'unknown'),
-            onDelete: () => setState(() => _ownerIdUrl = null),
-          ),
-
-          const SizedBox(height: 40),
-          _buildPrimaryButton('Submit for Review', _nextPage, isLoading: _isSaving),
-          const SizedBox(height: 12),
-          const Center(
-            child: Text(
-              "Your stadium will be reviewed within 24 hours.",
-              style: TextStyle(color: Colors.grey, fontSize: 12),
-            ),
-          ),
-          const SizedBox(height: 20),
-        ],
-      ),
-    );
-  }
 
   // --- Widgets ---
 
-  Widget _buildTextField(String label, String hint, {TextEditingController? controller, bool readOnly = false, int maxLines = 1}) {
+  Widget _buildTextField(
+    String label, 
+    String hint, {
+    TextEditingController? controller, 
+    bool readOnly = false, 
+    int maxLines = 1,
+    int? maxLength,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: Colors.grey)),
-        const SizedBox(height: 5),
+        Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
+        const SizedBox(height: VSPSpacing.xs),
         TextField(
           controller: controller,
           readOnly: readOnly,
           maxLines: maxLines,
-          style: const TextStyle(color: Colors.white),
+          maxLength: maxLength,
+          keyboardType: keyboardType,
+          inputFormatters: inputFormatters,
+          style: Theme.of(context).textTheme.bodyMedium,
           decoration: InputDecoration(
             hintText: hint,
             filled: true,
-            fillColor: const Color(0xFF1E1E1E),
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
+            fillColor: VSPColors.surface,
+            counterText: "", // Hide counter for cleaner UI
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
           ),
         ),
       ],
@@ -729,15 +633,15 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildSportDropdown() {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      decoration: BoxDecoration(color: const Color(0xFF1E1E1E), borderRadius: BorderRadius.circular(12)),
+      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedSportType,
-          hint: const Text('Select Sport', style: TextStyle(color: Colors.grey)),
-          dropdownColor: const Color(0xFF1E1E1E),
+          hint: Text('Select Sport', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
+          dropdownColor: VSPColors.surface,
           isExpanded: true,
-          items: ['Football', 'Padel', 'Tennis'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: const TextStyle(color: Colors.white)))).toList(),
+          items: ['Football', 'Padel', 'Tennis'].map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
           onChanged: (val) => setState(() => _selectedSportType = val),
         ),
       ),
@@ -748,11 +652,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: isSelected ? AppTheme.neonGreen.withOpacity(0.1) : const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: isSelected ? AppTheme.neonGreen : Colors.transparent),
+        color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: isSelected ? VSPColors.accent : Colors.transparent),
       ),
-      child: Center(child: Text(text, style: TextStyle(color: isSelected ? AppTheme.neonGreen : Colors.white))),
+      child: Center(child: Text(text, style: TextStyle(color: isSelected ? VSPColors.accent : VSPColors.textPrimary))),
     );
   }
 
@@ -778,29 +682,19 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       child: Container(
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
         decoration: BoxDecoration(
-          color: selected ? AppTheme.neonGreen : const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(20),
+          color: selected ? VSPColors.accent : VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
         ),
-        child: Text(text, style: TextStyle(color: selected ? Colors.black : Colors.white)),
+        child: Text(text, style: TextStyle(color: selected ? Colors.black : VSPColors.textPrimary)),
       ),
     );
   }
 
   Widget _buildPrimaryButton(String text, VoidCallback onPressed, {bool isLoading = false}) {
-    return SizedBox(
-      width: double.infinity,
-      height: 50,
-      child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonGreen, 
-          foregroundColor: Colors.black,
-          disabledBackgroundColor: AppTheme.neonGreen.withOpacity(0.5),
-        ),
-        child: isLoading 
-          ? const SizedBox(height: 20, width: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-          : Text(text, style: const TextStyle(fontWeight: FontWeight.bold)),
-      ),
+    return PrimaryButton(
+      text: text,
+      onPressed: isLoading ? () {} : onPressed,
+      isLoading: isLoading,
     );
   }
 
@@ -814,18 +708,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }) {
     return InkWell(
       onTap: fileUrl == null ? onTap : null,
-      child: Container(
-        padding: const EdgeInsets.all(16),
-        margin: const EdgeInsets.only(bottom: 12),
-        decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: fileUrl != null
-                ? Colors.green
-                : AppTheme.neonGreen.withValues(alpha: 0.2),
-          ),
-        ),
+      child: VSPCard(
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        margin: const EdgeInsets.only(bottom: VSPSpacing.md),
         child: Row(
           children: [
             if (thumbnail != null)
@@ -833,7 +718,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             else
               Icon(
                 fileUrl != null ? Icons.check_circle : Icons.upload_file,
-                color: fileUrl != null ? Colors.green : AppTheme.neonGreen,
+                color: fileUrl != null ? Colors.green : VSPColors.accent,
                 size: 32,
               ),
             const SizedBox(width: 12),

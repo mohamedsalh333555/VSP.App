@@ -17,11 +17,12 @@ class BookingProvider with ChangeNotifier {
   
   bool _isLoading = false;
   String? _errorMessage;
+  final Set<String> _cancellingIds = {};
 
   // Getters
-  List<Booking> get userBookings => _userBookings;
-  List<Booking> get upcomingBookings => _upcomingBookings;
-  List<Booking> get historyBookings => _historyBookings;
+  List<Booking> get userBookings => _userBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get upcomingBookings => _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get historyBookings => _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
@@ -144,12 +145,13 @@ class BookingProvider with ChangeNotifier {
         _upcomingBookings = bookings
             .where((b) => 
                 b.status == BookingStatus.confirmed && 
-                b.startTime.isAfter(now))
+                b.endTime.isAfter(now))
             .toList();
         _historyBookings = bookings
             .where((b) => 
                 b.status == BookingStatus.completed || 
-                b.endTime.isBefore(now))
+                b.status == BookingStatus.cancelled ||
+                (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
             .toList();
         notifyListeners();
       },
@@ -170,12 +172,13 @@ class BookingProvider with ChangeNotifier {
         _upcomingBookings = bookings
             .where((b) => 
                 b.status == BookingStatus.confirmed && 
-                b.startTime.isAfter(now))
+                b.endTime.isAfter(now))
             .toList();
         _historyBookings = bookings
             .where((b) => 
                 b.status == BookingStatus.completed || 
-                b.endTime.isBefore(now))
+                b.status == BookingStatus.cancelled ||
+                (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
             .toList();
         notifyListeners();
       },
@@ -188,7 +191,8 @@ class BookingProvider with ChangeNotifier {
 
   /// Cancel a booking
   Future<bool> cancelBooking(String bookingId) async {
-    _isLoading = true;
+    _cancellingIds.add(bookingId);
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -196,13 +200,18 @@ class BookingProvider with ChangeNotifier {
       if (success) {
         _upcomingBookings.removeWhere((b) => b.id == bookingId);
         _userBookings.removeWhere((b) => b.id == bookingId);
+        _historyBookings.removeWhere((b) => b.id == bookingId);
+        // Keep in set for a moment to allow Firestore to sync.
+        await Future.delayed(const Duration(seconds: 1));
+      } else {
+        _errorMessage = 'Failed to cancel on server';
       }
-      _isLoading = false;
+      _cancellingIds.remove(bookingId);
       notifyListeners();
       return success;
     } catch (e) {
       _errorMessage = 'Failed to cancel booking: $e';
-      _isLoading = false;
+      _cancellingIds.remove(bookingId);
       notifyListeners();
       return false;
     }

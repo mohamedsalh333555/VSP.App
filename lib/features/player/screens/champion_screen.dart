@@ -1,14 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/providers/auth_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/database_service.dart';
 import 'championship_details_screen.dart';
 import 'player_home_screen.dart'; // For ChampionshipCard
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
+import 'official_league_standings_screen.dart';
 
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
@@ -23,6 +25,7 @@ class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTabIndex = 0;
+  String _selectedRankingType = 'Teams';
 
   // Filter states
   String _selectedLocation = 'Cairo'; 
@@ -62,97 +65,102 @@ class ChampionScreenState extends State<ChampionScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false, // Maintain no back button
-        title: const Text(
+        title: Text(
           'Champion',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: Column(
         children: [
-          // Capsule Tab Bar
           Container(
-            margin: const EdgeInsets.symmetric(horizontal: 16),
+            margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             height: 50,
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
-              borderRadius: BorderRadius.circular(25), // Pill Shape
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.full), // Pill Shape
             ),
-            child: Row(
+            child: Stack(
               children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _tabController.animateTo(0),
+                // Animated background pill
+                AnimatedAlign(
+                  duration: const Duration(milliseconds: 250),
+                  curve: Curves.easeInOut,
+                  alignment: _selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight,
+                  child: FractionallySizedBox(
+                    widthFactor: 0.5,
                     child: Container(
+                      height: 44,
+                      margin: const EdgeInsets.symmetric(horizontal: 3),
                       decoration: BoxDecoration(
-                        color: _selectedTabIndex == 0
-                            ? AppTheme.neonGreen
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Ranking',
-                        style: TextStyle(
-                          color: _selectedTabIndex == 0
-                              ? Colors.black
-                              : AppTheme.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
-                        ),
+                        color: VSPColors.accent,
+                        borderRadius: BorderRadius.circular(VSPRadius.full),
+                        boxShadow: [
+                          BoxShadow(
+                            color: VSPColors.accent.withValues(alpha: 0.3),
+                            blurRadius: 8,
+                            offset: const Offset(0, 2),
+                          ),
+                        ],
                       ),
                     ),
                   ),
                 ),
-                Expanded(
-                  child: GestureDetector(
-                    onTap: () => _tabController.animateTo(1),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        color: _selectedTabIndex == 1
-                            ? AppTheme.neonGreen
-                            : Colors.transparent,
-                        borderRadius: BorderRadius.circular(25),
-                      ),
-                      alignment: Alignment.center,
-                      child: Text(
-                        'Championships', // Reverted Label
-                        style: TextStyle(
-                          color: _selectedTabIndex == 1
-                              ? Colors.black
-                              : AppTheme.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 14,
+                Row(
+                  children: [
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _tabController.animateTo(0),
+                        behavior: HitTestBehavior.opaque,
+                        child: Center(
+                          child: Text(
+                            'Ranking',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: _selectedTabIndex == 0
+                                  ? Colors.black
+                                  : VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
                         ),
                       ),
                     ),
-                  ),
+                    Expanded(
+                      child: GestureDetector(
+                        onTap: () => _tabController.animateTo(1),
+                        behavior: HitTestBehavior.opaque,
+                        child: Center(
+                          child: Text(
+                            'Championships',
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: _selectedTabIndex == 1
+                                  ? Colors.black
+                                  : VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 14,
+                            ),
+                          ),
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 16),
-
-          const SizedBox(height: 16),
-
-          const SizedBox(height: 16),
+          const SizedBox(height: VSPSpacing.md),
 
           // Filters Row - Symmetrical Dropdowns
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: 16),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 // Dropdown 1: Governorates
                 Expanded(
@@ -175,11 +183,20 @@ class ChampionScreenState extends State<ChampionScreen>
                     onChanged: (val) => setState(() => _selectedSport = val!),
                   ),
                 ),
+                const SizedBox(width: 8),
+                // Dropdown 3: Ranking Type
+                Expanded(
+                  child: _buildFunctionalDropdown(
+                    value: _selectedRankingType,
+                    items: const ['Teams', '1v1 Players'],
+                    onChanged: (val) => setState(() => _selectedRankingType = val!),
+                  ),
+                ),
               ],
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Tab Views
           Expanded(
@@ -208,21 +225,18 @@ class ChampionScreenState extends State<ChampionScreen>
       padding: const EdgeInsets.symmetric(horizontal: 12),
       height: 40,
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: effectiveValue,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.neonGreen, size: 20),
-          dropdownColor: const Color(0xFF1E1E1E),
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent, size: 20),
+          dropdownColor: VSPColors.surfaceAlt,
           isExpanded: true,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
-            fontFamily: 'Inter',
           ),
           onChanged: onChanged,
           items: items.map<DropdownMenuItem<String>>((String item) {
@@ -237,6 +251,74 @@ class ChampionScreenState extends State<ChampionScreen>
   }
 
   Widget _buildRankingTab() {
+    return Column(
+      children: [
+        // Conditional Rendering based on Dropdown selection
+        Expanded(
+          child: _selectedRankingType == '1v1 Players' 
+              ? _build1v1PlayersRanking() 
+              : _buildTeamsRankingStream(),
+        ),
+      ],
+    );
+  }
+
+  Widget _build1v1PlayersRanking() {
+    return StreamBuilder<List<VSP1v1Player>>(
+      stream: DatabaseService().get1v1Standings(),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        final players = snapshot.data ?? [];
+        if (players.isEmpty) return const Center(child: Text("No 1v1 players ranked yet", style: TextStyle(color: VSPColors.textSecondary)));
+
+        return ListView.builder(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          physics: const BouncingScrollPhysics(),
+          itemCount: players.length,
+          itemBuilder: (context, index) {
+            final player = players[index];
+            final isFirst = player.rank == 1;
+            
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border(left: BorderSide(color: isFirst ? VSPColors.accent : Colors.transparent, width: 4)),
+              ),
+              child: Row(
+                children: [
+                  SizedBox(
+                    width: 30,
+                    child: Text('${player.rank}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: isFirst ? VSPColors.accent : VSPColors.textSecondary, fontWeight: FontWeight.w900)),
+                  ),
+                  Icon(player.trend == 'up' ? Icons.arrow_drop_up : (player.trend == 'down' ? Icons.arrow_drop_down : Icons.remove), color: player.trend == 'up' ? VSPColors.accent : (player.trend == 'down' ? Colors.red : VSPColors.textSecondary), size: 20),
+                  const SizedBox(width: 12),
+                  CircleAvatar(radius: 18, backgroundColor: VSPColors.surfaceAlt, backgroundImage: NetworkImage(player.avatarUrl.isNotEmpty ? player.avatarUrl : 'https://ui-avatars.com/api/?name=${player.name}&background=random')),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(player.name.toUpperCase(), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
+                        Text('SKILL: ${player.skillPoints} | G: ${player.goals}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
+                      ],
+                    ),
+                  ),
+                  Text('${player.totalPoints}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.w900)),
+                  const SizedBox(width: 4),
+                  const Text('PTS', style: TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildTeamsRankingStream() {
     return StreamBuilder<List<Team>>(
       stream: DatabaseService().getTeams(governorate: _selectedLocation),
       builder: (context, snapshot) {
@@ -248,17 +330,17 @@ class ChampionScreenState extends State<ChampionScreen>
               .toList();
         } else {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
           teams = snapshot.data ?? [];
         }
 
         if (teams.isEmpty) {
           return Center(
-            child: Text(
-              "No teams in $_selectedLocation yet", 
-              style: const TextStyle(color: Colors.grey)
-            ),
+          child: Text(
+            "No teams in $_selectedLocation yet", 
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+          ),
           );
         }
 
@@ -272,18 +354,80 @@ class ChampionScreenState extends State<ChampionScreen>
         if (teams.length < 3) {
           return ListView.builder(
             padding: const EdgeInsets.all(16),
+            physics: const BouncingScrollPhysics(),
             itemCount: teams.length,
-            itemBuilder: (ctx, i) => Padding(
-              padding: const EdgeInsets.only(bottom: 12),
-              child: _buildRankListItem(teams[i], i + 1, totalTeams: totalTeams),
+            itemBuilder: (ctx, i) => VSPFadeInItem(
+              index: i,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _buildRankListItem(teams[i], i + 1, totalTeams: totalTeams),
+              ),
             ),
           );
         }
 
         return SingleChildScrollView(
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
+              // 🟢 NEW: VSP OFFICIAL 1v1 BANNER
+              GestureDetector(
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (context) => const OfficialLeagueStandingsScreen()),
+                  );
+                },
+                child: Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(VSPSpacing.lg),
+                  margin: const EdgeInsets.only(bottom: VSPSpacing.xl), // Spacing before regular podium
+                  decoration: BoxDecoration(
+                    gradient: LinearGradient(
+                      colors: [VSPColors.accent.withValues(alpha: 0.15), VSPColors.surface],
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                    ),
+                    borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
+                  ),
+                  child: Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.2),
+                          shape: BoxShape.circle,
+                        ),
+                        child: const Icon(Icons.flash_on, color: VSPColors.accent, size: 32),
+                      ),
+                      const SizedBox(width: 16),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              'VSP 1V1 OFFICIAL LEAGUE',
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                    fontWeight: FontWeight.w900,
+                                    letterSpacing: 1.0,
+                                  ),
+                            ),
+                            const SizedBox(height: 4),
+                            Text(
+                              'Watch highlights & follow the ultimate street ranking!',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const Icon(Icons.arrow_forward_ios, color: VSPColors.accent, size: 16),
+                    ],
+                  ),
+                ),
+              ),
+
               // Podium
               SizedBox(
                 height: 280, 
@@ -294,13 +438,16 @@ class ChampionScreenState extends State<ChampionScreen>
                      // Rank 2 - Left
                      Expanded(
                        flex: 1,
-                       child: _buildTopRankItem(
-                         rank: 2,
-                         name: top3[1].name, 
-                         logo: top3[1].captainImageUrl,
-                         points: top3[1].points,
-                         isCenter: false,
-                         color: AppTheme.cardBackground,
+                       child: VSPFadeInItem(
+                         index: 1,
+                         child: _buildTopRankItem(
+                           rank: 2,
+                           name: top3[1].name, 
+                           logo: top3[1].captainImageUrl,
+                           points: top3[1].points,
+                           isCenter: false,
+                           color: VSPColors.surface,
+                         ),
                        ),
                      ),
                      
@@ -309,13 +456,16 @@ class ChampionScreenState extends State<ChampionScreen>
                      // Rank 1 - Center
                      Expanded(
                        flex: 1, 
-                       child: _buildTopRankItem(
-                         rank: 1,
-                         name: top3[0].name,
-                         logo: top3[0].captainImageUrl, 
-                         points: top3[0].points,
-                         isCenter: true,
-                         color: AppTheme.neonGreen,
+                       child: VSPFadeInItem(
+                         index: 0,
+                         child: _buildTopRankItem(
+                           rank: 1,
+                           name: top3[0].name,
+                           logo: top3[0].captainImageUrl, 
+                           points: top3[0].points,
+                           isCenter: true,
+                           color: VSPColors.accent,
+                         ),
                        ),
                      ),
 
@@ -324,13 +474,16 @@ class ChampionScreenState extends State<ChampionScreen>
                      // Rank 3 - Right
                      Expanded(
                        flex: 1, 
-                       child: _buildTopRankItem(
-                         rank: 3,
-                         name: top3[2].name, 
-                         logo: top3[2].captainImageUrl,
-                         points: top3[2].points,
-                         isCenter: false,
-                         color: AppTheme.cardBackground,
+                       child: VSPFadeInItem(
+                         index: 2,
+                         child: _buildTopRankItem(
+                           rank: 3,
+                           name: top3[2].name, 
+                           logo: top3[2].captainImageUrl,
+                           points: top3[2].points,
+                           isCenter: false,
+                           color: VSPColors.surface,
+                         ),
                        ),
                      ),
                   ],
@@ -343,9 +496,12 @@ class ChampionScreenState extends State<ChampionScreen>
               ...List.generate(rest.length, (index) {
                  final team = rest[index];
                  final rank = index + 4;
-                 return Padding(
-                   padding: const EdgeInsets.only(bottom: 12),
-                   child: _buildRankListItem(team, rank, totalTeams: totalTeams),
+                 return VSPFadeInItem(
+                   index: index + 3,
+                   child: Padding(
+                     padding: const EdgeInsets.only(bottom: 12),
+                     child: _buildRankListItem(team, rank, totalTeams: totalTeams),
+                   ),
                  );
               }),
 
@@ -370,14 +526,14 @@ class ChampionScreenState extends State<ChampionScreen>
     // Center was 220, Keep it. Rank 2/3 was 165, reduce slightly or keep but adjust internal padding.
     // Let's optimize heights to be sure.
     final height = isCenter ? 230.0 : 170.0; 
-    final textColor = isCenter ? Colors.black : Colors.white;
+    final textColor = isCenter ? VSPColors.background : VSPColors.textPrimary;
 
     return Container(
       height: height,
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
       decoration: BoxDecoration(
         color: color,
-        borderRadius: BorderRadius.circular(15), // 15px
+        borderRadius: BorderRadius.circular(VSPRadius.lg), 
       ),
       child: Column(
         mainAxisAlignment: MainAxisAlignment.end,
@@ -408,11 +564,9 @@ class ChampionScreenState extends State<ChampionScreen>
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
-            style: TextStyle(
+            style: Theme.of(context).textTheme.labelMedium?.copyWith(
               color: textColor,
-              fontWeight: FontWeight.w500,
-              fontSize: 13,
-              fontFamily: 'Agency FB', 
+              fontWeight: FontWeight.w600,
             ),
           ),
            
@@ -439,8 +593,8 @@ class ChampionScreenState extends State<ChampionScreen>
                          child: CachedNetworkImage(
                            imageUrl: 'https://randomuser.me/api/portraits/men/${index + 20 + rank}.jpg',
                            fit: BoxFit.cover,
-                           placeholder: (context, url) => Container(color: Colors.grey[800]),
-                           errorWidget: (context, url, error) => Container(color: Colors.grey[600]), 
+                            placeholder: (context, url) => Container(color: VSPColors.surfaceAlt),
+                            errorWidget: (context, url, error) => Container(color: VSPColors.surface), 
                          ),
                        ),
                      )
@@ -453,11 +607,10 @@ class ChampionScreenState extends State<ChampionScreen>
                 const Spacer(),
                 Text(
                   '$rank',
-                  style: TextStyle(
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
                     color: textColor,
                     fontSize: 48,
-                    fontWeight: FontWeight.w900, // Condensed Bold
-                    fontFamily: 'Agency FB',
+                    fontWeight: FontWeight.w900,
                     height: 1.0,
                   ),
                 ),
@@ -468,12 +621,15 @@ class ChampionScreenState extends State<ChampionScreen>
                    children: [
                      Icon(
                        rank == 3 ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                       color: rank == 3 ? Colors.red : AppTheme.neonGreen,
+                        color: rank == 3 ? VSPColors.error : VSPColors.accent,
                        size: 16,
                      ),
                      Text(
                        '$rank',
-                       style: TextStyle(color: textColor, fontWeight: FontWeight.bold, fontSize: 16),
+                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                         color: textColor,
+                         fontWeight: FontWeight.bold,
+                       ),
                      )
                    ],
                  )
@@ -486,15 +642,15 @@ class ChampionScreenState extends State<ChampionScreen>
   Widget _buildRankListItem(Team team, int rank, {bool isMyTeam = false, int totalTeams = 10}) {
     // Promotion/Relegation status color code
     Color? statusColor;
-    if (rank <= 3) statusColor = Colors.green.withOpacity(0.08); // Promotion zone
-    if (rank >= totalTeams - 2 && totalTeams > 5) statusColor = Colors.red.withOpacity(0.08); // Relegation zone
+    if (rank <= 3) statusColor = VSPColors.accent.withValues(alpha: 0.08); // Promotion zone
+    if (rank >= totalTeams - 2 && totalTeams > 5) statusColor = VSPColors.error.withValues(alpha: 0.08); // Relegation zone
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
-        color: statusColor ?? AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(15),
-        border: isMyTeam ? Border.all(color: AppTheme.neonGreen.withOpacity(0.5)) : null,
+        color: statusColor ?? VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: isMyTeam ? Border.all(color: VSPColors.accent.withValues(alpha: 0.5)) : null,
       ),
       child: Row(
         children: [
@@ -505,7 +661,7 @@ class ChampionScreenState extends State<ChampionScreen>
               height: 25,
               margin: const EdgeInsets.only(right: 12),
               decoration: BoxDecoration(
-                color: rank <= 3 ? Colors.green : Colors.red,
+                color: rank <= 3 ? VSPColors.accent : VSPColors.error,
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -534,18 +690,14 @@ class ChampionScreenState extends State<ChampionScreen>
               children: [
                 Text(
                   team.name,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    fontFamily: 'Agency FB',
                   ),
                 ),
                 Text(
                   'MP: ${team.matchesPlayed} | W: ${team.wins} | D: ${team.draws} | L: ${team.losses}',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                    fontSize: 10,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: VSPColors.textSecondary.withValues(alpha: 0.7),
                   ),
                 ),
               ],
@@ -555,7 +707,7 @@ class ChampionScreenState extends State<ChampionScreen>
           // Small Trend Arrow
           Icon(
              rank % 2 == 0 ? Icons.arrow_drop_down : Icons.arrow_drop_up, 
-             color: rank % 2 == 0 ? Colors.red : AppTheme.neonGreen, 
+             color: rank % 2 == 0 ? VSPColors.error : VSPColors.accent, 
              size: 16
           ),
           const SizedBox(width: 4),
@@ -564,19 +716,13 @@ class ChampionScreenState extends State<ChampionScreen>
               children: [
                    Text(
                     '$rank', // Pos
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
                     ),
                   ),
                   Text(
                     '${team.points} pts',
-                    style: TextStyle(
-                      color: Colors.white.withOpacity(0.5),
-                      fontSize: 10,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                   ),
               ],
           ),
@@ -595,7 +741,7 @@ class ChampionScreenState extends State<ChampionScreen>
       ),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
 
         final championships = snapshot.data ?? [];
@@ -605,11 +751,11 @@ class ChampionScreenState extends State<ChampionScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.emoji_events_outlined, color: Colors.white.withOpacity(0.1), size: 64),
+                Icon(Icons.emoji_events_outlined, color: Colors.white.withValues(alpha: 0.1), size: 64),
                 const SizedBox(height: 16),
                 Text(
                   "No championships in $_selectedLocation yet",
-                  style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 16),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                 ),
               ],
             ),
@@ -618,21 +764,25 @@ class ChampionScreenState extends State<ChampionScreen>
 
         return ListView.builder(
           padding: const EdgeInsets.symmetric(vertical: 16),
+          physics: const BouncingScrollPhysics(),
           itemCount: championships.length,
           itemBuilder: (context, index) {
             final championship = championships[index];
-            return Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-              child: GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChampionshipDetailsScreen(championship: championship),
-                    ),
-                  );
-                },
-                child: ChampionshipCard(championship: championship),
+            return VSPFadeInItem(
+              index: index,
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                child: GestureDetector(
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => ChampionshipDetailsScreen(championship: championship),
+                      ),
+                    );
+                  },
+                  child: ChampionshipCard(championship: championship),
+                ),
               ),
             );
           },

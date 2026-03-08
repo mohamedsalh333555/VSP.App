@@ -18,7 +18,8 @@ service cloud.firestore {
     function isAppOwner() {
       return isAuthenticated() && getUserData().role == 'owner';
     }
-
+    
+    
     // Users Collection
     match /users/{userId} {
       allow read: if isAuthenticated();
@@ -32,17 +33,22 @@ service cloud.firestore {
       allow update, delete: if isAppOwner() && resource.data.ownerId == request.auth.uid;
     }
 
-    // Bookings Collection
+    // BOOKINGS: Allow read for availability checks, but restrict write
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated() && (
-        resource.data.createdByUserId == request.auth.uid || 
-        resource.data.ownerId == request.auth.uid
-      );
+      
+      // ✅ FIX: Allow any authenticated user to READ bookings
+      // (Necessary for: 1. Double-booking prevention Transaction,
+      //  2. Showing booked/greyed-out slots in the calendar UI)
+      allow read: if isAuthenticated();
+      
       allow create: if isAuthenticated();
+      
+      // Only booking creator or stadium owner can update (cancel, change status, submit result)
       allow update: if isAuthenticated() && (
         resource.data.createdByUserId == request.auth.uid || 
         resource.data.ownerId == request.auth.uid
       );
+      
       allow delete: if false; // Soft delete or status change only
     }
 

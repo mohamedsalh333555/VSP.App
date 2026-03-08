@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 import 'dart:io';
 
 class VspUploadMainCard extends StatelessWidget {
@@ -24,19 +24,22 @@ class VspUploadMainCard extends StatelessWidget {
         width: double.infinity,
         height: 160,
         decoration: BoxDecoration(
-          color: isLoading ? Colors.grey[700] : AppTheme.neonGreen,
-          borderRadius: BorderRadius.circular(15),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
         ),
         child: isLoading
-            ? const Center(
+            ? Center(
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    CircularProgressIndicator(color: Colors.black),
-                    SizedBox(height: 8),
+                    const CircularProgressIndicator(color: VSPColors.accent),
+                    const SizedBox(height: VSPSpacing.sm),
                     Text(
                       'Uploading...',
-                      style: TextStyle(color: Colors.black),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: VSPColors.textSecondary,
+                          ),
                     ),
                   ],
                 ),
@@ -44,17 +47,23 @@ class VspUploadMainCard extends StatelessWidget {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Icons.add_photo_alternate_outlined, color: Colors.black, size: 40),
-                  const SizedBox(height: 8),
+                  Icon(Icons.add_photo_alternate_outlined,
+                      color: VSPColors.textSecondary.withValues(alpha: 0.5), size: 40),
+                  const SizedBox(height: VSPSpacing.sm),
                   Text(
                     title,
                     textAlign: TextAlign.center,
-                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                          color: VSPColors.textPrimary,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                   const SizedBox(height: 4),
                   Text(
                     helper,
-                    style: TextStyle(color: Colors.black.withValues(alpha: 0.6), fontSize: 12),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: VSPColors.textSecondary.withValues(alpha: 0.6),
+                        ),
                   ),
                 ],
               ),
@@ -84,25 +93,25 @@ class VspUploadedItemRow extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(
           color: thumbnailUrl != null || imageFile != null
-              ? AppTheme.neonGreen.withValues(alpha: 0.3)
-              : Colors.white.withValues(alpha: 0.05),
+              ? VSPColors.accent.withValues(alpha: 0.3)
+              : VSPColors.divider,
         ),
       ),
       child: Row(
         children: [
           // Thumbnail
           Container(
-            width: 40,
-            height: 40,
+            width: 44,
+            height: 44,
             decoration: BoxDecoration(
-              color: Colors.black,
-              borderRadius: BorderRadius.circular(10),
+              color: VSPColors.background,
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
               image: DecorationImage(
                 image: imageFile != null
                     ? FileImage(imageFile!)
@@ -121,43 +130,42 @@ class VspUploadedItemRow extends StatelessWidget {
               children: [
                 Text(
                   title,
-                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
                 Text(
                   subtitle,
-                  style: TextStyle(
-                    color: thumbnailUrl != null || imageFile != null
-                        ? AppTheme.neonGreen
-                        : (isUploading ? Colors.orange : Colors.grey),
-                    fontSize: 12,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: thumbnailUrl != null || imageFile != null
+                            ? VSPColors.accent
+                            : (isUploading ? VSPColors.warning : VSPColors.textSecondary),
+                      ),
                 ),
               ],
             ),
           ),
           if (thumbnailUrl != null || imageFile != null)
-             Row(
-               children: [
-                 const Icon(Icons.check_circle, color: AppTheme.neonGreen, size: 20),
-                 if (onDelete != null) ...[
-                   const SizedBox(width: 8),
-                   IconButton(
-                     icon: const Icon(Icons.delete_outline, color: Colors.red, size: 20),
-                     onPressed: onDelete,
-                     padding: EdgeInsets.zero,
-                     constraints: const BoxConstraints(),
-                   ),
-                 ],
-               ],
-             )
+            Row(
+              children: [
+                const Icon(Icons.check_circle, color: VSPColors.success, size: 20),
+                if (onDelete != null) ...[
+                  const SizedBox(width: 8),
+                  IconButton(
+                    icon: const Icon(Icons.delete_outline, color: VSPColors.error, size: 20),
+                    onPressed: onDelete,
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                  ),
+                ],
+              ],
+            )
           else if (isUploading)
             const SizedBox(
               width: 16,
               height: 16,
-              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
+              child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
             )
           else
-            const Icon(Icons.error_outline, color: Colors.red, size: 20),
+            const Icon(Icons.error_outline, color: VSPColors.error, size: 20),
         ],
       ),
     );

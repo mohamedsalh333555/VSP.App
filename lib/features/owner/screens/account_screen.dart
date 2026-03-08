@@ -1,7 +1,10 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/widgets/shimmer_image.dart';
-import 'add_stadium_screen.dart';
+import 'add_stadium_wizard.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class AccountScreen extends StatelessWidget {
   const AccountScreen({super.key});
@@ -9,21 +12,17 @@ class AccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Account',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -48,27 +47,27 @@ class AccountScreen extends StatelessWidget {
             const SizedBox(height: 24),
 
             // Owner Info Form
-            _buildLabel('Owner Name'),
-            _buildTextField(hint: 'Sal acd'),
+            _buildLabel(context, 'Owner Name'),
+            _buildTextField(context, hint: 'Sal acd'),
             const SizedBox(height: 16),
 
-            _buildLabel('Number'),
-            _buildTextField(hint: '+20 0111000222'),
+            _buildLabel(context, 'Number'),
+            _buildTextField(context, hint: '+20 0111000222'),
             const SizedBox(height: 16),
 
-            _buildLabel('Email'),
-            _buildTextField(hint: 'hana.mohamed@gmail.com'),
+            _buildLabel(context, 'Email'),
+            _buildTextField(context, hint: 'hana.mohamed@gmail.com'),
             const SizedBox(height: 16),
 
-            _buildLabel('Add Address'),
+            _buildLabel(context, 'Add Address'),
              Container(
               height: 150,
               width: double.infinity,
               clipBehavior: Clip.antiAlias,
-              decoration: const BoxDecoration(
+              decoration: BoxDecoration(
                 borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(12),
-                  topRight: Radius.circular(12),
+                  topLeft: Radius.circular(VSPRadius.md),
+                  topRight: Radius.circular(VSPRadius.md),
                 ),
               ),
               child: Stack(
@@ -85,64 +84,53 @@ class AccountScreen extends StatelessWidget {
               ),
             ),
             Container(
-              decoration: const BoxDecoration(
-                color: Color(0xFF2C2C2E),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
                 borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(12),
-                  bottomRight: Radius.circular(12),
+                  bottomLeft: Radius.circular(VSPRadius.md),
+                  bottomRight: Radius.circular(VSPRadius.md),
                 ),
               ),
               child: TextField(
-                style: const TextStyle(color: Colors.white),
+                style: Theme.of(context).textTheme.bodyMedium,
                 decoration: InputDecoration(
                   hintText: 'Egypt - Aswan - Elaha Youth Center',
-                  hintStyle: TextStyle(color: Colors.grey[600]),
+                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                    border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-                  prefixIcon: const Icon(Icons.edit_location_alt, color: AppTheme.textSecondary, size: 20),
+                   contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
+                  prefixIcon: const Icon(Icons.edit_location_alt, color: VSPColors.textSecondary, size: 20),
                 ),
               ),
             ),
             const SizedBox(height: 16),
 
-            _buildLabel('Social media'),
-            _buildTextField(hint: 'https://www.facebook.com/search/pages/?q=VSP&sde=Abrgg...'),
+            _buildLabel(context, 'Social media'),
+            _buildTextField(context, hint: 'https://www.facebook.com/search/pages/?q=VSP&sde=Abrgg...'),
             const SizedBox(height: 24),
 
             // Documents
-            _buildLabel('National ID front'),
-            _buildDocCard('National ID front'),
+            _buildLabel(context, 'National ID front'),
+            _buildDocCard(context, 'National ID front'),
             const SizedBox(height: 12),
 
-            _buildLabel('National ID back'),
-            _buildDocCard('National ID Back'),
+            _buildLabel(context, 'National ID back'),
+            _buildDocCard(context, 'National ID Back'),
             const SizedBox(height: 12),
 
-            _buildLabel('Tex card'), // Sic: Screenshot says "Tex card"
-            _buildDocCard('Tax card'),
+            _buildLabel(context, 'Tex card'), // Sic: Screenshot says "Tex card"
+            _buildDocCard(context, 'Tax card'),
             const SizedBox(height: 12),
 
-             _buildLabel('Commercial register'),
-            _buildDocCard('commercial register'),
+             _buildLabel(context, 'Commercial register'),
+            _buildDocCard(context, 'commercial register'),
             const SizedBox(height: 40),
 
-            // Confirm Button
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                   ScaffoldMessenger.of(context).showSnackBar(
-                     const SnackBar(content: Text('Changes Saved Successfully')),
-                   );
-                   Navigator.pop(context);
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Confirm', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              ),
+            PrimaryButton(
+              text: 'Confirm',
+              onPressed: () {
+                 VSPFeedback.showSuccess(context, 'Changes Saved Successfully');
+                 Navigator.pop(context);
+              },
             ),
             const SizedBox(height: 20),
           ],
@@ -150,36 +138,43 @@ class AccountScreen extends StatelessWidget {
       ),
     );
   }
-
   Widget _buildStadiumCard(BuildContext context) {
     return SizedBox(
       width: 320,
       height: 200,
       child: Stack(
         children: [
-            ShimmerImage(
-              imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+            VSPCard(
               width: 320,
               height: 200,
-              borderRadius: 16,
-            ),
-            Container(
-              width: 320,
-              height: 200,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(16),
-                color: Colors.black.withValues(alpha: 0.4),
-                border: Border.all(color: AppTheme.neonGreen),
-              ),
-            ),
+              padding: EdgeInsets.zero,
+              margin: EdgeInsets.zero,
+              borderRadius: VSPRadius.lg,
+              border: Border.all(color: VSPColors.accent),
+              child: Stack(
+                children: [
+                    ShimmerImage(
+                      imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+                      width: 320,
+                      height: 200,
+                      borderRadius: VSPRadius.lg,
+                    ),
+                    Container(
+                      width: 320,
+                      height: 200,
+                      decoration: BoxDecoration(
+                        color: Colors.black.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                      ),
+                    ),
             Positioned(
               top: 10,
               left: 10,
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: AppTheme.neonGreen, size: 16),
+                  const Icon(Icons.location_on, color: VSPColors.accent, size: 16),
                   const SizedBox(width: 4),
-                  const Text('Madrid', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  Text('Madrid', style: Theme.of(context).textTheme.titleSmall),
                 ],
               ),
             ),
@@ -188,10 +183,10 @@ class AccountScreen extends StatelessWidget {
               right: 10,
               child: GestureDetector(
                 onTap: () {
-                   // Navigate to AddStadiumScreen in Edit Mode (Logic to be handled)
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AddStadiumScreen())); 
+                   // Navigate to AddStadiumWizard in Edit Mode
+                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AddStadiumWizard())); 
                 },
-                child: const Icon(Icons.edit_square, color: AppTheme.neonGreen),
+                child: const Icon(Icons.edit_square, color: VSPColors.accent),
               ),
             ),
             Positioned(
@@ -201,90 +196,92 @@ class AccountScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                       Text('Santiago Bernabeoa 11 VS 11 Football', style: TextStyle(color: Colors.white, fontSize: 12)),
-                       Text('Seats K90 person', style: TextStyle(color: Colors.white, fontSize: 10)),
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                       Row(
-                         children: const [
-                            Text('Baths', style: TextStyle(color: Colors.white, fontSize: 10)),
-                             SizedBox(width: 4),
-                            Icon(Icons.male, color: Colors.white, size: 12),
-                            Icon(Icons.female, color: Colors.white, size: 12),
-                         ],
-                       ),
-                       const Text('Cafeteria', style: TextStyle(color: Colors.white, fontSize: 10)),
-                    ],
-                  ),
-                   const SizedBox(height: 4),
-                   Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: const [
-                       Text('Price 1,000,000 eu', style: TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold)),
-                       Text('Jerash', style: TextStyle(color: Colors.white, fontSize: 10)),
-                    ],
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Santiago Bernabeoa 11 VS 11 Football', style: Theme.of(context).textTheme.bodySmall),
+                            Text('Seats K90 person', style: Theme.of(context).textTheme.labelSmall),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                Text('Baths', style: Theme.of(context).textTheme.labelSmall),
+                                const SizedBox(width: 4),
+                                Icon(Icons.male, color: VSPColors.textPrimary, size: 12),
+                                Icon(Icons.female, color: VSPColors.textPrimary, size: 12),
+                              ],
+                            ),
+                            Text('Cafeteria', style: Theme.of(context).textTheme.labelSmall),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text('Price 1,000,000 eu', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.accent)),
+                            Text('Jerash', style: Theme.of(context).textTheme.labelSmall),
+                          ],
+                        ),
+                      ],
+                    ),
                   ),
                 ],
               ),
             ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildLabel(String text) {
-     return Padding(
-       padding: const EdgeInsets.only(bottom: 8),
-       child: Text(
-         text,
-         style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-       ),
-     );
-  }
-
-  Widget _buildTextField({required String hint}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(12),
-      ),
-      child: TextField(
-        style: const TextStyle(color: Colors.white),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[600]),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          ],
         ),
       ),
     );
   }
 
-  Widget _buildDocCard(String name) {
+  Widget _buildLabel(BuildContext context, String text) {
+     return Padding(
+        padding: const EdgeInsets.only(bottom: VSPSpacing.xs),
+        child: Text(
+          text,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+        ),
+     );
+  }
+
+  Widget _buildTextField(BuildContext context, {required String hint}) {
     return Container(
-      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-          color: const Color(0xFF335500), // Dark Green background for docs
-          borderRadius: BorderRadius.circular(12),
-          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.5)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
       ),
+      child: TextField(
+        style: Theme.of(context).textTheme.bodyMedium,
+        decoration: InputDecoration(
+          hintText: hint,
+          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+          border: InputBorder.none,
+          contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildDocCard(BuildContext context, String name) {
+    return VSPCard(
+      padding: const EdgeInsets.all(VSPSpacing.md),
+      color: VSPColors.accent.withValues(alpha: 0.05),
+      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       child: Row(
         children: [
-           const Icon(Icons.image_outlined, color: Colors.white),
-           const SizedBox(width: 12),
+           const Icon(Icons.image_outlined, color: VSPColors.textPrimary),
+           const SizedBox(width: VSPSpacing.md),
            Column(
              crossAxisAlignment: CrossAxisAlignment.start,
              children: [
-               Text(name, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
-               const Text('200 KB', style: TextStyle(color: Colors.white70, fontSize: 10)),
-               const Text('Click to view', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline, fontSize: 12, fontWeight: FontWeight.bold)),
+               Text(name, style: Theme.of(context).textTheme.titleSmall),
+               Text('200 KB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+               Text('Click to view', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, decoration: TextDecoration.underline)),
              ],
            )
         ],
@@ -292,3 +289,4 @@ class AccountScreen extends StatelessWidget {
     );
   }
 }
+

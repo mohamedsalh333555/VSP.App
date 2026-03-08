@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
   const PrivacyPolicyScreen({super.key});
@@ -7,21 +7,17 @@ class PrivacyPolicyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Privacy Policy',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -47,9 +43,9 @@ class PrivacyPolicyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
+          Text(title, style: const TextStyle(color: VSPColors.textPrimary, fontSize: 20, fontWeight: FontWeight.bold)),
           const SizedBox(height: 8),
-          Text(content, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13, height: 1.5)),
+          Text(content, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5)),
         ],
       ),
     );

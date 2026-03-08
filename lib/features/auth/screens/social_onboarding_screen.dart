@@ -1,7 +1,8 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../owner/screens/add_stadium_wizard.dart';
 import '../../../core/navigation/root_screen.dart';
@@ -27,7 +28,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   String _passwordError = '';
   String _confirmPasswordError = '';
   double _strengthValue = 0.0; // 0.0 to 1.0
-  Color _strengthColor = Colors.red;
+  Color _strengthColor = VSPColors.error;
   String _strengthLabel = 'Weak';
 
   final List<String> _positions = ['GK', 'CB', 'LB', 'RB', 'MID', 'LW', 'RW', 'ST'];
@@ -38,6 +39,16 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     _passwordController.addListener(_validatePassword);
     _confirmPasswordController.addListener(_validateConfirmPassword);
     _phoneController.addListener(() => setState(() {})); // Re-evaluate form validity
+
+    // Pre-fill name from Google properly in initState to avoid build issues
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      if (auth.userModel?.name != null && _nameController.text.isEmpty) {
+        setState(() {
+          _nameController.text = auth.userModel!.name!;
+        });
+      }
+    });
   }
 
   @override
@@ -56,7 +67,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         _passwordError = '';
         _strengthValue = 0.0;
         _strengthLabel = 'Weak';
-        _strengthColor = Colors.red;
+        _strengthColor = VSPColors.error;
         return;
       }
 
@@ -65,7 +76,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         _passwordError = 'At least 6 characters required';
         _strengthValue = 0.3;
         _strengthLabel = 'Weak';
-        _strengthColor = Colors.red;
+        _strengthColor = VSPColors.error;
       } else {
         _passwordError = '';
         bool hasDigits = value.contains(RegExp(r'[0-9]'));
@@ -74,11 +85,11 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         if (value.length >= 8 && hasDigits && hasSpecial) {
           _strengthValue = 1.0;
           _strengthLabel = 'Strong';
-          _strengthColor = AppTheme.neonGreen;
+          _strengthColor = VSPColors.accent;
         } else {
           _strengthValue = 0.6;
           _strengthLabel = 'Medium';
-          _strengthColor = Colors.orange;
+          _strengthColor = VSPColors.warning;
         }
       }
     });
@@ -112,6 +123,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
 
     final phone = _phoneController.text.trim();
     final password = _passwordController.text;
+    final name = _nameController.text.trim();
 
     setState(() => _isLoading = true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -119,6 +131,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     final success = await authProvider.completeSocialRegistration(
       phone: phone,
       password: password,
+      name: name,
       position: authProvider.isPlayer ? _selectedPosition : null,
       governorate: _selectedGovernorate,
     );
@@ -126,19 +139,10 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (authProvider.isOwner) {
-        // Force Owner to add a stadium first
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const AddStadiumWizard()),
-          (route) => false,
-        );
-      } else {
-        // Players go to Home (via RootScreen)
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => const RootScreen()),
-          (route) => false,
-        );
-      }
+      // Logic: RootScreen is listening to AuthProvider. 
+      // It will see that phone is now filled but isRegistrationComplete is still false, 
+      // thus it will automatically show VerifyEmailScreen (OTP). 
+      // No manual Navigator call needed here.
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.errorMessage ?? 'Registration failed')),
@@ -153,19 +157,13 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final isOwner = auth.isOwner;
 
-    // Pre-fill name from Google (only once)
-    if (!_nameInitialized && auth.userModel?.name != null) {
-      _nameController.text = auth.userModel!.name!;
-      _nameInitialized = true;
-    }
-
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: () => Navigator.of(context).pop(),
         ),
         actions: const [], // Clean
@@ -188,7 +186,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
               const Text(
                 'Complete Your Profile',
                 style: TextStyle(
-                  color: AppTheme.textPrimary,
+                  color: VSPColors.textPrimary,
                   fontSize: 28,
                   fontWeight: FontWeight.bold,
                 ),
@@ -196,7 +194,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
               const SizedBox(height: 8),
               const Text(
                 'Just a few more details to get you started',
-                style: TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+                style: TextStyle(color: VSPColors.textSecondary, fontSize: 16),
               ),
               const SizedBox(height: 32),
 
@@ -254,7 +252,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                   borderRadius: BorderRadius.circular(2),
                   child: LinearProgressIndicator(
                     value: _strengthValue,
-                    backgroundColor: Colors.white10,
+                    backgroundColor: VSPColors.divider.withValues(alpha: 0.1),
                     valueColor: AlwaysStoppedAnimation<Color>(_strengthColor),
                     minHeight: 4,
                   ),
@@ -277,16 +275,16 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 Container(
                   padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: DropdownButtonHideUnderline(
                     child: DropdownButton<String>(
                       value: _selectedPosition,
-                      dropdownColor: AppTheme.cardBackground,
-                      icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+                      dropdownColor: VSPColors.surface,
+                      icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
                       isExpanded: true,
-                      style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+                      style: Theme.of(context).textTheme.bodyMedium,
                       onChanged: (String? newValue) {
                         if (newValue != null) {
                           setState(() {
@@ -312,24 +310,23 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 child: ElevatedButton(
                   onPressed: _isFormValid ? _handleCompleteRegistration : null,
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonGreen,
-                    disabledBackgroundColor: AppTheme.neonGreen.withOpacity(0.3),
-                    foregroundColor: AppTheme.darkBackground,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    backgroundColor: VSPColors.accent,
+                    disabledBackgroundColor: VSPColors.accent.withValues(alpha: 0.3),
+                    foregroundColor: VSPColors.background,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     elevation: _isFormValid ? 4 : 0,
                   ),
                   child: _isLoading
                       ? const SizedBox(
                           width: 24,
                           height: 24,
-                          child: CircularProgressIndicator(color: AppTheme.darkBackground, strokeWidth: 2),
+                          child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
                       : Text(
                           isOwner ? 'Continue to Stadium Setup' : 'Complete Registration',
-                          style: TextStyle(
-                            fontSize: 16, 
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
                             fontWeight: FontWeight.bold,
-                            color: _isFormValid ? AppTheme.darkBackground : Colors.white24,
+                            color: _isFormValid ? VSPColors.background : VSPColors.textSecondary.withValues(alpha: 0.24),
                           ),
                         ),
                 ),
@@ -351,13 +348,13 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           decoration: BoxDecoration(
-            color: AppTheme.cardBackground.withOpacity(0.5),
-            borderRadius: BorderRadius.circular(12),
-            border: Border.all(color: Colors.white10),
+            color: VSPColors.surface.withValues(alpha: 0.5),
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            border: Border.all(color: VSPColors.divider),
           ),
           child: Text(
             value.isEmpty ? 'N/A' : value,
-            style: const TextStyle(color: AppTheme.textSecondary, fontSize: 16),
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
           ),
         ),
       ],
@@ -369,7 +366,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       padding: const EdgeInsets.only(bottom: 8.0),
       child: Text(
         text,
-        style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14, fontWeight: FontWeight.w500),
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }
@@ -384,17 +381,17 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedGovernorate,
-          dropdownColor: AppTheme.cardBackground,
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.textSecondary),
+          dropdownColor: VSPColors.surface,
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
           isExpanded: true,
-          style: const TextStyle(color: AppTheme.textPrimary, fontSize: 16),
+          style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {
             if (newValue != null) {
               setState(() {
@@ -413,3 +410,4 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     );
   }
 }
+

@@ -1,11 +1,14 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:math';
 import '../../core/models/user_model.dart';
 import '../../data/models.dart';
 
 class DatabaseService {
-  // Active Instance
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final FirebaseFirestore _firestore;
+
+  DatabaseService({FirebaseFirestore? firestore}) 
+      : _firestore = firestore ?? FirebaseFirestore.instance;
 
   // ==================== USERS ====================
 
@@ -79,21 +82,33 @@ class DatabaseService {
   // Add new stadium (Owner)
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
+      // SECURITY HARDENING: Strip sensitive fields from generic creation
+      final sanitizedData = Map<String, dynamic>.from(stadiumData);
+      sanitizedData.remove('isVerified');
+      sanitizedData.remove('createdAt');
+
       DocumentReference ref = await _firestore.collection('stadiums').add({
-        ...stadiumData,
+        ...sanitizedData,
+        'isVerified': false, // Force false for new stadiums
         'createdAt': FieldValue.serverTimestamp(),
       });
       return ref.id;
     } catch (e) {
-      debugPrint('Error adding stadium: $e');
+      debugPrint('Error adding stadium: Masked for security');
       return null;
     }
   }
 
-  // Update stadium
+  // SECURITY PATCH: Sanitize stadium updates to prevent hijacking verified status or owner identity.
   Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('stadiums').doc(stadiumId).update(data);
+      final securedData = Map<String, dynamic>.from(data);
+      // SECURITY: Prevents unauthorized verification bypass or stadium ownership theft
+      securedData.remove('isVerified');
+      securedData.remove('ownerId');
+      securedData.remove('createdAt');
+      
+      await _firestore.collection('stadiums').doc(stadiumId).update(securedData);
       return true;
     } catch (e) {
       return false;
@@ -225,41 +240,62 @@ class DatabaseService {
 
   Future<String?> createChampionship(Map<String, dynamic> data) async {
     try {
+      // SECURITY HARDENING
+      final sanitizedData = Map<String, dynamic>.from(data);
+      sanitizedData.remove('joinedTeams');
+      sanitizedData.remove('status');
+      sanitizedData.remove('creatorId');
+
       final docRef = await _firestore.collection('championships').add({
-        ...data,
+        ...sanitizedData,
+        'status': 'open',
+        'joinedTeams': [],
         'createdAt': FieldValue.serverTimestamp(),
       });
       return docRef.id;
     } catch (e) {
-      debugPrint('Error creating championship: $e');
+      debugPrint('Error creating championship: Masked for security');
       return null;
     }
   }
 
-  // Join a championship
+  // Join a championship with 5-player rule
   Future<bool> joinChampionship(String championshipId, String teamId) async {
     try {
-      DocumentReference champRef = _firestore.collection('championships').doc(championshipId);
+      final teamRef = _firestore.collection('teams').doc(teamId);
+      final champRef = _firestore.collection('championships').doc(championshipId);
       
       await _firestore.runTransaction((transaction) async {
-        DocumentSnapshot champSnapshot = await transaction.get(champRef);
+        final teamSnap = await transaction.get(teamRef);
+        final champSnap = await transaction.get(champRef);
         
-        if (!champSnapshot.exists) {
-          throw Exception('Championship does not exist');
+        if (!teamSnap.exists) throw Exception('المجموعة لا توجد.');
+        if (!champSnap.exists) throw Exception('البطولة لا توجد.');
+
+        final teamData = teamSnap.data() as Map<String, dynamic>;
+        final champData = champSnap.data() as Map<String, dynamic>;
+
+        // 1. Check Team Size (Rule: Min 5 Players)
+        final List members = teamData['memberUids'] ?? [];
+        final int playerCount = teamData['playersCount'] ?? members.length;
+        
+        if (playerCount < 5) {
+          throw Exception('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
         }
 
-        Map<String, dynamic> champData = champSnapshot.data() as Map<String, dynamic>;
-        List<dynamic> joinedTeams = champData['joinedTeams'] ?? [];
-        int maxTeams = champData['maxTeams'] ?? 0;
+        // 2. Check Championship Capacity
+        final List joinedTeams = champData['joinedTeams'] ?? [];
+        final int maxTeams = champData['maxTeams'] ?? 16;
 
         if (joinedTeams.length >= maxTeams) {
-          throw Exception('Championship is full');
+          throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
         }
 
         if (joinedTeams.contains(teamId)) {
-          throw Exception('Team already joined');
+          throw Exception('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
         }
 
+        // 3. Update Championship
         transaction.update(champRef, {
           'joinedTeams': FieldValue.arrayUnion([teamId]),
         });
@@ -267,7 +303,8 @@ class DatabaseService {
 
       return true;
     } catch (e) {
-      return false;
+      debugPrint('Error joining championship: $e');
+      rethrow; // Re-throw so UI can handle exact error message
     }
   }
 
@@ -376,7 +413,7 @@ class DatabaseService {
         .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+            .map((doc) => Booking.fromFirestore(doc.data(), doc.id))
             .where((b) => b.status != BookingStatus.cancelled) // Only active bookings
             .toList());
   }
@@ -403,7 +440,7 @@ class DatabaseService {
           .get();
 
       if (snapshot.docs.isEmpty) return null;
-      return Team.fromFirestore(snapshot.docs.first.data() as Map<String, dynamic>, snapshot.docs.first.id);
+      return Team.fromFirestore(snapshot.docs.first.data(), snapshot.docs.first.id);
     } catch (e) {
       debugPrint('Error getting team by captain phone: $e');
       return null;
@@ -417,23 +454,62 @@ class DatabaseService {
 
   Future<String?> createTeam(Map<String, dynamic> teamData) async {
     try {
+      // SECURITY HARDENING
+      final sanitizedData = Map<String, dynamic>.from(teamData);
+      sanitizedData.remove('points');
+      sanitizedData.remove('championshipsWon');
+      sanitizedData.remove('unlockedBadges');
+      sanitizedData.remove('matchesPlayed');
+      sanitizedData.remove('wins');
+      sanitizedData.remove('draws');
+      sanitizedData.remove('losses');
+
       DocumentReference ref = await _firestore.collection('teams').add({
-        ...teamData,
+        ...sanitizedData,
+        'points': 0,
+        'championshipsWon': 0,
+        'unlockedBadges': [],
+        'matchesPlayed': 0,
+        'wins': 0,
+        'draws': 0,
+        'losses': 0,
         'createdAt': FieldValue.serverTimestamp(),
       });
       return ref.id;
     } catch (e) {
-      debugPrint('Error creating team: $e');
+      debugPrint('Error creating team: Masked for security');
       return null;
     }
   }
 
   Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('teams').doc(teamId).update(data);
+      // SECURITY HARDENING
+      final sanitizedData = Map<String, dynamic>.from(data);
+      const restricted = [
+        'points', 
+        'championshipsWon', 
+        'unlockedBadges', 
+        'matchesPlayed', 
+        'wins', 
+        'draws', 
+        'losses',
+        'captainPhone',
+        'uid'
+      ];
+      for (var f in restricted) {
+        sanitizedData.remove(f);
+      }
+
+      if (sanitizedData.isEmpty) return true;
+
+      await _firestore.collection('teams').doc(teamId).update({
+        ...sanitizedData,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       return true;
     } catch (e) {
-      debugPrint('Error updating team: $e');
+      debugPrint('Error updating team: Masked for security');
       return false;
     }
   }
@@ -555,7 +631,7 @@ class DatabaseService {
         // Simple case-insensitive start-search
         queryRef = queryRef
             .where('name', isGreaterThanOrEqualTo: query)
-            .where('name', isLessThanOrEqualTo: query + '\uf8ff')
+            .where('name', isLessThanOrEqualTo: '$query\uf8ff')
             .limit(10);
       }
 
@@ -615,16 +691,24 @@ class DatabaseService {
 
       for (var doc in q1.docs) {
         final outcome = doc.data()['finalOutcome'];
-        if (outcome == MatchOutcome.homeWin.name) teamAWins++;
-        else if (outcome == MatchOutcome.awayWin.name) teamBWins++;
-        else draws++;
+        if (outcome == MatchOutcome.homeWin.name) {
+          teamAWins++;
+        } else if (outcome == MatchOutcome.awayWin.name) {
+          teamBWins++;
+        } else {
+          draws++;
+        }
       }
 
       for (var doc in q2.docs) {
         final outcome = doc.data()['finalOutcome'];
-        if (outcome == MatchOutcome.homeWin.name) teamBWins++;
-        else if (outcome == MatchOutcome.awayWin.name) teamAWins++;
-        else draws++;
+        if (outcome == MatchOutcome.homeWin.name) {
+          teamBWins++;
+        } else if (outcome == MatchOutcome.awayWin.name) {
+          teamAWins++;
+        } else {
+          draws++;
+        }
       }
 
       return {
@@ -657,16 +741,39 @@ class DatabaseService {
 
   Stream<List<Booking>> getPublicMatches() {
     final now = DateTime.now();
+    
+    // Only query by status to avoid Composite Index requirements
     return _firestore
         .collection('bookings')
-        .where('isPrivate', isEqualTo: false)
         .where('status', isEqualTo: BookingStatus.confirmed.name)
-        .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .where((b) => b.startTime.isAfter(now) && b.currentPlayers < b.maxPlayers)
-            .toList());
+        .map<List<Booking>>((snapshot) {
+          try {
+            // 1. Map to Booking objects
+            var matches = snapshot.docs
+                .map((doc) => Booking.fromFirestore(doc.data(), doc.id))
+                .toList();
+
+            // 2. Filter locally in Dart
+            matches = matches.where((b) {
+              final isPublic = b.isPrivate == false;
+              final isFuture = b.startTime.isAfter(now);
+              final hasSpace = b.currentPlayers < (b.maxPlayers > 0 ? b.maxPlayers : 1);
+              final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
+              
+              return isPublic && isFuture && hasSpace && isRightType;
+            }).toList();
+
+            // 3. Sort locally by createdAt descending
+            matches.sort((a, b) => b.createdAt.compareTo(a.createdAt));
+
+            debugPrint('✅ Found ${matches.length} active public matches');
+            return matches;
+          } catch (e) {
+            debugPrint('❌ Error parsing public matches: $e');
+            return []; 
+          }
+        });
   }
 
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
@@ -696,6 +803,325 @@ class DatabaseService {
       return false;
     }
   }
+
+  Future<bool> leavePublicMatch(String bookingId, String userId) async {
+    try {
+      final docRef = _firestore.collection('bookings').doc(bookingId);
+      
+      await _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        if (!doc.exists) throw 'Match not found';
+        
+        final data = doc.data() as Map<String, dynamic>;
+        final joined = List<String>.from(data['joinedUserIds'] ?? []);
+        
+        if (!joined.contains(userId)) throw 'Not a participant';
+        
+        transaction.update(docRef, {
+          'currentPlayers': FieldValue.increment(-1),
+          'joinedUserIds': FieldValue.arrayRemove([userId]),
+        });
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error leaving public match: $e');
+      return false;
+    }
+  }
+
+  // BETA READY: Unified team fetch for Captains AND Members
+  Future<Team?> getUserTeam(String userId) async {
+    try {
+      final query = await _firestore.collection('teams')
+          .where('memberUids', arrayContains: userId)
+          .limit(1)
+          .get();
+      
+      if (query.docs.isNotEmpty) {
+        return Team.fromFirestore(query.docs.first.data(), query.docs.first.id);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error getting user team: $e');
+      return null;
+    }
+  }
+
+  // BETA READY: Interactive notification action logic
+  Future<void> respondToChallenge(String notificationId, String bookingId, bool accept) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // 1. Mark notification as read
+      batch.update(_firestore.collection('notifications').doc(notificationId), {
+        'isRead': true,
+      });
+
+      // 2. Update booking status
+      batch.update(_firestore.collection('bookings').doc(bookingId), {
+        'status': accept ? 'confirmed' : 'cancelled',
+      });
+
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error responding to challenge: $e');
+    }
+  }
+  // TOURNAMENT Logic: Update championship status (e.g., from 'open' to 'ongoing')
+  Future<void> updateChampionshipStatus(String championshipId, String status) async {
+    try {
+      await _firestore.collection('championships').doc(championshipId).update({
+        'status': status,
+      });
+    } catch (e) {
+      debugPrint('Error updating championship status: $e');
+    }
+  }
+
+  // TOURNAMENT Logic: Finalize tournament and increment winning team's trophies
+  Future<void> crownChampion(String championshipId, String winningTeamId, String winningTeamName) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // 1. Mark championship as completed
+      batch.update(_firestore.collection('championships').doc(championshipId), {
+        'status': 'completed',
+        'championTeamId': winningTeamId,
+        'championTeamName': winningTeamName,
+      });
+
+      // 2. Increment team's trophies and add badge
+      batch.update(_firestore.collection('teams').doc(winningTeamId), {
+        'championshipsWon': FieldValue.increment(1),
+        'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
+      });
+
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error crowning champion: $e');
+      throw 'Failed to crown champion';
+    }
+  }
+
+  // TOURNAMENT Logic: Fetch joined teams for dashboard
+  Future<List<Team>> getTeamsByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      // Note: Firestore 'whereIn' is limited to 10-30 items depending on sdk, 
+      // but usually championships have a max team count.
+      final query = await _firestore.collection('teams')
+          .where(FieldPath.documentId, whereIn: ids)
+          .get();
+      
+      return query.docs.map((d) => Team.fromFirestore(d.data(), d.id)).toList();
+    } catch (e) {
+      debugPrint('Error getting teams by IDs: $e');
+      return [];
+    }
+  }
+
+  // BETA READY: Delete team logic
+  Future<bool> deleteTeam(String teamId) async {
+    try {
+      await _firestore.collection('teams').doc(teamId).delete();
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting team: $e');
+      return false;
+    }
+  }
+
+  // ==================== TOURNAMENT BRACKET ENGINE ====================
+
+  /// Generates the full knockout bracket tree for a championship.
+  /// Supports 4, 8, 16, or 32 teams. Teams are randomly shuffled (draw).
+  Future<void> generateFixtures(String championshipId) async {
+    try {
+      // 1. Get Championship & Teams
+      final champDoc = await _firestore.collection('championships').doc(championshipId).get();
+      if (!champDoc.exists) throw 'Championship not found';
+
+      final champData = champDoc.data() as Map<String, dynamic>;
+      final List<String> teamIds = List<String>.from(champData['joinedTeams'] ?? []);
+
+      // Validation: must be power of 2
+      int teamCount = teamIds.length;
+      if (![4, 8, 16, 32].contains(teamCount)) {
+        throw 'Number of teams must be 4, 8, 16, or 32 for a knockout bracket. Current: $teamCount';
+      }
+
+      // 2. Fetch Team Names
+      final teams = await getTeamsByIds(teamIds);
+      final teamMap = {for (var t in teams) t.id: t.name};
+
+      // 3. Shuffle Teams (Random Draw)
+      final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
+
+      // 4. Determine Rounds
+      // Round 0 = Final (1 match), Round 1 = Semi (2 matches), Round 2 = Quarters (4 matches), etc.
+      int totalRounds = (log(teamCount) / log(2)).round();
+      int firstRoundIndex = totalRounds - 1;
+
+      final batch = _firestore.batch();
+      final matchesCollection = _firestore.collection('tournament_matches');
+
+      // Helper: deterministic match IDs
+      String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
+
+      // 5. Generate All Match Slots
+      for (int r = 0; r <= firstRoundIndex; r++) {
+        int matchCount = pow(2, r).toInt();
+
+        for (int m = 0; m < matchCount; m++) {
+          final docRef = matchesCollection.doc(getMatchId(r, m));
+
+          // Link to parent match in the next round closer to Final
+          String? nextMatchId;
+          if (r > 0) {
+            nextMatchId = getMatchId(r - 1, m ~/ 2);
+          }
+
+          // Only populate teams in the FIRST round (furthest from Final)
+          String? homeId, homeName, awayId, awayName;
+          if (r == firstRoundIndex) {
+            int teamIndexBase = m * 2;
+            if (teamIndexBase < shuffledIds.length) {
+              homeId = shuffledIds[teamIndexBase];
+              homeName = teamMap[homeId];
+            }
+            if (teamIndexBase + 1 < shuffledIds.length) {
+              awayId = shuffledIds[teamIndexBase + 1];
+              awayName = teamMap[awayId];
+            }
+          }
+
+          final matchData = TournamentMatch(
+            id: docRef.id,
+            championshipId: championshipId,
+            roundIndex: r,
+            matchIndex: m,
+            nextMatchId: nextMatchId,
+            homeTeamId: homeId,
+            homeTeamName: homeName,
+            awayTeamId: awayId,
+            awayTeamName: awayName,
+          );
+
+          batch.set(docRef, matchData.toFirestore());
+        }
+      }
+
+      // 6. Update Championship Status to 'ongoing'
+      batch.update(champDoc.reference, {'status': 'ongoing'});
+
+      await batch.commit();
+      debugPrint('✅ Fixtures generated for $championshipId: $totalRounds rounds, $teamCount teams');
+    } catch (e) {
+      debugPrint('Error generating fixtures: $e');
+      rethrow;
+    }
+  }
+
+  /// Updates a match score and automatically propagates the winner to the next round.
+  Future<void> updateTournamentMatchScore({
+    required String matchId,
+    required int homeScore,
+    required int awayScore,
+    required String winnerId,
+    required String winnerName,
+  }) async {
+    try {
+      final matchRef = _firestore.collection('tournament_matches').doc(matchId);
+
+      await _firestore.runTransaction((transaction) async {
+        final matchDoc = await transaction.get(matchRef);
+        if (!matchDoc.exists) throw 'Match not found';
+
+        final matchData = matchDoc.data() as Map<String, dynamic>;
+        final String? nextMatchId = matchData['nextMatchId'];
+        final int matchIndex = matchData['matchIndex'];
+
+        // 1. Update Current Match Score & Winner
+        transaction.update(matchRef, {
+          'homeScore': homeScore,
+          'awayScore': awayScore,
+          'winnerId': winnerId,
+        });
+
+        // 2. Propagate Winner to Next Match
+        if (nextMatchId != null) {
+          final nextMatchRef = _firestore.collection('tournament_matches').doc(nextMatchId);
+
+          // Even matchIndex → Home slot, Odd → Away slot in parent match
+          String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
+
+          transaction.update(nextMatchRef, {
+            '${slotField}TeamId': winnerId,
+            '${slotField}TeamName': winnerName,
+          });
+        } else if (matchData['roundIndex'] == 0) {
+          // 🏆 This was the FINAL — automatically crown champion
+          final champRef = _firestore.collection('championships').doc(matchData['championshipId']);
+          final teamRef = _firestore.collection('teams').doc(winnerId);
+
+          transaction.update(champRef, {
+            'status': 'completed',
+            'championTeamId': winnerId,
+            'championTeamName': winnerName,
+          });
+
+          transaction.update(teamRef, {
+            'championshipsWon': FieldValue.increment(1),
+            'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
+          });
+        }
+      });
+    } catch (e) {
+      debugPrint('Error updating tournament match score: $e');
+      rethrow;
+    }
+  }
+
+  /// Real-time stream of all bracket matches for a championship.
+  Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) {
+    return _firestore
+        .collection('tournament_matches')
+        .where('championshipId', isEqualTo: championshipId)
+        .snapshots()
+        .map((snapshot) {
+      final matches = snapshot.docs
+          .map((doc) => TournamentMatch.fromFirestore(doc.data(), doc.id))
+          .toList();
+      // Sort: highest roundIndex first (first rounds at top), then by matchIndex
+      matches.sort((a, b) {
+        if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
+        return a.matchIndex.compareTo(b.matchIndex);
+      });
+      return matches;
+    });
+  }
+
+  // ==================== VSP 1v1 LEAGUE ====================
+  
+  Stream<List<VSP1v1Player>> get1v1Standings() {
+    return _firestore
+        .collection('vsp_1VS1_players')
+        .orderBy('totalPoints', descending: true) // Sort by points automatically
+        .snapshots()
+        .map((snapshot) {
+          if (snapshot.docs.isEmpty) {
+            // For demo purposes, return mock data if DB is empty
+            return VSP1v1Player.getMockStandings();
+          }
+          
+          List<VSP1v1Player> players = [];
+          for (int i = 0; i < snapshot.docs.length; i++) {
+            // Force recalculate rank based on sort order just to be safe
+            var data = snapshot.docs[i].data();
+            data['rank'] = i + 1; 
+            players.add(VSP1v1Player.fromFirestore(data, snapshot.docs[i].id));
+          }
+          return players;
+        });
+  }
 }
-
-

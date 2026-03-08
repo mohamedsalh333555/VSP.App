@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_section_title.dart';
 import '../../player/screens/profile_subscreens/notifications_screen.dart';
 import '../../player/screens/profile_subscreens/privacy_policy_screen.dart';
 import '../../player/screens/profile_subscreens/language_screen.dart';
@@ -9,7 +10,9 @@ import '../../player/screens/profile_subscreens/payment_methods_screen.dart';
 import '../../auth/screens/welcome_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'owner_account_management_screen.dart';
-import 'owner_subscription_screen.dart';
+// Subscription screen removed — no longer accessible from profile
+import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/ui/components/vsp_menu_item.dart';
 
 class OwnerProfileScreen extends StatelessWidget {
   const OwnerProfileScreen({super.key});
@@ -17,196 +20,156 @@ class OwnerProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212), // Pure Dark
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: VSPColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false, // No back arrow
+        automaticallyImplyLeading: false,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Profile',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB', // Condensed Bold
-          ),
+          style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+        physics: const BouncingScrollPhysics(),
+        padding: const EdgeInsets.symmetric(
+            horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // --- Account Section ---
-            _buildSectionTitle('Account'),
-            const SizedBox(height: 16),
-             _buildProfileTile(
-              context,
-              icon: Icons.person_outline,
-              title: 'Account',
-              subtitle: 'Manage Your Account Information',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const OwnerAccountManagementScreen()));
-              },
-            ),
-
-
-            _buildProfileTile(
-              context,
-              icon: Icons.workspace_premium_outlined, // Crown/Premium icon
-              title: 'Subscription',
-              subtitle: 'Manage Your Subscription',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const OwnerSubscriptionScreen()));
-              },
-            ),
-            _buildProfileTile(
-              context,
-              icon: Icons.payment_outlined,
-              title: 'Payment Methods',
-              subtitle: 'Manage Your Payment Methods',
-              onTap: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => const PaymentMethodsScreen()));
-              },
-            ),
-
-            const SizedBox(height: 24),
-
-            // --- Preferences Section ---
-            _buildSectionTitle('Preferences'),
-            const SizedBox(height: 16),
-            _buildProfileTile(
-              context,
-              icon: Icons.notifications_none_outlined,
-              title: 'Notifications',
-              subtitle: 'Manage Your Notification Settings',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const NotificationsScreen()));
-              },
-            ),
-            _buildProfileTile(
-              context,
-              icon: Icons.details_outlined, // Use privacy/shield icon if available, otherwise details
-              title: 'Privacy',
-              subtitle: 'Privacy Policy',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const PrivacyPolicyScreen()));
-              },
-            ),
-            _buildProfileTile(
-              context,
-              icon: Icons.language_outlined, // Language/Globe icon
-              title: 'Language',
-              subtitle: 'Manage Your Language Preferences',
-              onTap: () {
-                 Navigator.push(context, MaterialPageRoute(builder: (context) => const LanguageScreen()));
-              },
-            ),
-
-             const SizedBox(height: 24),
-
-            // --- Support Section ---
-            _buildSectionTitle('Support'),
-            const SizedBox(height: 16),
-            _buildProfileTile(
-              context,
-              icon: Icons.help_outline,
-              title: 'Help Center',
-              subtitle: 'Chat With Support',
-              onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => const HelpCenterScreen()));
-              },
-            ),
-
-            const SizedBox(height: 24),
-            
-             // --- Logout ---
-            _buildProfileTile(
-              context,
-              icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
-              isLogout: true,
-              onTap: () async {
-                // Clear session and navigate to Welcome Screen
-                await Provider.of<AuthProvider>(context, listen: false).signOut();
-                if (context.mounted) {
-                  Navigator.of(context).pushAndRemoveUntil(
-                    MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                    (route) => false,
+            // ── Account Section ──
+            const VSPSectionTitle('Account'),
+            const SizedBox(height: VSPSpacing.md),
+            VSPFadeInItem(
+              index: 0,
+              child: VSPMenuItem(
+                icon: Icons.person_outline,
+                title: 'Account',
+                subtitle: 'Manage Your Account Information',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) =>
+                            const OwnerAccountManagementScreen()),
                   );
-                }
-              },
+                },
+              ),
             ),
-            
-            const SizedBox(height: 100), // Bottom padding for Nav Bar
-          ],
-        ),
-      ),
-    );
-  }
+            VSPFadeInItem(
+              index: 1,
+              child: VSPMenuItem(
+                icon: Icons.payment_outlined,
+                title: 'Payment Methods',
+                subtitle: 'Manage Your Payment Methods',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PaymentMethodsScreen()),
+                  );
+                },
+              ),
+            ),
 
-  Widget _buildSectionTitle(String title) {
-    return Text(
-      title,
-      style: const TextStyle(
-        color: Colors.white,
-        fontSize: 20,
-        fontWeight: FontWeight.bold,
-        fontFamily: 'Agency FB',
-      ),
-    );
-  }
+            const SizedBox(height: VSPSpacing.lg),
 
-  Widget _buildProfileTile(BuildContext context, {required IconData icon, required String title, required String subtitle, required VoidCallback onTap, bool isLogout = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      behavior: HitTestBehavior.opaque, // Ensure entire row is clickable
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        child: Row(
-          children: [
-            // Icon Square
-            Container(
-              width: 50,
-              height: 50,
-              decoration: BoxDecoration(
-                color: isLogout ? Colors.red.withValues(alpha: 0.1) : AppTheme.neonGreen,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: isLogout ? Colors.red : Colors.black,
-                size: 24,
+            // ── Preferences Section ──
+            const VSPSectionTitle('Preferences'),
+            const SizedBox(height: VSPSpacing.md),
+            VSPFadeInItem(
+              index: 2,
+              child: VSPMenuItem(
+                icon: Icons.notifications_none_outlined,
+                title: 'Notifications',
+                subtitle: 'Manage Your Notification Settings',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const NotificationsScreen()),
+                  );
+                },
               ),
             ),
-            const SizedBox(width: 16),
-            // Texts
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isLogout ? Colors.red : Colors.white,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: isLogout ? Colors.red.withValues(alpha: 0.7) : Colors.grey[400],
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
+            VSPFadeInItem(
+              index: 3,
+              child: VSPMenuItem(
+                icon: Icons.shield_outlined,
+                title: 'Privacy',
+                subtitle: 'Privacy Policy',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const PrivacyPolicyScreen()),
+                  );
+                },
               ),
             ),
-            if (!isLogout) Icon(Icons.arrow_forward_ios, color: Colors.grey[600], size: 16),
+            VSPFadeInItem(
+              index: 4,
+              child: VSPMenuItem(
+                icon: Icons.language_outlined,
+                title: 'Language',
+                subtitle: 'Manage Your Language Preferences',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const LanguageScreen()),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: VSPSpacing.lg),
+
+            // ── Support Section ──
+            const VSPSectionTitle('Support'),
+            const SizedBox(height: VSPSpacing.md),
+            VSPFadeInItem(
+              index: 5,
+              child: VSPMenuItem(
+                icon: Icons.help_outline,
+                title: 'Help Center',
+                subtitle: 'Chat With Support',
+                onTap: () {
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(
+                        builder: (context) => const HelpCenterScreen()),
+                  );
+                },
+              ),
+            ),
+
+            const SizedBox(height: VSPSpacing.lg),
+
+            // ── Logout ──
+            VSPFadeInItem(
+              index: 6,
+              child: VSPMenuItem(
+                icon: Icons.logout,
+                title: 'Logout',
+                subtitle: 'Sign out of your account',
+                isLogout: true,
+                onTap: () async {
+                  await Provider.of<AuthProvider>(context, listen: false)
+                      .signOut();
+                  if (context.mounted) {
+                    Navigator.of(context).pushAndRemoveUntil(
+                      MaterialPageRoute(
+                          builder: (_) => const WelcomeScreen()),
+                      (route) => false,
+                    );
+                  }
+                },
+              ),
+            ),
+
+            const SizedBox(height: 100),
           ],
         ),
       ),

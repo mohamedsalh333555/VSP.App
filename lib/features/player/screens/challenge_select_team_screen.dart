@@ -1,8 +1,10 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/shimmer_image.dart';
+
+import '../../../core/widgets/shimmer_image.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../../core/services/database_service.dart';
 import '../../../data/models.dart';
@@ -76,23 +78,18 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Select Opponent Team',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Column(
@@ -103,20 +100,15 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     "Choose Opponent",
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
                     "Search for a team to challenge or pick from teams you've played against.",
                     style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
+                      color: VSPColors.textSecondary.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -125,20 +117,20 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   // Search Field
                   Container(
                     decoration: BoxDecoration(
-                      color: const Color(0xFF1E1E1E),
-                      borderRadius: BorderRadius.circular(12),
-                      border: Border.all(color: AppTheme.textSecondary.withValues(alpha: 0.2)),
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider),
                     ),
                     child: TextField(
                       controller: _searchController,
-                      style: const TextStyle(color: Colors.white),
+                      style: Theme.of(context).textTheme.bodyLarge,
                       onChanged: _onSearchChanged,
                       decoration: InputDecoration(
                         hintText: "Search by Team Name or Captain's Phone",
-                        hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
-                        prefixIcon: const Icon(Icons.search, color: AppTheme.neonGreen),
+                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                        prefixIcon: const Icon(Icons.search, color: VSPColors.accent),
                         border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                        contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
                       ),
                     ),
                   ),
@@ -147,21 +139,16 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
                   // Search Results or History
                   if (_searchQuery.isNotEmpty) ...[
-                    const Text(
+                    Text(
                       'Search Results',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     if (_isSearching)
                       const Center(
                         child: Padding(
                           padding: EdgeInsets.symmetric(vertical: 40),
-                          child: CircularProgressIndicator(color: AppTheme.neonGreen),
+                          child: CircularProgressIndicator(color: VSPColors.accent),
                         ),
                       )
                     else if (_searchedTeams.isEmpty)
@@ -170,11 +157,11 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Column(
                             children: [
-                              Icon(Icons.search_off, color: AppTheme.textSecondary.withValues(alpha: 0.3), size: 48),
+                              Icon(Icons.search_off, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                               const SizedBox(height: 16),
                               Text(
                                 "No teams found matching '$_searchQuery'",
-                                style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+                                style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                               ),
                             ],
                           ),
@@ -183,14 +170,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                     else
                       ..._searchedTeams.map((team) => _buildTeamCard(team)),
                   ] else ...[
-                    const Text(
+                    Text(
                       'Teams You Played Against',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
                     if (_historyTeams.isEmpty)
@@ -198,17 +180,17 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 40),
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(16),
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.lg),
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.history, color: AppTheme.textSecondary.withValues(alpha: 0.3), size: 48),
+                            Icon(Icons.history, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                             const SizedBox(height: 16),
                             Text(
                               "You don't have previous opponents yet.\nStart by searching for a team.",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                              style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
                             ),
                           ],
                         ),
@@ -223,25 +205,18 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
           // Continue Button
           Container(
-            padding: const EdgeInsets.all(24),
+            padding: const EdgeInsets.all(VSPSpacing.lg),
             decoration: BoxDecoration(
-              color: const Color(0xFF1C1C1E),
+              color: VSPColors.surface,
               borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(24),
-                topRight: Radius.circular(24),
+                topLeft: Radius.circular(VSPRadius.xl),
+                topRight: Radius.circular(VSPRadius.xl),
               ),
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withValues(alpha: 0.5),
-                  blurRadius: 10,
-                  offset: const Offset(0, -2),
-                ),
-              ],
+              boxShadow: VSPShadow.subtle,
             ),
-            child: SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
+            child: SafeArea(
+              child: PrimaryButton(
+                text: 'Continue',
                 onPressed: _selectedTeam == null
                     ? null
                     : () {
@@ -262,22 +237,6 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                           ),
                         );
                       },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  foregroundColor: Colors.black,
-                  disabledBackgroundColor: Colors.grey[800],
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  elevation: 0,
-                ),
-                child: const Text(
-                  'Continue',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
               ),
             ),
           ),
@@ -315,12 +274,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       child: AnimatedContainer(
         duration: const Duration(milliseconds: 300),
         margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.05) : const Color(0xFF1E1E1E),
-          borderRadius: BorderRadius.circular(16),
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : Colors.white.withValues(alpha: 0.05),
+            color: isSelected ? VSPColors.accent : VSPColors.divider,
             width: 1.5,
           ),
         ),
@@ -332,7 +291,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   imageUrl: team.captainImageUrl,
                   width: 50,
                   height: 50,
-                  borderRadius: 25,
+                  borderRadius: VSPRadius.full,
                 ),
                 const SizedBox(width: 16),
                 Expanded(
@@ -350,18 +309,15 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       const SizedBox(height: 4),
                       Text(
                         "Matches played: ${team.matchesPlayed}",
-                        style: TextStyle(
-                          color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                          fontSize: 12,
-                        ),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
                 if (isSelected)
-                  const Icon(Icons.check_circle, color: AppTheme.neonGreen)
+                  const Icon(Icons.check_circle, color: VSPColors.accent)
                 else
-                  Icon(Icons.circle_outlined, color: AppTheme.textSecondary.withValues(alpha: 0.3)),
+                  Icon(Icons.circle_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
               ],
             ),
             if (isSelected) ...[
@@ -373,7 +329,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                     child: SizedBox(
                       width: 20,
                       height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonGreen),
+                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                     ),
                   ),
                 )
@@ -382,7 +338,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               else if (_h2hStats != null)
                 const Text(
                   "First time playing against them. Set the tone!",
-                  style: TextStyle(color: AppTheme.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
+                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
                 ),
             ],
           ],
@@ -418,9 +374,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            _buildH2HStatItem("YOUR WINS", wins, AppTheme.neonGreen),
+            _buildH2HStatItem("YOUR WINS", wins, VSPColors.accent),
             _buildH2HStatItem("DRAWS", draws, Colors.white60),
-            _buildH2HStatItem("THEIR WINS", opposingWins, Colors.redAccent),
+            _buildH2HStatItem("THEIR WINS", opposingWins, VSPColors.error),
           ],
         ),
         const SizedBox(height: 16),
@@ -428,15 +384,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: AppTheme.neonGreen.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(8),
+            color: VSPColors.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(VSPRadius.sm),
           ),
           child: Text(
             hypeMessage,
             textAlign: TextAlign.center,
-            style: const TextStyle(
-              color: AppTheme.neonGreen,
-              fontSize: 12,
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+              color: VSPColors.accent,
               fontWeight: FontWeight.bold,
             ),
           ),
@@ -455,13 +410,13 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               color: color,
               fontSize: 24,
               fontWeight: FontWeight.w900,
-              fontFamily: 'Agency FB',
+              
             ),
           ),
           Text(
             label,
             style: TextStyle(
-              color: AppTheme.textSecondary.withValues(alpha: 0.6),
+              color: VSPColors.textSecondary.withValues(alpha: 0.6),
               fontSize: 9,
               fontWeight: FontWeight.bold,
             ),

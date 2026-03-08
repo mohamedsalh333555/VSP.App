@@ -2,10 +2,14 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
 import 'login_screen.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_button.dart';
+import '../../../shared/widgets/vsp_animated_button.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 
 /// Welcome Screen - Initial landing page
@@ -20,24 +24,24 @@ class WelcomeScreen extends StatelessWidget {
     WidgetsBinding.instance.addPostFrameCallback((_) => authProvider.reset());
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
           bottom: true,
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
             child: Column(
               children: [
-                const SizedBox(height: 60), // Space where logo/top once was
+                const SizedBox(height: VSPSpacing.xxl), // Space where logo/top once was
 
                 // Logo with soft diffused glow (Increased Blur) and Secret Migration Trigger
                 Stack(
@@ -50,7 +54,7 @@ class WelcomeScreen extends StatelessWidget {
                         shape: BoxShape.circle,
                         boxShadow: [
                           BoxShadow(
-                            color: AppTheme.neonGreen.withValues(alpha: 0.08), // Subtle
+                            color: VSPColors.accent.withValues(alpha: 0.08), // Subtle
                             blurRadius: 120, // Increased for more diffusion
                             spreadRadius: 40,
                           ),
@@ -60,14 +64,10 @@ class WelcomeScreen extends StatelessWidget {
                     GestureDetector(
                       onLongPress: () async {
                         // Secret Trigger for Data Migration
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Starting Data Migration...')),
-                        );
+                        VSPFeedback.showSuccess(context, 'Starting Data Migration...');
                         await DataMigration().seedDatabase();
                         if (context.mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            const SnackBar(content: Text('Data Migration Completed!')),
-                          );
+                          VSPFeedback.showSuccess(context, 'Data Migration Completed!');
                         }
                       },
                       child: Image.asset(
@@ -79,7 +79,7 @@ class WelcomeScreen extends StatelessWidget {
                             child: Text(
                               'VSP',
                               style: TextStyle(
-                                color: AppTheme.neonGreen,
+                                color: VSPColors.accent,
                                 fontSize: 64,
                                 fontWeight: FontWeight.w900,
                               ),
@@ -91,33 +91,26 @@ class WelcomeScreen extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 60),
+                const SizedBox(height: VSPSpacing.xxl),
 
                 // Welcome Title - English Only
-                const Text(
+                Text(
                   'Welcome to VSP',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 38,
-                    fontWeight: FontWeight.w900,
-                    letterSpacing: -0.8,
-                    height: 1.1,
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontSize: 38, // Keep primary impact size
                   ),
                   textAlign: TextAlign.center,
                 ),
 
-                const SizedBox(height: 20),
+                const SizedBox(height: VSPSpacing.md),
 
                 // Subtitle - English, Medium weight, Clean White
-                const Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20),
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: Text(
                     'Book your pitch easily and join teams',
-                    style: TextStyle(
-                      color: Colors.white, // Clean White
-                      fontSize: 15,
-                      height: 1.7,
-                      fontWeight: FontWeight.w500, // Medium as requested
+                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                      color: VSPColors.textPrimary,
                     ),
                     textAlign: TextAlign.center,
                   ),
@@ -129,44 +122,52 @@ class WelcomeScreen extends StatelessWidget {
                 Column(
                   children: [
                       // Player Button
-                      Padding(
-                        padding: const EdgeInsets.only(bottom: 4),
-                        child: _AuthButton(
-                          label: 'I am a Player',
-                          backgroundColor: AppTheme.neonGreen,
-                          textColor: Colors.black,
-                          onTap: () {
-                            authProvider.setUserType('player');
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CreateAccountScreen(isOwner: false),
-                              ),
-                            );
-                          },
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      // Owner Button
-                      _AuthButton(
-                        label: 'I am Stadium Owner',
-                        backgroundColor: Colors.transparent,
-                        textColor: Colors.white, // Active color
-                        isOutlined: true,
-                        onTap: () {
-                          authProvider.setUserType('owner');
+                      VSPAnimatedButton(
+                        text: 'I am a Player',
+                        onPressed: () {
+                          authProvider.setUserType('player');
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const CreateAccountScreen(isOwner: true),
+                              builder: (context) => const CreateAccountScreen(isOwner: false),
                             ),
                           );
                         },
                       ),
+                      const SizedBox(height: VSPSpacing.md),
+                      // Owner Button
+                      SizedBox(
+                        height: 56,
+                        width: double.infinity,
+                        child: OutlinedButton(
+                          onPressed: () {
+                            authProvider.setUserType('owner');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateAccountScreen(isOwner: true),
+                              ),
+                            );
+                          },
+                          style: OutlinedButton.styleFrom(
+                            foregroundColor: VSPColors.textPrimary,
+                            side: const BorderSide(color: VSPColors.accent, width: 1.5),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(VSPRadius.lg),
+                            ),
+                          ),
+                          child: Text(
+                            'I am Stadium Owner',
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ),
+                      ),
                   ],
                 ),
 
-                const SizedBox(height: 32),
+                const SizedBox(height: VSPSpacing.xl),
 
                 // Footer - English
                 Column(
@@ -177,12 +178,11 @@ class WelcomeScreen extends StatelessWidget {
                       children: [
                         Text(
                           'Already have an account?',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.7),
-                            fontSize: 14,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: VSPColors.textSecondary,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: VSPSpacing.sm),
                         GestureDetector(
                           onTap: () {
                             Navigator.push(
@@ -192,12 +192,11 @@ class WelcomeScreen extends StatelessWidget {
                               ),
                             );
                           },
-                          child: const Text(
+                          child: Text(
                             'Login',
-                            style: TextStyle(
-                              color: AppTheme.neonGreen, // #9FDF02 from theme
-                              fontSize: 14,
-                              fontWeight: FontWeight.bold, // Bold as requested
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.bold,
                             ),
                           ),
                         ),
@@ -209,19 +208,19 @@ class WelcomeScreen extends StatelessWidget {
                       builder: (context, auth, child) {
                         if (auth.isAuthenticated) {
                           return Padding(
-                            padding: const EdgeInsets.only(top: 12.0),
+                            padding: const EdgeInsets.only(top: VSPSpacing.sm),
                             child: TextButton(
                               onPressed: () async {
                                 await auth.signOut();
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(content: Text('Signed out successfully')),
-                                  );
+                                  VSPFeedback.showSuccess(context, 'Signed out successfully');
                                 }
                               },
-                              child: const Text(
+                              child: Text(
                                 'Sign out of current account',
-                                style: TextStyle(color: Colors.white38, fontSize: 12),
+                                style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.38),
+                                ),
                               ),
                             ),
                           );
@@ -232,81 +231,9 @@ class WelcomeScreen extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 30),
+                const SizedBox(height: VSPSpacing.xl),
               ],
             ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// Corrected Auth Button with 12px fix
-class _AuthButton extends StatelessWidget {
-  final String label;
-  final VoidCallback onTap;
-  final Color backgroundColor;
-  final Color textColor;
-  final bool isOutlined;
-
-  const _AuthButton({
-    required this.label,
-    required this.onTap,
-    required this.backgroundColor,
-    required this.textColor,
-    this.isOutlined = false,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    const double radius = 12.0; // Exact 12 as requested
-    final shape = RoundedRectangleBorder(
-      borderRadius: BorderRadius.circular(radius),
-    );
-
-    if (isOutlined) {
-      return SizedBox(
-        width: double.infinity,
-        height: 58,
-        child: OutlinedButton(
-          onPressed: onTap,
-          style: OutlinedButton.styleFrom(
-            foregroundColor: textColor,
-            side: const BorderSide(color: AppTheme.neonGreen, width: 1.5), // 1.5 Width
-            shape: shape,
-            elevation: 0,
-          ),
-          child: Text(
-            label,
-            style: const TextStyle(
-              fontSize: 17,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
-            ),
-          ),
-        ),
-      );
-    }
-
-    return SizedBox(
-      width: double.infinity,
-      height: 58,
-      child: ElevatedButton(
-        onPressed: onTap,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: backgroundColor,
-          foregroundColor: textColor,
-          elevation: 4,
-          shadowColor: backgroundColor.withValues(alpha: 0.3),
-          shape: shape,
-        ),
-        child: Text(
-          label,
-          style: const TextStyle(
-            fontSize: 17,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 0.5,
           ),
         ),
       ),

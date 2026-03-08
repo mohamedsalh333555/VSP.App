@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/models/user_model.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
 
 class AddPlayerSheet extends StatefulWidget {
@@ -49,16 +50,16 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        top: 24,
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        top: VSPSpacing.lg,
+        left: VSPSpacing.md,
+        right: VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
       ),
       decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
+        color: VSPColors.background,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
         ),
       ),
       child: Column(
@@ -68,65 +69,60 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              const Text(
+              Text(
                 'Add Team Member',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 22,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Agency FB',
-                ),
+                style: Theme.of(context).textTheme.displaySmall,
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                icon: const Icon(Icons.close, color: VSPColors.textSecondary),
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          const Text('Search by Phone Number', style: TextStyle(color: AppTheme.textSecondary, fontSize: 13)),
-          const SizedBox(height: 8),
+          const SizedBox(height: VSPSpacing.lg),
+          Text('Search by Phone Number', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+          const SizedBox(height: VSPSpacing.sm),
           Row(
             children: [
               Expanded(
                 child: TextField(
                   controller: _phoneController,
                   keyboardType: TextInputType.phone,
-                  style: const TextStyle(color: AppTheme.textPrimary),
+                  style: Theme.of(context).textTheme.bodyMedium,
                   decoration: InputDecoration(
                     hintText: 'e.g. 01012345678',
-                    hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+                    hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                     filled: true,
-                    fillColor: AppTheme.cardBackground,
+                    fillColor: VSPColors.surface,
                     border: OutlineInputBorder(
-                      borderRadius: BorderRadius.circular(12),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
                       borderSide: BorderSide.none,
                     ),
-                    contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
                   ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: VSPSpacing.md),
               GestureDetector(
                 onTap: _isSearching ? null : _searchPlayer,
                 child: Container(
                   height: 50,
                   width: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonGreen,
-                    borderRadius: BorderRadius.circular(12),
+                    color: VSPColors.accent,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: _isSearching
                       ? const Padding(
-                          padding: EdgeInsets.all(12.0),
-                          child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2),
+                          padding: EdgeInsets.all(VSPSpacing.sm),
+                          child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
-                      : const Icon(Icons.search, color: Colors.black),
+                      : const Icon(Icons.search, color: VSPColors.background),
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 32),
+          const SizedBox(height: VSPSpacing.xl),
           if (_foundUser != null)
             _buildFoundUserCard()
           else if (_hasSearched)
@@ -139,11 +135,11 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
   Widget _buildFoundUserCard() {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       ),
       child: Row(
         children: [
@@ -151,36 +147,31 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             imageUrl: _foundUser!.profileImageUrl ?? '',
             width: 50,
             height: 50,
-            borderRadius: 25,
+            borderRadius: VSPRadius.full,
           ),
-          const SizedBox(width: 16),
+          const SizedBox(width: VSPSpacing.md),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   _foundUser!.name ?? 'Player',
-                  style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
                 Text(
                   _foundUser!.phone ?? '',
-                  style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.7), fontSize: 12),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ],
             ),
           ),
-          ElevatedButton(
+          PrimaryButton(
+            text: 'Add',
             onPressed: () {
               widget.onPlayerAdded(_foundUser!);
               Navigator.pop(context);
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonGreen,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-              padding: const EdgeInsets.symmetric(horizontal: 16),
-            ),
-            child: const Text('Add', style: TextStyle(fontWeight: FontWeight.bold)),
+            // Customizing for inline feel
           ),
         ],
       ),
@@ -190,39 +181,34 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   Widget _buildInviteCard() {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(24),
+      padding: const EdgeInsets.all(VSPSpacing.xl),
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
         children: [
-          Icon(Icons.person_search_outlined, color: Colors.white.withValues(alpha: 0.2), size: 48),
-          const SizedBox(height: 16),
-          const Text(
+          Icon(Icons.person_search_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.2), size: 48),
+          const SizedBox(height: VSPSpacing.md),
+          Text(
             "User Not Found",
-            style: TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold, fontSize: 18),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: VSPSpacing.sm),
           Text(
             "This number isn't registered on VSP yet. Invite them to join the game!",
             textAlign: TextAlign.center,
-            style: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.6), fontSize: 13),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           SizedBox(
             width: double.infinity,
-            child: ElevatedButton.icon(
+            child: PrimaryButton(
+              text: 'Invite via WhatsApp',
               onPressed: _inviteViaWhatsApp,
-              icon: const Icon(Icons.share, size: 18),
-              label: const Text('Invite via WhatsApp', style: TextStyle(fontWeight: FontWeight.bold)),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF25D366), // WhatsApp Green
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                padding: const EdgeInsets.symmetric(vertical: 14),
-              ),
+              color: const Color(0xFF25D366),
+              textColor: Colors.white, // WhatsApp branding
             ),
           ),
         ],

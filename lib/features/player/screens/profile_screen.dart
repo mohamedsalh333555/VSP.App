@@ -1,17 +1,21 @@
 import 'package:flutter/material.dart';
-import 'package:image_picker/image_picker.dart';
-import '../../../../core/theme/app_theme.dart';
-import '../../../../core/widgets/shimmer_image.dart';
 import 'profile_subscreens/my_team_screen.dart';
 import 'profile_subscreens/payment_methods_screen.dart';
 import 'profile_subscreens/notifications_screen.dart';
 import 'profile_subscreens/privacy_policy_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/help_center_screen.dart';
+import 'profile_subscreens/edit_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../auth/screens/welcome_screen.dart';
+import '../../../core/services/database_service.dart';
+import '../../../data/models.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_section_title.dart';
+import '../../../core/ui/components/vsp_card.dart';
+import '../../../core/ui/components/vsp_menu_item.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -21,36 +25,25 @@ class ProfileScreen extends StatelessWidget {
     final userProfileUrl = auth.userModel?.profileImageUrl;
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Profile',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 22,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'Agency FB',
-            letterSpacing: 0.5,
-          ),
+          style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Profile Header Card - REFINED
-            Container(
-              padding: const EdgeInsets.all(20),
-              decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: AppTheme.neonGreen, width: 2.5),
-              ),
+            VSPCard(
+              padding: const EdgeInsets.all(VSPSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -63,7 +56,7 @@ class ProfileScreen extends StatelessWidget {
                         height: 92,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: AppTheme.neonGreen, width: 2),
+                          border: Border.all(color: VSPColors.accent, width: 2),
                         ),
                         child: CircleAvatar(
                           backgroundColor: Colors.transparent,
@@ -75,153 +68,117 @@ class ProfileScreen extends StatelessWidget {
                               : null,
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: VSPSpacing.md),
                       // Stats - REFINED
                       Expanded(
-                        child: Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceAround,
-                          children: [
-                            _buildStatItem('Rank your team', '9', hasArrow: true),
-                            _buildStatItem('Enrolled teams', '3', hasArrow: false),
-                          ],
+                        child: FutureBuilder<Team?>(
+                          future: DatabaseService().getUserTeam(auth.currentUser!.uid),
+                          builder: (context, snapshot) {
+                            if (snapshot.connectionState == ConnectionState.waiting) {
+                              return const Center(
+                                child: SizedBox(
+                                  width: 20,
+                                  height: 20,
+                                  child: CircularProgressIndicator(
+                                    strokeWidth: 2,
+                                    color: VSPColors.accent,
+                                  ),
+                                ),
+                              );
+                            }
+                            final team = snapshot.data;
+                            return Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceAround,
+                              children: [
+                                _buildStatItem(context, 'Wins', team?.wins.toString() ?? '0'),
+                                _buildStatItem(context, 'Matches', team?.matchesPlayed.toString() ?? '0'),
+                              ],
+                            );
+                          },
                         ),
                       ),
                       // Edit Button
                       GestureDetector(
-                        onTap: () => _pickAndUploadImage(context, auth),
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const EditProfileScreen()),
+                          );
+                        },
                         child: Container(
-                          padding: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(VSPSpacing.sm),
                           decoration: BoxDecoration(
-                            color: AppTheme.darkBackground,
+                            color: VSPColors.background,
                             shape: BoxShape.circle,
-                            border: Border.all(color: Colors.grey.withValues(alpha: 0.3)),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
                           ),
-                          child: auth.isLoading
-                              ? const SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(strokeWidth: 2, color: AppTheme.neonGreen),
-                                )
-                              : const Icon(
-                                  Icons.edit_outlined,
-                                  color: AppTheme.neonGreen,
-                                  size: 20,
-                                ),
+                          child: const Icon(
+                            Icons.edit_outlined,
+                            color: VSPColors.accent,
+                            size: 20,
+                          ),
                         ),
                       ),
                     ],
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: VSPSpacing.md),
                   // Info Text - REFINED (Aligned with Avatar left edge)
                   Text(
                     'Name / ${auth.userModel?.name ?? "Player"}  |  Position / ${auth.userModel?.position ?? "GK"}',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 11,
-                      letterSpacing: 0.2,
-                      height: 1.3,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium,
                     maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
-                  const SizedBox(height: 12),
-                  // Points Progress - REFINED (Fully rounded bar)
-                   Row(
-                    children: [
-                       const Text(
-                        'Point 210/600',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary, 
-                          fontSize: 11,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Padding(
-                          padding: const EdgeInsets.only(right: 8),
-                          child: ClipRRect(
-                            borderRadius: BorderRadius.circular(100),
-                            child: LinearProgressIndicator(
-                              value: 210 / 600,
-                              backgroundColor: Colors.grey.withValues(alpha: 0.2),
-                              color: AppTheme.neonGreen,
-                              minHeight: 14,
-                              borderRadius: BorderRadius.circular(100),
-                            ),
-                          ),
-                        ),
-                      ),
-                    ],
-                   )
                 ],
               ),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
 
             // Account Section - REFINED HEADER
-            const Text(
-              'Account',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Agency FB',
-                letterSpacing: 0.8,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _buildMenuItem(
+            const VSPSectionTitle('Account'),
+            const SizedBox(height: VSPSpacing.sm),
+            VSPMenuItem(
               icon: Icons.groups_outlined,
               title: 'My Team',
               subtitle: 'Manage Your Team Information',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
             ),
-            const SizedBox(height: 16),
-            _buildMenuItem(
+            const SizedBox(height: VSPSpacing.md),
+            VSPMenuItem(
               icon: Icons.payment_outlined,
               title: 'Payment Methods',
               subtitle: 'Manage Your Payment Methods',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
             ),
 
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
 
             // Preferences Section - REFINED HEADER
-            const Text(
-              'Preferences',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 22,
-                fontWeight: FontWeight.w900,
-                fontFamily: 'Agency FB',
-                letterSpacing: 0.8,
-              ),
-            ),
+            const VSPSectionTitle('Preferences'),
             const SizedBox(height: 12),
-            _buildMenuItem(
+            VSPMenuItem(
               icon: Icons.notifications_none_outlined,
               title: 'Notifications',
               subtitle: 'Manage Your Notification Settings',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
             ),
             const SizedBox(height: 16),
-            _buildMenuItem(
+            VSPMenuItem(
               icon: Icons.shield_outlined,
               title: 'Privacy',
               subtitle: 'Privacy Policy',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
             ),
             const SizedBox(height: 16),
-            _buildMenuItem(
+            VSPMenuItem(
               icon: Icons.translate,
               title: 'Language',
               subtitle: 'Manage Your Language Preferences',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
             ),
              const SizedBox(height: 16),
-            _buildMenuItem(
+            VSPMenuItem(
               icon: Icons.help_outline,
               title: 'Help Center',
               subtitle: 'Get Help & Support',
@@ -231,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: 16),
 
             // Logout Button
-            _buildMenuItem(
+            VSPMenuItem(
               icon: Icons.logout,
               title: 'Logout',
               subtitle: 'Sign out of your account',
@@ -248,128 +205,35 @@ class ProfileScreen extends StatelessWidget {
             ),
             
             // Bottom Padding
-            const SizedBox(height: 100),
+            const SizedBox(height: VSPSpacing.xxl * 2),
           ],
         ),
       ),
     );
   }
 
-  Future<void> _pickAndUploadImage(BuildContext context, AuthProvider auth) async {
-    final ImagePicker picker = ImagePicker();
-    final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) {
-      await auth.updateProfilePhoto(image);
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Profile photo updated!'), backgroundColor: AppTheme.neonGreen),
-        );
-      }
-    }
-  }
 
-  Widget _buildStatItem(String label, String value, {required bool hasArrow}) {
+
+  Widget _buildStatItem(BuildContext context, String label, String value) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        if (hasArrow)
-          const Icon(Icons.arrow_drop_down, color: Colors.red, size: 24),
         Text(
           value,
-          style: const TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 36,
-            fontWeight: FontWeight.w900,
-            fontFamily: 'Agency FB',
+          style: Theme.of(context).textTheme.displayLarge?.copyWith(
             height: 0.9,
             letterSpacing: 1.0,
           ),
         ),
-        const SizedBox(height: 2),
+        const SizedBox(height: VSPSpacing.xs),
         Text(
           label,
           textAlign: TextAlign.center,
-          style: const TextStyle(
-            color: AppTheme.textSecondary,
-            fontSize: 11,
-            fontWeight: FontWeight.w400,
-            height: 1.2,
-          ),
+          style: Theme.of(context).textTheme.labelMedium,
         ),
       ],
     );
   }
 
-  Widget _buildMenuItem({
-    required IconData icon,
-    required String title,
-    required String subtitle,
-    required VoidCallback onTap,
-    bool isLogout = false,
-  }) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        constraints: const BoxConstraints(minHeight: 56),
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 0),
-        color: Colors.transparent,
-        child: Row(
-          children: [
-            // Icon Box - REFINED
-            Container(
-              width: 48,
-              height: 48,
-              decoration: BoxDecoration(
-                color: isLogout ? const Color(0xFF2A1A1A) : AppTheme.neonGreen,
-                borderRadius: BorderRadius.circular(12),
-              ),
-              child: Icon(
-                icon,
-                color: isLogout ? Colors.red : Colors.black,
-                size: 24,
-              ),
-            ),
-            const SizedBox(width: 16),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Text(
-                    title,
-                    style: TextStyle(
-                      color: isLogout ? Colors.red : AppTheme.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                      letterSpacing: 0.3,
-                    ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: isLogout 
-                        ? Colors.red.withValues(alpha: 0.7) 
-                        : const Color(0xFF888888),
-                      fontSize: 12,
-                      fontWeight: FontWeight.w400,
-                      height: 1.3,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-            // Chevron Right Icon - REFINED (More visible #555555)
-            if (!isLogout) 
-              const Icon(
-                Icons.chevron_right, 
-                color: Color(0xFF555555),
-                size: 22,
-              ),
-          ],
-        ),
-      ),
-    );
-  }
+
 }

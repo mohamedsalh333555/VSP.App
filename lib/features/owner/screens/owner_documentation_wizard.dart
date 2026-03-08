@@ -1,11 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:file_picker/file_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:image_picker/image_picker.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_section_title.dart';
+import '../../../core/ui/components/vsp_card.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_upload_widgets.dart';
+import '../../../core/navigation/root_screen.dart';
 import '../../../core/services/owner_document_service.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../shared/widgets/vsp_upload_widgets.dart';
-import 'owner_main_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
+import '../../../data/models.dart';
 
 class OwnerDocumentationWizard extends StatefulWidget {
   const OwnerDocumentationWizard({super.key});
@@ -32,48 +37,89 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     'idBack': false,
   };
   
-  Future<void> _pickAndUpload(OwnerDocumentType type, String key) async {
+  @override
+  void dispose() {
+    _pageController.dispose();
+    super.dispose();
+  }
+
+  final ImagePicker _picker = ImagePicker();
+
+  Future<void> _showImageSourceActionSheet(OwnerDocumentType type, String key) async {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VSPColors.background,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+      ),
+      builder: (context) => SafeArea(
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            const SizedBox(height: VSPSpacing.md),
+            Text(
+              'Select Image Source',
+              style: Theme.of(context).textTheme.displaySmall,
+            ),
+            const SizedBox(height: VSPSpacing.md),
+            ListTile(
+              leading: const Icon(Icons.camera_alt, color: VSPColors.accent),
+              title: const Text('Camera', style: TextStyle(color: VSPColors.textPrimary)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUpload(type, key, ImageSource.camera);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.photo_library, color: VSPColors.accent),
+              title: const Text('Gallery', style: TextStyle(color: VSPColors.textPrimary)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUpload(type, key, ImageSource.gallery);
+              },
+            ),
+            const SizedBox(height: VSPSpacing.md),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _pickAndUpload(OwnerDocumentType type, String key, ImageSource source) async {
     try {
-      FilePickerResult? result = await FilePicker.platform.pickFiles(
-        type: FileType.custom,
-        allowedExtensions: ['jpg', 'jpeg', 'png', 'pdf'],
+      final XFile? pickedFile = await _picker.pickImage(
+        source: source,
+        imageQuality: 80, // High quality for verification
       );
       
-      if (result == null || result.files.single.path == null) return;
+      if (pickedFile == null) return;
 
       setState(() {
         _uploadingStatus[key] = true;
       });
-      
+
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final uid = authProvider.currentUser?.uid ?? 'demo_owner_uid';
+
       final url = await _documentService.uploadAndSave(
         type: type,
-        filePath: result.files.single.path!,
+        filePath: pickedFile.path,
+        uid: uid,
       );
       
-      if (mounted) {
-        setState(() {
-          _uploadedDocUrls[key] = url;
-          _uploadingStatus[key] = false;
-        });
-        
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Document uploaded successfully!'),
-            backgroundColor: AppTheme.neonGreen,
-          ),
-        );
-      }
+      if (!context.mounted) return;
+      setState(() {
+        _uploadedDocUrls[key] = url;
+        _uploadingStatus[key] = false;
+      });
+      
+      VSPFeedback.showSuccess(context, 'Document uploaded successfully!');
     } catch (e) {
-      if (mounted) {
+      if (mounted && context.mounted) {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Upload failed: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        VSPFeedback.showError(context, 'Upload failed: $e');
       }
     }
   }
@@ -103,56 +149,53 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         });
       }
       
-      if (mounted) {
-        await showDialog(
+      if (!context.mounted) return;
+      
+      await showDialog(
           context: context,
           barrierDismissible: false,
           builder: (context) {
             return AlertDialog(
-              backgroundColor: const Color(0xFF1E1E1E), 
+              backgroundColor: VSPColors.surface, 
               shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(16),
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
               ),
-              title: const Text(
+              title: Text(
                 'Documents under review',
-                style: TextStyle(
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
+                style: Theme.of(context).textTheme.titleLarge,
               ),
-              content: const Text(
+              content: Text(
                 'Your documents have been submitted and are now being processed. You will receive a response within 12 hours.',
-                style: TextStyle(color: Colors.white70),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
               ),
               actions: [
                 TextButton(
                   onPressed: () {
                     Navigator.of(context).pop(); 
                   },
-                  child: const Text('OK', style: TextStyle(color: AppTheme.neonGreen)),
+                  child: Text(
+                    'OK',
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: VSPColors.accent,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
                 ),
               ],
             );
           },
         );
 
-        if (mounted) {
+        if (mounted && context.mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => const OwnerMainScreen()),
+            MaterialPageRoute(builder: (context) => const RootScreen()),
             (route) => false,
           );
         }
-      }
     } catch (e) {
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text('Failed to save: $e'),
-            backgroundColor: Colors.red,
-          ),
-        );
-      }
+      if (!mounted || !context.mounted) return;
+      VSPFeedback.showError(context, 'Failed to save: $e');
     }
   }
 
@@ -173,37 +216,33 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: _previousPage,
         ),
-        title: const Text(
+        title: Text(
           'Owner information',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
       body: SafeArea(
         child: Column(
           children: [
-            const SizedBox(height: 10),
+            const SizedBox(height: VSPSpacing.sm),
             Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 _buildDot(0),
-                const SizedBox(width: 8),
+                const SizedBox(width: VSPSpacing.xs),
                 _buildDot(1),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: VSPSpacing.md),
             Expanded(
               child: PageView(
                 controller: _pageController,
@@ -225,7 +264,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       width: _currentStep == index ? 24 : 8,
       height: 4,
       decoration: BoxDecoration(
-        color: _currentStep == index ? AppTheme.neonGreen : Colors.grey[800],
+        color: _currentStep == index ? VSPColors.accent : VSPColors.divider,
         borderRadius: BorderRadius.circular(2),
       ),
     );
@@ -233,24 +272,21 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
   Widget _buildStep1BusinessDocs() {
      return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Upload documents',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
+          const VSPSectionTitle('Upload documents'),
+          const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
             title: 'Click to upload commercial register',
             isLoading: _uploadingStatus['commercialRegister'] ?? false,
-            onTap: () => _pickAndUpload(OwnerDocumentType.commercialRegister, 'commercialRegister'),
+            onTap: () => _showImageSourceActionSheet(OwnerDocumentType.commercialRegister, 'commercialRegister'),
           ),
 
           if (_uploadedDocUrls['commercialRegister'] != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
               title: 'Commercial Register',
               subtitle: 'Uploaded Successfully',
@@ -259,8 +295,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
           ],
 
-          const SizedBox(height: 40),
-          _buildPrimaryButton('Save', _nextPage),
+          const SizedBox(height: VSPSpacing.xxl),
+          PrimaryButton(
+            text: 'Save',
+            onPressed: _nextPage,
+          ),
         ],
       ),
     );
@@ -268,24 +307,21 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
   Widget _buildStep2PersonalID() {
      return SingleChildScrollView(
-      padding: const EdgeInsets.all(20),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
-            'Upload national ID',
-            style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
-          ),
-          const SizedBox(height: 20),
+          const VSPSectionTitle('Upload national ID'),
+          const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
             title: 'National ID Front',
             isLoading: _uploadingStatus['idFront'] ?? false,
-            onTap: () => _pickAndUpload(OwnerDocumentType.nationalIdFront, 'idFront'),
+            onTap: () => _showImageSourceActionSheet(OwnerDocumentType.nationalIdFront, 'idFront'),
           ),
 
           if (_uploadedDocUrls['idFront'] != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
               title: 'ID Front',
               subtitle: 'Uploaded Successfully',
@@ -294,16 +330,16 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
           ],
           
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
             title: 'National ID Back',
             isLoading: _uploadingStatus['idBack'] ?? false,
-            onTap: () => _pickAndUpload(OwnerDocumentType.nationalIdBack, 'idBack'),
+            onTap: () => _showImageSourceActionSheet(OwnerDocumentType.nationalIdBack, 'idBack'),
           ),
 
           if (_uploadedDocUrls['idBack'] != null) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
               title: 'ID Back',
               subtitle: 'Uploaded Successfully',
@@ -312,35 +348,15 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
           ],
 
-          const SizedBox(height: 40),
-          _buildPrimaryButton('Save', _nextPage),
+          const SizedBox(height: VSPSpacing.xl),
+          PrimaryButton(
+            text: 'Save', 
+            onPressed: _nextPage,
+          ),
         ],
       ),
     );
   }
 
-  Widget _buildPrimaryButton(String text, VoidCallback onPressed) {
-    return SizedBox(
-      width: double.infinity,
-      height: 56,
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonGreen,
-          foregroundColor: Colors.black,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: const TextStyle(
-            fontSize: 16,
-            fontWeight: FontWeight.bold,
-          ),
-        ),
-      ),
-    );
-  }
+
 }

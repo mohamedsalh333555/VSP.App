@@ -1,10 +1,12 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/navigation/root_screen.dart';
 
 class SplashScreen extends StatefulWidget {
-  const SplashScreen({super.key});
+  final bool navigate;
+  const SplashScreen({super.key, this.navigate = true});
 
   @override
   State<SplashScreen> createState() => _SplashScreenState();
@@ -19,16 +21,16 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     super.initState();
     
     // Set status bar to dark
-    SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+    SystemChrome.setSystemUIOverlayStyle(SystemUiOverlayStyle(
       statusBarColor: Colors.transparent,
       statusBarIconBrightness: Brightness.light,
-      systemNavigationBarColor: AppTheme.darkBackground,
+      systemNavigationBarColor: VSPColors.background,
       systemNavigationBarIconBrightness: Brightness.light,
     ));
 
     // Initialize fade animation
     _controller = AnimationController(
-      duration: const Duration(milliseconds: 1500),
+      duration: const Duration(milliseconds: 1000), // Slightly faster
       vsync: this,
     );
 
@@ -37,15 +39,6 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
 
     _controller.forward();
-
-    // Navigate after delay to RootScreen which handles the logic
-    Future.delayed(const Duration(milliseconds: 2000), () {
-      if (mounted) {
-        Navigator.of(context).pushReplacement(
-          MaterialPageRoute(builder: (_) => const RootScreen()),
-        );
-      }
-    });
   }
 
   @override
@@ -57,11 +50,11 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground, // Pure #121212
+      backgroundColor: VSPColors.background,
       body: Container(
         width: double.infinity,
         height: double.infinity,
-        color: AppTheme.darkBackground,
+        color: VSPColors.background,
         child: Center(
           child: FadeTransition(
             opacity: _fadeAnimation,
@@ -73,7 +66,7 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
                 return const Text(
                   'VSP',
                   style: TextStyle(
-                    color: AppTheme.neonGreen,
+                    color: VSPColors.accent,
                     fontSize: 72,
                     fontWeight: FontWeight.w900,
                     letterSpacing: 4,
@@ -87,3 +80,4 @@ class _SplashScreenState extends State<SplashScreen> with SingleTickerProviderSt
     );
   }
 }
+

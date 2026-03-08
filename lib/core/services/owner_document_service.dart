@@ -19,14 +19,8 @@ class OwnerDocumentService {
   Future<String> uploadAndSave({
     required OwnerDocumentType type,
     required String filePath,
+    required String uid,
   }) async {
-    final user = _auth.currentUser;
-    if (user == null) {
-      throw Exception('No authenticated user for document upload');
-    }
-
-    final uid = user.uid;
-
     // 1) رفع الملف على Cloudinary
     final folder = 'users/$uid/documents';
     final url = await _cloudinary.uploadRawFile(filePath, folder: folder);

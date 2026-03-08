@@ -4,7 +4,9 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/vsp_animated_button.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../data/models.dart';
 
 class OwnerBookedScreen extends StatefulWidget {
@@ -34,27 +36,22 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: VSPColors.background,
         elevation: 0,
         automaticallyImplyLeading: false,
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Booked',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
       body: Column(
         children: [
           // 1. Stadium Picker & Month Selector
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
             child: Row(
               children: [
                 // Stadium Dropdown
@@ -74,22 +71,22 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                     }
 
                     return Container(
-                      margin: const EdgeInsets.only(right: 12),
-                      padding: const EdgeInsets.symmetric(horizontal: 12),
+                      margin: const EdgeInsets.only(right: VSPSpacing.md),
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                       decoration: BoxDecoration(
-                        color: const Color(0xFF1E1E1E),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                       ),
                       child: DropdownButtonHideUnderline(
                         child: DropdownButton<Stadium>(
                           value: _selectedStadium,
-                          dropdownColor: const Color(0xFF1E1E1E),
-                          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.neonGreen),
-                          hint: const Text('Select Stadium', style: TextStyle(color: Colors.white70, fontSize: 13)),
+                          dropdownColor: VSPColors.surface,
+                          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
+                          hint: Text('Select Stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                           items: stadiums.map((s) => DropdownMenuItem(
                             value: s,
-                            child: Text(s.name, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold)),
+                            child: Text(s.name, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.textPrimary)),
                           )).toList(),
                           onChanged: (val) {
                             setState(() {
@@ -104,24 +101,20 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
 
                 // Date Picker (Visual)
                 Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
                   decoration: BoxDecoration(
-                    color: const Color(0xFF2C2C2C),
-                    borderRadius: BorderRadius.circular(12),
-                    border: Border.all(color: Colors.grey[800]!),
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
                   ),
                   child: Row(
                     children: [
                       Text(
                         DateFormat('MMMM, yyyy').format(DateTime.now()),
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 14,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(width: 8),
-                      const Icon(Icons.calendar_today_outlined, color: Colors.white, size: 16),
+                      const Icon(Icons.calendar_today_outlined, color: VSPColors.textPrimary, size: 16),
                     ],
                   ),
                 ),
@@ -135,6 +128,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
               padding: const EdgeInsets.symmetric(horizontal: 16),
+              physics: const BouncingScrollPhysics(),
               itemCount: 7, // Current Week
               itemBuilder: (context, index) {
                 final date = DateTime.now().add(Duration(days: index));
@@ -149,12 +143,12 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   },
                   child: Container(
                     width: 60,
-                    margin: const EdgeInsets.only(right: 12),
+                    margin: const EdgeInsets.only(right: VSPSpacing.md),
                     decoration: BoxDecoration(
-                      color: isSelected ? AppTheme.neonGreen : Colors.transparent,
-                      borderRadius: BorderRadius.circular(12),
+                      color: isSelected ? VSPColors.accent : Colors.transparent,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
                       border: Border.all(
-                        color: isSelected ? AppTheme.neonGreen : Colors.grey[800]!,
+                        color: isSelected ? VSPColors.accent : VSPColors.divider,
                         width: 1.5,
                       ),
                     ),
@@ -163,20 +157,18 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                       children: [
                         Text(
                           '${date.day}',
-                          style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.white,
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                                color: isSelected ? Colors.black : VSPColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
                         ),
                         const SizedBox(height: 4),
                         Text(
                           dayName,
-                          style: TextStyle(
-                            color: isSelected ? Colors.black : Colors.grey[600],
-                            fontSize: 12,
-                            fontWeight: FontWeight.w600,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: isSelected ? Colors.black : VSPColors.textSecondary,
+                                fontWeight: FontWeight.w600,
+                              ),
                         ),
                       ],
                     ),
@@ -187,7 +179,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
           ),
 
           const SizedBox(height: 10),
-          const Divider(color: Colors.white10, thickness: 1),
+          const Divider(color: VSPColors.divider, thickness: 1),
           
           // 3. Time Slots List
           Expanded(
@@ -238,12 +230,16 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   }
 
                  return ListView.separated(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    physics: const BouncingScrollPhysics(),
                     itemCount: slots.length,
-                    separatorBuilder: (c, i) => const SizedBox(height: 20),
+                    separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
                     itemBuilder: (context, index) {
                       final slot = slots[index];
-                      return _buildTimeSlotRow(slot);
+                      return VSPFadeInItem(
+                        index: index,
+                        child: _buildTimeSlotRow(slot),
+                      );
                     },
                   );
                },
@@ -265,12 +261,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
             padding: const EdgeInsets.only(top: 18.0), // Optical alignment
             child: Text(
               slot['time'],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.bold,
-                fontFamily: 'Agency FB',
-              ),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
           ),
         ),
@@ -296,35 +287,21 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     if (slot['type'] == 'empty') {
       return Container(
         height: 60,
-        decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15),
-          // No border for empty? Or maybe subtle?
-          // Prompt says: "State A: Empty Slot: Show a large Neon Green button with '+ -' text."
-          // Usually buttons have background. Let's make it a solid button button as shown in image 3 (green square)
-          // Wait, Image 3 shows a small square green button "+-" next to the time? Or the whole row?
-          // "State A: Empty Slot: Show a large Neon Green button with '+ -' text."
-          // Image 3 shows: Time on left, then a Green Square Button with "+ -" inside it. It doesn't stretch.
-          // Let's look at Image 3 provided in conversation... It's obscured.
-          // But strict instruction says: "Below the calendar, create a vertical list of time slots... Slot Design: Each row should have the time label on the left and a large Neon Green '+ -' Button on the right."
-          // And "State A: Empty Slot: Show a large Neon Green button...".
-          // I will make a button that looks like the one described.
-        ),
         alignment: Alignment.centerLeft,
         child: Container(
           width: 60,
           height: 50,
           decoration: BoxDecoration(
-             color: AppTheme.neonGreen,
-             borderRadius: BorderRadius.circular(15),
+             color: VSPColors.accent,
+             borderRadius: BorderRadius.circular(VSPRadius.md),
           ),
           alignment: Alignment.center,
-          child: const Text(
+          child: Text(
             '+ -',
-            style: TextStyle(
-              color: Colors.black,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: Colors.black,
+                  fontWeight: FontWeight.bold,
+                ),
           ),
         ),
       );
@@ -336,9 +313,9 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Dark card bg
-        borderRadius: BorderRadius.circular(15),
-        border: isManaged ? Border.all(color: AppTheme.neonGreen, width: 1.5) : Border.all(color: Colors.grey[800]!, width: 0.5),
+        color: VSPColors.surface, // Dark card bg
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: isManaged ? Border.all(color: VSPColors.accent, width: 1.5) : Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: Row(
         children: [
@@ -348,6 +325,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                width: 40, height: 40,
                decoration: BoxDecoration(
                  shape: BoxShape.circle,
+                 border: Border.all(color: VSPColors.divider, width: 1),
                  image: DecorationImage(image: NetworkImage(slot['logo']), fit: BoxFit.cover),
                ),
             )
@@ -356,6 +334,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                width: 40, height: 40,
                decoration: BoxDecoration(
                  shape: BoxShape.circle,
+                 border: Border.all(color: VSPColors.divider, width: 1),
                  image: DecorationImage(image: NetworkImage(slot['image']), fit: BoxFit.cover),
                ),
             ),
@@ -370,19 +349,11 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               children: [
                 Text(
                   slot['name'],
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold, // Condensed bold implied
-                    fontFamily: 'Agency FB',
-                  ),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
                 ),
                 Text(
                   slot['subtitle'], // 'Team', 'GK', etc
-                  style: TextStyle(
-                    color: Colors.grey[500],
-                    fontSize: 12,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ],
             ),
@@ -395,15 +366,15 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                height: 30,
                child: Stack(
                  children: [
-                    _buildMiniAvatar(0, Colors.red),
+                    _buildMiniAvatar(0, VSPColors.error),
                     _buildMiniAvatar(1, Colors.blue),
-                    _buildMiniAvatar(2, AppTheme.neonGreen),
+                    _buildMiniAvatar(2, VSPColors.accent),
                  ],
                ),
              ),
              
           if (isManaged)
-             const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 20),
+             const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 20),
         ],
       ),
     );
@@ -438,12 +409,12 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       builder: (context, setModalState) {
         return Container(
           height: MediaQuery.of(context).size.height * 0.75,
-          padding: const EdgeInsets.all(20),
-          decoration: const BoxDecoration(
-            color: Color(0xFF1E1E1E),
-            borderRadius: BorderRadius.only(
-              topLeft: Radius.circular(25),
-              topRight: Radius.circular(25),
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: const BorderRadius.only(
+              topLeft: Radius.circular(VSPRadius.xl),
+              topRight: Radius.circular(VSPRadius.xl),
             ),
           ),
           child: Column(
@@ -452,7 +423,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               Center(
                 child: Container(
                   width: 40, height: 4,
-                  decoration: BoxDecoration(color: Colors.grey[600], borderRadius: BorderRadius.circular(2)),
+                  decoration: BoxDecoration(color: VSPColors.textSecondary.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
                 ),
               ),
               const SizedBox(height: 20),
@@ -460,7 +431,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               Center(
                 child: Text(
                   isEdit ? 'Booking Details' : 'Manual Booking',
-                  style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold, fontFamily: 'Agency FB'),
+                  style: Theme.of(context).textTheme.displaySmall,
                 ),
               ),
                const SizedBox(height: 30),
@@ -495,69 +466,66 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                       child: ElevatedButton(
                         onPressed: () => Navigator.pop(context),
                         style: ElevatedButton.styleFrom(
-                          backgroundColor: Colors.white10,
+                          backgroundColor: VSPColors.surfaceAlt,
                           elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                         ),
-                        child: const Text('Cancel', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
+                        child: Text(
+                          'Cancel',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                color: VSPColors.textSecondary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                        ),
                       ),
                     ),
                   ),
                   const SizedBox(width: 15),
                   Expanded(
-                    child: SizedBox(
-                      height: 50,
-                      child: ElevatedButton(
-                        onPressed: isSaving ? null : () async {
-                          if (nameController.text.isEmpty || _selectedStadium == null) {
-                            ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter name and select stadium')));
-                            return;
-                          }
+                    child: VSPAnimatedButton(
+                      text: 'Confirm',
+                      isLoading: isSaving,
+                      onPressed: isSaving ? () {} : () async {
+                        if (nameController.text.isEmpty || _selectedStadium == null) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter name and select stadium')));
+                          return;
+                        }
 
-                          setModalState(() => isSaving = true);
+                        setModalState(() => isSaving = true);
 
-                          try {
-                            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                            final uid = authProvider.firebaseUser!.uid;
+                        try {
+                          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          final uid = authProvider.firebaseUser!.uid;
 
-                            final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
-                            final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
-                            final endTime = startTime.add(const Duration(hours: 1));
+                          final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
+                          final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
+                          final endTime = startTime.add(const Duration(hours: 1));
 
-                            final draft = BookingDraft(
-                              stadiumId: _selectedStadium!.id,
-                              stadiumName: _selectedStadium!.name,
-                              stadiumImageUrl: _selectedStadium!.imageUrl,
-                              ownerId: uid,
-                              startTime: startTime,
-                              endTime: endTime,
-                              bookingType: BookingType.personal,
-                              playerTeamName: nameController.text,
-                              isPrivate: true,
-                              rentBall: false,
-                              totalPrice: _selectedStadium!.pricePerHour.toDouble(),
-                              paymentMethod: 'cash',
-                              paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
-                            );
+                          final draft = BookingDraft(
+                            stadiumId: _selectedStadium!.id,
+                            stadiumName: _selectedStadium!.name,
+                            stadiumImageUrl: _selectedStadium!.imageUrl,
+                            ownerId: uid,
+                            startTime: startTime,
+                            endTime: endTime,
+                            bookingType: BookingType.personal,
+                            playerTeamName: nameController.text,
+                            isPrivate: true,
+                            rentBall: false,
+                            totalPrice: _selectedStadium!.pricePerHour.toDouble(),
+                            paymentMethod: 'cash',
+                            paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+                          );
 
-                            await bookingProvider.createBooking(draft, uid); // Use owner UID as creator for manual
-                            if (context.mounted) Navigator.pop(context);
-                          } catch (e) {
-                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
-                          } finally {
-                            setModalState(() => isSaving = false);
-                          }
-                        },
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: AppTheme.neonGreen,
-                          elevation: 0,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-                        ),
-                        child: isSaving 
-                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                            : const Text('Confirm', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16)),
-                      ),
+                          await bookingProvider.createBooking(draft, uid); // Use owner UID as creator for manual
+                          if (context.mounted) Navigator.pop(context);
+                        } catch (e) {
+                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                        } finally {
+                          setModalState(() => isSaving = false);
+                        }
+                      },
                     ),
                   ),
                 ],
@@ -573,15 +541,16 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   Widget _buildPillTextField({required TextEditingController controller, required String hint}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(15),
+        color: VSPColors.background,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        style: Theme.of(context).textTheme.bodyMedium,
         decoration: InputDecoration(
           hintText: hint,
-          hintStyle: TextStyle(color: Colors.grey[600]),
+          hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
         ),
@@ -594,11 +563,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       padding: const EdgeInsets.only(bottom: 8.0, left: 4),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white70,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
       ),
     );
   }
@@ -606,14 +571,16 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   Widget _buildPillInput({String? initialValue, bool enabled = true}) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(15),
-        border: enabled ? null : Border.all(color: Colors.white12),
+        color: VSPColors.background,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: TextFormField(
         initialValue: initialValue,
         enabled: enabled,
-        style: TextStyle(color: enabled ? Colors.white : Colors.white54),
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
+            ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: 16, vertical: 14),
@@ -623,3 +590,4 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     );
   }
 }
+

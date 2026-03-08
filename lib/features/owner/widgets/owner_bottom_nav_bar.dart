@@ -1,88 +1,129 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import 'package:flutter/services.dart';
+import 'dart:ui';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+
+class NavItem {
+  final IconData activeIcon;
+  final IconData inactiveIcon;
+  final String label;
+
+  NavItem({
+    required this.activeIcon,
+    required this.inactiveIcon,
+    required this.label,
+  });
+}
 
 class OwnerBottomNavBar extends StatelessWidget {
   final int currentIndex;
   final Function(int) onTap;
 
-  const OwnerBottomNavBar({
+  OwnerBottomNavBar({
     super.key,
     required this.currentIndex,
     required this.onTap,
   });
 
+  final List<NavItem> _navItems = [
+    NavItem(
+      activeIcon: Icons.home_filled,
+      inactiveIcon: Icons.home_outlined,
+      label: 'Home',
+    ),
+    NavItem(
+      activeIcon: Icons.emoji_events,
+      inactiveIcon: Icons.emoji_events_outlined,
+      label: 'Cup',
+    ),
+    NavItem(
+      activeIcon: Icons.work,
+      inactiveIcon: Icons.work_outline,
+      label: 'Booked',
+    ),
+    NavItem(
+      activeIcon: Icons.person,
+      inactiveIcon: Icons.person_outline,
+      label: 'Profile',
+    ),
+  ];
+
   @override
   Widget build(BuildContext context) {
     return Container(
-      height: 85,
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        border: Border(
-          top: BorderSide(color: Colors.white.withValues(alpha: 0.1)),
-        ),
+      margin: EdgeInsets.only(
+        left: 20, 
+        right: 20, 
+        bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
-      child: Row(
-        mainAxisAlignment: MainAxisAlignment.spaceAround,
-        children: [
-          _buildNavItem(0, Icons.home_filled, 'Home'),
-          _buildNavItem(1, Icons.emoji_events_outlined, 'Cup'),
-          _buildNavItem(2, Icons.work_outline, 'Booked'),
-          _buildNavItem(3, Icons.person_outline, 'Profile'),
+      height: 65,
+      decoration: BoxDecoration(
+        color: VSPColors.surface.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
         ],
       ),
-    );
-  }
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: _navItems.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final isSelected = index == currentIndex;
 
-  Widget _buildNavItem(int index, IconData icon, String label) {
-    bool isSelected = currentIndex == index;
-    return GestureDetector(
-      onTap: () => onTap(index),
-      behavior: HitTestBehavior.opaque,
-      child: SizedBox(
-        width: 65,
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            Stack(
-              alignment: Alignment.center,
-              clipBehavior: Clip.none,
-              children: [
-                if (isSelected)
-                  Positioned(
-                    top: -12,
-                    child: Container(
-                      width: 5,
-                      height: 5,
-                      decoration: const BoxDecoration(
-                        color: AppTheme.neonGreen,
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: AppTheme.neonGreen,
-                            blurRadius: 10,
-                            spreadRadius: 2,
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onTap(index);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSelected ? 16 : 12,
+                      vertical: isSelected ? 10 : 0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? VSPColors.accent.withValues(alpha: 0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? item.activeIcon : item.inactiveIcon,
+                          color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                          size: 24,
+                        ),
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
                           ),
                         ],
-                      ),
+                      ],
                     ),
                   ),
-                Icon(
-                  icon,
-                  color: isSelected ? AppTheme.neonGreen : Colors.grey[500],
-                  size: 26,
-                ),
-              ],
+                );
+              }).toList(),
             ),
-            const SizedBox(height: 5),
-            Text(
-              label,
-              style: TextStyle(
-                color: isSelected ? AppTheme.neonGreen : Colors.grey[500],
-                fontSize: 11,
-                fontWeight: isSelected ? FontWeight.w600 : FontWeight.normal,
-              ),
-            ),
-          ],
+          ),
         ),
       ),
     );

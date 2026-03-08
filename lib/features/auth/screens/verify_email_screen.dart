@@ -1,12 +1,14 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/navigation/root_screen.dart';
 import '../../owner/screens/add_stadium_wizard.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 /// شاشة التحقق من OTP - تعمل بنظام Mock في DEV والحقيقي في Production
 class VerifyEmailScreen extends StatefulWidget {
@@ -65,7 +67,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Future<void> _handleVerify() async {
     final code = _getCode();
     if (code.length < 6) {
-      _showError('يرجى إدخال رمز التحقق كاملاً (6 أرقام)');
+      VSPFeedback.showError(context, 'يرجى إدخال رمز التحقق كاملاً (6 أرقام)');
       return;
     }
 
@@ -81,7 +83,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         // Mark registration as complete in Firestore
         await auth.updateProfile({'isRegistrationComplete': true});
 
-        if (!mounted) return;
+        if (!context.mounted) return;
         
         // Role-based redirection
         if (auth.isOwner) {
@@ -101,46 +103,27 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         }
       } else {
         if (mounted) setState(() => _isLoading = false);
-        _showError('رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
+        VSPFeedback.showError(context, 'رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
       }
     } else {
-      // 🔥 Production: Replace with real OTP verification
-      // final auth = Provider.of<AuthProvider>(context, listen: false);
-      // final verified = await auth.verifyOtpFromCloud(code);
       // if (verified) { ... } else { ... }
-      if (mounted) setState(() => _isLoading = false);
-      _showError('OTP الحقيقي غير مفعّل بعد. استخدم وضع التطوير.');
+      if (!context.mounted) return;
+      setState(() => _isLoading = false);
+      VSPFeedback.showError(context, 'Real OTP not activated yet.');
     }
   }
 
-  void _showError(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message),
-        backgroundColor: Colors.red.shade700,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      ),
-    );
-  }
+  // Removed _showError helper in favor of VSPFeedback
 
   void _handleResend() {
     if (!_canResend) return;
     _startCountdown();
     // TODO: In production, call auth.resendOtp()
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(
-          AppConfig.useMockOtp
-              ? 'رمز التحقق الوهمي: ${AppConfig.mockOtpCode}'
-              : 'تم إعادة إرسال رمز التحقق',
-        ),
-        backgroundColor: AppTheme.neonGreen,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
-      ),
+    VSPFeedback.showSuccess(
+      context, 
+      AppConfig.useMockOtp
+          ? 'رمز التحقق الوهمي: ${AppConfig.mockOtpCode}'
+          : 'تم إعادة إرسال رمز التحقق',
     );
   }
 
@@ -164,14 +147,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -183,7 +166,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 Align(
                   alignment: Alignment.centerLeft,
                   child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                    icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -197,26 +180,22 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   width: 100,
                   height: 100,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonGreen.withOpacity(0.1),
+                    color: VSPColors.accent.withValues(alpha: 0.1),
                     shape: BoxShape.circle,
                   ),
                   child: const Icon(
                     Icons.verified_outlined,
                     size: 52,
-                    color: AppTheme.neonGreen,
+                    color: VSPColors.accent,
                   ),
                 ),
 
                 const SizedBox(height: 32),
 
                 // Title
-                const Text(
+                Text(
                   'أدخل رمز التحقق',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 28,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displayMedium,
                   textAlign: TextAlign.center,
                 ),
                 const SizedBox(height: 12),
@@ -229,9 +208,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                           ? 'وضع التطوير: استخدم الرمز ${AppConfig.mockOtpCode}'
                           : 'أدخل الرمز المُرسل إليك',
                   textAlign: TextAlign.center,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 15,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: VSPColors.textSecondary,
                     height: 1.6,
                   ),
                 ),
@@ -242,15 +220,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.orange.withOpacity(0.1),
+                      color: VSPColors.warning.withValues(alpha: 0.1),
                       borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: Colors.orange.withOpacity(0.4)),
+                      border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
                     ),
                     child: Text(
                       'وضع التطوير - رمز التجربة: ${AppConfig.mockOtpCode}',
-                      style: const TextStyle(
-                        color: Colors.orange,
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.warning,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -268,12 +245,12 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       height: 58,
                       margin: const EdgeInsets.symmetric(horizontal: 5),
                       decoration: BoxDecoration(
-                        color: AppTheme.cardBackground,
-                        borderRadius: BorderRadius.circular(12),
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                         border: Border.all(
                           color: _focusNodes[index].hasFocus
-                              ? AppTheme.neonGreen
-                              : Colors.white.withOpacity(0.1),
+                              ? VSPColors.accent
+                              : VSPColors.divider.withValues(alpha: 0.1),
                           width: 1.5,
                         ),
                       ),
@@ -284,10 +261,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         keyboardType: TextInputType.number,
                         maxLength: 1,
                         obscureText: false,
-                        style: const TextStyle(
-                          color: Colors.white,
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                          color: VSPColors.textPrimary,
                           fontSize: 22,
-                          fontWeight: FontWeight.bold,
                         ),
                         decoration: const InputDecoration(
                           counterText: '',
@@ -309,9 +285,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                   child: ElevatedButton(
                     onPressed: _isLoading ? null : _handleVerify,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(14)),
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: VSPColors.background,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                       elevation: 0,
                     ),
                     child: _isLoading
@@ -319,13 +295,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                             width: 24,
                             height: 24,
                             child: CircularProgressIndicator(
-                              color: Colors.black,
+                              color: VSPColors.background,
                               strokeWidth: 2.5,
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'تحقق',
-                            style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                   ),
                 ),
@@ -336,20 +312,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                 _canResend
                     ? TextButton(
                         onPressed: _handleResend,
-                        child: const Text(
+                        child: Text(
                           'إعادة إرسال الرمز',
-                          style: TextStyle(
-                            color: AppTheme.neonGreen,
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: VSPColors.accent,
                             fontWeight: FontWeight.bold,
-                            fontSize: 15,
                           ),
                         ),
                       )
                     : Text(
                         'يمكنك إعادة الإرسال بعد $_countdown ثانية',
-                        style: TextStyle(
-                          color: Colors.white.withOpacity(0.45),
-                          fontSize: 13,
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: VSPColors.textSecondary.withValues(alpha: 0.45),
                         ),
                       ),
 
@@ -361,7 +335,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.2),
+                      color: VSPColors.divider.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -375,3 +349,4 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     );
   }
 }
+

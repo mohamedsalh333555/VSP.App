@@ -2,9 +2,8 @@ import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
-import 'owner_dashboard_screen.dart';
 import 'owner_dashboard_tab.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
@@ -78,27 +77,27 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                   Text(
                     'Stadium Approved!',
-                    style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                   Text(
                     'Congratulations! "$name" is now live.',
-                    style: const TextStyle(color: Colors.black87, fontSize: 13),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black.withValues(alpha: 0.8)),
                   ),
                 ],
               ),
             ),
           ],
         ),
-        backgroundColor: AppTheme.neonGreen,
+        backgroundColor: VSPColors.accent,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(15)),
-        margin: const EdgeInsets.fromLTRB(16, 0, 16, 20),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+        margin: const EdgeInsets.fromLTRB(VSPSpacing.md, 0, VSPSpacing.md, VSPSpacing.xl),
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
           label: 'DISMISS',
-          textColor: Colors.black54,
+          textColor: Colors.black.withValues(alpha: 0.5),
           onPressed: () {},
         ),
       ),
@@ -116,7 +115,8 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      extendBody: true,
+      backgroundColor: VSPColors.background,
       body: IndexedStack(
         index: _currentIndex,
         children: const [
@@ -139,11 +139,11 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                 onPressed: () {
                    Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateTournamentScreen()));
                 },
-                backgroundColor: AppTheme.neonGreen,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                label: const Text(
+                backgroundColor: VSPColors.accent,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                label: Text(
                   'Create a tournament',
-                  style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 16),
+                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
                 ),
                 icon: const Icon(Icons.add, color: Colors.black),
                 elevation: 4,

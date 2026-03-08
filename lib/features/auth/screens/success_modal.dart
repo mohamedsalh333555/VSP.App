@@ -1,8 +1,9 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/navigation/root_screen.dart';
 import '../../owner/screens/my_stadiums_screen.dart';
 
@@ -61,10 +62,10 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
         child: Container(
           padding: const EdgeInsets.all(32),
           decoration: BoxDecoration(
-            color: const Color(0xFF1E1E1E).withValues(alpha: 0.9), // Dark Grey
-            borderRadius: BorderRadius.circular(24),
+            color: VSPColors.surface.withValues(alpha: 0.9),
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
             border: Border.all(
-              color: Colors.white.withValues(alpha: 0.1),
+              color: VSPColors.divider,
               width: 1,
             ),
             boxShadow: [
@@ -87,12 +88,12 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
                     border: Border.all(
-                      color: AppTheme.neonGreen,
+                      color: VSPColors.accent,
                       width: 4,
                     ),
                     boxShadow: [
                       BoxShadow(
-                        color: AppTheme.neonGreen.withValues(alpha: 0.2),
+                        color: VSPColors.accent.withValues(alpha: 0.2),
                         blurRadius: 20,
                         spreadRadius: 5,
                       ),
@@ -101,7 +102,7 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                   child: const Center(
                     child: Icon(
                       Icons.check,
-                      color: AppTheme.neonGreen,
+                      color: VSPColors.accent,
                       size: 50,
                     ),
                   ),
@@ -111,11 +112,10 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
               const SizedBox(height: 32),
 
               // Title
-              const Text(
+              Text(
                 'Success!',
-                style: TextStyle(
-                  color: AppTheme.neonGreen,
-                  fontSize: 28,
+                style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                  color: VSPColors.accent,
                   fontWeight: FontWeight.bold,
                   letterSpacing: 1,
                 ),
@@ -129,11 +129,10 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                     ? 'Your account was successfully created!\nYou are owner now'
                     : 'Your account was successfully created!\nYou are player now',
                 textAlign: TextAlign.center,
-                style: const TextStyle(
-                  color: Colors.white,
-                  fontSize: 16,
-                  height: 1.5,
+                style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                  color: VSPColors.textPrimary,
                   fontWeight: FontWeight.w500,
+                  height: 1.5,
                 ),
               ),
 
@@ -156,17 +155,16 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                     );
                   },
                   style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonGreen,
-                    foregroundColor: Colors.black, // Black Text
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: VSPColors.background, 
                     shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
                     ),
                     elevation: 0,
                   ),
-                  child: const Text(
+                  child: Text(
                     'Done',
-                    style: TextStyle(
-                      fontSize: 18,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                       letterSpacing: 0.5,
                     ),
@@ -180,3 +178,4 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
     );
   }
 }
+

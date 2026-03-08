@@ -1,8 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class CreateTournamentScreen extends StatefulWidget {
   const CreateTournamentScreen({super.key});
@@ -22,10 +26,23 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _prizeController = TextEditingController(text: '5000');
   final _instructionsController = TextEditingController();
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _winningPointsController.dispose();
+    _breakEvenPointsController.dispose();
+    _lossPointsController.dispose();
+    _durationController.dispose();
+    _feesController.dispose();
+    _prizeController.dispose();
+    _instructionsController.dispose();
+    super.dispose();
+  }
+
   // State Variables
   String _selectedTypeTournament = 'Cup';
   String _selectedSport = 'Football';
-  String _selectedNumTeams = '12';
+  String _selectedNumTeams = '16'; // 🟢 Default to a valid power of 2
   String _selectedMaxPlayers = '11';
   String _selectedMinPlayers = '5';
   String _selectedBackForth = 'Yes';
@@ -36,6 +53,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _trophyMedals = true;
   bool _redCardSuspension = true;
   bool _fairPlayScoring = false;
+  String _selectedPaymentMethod = 'Cash';
   bool _isLoading = false;
 
   DateTime _startDate = DateTime.now().add(const Duration(days: 7));
@@ -49,12 +67,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
-            colorScheme: const ColorScheme.dark(
-              primary: AppTheme.neonGreen,
+          data: Theme.of(context).copyWith(
+            colorScheme: ColorScheme.dark(
+              primary: VSPColors.accent,
               onPrimary: Colors.black,
-              surface: AppTheme.cardBackground,
-              onSurface: Colors.white,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
             ),
           ),
           child: child!,
@@ -71,9 +89,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
   Future<void> _handleCreateTournament() async {
     if (_nameController.text.trim().isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter a tournament name')),
-      );
+      VSPFeedback.showError(context, 'Please enter a tournament name');
       return;
     }
 
@@ -81,6 +97,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
+      
+      List<String> payments = [];
+      if (_selectedPaymentMethod == 'Cash') payments = ['cash'];
+      else if (_selectedPaymentMethod == 'Online') payments = ['online'];
+      else payments = ['cash', 'online'];
+
       final champData = {
         'name': _nameController.text.trim(),
         'type': _selectedTypeTournament,
@@ -93,16 +115,17 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'teamsCount': int.parse(_selectedNumTeams),
         'maxTeams': int.parse(_selectedNumTeams),
         'joinedTeams': [],
-        'prize': _prizeController.text,
-        'fees': _feesController.text,
-        'rules': _instructionsController.text,
+        'prize': _prizeController.text.trim(),
+        'fees': _feesController.text.trim(),
+        'rules': _instructionsController.text.trim(),
+        'paymentMethods': payments,
         'settings': {
           'maxPlayers': _selectedMaxPlayers,
           'minPlayers': _selectedMinPlayers,
-          'winningPoints': _winningPointsController.text,
-          'drawPoints': _breakEvenPointsController.text,
-          'lossPoints': _lossPointsController.text,
-          'matchDuration': _durationController.text,
+          'winningPoints': _winningPointsController.text.trim(),
+          'drawPoints': _breakEvenPointsController.text.trim(),
+          'lossPoints': _lossPointsController.text.trim(),
+          'matchDuration': _durationController.text.trim(),
           'isBackAndForth': _selectedBackForth == 'Yes',
           'trophyMedals': _trophyMedals,
           'redCardSuspension': _redCardSuspension,
@@ -114,18 +137,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       
       if (id != null && mounted) {
         Navigator.pop(context);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Tournament Created Successfully!', style: TextStyle(color: Colors.black)),
-            backgroundColor: AppTheme.neonGreen,
-          ),
-        );
+        VSPFeedback.showSuccess(context, 'Tournament Created Successfully!');
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e')),
-        );
+        VSPFeedback.showError(context, 'Error: $e');
       }
     } finally {
       if (mounted) setState(() => _isLoading = false);
@@ -135,36 +151,31 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Create a tournament',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.only(bottom: 100),
         child: Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- Basic Info ---
-              _buildSectionTitle('Basic Info'),
+              const VSPSectionTitle('Basic Info'),
               _buildInputLabel('Name Tournament'),
-              _buildTextField(_nameController, hint: 'Sal Cup'),
+              _buildTextField(_nameController, hint: 'Sal Cup', maxLength: 50),
               const SizedBox(height: 16),
               _buildInputLabel('Type Tournament'),
               _buildDropdown(['Cup', 'League'], _selectedTypeTournament, (v) => setState(() => _selectedTypeTournament = v!)),
@@ -174,7 +185,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 24),
 
               // --- Dates ---
-              _buildSectionTitle('Tournament Dates'),
+              const VSPSectionTitle('Tournament Dates'),
               Row(
                 children: [
                   Expanded(
@@ -208,32 +219,32 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
               // --- Upload Cover ---
               _buildInputLabel('Upload Tournament Cover'),
-              const Text('Recommended Size: 1920x1080', style: TextStyle(color: Colors.grey, fontSize: 10)),
-              const SizedBox(height: 8),
+              Text('Recommended Size: 1920x1080', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+              const SizedBox(height: VSPSpacing.xs),
               Container(
                 height: 150,
                 width: double.infinity,
                 decoration: BoxDecoration(
-                  color: const Color(0xFF1E1E1E),
-                  borderRadius: BorderRadius.circular(15),
-                  border: Border.all(color: Colors.grey.withValues(alpha: 0.3), style: BorderStyle.solid), // Dashed border simulation needed? Solid looks cleaner for now or use dedicated package
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.divider, style: BorderStyle.solid), 
                 ),
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
-                  children: const [
-                    Icon(Icons.camera_alt_outlined, color: AppTheme.neonGreen, size: 32),
-                    SizedBox(height: 8),
-                    Text('Upload Image', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                    Text('JPG, JPEG, PNG Less Than 10MB', style: TextStyle(color: Colors.grey, fontSize: 10)),
+                  children: [
+                    const Icon(Icons.camera_alt_outlined, color: VSPColors.accent, size: 32),
+                    const SizedBox(height: VSPSpacing.xs),
+                    Text('Upload Image', style: Theme.of(context).textTheme.titleSmall),
+                    Text('JPG, JPEG, PNG Less Than 10MB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
               // --- League Settings ---
-              _buildSectionTitle('League Settings'),
+              const VSPSectionTitle('League Settings'),
               _buildInputLabel('Number Of Teams'),
-              _buildDropdown(['8', '12', '16', '20'], _selectedNumTeams, (v) => setState(() => _selectedNumTeams = v!)),
+              _buildDropdown(['4', '8', '16', '32'], _selectedNumTeams, (v) => setState(() => _selectedNumTeams = v!)), // 🟢 FIXED: Only Powers of 2 for Knockout Algorithm
               const SizedBox(height: 16),
               _buildInputLabel('Maximum Number Of Players Per Team'),
               _buildDropdown(['5', '7', '11', '15'], _selectedMaxPlayers, (v) => setState(() => _selectedMaxPlayers = v!)),
@@ -243,21 +254,21 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 24),
 
               // --- Scoring Rules ---
-              _buildSectionTitle('Scoring Rules'),
+              const VSPSectionTitle('Scoring Rules'),
               _buildInputLabel('Winning Points'),
-              _buildTextField(_winningPointsController),
+              _buildTextField(_winningPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Break-Even Points'),
-              _buildTextField(_breakEvenPointsController),
+              _buildTextField(_breakEvenPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Loss Points'),
-              _buildTextField(_lossPointsController),
+              _buildTextField(_lossPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 24),
 
               // --- Match Settings ---
-              _buildSectionTitle('Match Settings'),
+              const VSPSectionTitle('Match Settings'),
               _buildInputLabel('Duration Of The Match'),
-              _buildTextField(_durationController), // Could be dropdown or text with suffix
+              _buildTextField(_durationController, maxLength: 3, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]), // Could be dropdown or text with suffix
                const SizedBox(height: 16),
               _buildInputLabel('Back And Forth'),
               _buildDropdown(['Yes', 'No'], _selectedBackForth, (v) => setState(() => _selectedBackForth = v!)),
@@ -270,39 +281,42 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 24),
 
               // --- Fees & Prize ---
-              _buildSectionTitle('Fees & Prize'),
+              const VSPSectionTitle('Fees & Prize'),
               _buildInputLabel('Team Subscription Fees'),
-              _buildTextField(_feesController),
+              _buildTextField(_feesController, maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Grand Prize'),
-              _buildTextField(_prizeController),
+              _buildTextField(_prizeController, maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              const SizedBox(height: 16),
+              _buildInputLabel('Payment Method'),
+              _buildDropdown(['Cash', 'Online', 'Both'], _selectedPaymentMethod, (v) => setState(() => _selectedPaymentMethod = v!)),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  const Text('Trophy/Medals', style: TextStyle(color: Colors.white, fontSize: 14)),
+                  Text('Trophy/Medals', style: Theme.of(context).textTheme.bodyMedium),
                   Switch(
                     value: _trophyMedals, 
                     onChanged: (v) => setState(() => _trophyMedals = v),
-                    activeColor: AppTheme.neonGreen,
+                    activeColor: VSPColors.accent,
                   )
                 ],
               ),
               const SizedBox(height: 24),
 
               // --- Rules & Regulations ---
-              _buildSectionTitle('Rules & Regulations'),
+              const VSPSectionTitle('Rules & Regulations'),
               _buildInputLabel('Yellow Cards Before Suspension'),
               _buildDropdown(['1', '2', '3'], _selectedYellowCards, (v) => setState(() => _selectedYellowCards = v!)),
               const SizedBox(height: 16),
                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   const Text('Red Cards Automatic Suspension', style: TextStyle(color: Colors.white, fontSize: 14)),
+                   Text('Red Cards Automatic Suspension', style: Theme.of(context).textTheme.bodyMedium),
                    Switch(
                     value: _redCardSuspension,
                     onChanged: (v) => setState(() => _redCardSuspension = v),
-                    activeColor: AppTheme.neonGreen,
+                    activeColor: VSPColors.accent,
                   )
                 ],
               ),
@@ -310,64 +324,51 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   const Text('Fair-Play Scoring', style: TextStyle(color: Colors.white, fontSize: 14)),
+                   Text('Fair-Play Scoring', style: Theme.of(context).textTheme.bodyMedium),
                    Switch(
                     value: _fairPlayScoring,
                     onChanged: (v) => setState(() => _fairPlayScoring = v),
-                    activeColor: AppTheme.neonGreen,
+                    activeColor: VSPColors.accent,
                   )
                 ],
               ),
               const SizedBox(height: 24),
               
-               _buildInputLabel('Championship instructions'),
-               Container(
-                 height: 120,
-                  decoration: BoxDecoration(
-                   color: const Color(0xFF2C2C2C),
-                   borderRadius: BorderRadius.circular(12),
-                 ),
-                 child: TextField(
-                   controller: _instructionsController,
-                   maxLines: 5,
-                   style: const TextStyle(color: Colors.white, fontSize: 12),
-                   decoration: const InputDecoration(
-                     border: InputBorder.none,
-                     contentPadding: EdgeInsets.all(16),
-                     hintText: 'Welcome everyone, Before We Begin The Tournament I Would Like To Clarify Some Important Instructions To Ensure Fair Competition...',
-                     hintStyle: TextStyle(color: Colors.grey),
-                   ),
-                 ),
-               ),
+              _buildInputLabel('Championship instructions'),
+                Container(
+                  height: 120,
+                   decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                  child: TextField(
+                    controller: _instructionsController,
+                    maxLines: 5,
+                    maxLength: 500,
+                    style: Theme.of(context).textTheme.bodySmall,
+                    decoration: InputDecoration(
+                      border: InputBorder.none,
+                      counterText: "",
+                      contentPadding: const EdgeInsets.all(VSPSpacing.md),
+                      hintText: 'Welcome everyone, Before We Begin The Tournament I Would Like To Clarify Some Important Instructions To Ensure Fair Competition...',
+                      hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+                    ),
+                  ),
+                ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(20),
-        color: const Color(0xFF121212),
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        color: VSPColors.background,
         child: SizedBox(
           width: double.infinity,
           height: 56,
-          child: ElevatedButton(
-            onPressed: _isLoading ? null : _handleCreateTournament,
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonGreen,
-              foregroundColor: Colors.black,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(15),
-              ),
-              elevation: 0,
-            ),
-            child: _isLoading 
-              ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-              : const Text(
-                  'Confirm',
-                  style: TextStyle(
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+          child: PrimaryButton(
+            text: 'Confirm',
+            isLoading: _isLoading,
+            onPressed: _isLoading ? () {} : _handleCreateTournament,
           ),
         ),
       ),
@@ -375,49 +376,43 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   }
 
   Widget _buildSectionTitle(String title) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
-      child: Text(
-        title,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 18,
-          fontWeight: FontWeight.bold,
-          fontFamily: 'Agency FB',
-        ),
-      ),
-    );
+    return VSPSectionTitle(title);
   }
 
   Widget _buildInputLabel(String label) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 8.0, left: 4),
+      padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),
       child: Text(
         label,
-        style: const TextStyle(
-          color: Colors.white,
-          fontSize: 14,
-          fontWeight: FontWeight.w500,
-        ),
+        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.w500),
       ),
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, {String? hint}) {
+  Widget _buildTextField(TextEditingController controller, {
+    String? hint, 
+    int? maxLength,
+    TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
+  }) {
     return Container(
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
       child: TextField(
         controller: controller,
-        style: const TextStyle(color: Colors.white),
+        maxLength: maxLength,
+        keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
+        style: Theme.of(context).textTheme.bodyMedium,
         decoration: InputDecoration(
           border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+          counterText: "",
+          contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
           isDense: true,
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.grey),
+          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
         ),
       ),
     );
@@ -427,16 +422,16 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
-          dropdownColor: const Color(0xFF2C2C2C),
-          icon: const Icon(Icons.keyboard_arrow_down, color: Colors.grey),
+          dropdownColor: VSPColors.surface,
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
           isExpanded: true,
-          style: const TextStyle(color: Colors.white),
+          style: Theme.of(context).textTheme.bodyMedium,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
@@ -453,17 +448,17 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
             "${date.day}/${date.month}/${date.year}",
-            style: const TextStyle(color: Colors.white),
+            style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 18),
+          const Icon(Icons.calendar_today, color: VSPColors.accent, size: 18),
         ],
       ),
     );

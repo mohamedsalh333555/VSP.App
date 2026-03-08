@@ -43,6 +43,10 @@
 	</array>
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
+	<key>NSLocationWhenInUseUsageDescription</key>
+	<string>This app needs access to location when open to automatically detect your governorate and show nearby stadiums and tournaments.</string>
+	<key>NSLocationAlwaysUsageDescription</key>
+	<string>This app needs access to location to show you relevant matches and stadiums in your area.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 </dict>

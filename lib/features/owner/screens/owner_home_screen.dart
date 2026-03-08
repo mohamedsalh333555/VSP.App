@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import 'owner_profile_screen.dart';
 import 'owner_booked_screen.dart';
@@ -19,8 +18,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
-
+      backgroundColor: VSPColors.background,
       body: Stack(
         children: [
           // Content
@@ -55,34 +53,29 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(16, 60, 16, 100),
+      padding: const EdgeInsets.fromLTRB(VSPSpacing.md, 60, VSPSpacing.md, 100),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildHeader(),
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           _buildFilters(),
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           _buildStatsGrid(),
-          const SizedBox(height: 32),
-          const Text(
+          const SizedBox(height: VSPSpacing.xl),
+          Text(
             'Booked Today',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 20,
-              fontWeight: FontWeight.bold,
-            ),
+            style: Theme.of(context).textTheme.displaySmall,
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: VSPSpacing.md),
           _buildBookedList(),
           const SizedBox(height: 20),
           Center(
             child: Text(
               'Show more',
-              style: TextStyle(
-                color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                fontSize: 14,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary.withValues(alpha: 0.7),
+                  ),
             ),
           ),
         ],
@@ -99,33 +92,28 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
+            Text(
               'Hi Sal Acd',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 24,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.displayMedium,
             ),
             const SizedBox(height: 4),
             Text(
               'You have 3 stadium',
-              style: TextStyle(
-                color: AppTheme.textSecondary.withValues(alpha: 0.8),
-                fontSize: 14,
-              ),
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary.withValues(alpha: 0.8),
+                  ),
             ),
           ],
         ),
         Container(
           padding: const EdgeInsets.all(10),
           decoration: BoxDecoration(
-            color: const Color(0xFF2C2C2E),
-            borderRadius: BorderRadius.circular(12),
+            color: VSPColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
           ),
           child: const Icon(
             Icons.notifications_none,
-            color: AppTheme.neonGreen,
+            color: VSPColors.accent,
             size: 28,
           ),
         ),
@@ -141,15 +129,15 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: transparentDark,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.grey[800]!),
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.divider),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: const [
-                 Text('All Stadium', style: TextStyle(color: Colors.white)),
-                 Icon(Icons.keyboard_arrow_down, color: Colors.white),
+              children: [
+                 Text('All Stadium', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary)),
+                 const Icon(Icons.keyboard_arrow_down, color: VSPColors.textPrimary),
               ],
             ),
           ),
@@ -159,15 +147,15 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
           child: Container(
             padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
             decoration: BoxDecoration(
-              color: transparentDark,
-              borderRadius: BorderRadius.circular(12),
-               border: Border.all(color: Colors.grey[800]!),
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+               border: Border.all(color: VSPColors.divider),
             ),
             child: Row(
-              children: const [
-                 Icon(Icons.calendar_today, size: 16, color: Colors.white),
-                 SizedBox(width: 8),
-                 Text('Last 30 days', style: TextStyle(color: Colors.white)),
+              children: [
+                 const Icon(Icons.calendar_today, size: 16, color: VSPColors.textPrimary),
+                 const SizedBox(width: 8),
+                 Text('Last 30 days', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary)),
               ],
             ),
           ),
@@ -182,32 +170,33 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
       children: [
         // Revenue Card (Full Width)
         Container(
-          padding: const EdgeInsets.all(16),
+          padding: const EdgeInsets.all(VSPSpacing.md),
           decoration: BoxDecoration(
-            color: transparentDark,
-            borderRadius: BorderRadius.circular(16),
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
           child: Row(
             children: [
               Container(
                  padding: const EdgeInsets.all(10),
                  decoration: BoxDecoration(
-                   color: Colors.grey[800],
+                   color: VSPColors.background,
                    shape: BoxShape.circle,
+                   border: Border.all(color: VSPColors.divider),
                  ),
-                 child: const Icon(Icons.attach_money, color: Colors.white),
+                 child: const Icon(Icons.attach_money, color: VSPColors.textPrimary),
               ),
               const SizedBox(width: 16),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text('Revenue', style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+                    Text('Revenue', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                     Row(
-                      children: const [
-                        Text('369K', style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold)),
-                        SizedBox(width: 8),
-                         Text('↑ 34%', style: TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold)),
+                      children: [
+                        Text('369K', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+                        const SizedBox(width: 8),
+                        Text('↑ 34%', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                       ],
                     )
                   ],
@@ -216,10 +205,10 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
-                  color: Colors.grey[700],
+                  color: VSPColors.surfaceAlt,
                   borderRadius: BorderRadius.circular(20),
                 ),
-                child: const Text('Details >', style: TextStyle(color: Colors.white, fontSize: 10)),
+                child: Text('Details >', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textPrimary, fontSize: 10)),
               ),
             ],
           ),
@@ -244,7 +233,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
                  null, 
                  Icons.star_border,
                  customContent: Row(
-                   children: List.generate(5, (index) => const Icon(Icons.star, color: Colors.amber, size: 16)),
+                   children: List.generate(5, (index) => const Icon(Icons.star, color: VSPColors.warning, size: 16)),
                  )
                )
              ),
@@ -258,17 +247,17 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
 
   Widget _buildStatCard(String title, String? value, String? trend, IconData icon, {Widget? customContent}) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: transparentDark,
-        borderRadius: BorderRadius.circular(16),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-           Icon(icon, color: Colors.white, size: 20),
+           Icon(icon, color: VSPColors.textPrimary, size: 20),
            const SizedBox(height: 8),
-           Text(title, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
+           Text(title, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
            const SizedBox(height: 4),
            if (customContent != null)
              customContent
@@ -276,9 +265,9 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
              Row(
                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                children: [
-                 Text(value!, style: const TextStyle(color: Colors.white, fontSize: 20, fontWeight: FontWeight.bold)),
+                 Text(value!, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
                  if (trend != null)
-                   Text(trend, style: const TextStyle(color: AppTheme.neonGreen, fontSize: 12)),
+                   Text(trend, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent)),
                ],
              ),
         ],
@@ -299,15 +288,15 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
-          color: const Color(0xFF1E3A1E), // Dark Greenish tint
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3), width: 1),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2), width: 1),
         ),
         child: Row(
           children: [
             Text(
               booking['time']!,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
             ),
             const SizedBox(width: 16),
             ShimmerImage(
@@ -321,8 +310,8 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(booking['name']!, style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-                  Text(booking['role']!, style: const TextStyle(color: Colors.white70, fontSize: 12)),
+                  Text(booking['name']!, style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+                  Text(booking['role']!, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                 ],
               ),
             ),
@@ -330,10 +319,10 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
               padding: const EdgeInsets.all(8),
               decoration: BoxDecoration(
                 color: Colors.transparent,
-                border: Border.all(color: AppTheme.neonGreen),
-                borderRadius: BorderRadius.circular(8),
+                border: Border.all(color: VSPColors.accent),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
               ),
-              child: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 20),
+              child: const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 20),
             ),
           ],
         ),
@@ -345,18 +334,12 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
   Widget _buildBottomNavBar() {
     return Container(
       decoration: BoxDecoration(
-        color: AppTheme.darkBackground.withValues(alpha: 0.95),
+        color: VSPColors.background.withValues(alpha: 0.95),
          borderRadius: const BorderRadius.only(
-            topLeft: Radius.circular(24),
-            topRight: Radius.circular(24),
+            topLeft: Radius.circular(VSPRadius.xl),
+            topRight: Radius.circular(VSPRadius.xl),
          ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.5),
-            blurRadius: 20,
-            offset: const Offset(0, -5),
-          ),
-        ],
+        boxShadow: VSPShadow.subtle,
       ),
       child: SafeArea(
         child: Padding(
@@ -384,7 +367,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
         children: [
           Icon(
             icon,
-            color: isSelected ? AppTheme.neonGreen : Colors.grey,
+            color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
             size: 26,
           ),
           const SizedBox(height: 6),
@@ -393,23 +376,20 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
               width: 4,
               height: 4,
               decoration: const BoxDecoration(
-                color: AppTheme.neonGreen,
+                color: VSPColors.accent,
                 shape: BoxShape.circle,
               ),
             )
           else 
             Text(
               label,
-              style: const TextStyle(
-                color: Colors.grey,
-                fontSize: 10,
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontSize: 10,
+                  ),
             ),
         ],
       ),
     );
   }
 }
-
-// Helper Constant
-const Color transparentDark = Color(0xFF2C2C2E);

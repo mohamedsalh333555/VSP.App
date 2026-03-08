@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../../core/theme/app_theme.dart';
@@ -43,7 +44,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -54,7 +55,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                 
                 // Back Button
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                  icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -63,12 +64,10 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                 const SizedBox(height: 40),
 
                 // Title
-                const Center(
+                Center(
                   child: Text(
                     'Verify your email 2/3',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -86,9 +85,8 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.textSecondary,
                         height: 1.5,
                       ),
                       children: [
@@ -96,7 +94,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                         TextSpan(
                           text: widget.email,
                           style: const TextStyle(
-                            color: AppTheme.textPrimary,
+                            color: VSPColors.textPrimary,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -109,11 +107,9 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                 const SizedBox(height: 32),
 
                 // Code Label
-                const Text(
+                Text(
                   'Code',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -157,17 +153,16 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                       }
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: VSPColors.background,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Create New Account',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -181,20 +176,18 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Text(
+                      Text(
                         'Wrong email? ',
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 14,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.textSecondary,
                         ),
                       ),
                       GestureDetector(
                         onTap: () => Navigator.pop(context),
-                        child: const Text(
+                        child: Text(
                           'Send to different email',
-                          style: TextStyle(
-                            color: AppTheme.neonGreen,
-                            fontSize: 14,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: VSPColors.accent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -212,15 +205,14 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                       ScaffoldMessenger.of(context).showSnackBar(
                         const SnackBar(
                           content: Text('Code sent again!'),
-                          backgroundColor: AppTheme.neonGreen,
+                          backgroundColor: VSPColors.accent,
                         ),
                       );
                     },
-                    child: const Text(
+                    child: Text(
                       'Send Code Again',
-                      style: TextStyle(
-                        color: AppTheme.neonGreen,
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.accent,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -235,7 +227,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -268,8 +260,8 @@ class _OTPBox extends StatelessWidget {
       width: 60,
       height: 60,
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
       child: TextField(
         controller: controller,
@@ -277,9 +269,7 @@ class _OTPBox extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: const TextStyle(
-          color: AppTheme.textPrimary,
-          fontSize: 24,
+        style: Theme.of(context).textTheme.displaySmall?.copyWith(
           fontWeight: FontWeight.bold,
         ),
         decoration: const InputDecoration(
@@ -317,9 +307,10 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
 }
+

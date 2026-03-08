@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -16,21 +16,17 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Notifications',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -74,12 +70,12 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
              children: [
                Text(
                  title,
-                 style: const TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                 style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
                ),
                const SizedBox(height: 8),
                Text(
                  subtitle,
-                 style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                ),
              ],
            ),
@@ -87,10 +83,10 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
          Switch(
            value: value,
            onChanged: onChanged,
-           activeColor: AppTheme.neonGreen,
-           activeTrackColor: AppTheme.neonGreen.withValues(alpha: 0.3),
+           activeColor: VSPColors.accent,
+           activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
            inactiveThumbColor: Colors.white,
-           inactiveTrackColor: Colors.grey[800],
+           inactiveTrackColor: VSPColors.surfaceAlt,
          ),
        ],
      );

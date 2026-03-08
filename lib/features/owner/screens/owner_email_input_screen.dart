@@ -3,7 +3,8 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../auth/screens/owner_verify_email_screen.dart';
@@ -37,9 +38,9 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
     
     if (name.isEmpty || !name.contains(' ')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter your full name (First and Last name)'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please enter your full name (First and Last name)'),
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -47,9 +48,9 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
 
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid email'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please enter a valid email'),
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -57,9 +58,9 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
 
     if (phone.isEmpty || phone.length < 8) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Please enter a valid phone number'),
-          backgroundColor: Colors.red,
+        SnackBar(
+          content: const Text('Please enter a valid phone number'),
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -112,14 +113,12 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
       value: const SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
-        extendBody: true,
-        extendBodyBehindAppBar: true,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           bottom: true,
           child: SingleChildScrollView(
@@ -136,7 +135,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                       languageProvider.isArabic
                           ? Icons.arrow_forward
                           : Icons.arrow_back,
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.textPrimary,
                     ),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
@@ -151,11 +150,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                       languageProvider.isArabic
                           ? 'أضف بريدك الإلكتروني'
                           : 'Add your email',
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.displayLarge,
                     ),
                   ),
 
@@ -169,11 +164,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                   // Name Label
                   Text(
                     languageProvider.isArabic ? 'الاسم بالكامل' : 'Full Name',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
                   ),
 
                   const SizedBox(height: 12),
@@ -190,11 +181,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                   // Email Label
                   Text(
                     languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email Address',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
                   ),
 
                   const SizedBox(height: 12),
@@ -211,11 +198,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                   // Phone Label
                   Text(
                     languageProvider.isArabic ? 'رقم الموبايل' : 'Phone Number',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
                   ),
 
                   const SizedBox(height: 12),
@@ -230,44 +213,10 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                   const SizedBox(height: 40),
 
                   // Continue Button
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: _isLoading 
-                          ? null 
-                          : () {
-                              _handleContinue();
-                            },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonGreen,
-                        foregroundColor: AppTheme.darkBackground,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: _isLoading
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(
-                                strokeWidth: 2,
-                                valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.darkBackground,
-                                ),
-                              ),
-                            )
-                          : Text(
-                              languageProvider.isArabic
-                                  ? 'المتابعة'
-                                  : 'Continue',
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                    ),
+                  PrimaryButton(
+                    text: languageProvider.isArabic ? 'المتابعة' : 'Continue',
+                    isLoading: _isLoading,
+                    onPressed: _handleContinue,
                   ),
 
                   const SizedBox(height: 40),
@@ -276,10 +225,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                   Center(
                     child: Text(
                       'By continuing, you agree to our Terms & Privacy Policy',
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
                   ),
@@ -292,7 +238,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                       width: 134,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: AppTheme.textPrimary,
+                        color: VSPColors.textPrimary,
                         borderRadius: BorderRadius.circular(100),
                       ),
                     ),
@@ -334,8 +280,8 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.divider,
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }

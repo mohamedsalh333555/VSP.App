@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/database_service.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-import '../screens/booking_confirmation_screen.dart';
 import '../screens/challenge_select_team_screen.dart';
+import '../screens/booking_confirmation_screen.dart';
 import 'create_team_sheet.dart';
 
 class BookingTeamSelectionSheet extends StatefulWidget {
@@ -15,47 +19,74 @@ class BookingTeamSelectionSheet extends StatefulWidget {
 }
 
 class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
-  // Mock State
-  bool _hasTeam = true; 
-  String _selectedOption = 'Challenge'; // Default to Challenge as per screenshot
+  // BETA READY: Real State Logic
+  Team? _myTeam;
+  bool _isLoading = true;
+  String _selectedOption = 'Personal';
 
-  // Restoring the missing variable
-  final List<Map<String, dynamic>> _myTeams = [
-    {
-      'name': 'New Castle United',
-      'image': 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Newcastle_United_Logo.svg/1200px-Newcastle_United_Logo.svg.png', // Real Logo
-      'members': 12,
-    },
-  ];
+  @override
+  void initState() {
+    super.initState();
+    _fetchTeam();
+  }
 
-  void _showCreateTeamSheet() {
-    Navigator.pop(context); // Close current sheet
-    showModalBottomSheet(
+  Future<void> _fetchTeam() async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final phone = auth.userModel?.phone;
+    if (phone != null) {
+      final team = await DatabaseService().getTeamByCaptainPhone(phone);
+      if (mounted) {
+        setState(() {
+          _myTeam = team;
+          _isLoading = false;
+          // Default to Challenge if team exists, otherwise Personal
+          _selectedOption = (_myTeam != null) ? 'Challenge' : 'Personal';
+        });
+      }
+    } else {
+      if (mounted) setState(() => _isLoading = false);
+    }
+  }
+
+  Future<void> _showCreateTeamSheet() async {
+    final bool? created = await showModalBottomSheet<bool>(
       context: context,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => const CreateTeamSheet(),
     );
+
+    if (created == true) {
+      _fetchTeam(); // BETA READY: Refresh immediately to show the new team!
+    }
   }
 
   @override
   Widget build(BuildContext context) {
-    if (_myTeams.isEmpty) {
-      _hasTeam = false;
-      if (_selectedOption == 'Team') _selectedOption = 'Personal';
+    if (_isLoading) {
+      return Container(
+        height: 300,
+        decoration: const BoxDecoration(
+          color: VSPColors.background,
+          borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+        ),
+        child: const Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+      );
     }
 
+    final hasTeam = _myTeam != null;
+
     return Container(
-      padding: const EdgeInsets.only(top: 24, left: 16, right: 16, bottom: 24),
+      padding: const EdgeInsets.only(top: VSPSpacing.lg, left: VSPSpacing.md, right: VSPSpacing.md, bottom: VSPSpacing.lg),
       decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
+        color: VSPColors.background,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
         ),
       ),
       child: Column(
-        mainAxisSize: MainAxisSize.min, // Moved from Container to Column
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Handle Bar
@@ -69,28 +100,22 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
               ),
             ),
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Title
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              const Text(
+              Text(
                 'Choose What Suits You',
-                style: TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 24,
-                  fontWeight: FontWeight.bold,
-                  fontFamily: 'Agency FB', 
-                ),
+                style: Theme.of(context).textTheme.displayMedium,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: VSPSpacing.sm),
               Text(
                 'Choose What Suits You To Finish Your Booking Easily',
-                style: TextStyle(
-                  color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                  fontSize: 14,
-                ),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                      color: VSPColors.textSecondary,
+                    ),
               ),
             ],
           ),
@@ -98,46 +123,41 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
 
           // --- Options List ---
           
-          if (!_hasTeam)
+          if (!hasTeam)
             // No Team State - Top Card: Create Button
             Container(
-              margin: const EdgeInsets.only(bottom: 16),
-              padding: const EdgeInsets.all(16),
+              margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(16),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
               ),
               child: Row(
                 children: [
                   Container(
                     width: 48,
                     height: 48,
-                    decoration: BoxDecoration(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.1),
+                    decoration: const BoxDecoration(
+                      color: VSPColors.surfaceAlt,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.groups_outlined, color: AppTheme.neonGreen),
+                    child: const Icon(Icons.groups_outlined, color: VSPColors.accent),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        const Text(
+                        Text(
                           'Create A New Team',
-                          style: TextStyle(
-                            color: AppTheme.textPrimary,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.titleMedium,
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: VSPSpacing.xs),
                         Text(
                           'Create A New Team Now To Confirm Your Booking.',
-                          style: TextStyle(
-                            color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                            fontSize: 12,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.textSecondary,
+                              ),
                         ),
                       ],
                     ),
@@ -148,7 +168,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: AppTheme.neonGreen,
+                        color: VSPColors.accent,
                         borderRadius: BorderRadius.circular(20),
                       ),
                       child: Row(
@@ -157,13 +177,13 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                           Text(
                             'Create',
                             style: TextStyle(
-                              color: AppTheme.darkBackground,
+                              color: VSPColors.background,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
-                          const SizedBox(width: 4),
-                          Icon(Icons.refresh, size: 14, color: AppTheme.darkBackground), 
+                          SizedBox(width: 4),
+                          Icon(Icons.refresh, size: 14, color: VSPColors.background), 
                         ],
                       ),
                     ),
@@ -182,12 +202,12 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
           ),
 
           // Option 2: Your Team (Only if has team)
-          if (_hasTeam)
+          if (hasTeam)
             _buildOptionCard(
               id: 'Team',
-              title: _myTeams.isNotEmpty ? 'Your Team (${_myTeams[0]['name']})' : 'Your Team',
+              title: 'Your Team (${_myTeam!.name})',
               subtitle: 'For You & Your Team — Public With A Link Or Private For Friends',
-              iconUrl: _myTeams.isNotEmpty ? _myTeams[0]['image'] : '',
+              iconUrl: _myTeam!.captainImageUrl,
               isAvatar: true, 
             ),
 
@@ -195,58 +215,41 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
           _buildOptionCard(
             id: 'Challenge',
             title: 'Challenge',
-            subtitle: _hasTeam ? 'Challenge Another Team' : "You Don't Have A Team.",
+            subtitle: hasTeam ? 'Challenge Another Team' : "You Don't Have A Team.",
             iconData: Icons.bolt,
+            enabled: hasTeam,
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Continue Button
-          SizedBox(
-            width: double.infinity,
-            height: 56,
-            child: ElevatedButton(
-              onPressed: () {
-                Navigator.pop(context); // Close modal
-                
-                if (_selectedOption == 'Challenge') {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => ChallengeSelectTeamScreen(
-                        stadium: widget.stadium,
-                        bookingType: _selectedOption,
-                      ),
+          PrimaryButton(
+            text: 'Continue',
+            onPressed: () {
+              Navigator.pop(context); // Close modal
+              
+              if (_selectedOption == 'Challenge') {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => ChallengeSelectTeamScreen(
+                      stadium: widget.stadium,
+                      bookingType: _selectedOption,
                     ),
-                  );
-                } else {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => BookingConfirmationScreen(
-                        stadium: widget.stadium,
-                        bookingType: _selectedOption,
-                      ),
+                  ),
+                );
+              } else {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => BookingConfirmationScreen(
+                      stadium: widget.stadium,
+                      bookingType: _selectedOption,
                     ),
-                  );
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: AppTheme.neonGreen,
-                foregroundColor: AppTheme.darkBackground,
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(16),
-                ),
-                elevation: 0,
-              ),
-              child: const Text(
-                'Continue',
-                style: TextStyle(
-                  fontSize: 16,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+                  ),
+                );
+              }
+            },
           ),
         ],
       ),
@@ -260,101 +263,104 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
     String? iconUrl,
     IconData? iconData,
     bool isAvatar = false,
+    bool enabled = true,
   }) {
     final isSelected = _selectedOption == id;
 
-    return InkWell(
-      onTap: () {
-        setState(() {
-          _selectedOption = id;
-        });
-      },
-      child: Container(
-        margin: const EdgeInsets.only(bottom: 16),
-        padding: const EdgeInsets.all(16),
-        decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.05) : AppTheme.cardBackground,
-          borderRadius: BorderRadius.circular(16),
-          border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent,
-            width: 1,
+    return Opacity(
+      opacity: enabled ? 1.0 : 0.5,
+      child: InkWell(
+        onTap: !enabled ? () {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('Please create a team first to use this option.')),
+          );
+        } : () {
+          setState(() {
+            _selectedOption = id;
+          });
+        },
+        child: Container(
+          margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          decoration: BoxDecoration(
+            color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            border: Border.all(
+              color: isSelected ? VSPColors.accent : Colors.transparent,
+              width: 1,
+            ),
           ),
-        ),
-        child: Row(
-          children: [
-            // Icon / Avatar
-            if (iconUrl != null && iconUrl.isNotEmpty) // Added check
-              ShimmerImage(
-                imageUrl: iconUrl,
-                width: 48,
-                height: 48,
-                borderRadius: 24,
-              )
-            else if (iconData != null)
-               Container(
-                width: 48,
-                height: 48,
+          child: Row(
+            children: [
+              // Icon / Avatar
+              if (iconUrl != null && iconUrl.isNotEmpty)
+                ShimmerImage(
+                  imageUrl: iconUrl,
+                  width: 48,
+                  height: 48,
+                  borderRadius: 24,
+                )
+              else if (iconData != null)
+                 Container(
+                  width: 48,
+                  height: 48,
+                  decoration: const BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(iconData, color: VSPColors.accent),
+                ),
+              
+              const SizedBox(width: 16),
+  
+              // Text
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      title,
+                      style: Theme.of(context).textTheme.titleMedium,
+                    ),
+                    const SizedBox(height: VSPSpacing.xs),
+                    Text(
+                      subtitle,
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: VSPColors.textSecondary,
+                          ),
+                    ),
+                  ],
+                ),
+              ),
+  
+              const SizedBox(width: 8),
+  
+              // Radio Button
+              Container(
+                width: 24,
+                height: 24,
                 decoration: BoxDecoration(
-                  color: AppTheme.textSecondary.withValues(alpha: 0.1),
                   shape: BoxShape.circle,
-                ),
-                child: Icon(iconData, color: AppTheme.neonGreen),
-              ),
-            
-            const SizedBox(width: 16),
-
-            // Text
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
+                  border: Border.all(
+                    color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                    width: 1.5,
                   ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
-                  ),
-                ],
-              ),
-            ),
-
-            const SizedBox(width: 8),
-
-            // Radio Button
-            Container(
-              width: 24,
-              height: 24,
-              decoration: BoxDecoration(
-                shape: BoxShape.circle,
-                border: Border.all(
-                  color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
-                  width: 1.5,
                 ),
-              ),
-              child: isSelected
-                  ? Center(
-                      child: Container(
-                        width: 12,
-                        height: 12,
-                        decoration: const BoxDecoration(
-                          color: AppTheme.neonGreen,
-                          shape: BoxShape.circle,
+                child: isSelected
+                    ? Center(
+                        child: Container(
+                          width: 12,
+                          height: 12,
+                          decoration: const BoxDecoration(
+                            color: VSPColors.accent,
+                            shape: BoxShape.circle,
+                          ),
                         ),
-                      ),
-                    )
-                  : null,
-            ),
-          ],
+                      )
+                    : null,
+              ),
+            ],
+          ),
         ),
       ),
     );

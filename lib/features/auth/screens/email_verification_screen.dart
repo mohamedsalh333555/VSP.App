@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
@@ -63,7 +64,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter the complete code'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -91,7 +92,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Invalid code'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
     }
@@ -104,16 +105,16 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF0A0A0A),
-              Color(0xFF1A3A1A),
-              Color(0xFF0A0A0A),
+              VSPColors.background,
+              VSPColors.accent.withValues(alpha: 0.1),
+              VSPColors.background,
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -130,7 +131,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     languageProvider.isArabic
                         ? Icons.arrow_forward
                         : Icons.arrow_back,
-                    color: AppTheme.textPrimary,
+                    color: VSPColors.textPrimary,
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -140,11 +141,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 // Title
                 Text(
                   languageProvider.getText(AppStrings.verifyEmail),
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displayLarge,
                 ),
 
                 const SizedBox(height: 12),
@@ -152,9 +149,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 // Step Indicator
                 Text(
                   '2/4',
-                  style: TextStyle(
-                    color: AppTheme.neonGreen,
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -164,9 +160,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                 // Subtitle
                 RichText(
                   text: TextSpan(
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: VSPColors.textSecondary,
                     ),
                     children: [
                       TextSpan(
@@ -176,7 +171,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                       TextSpan(
                         text: authProvider.email,
                         style: const TextStyle(
-                          color: AppTheme.neonGreen,
+                          color: VSPColors.accent,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -214,9 +209,8 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     },
                     child: Text(
                       languageProvider.getText(AppStrings.resendCode),
-                      style: const TextStyle(
-                        color: AppTheme.neonGreen,
-                        fontSize: 14,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                        color: VSPColors.accent,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -244,7 +238,7 @@ class _EmailVerificationScreenState extends State<EmailVerificationScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -278,10 +272,10 @@ class _OTPBox extends StatelessWidget {
       width: 50,
       height: 60,
       decoration: BoxDecoration(
-        color: AppTheme.cardBackground,
-        borderRadius: BorderRadius.circular(12),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: AppTheme.neonGreen.withValues(alpha: 0.3),
+          color: VSPColors.divider,
           width: 1,
         ),
       ),
@@ -291,9 +285,7 @@ class _OTPBox extends StatelessWidget {
         textAlign: TextAlign.center,
         keyboardType: TextInputType.number,
         maxLength: 1,
-        style: const TextStyle(
-          color: AppTheme.textPrimary,
-          fontSize: 24,
+        style: Theme.of(context).textTheme.displaySmall?.copyWith(
           fontWeight: FontWeight.bold,
         ),
         decoration: const InputDecoration(
@@ -305,3 +297,4 @@ class _OTPBox extends StatelessWidget {
     );
   }
 }
+

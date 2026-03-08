@@ -2,10 +2,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
 import 'dart:math';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/services/notification_service.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booked_screen.dart';
+
+import '../../../core/services/notification_service.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   final Booking booking;
@@ -74,9 +76,9 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
         content: const Text('Link copied!'),
-        backgroundColor: AppTheme.neonGreen,
+        backgroundColor: VSPColors.accent,
         behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
         duration: const Duration(seconds: 1),
       ),
     );
@@ -92,11 +94,11 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
           // Main Content Centered
           Center(
             child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 24),
-              padding: const EdgeInsets.all(32),
+              margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
+              padding: const EdgeInsets.all(VSPSpacing.xl),
               decoration: BoxDecoration(
-                color: const Color(0xFF2C2C2E),
-                borderRadius: BorderRadius.circular(24),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
               ),
               child: Column(
                 mainAxisSize: MainAxisSize.min,
@@ -109,44 +111,38 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                       height: 100,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        border: Border.all(color: AppTheme.neonGreen, width: 4),
-                        color: const Color(0xFF2C2C2E),
+                        border: Border.all(color: VSPColors.accent, width: 4),
+                        color: VSPColors.surface,
                       ),
-                      child: const Icon(Icons.check, color: AppTheme.neonGreen, size: 60),
+                      child: const Icon(Icons.check, color: VSPColors.accent, size: 60),
                     ),
                   ),
                   const SizedBox(height: 24),
                   
                   // Title
-                  const Text(
+                  Text(
                     'Your reservation has been\ncompleted successfully',
                     textAlign: TextAlign.center,
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 22,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                      height: 1.3,
-                    ),
+                    style: Theme.of(context).textTheme.displaySmall,
                   ),
 
                   const SizedBox(height: 24),
 
                   // Booking Details Summary
                   Container(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3A3A3C),
-                      borderRadius: BorderRadius.circular(12),
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
                     ),
                     child: Column(
                       children: [
                         _buildDetailRow(Icons.stadium, widget.booking.stadiumName),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: VSPSpacing.md),
                         _buildDetailRow(Icons.calendar_today, widget.booking.formattedDate),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: VSPSpacing.md),
                         _buildDetailRow(Icons.access_time, widget.booking.formattedTimeRange),
-                        const SizedBox(height: 12),
+                        const SizedBox(height: VSPSpacing.md),
                         _buildDetailRow(
                           Icons.payment, 
                           '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
@@ -162,38 +158,38 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     ),
                   ),
 
-                  const SizedBox(height: 24),
+                  const SizedBox(height: VSPSpacing.lg),
 
                   // Share Link
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: const Text('Share Link', style: TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
+                    child: Text('Share Link', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ),
-                  const SizedBox(height: 8),
+                  const SizedBox(height: VSPSpacing.sm),
                   Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
                     decoration: BoxDecoration(
-                      color: const Color(0xFF3A3A3C),
-                      borderRadius: BorderRadius.circular(8),
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                     child: Row(
                       children: [
                         Expanded(
                           child: Text(
                             'https://vsp.app/b/${widget.booking.id.substring(0, 8)}',
-                            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+                            style: Theme.of(context).textTheme.bodySmall,
                           ),
                         ),
-                        const SizedBox(width: 8),
+                        const SizedBox(width: VSPSpacing.sm),
                         InkWell(
                           onTap: _copyLink,
                           child: Container(
                             padding: const EdgeInsets.all(6),
                             decoration: BoxDecoration(
-                              color: AppTheme.neonGreen,
-                              borderRadius: BorderRadius.circular(6),
+                              color: VSPColors.accent,
+                              borderRadius: BorderRadius.circular(VSPRadius.xs),
                             ),
-                            child: const Icon(Icons.content_copy, color: AppTheme.darkBackground, size: 18),
+                            child: const Icon(Icons.content_copy, color: VSPColors.background, size: 18),
                           ),
                         ),
                       ],
@@ -206,43 +202,27 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   Row(
                     children: [
                       Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: OutlinedButton(
-                            onPressed: () {
-                              // Navigate to bookings screen
-                              Navigator.of(context).pushAndRemoveUntil(
-                                MaterialPageRoute(builder: (context) => const BookedScreen()),
-                                (route) => route.isFirst,
-                              );
-                            },
-                            style: OutlinedButton.styleFrom(
-                              side: const BorderSide(color: AppTheme.neonGreen),
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text(
-                              'My Bookings',
-                              style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold),
-                            ),
-                          ),
+                        child: PrimaryButton(
+                          text: 'My Bookings',
+                          color: VSPColors.surfaceAlt,
+                          textColor: VSPColors.textPrimary,
+                          onPressed: () {
+                            // Navigate to bookings screen
+                            Navigator.of(context).pushAndRemoveUntil(
+                              MaterialPageRoute(builder: (context) => const BookedScreen()),
+                              (route) => route.isFirst,
+                            );
+                          },
                         ),
                       ),
-                      const SizedBox(width: 16),
+                      const SizedBox(width: VSPSpacing.md),
                       Expanded(
-                        child: SizedBox(
-                          height: 50,
-                          child: ElevatedButton(
-                            onPressed: () {
-                              // Reset to the very first screen (Dashboard)
-                              Navigator.of(context).popUntil((route) => route.isFirst);
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: AppTheme.neonGreen,
-                              foregroundColor: AppTheme.darkBackground,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                            ),
-                            child: const Text('Home', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
-                          ),
+                        child: PrimaryButton(
+                          text: 'Home',
+                          onPressed: () {
+                            // Reset to the very first screen (Dashboard)
+                            Navigator.of(context).popUntil((route) => route.isFirst);
+                          },
                         ),
                       ),
                     ],
@@ -253,20 +233,22 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
           ),
 
           // Confetti Animation Overlay
-          ConfettiWidget(
-            confettiController: _confettiController,
-            blastDirection: pi / 2, // Down
-            maxBlastForce: 5,
-            minBlastForce: 2,
-            emissionFrequency: 0.05,
-            numberOfParticles: 20,
-            gravity: 0.2,
-            colors: const [
-              AppTheme.neonGreen,
-              Colors.yellow,
-              Colors.white,
-              Colors.blue,
-            ],
+          RepaintBoundary(
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirection: pi / 2, // Down
+              maxBlastForce: 5,
+              minBlastForce: 2,
+              emissionFrequency: 0.05,
+              numberOfParticles: 20,
+              gravity: 0.2,
+              colors: const [
+                VSPColors.accent,
+                Colors.yellow,
+                Colors.white,
+                Colors.blue,
+              ],
+            ),
           ),
         ],
       ),
@@ -276,12 +258,12 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   Widget _buildDetailRow(IconData icon, String text) {
     return Row(
       children: [
-        Icon(icon, color: AppTheme.neonGreen, size: 20),
-        const SizedBox(width: 12),
+        Icon(icon, color: VSPColors.accent, size: 20),
+        const SizedBox(width: VSPSpacing.md),
         Expanded(
           child: Text(
             text,
-            style: const TextStyle(color: AppTheme.textPrimary, fontSize: 14),
+            style: Theme.of(context).textTheme.bodySmall,
           ),
         ),
       ],

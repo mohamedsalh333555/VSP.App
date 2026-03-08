@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -63,7 +64,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please meet all password requirements'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -87,7 +88,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Account creation failed'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
     }
@@ -96,15 +97,15 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
   @override
   Widget build(BuildContext context) {
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
@@ -121,7 +122,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                   IconButton(
                       icon: const Icon(
                         Icons.arrow_back,
-                        color: AppTheme.textPrimary,
+                        color: VSPColors.textPrimary,
                       ),
                     onPressed: () => Navigator.pop(context),
                     padding: EdgeInsets.zero,
@@ -132,13 +133,9 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
 
                   // Title
                   Center(
-                    child: const Text(
+                    child: Text(
                       'Set Your Password',
-                      style: TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.displayLarge,
                     ),
                   ),
 
@@ -150,11 +147,9 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                   const SizedBox(height: 40),
 
                   // Password Label
-                  const Text(
+                  Text(
                     'Password',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 14,
+                    style: Theme.of(context).textTheme.labelMedium?.copyWith(
                       fontWeight: FontWeight.w500,
                     ),
                   ),
@@ -171,7 +166,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                         _obscurePassword
                             ? Icons.visibility_off_outlined
                             : Icons.visibility_outlined,
-                        color: AppTheme.textSecondary,
+                        color: VSPColors.textSecondary,
                       ),
                       onPressed: () {
                         setState(() => _obscurePassword = !_obscurePassword);
@@ -211,11 +206,11 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                             },
                       style: ElevatedButton.styleFrom(
                         backgroundColor: (_isPasswordValid || AppConfig.demoMode)
-                            ? AppTheme.neonGreen
-                            : AppTheme.textSecondary,
-                        foregroundColor: AppTheme.darkBackground,
+                            ? VSPColors.accent
+                            : VSPColors.textSecondary.withValues(alpha: 0.3),
+                        foregroundColor: VSPColors.background,
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(12),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
                         ),
                         elevation: 0,
                       ),
@@ -226,14 +221,13 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                               child: CircularProgressIndicator(
                                 strokeWidth: 2,
                                 valueColor: AlwaysStoppedAnimation<Color>(
-                                  AppTheme.darkBackground,
-                                ),
+                                VSPColors.background,
                               ),
+                            ),
                             )
-                          : const Text(
+                          : Text(
                               'Continue',
-                              style: TextStyle(
-                                fontSize: 16,
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
@@ -246,18 +240,17 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                   Center(
                     child: RichText(
                       textAlign: TextAlign.center,
-                      text: const TextSpan(
-                        style: TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 12,
+                      text: TextSpan(
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: VSPColors.textSecondary,
                         ),
                         children: [
                           TextSpan(
                               text: 'By using VSP , you agree to the\nTerms and '),
                           TextSpan(
                             text: 'Privacy Policy.',
-                            style: TextStyle(
-                              color: AppTheme.neonGreen,
+                            style: const TextStyle(
+                              color: VSPColors.accent,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -274,7 +267,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                       width: 134,
                       height: 5,
                       decoration: BoxDecoration(
-                        color: AppTheme.textPrimary,
+                        color: VSPColors.divider,
                         borderRadius: BorderRadius.circular(100),
                       ),
                     ),
@@ -310,9 +303,9 @@ class _PasswordRequirement extends StatelessWidget {
           height: 24,
           decoration: BoxDecoration(
             shape: BoxShape.circle,
-            color: isMet ? AppTheme.neonGreen : Colors.transparent,
+            color: isMet ? VSPColors.accent : Colors.transparent,
             border: Border.all(
-              color: isMet ? AppTheme.neonGreen : AppTheme.textSecondary,
+              color: isMet ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
               width: 2,
             ),
           ),
@@ -320,16 +313,15 @@ class _PasswordRequirement extends StatelessWidget {
               ? const Icon(
                   Icons.check,
                   size: 16,
-                  color: AppTheme.darkBackground,
+                  color: VSPColors.background,
                 )
               : null,
         ),
         const SizedBox(width: 12),
         Text(
           text,
-          style: TextStyle(
-            color: isMet ? AppTheme.neonGreen : AppTheme.textSecondary,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: isMet ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.6),
             fontWeight: isMet ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -364,9 +356,10 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
 }
+

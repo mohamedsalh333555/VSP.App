@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -54,7 +55,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Text(authProvider.errorMessage ?? 'Account creation failed'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
     }
@@ -68,7 +69,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
         statusBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -79,7 +80,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                 
                 // Back Button
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                  icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -88,12 +89,10 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                 const SizedBox(height: 40),
 
                 // Title
-                const Center(
+                Center(
                   child: Text(
                     'Verify your email 3/3',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 20,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -107,11 +106,9 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                 const SizedBox(height: 40),
 
                 // Password Label
-                const Text(
+                Text(
                   'Password',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -121,17 +118,17 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                 // Password Input
                 Container(
                   decoration: BoxDecoration(
-                    color: AppTheme.cardBackground,
-                    borderRadius: BorderRadius.circular(12),
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
                   ),
                   child: TextField(
                     controller: _passwordController,
                     obscureText: _obscurePassword,
-                    style: const TextStyle(color: AppTheme.textPrimary),
+                    style: Theme.of(context).textTheme.bodyMedium,
                     onChanged: _validatePassword,
                     decoration: InputDecoration(
                       hintText: 'Enter your password',
-                      hintStyle: const TextStyle(color: AppTheme.textSecondary),
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                       border: InputBorder.none,
                       contentPadding: const EdgeInsets.symmetric(
                         horizontal: 16,
@@ -140,7 +137,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                       suffixIcon: IconButton(
                         icon: Icon(
                           _obscurePassword ? Icons.visibility_off : Icons.visibility,
-                          color: AppTheme.textSecondary,
+                          color: VSPColors.textSecondary,
                         ),
                         onPressed: () {
                           setState(() {
@@ -183,11 +180,11 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                           }
                         : null,
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      disabledBackgroundColor: AppTheme.textSecondary.withValues(alpha: 0.3),
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: VSPColors.background,
+                      disabledBackgroundColor: VSPColors.textSecondary.withValues(alpha: 0.3),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                       ),
                       elevation: 0,
                     ),
@@ -197,13 +194,12 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                             width: 24,
                             child: CircularProgressIndicator(
                               strokeWidth: 2,
-                              valueColor: AlwaysStoppedAnimation<Color>(Colors.black),
+                              valueColor: AlwaysStoppedAnimation<Color>(VSPColors.background),
                             ),
                           )
-                        : const Text(
+                        : Text(
                             'Continue',
-                            style: TextStyle(
-                              fontSize: 16,
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               fontWeight: FontWeight.bold,
                             ),
                           ),
@@ -218,7 +214,7 @@ class _OwnerSetPasswordScreenState extends State<OwnerSetPasswordScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -251,17 +247,17 @@ class _RequirementItem extends StatelessWidget {
           width: 24,
           height: 24,
           decoration: BoxDecoration(
-            color: isValid ? AppTheme.neonGreen : Colors.transparent,
+            color: isValid ? VSPColors.accent : Colors.transparent,
             border: Border.all(
-              color: isValid ? AppTheme.neonGreen : AppTheme.textSecondary,
+              color: isValid ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
               width: 2,
             ),
-            borderRadius: BorderRadius.circular(6),
+            borderRadius: BorderRadius.circular(VSPRadius.xs),
           ),
           child: isValid
               ? const Icon(
                   Icons.check,
-                  color: Colors.black,
+                  color: VSPColors.background,
                   size: 16,
                 )
               : null,
@@ -269,9 +265,8 @@ class _RequirementItem extends StatelessWidget {
         const SizedBox(width: 12),
         Text(
           text,
-          style: TextStyle(
-            color: isValid ? AppTheme.textPrimary : AppTheme.textSecondary,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: isValid ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.6),
             fontWeight: isValid ? FontWeight.w600 : FontWeight.normal,
           ),
         ),
@@ -305,9 +300,10 @@ class _ProgressIndicator extends StatelessWidget {
       width: 60,
       height: 4,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : AppTheme.textSecondary,
-        borderRadius: BorderRadius.circular(2),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
       ),
     );
   }
 }
+

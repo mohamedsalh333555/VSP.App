@@ -4,10 +4,12 @@ import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/database_service.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
 import '../../../data/models.dart';
 import 'add_stadium_wizard.dart';
 import 'owner_documentation_wizard.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 /// شاشة تسجيل بيانات المنشأة - للمالك فقط
 /// تعرض الملاعب المضافة وتتحكم في زر التأكيد
@@ -26,22 +28,22 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
     final uid = authProvider.currentUser?.uid ?? '';
 
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       body: Container(
         width: double.infinity,
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
             colors: [
-              Color(0xFF0D1B0D),
-              AppTheme.darkBackground,
+              VSPColors.accent.withValues(alpha: 0.05),
+              VSPColors.background,
             ],
           ),
         ),
         child: SafeArea(
           child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
             child: StreamBuilder<List<Stadium>>(
               stream: DatabaseService().getOwnerStadiums(uid),
               builder: (context, snapshot) {
@@ -58,13 +60,13 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                       width: 100,
                       height: 100,
                       decoration: BoxDecoration(
-                        color: AppTheme.neonGreen.withValues(alpha: 0.1),
+                        color: VSPColors.accent.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
                         Icons.stadium_rounded,
                         size: 52,
-                        color: AppTheme.neonGreen,
+                        color: VSPColors.accent,
                       ),
                     ),
 
@@ -73,12 +75,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                     // Title
                     Text(
                       languageProvider.getText(AppStrings.facilityDetails),
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                      ),
+                      style: Theme.of(context).textTheme.displayLarge,
                     ),
 
                     const SizedBox(height: 12),
@@ -89,10 +86,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                           ? 'أضف ملعبك الأول وقم بتوثيق حسابك للبدء في استقبال الحجوزات'
                           : 'Add your stadium and verify your account to start receiving bookings.',
                       textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 16,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                     ),
 
                     const SizedBox(height: 24),
@@ -102,17 +96,13 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                       // Section header
                       Row(
                         children: [
-                          const Icon(Icons.check_circle, color: AppTheme.neonGreen, size: 18),
+                          const Icon(Icons.check_circle, color: VSPColors.accent, size: 18),
                           const SizedBox(width: 8),
                           Text(
                             languageProvider.isArabic
                                 ? 'ملاعبك المضافة (${stadiums.length})'
                                 : 'Your Stadiums (${stadiums.length})',
-                            style: const TextStyle(
-                              color: AppTheme.textPrimary,
-                              fontSize: 16,
-                              fontWeight: FontWeight.w600,
-                            ),
+                            style: Theme.of(context).textTheme.titleSmall,
                           ),
                         ],
                       ),
@@ -137,10 +127,10 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 24, horizontal: 16),
                         decoration: BoxDecoration(
-                          color: Colors.white.withValues(alpha: 0.03),
-                          borderRadius: BorderRadius.circular(16),
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
                           border: Border.all(
-                            color: AppTheme.neonGreen.withValues(alpha: 0.15),
+                            color: VSPColors.accent.withValues(alpha: 0.1),
                             style: BorderStyle.solid,
                           ),
                         ),
@@ -194,26 +184,22 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                               ? 'رفع المستندات والأوراق الثبوتية'
                               : 'Upload legal documents and ID',
                           icon: Icons.verified_user_rounded,
-                          color: hasStadiums ? AppTheme.neonGreen : Colors.grey[700]!,
-                          textColor: hasStadiums ? Colors.black : Colors.white54,
+                          color: hasStadiums ? VSPColors.accent : VSPColors.surface,
+                          textColor: hasStadiums ? Colors.black : VSPColors.textSecondary,
                           enabled: hasStadiums,
-                          onTap: () {
+                          onTap: () async {
                             if (!hasStadiums) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(
-                                    languageProvider.isArabic
-                                        ? 'يرجى إضافة ملعب أولاً'
-                                        : 'Please add a stadium first',
-                                    style: const TextStyle(color: Colors.white),
-                                  ),
-                                  backgroundColor: Colors.red[700],
-                                  behavior: SnackBarBehavior.floating,
-                                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                                ),
+                              VSPFeedback.showError(
+                                context, 
+                                languageProvider.isArabic
+                                    ? 'يرجى إضافة ملعب أولاً'
+                                    : 'Please add a stadium first'
                               );
                               return;
                             }
+                            // Set hasStadium flag NOW — user explicitly confirmed
+                            await authProvider.updateProfile({'hasStadium': true});
+                            if (!context.mounted) return;
                             Navigator.push(
                               context,
                               MaterialPageRoute(builder: (context) => const OwnerDocumentationWizard()),
@@ -235,36 +221,32 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
   }
 
   Widget _buildMiniStadiumCard(Stadium stadium) {
-    return Container(
+    return VSPCard(
       width: 200,
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.2)),
-      ),
+      padding: const EdgeInsets.all(VSPSpacing.sm),
+      margin: EdgeInsets.zero,
       child: Row(
         children: [
           // Stadium Image
           ClipRRect(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(VSPRadius.md),
             child: Container(
               width: 56,
               height: 56,
-              color: const Color(0xFF2C2C2C),
+              color: VSPColors.background,
               child: stadium.imageUrl.isNotEmpty
                   ? Image.network(
                       stadium.imageUrl,
                       fit: BoxFit.cover,
                       errorBuilder: (_, __, ___) => const Icon(
                         Icons.stadium,
-                        color: AppTheme.neonGreen,
+                        color: VSPColors.accent,
                         size: 28,
                       ),
                     )
                   : const Icon(
                       Icons.stadium,
-                      color: AppTheme.neonGreen,
+                      color: VSPColors.accent,
                       size: 28,
                     ),
             ),
@@ -280,26 +262,19 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                   stadium.name,
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 14,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.titleSmall,
                 ),
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const Icon(Icons.location_on_outlined, size: 12, color: AppTheme.neonGreen),
+                    const Icon(Icons.location_on_outlined, size: 12, color: VSPColors.accent),
                     const SizedBox(width: 4),
                     Expanded(
                       child: Text(
                         stadium.location,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: const TextStyle(
-                          color: AppTheme.textSecondary,
-                          fontSize: 11,
-                        ),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ),
                   ],
@@ -307,9 +282,8 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                 const SizedBox(height: 4),
                 Text(
                   'EGP ${stadium.pricePerHour.toStringAsFixed(0)}/hr',
-                  style: const TextStyle(
-                    color: AppTheme.neonGreen,
-                    fontSize: 12,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: VSPColors.accent,
                     fontWeight: FontWeight.w600,
                   ),
                 ),
@@ -348,17 +322,17 @@ class _OnboardingButton extends StatelessWidget {
       opacity: enabled ? 1.0 : 0.6,
       child: InkWell(
         onTap: onTap,
-        borderRadius: BorderRadius.circular(20),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
         child: Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 24),
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.lg),
           decoration: BoxDecoration(
             color: color,
-            borderRadius: BorderRadius.circular(24),
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
             boxShadow: enabled
                 ? [
                     BoxShadow(
-                      color: color.withValues(alpha: 0.3),
+                      color: color.withValues(alpha: 0.15),
                       blurRadius: 15,
                       offset: const Offset(0, 8),
                     ),
@@ -382,19 +356,12 @@ class _OnboardingButton extends StatelessWidget {
                   children: [
                     Text(
                       title,
-                      style: TextStyle(
-                        color: textColor,
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(color: textColor),
                     ),
                     const SizedBox(height: 4),
                     Text(
                       subtitle,
-                      style: TextStyle(
-                        color: textColor.withValues(alpha: 0.7),
-                        fontSize: 14,
-                      ),
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: textColor.withValues(alpha: 0.7)),
                     ),
                   ],
                 ),

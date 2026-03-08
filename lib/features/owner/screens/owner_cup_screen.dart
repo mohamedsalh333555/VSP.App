@@ -1,5 +1,13 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:intl/intl.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
+import '../../../core/services/database_service.dart';
+import '../../../data/models.dart';
+import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
+import 'owner_tournament_dashboard_screen.dart';
+import 'create_tournament_screen.dart';
 
 class OwnerCupScreen extends StatefulWidget {
   const OwnerCupScreen({super.key});
@@ -16,38 +24,62 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: const Color(0xFF121212),
+        backgroundColor: VSPColors.background,
         elevation: 0,
         automaticallyImplyLeading: false, // Root tab, no back button
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Cup',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
       body: Column(
         children: [
-          // 1. Custom Tab Bar (Pill Design)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
             child: Container(
               height: 50,
               decoration: BoxDecoration(
-                color: const Color(0xFF2C2C2C), // Dark Grey bg
-                borderRadius: BorderRadius.circular(25),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
               ),
-              child: Row(
+              child: Stack(
                 children: [
-                  _buildTabButton('Coming', 0),
-                  _buildTabButton('Ongoing', 1),
-                  _buildTabButton('Finished', 2),
+                  // Animated background pill
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 250),
+                    curve: Curves.easeInOut,
+                    alignment: _selectedTab == 0 
+                        ? Alignment.centerLeft 
+                        : (_selectedTab == 1 ? Alignment.center : Alignment.centerRight),
+                    child: FractionallySizedBox(
+                      widthFactor: 1 / 3,
+                      child: Container(
+                        height: 44,
+                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent,
+                          borderRadius: BorderRadius.circular(VSPRadius.xl),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VSPColors.accent.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              offset: const Offset(0, 2),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
+                  Row(
+                    children: [
+                      _buildTabButton('Coming', 0),
+                      _buildTabButton('Ongoing', 1),
+                      _buildTabButton('Finished', 2),
+                    ],
+                  ),
                 ],
               ),
             ),
@@ -55,7 +87,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
           // 2. Filters
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.end, // Align to right if constrained, but Expanded fills width
               children: [
@@ -80,14 +112,61 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
            const SizedBox(height: 20),
 
-          // 3. List of Tournaments
+          // 3. List of Tournaments - Wired to Firestore
           Expanded(
-            child: ListView.builder(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              itemCount: 2, // Mock items
-              itemBuilder: (context, index) {
-                return _buildTournamentCard();
-              },
+            child: StreamBuilder<List<Championship>>(
+              stream: DatabaseService().getChampionshipsStream(
+                sportType: _selectedSport,
+              ),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                }
+                
+                final championships = snapshot.data ?? [];
+                
+                // Filter by category locally and status
+                final filtered = championships.where((c) {
+                  final isRightCategory = c.type.toLowerCase() == _selectedCategory.toLowerCase();
+                  
+                  // Simple status filter (mock status since it might not be in DB yet, 
+                  // or derived from dates)
+                  final now = DateTime.now();
+                  bool isRightStatus = false;
+                  if (_selectedTab == 0) isRightStatus = c.startDate.isAfter(now);
+                  else if (_selectedTab == 1) isRightStatus = c.startDate.isBefore(now) && c.endDate.isAfter(now);
+                  else if (_selectedTab == 2) isRightStatus = c.endDate.isBefore(now);
+                  
+                  return isRightCategory && isRightStatus;
+                }).toList();
+
+                if (filtered.isEmpty) {
+                  return VSPEmptyState(
+                    icon: Icons.emoji_events_outlined,
+                    title: 'No ${_selectedCategory}s Found',
+                    subtitle: 'Create a tournament to start hosting competitions at your stadium!',
+                    buttonText: 'Create Tournament',
+                    onButtonPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const CreateTournamentScreen()),
+                      );
+                    },
+                  );
+                }
+
+                return ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: filtered.length,
+                  itemBuilder: (context, index) {
+                    return VSPFadeInItem(
+                      index: index,
+                      child: _buildTournamentCard(filtered[index]),
+                    );
+                  },
+                );
+              }
             ),
           ),
         ],
@@ -104,18 +183,18 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             _selectedTab = index;
           });
         },
+        behavior: HitTestBehavior.opaque,
         child: Container(
-          decoration: BoxDecoration(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent,
-            borderRadius: BorderRadius.circular(25),
+          decoration: const BoxDecoration(
+            color: Colors.transparent,
           ),
           alignment: Alignment.center,
           child: Text(
             text,
-            style: TextStyle(
-              color: isSelected ? Colors.black : Colors.grey[400],
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-            ),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: isSelected ? Colors.black : VSPColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
           ),
         ),
       ),
@@ -127,20 +206,20 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       padding: const EdgeInsets.symmetric(horizontal: 12),
       height: 40,
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2C),
-        borderRadius: BorderRadius.circular(8), // 8.0 radius as requested
-        border: Border.all(color: AppTheme.neonGreen, width: 1), // Green border as per image
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.sm), 
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1), 
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
-          dropdownColor: const Color(0xFF2C2C2C),
-          icon: const Icon(Icons.keyboard_arrow_down, color: AppTheme.neonGreen),
-          style: const TextStyle(color: Colors.white, fontSize: 14, fontFamily: 'Inter'),
+          dropdownColor: VSPColors.surface,
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
+          style: Theme.of(context).textTheme.bodySmall,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item),
+              child: Text(item, style: Theme.of(context).textTheme.bodySmall),
             );
           }).toList(),
           onChanged: onChanged,
@@ -149,15 +228,23 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     );
   }
 
-  Widget _buildTournamentCard() {
-    return Container(
-      margin: const EdgeInsets.only(bottom: 16),
-      padding: const EdgeInsets.all(16),
-      decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E), // Deep Grey
-        borderRadius: BorderRadius.circular(15),
-      ),
-      child: Column(
+  Widget _buildTournamentCard(Championship tournament) {
+    final dateRange = '${DateFormat('MMM d').format(tournament.startDate)} - ${DateFormat('MMM d').format(tournament.endDate)}';
+    
+    return InkWell(
+      onTap: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => OwnerTournamentDashboardScreen(championship: tournament),
+          ),
+        );
+      },
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
+      child: VSPCard(
+        margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // Header: Logo, Title, Actions
@@ -167,13 +254,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               Container(
                 width: 45,
                 height: 45,
-                decoration: const BoxDecoration(
+                decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  image: DecorationImage(
-                    image: NetworkImage('https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Al_Hilal_SFC_logo.svg/1200px-Al_Hilal_SFC_logo.svg.png'), // Real Logo
-                    fit: BoxFit.cover,
-                  ),
+                  image: tournament.imageUrl.isNotEmpty 
+                    ? DecorationImage(image: NetworkImage(tournament.imageUrl), fit: BoxFit.cover)
+                    : null,
+                  color: VSPColors.background,
+                  border: Border.all(color: VSPColors.divider, width: 1),
                 ),
+                child: tournament.imageUrl.isEmpty 
+                  ? Icon(Icons.emoji_events, color: VSPColors.textSecondary.withValues(alpha: 0.3)) 
+                  : null,
               ),
               const SizedBox(width: 12),
               // Title & Subtitle
@@ -181,22 +272,14 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      'Sal acd',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                      ),
+                    Text(
+                      tournament.name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                     ),
                     const SizedBox(height: 2),
                     Text(
-                      'Football • League',
-                      style: TextStyle(
-                        color: Colors.grey[400],
-                        fontSize: 12,
-                      ),
+                      '${tournament.sportType} • ${tournament.type}',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                     ),
                   ],
                 ),
@@ -213,13 +296,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                      child: Container(
                        width: 36,
                        height: 36,
-                       decoration: BoxDecoration(
-                         color: AppTheme.neonGreen.withValues(alpha: 0.1),
-                         shape: BoxShape.circle,
-                         border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
-                       ),
-                       child: const Icon(Icons.edit_outlined, color: AppTheme.neonGreen, size: 18),
-                     ),
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withValues(alpha: 0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 18),
+                    ),
                    ),
                    const SizedBox(width: 8),
                    // Share Button
@@ -232,11 +315,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                        width: 36,
                        height: 36,
                        decoration: BoxDecoration(
-                         color: const Color(0xFF2C2C2C),
+                         color: VSPColors.surfaceAlt,
                          shape: BoxShape.circle,
-                         border: Border.all(color: Colors.grey[800]!),
+                         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                        ),
-                       child: const Icon(Icons.share_outlined, color: Colors.grey, size: 18),
+                       child: const Icon(Icons.share_outlined, color: VSPColors.textSecondary, size: 18),
                      ),
                    ),
                 ],
@@ -250,45 +333,42 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn('Date', 'Aug 6 - Sep 30'),
-              _buildInfoColumn('Entry Fee', '900 eg'),
-              _buildInfoColumn('Grand Prize', '2000 eg'),
+              _buildInfoColumn('Date', dateRange),
+              _buildInfoColumn('Entry Fee', '${tournament.entryFee.toInt()} eg'),
+              _buildInfoColumn('Grand Prize', '${tournament.grandPrize.toInt()} eg'),
             ],
           ),
           
-           const SizedBox(height: 20),
+          const SizedBox(height: 20),
            
            // Footer: Teams Joined
            Row(
              children: [
-               SizedBox(
-                 width: 120, // Enough for 5 avatars
-                 height: 30,
-                 child: Stack(
-                   children: [
-                      _buildAvatar(0, 'https://upload.wikimedia.org/wikipedia/en/thumb/4/47/FC_Barcelona_%28crest%29.svg/1200px-FC_Barcelona_%28crest%29.svg.png'),
-                      _buildAvatar(1, 'https://upload.wikimedia.org/wikipedia/en/thumb/5/56/Real_Madrid_CF.svg/1200px-Real_Madrid_CF.svg.png'),
-                      _buildAvatar(2, 'https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg/1024px-FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg.png'),
-                      _buildAvatar(3, 'https://upload.wikimedia.org/wikipedia/en/thumb/c/cc/Chelsea_FC.svg/1200px-Chelsea_FC.svg.png'),
-                      _buildAvatar(4, 'https://upload.wikimedia.org/wikipedia/en/thumb/7/7a/Manchester_United_FC_crest.svg/1024px-Manchester_United_FC_crest.svg.png'),
-                   ],
+               if (tournament.joinedTeams.isNotEmpty) 
+                 SizedBox(
+                   width: 30 + (tournament.joinedTeams.length.clamp(1, 5) - 1) * 22.0,
+                   height: 30,
+                   child: Stack(
+                     children: List.generate(tournament.joinedTeams.length.clamp(0, 5), (i) {
+                       return _buildAvatar(i, 'https://cdn-icons-png.flaticon.com/512/166/166165.png'); // Placeholder
+                     }),
+                   ),
                  ),
-               ),
-               const SizedBox(width: 8),
+               if (tournament.joinedTeams.isNotEmpty) const SizedBox(width: 8),
                Text(
-                 'Teams Joined: 9 / 12',
-                 style: TextStyle(
-                   color: Colors.grey[400],
-                   fontSize: 12,
-                   fontWeight: FontWeight.w500,
-                 ),
+                 'Teams Joined: ${tournament.joinedTeams.length} / ${tournament.maxTeams}',
+                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontWeight: FontWeight.w500,
+                  ),
                ),
              ],
            )
         ],
       ),
-    );
-  }
+    ),
+  );
+}
   
   Widget _buildAvatar(int index, String url) {
     return Positioned(
@@ -298,7 +378,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         height: 30,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: const Color(0xFF1E1E1E), width: 2), // Ring effect to separate
+          border: Border.all(color: VSPColors.surface, width: 2), // Ring effect to separate
           image: DecorationImage(
             image: NetworkImage(url),
             fit: BoxFit.cover,
@@ -314,17 +394,12 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       children: [
         Text(
           label, 
-          style: TextStyle(color: Colors.grey[500], fontSize: 11, fontWeight: FontWeight.w500)
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10),
         ),
         const SizedBox(height: 4),
         Text(
           value, 
-          style: const TextStyle(
-            color: Colors.white, 
-            fontWeight: FontWeight.bold, 
-            fontSize: 15, // Slightly bigger for emphasis
-            fontFamily: 'Agency FB' // Condensed if possible
-          )
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
         ),
       ],
     );

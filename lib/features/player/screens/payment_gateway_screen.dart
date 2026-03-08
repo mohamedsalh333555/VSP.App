@@ -1,10 +1,12 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/providers/booking_provider.dart';
-import '../../../core/providers/auth_provider.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_success_screen.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/booking_provider.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
@@ -72,24 +74,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         );
       } else {
         // Show error
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(
-            content: Text(bookingProvider.errorMessage ?? 'Failed to create booking'),
-            backgroundColor: Colors.red,
-          ),
-        );
+        VSPFeedback.showError(context, bookingProvider.errorMessage ?? 'Failed to create booking');
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Payment failed: $e'),
-          backgroundColor: Colors.red,
-        ),
-      );
+      VSPFeedback.showError(context, 'Payment failed: $e');
     }
   }
 
@@ -105,64 +97,55 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Payment Gateway',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // Booking Summary Card
             Container(
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     widget.bookingDraft.stadiumName,
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 18,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: 8),
                   Row(
                     children: [
-                      const Icon(Icons.calendar_today, color: AppTheme.neonGreen, size: 16),
-                      const SizedBox(width: 8),
+                      const Icon(Icons.calendar_today, color: VSPColors.accent, size: 16),
+                      const SizedBox(width: VSPSpacing.xs),
                       Text(
                         '${widget.bookingDraft.startTime.day}/${widget.bookingDraft.startTime.month}/${widget.bookingDraft.startTime.year}',
-                        style: const TextStyle(color: AppTheme.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                       ),
-                      const SizedBox(width: 16),
-                      const Icon(Icons.access_time, color: AppTheme.neonGreen, size: 16),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: VSPSpacing.md),
+                      const Icon(Icons.access_time, color: VSPColors.accent, size: 16),
+                      const SizedBox(width: VSPSpacing.xs),
                       Text(
                         '${widget.bookingDraft.startTime.hour}:${widget.bookingDraft.startTime.minute.toString().padLeft(2, '0')} - ${widget.bookingDraft.endTime.hour}:${widget.bookingDraft.endTime.minute.toString().padLeft(2, '0')}',
-                        style: const TextStyle(color: AppTheme.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
@@ -172,15 +155,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     children: [
                       Text(
                         'Type: ${widget.bookingDraft.bookingType.name.toUpperCase()}',
-                        style: const TextStyle(color: AppTheme.textSecondary),
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                       Text(
                         '${widget.bookingDraft.totalPrice.toInt()} ${widget.bookingDraft.currency}',
-                        style: const TextStyle(
-                          color: AppTheme.neonGreen,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ],
                   ),
@@ -194,7 +176,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             const Text(
               'Payment Method',
               style: TextStyle(
-                color: AppTheme.textPrimary,
+                color: VSPColors.textPrimary,
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
               ),
@@ -217,15 +199,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               Container(
                 height: 200,
                 width: double.infinity,
-                padding: const EdgeInsets.all(24),
+                padding: const EdgeInsets.all(VSPSpacing.lg),
                 decoration: BoxDecoration(
-                  gradient: const LinearGradient(
-                    colors: [Color(0xFF1C3A00), Colors.black],
+                  gradient: LinearGradient(
+                    colors: [VSPColors.accent.withValues(alpha: 0.8), VSPColors.background],
                     begin: Alignment.topLeft,
                     end: Alignment.bottomRight,
                   ),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -233,16 +215,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                   children: [
                     const Text(
                       'Bank Card',
-                      style: TextStyle(color: Colors.white70, fontSize: 16, fontFamily: 'Agency FB'),
+                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 16),
                     ),
                     const Text(
                       '4582  1547  3265  1984',
                       style: TextStyle(
-                        color: Colors.white,
+                        color: VSPColors.textPrimary,
                         fontSize: 24,
                         fontWeight: FontWeight.bold,
                         letterSpacing: 2,
-                        fontFamily: 'Agency FB', 
                       ),
                     ),
                     Row(
@@ -250,16 +231,16 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       children: [
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Card Holder', style: TextStyle(color: Colors.white54, fontSize: 10)),
-                            Text('MOHAMED SALAH', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          children: [
+                            const Text('Card Holder', style: TextStyle(color: VSPColors.textSecondary, fontSize: 10)),
+                            const Text('MOHAMED SALAH', style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
                           ],
                         ),
                         Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
-                          children: const [
-                            Text('Expires', style: TextStyle(color: Colors.white54, fontSize: 10)),
-                            Text('12/28', style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                          children: [
+                            const Text('Expires', style: TextStyle(color: VSPColors.textSecondary, fontSize: 10)),
+                            const Text('12/28', style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ],
@@ -288,25 +269,25 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             if (_selectedPaymentMethod == 'wallet') ...[
               Container(
                 width: double.infinity,
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.only(top: VSPSpacing.xs),
+                padding: const EdgeInsets.all(VSPSpacing.lg),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111),
-                  borderRadius: BorderRadius.circular(16),
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.account_balance_wallet, color: AppTheme.neonGreen, size: 48),
-                    SizedBox(height: 12),
+                  children: [
+                    const Icon(Icons.account_balance_wallet, color: VSPColors.accent, size: 48),
+                    const SizedBox(height: VSPSpacing.md),
                     Text(
                       'Pay with Wallet',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: VSPSpacing.sm),
                     Text(
                       'Your wallet balance will be used for this payment.',
-                      style: TextStyle(color: AppTheme.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -317,25 +298,25 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             if (_selectedPaymentMethod == 'cash') ...[
               Container(
                 width: double.infinity,
-                margin: const EdgeInsets.only(top: 8),
-                padding: const EdgeInsets.all(20),
+                margin: const EdgeInsets.only(top: VSPSpacing.xs),
+                padding: const EdgeInsets.all(VSPSpacing.lg),
                 decoration: BoxDecoration(
-                  color: const Color(0xFF111111),
-                  borderRadius: BorderRadius.circular(16),
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
                 ),
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
-                  children: const [
-                    Icon(Icons.money, color: AppTheme.neonGreen, size: 48),
-                    SizedBox(height: 12),
+                  children: [
+                    const Icon(Icons.money, color: VSPColors.accent, size: 48),
+                    const SizedBox(height: VSPSpacing.md),
                     Text(
                       'Pay with Cash',
-                      style: TextStyle(color: AppTheme.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                      style: Theme.of(context).textTheme.titleLarge,
                     ),
-                    SizedBox(height: 8),
+                    const SizedBox(height: VSPSpacing.sm),
                     Text(
                       'Pay cash at the stadium when you arrive.',
-                      style: TextStyle(color: AppTheme.textSecondary),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                       textAlign: TextAlign.center,
                     ),
                   ],
@@ -346,34 +327,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             const SizedBox(height: 48),
 
             // Pay Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _isLoading ? null : _processPayment,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  foregroundColor: AppTheme.darkBackground,
-                  disabledBackgroundColor: AppTheme.neonGreen.withValues(alpha: 0.5),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                ),
-                child: _isLoading
-                    ? const SizedBox(
-                        width: 24,
-                        height: 24,
-                        child: CircularProgressIndicator(
-                          color: AppTheme.darkBackground,
-                          strokeWidth: 2.5,
-                        ),
-                      )
-                    : Text(
-                        'Pay ${widget.bookingDraft.totalPrice.toInt()} ${widget.bookingDraft.currency}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-              ),
+            PrimaryButton(
+              text: 'Pay ${widget.bookingDraft.totalPrice.toInt()} ${widget.bookingDraft.currency}',
+              isLoading: _isLoading,
+              onPressed: _processPayment,
             ),
           ],
         ),
@@ -386,22 +343,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     return GestureDetector(
       onTap: () => setState(() => _selectedPaymentMethod = value),
       child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? AppTheme.neonGreen.withValues(alpha: 0.2) : Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.2) : Colors.transparent,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary.withValues(alpha: 0.3),
+            color: isSelected ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary, size: 20),
-            const SizedBox(width: 8),
+            Icon(icon, color: isSelected ? VSPColors.accent : VSPColors.textSecondary, size: 20),
+            const SizedBox(width: VSPSpacing.xs),
             Text(
               label,
               style: TextStyle(
-                color: isSelected ? AppTheme.neonGreen : AppTheme.textSecondary,
+                color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
                 fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
               ),
             ),
@@ -413,20 +370,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   Widget _buildTextField(String label, TextEditingController controller, TextInputType type, {bool obscureText = false}) {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text(label, style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14)),
-        const SizedBox(height: 8),
+        Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+        const SizedBox(height: VSPSpacing.xs),
         TextField(
           controller: controller,
           keyboardType: type,
           obscureText: obscureText,
-          style: const TextStyle(color: AppTheme.textPrimary, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
           decoration: InputDecoration(
             filled: true,
-            fillColor: AppTheme.cardBackground,
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(12), borderSide: BorderSide.none),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+            fillColor: VSPColors.surface,
+            border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+            contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
           ),
         ),
       ],

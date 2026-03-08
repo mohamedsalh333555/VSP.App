@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import 'id_verification_screen.dart';
 
 class LegalDocsScreen extends StatelessWidget {
@@ -8,21 +9,17 @@ class LegalDocsScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
-          'Owner information', // Matching screenshot title
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+        title: Text(
+          'Owner information',
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -36,25 +33,21 @@ class LegalDocsScreen extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: List.generate(3, (index) {
                 return Container(
-                  width: 30,
+                  width: index == 0 ? 30 : 8,
                   height: 4,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: index == 0 ? AppTheme.neonGreen : Colors.grey[700], // Step 1 of Owner Info
-                    borderRadius: BorderRadius.circular(2),
+                    color: index == 0 ? VSPColors.accent : VSPColors.divider, // Step 1 of Owner Info
+                    borderRadius: BorderRadius.circular(VSPRadius.xs),
                   ),
                 );
               }),
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Upload an image',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: 16),
 
@@ -63,48 +56,46 @@ class LegalDocsScreen extends StatelessWidget {
               width: double.infinity,
               height: 150,
               decoration: BoxDecoration(
-                color: AppTheme.neonGreen, 
-                borderRadius: BorderRadius.circular(16),
+                color: VSPColors.accent, 
+                borderRadius: BorderRadius.circular(VSPRadius.md),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                    const Icon(Icons.add_photo_alternate_outlined, size: 40, color: Colors.black),
                    const SizedBox(height: 8),
-                   const Text('Click to upload', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-                   Text('JPG, JPEG, PNG less than 10MB', style: TextStyle(color: Colors.black.withValues(alpha: 0.7), fontSize: 10)),
+                   Text(
+                     'Click to upload', 
+                     style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
+                   ),
+                   Text(
+                     'JPG, JPEG, PNG less than 10MB', 
+                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.black.withValues(alpha: 0.7)),
+                   ),
                 ],
               ),
             ),
 
             const SizedBox(height: 32),
 
-            _buildLabel('Tax card'),
-            _buildUploadedFile('Tax card', '200 KB'),
+            _buildLabel(context, 'Tax card'),
+            _buildUploadedFile(context, 'Tax card', '200 KB'),
 
             const SizedBox(height: 16),
 
-            _buildLabel('Commercial register'),
-             _buildUploadedFile('commercial register', '200 KB'),
+            _buildLabel(context, 'Commercial register'),
+             _buildUploadedFile(context, 'commercial register', '200 KB'),
 
             const SizedBox(height: 40),
 
-            SizedBox(
-              width: double.infinity,
-              height: 50,
-              child: ElevatedButton(
-                onPressed: () {
-                   Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const IdVerificationScreen()),
-                  );
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                ),
-                child: const Text('Save', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-              ),
+            PrimaryButton(
+              text: 'Save',
+              onPressed: () {
+                 Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (_) => const IdVerificationScreen()),
+                );
+              },
             ),
           ],
         ),
@@ -112,34 +103,40 @@ class LegalDocsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLabel(String text) {
-     return Padding(
-       padding: const EdgeInsets.only(bottom: 8),
-       child: Text(
-         text,
-         style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
-       ),
-     );
+  Widget _buildLabel(BuildContext context, String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
+      ),
+    );
   }
 
-  Widget _buildUploadedFile(String name, String size) {
+  Widget _buildUploadedFile(BuildContext context, String name, String size) {
     return Container(
-      padding: const EdgeInsets.all(12),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(12),
-        border: Border.all(color: AppTheme.neonGreen),
-        color: AppTheme.neonGreen.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent),
+        color: VSPColors.accent.withValues(alpha: 0.1),
       ),
       child: Row(
         children: [
-          const Icon(Icons.image_outlined, color: Colors.white),
-          const SizedBox(width: 12),
+          const Icon(Icons.image_outlined, color: VSPColors.textPrimary),
+          const SizedBox(width: VSPSpacing.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Text(name, style: const TextStyle(color: Colors.white, fontSize: 14)),
-              Text(size, style: const TextStyle(color: Colors.grey, fontSize: 10)),
-              const Text('Click to view', style: TextStyle(color: Colors.white, decoration: TextDecoration.underline, fontSize: 12)),
+              Text(name, style: Theme.of(context).textTheme.bodyMedium),
+              Text(size, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+              Text(
+                'Click to view', 
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: VSPColors.textPrimary,
+                  decoration: TextDecoration.underline,
+                ),
+              ),
             ],
           ),
         ],

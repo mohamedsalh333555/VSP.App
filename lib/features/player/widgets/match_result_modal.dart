@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../data/models.dart';
+import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
+import 'package:vsp_application/shared/widgets/primary_button.dart';
 
 class MatchResultModal extends StatefulWidget {
   final Booking booking;
+  final String submittingTeamId;
   final Function(MatchOutcome outcome, double? rating, String? review) onConfirm;
 
   const MatchResultModal({
     super.key, 
     required this.booking,
+    required this.submittingTeamId,
     required this.onConfirm,
   });
 
@@ -34,10 +37,10 @@ class _MatchResultModalState extends State<MatchResultModal> {
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
       child: Container(
         decoration: BoxDecoration(
-          color: const Color(0xFF1C1C1E), // Dark card background
-          borderRadius: BorderRadius.circular(24),
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
         ),
-        padding: const EdgeInsets.all(24),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -46,44 +49,41 @@ class _MatchResultModalState extends State<MatchResultModal> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                const Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Confirm Match Result',
-                      style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 20,
-                        fontWeight: FontWeight.bold,
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Confirm Match Result',
+                        style: Theme.of(context).textTheme.displaySmall,
                       ),
-                    ),
-                    SizedBox(height: 4),
-                    Text(
-                      'Please Confirm The Final Match Outcome',
-                      style: TextStyle(
-                        color: AppTheme.neonGreen,
-                        fontSize: 12,
+                      const SizedBox(height: VSPSpacing.xs),
+                      Text(
+                        'Please Confirm The Final Match Outcome',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.accent,
+                            ),
                       ),
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: Colors.white),
+                  icon: const Icon(Icons.close, color: VSPColors.textPrimary),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   visualDensity: VisualDensity.compact,
                 ),
               ],
             ),
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
 
             // Match Info Card
             Container(
-              padding: const EdgeInsets.all(20),
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
-                color: const Color(0xFF2C2C2E),
-                borderRadius: BorderRadius.circular(16),
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
               ),
               child: Column(
                 children: [
@@ -92,21 +92,19 @@ class _MatchResultModalState extends State<MatchResultModal> {
                     mainAxisAlignment: MainAxisAlignment.spaceAround,
                     children: [
                       _buildTeamDisplay(widget.booking.playerTeamName ?? 'Your Team'),
-                      const Text(
+                      Text(
                         'VS',
-                        style: TextStyle(
-                          color: AppTheme.neonGreen, 
-                          fontSize: 20, 
-                          fontWeight: FontWeight.bold,
-                          fontStyle: FontStyle.italic,
-                        ),
+                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                              color: VSPColors.accent,
+                              fontStyle: FontStyle.italic,
+                            ),
                       ),
                       _buildTeamDisplay(widget.booking.opponentTeamName ?? 'Opponent'),
                     ],
                   ),
-                  const SizedBox(height: 20),
-                  const Divider(color: Colors.grey, height: 1),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: VSPSpacing.lg),
+                  const Divider(color: VSPColors.divider, height: 1),
+                  const SizedBox(height: VSPSpacing.md),
                   // Details
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -122,15 +120,15 @@ class _MatchResultModalState extends State<MatchResultModal> {
             const SizedBox(height: 24),
 
             // Selection Options
-            _buildSelectionOption(0, 'We Won', Icons.emoji_events_outlined, Colors.amber),
+            _buildSelectionOption(0, 'We Won', Icons.emoji_events_outlined, VSPColors.warning),
             const SizedBox(height: 12),
-            _buildSelectionOption(1, 'Draw', Icons.sync_alt, Colors.blue),
+            _buildSelectionOption(1, 'Draw', Icons.sync_alt, Colors.blue), // Blue is used for Draw specifically, could use a custom token if available
             const SizedBox(height: 12),
-            _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, Colors.red),
+            _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, VSPColors.error),
 
-            const SizedBox(height: 24),
-            const Divider(color: Colors.white10),
-            const SizedBox(height: 24),
+            const SizedBox(height: VSPSpacing.lg),
+            const Divider(color: VSPColors.divider),
+            const SizedBox(height: VSPSpacing.lg),
 
             // Rating Section
             _buildRatingSection(),
@@ -138,27 +136,10 @@ class _MatchResultModalState extends State<MatchResultModal> {
             const SizedBox(height: 32),
 
             // Submit Button
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: _selectedIndex == -1 ? null : _handleSubmit,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(16),
-                  ),
-                  disabledBackgroundColor: Colors.white10,
-                ),
-                child: Text(
-                  'Submit Result',
-                  style: TextStyle(
-                    color: _selectedIndex == -1 ? Colors.white24 : Colors.black,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-              ),
+            PrimaryButton(
+              text: 'Submit Result',
+              onPressed: _selectedIndex == -1 ? null : _handleSubmit,
+              isLoading: false,
             ),
           ],
         ),
@@ -169,8 +150,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
   void _handleSubmit() {
     late MatchOutcome outcome;
 
-    final myTeamId = widget.booking.playerTeamId ?? 'team_1';
-    final isHome = myTeamId == widget.booking.playerTeamId;
+    final isHome = widget.submittingTeamId == widget.booking.playerTeamId;
 
     if (_selectedIndex == 0) { // We Won
       outcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
@@ -194,15 +174,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
+        Text(
           'Rate the Stadium (Optional)',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.titleSmall,
         ),
-        const SizedBox(height: 12),
+        const SizedBox(height: VSPSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(5, (index) {
@@ -214,27 +190,27 @@ class _MatchResultModalState extends State<MatchResultModal> {
               },
               child: Icon(
                 index < _rating ? Icons.star : Icons.star_border,
-                color: Colors.amber,
+                color: VSPColors.warning,
                 size: 32,
               ),
             );
           }),
         ),
-        const SizedBox(height: 16),
+        const SizedBox(height: VSPSpacing.md),
         TextField(
           controller: _reviewController,
-          style: const TextStyle(color: Colors.white, fontSize: 13),
+          style: Theme.of(context).textTheme.bodySmall,
           maxLines: 2,
           decoration: InputDecoration(
             hintText: 'Write a review...',
-            hintStyle: const TextStyle(color: Colors.white24),
+            hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
             filled: true,
-            fillColor: const Color(0xFF2C2C2E),
+            fillColor: VSPColors.surfaceAlt,
             border: OutlineInputBorder(
-              borderRadius: BorderRadius.circular(12),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
               borderSide: BorderSide.none,
             ),
-            contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+            contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
           ),
         ),
       ],
@@ -249,24 +225,23 @@ class _MatchResultModalState extends State<MatchResultModal> {
         width: double.infinity,
         padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 20),
         decoration: BoxDecoration(
-          color: isSelected ? activeColor.withValues(alpha: 0.2) : const Color(0xFF2C2C2E),
-          borderRadius: BorderRadius.circular(12),
+          color: isSelected ? activeColor.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isSelected ? activeColor : Colors.white10,
+            color: isSelected ? activeColor : VSPColors.divider,
             width: 1.5,
           ),
         ),
         child: Row(
           children: [
-            Icon(icon, color: isSelected ? activeColor : Colors.white54),
-            const SizedBox(width: 16),
+            Icon(icon, color: isSelected ? activeColor : VSPColors.textSecondary),
+            const SizedBox(width: VSPSpacing.md),
             Text(
               label,
-              style: TextStyle(
-                color: isSelected ? Colors.white : Colors.white54,
-                fontSize: 16,
-                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              ),
+              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: isSelected ? VSPColors.textPrimary : VSPColors.textSecondary,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
             ),
             const Spacer(),
             if (isSelected)
@@ -284,18 +259,18 @@ class _MatchResultModalState extends State<MatchResultModal> {
           width: 50,
           height: 50,
           decoration: BoxDecoration(
-            color: Colors.white10,
+            color: VSPColors.surface,
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white24),
+            border: Border.all(color: VSPColors.divider),
           ),
-          child: const Icon(Icons.sports_soccer, color: Colors.white24),
+          child: const Icon(Icons.sports_soccer, color: VSPColors.textSecondary),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: VSPSpacing.sm),
         SizedBox(
           width: 80,
           child: Text(
             name,
-            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
             maxLines: 1,
             overflow: TextOverflow.ellipsis,
@@ -311,19 +286,17 @@ class _MatchResultModalState extends State<MatchResultModal> {
       children: [
         Text(
           label,
-          style: const TextStyle(
-            color: Colors.grey,
-            fontSize: 12,
-          ),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: VSPColors.textSecondary,
+              ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: VSPSpacing.xs),
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: VSPColors.textPrimary,
+                fontWeight: FontWeight.bold,
+              ),
         ),
       ],
     );

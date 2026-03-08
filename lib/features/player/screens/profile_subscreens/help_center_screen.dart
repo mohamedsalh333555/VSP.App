@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class HelpCenterScreen extends StatelessWidget {
   const HelpCenterScreen({super.key});
@@ -7,21 +7,17 @@ class HelpCenterScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Help Center',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -53,14 +49,14 @@ class HelpCenterScreen extends StatelessWidget {
                      padding: const EdgeInsets.symmetric(horizontal: 16),
                      height: 50,
                      decoration: BoxDecoration(
-                       color: AppTheme.cardBackground,
-                       borderRadius: BorderRadius.circular(25),
-                       border: Border.all(color: Colors.grey.withValues(alpha: 0.5)),
+                       color: VSPColors.surface,
+                       borderRadius: BorderRadius.circular(VSPRadius.full),
+                       border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
                      ),
                      child: Row(
                        children: [
-                         const Expanded(child: Text('Generate A Name Of ....', style: TextStyle(color: AppTheme.textSecondary))),
-                         Icon(Icons.upload_file, color: AppTheme.textSecondary.withValues(alpha: 0.7)),
+                         const Expanded(child: Text('Generate A Name Of ....', style: TextStyle(color: VSPColors.textSecondary))),
+                         Icon(Icons.upload_file, color: VSPColors.textSecondary.withValues(alpha: 0.7)),
                        ],
                      ),
                    ),
@@ -70,10 +66,10 @@ class HelpCenterScreen extends StatelessWidget {
                    width: 50,
                    height: 50,
                    decoration: const BoxDecoration(
-                     color: AppTheme.neonGreen,
+                     color: VSPColors.accent,
                      shape: BoxShape.circle,
                    ),
-                   child: const Icon(Icons.send, color: Colors.black),
+                   child: const Icon(Icons.send, color: VSPColors.background),
                  ),
                ],
              ),
@@ -88,15 +84,15 @@ class HelpCenterScreen extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       height: 140,
       decoration: BoxDecoration(
-         color: AppTheme.cardBackground,
-         borderRadius: BorderRadius.circular(16),
+         color: VSPColors.surface,
+         borderRadius: BorderRadius.circular(VSPRadius.lg),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Text(title, style: const TextStyle(color: AppTheme.textPrimary, fontSize: 13, height: 1.4), maxLines: 2, overflow: TextOverflow.ellipsis),
+          Text(title, style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, height: 1.4), maxLines: 2, overflow: TextOverflow.ellipsis),
            const Spacer(),
-          Text(subtitle, style: const TextStyle(color: Colors.teal, fontSize: 11, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
+          Text(subtitle, style: const TextStyle(color: VSPColors.accent, fontSize: 11, height: 1.4), maxLines: 3, overflow: TextOverflow.ellipsis),
         ],
       ),
     );

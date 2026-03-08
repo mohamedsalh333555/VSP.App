@@ -1,9 +1,10 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart'; // Import Provider
 import '../../../core/constants/create_account_strings.dart'; // Import Strings
 import '../../../core/providers/language_provider.dart'; // Import LanguageProvider
-import '../../../core/theme/app_theme.dart';
+
 import '../../owner/screens/owner_stadiums_screen.dart';
 import 'owner_email_input_screen.dart';
 
@@ -21,14 +22,14 @@ class OwnerEntryScreen extends StatelessWidget {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -39,7 +40,7 @@ class OwnerEntryScreen extends StatelessWidget {
                 
                 // Back Button
                 IconButton(
-                  icon: const Icon(Icons.arrow_back, color: AppTheme.textPrimary),
+                  icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
                   onPressed: () => Navigator.pop(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
@@ -54,7 +55,7 @@ class OwnerEntryScreen extends StatelessWidget {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Dev Mode: Navigating to Owner Dashboard'),
-                        backgroundColor: AppTheme.neonGreen,
+                        backgroundColor: VSPColors.accent,
                         duration: Duration(seconds: 1),
                       ),
                     );
@@ -68,12 +69,9 @@ class OwnerEntryScreen extends StatelessWidget {
                     );
                   },
                   child: Text(
-                    languageProvider.getText(CreateAccountStrings.hiPitch), // Use Dynamic String
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 48,
+                    languageProvider.getText(CreateAccountStrings.hiPitch), 
+                    style: Theme.of(context).textTheme.displayLarge?.copyWith(
                       fontWeight: FontWeight.w900,
-                      fontFamily: 'Agency FB',
                       letterSpacing: -1,
                     ),
                   ),
@@ -84,9 +82,8 @@ class OwnerEntryScreen extends StatelessWidget {
                 // Subtitle
                 Text(
                   languageProvider.getText(CreateAccountStrings.createNewAccount),
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 18,
+                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                    color: VSPColors.textSecondary,
                     fontWeight: FontWeight.w500,
                   ),
                 ),
@@ -95,10 +92,9 @@ class OwnerEntryScreen extends StatelessWidget {
 
                 // Description
                 Text(
-                  languageProvider.getText(CreateAccountStrings.ownerSubtitle), // Use Dynamic String
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
+                  languageProvider.getText(CreateAccountStrings.ownerSubtitle), 
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary,
                     height: 1.6,
                   ),
                 ),
@@ -119,17 +115,16 @@ class OwnerEntryScreen extends StatelessWidget {
                       );
                     },
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: VSPColors.background,
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                       ),
                       elevation: 0,
                     ),
-                    child: const Text(
+                    child: Text(
                       'Continue With Email',
-                      style: TextStyle(
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -178,7 +173,7 @@ class OwnerEntryScreen extends StatelessWidget {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -214,20 +209,19 @@ class _SocialButton extends StatelessWidget {
         height: 56,
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: AppTheme.textSecondary.withValues(alpha: 0.3),
+            color: VSPColors.divider,
             width: 1.5,
           ),
         ),
         child: Center(
           child: icon != null
-              ? Icon(icon, color: AppTheme.textPrimary, size: 28)
+              ? Icon(icon, color: VSPColors.textPrimary, size: 28)
               : Text(
                   iconPath!,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 24,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                    color: VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -236,3 +230,4 @@ class _SocialButton extends StatelessWidget {
     );
   }
 }
+

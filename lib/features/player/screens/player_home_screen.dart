@@ -1,15 +1,13 @@
 import 'package:flutter/material.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:flutter/services.dart'; // For HapticFeedback
- // For verifying UI imports
-import '../../../core/providers/language_provider.dart';
+import 'package:flutter/services.dart'; 
+import 'dart:ui';
+import 'package:intl/intl.dart';
+import 'championship_details_screen.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:provider/provider.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/shimmer_image.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/database_service.dart';
@@ -19,8 +17,15 @@ import 'booked_screen.dart';
 import 'champion_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_center_screen.dart';
+import '../../../core/ui/components/vsp_section_title.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../../../shared/widgets/stadium_card.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/utils/vsp_feedback.dart';
+
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/booking_provider.dart';
+import '../widgets/match_result_modal.dart';
 
 /// Player Home Page (English Only)
 class PlayerHomeScreen extends StatefulWidget {
@@ -44,41 +49,62 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   }
 
   void _checkAndShowMatchResultModal() async {
-    // This was a simulation for demo purposes
-    /* 
+    // Wait a moment for providers to load data
     await Future.delayed(const Duration(seconds: 2));
-    if (mounted) {
-       showDialog(
-         context: context,
-         builder: (context) => MatchResultModal(
-           booking: Booking(
-             id: 'demo_match',
-             stadiumId: '1',
-             stadiumName: 'Santiago Bernabéu',
-             ownerId: 'owner_1',
-             startTime: DateTime.now().subtract(const Duration(hours: 3)),
-             endTime: DateTime.now().subtract(const Duration(hours: 1)),
-             bookingType: BookingType.challenge,
-             playerTeamName: 'Your Team',
-             opponentTeamName: 'Real Madrid',
-             isPrivate: false,
-             rentBall: true,
-             totalPrice: 120,
-             paymentMethod: 'card',
-             status: BookingStatus.completed,
-             createdByUserId: 'demo_user',
-             createdAt: DateTime.now().subtract(const Duration(days: 1)),
-           ),
-           onConfirm: (outcome) {
-             Navigator.pop(context);
-              ScaffoldMessenger.of(context).showSnackBar(
-               const SnackBar(content: Text('Result Submitted Successfully!')),
-             );
-           },
-         ),
-       );
+    if (!mounted) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.uid;
+    if (userId == null) return;
+
+    // Get user's team to know their teamId
+    final myTeam = await DatabaseService().getUserTeam(userId);
+    final myTeamId = myTeam?.id;
+
+    if (!mounted) return;
+
+    // Find first challenge booking that needs a result from this user
+    final historyBookings = bookingProvider.historyBookings;
+    for (final booking in historyBookings) {
+      // 🚨 STRICT CHECK: ONLY Challenge mode with a valid opponent MUST trigger result prompt.
+      if (booking.bookingType != BookingType.challenge) continue;
+      if (booking.opponentTeamId == null || booking.playerTeamId == null) continue;
+      
+      if (booking.matchResultStatus == MatchResultStatus.confirmed) continue;
+      if (booking.matchResultStatus.toString().contains('disputed')) continue;
+
+      // If this user already submitted their result, skip
+      if (booking.resultSubmittedByTeamId == myTeamId && myTeamId != null) continue;
+
+      // Found a booking needing result submission!
+      if (mounted) {
+        showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (ctx) => MatchResultModal(
+            booking: booking,
+            submittingTeamId: myTeamId ?? userId,
+            onConfirm: (outcome, rating, review) async {
+              final success = await bookingProvider.submitMatchResult(
+                bookingId: booking.id,
+                teamId: myTeamId ?? userId,
+                outcome: outcome,
+                rating: rating,
+                review: review,
+              );
+              if (ctx.mounted) {
+                Navigator.pop(ctx);
+                if (success) {
+                  VSPFeedback.showSuccess(ctx, 'Result submitted!');
+                }
+              }
+            },
+          ),
+        );
+      }
+      break; // Only show one at a time
     }
-    */
   }
 
   @override
@@ -90,7 +116,8 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      extendBody: true,
+      backgroundColor: VSPColors.background,
       body: IndexedStack(
         index: _selectedIndex,
         children: [
@@ -157,14 +184,7 @@ class _SectionHeader extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            title,
-            style: const TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
+          VSPSectionTitle(title),
           Material(
             color: Colors.transparent,
             child: InkWell(
@@ -173,15 +193,12 @@ class _SectionHeader extends StatelessWidget {
                 HapticFeedback.lightImpact();
                 onSeeAll();
               },
-              borderRadius: BorderRadius.circular(8),
-              child: const Padding(
-                padding: EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              borderRadius: BorderRadius.circular(VSPRadius.xs),
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 child: Text(
                   'See all',
-                  style: TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 14,
-                  ),
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
             ),
@@ -232,11 +249,11 @@ class _MatchCardState extends State<MatchCard> {
   Color _getBackgroundColor(int index) {
     switch (index % 3) {
       case 0:
-        return const Color(0xFF2D4B15); // Deep Forest Green
+        return const Color(0xFF2D4B15); // Keeping these specific decorative colors as they define the "Match Card" variety
       case 1:
-        return const Color(0xFF1E1E1E); // Charcoal Gray
+        return const Color(0xFF1E1E1E); 
       case 2:
-        return const Color(0xFF133638); // Deep Teal
+        return const Color(0xFF133638);
       default:
         return const Color(0xFF2D4B15);
     }
@@ -245,7 +262,7 @@ class _MatchCardState extends State<MatchCard> {
   void _toggleJoin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login to join matches')));
+      VSPFeedback.showError(context, 'Please login to join matches');
       return;
     }
 
@@ -271,7 +288,11 @@ class _MatchCardState extends State<MatchCard> {
         if (success) {
            setState(() {
             _isJoined = !_isJoined;
-            if (_isJoined) _currentPlayers++; else _currentPlayers--;
+            if (_isJoined) {
+              _currentPlayers++;
+            } else {
+              _currentPlayers--;
+            }
            });
         }
       }
@@ -279,7 +300,11 @@ class _MatchCardState extends State<MatchCard> {
       // Fallback for mock/UI testing
       setState(() {
         _isJoined = !_isJoined;
-        if (_isJoined) _currentPlayers++; else _currentPlayers--;
+        if (_isJoined) {
+          _currentPlayers++;
+        } else {
+          _currentPlayers--;
+        }
       });
     }
   }
@@ -287,12 +312,7 @@ class _MatchCardState extends State<MatchCard> {
   bool _isLoading = false;
 
   void _onShare() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Match link copied to clipboard!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    VSPFeedback.showSuccess(context, 'Match link copied to clipboard!');
   }
 
   @override
@@ -305,7 +325,7 @@ class _MatchCardState extends State<MatchCard> {
       margin: widget.margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
         color: bgColor,
-        borderRadius: BorderRadius.circular(15), 
+        borderRadius: BorderRadius.circular(VSPRadius.md), 
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.25), 
@@ -329,7 +349,7 @@ class _MatchCardState extends State<MatchCard> {
                     children: [
                       _buildTeamAvatar(widget.booking!.playerTeamName ?? 'Team A'),
                       const SizedBox(width: 8),
-                      const Text('VS', style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold, fontSize: 12)),
+                      Text('VS', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                       const SizedBox(width: 8),
                       _buildTeamAvatar(widget.booking!.opponentTeamName ?? 'Team B'),
                     ],
@@ -342,15 +362,17 @@ class _MatchCardState extends State<MatchCard> {
                   height: 44,
                   decoration: BoxDecoration(
                     shape: BoxShape.circle,
-                    border: Border.all(color: Colors.white24, width: 1.5),
+                    border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1), width: 1.5),
                   ),
                   child: ClipRRect(
-                    borderRadius: BorderRadius.circular(22),
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
                     child: CachedNetworkImage(
                       imageUrl: widget.team.captainImageUrl,
                       fit: BoxFit.cover,
-                      placeholder: (context, url) => Container(color: Colors.white10),
-                      errorWidget: (context, url, error) => const Icon(Icons.person, color: Colors.white24),
+                      memCacheWidth: 80,
+                      memCacheHeight: 80,
+                      placeholder: (context, url) => Container(color: VSPColors.surface),
+                      errorWidget: (context, url, error) => const Icon(Icons.person, color: VSPColors.textSecondary),
                     ),
                   ),
                 ),
@@ -361,25 +383,19 @@ class _MatchCardState extends State<MatchCard> {
                     children: [
                       Text(
                         widget.team.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16, 
-                          fontWeight: FontWeight.w900,
-                        ),
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
                         widget.team.captainName,
-                        style: TextStyle(
-                          color: Colors.white.withValues(alpha: 0.6),
-                          fontSize: 12,
-                        ),
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
                 ),
               ],
+              const SizedBox(width: 8),
               Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -390,31 +406,21 @@ class _MatchCardState extends State<MatchCard> {
                       height: 30,
                       margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: VSPColors.textPrimary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.share_outlined, color: AppTheme.neonGreen, size: 14),
+                      child: const Icon(Icons.share_outlined, color: VSPColors.accent, size: 14),
                     ),
                   ),
-                  GestureDetector(
-                    onTap: _isLoading ? null : _toggleJoin,
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: _isJoined ? const Color(0xFF2A2A2A) : AppTheme.neonGreen,
-                        borderRadius: BorderRadius.circular(10),
-                        border: _isJoined ? Border.all(color: Colors.white24, width: 1) : null,
-                      ),
-                      child: _isLoading 
-                        ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
-                        : Text(
-                            _isJoined ? 'Leave' : 'Join Match',
-                            style: TextStyle(
-                              color: _isJoined ? Colors.white : Colors.black,
-                              fontWeight: FontWeight.w900, 
-                              fontSize: 12,
-                            ),
-                          ),
+                  SizedBox(
+                    height: 32,
+                    child: PrimaryButton(
+                      text: _isJoined ? 'Leave' : 'Join Match',
+                      isLoading: _isLoading,
+                      color: _isJoined ? VSPColors.surface : VSPColors.accent,
+                      textColor: _isJoined ? VSPColors.textPrimary : VSPColors.background,
+                      onPressed: _isLoading ? null : _toggleJoin,
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                     ),
                   ),
                 ],
@@ -422,19 +428,19 @@ class _MatchCardState extends State<MatchCard> {
             ],
           ),
           const SizedBox(height: 14), 
-          // Info Grid
-          Container(
+              // Info Grid
+              Container(
             padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: VSPColors.background.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
             ),
             child: Row(
               children: [
                 Expanded(child: _buildInfoColumn('Date', _formatDate(widget.team.date))),
-                Container(width: 1, height: 20, color: Colors.white10),
+                Container(width: 1, height: 20, color: VSPColors.divider.withValues(alpha: 0.2)),
                 Expanded(child: _buildInfoColumn('Stadium', _shortenName(widget.team.stadium))),
-                Container(width: 1, height: 20, color: Colors.white10),
+                Container(width: 1, height: 20, color: VSPColors.divider.withValues(alpha: 0.2)),
                 Expanded(child: _buildInfoColumn("you'll pay", '${widget.team.pricePerPerson.toStringAsFixed(0)} eg')),
               ],
             ),
@@ -461,14 +467,16 @@ class _MatchCardState extends State<MatchCard> {
                               shape: BoxShape.circle,
                               border: Border.all(color: bgColor, width: 2),
                             ),
-                            child: ClipRRect(
-                              borderRadius: BorderRadius.circular(15),
-                              child: CachedNetworkImage(
-                                imageUrl: widget.team.playerImages[i],
-                                fit: BoxFit.cover,
-                                placeholder: (context, url) => Container(color: Colors.white10),
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(VSPRadius.full),
+                                child: CachedNetworkImage(
+                                  imageUrl: widget.team.playerImages[i],
+                                  fit: BoxFit.cover,
+                                  memCacheWidth: 60,
+                                  memCacheHeight: 60,
+                                  placeholder: (context, url) => Container(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
+                                ),
                               ),
-                            ),
                           ),
                         ),
                       ),
@@ -478,12 +486,12 @@ class _MatchCardState extends State<MatchCard> {
                   Expanded(
                     child: RichText(
                       text: TextSpan(
-                        style: TextStyle(color: Colors.white.withValues(alpha: 0.6), fontSize: 12),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         children: [
                           const TextSpan(text: 'Number of remaining '),
                           TextSpan(
                             text: '${widget.team.maxPlayers - _currentPlayers}', 
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 14),
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.textPrimary),
                           ),
                           TextSpan(text: ' out of ${widget.team.maxPlayers}'), 
                         ],
@@ -495,11 +503,11 @@ class _MatchCardState extends State<MatchCard> {
               const SizedBox(height: 12),
               // Availability Progress Bar
               ClipRRect(
-                borderRadius: BorderRadius.circular(4),
+                borderRadius: BorderRadius.circular(VSPRadius.xs),
                 child: LinearProgressIndicator(
                   value: _currentPlayers / (widget.team.maxPlayers > 0 ? widget.team.maxPlayers : 1),
-                  backgroundColor: Colors.white10,
-                  valueColor: const AlwaysStoppedAnimation<Color>(AppTheme.neonGreen),
+                  backgroundColor: VSPColors.divider.withValues(alpha: 0.1),
+                  valueColor: const AlwaysStoppedAnimation<Color>(VSPColors.accent),
                   minHeight: 4,
                 ),
               ),
@@ -517,9 +525,7 @@ class _MatchCardState extends State<MatchCard> {
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 10,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
             fontWeight: FontWeight.w800,
             letterSpacing: 0.5,
           ),
@@ -530,10 +536,8 @@ class _MatchCardState extends State<MatchCard> {
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
+          style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+            fontWeight: FontWeight.w600,
           ),
         ),
       ],
@@ -559,16 +563,16 @@ class _MatchCardState extends State<MatchCard> {
           width: 32,
           height: 32,
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.1),
+            color: VSPColors.textPrimary.withValues(alpha: 0.1),
             shape: BoxShape.circle,
-            border: Border.all(color: Colors.white24, width: 1),
+            border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1), width: 1),
           ),
-          child: const Center(child: Icon(Icons.shield, color: AppTheme.neonGreen, size: 16)),
+          child: const Center(child: Icon(Icons.shield, color: VSPColors.accent, size: 16)),
         ),
         const SizedBox(height: 4),
         Text(
           name.length > 8 ? '${name.substring(0, 6)}..' : name,
-          style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
         ),
       ],
     );
@@ -593,7 +597,6 @@ class ChampionshipCard extends StatefulWidget {
 }
 
 class _ChampionshipCardState extends State<ChampionshipCard> {
-  bool _isJoined = false;
   late int _teamsJoined;
 
   @override
@@ -602,44 +605,8 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
     _teamsJoined = widget.championship.teamsJoined;
   }
 
-  void _toggleJoin() async {
-    // Simulate API delay
-    await Future.delayed(const Duration(milliseconds: 500));
-    
-    if (mounted) {
-      setState(() {
-        _isJoined = !_isJoined;
-        if (_isJoined) {
-          _teamsJoined++;
-        } else {
-          _teamsJoined--;
-        }
-      });
-      
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(_isJoined ? 'Joined championship!' : 'Left championship'),
-          backgroundColor: AppTheme.neonGreen,
-          duration: const Duration(seconds: 1),
-          behavior: SnackBarBehavior.floating,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-          action: SnackBarAction(
-            label: 'OK', 
-            textColor: Colors.black, 
-            onPressed: () {},
-          ),
-        ),
-      );
-    }
-  }
-
   void _onShare() {
-    ScaffoldMessenger.of(context).showSnackBar(
-      const SnackBar(
-        content: Text('Championship link copied to clipboard!'),
-        duration: Duration(seconds: 2),
-      ),
-    );
+    VSPFeedback.showSuccess(context, 'Championship link copied to clipboard!');
   }
 
   @override
@@ -649,15 +616,9 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
       padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
       margin: widget.margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
-        color: const Color(0xFF2C2C2E),
-        borderRadius: BorderRadius.circular(15), // Unified 15px
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.25),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-        ],
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        boxShadow: VSPShadow.subtle,
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -672,40 +633,35 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                 height: 44,
                 decoration: BoxDecoration(
                   shape: BoxShape.circle,
-                  border: Border.all(color: Colors.white24, width: 1.5),
+                  border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1), width: 1.5),
                 ),
-                child: ClipRRect(
-                  borderRadius: BorderRadius.circular(22),
-                  child: CachedNetworkImage(
+                  child: ClipRRect(
+                    borderRadius: BorderRadius.circular(VSPRadius.full),
+                    child: CachedNetworkImage(
                     imageUrl: widget.championship.logoUrl,
                     width: 44,
                     height: 44,
                     fit: BoxFit.cover,
-                    placeholder: (context, url) => Container(color: Colors.white10),
+                    memCacheWidth: 80,
+                    memCacheHeight: 80,
+                    placeholder: (context, url) => Container(color: VSPColors.surface),
                   ),
                 ),
               ),
-              const SizedBox(width: 10),
+              const SizedBox(width: VSPSpacing.sm),
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
                       widget.championship.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16, // Slightly smaller title
-                        fontWeight: FontWeight.w900,
-                      ),
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 16),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                     Text(
                       widget.championship.type,
-                      style: TextStyle(
-                        color: Colors.white.withValues(alpha: 0.6),
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
                   ],
                 ),
@@ -720,27 +676,34 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                       height: 30,
                       margin: const EdgeInsets.only(right: 6),
                       decoration: BoxDecoration(
-                        color: Colors.white.withValues(alpha: 0.1),
+                        color: VSPColors.textPrimary.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
                       ),
-                      child: const Icon(Icons.share_outlined, color: AppTheme.neonGreen, size: 14),
+                      child: const Icon(Icons.share_outlined, color: VSPColors.accent, size: 14),
                     ),
                   ),
                   GestureDetector(
-                    onTap: _toggleJoin,
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChampionshipDetailsScreen(championship: widget.championship),
+                        ),
+                      );
+                    },
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
                       decoration: BoxDecoration(
-                        color: _isJoined ? const Color(0xFF2A2A2A) : AppTheme.neonGreen,
-                        borderRadius: BorderRadius.circular(10),
-                        border: _isJoined ? Border.all(color: Colors.white24, width: 1) : null,
+                        color: VSPColors.accent,
+                        borderRadius: BorderRadius.circular(VSPRadius.sm),
                       ),
                       child: Text(
-                        _isJoined ? 'Leave' : 'Join',
-                        style: TextStyle(
-                          color: _isJoined ? Colors.white : Colors.black, 
-                          fontWeight: FontWeight.w900, 
-                          fontSize: 12,
+                        (widget.championship.status == 'ongoing' || widget.championship.status == 'completed') 
+                            ? 'Brackets' 
+                            : 'Join',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: Colors.black, 
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
                     ),
@@ -749,25 +712,25 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
               ),
             ],
           ),
-          const SizedBox(height: 14), // Breathing room
+          const SizedBox(height: VSPSpacing.md), // Breathing room
           // Info Grid
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.sm),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
-              borderRadius: BorderRadius.circular(12),
+              color: VSPColors.background.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
             ),
             child: Row(
               children: [
-                Expanded(child: _buildInfoColumn('Starts', widget.championship.startDate.split(' ').map((s) => s.length > 3 ? s.substring(0, 3) : s).join(' '))),
-                Container(width: 1, height: 20, color: Colors.white10),
+                Expanded(child: _buildInfoColumn('Starts', DateFormat('MMM d').format(widget.championship.startDate))),
+                Container(width: 1, height: 20, color: VSPColors.divider.withValues(alpha: 0.2)),
                 Expanded(child: _buildInfoColumn('Prize', '${widget.championship.grandPrize.toStringAsFixed(0)} eg')),
-                Container(width: 1, height: 20, color: Colors.white10),
+                Container(width: 1, height: 20, color: VSPColors.divider.withValues(alpha: 0.2)),
                 Expanded(child: _buildInfoColumn("Entry", '${widget.championship.entryFee.toStringAsFixed(0)} eg')),
               ],
             ),
           ),
-          const SizedBox(height: 12), // Breathing room
+          const SizedBox(height: VSPSpacing.sm), // Breathing room
           // Teams Joined
           Row(
             children: [
@@ -784,14 +747,16 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                         height: 30,
                         decoration: BoxDecoration(
                           shape: BoxShape.circle,
-                          border: Border.all(color: const Color(0xFF2C2C2E), width: 2),
+                          border: Border.all(color: VSPColors.surface, width: 2),
                         ),
                         child: ClipRRect(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(VSPRadius.full),
                           child: CachedNetworkImage(
                             imageUrl: widget.championship.teamLogos[index],
                             fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: Colors.white10),
+                            memCacheWidth: 60,
+                            memCacheHeight: 60,
+                            placeholder: (context, url) => Container(color: VSPColors.surface),
                           ),
                         ),
                       ),
@@ -799,13 +764,12 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                   ),
                 ),
               ),
-              const SizedBox(width: 8),
+              const SizedBox(width: VSPSpacing.sm),
               Expanded(
                 child: Text(
                    '$_teamsJoined/${widget.championship.maxTeams} Teams Joined',
-                   style: TextStyle(
-                     color: Colors.white.withValues(alpha: 0.6),
-                     fontSize: 12,
+                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                     color: VSPColors.textSecondary.withValues(alpha: 0.6),
                      fontWeight: FontWeight.w500,
                    ),
                 ),
@@ -824,12 +788,11 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
       children: [
         Text(
           label.toUpperCase(),
-          style: TextStyle(
-            color: Colors.white.withValues(alpha: 0.5),
-            fontSize: 10,
-            fontWeight: FontWeight.w800,
-            letterSpacing: 0.5,
-          ),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                color: VSPColors.textSecondary,
+                fontWeight: FontWeight.w800,
+                letterSpacing: 0.5,
+              ),
         ),
         const SizedBox(height: 4),
         Text(
@@ -837,11 +800,10 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
           textAlign: TextAlign.center,
           maxLines: 1,
           overflow: TextOverflow.ellipsis,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
-            fontWeight: FontWeight.w900,
-          ),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: VSPColors.textPrimary,
+                fontWeight: FontWeight.w900,
+              ),
         ),
       ],
     );
@@ -887,7 +849,7 @@ class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
     NavItem(
       activeIcon: Icons.groups_rounded, 
       inactiveIcon: Icons.groups_outlined,
-      label: 'Team',
+      label: 'Matches',
     ),
     NavItem(
       activeIcon: Icons.emoji_events_rounded,
@@ -909,70 +871,78 @@ class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
   @override
   Widget build(BuildContext context) {
     return Container(
-      decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
-        border: Border(top: BorderSide(color: Colors.white12, width: 0.5)),
+      margin: EdgeInsets.only(
+        left: 20, 
+        right: 20, 
+        bottom: MediaQuery.of(context).padding.bottom + 16,
       ),
-      child: SafeArea(
-        top: false,
-        child: Container(
-          height: 70,
-          padding: const EdgeInsets.symmetric(horizontal: 8.0),
-          child: Row(
-            mainAxisAlignment: MainAxisAlignment.spaceAround,
-            children: _navItems.asMap().entries.map((entry) {
-              final index = entry.key;
-              final item = entry.value;
-              final isSelected = index == widget.selectedIndex;
+      height: 65,
+      decoration: BoxDecoration(
+        color: VSPColors.surface.withValues(alpha: 0.85),
+        borderRadius: BorderRadius.circular(30),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.2),
+            blurRadius: 20,
+            offset: const Offset(0, 10),
+          ),
+        ],
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(30),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 12),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
+              children: _navItems.asMap().entries.map((entry) {
+                final index = entry.key;
+                final item = entry.value;
+                final isSelected = index == widget.selectedIndex;
 
-              return Expanded(
-                child: InkWell(
-                  onTap: () => widget.onItemTapped(index),
-                  splashColor: Colors.transparent,
-                  highlightColor: Colors.transparent,
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      // Dot Indicator - Only when selected
-                      if (isSelected)
-                        Container(
-                          width: 6,
-                          height: 6,
-                          margin: const EdgeInsets.only(bottom: 4),
-                          decoration: const BoxDecoration(
-                            color: AppTheme.neonGreen,
-                            shape: BoxShape.circle,
-                          ),
-                        )
-                      else
-                        const SizedBox(height: 10), // Placeholder to keep height consistent
-
-                      // Icon
-                      Icon(
-                        isSelected ? item.activeIcon : item.inactiveIcon,
-                        color: isSelected ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
-                        size: 26,
-                      ),
-                      
-                      const SizedBox(height: 4),
-                      
-                      // Label
-                      Text(
-                        item.label,
-                        style: TextStyle(
-                          color: isSelected ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
-                          fontSize: 11,
-                          fontFamily: 'Agency FB', 
-                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                          letterSpacing: 0.5,
+                return GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    widget.onItemTapped(index);
+                  },
+                  behavior: HitTestBehavior.opaque,
+                  child: AnimatedContainer(
+                    duration: const Duration(milliseconds: 300),
+                    curve: Curves.easeInOut,
+                    padding: EdgeInsets.symmetric(
+                      horizontal: isSelected ? 16 : 12,
+                      vertical: isSelected ? 10 : 0,
+                    ),
+                    decoration: BoxDecoration(
+                      color: isSelected ? VSPColors.accent.withValues(alpha: 0.15) : Colors.transparent,
+                      borderRadius: BorderRadius.circular(20),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          isSelected ? item.activeIcon : item.inactiveIcon,
+                          color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                          size: 24,
                         ),
-                      ),
-                    ],
+                        if (isSelected) ...[
+                          const SizedBox(width: 8),
+                          Text(
+                            item.label,
+                            style: const TextStyle(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ],
+                    ),
                   ),
-                ),
-              );
-            }).toList(),
+                );
+              }).toList(),
+            ),
           ),
         ),
       ),
@@ -996,10 +966,10 @@ class _HomeContent extends StatelessWidget {
         children: [
           // 🔹 FIXED HEADER SECTION
           Container(
-            padding: const EdgeInsets.fromLTRB(16, 16, 16, 16),
-            decoration: const BoxDecoration(
-              color: AppTheme.darkBackground,
-              border: Border(bottom: BorderSide(color: Colors.white10)),
+            padding: const EdgeInsets.all(VSPSpacing.md),
+            decoration: BoxDecoration(
+              color: VSPColors.background,
+              border: Border(bottom: BorderSide(color: VSPColors.divider.withValues(alpha: 0.1))),
             ),
             child: Column(
               children: [
@@ -1021,6 +991,9 @@ class _HomeContent extends StatelessWidget {
                             );
                             if (image != null) {
                               auth.updateProfilePhoto(image);
+                              if (context.mounted) {
+                                VSPFeedback.showSuccess(context, 'Profile photo updated!');
+                              }
                             }
                           },
                           child: Stack(
@@ -1030,29 +1003,29 @@ class _HomeContent extends StatelessWidget {
                                 height: 50,
                                 decoration: BoxDecoration(
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white10, width: 1),
+                                  border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 1),
                                 ),
                                 child: CircleAvatar(
-                                  backgroundColor: AppTheme.cardBackground,
+                                  backgroundColor: VSPColors.surface,
                                   backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty)
-                                      ? CachedNetworkImageProvider(userProfileUrl!)
+                                      ? CachedNetworkImageProvider(userProfileUrl)
                                       : null,
                                   child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                      ? const Icon(Icons.person, color: Colors.white54, size: 28)
+                                      ? Icon(Icons.person, color: VSPColors.textSecondary.withValues(alpha: 0.5), size: 28)
                                       : null,
                                 ),
                               ),
                               if (authLoading)
                                 Positioned.fill(
                                   child: Container(
-                                    decoration: const BoxDecoration(
-                                      color: Colors.black45,
+                                    decoration: BoxDecoration(
+                                      color: VSPColors.background.withValues(alpha: 0.45),
                                       shape: BoxShape.circle,
                                     ),
                                     child: const Center(
                                       child: CircularProgressIndicator(
                                         strokeWidth: 2,
-                                        valueColor: AlwaysStoppedAnimation(AppTheme.neonGreen),
+                                        valueColor: AlwaysStoppedAnimation(VSPColors.accent),
                                       ),
                                     ),
                                   ),
@@ -1063,41 +1036,49 @@ class _HomeContent extends StatelessWidget {
                                 child: Container(
                                     padding: const EdgeInsets.all(2),
                                     decoration: const BoxDecoration(
-                                      color: AppTheme.neonGreen,
+                                      color: VSPColors.accent,
                                       shape: BoxShape.circle,
                                     ),
-                                    child: const Icon(Icons.add, size: 12, color: Colors.black)),
+                                    child: const Icon(Icons.add, size: 12, color: VSPColors.background)),
                               ),
                             ],
                           ),
                         );
                       }
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: VSPSpacing.sm),
                     // Welcome Text
                     Expanded(
                       child: Consumer<AuthProvider>(
                         builder: (context, auth, _) {
                           final userName = auth.userModel?.name;
-                          final userPosition = auth.userModel?.position ?? 'Player';
                           
                           return Column(
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
                                 'Hi ${userName ?? "Player"}',
-                                style: const TextStyle(
-                                  color: AppTheme.textPrimary,
-                                  fontSize: 18,
-                                  fontWeight: FontWeight.bold,
-                                ),
+                                style: Theme.of(context).textTheme.titleLarge,
                               ),
                               const SizedBox(height: 2),
-                              Text(
-                                'Player ($userPosition)',
-                                style: const TextStyle(
-                                  color: AppTheme.textSecondary,
-                                  fontSize: 12,
+                              // 📍 Location Selector
+                              GestureDetector(
+                                onTap: () => _showLocationPicker(context, auth),
+                                child: Row(
+                                  children: [
+                                    const Icon(Icons.location_on, color: VSPColors.accent, size: 14),
+                                    const SizedBox(width: 4),
+                                    Text(
+                                      auth.userModel?.governorate ?? 'Select Location',
+                                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                        color: VSPColors.textSecondary,
+                                        fontWeight: FontWeight.bold,
+                                        decoration: TextDecoration.underline,
+                                        decorationColor: VSPColors.textSecondary.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                    const Icon(Icons.arrow_drop_down, color: VSPColors.textSecondary, size: 16),
+                                  ],
                                 ),
                               ),
                             ],
@@ -1119,12 +1100,12 @@ class _HomeContent extends StatelessWidget {
                         width: 40,
                         height: 40,
                         decoration: BoxDecoration(
-                          color: AppTheme.cardBackground,
-                          borderRadius: BorderRadius.circular(10),
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.sm),
                         ),
                         child: const Icon(
                           Icons.notifications_outlined,
-                          color: AppTheme.textPrimary,
+                          color: VSPColors.textPrimary,
                           size: 24,
                         ),
                       ),
@@ -1132,7 +1113,7 @@ class _HomeContent extends StatelessWidget {
                   ],
                 ),
 
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.md),
 
                 // Search & Filter
                 Row(
@@ -1142,19 +1123,17 @@ class _HomeContent extends StatelessWidget {
                       child: Container(
                         height: 50,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(30),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.full),
+                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                         ),
                         child: TextField(
                           controller: searchController,
-                          style: const TextStyle(
-                            color: AppTheme.textPrimary,
-                          ),
+                          style: Theme.of(context).textTheme.bodyMedium,
                           decoration: InputDecoration(
                             hintText: 'Search...',
-                            hintStyle: TextStyle(
-                              color: AppTheme.textSecondary.withValues(alpha: 0.5),
+                            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: VSPColors.textSecondary.withValues(alpha: 0.5),
                             ),
                             prefixIcon: Padding(
                               padding: const EdgeInsets.all(8.0),
@@ -1162,13 +1141,13 @@ class _HomeContent extends StatelessWidget {
                                 width: 34,
                                 height: 34,
                                 decoration: BoxDecoration(
-                                  color: Colors.white.withValues(alpha: 0.05),
+                                  color: VSPColors.surfaceAlt,
                                   shape: BoxShape.circle,
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                                  border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                                 ),
                                 child: const Icon(
                                   Icons.search,
-                                  color: Colors.white,
+                                  color: VSPColors.textPrimary,
                                   size: 18,
                                 ),
                               ),
@@ -1181,7 +1160,7 @@ class _HomeContent extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const SizedBox(width: 12),
+                    const SizedBox(width: VSPSpacing.sm),
                     // Filter Button
                     InkWell(
                       onTap: () {
@@ -1189,27 +1168,30 @@ class _HomeContent extends StatelessWidget {
                           context: context,
                           backgroundColor: Colors.transparent,
                           isScrollControlled: true,
-                          builder: (context) => const FilterBottomSheet(),
+                          builder: (context) => Padding(
+                            padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                            child: const FilterBottomSheet(),
+                          ),
                         );
                       },
                       child: Container(
                         width: 50,
                         height: 50,
                         decoration: BoxDecoration(
-                          color: const Color(0xFF1E1E1E),
-                          borderRadius: BorderRadius.circular(12),
-                          border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                         ),
                         child: const Icon(
                           Icons.tune,
-                          color: AppTheme.neonGreen,
+                          color: VSPColors.accent,
                           size: 24,
                         ),
                       ),
                     ),
                   ],
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: VSPSpacing.sm),
               ],
             ),
           ),
@@ -1217,7 +1199,8 @@ class _HomeContent extends StatelessWidget {
           // 🔹 SCROLLABLE CONTENT SECTION
           Expanded(
             child: SingleChildScrollView(
-              padding: const EdgeInsets.symmetric(vertical: 24),
+              physics: const BouncingScrollPhysics(),
+              padding: const EdgeInsets.symmetric(vertical: VSPSpacing.lg),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1226,7 +1209,7 @@ class _HomeContent extends StatelessWidget {
                     title: 'Stadium',
                     onSeeAll: () {},
                   ),
-                  const SizedBox(height: 16),
+                  const SizedBox(height: VSPSpacing.md),
                   SizedBox(
                     height: 250,
                     child: StreamBuilder<List<Stadium>>(
@@ -1239,19 +1222,22 @@ class _HomeContent extends StatelessWidget {
                              padding: const EdgeInsets.symmetric(horizontal: 16),
                              itemCount: mockStadiums.length,
                              itemBuilder: (context, index) {
-                               return Container(
-                                 width: 320,
-                                 margin: const EdgeInsets.only(right: 16),
-                                 child: StadiumCard(
-                                   stadium: mockStadiums[index],
-                                   onTap: () {
-                                     Navigator.push(
-                                       context,
-                                       MaterialPageRoute(
-                                         builder: (context) => StadiumDetailsScreen(stadium: mockStadiums[index]),
-                                       ),
-                                     );
-                                   },
+                               return VSPFadeInItem(
+                                 index: index,
+                                 child: Container(
+                                   width: 320,
+                                   margin: const EdgeInsets.only(right: 16),
+                                   child: StadiumCard(
+                                     stadium: mockStadiums[index],
+                                     onTap: () {
+                                       Navigator.push(
+                                         context,
+                                         MaterialPageRoute(
+                                           builder: (context) => StadiumDetailsScreen(stadium: mockStadiums[index]),
+                                         ),
+                                       );
+                                     },
+                                   ),
                                  ),
                                );
                              },
@@ -1267,15 +1253,20 @@ class _HomeContent extends StatelessWidget {
                                width: 320,
                                margin: const EdgeInsets.only(right: 16),
                                decoration: BoxDecoration(
-                                 color: Colors.white.withValues(alpha: 0.6),
-                                 borderRadius: BorderRadius.circular(15),
+                                 color: VSPColors.surface,
+                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 ),
                               ),
                             );
                           }
                           
                           if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                            return const Center(child: Text("No stadiums found", style: TextStyle(color: Colors.white)));
+                            return Center(
+                              child: Text(
+                                "No stadiums found", 
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                              ),
+                            );
                           }
                           
                            final stadiums = snapshot.data!;
@@ -1284,19 +1275,22 @@ class _HomeContent extends StatelessWidget {
                              padding: const EdgeInsets.symmetric(horizontal: 16),
                              itemCount: stadiums.length,
                              itemBuilder: (context, index) {
-                               return Container(
-                                 width: 320,
-                                 margin: const EdgeInsets.only(right: 16),
-                                 child: StadiumCard(
-                                   stadium: stadiums[index],
-                                   onTap: () {
-                                     Navigator.push(
-                                       context,
-                                       MaterialPageRoute(
-                                         builder: (context) => StadiumDetailsScreen(stadium: stadiums[index]),
-                                       ),
-                                     );
-                                   },
+                               return VSPFadeInItem(
+                                 index: index,
+                                 child: Container(
+                                   width: 320,
+                                   margin: const EdgeInsets.only(right: 16),
+                                   child: StadiumCard(
+                                     stadium: stadiums[index],
+                                     onTap: () {
+                                       Navigator.push(
+                                         context,
+                                         MaterialPageRoute(
+                                           builder: (context) => StadiumDetailsScreen(stadium: stadiums[index]),
+                                         ),
+                                       );
+                                     },
+                                   ),
                                  ),
                                );
                              },
@@ -1305,7 +1299,7 @@ class _HomeContent extends StatelessWidget {
                     ),
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: VSPSpacing.xl),
 
                   // Matches Section
                   _SectionHeader(
@@ -1314,23 +1308,21 @@ class _HomeContent extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
                   SizedBox(
-                    height: 190,
-                    child: StreamBuilder<List<Team>>(
-                      stream: DatabaseService().getTeams(
-                        governorate: Provider.of<AuthProvider>(context, listen: false).userModel?.governorate
-                      ),
-                      builder: (context, teamSnapshot) {
-                          if (teamSnapshot.connectionState == ConnectionState.waiting) {
-                             return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+                    height: 250, // Increased height for the new card
+                    child: StreamBuilder<List<Booking>>( 
+                      stream: DatabaseService().getPublicMatches(), 
+                      builder: (context, matchSnapshot) {
+                          if (matchSnapshot.connectionState == ConnectionState.waiting) {
+                             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                           }
                           
-                          final teams = teamSnapshot.hasData ? teamSnapshot.data! : [];
+                          final matches = matchSnapshot.hasData ? matchSnapshot.data! : [];
                           
-                          if (teams.isEmpty) {
+                          if (matches.isEmpty) {
                             return const Center(
                               child: Text(
-                                "No matches found near you",
-                                style: TextStyle(color: AppTheme.textSecondary),
+                                "No public matches available",
+                                style: TextStyle(color: VSPColors.textSecondary),
                               ),
                             );
                           }
@@ -1338,13 +1330,15 @@ class _HomeContent extends StatelessWidget {
                           return ListView.builder(
                             scrollDirection: Axis.horizontal,
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            itemCount: teams.length,
+                            itemCount: matches.length,
                             itemBuilder: (context, index) {
-                              return MatchCard(
-                                team: teams[index],
+                              return VSPFadeInItem(
                                 index: index,
-                                width: 320,
-                                margin: const EdgeInsets.only(right: 16),
+                                child: Container(
+                                  width: 320,
+                                  margin: const EdgeInsets.only(right: 16),
+                                  child: PublicMatchCard(booking: matches[index]), 
+                                ),
                               );
                             },
                           );
@@ -1362,26 +1356,51 @@ class _HomeContent extends StatelessWidget {
                   const SizedBox(height: 16),
                   SizedBox(
                     height: 190,
-                    child: AppConfig.demoMode 
-                      ? ListView.builder(
+                    child: StreamBuilder<List<Championship>>(
+                      stream: DatabaseService().getChampionshipsStream(
+                        governorate: Provider.of<AuthProvider>(context, listen: false).userModel?.governorate,
+                      ),
+                      builder: (context, snapshot) {
+                        if (snapshot.connectionState == ConnectionState.waiting) {
+                          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                        }
+
+                        List<Championship> championships = snapshot.data ?? [];
+
+                        // Fallback to mock only if empty AND demo mode is on
+                        if (championships.isEmpty && AppConfig.demoMode) {
+                          championships = Championship.getMockChampionships();
+                        }
+
+                         if (championships.isEmpty) {
+                          return Center(
+                            child: Text(
+                              "No championships active in your area",
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                            ),
+                          );
+                        }
+
+                        return ListView.builder(
                           scrollDirection: Axis.horizontal,
                           padding: const EdgeInsets.symmetric(horizontal: 16),
-                          itemCount: Championship.getMockChampionships().length,
+                          itemCount: championships.length,
                           itemBuilder: (context, index) {
-                            final championship = Championship.getMockChampionships()[index];
-                            return ChampionshipCard(
-                              championship: championship,
-                              width: 320,
-                              margin: const EdgeInsets.only(right: 16),
+                            final championship = championships[index];
+                            return VSPFadeInItem(
+                              index: index,
+                              child: Container(
+                                width: 320,
+                                margin: const EdgeInsets.only(right: 16),
+                                child: ChampionshipCard(
+                                  championship: championship,
+                                ),
+                              ),
                             );
                           },
-                        )
-                      : const Center(
-                          child: Text(
-                            "No championships active",
-                            style: TextStyle(color: AppTheme.textSecondary),
-                          ),
-                        ),
+                        );
+                      },
+                    ),
                   ),
 
                   const SizedBox(height: 16),
@@ -1391,6 +1410,77 @@ class _HomeContent extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  // 📍 Helper to show manual picker
+  void _showLocationPicker(BuildContext context, AuthProvider auth) {
+    final governorates = [
+      'Cairo', 'Alexandria', 'Giza', 'Dakahlia', 'Red Sea', 
+      'Luxor', 'Aswan', 'Gharbia', 'Port Said', 'Suez', 
+      'Ismailia', 'Minya', 'Assiut', 'Qena', 'Sohag'
+    ];
+    
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VSPColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.lg)),
+      ),
+      builder: (context) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text('Select Location', style: Theme.of(context).textTheme.titleLarge),
+                  IconButton(
+                    icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                    onPressed: () {
+                      Navigator.pop(context);
+                      auth.updateUserLocation();
+                    },
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              // List
+              Expanded(
+                child: ListView.builder(
+                  itemCount: governorates.length,
+                  itemBuilder: (context, index) {
+                    final gov = governorates[index];
+                    final isSelected = auth.userModel?.governorate == gov;
+                    
+                    return ListTile(
+                      leading: Icon(
+                        Icons.location_city, 
+                        color: isSelected ? VSPColors.accent : VSPColors.textSecondary
+                      ),
+                       title: Text(
+                        gov, 
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        )
+                      ),
+                      trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null,
+                      onTap: () {
+                        auth.updateProfile({'governorate': gov});
+                        Navigator.pop(context);
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
     );
   }
 }

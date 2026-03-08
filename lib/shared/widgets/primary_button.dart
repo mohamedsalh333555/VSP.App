@@ -1,33 +1,43 @@
 import 'package:flutter/material.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 
-/// زر أساسي مخصص بتصميم نيون أخضر
 class PrimaryButton extends StatelessWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
+  final Color? color;
+  final Color? textColor;
+
+  final double? width;
+  final EdgeInsetsGeometry? padding;
 
   const PrimaryButton({
     super.key,
     required this.text,
     this.onPressed,
     this.isLoading = false,
+    this.color,
+    this.textColor,
+    this.width,
+    this.padding,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      width: double.infinity,
+      width: width ?? double.infinity,
       height: 56,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonGreen,
-          foregroundColor: AppTheme.darkBackground,
+          backgroundColor: color ?? VSPColors.accent,
+          foregroundColor: textColor ?? VSPColors.background,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(VSPRadius.md),
           ),
           elevation: 0,
+          disabledBackgroundColor: VSPColors.surface,
+          padding: padding,
         ),
         child: isLoading
             ? const SizedBox(
@@ -36,15 +46,15 @@ class PrimaryButton extends StatelessWidget {
                 child: CircularProgressIndicator(
                   strokeWidth: 2,
                   valueColor: AlwaysStoppedAnimation<Color>(
-                    AppTheme.darkBackground,
+                    VSPColors.background,
                   ),
                 ),
               )
             : Text(
                 text,
-                style: const TextStyle(
-                  fontSize: 18,
-                  fontWeight: FontWeight.bold,
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                  color: textColor ?? VSPColors.background,
+                  fontSize: 16, // Keeping 16 as it was specifically requested or set before, but using theme as base
                 ),
               ),
       ),

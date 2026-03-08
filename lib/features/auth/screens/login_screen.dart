@@ -1,13 +1,15 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../shared/widgets/custom_text_field.dart';
-import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../core/navigation/root_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -31,11 +33,9 @@ class _LoginScreenState extends State<LoginScreen> {
   void _handleLogin() async {
     // Basic Validation
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Please enter email and password'), backgroundColor: Colors.red),
-      );
-      return;
-    }
+       VSPFeedback.showError(context, 'Please enter email and password');
+       return;
+     }
 
     setState(() => _isLoading = true);
     
@@ -62,9 +62,7 @@ class _LoginScreenState extends State<LoginScreen> {
         }
     } else {
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(authProvider.errorMessage ?? 'Login Failed'), backgroundColor: Colors.red),
-          );
+          VSPFeedback.showError(context, authProvider.errorMessage ?? 'Login Failed');
         }
     }
   }
@@ -75,15 +73,15 @@ class _LoginScreenState extends State<LoginScreen> {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground,
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         extendBody: true,
         extendBodyBehindAppBar: true,
         appBar: AppBar(
@@ -92,7 +90,7 @@ class _LoginScreenState extends State<LoginScreen> {
         leading: IconButton(
           icon: Icon(
             languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
-            color: AppTheme.textPrimary,
+            color: VSPColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),
           ),
@@ -100,6 +98,7 @@ class _LoginScreenState extends State<LoginScreen> {
       body: SafeArea(
         bottom: true,
         child: SingleChildScrollView(
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: 24.0),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -116,11 +115,7 @@ class _LoginScreenState extends State<LoginScreen> {
               const SizedBox(height: 30),
               Text(
                 languageProvider.getText(AppStrings.login),
-                style: const TextStyle(
-                  color: AppTheme.textPrimary,
-                  fontSize: 32,
-                  fontWeight: FontWeight.bold,
-                ),
+                style: Theme.of(context).textTheme.displayLarge,
               ),
               const SizedBox(height: 40),
               CustomTextField(
@@ -137,7 +132,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 prefixIcon: Icons.lock_outline,
               ),
               const SizedBox(height: 40),
-              PrimaryButton(
+              VSPAnimatedButton(
                 text: languageProvider.getText(AppStrings.login),
                 onPressed: () {
                   if (_isLoading) return;
@@ -151,15 +146,15 @@ class _LoginScreenState extends State<LoginScreen> {
               // ── Divider ──
               Row(
                 children: [
-                  Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                  Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.15), thickness: 1)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       languageProvider.isArabic ? 'أو' : 'Or continue with',
-                      style: TextStyle(color: AppTheme.textSecondary.withOpacity(0.6), fontSize: 13),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
                     ),
                   ),
-                  Expanded(child: Divider(color: Colors.white.withOpacity(0.15), thickness: 1)),
+                  Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.15), thickness: 1)),
                 ],
               ),
 
@@ -180,23 +175,22 @@ class _LoginScreenState extends State<LoginScreen> {
                   ),
                   label: Text(
                     languageProvider.isArabic ? 'تسجيل الدخول عبر جوجل' : 'Sign in with Google',
-                    style: const TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 15,
+                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                      color: VSPColors.textPrimary,
                       fontWeight: FontWeight.w500,
                     ),
                   ),
                   style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: Colors.white.withOpacity(0.15)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(30)),
-                    backgroundColor: Colors.white.withOpacity(0.04),
+                    side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                    backgroundColor: VSPColors.surface,
                   ),
-                  onPressed: _isLoading ? null : () async {
+                      onPressed: _isLoading ? null : () async {
                     setState(() => _isLoading = true);
                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
                     final success = await authProvider.signInWithGoogle();
 
-                    if (!mounted) return;
+                    if (!context.mounted) return;
                     setState(() => _isLoading = false);
 
                     if (success) {
@@ -205,12 +199,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         (route) => false,
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(authProvider.errorMessage ?? 'Google Sign-In failed'),
-                          backgroundColor: Colors.red,
-                        ),
-                      );
+                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
                     }
                   },
                 ),
@@ -223,3 +212,4 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 }
+

@@ -1,8 +1,9 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -46,7 +47,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
           content: Text('Please enter a valid email'),
-          backgroundColor: Colors.red,
+          backgroundColor: VSPColors.error,
         ),
       );
       return;
@@ -77,16 +78,16 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
 
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topRight,
             end: Alignment.bottomLeft,
             colors: [
-              Color(0xFF0A0A0A),
-              Color(0xFF1A3A1A),
-              Color(0xFF0A0A0A),
+              VSPColors.background,
+              VSPColors.accent.withValues(alpha: 0.1),
+              VSPColors.background,
             ],
-            stops: [0.0, 0.5, 1.0],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
         child: SafeArea(
@@ -101,7 +102,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                 IconButton(
                   icon: const Icon(
                     Icons.arrow_back,
-                    color: AppTheme.textPrimary,
+                    color: VSPColors.textPrimary,
                   ),
                   onPressed: () => Navigator.pop(context),
                 ),
@@ -109,13 +110,9 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                 const SizedBox(height: 40),
 
                 // Title
-                const Text(
+                Text(
                   'Enter Your Email',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 32,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displayLarge,
                 ),
 
                 const SizedBox(height: 12),
@@ -123,9 +120,8 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                 // Step Indicator
                 Text(
                   '1/4',
-                  style: TextStyle(
-                    color: AppTheme.neonGreen,
-                    fontSize: 16,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
@@ -161,7 +157,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
                     width: 134,
                     height: 5,
                     decoration: BoxDecoration(
-                      color: AppTheme.textPrimary,
+                      color: VSPColors.divider,
                       borderRadius: BorderRadius.circular(100),
                     ),
                   ),
@@ -176,3 +172,4 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     );
   }
 }
+

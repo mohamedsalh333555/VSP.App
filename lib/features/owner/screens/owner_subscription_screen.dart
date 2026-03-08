@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 class OwnerSubscriptionScreen extends StatefulWidget {
   const OwnerSubscriptionScreen({super.key});
@@ -36,24 +37,19 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFF121212),
+      backgroundColor: VSPColors.background,
       extendBodyBehindAppBar: true, // Allow background image behind app bar
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
-        title: const Text(
+        title: Text(
           'Subscription',
-          style: TextStyle(
-            color: Colors.white,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Stack(
@@ -80,8 +76,8 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.black.withValues(alpha: 0.3),
-                        const Color(0xFF121212).withValues(alpha: 0.8),
-                        const Color(0xFF121212),
+                        VSPColors.background.withValues(alpha: 0.8),
+                        VSPColors.background,
                       ],
                       stops: const [0.0, 0.7, 1.0],
                     ),
@@ -98,12 +94,12 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
                 const SizedBox(height: 20),
                 // Toggle Switch (Monthly / Yearly)
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: Container(
                     height: 50,
                     decoration: BoxDecoration(
-                      color: const Color(0xFF2C2C2C), // Dark Grey Background
-                      borderRadius: BorderRadius.circular(25),
+                      color: VSPColors.surface, // Dark Grey Background
+                      borderRadius: BorderRadius.circular(VSPRadius.xl),
                     ),
                     child: Row(
                       children: [
@@ -118,15 +114,15 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
                 
                 // Plans Row
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     crossAxisAlignment: CrossAxisAlignment.end, // Align bottom
                     children: [
                       Expanded(child: _buildPlanCard(0, isSmall: true)),
-                      const SizedBox(width: 8),
+                      const SizedBox(width: VSPSpacing.sm),
                       Expanded(child: _buildPlanCard(1, isSmall: false)), // Middle one bigger/prominent
-                      const SizedBox(width: 8),
+                      const SizedBox(width: VSPSpacing.sm),
                       Expanded(child: _buildPlanCard(2, isSmall: true)),
                     ],
                   ),
@@ -136,56 +132,34 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
 
                 // Bottom Buttons
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: SizedBox(
                     width: double.infinity,
                     height: 56,
                     child: OutlinedButton(
                       onPressed: () {},
                       style: OutlinedButton.styleFrom(
-                        side: BorderSide(color: Colors.grey[700]!),
+                        side: BorderSide(color: VSPColors.divider),
                         shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
                         ),
                       ),
-                      child: const Text(
+                      child: Text(
                         'Custom plan',
-                        style: TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
-                          fontWeight: FontWeight.normal,
-                        ),
+                        style: Theme.of(context).textTheme.titleSmall,
                       ),
                     ),
                   ),
                 ),
                 const SizedBox(height: 16),
                 Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 20),
-                  child: SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: ElevatedButton(
-                      onPressed: () {
-                        // Confirm Logic
-                        Navigator.pop(context);
-                      },
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: AppTheme.neonGreen,
-                        foregroundColor: Colors.black,
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(15),
-                        ),
-                        elevation: 0,
-                      ),
-                      child: const Text(
-                        'Confirm',
-                        style: TextStyle(
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+                  child: PrimaryButton(
+                    text: 'Confirm',
+                    onPressed: () {
+                      // Confirm Logic
+                      Navigator.pop(context);
+                    },
                   ),
                 ),
                 const SizedBox(height: 30),
@@ -208,17 +182,16 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
         },
         child: Container(
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent, // Solid Neon Green for active
-            borderRadius: BorderRadius.circular(25),
+            color: isSelected ? VSPColors.accent : Colors.transparent, // Solid Neon Green for active
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
           ),
           alignment: Alignment.center,
           child: Text(
             text,
-            style: TextStyle(
-              color: isSelected ? Colors.black : Colors.grey[400], // Black text for active
-              fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-              fontSize: 14,
-            ),
+            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                  color: isSelected ? Colors.black : VSPColors.textSecondary,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                ),
           ),
         ),
       ),
@@ -239,10 +212,10 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
         duration: const Duration(milliseconds: 200),
         height: isSmall ? 150 : 170, // Slight adjustments
         decoration: BoxDecoration(
-          color: const Color(0xFF1E1E1E).withValues(alpha: 0.9), // Less transparent
-          borderRadius: BorderRadius.circular(15),
+          color: VSPColors.surface, // Less transparent
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent,
+            color: isSelected ? VSPColors.accent : Colors.transparent,
             width: 1.5,
           ),
         ),
@@ -252,22 +225,14 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
           children: [
             Text(
               plan['title'],
-              style: const TextStyle(
-                color: Colors.white,
-                fontSize: 16,
-                fontWeight: FontWeight.normal,
-                 fontFamily: 'Agency FB',
-              ),
+              style: Theme.of(context).textTheme.titleSmall,
               textAlign: TextAlign.center,
               maxLines: 1,
             ),
             const SizedBox(height: 4),
             Text(
               plan['subtitle'],
-              style: TextStyle(
-                color: Colors.grey[400],
-                fontSize: 10,
-              ),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
               textAlign: TextAlign.center,
               maxLines: 1, 
               overflow: TextOverflow.ellipsis,
@@ -280,20 +245,15 @@ class _OwnerSubscriptionScreenState extends State<OwnerSubscriptionScreen> {
                    fit: BoxFit.scaleDown,
                    child: Text(
                      '\$${plan['price']}',
-                     style: const TextStyle(
-                       color: AppTheme.neonGreen,
-                       fontSize: 24,
-                       fontWeight: FontWeight.bold,
-                       fontFamily: 'Agency FB',
-                     ),
+                     style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                           color: VSPColors.accent,
+                           fontWeight: FontWeight.bold,
+                         ),
                    ),
                  ),
                   Text(
                    plan['period'],
-                   style: const TextStyle(
-                     color: AppTheme.neonGreen,
-                     fontSize: 10, // Smaller period font
-                   ),
+                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent),
                    maxLines: 1,
                   ),
                ],

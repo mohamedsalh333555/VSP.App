@@ -1,11 +1,15 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/widgets/shimmer_image.dart';
+import '../../../shared/widgets/vsp_animated_button.dart';
+import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../data/models.dart';
 import '../widgets/match_result_modal.dart';
+import '../../../core/services/database_service.dart';
 
 class BookedScreen extends StatefulWidget {
   const BookedScreen({super.key});
@@ -19,38 +23,42 @@ class _BookedScreenState extends State<BookedScreen> {
   void initState() {
     super.initState();
     // Load bookings when screen initializes
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-      
-      final userId = authProvider.currentUser?.uid;
-      if (userId != null) {
-        bookingProvider.loadUserBookings(userId);
+    _loadData();
+  }
+
+  String? _myTeamId;
+
+  Future<void> _loadData() async {
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+    
+    final userId = authProvider.currentUser?.uid;
+    if (userId != null) {
+      bookingProvider.loadUserBookings(userId);
+      final team = await DatabaseService().getUserTeam(userId);
+      if (mounted) {
+        setState(() => _myTeamId = team?.id);
       }
-    });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         centerTitle: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+                icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
-        title: const Text(
+        title: Text(
           'Booked',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, bool loading})>(
@@ -62,52 +70,97 @@ class _BookedScreenState extends State<BookedScreen> {
         builder: (context, data, child) {
           if (data.loading) {
             return const Center(
-              child: CircularProgressIndicator(color: AppTheme.neonGreen),
+              child: CircularProgressIndicator(color: VSPColors.accent),
             );
           }
 
           if (data.upcoming.isEmpty && data.history.isEmpty) {
-            return _buildEmptyState();
+            return RefreshIndicator(
+              onRefresh: () async {
+                final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                final userId = authProvider.currentUser?.uid;
+                if (userId != null) {
+                  Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+                  await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
+                }
+              },
+              color: VSPColors.accent,
+              backgroundColor: VSPColors.surface,
+              child: SingleChildScrollView(
+                physics: const AlwaysScrollableScrollPhysics(),
+                child: SizedBox(
+                  height: MediaQuery.of(context).size.height * 0.7,
+                  child: _buildEmptyState(),
+                ),
+              ),
+            );
           }
 
-          return ListView(
-            padding: const EdgeInsets.all(16),
-            children: [
-              // Upcoming Section
-              if (data.upcoming.isNotEmpty) ...[
-                const Text(
-                  'Upcoming',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+          return RefreshIndicator(
+            onRefresh: () async {
+              final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+              final userId = authProvider.currentUser?.uid;
+              if (userId != null) {
+                Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+                await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
+              }
+            },
+            color: VSPColors.accent,
+            backgroundColor: VSPColors.surface,
+            child: ListView(
+              physics: const AlwaysScrollableScrollPhysics(), // Ensures scrolling even if empty
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              children: [
+                // Upcoming Section
+                if (data.upcoming.isNotEmpty) ...[
+                  Text(
+                    'Upcoming',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...data.upcoming.map((booking) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _BookingCard(booking: booking, isHistory: false),
-                )),
-                const SizedBox(height: 24),
-              ],
+                  const SizedBox(height: VSPSpacing.md),
+                  ...data.upcoming.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final booking = entry.value;
+                    return VSPFadeInItem(
+                      index: index,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        child: _BookingCard(
+                          booking: booking, 
+                          isHistory: false,
+                          myTeamId: _myTeamId,
+                        ),
+                      ),
+                    );
+                  }),
+                  const SizedBox(height: VSPSpacing.lg),
+                ],
 
-              // History Section
-              if (data.history.isNotEmpty) ...[
-                const Text(
-                  'History',
-                  style: TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
+                // History Section
+                if (data.history.isNotEmpty) ...[
+                  Text(
+                    'History',
+                    style: Theme.of(context).textTheme.titleLarge,
                   ),
-                ),
-                const SizedBox(height: 16),
-                ...data.history.map((booking) => Padding(
-                  padding: const EdgeInsets.only(bottom: 16),
-                  child: _BookingCard(booking: booking, isHistory: true),
-                )),
+                  const SizedBox(height: VSPSpacing.md),
+                  ...data.history.asMap().entries.map((entry) {
+                    final index = entry.key;
+                    final booking = entry.value;
+                    return VSPFadeInItem(
+                      index: index + data.upcoming.length,
+                      child: Padding(
+                        padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                        child: _BookingCard(
+                          booking: booking, 
+                          isHistory: true,
+                          myTeamId: _myTeamId,
+                        ),
+                      ),
+                    );
+                  }),
+                ],
               ],
-            ],
+            ),
           );
         },
       ),
@@ -115,50 +168,14 @@ class _BookedScreenState extends State<BookedScreen> {
   }
 
   Widget _buildEmptyState() {
-    return Center(
-      child: Column(
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Icon(
-            Icons.calendar_today,
-            size: 80,
-            color: AppTheme.textSecondary.withValues(alpha: 0.5),
-          ),
-          const SizedBox(height: 24),
-          const Text(
-            'No Bookings Yet',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 24,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-          const SizedBox(height: 8),
-          Text(
-            'Book a stadium to get started!',
-            style: TextStyle(
-              color: AppTheme.textSecondary.withValues(alpha: 0.7),
-              fontSize: 16,
-            ),
-          ),
-          const SizedBox(height: 32),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.of(context).popUntil((route) => route.isFirst);
-            },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: AppTheme.neonGreen,
-              foregroundColor: AppTheme.darkBackground,
-              padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 16),
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-            ),
-            child: const Text(
-              'Explore Stadiums',
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
-      ),
+    return VSPEmptyState(
+      icon: Icons.calendar_today_outlined,
+      title: 'No Bookings Yet',
+      subtitle: 'Book a stadium or join a match to see your schedule here!',
+      buttonText: 'Explore Stadiums',
+      onButtonPressed: () {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
     );
   }
 }
@@ -166,29 +183,25 @@ class _BookedScreenState extends State<BookedScreen> {
 class _BookingCard extends StatelessWidget {
   final Booking booking;
   final bool isHistory;
+  final String? myTeamId;
 
   const _BookingCard({
     required this.booking,
     required this.isHistory,
+    this.myTeamId,
   });
 
   @override
   Widget build(BuildContext context) {
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
         color: isHistory 
-            ? AppTheme.cardBackground 
-            : const Color(0xFF2D4B15), // Premium Deep Green for upcoming
-        borderRadius: BorderRadius.circular(15),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3), 
-            blurRadius: 10, 
-            offset: const Offset(0, 4),
-          ),
-        ],
+            ? VSPColors.surface 
+            : const Color(0xFF2D4B15), // Deep Forest Green
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        boxShadow: VSPShadow.subtle,
       ),
       child: Column(
         children: [
@@ -201,11 +214,11 @@ class _BookingCard extends StatelessWidget {
                 width: 56,
                 height: 56,
                 decoration: BoxDecoration(
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24, width: 1.5),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.15), width: 1.5),
                 ),
                 child: ClipRRect(
-                  borderRadius: BorderRadius.circular(11),
+                  borderRadius: BorderRadius.circular(VSPRadius.md - 1),
                   child: booking.stadiumImageUrl.isNotEmpty
                       ? ShimmerImage(
                           imageUrl: booking.stadiumImageUrl,
@@ -214,12 +227,12 @@ class _BookingCard extends StatelessWidget {
                           fit: BoxFit.cover,
                         )
                       : Container(
-                          color: AppTheme.cardBackground,
-                          child: const Icon(Icons.stadium, color: AppTheme.neonGreen),
+                          color: VSPColors.surface,
+                          child: const Icon(Icons.stadium, color: VSPColors.accent),
                         ),
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: VSPSpacing.sm),
               
               // Text Content
               Expanded(
@@ -232,19 +245,19 @@ class _BookingCard extends StatelessWidget {
                         color: Colors.white,
                         fontSize: 16,
                         fontWeight: FontWeight.w800,
-                        fontFamily: 'Agency FB',
+                        
                         letterSpacing: 0.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: VSPSpacing.xs),
                     Row(
                       children: [
                         _buildTag(booking.bookingType.name.toUpperCase()),
                         if (booking.isPrivate) ...[
-                          const SizedBox(width: 8),
-                          _buildTag('PRIVATE', color: Colors.orange),
+                          const SizedBox(width: VSPSpacing.sm),
+                          _buildTag('PRIVATE', color: VSPColors.warning),
                         ],
                       ],
                     ),
@@ -254,23 +267,23 @@ class _BookingCard extends StatelessWidget {
 
               // Status or Actions
               if (!isHistory) ...[
-                _buildStatusBadge('Confirmed', AppTheme.neonGreen),
+                _buildStatusBadge('Confirmed', VSPColors.accent),
               ] else ...[
                 if (booking.bookingType == BookingType.challenge)
                   _buildChallengeStatusBadge()
                 else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
-                  _buildStatusBadge('Submit Result', Colors.orange)
+                  _buildStatusBadge('Submit Result', VSPColors.warning)
                 else
-                  _buildStatusBadge('Completed', Colors.grey),
+                  _buildStatusBadge('Completed', VSPColors.textSecondary),
               ],
             ],
           ),
 
-          const SizedBox(height: 16),
+          const SizedBox(height: VSPSpacing.md),
           
           // Info Grid
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.md),
             decoration: BoxDecoration(
               color: Colors.black.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
@@ -289,18 +302,18 @@ class _BookingCard extends StatelessWidget {
 
           // Challenge Info (if applicable)
           if (booking.bookingType == BookingType.challenge && booking.opponentTeamName != null) ...[
-            const SizedBox(height: 12),
+            const SizedBox(height: VSPSpacing.sm),
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(VSPSpacing.sm),
               decoration: BoxDecoration(
-                color: Colors.orange.withValues(alpha: 0.2),
-                borderRadius: BorderRadius.circular(8),
-                border: Border.all(color: Colors.orange.withValues(alpha: 0.5)),
+                color: VSPColors.warning.withValues(alpha: 0.2),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.5)),
               ),
               child: Row(
                 children: [
                   const Icon(Icons.sports_soccer, color: Colors.orange, size: 20),
-                  const SizedBox(width: 8),
+                  const SizedBox(width: VSPSpacing.sm),
                   Text(
                     'VS ${booking.opponentTeamName}',
                     style: const TextStyle(
@@ -315,47 +328,36 @@ class _BookingCard extends StatelessWidget {
 
           // Actions for upcoming bookings
           if (!isHistory) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton.icon(
+                  child: VSPAnimatedButton(
+                    text: 'Cancel',
+                    color: VSPColors.surface,
+                    textColor: VSPColors.error,
                     onPressed: () {
-                      // Cancel booking logic
                       _showCancelDialog(context);
                     },
-                    icon: const Icon(Icons.close, size: 18),
-                    label: const Text('Cancel'),
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.red,
-                      side: const BorderSide(color: Colors.red),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: VSPSpacing.sm),
                 Expanded(
-                  child: ElevatedButton.icon(
+                  child: VSPAnimatedButton(
+                    text: 'Share',
                     onPressed: () {
                       // Share or view details
                     },
-                    icon: const Icon(Icons.share, size: 18),
-                    label: const Text('Share'),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                    ),
                   ),
                 ),
               ],
             ),
           ],
 
-          // Result button/status for history (challenge type ONLY)
-          if (isHistory && booking.bookingType == BookingType.challenge && 
+          // Result button/status for history (challenge type ONLY and valid opponent)
+          if (isHistory && booking.bookingType == BookingType.challenge && booking.opponentTeamId != null &&
              (booking.status == BookingStatus.completed || booking.endTime.isBefore(DateTime.now()))) ...[
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             _buildChallengeResultAction(context),
           ],
         ],
@@ -364,14 +366,11 @@ class _BookingCard extends StatelessWidget {
   }
 
   Widget _buildChallengeResultAction(BuildContext context) {
-    // Determine current user's team ID. 
-    // In this context, we assume the user viewing is the one who created the booking (Team A)
-    // or the opponent (Team B). 
-    // For simplicity in demo, we check if current user is creator.
-    final currentTeamId = booking.playerTeamId ?? 'team_1'; 
+    // Determine current user's team ID safely.
+    final currentTeamId = myTeamId ?? booking.playerTeamId ?? 'team_1'; 
     
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
-      return _buildAddResultButton(context);
+      return _buildAddResultButton(context, currentTeamId);
     } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       if (booking.resultSubmittedByTeamId == currentTeamId) {
         return Container(
@@ -382,17 +381,17 @@ class _BookingCard extends StatelessWidget {
             borderRadius: BorderRadius.circular(8),
             border: Border.all(color: Colors.white12),
           ),
-          child: const Text(
+          child: Text(
             'Waiting for opponent result...',
             textAlign: TextAlign.center,
-            style: TextStyle(
-              color: AppTheme.textSecondary,
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+              color: VSPColors.textSecondary,
               fontStyle: FontStyle.italic,
             ),
           ),
         );
       } else {
-        return _buildAddResultButton(context);
+        return _buildAddResultButton(context, currentTeamId);
       }
     } else if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       return const SizedBox.shrink(); // Badge already shown in header or skipped for confirmed
@@ -401,61 +400,48 @@ class _BookingCard extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  Widget _buildAddResultButton(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      child: ElevatedButton.icon(
-        onPressed: () {
-          showDialog(
-            context: context,
-            builder: (context) => MatchResultModal(
-              booking: booking,
-              onConfirm: (outcome, rating, review) async {
-                final provider = Provider.of<BookingProvider>(context, listen: false);
-                final currentTeamId = booking.playerTeamId ?? 'team_1';
-                
-                final success = await provider.submitMatchResult(
-                  bookingId: booking.id,
-                  teamId: currentTeamId,
-                  outcome: outcome,
-                  rating: rating,
-                  review: review,
-                );
+  Widget _buildAddResultButton(BuildContext context, String currentTeamId) {
+    return VSPAnimatedButton(
+      text: 'Add Result',
+      onPressed: () {
+        showDialog(
+          context: context,
+          builder: (context) => MatchResultModal(
+            booking: booking,
+            submittingTeamId: currentTeamId,
+            onConfirm: (outcome, rating, review) async {
+              final provider = Provider.of<BookingProvider>(context, listen: false);
+              
+              final success = await provider.submitMatchResult(
+                bookingId: booking.id,
+                teamId: currentTeamId,
+                outcome: outcome,
+                rating: rating,
+                review: review,
+              );
 
-                if (!context.mounted) return;
-                
-                if (success) {
-                  Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    const SnackBar(
-                      content: Text('Result Submitted Successfully!'),
-                      backgroundColor: AppTheme.neonGreen,
-                    ),
-                  );
-                } else {
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(
-                      content: Text(provider.errorMessage ?? 'Failed to submit result'),
-                      backgroundColor: Colors.red,
-                    ),
-                  );
-                }
-              },
-            ),
-          );
-        },
-        icon: const Icon(Icons.add, size: 18),
-        label: const Text(
-          'Add Result',
-          style: TextStyle(fontWeight: FontWeight.bold),
-        ),
-        style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonGreen,
-          foregroundColor: Colors.black,
-          padding: const EdgeInsets.symmetric(vertical: 12),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-        ),
-      ),
+              if (!context.mounted) return;
+              
+              if (success) {
+                Navigator.pop(context);
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Result Submitted Successfully!'),
+                    backgroundColor: VSPColors.accent,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Text(provider.errorMessage ?? 'Failed to submit result'),
+                    backgroundColor: Colors.red,
+                  ),
+                );
+              }
+            },
+          ),
+        );
+      },
     );
   }
 
@@ -473,15 +459,15 @@ class _BookingCard extends StatelessWidget {
         return _buildStatusBadge(isHome ? 'Loss' : 'Win', isHome ? Colors.red : Colors.amber);
       }
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
-      return _buildStatusBadge('Disputed', Colors.orange);
+      return _buildStatusBadge('Disputed', VSPColors.warning);
     }
     
     return const SizedBox.shrink();
   }
 
-  Widget _buildTag(String text, {Color color = AppTheme.neonGreen}) {
+  Widget _buildTag(String text, {Color color = VSPColors.accent}) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.xs),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(4),
@@ -499,7 +485,7 @@ class _BookingCard extends StatelessWidget {
 
   Widget _buildStatusBadge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
       decoration: BoxDecoration(
         color: color.withValues(alpha: 0.2),
         borderRadius: BorderRadius.circular(20),
@@ -528,7 +514,7 @@ class _BookingCard extends StatelessWidget {
             letterSpacing: 0.5,
           ),
         ),
-        const SizedBox(height: 4),
+        const SizedBox(height: VSPSpacing.xs),
         Text(
           value,
           style: const TextStyle(
@@ -556,38 +542,58 @@ class _BookingCard extends StatelessWidget {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        backgroundColor: AppTheme.cardBackground,
-        title: const Text(
+        backgroundColor: VSPColors.surface,
+        title: Text(
           'Cancel Booking?',
-          style: TextStyle(color: AppTheme.textPrimary),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
-        content: const Text(
+        content: Text(
           'Are you sure you want to cancel this booking? This action cannot be undone.',
-          style: TextStyle(color: AppTheme.textSecondary),
+          style: Theme.of(context).textTheme.bodyMedium,
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: const Text('Keep Booking'),
+            child: Text('Keep Booking', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
           ),
-          ElevatedButton(
-            onPressed: () {
+          VSPAnimatedButton(
+            text: 'Cancel Booking',
+            color: Colors.red,
+            textColor: Colors.white,
+            onPressed: () async {
               // Cancel booking
-              Provider.of<BookingProvider>(context, listen: false)
-                  .cancelBooking(booking.id);
-              Navigator.pop(context);
+              final provider = Provider.of<BookingProvider>(context, listen: false);
+              
+              // Show quick loading snackbar
               ScaffoldMessenger.of(context).showSnackBar(
                 const SnackBar(
-                  content: Text('Booking cancelled'),
-                  backgroundColor: Colors.red,
+                  content: Text('Cancelling booking...'),
+                  duration: Duration(seconds: 1),
                 ),
               );
+              
+              Navigator.pop(context); // Close dialog
+
+              final success = await provider.cancelBooking(booking.id);
+              
+              if (!context.mounted) return;
+              
+              if (success) {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(
+                    content: Text('Booking cancelled successfully'),
+                    backgroundColor: VSPColors.warning,
+                  ),
+                );
+              } else {
+                ScaffoldMessenger.of(context).showSnackBar(
+                   SnackBar(
+                    content: Text(provider.errorMessage ?? 'Failed to cancel'),
+                    backgroundColor: VSPColors.error,
+                  ),
+                );
+              }
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.red,
-              foregroundColor: Colors.white,
-            ),
-            child: const Text('Cancel Booking'),
           ),
         ],
       ),

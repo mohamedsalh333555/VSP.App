@@ -1,3 +1,4 @@
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -7,7 +8,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/constants/create_account_strings.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
-import '../../../core/theme/app_theme.dart';
+
 import 'signup_screen.dart';
 import '../../../core/navigation/root_screen.dart';
 
@@ -38,15 +39,15 @@ class CreateAccountScreen extends StatelessWidget {
         : languageProvider.getText(CreateAccountStrings.ownerSubtitle);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
+      value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
         statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: AppTheme.darkBackground, // Fallback to background color
+        systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
         systemNavigationBarDividerColor: Colors.transparent,
       ),
       child: Scaffold(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         extendBody: true,
         extendBodyBehindAppBar: true,
         body: SafeArea(
@@ -64,7 +65,7 @@ class CreateAccountScreen extends StatelessWidget {
                   languageProvider.isArabic
                       ? Icons.arrow_forward
                       : Icons.arrow_back,
-                  color: AppTheme.textPrimary,
+                  color: VSPColors.textPrimary,
                 ),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
@@ -79,10 +80,8 @@ class CreateAccountScreen extends StatelessWidget {
               Center(
                 child: Text(
                   greeting,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 34, // Slightly larger to compensate for default font
-                    fontWeight: FontWeight.w900, // Stay as extra bold as possible
+                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                    fontWeight: FontWeight.w900,
                     height: 1.0,
                     letterSpacing: 0.5,
                   ),
@@ -95,9 +94,7 @@ class CreateAccountScreen extends StatelessWidget {
               Center(
                 child: Text(
                   languageProvider.getText(CreateAccountStrings.createNewAccount),
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 26,
+                  style: Theme.of(context).textTheme.displayMedium?.copyWith(
                     fontWeight: FontWeight.w900,
                     height: 1.0,
                     letterSpacing: 0.2,
@@ -113,10 +110,9 @@ class CreateAccountScreen extends StatelessWidget {
                   constraints: const BoxConstraints(maxWidth: 260),
                   child: Text(
                     subtitle,
-                    style: TextStyle(
-                      color: Colors.white.withValues(alpha: 0.6),
-                      fontSize: 14,
-                      height: 1.3, // Tighter line height
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: VSPColors.textSecondary.withValues(alpha: 0.6),
+                      height: 1.3,
                       fontWeight: FontWeight.w400,
                     ),
                     textAlign: TextAlign.center,
@@ -145,10 +141,7 @@ class CreateAccountScreen extends StatelessWidget {
               Center(
                 child: Text(
                   languageProvider.getText(CreateAccountStrings.or),
-                  style: const TextStyle(
-                    color: Colors.white60,
-                    fontSize: 14,
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
                 ),
               ),
 
@@ -169,15 +162,15 @@ class CreateAccountScreen extends StatelessWidget {
                           width: 24,
                           height: 24,
                           placeholder: (context, url) =>
-                              const Icon(Icons.g_mobiledata, color: Colors.white, size: 24),
+                              const Icon(Icons.g_mobiledata, color: VSPColors.textPrimary, size: 24),
                           errorWidget: (context, url, error) =>
-                              const Icon(Icons.g_mobiledata, color: Colors.white, size: 24),
+                              const Icon(Icons.g_mobiledata, color: VSPColors.textPrimary, size: 24),
                         ),
                         const SizedBox(width: 12),
                         const Text(
                           'Continue with Google',
                           style: TextStyle(
-                            color: Colors.white,
+                            color: VSPColors.textPrimary,
                             fontWeight: FontWeight.bold,
                             fontSize: 16,
                           ),
@@ -210,9 +203,8 @@ class CreateAccountScreen extends StatelessWidget {
                   child: RichText(
                     textAlign: TextAlign.center,
                     text: TextSpan(
-                      style: const TextStyle(
-                        color: Colors.white54,
-                        fontSize: 12,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: VSPColors.textSecondary.withValues(alpha: 0.54),
                         height: 1.5,
                       ),
                       children: [
@@ -220,7 +212,7 @@ class CreateAccountScreen extends StatelessWidget {
                         TextSpan(
                           text: 'Privacy Policy.',
                           style: const TextStyle(
-                            color: AppTheme.neonGreen,
+                            color: VSPColors.accent,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
@@ -258,17 +250,16 @@ class _NeonButton extends StatelessWidget {
       child: ElevatedButton(
         onPressed: onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: AppTheme.neonGreen,
-          foregroundColor: Colors.black, // Explicitly Black Text
+          backgroundColor: VSPColors.accent,
+          foregroundColor: VSPColors.background,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(VSPRadius.md),
           ),
           elevation: 0,
         ),
         child: Text(
           text,
-          style: const TextStyle(
-            fontSize: 18,
+          style: Theme.of(context).textTheme.labelLarge?.copyWith(
             fontWeight: FontWeight.w900,
             letterSpacing: 0.8,
           ),
@@ -304,9 +295,9 @@ class _SocialButton extends StatelessWidget {
         height: height ?? 64,
         decoration: BoxDecoration(
           color: Colors.transparent,
-          borderRadius: BorderRadius.circular(12.0),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: const Color(0xFF2A2A2A),
+            color: VSPColors.divider,
             width: 1.5,
           ),
         ),
@@ -316,7 +307,7 @@ class _SocialButton extends StatelessWidget {
             child: iconWidget ??
                 Icon(
                   icon,
-                  color: AppTheme.textPrimary,
+                  color: VSPColors.textPrimary,
                   size: 24,
                 ),
           ),
@@ -325,3 +316,4 @@ class _SocialButton extends StatelessWidget {
     );
   }
 }
+

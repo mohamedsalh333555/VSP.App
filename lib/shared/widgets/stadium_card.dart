@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../core/theme/app_theme.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../data/models.dart';
 
 /// Stadium Card with Real Image Background and Glass Effect
@@ -24,17 +24,11 @@ class StadiumCard extends StatelessWidget {
         // If used in horizontal list, wrap with SizedBox or Container with width
         height: 230,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(15), // Unified 15px
-          boxShadow: [
-            BoxShadow(
-              color: Colors.black.withValues(alpha: 0.4),
-              blurRadius: 10,
-              offset: const Offset(0, 5),
-            ),
-          ],
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          boxShadow: VSPShadow.subtle,
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(15), // Unified 15px
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -44,8 +38,9 @@ class StadiumCard extends StatelessWidget {
                   ? CachedNetworkImage(
                       imageUrl: stadium.imageUrl,
                       fit: BoxFit.cover,
+                      memCacheWidth: 600,
                       placeholder: (context, url) => Container(
-                        color: const Color(0xFF1E1E1E),
+                        color: VSPColors.surface,
                       ),
                       errorWidget: (context, url, error) => _buildVspLogoBackground(),
                     )
@@ -60,7 +55,7 @@ class StadiumCard extends StatelessWidget {
                     stops: const [0.5, 0.95],
                     colors: [
                       Colors.transparent,
-                      Colors.black.withValues(alpha: 0.9),
+                      VSPColors.background.withValues(alpha: 0.9),
                     ],
                   ),
                 ),
@@ -75,19 +70,22 @@ class StadiumCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        color: VSPColors.background.withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(VSPRadius.xl),
+                        border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.location_on, color: AppTheme.neonGreen, size: 14),
-                          const SizedBox(width: 4),
+                          const Icon(Icons.location_on, color: VSPColors.accent, size: 14),
+                          const SizedBox(width: VSPSpacing.xs),
                           Text(
                             stadium.location,
-                            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ],
                       ),
@@ -96,13 +94,13 @@ class StadiumCard extends StatelessWidget {
                       width: 34,
                       height: 34,
                       decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.6),
+                        color: VSPColors.background.withValues(alpha: 0.6),
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
+                        border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
                       ),
                       child: Icon(
                         stadium.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: stadium.isFavorite ? Colors.red : Colors.white,
+                        color: stadium.isFavorite ? VSPColors.error : VSPColors.textPrimary,
                         size: 18,
                       ),
                     ),
@@ -120,38 +118,33 @@ class StadiumCard extends StatelessWidget {
                   children: [
                     Text(
                       stadium.name,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 18,
-                        fontWeight: FontWeight.w900,
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        color: VSPColors.textPrimary,
                         letterSpacing: 0.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
+                    const SizedBox(height: VSPSpacing.xs),
                     Row(
                       children: [
                         Text(
                           '${stadium.size} • ${stadium.type}',
-                          style: TextStyle(
-                            color: Colors.white.withValues(alpha: 0.8),
-                            fontSize: 12,
-                            fontWeight: FontWeight.w500,
+                          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: VSPColors.textPrimary.withValues(alpha: 0.8),
                           ),
                         ),
                         const Spacer(),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.xs),
                           decoration: BoxDecoration(
-                            color: AppTheme.neonGreen.withValues(alpha: 0.15),
-                            borderRadius: BorderRadius.circular(6),
+                            color: VSPColors.accent.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(VSPRadius.xs),
                           ),
                           child: Text(
                             '${stadium.pricePerHour.toInt()} EG/hr',
-                            style: const TextStyle(
-                              color: AppTheme.neonGreen,
-                              fontSize: 13,
+                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                              color: VSPColors.accent,
                               fontWeight: FontWeight.w900,
                             ),
                           ),
@@ -170,13 +163,13 @@ class StadiumCard extends StatelessWidget {
 
   Widget _buildVspLogoBackground() {
     return Container(
-      color: const Color(0xFF1E1E1E),
+      color: VSPColors.surface,
       child: Center(
         child: Image.asset(
           'assets/images/logo.png', // VSP logo
           width: 80,
           height: 80,
-          color: Colors.white.withValues(alpha: 0.06),
+          color: VSPColors.textPrimary.withValues(alpha: 0.06),
           colorBlendMode: BlendMode.modulate,
         ),
       ),

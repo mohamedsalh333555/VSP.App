@@ -1,10 +1,15 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
-import '../../../core/theme/app_theme.dart';
-import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/cloudinary_service.dart';
 import '../../../core/services/database_service.dart';
+
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/widgets/shimmer_image.dart';
+import '../../../shared/widgets/primary_button.dart';
 import 'add_player_sheet.dart';
 
 class CreateTeamSheet extends StatefulWidget {
@@ -19,6 +24,16 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   final String _selectedSport = 'Football';
   final List<UserModel> _teamMembers = [];
   bool _isSubmitting = false;
+  XFile? _selectedLogo;
+  String? _uploadedLogoUrl;
+
+  Future<void> _pickImage() async {
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image != null) {
+      setState(() => _selectedLogo = image);
+    }
+  }
 
   Future<void> _handleCreateTeam() async {
     final name = _nameController.text.trim();
@@ -33,29 +48,36 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.currentUser?.uid;
+
+      // 1. Upload Logo if selected
+      if (_selectedLogo != null) {
+        _uploadedLogoUrl = await CloudinaryService().uploadImage(
+          _selectedLogo!,
+          folder: 'teams/$uid/logos',
+        );
+      }
+
+      // 2. Prepare Payload (Cleaned for Hardened Service)
       final teamData = {
         'name': name,
         'captainName': auth.userModel?.name ?? 'Captain',
         'captainPhone': auth.userModel?.phone,
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
-        'logoUrl': 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
-        'playersCount': _teamMembers.length,
+        // Use uploaded URL or fallback to a default generic sport image
+        'logoUrl': _uploadedLogoUrl ?? 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
+        'playersCount': _teamMembers.length + 1, // +1 for captain
         'maxPlayers': 12,
-        'members': _teamMembers.map((m) => m.profileImageUrl ?? '').toList(),
-        'memberUids': _teamMembers.map((m) => m.uid).toList(),
+        'memberUids': [
+          if (uid != null) uid,
+          ..._teamMembers.map((m) => m.uid),
+        ],
+        'playerImages': [
+          auth.userModel?.profileImageUrl ?? '',
+          ..._teamMembers.map((m) => m.profileImageUrl ?? ''),
+        ],
         'governorate': auth.userModel?.governorate ?? 'Cairo',
-        'points': 0,
-        'matchesPlayed': 0,
-        'wins': 0,
-        'draws': 0,
-        'losses': 0,
-        'playedOpponents': [],
-        'unlockedBadges': [],
-        'currentWinningStreak': 0,
-        'trend': 'stable',
-        'date': 'Just Created',
-        'stadium': 'To be decided',
-        'pricePerPerson': 50.0,
+        'sportType': _selectedSport,
       };
 
       final teamId = await DatabaseService().createTeam(teamData);
@@ -63,9 +85,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       if (teamId != null && mounted) {
         Navigator.pop(context, true);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Team created successfully!', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
-            backgroundColor: AppTheme.neonGreen,
+          SnackBar(
+            content: Text('Team created successfully!', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold)),
+            backgroundColor: VSPColors.accent,
           ),
         );
       }
@@ -107,16 +129,16 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   Widget build(BuildContext context) {
     return Container(
       padding: EdgeInsets.only(
-        top: 24,
-        left: 16,
-        right: 16,
-        bottom: MediaQuery.of(context).viewInsets.bottom + 24,
+        top: VSPSpacing.lg,
+        left: VSPSpacing.md,
+        right: VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
       ),
       decoration: const BoxDecoration(
-        color: AppTheme.darkBackground,
+        color: VSPColors.background,
         borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(24),
-          topRight: Radius.circular(24),
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
         ),
       ),
       child: Column(
@@ -130,115 +152,119 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   const Text(
+                   Text(
                     'Create Team',
-                    style: TextStyle(
-                      color: AppTheme.textPrimary,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      fontFamily: 'Agency FB',
-                    ),
+                    style: Theme.of(context).textTheme.displayMedium,
                   ),
-                  const SizedBox(height: 4),
+                  const SizedBox(height: VSPSpacing.xs),
                   Text(
                     'Create Your Team To Have Your Favorite Friends Join You.',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary.withValues(alpha: 0.7),
-                      fontSize: 12,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: VSPColors.textSecondary,
+                        ),
                   ),
                 ],
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: AppTheme.textSecondary),
+                icon: const Icon(Icons.close, color: VSPColors.textSecondary),
               ),
             ],
           ),
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Team Name Input
-          const Text('Team Name*', style: TextStyle(color: AppTheme.textSecondary)),
-          const SizedBox(height: 8),
+          Text('Team Name*', style: Theme.of(context).textTheme.labelMedium),
+          const SizedBox(height: VSPSpacing.sm),
           TextField(
             controller: _nameController,
-            style: const TextStyle(color: AppTheme.textPrimary),
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
               hintText: 'El Mokatm',
-              hintStyle: TextStyle(color: AppTheme.textSecondary.withValues(alpha: 0.5)),
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
               filled: true,
-              fillColor: AppTheme.cardBackground,
+              fillColor: VSPColors.surface,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
             ),
           ),
           const SizedBox(height: 16),
 
           // Sports Type Input
-          const Text('Sports Type*', style: TextStyle(color: AppTheme.textSecondary)),
+          Text('Sports Type*', style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 8),
           TextField(
             controller: TextEditingController(text: _selectedSport),
             readOnly: true,
-            style: const TextStyle(color: AppTheme.textPrimary),
+            style: Theme.of(context).textTheme.bodyMedium,
             decoration: InputDecoration(
               filled: true,
-              fillColor: AppTheme.cardBackground,
+              fillColor: VSPColors.surface,
               border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(12),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
                 borderSide: BorderSide.none,
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+              contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
             ),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Upload Photo Section
-          Row(
-            children: [
-              Container(
-                width: 50,
-                height: 50,
-                decoration: BoxDecoration(
-                  color: AppTheme.cardBackground,
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white.withOpacity(0.05)),
-                ),
-                child: const Icon(Icons.add_photo_alternate_outlined, color: AppTheme.neonGreen),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: Container(
+          GestureDetector(
+            onTap: _pickImage,
+            child: Row(
+              children: [
+                Container(
+                  width: 50,
                   height: 50,
                   decoration: BoxDecoration(
-                    color: AppTheme.neonGreen,
-                    borderRadius: BorderRadius.circular(12),
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider),
+                    image: _selectedLogo != null 
+                        ? DecorationImage(
+                            image: FileImage(File(_selectedLogo!.path)),
+                            fit: BoxFit.cover,
+                          )
+                        : null,
                   ),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: const [
-                       Icon(Icons.cloud_upload_outlined, color: Colors.black),
-                       SizedBox(width: 8),
-                       Text(
-                        'Upload Photo',
-                        style: TextStyle(
-                          color: Colors.black,
-                          fontSize: 16,
-                          fontWeight: FontWeight.bold,
+                  child: _selectedLogo == null 
+                      ? const Icon(Icons.add_photo_alternate_outlined, color: VSPColors.accent)
+                      : null,
+                ),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: Container(
+                    height: 50,
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                         Icon(Icons.cloud_upload_outlined, color: VSPColors.background),
+                         const SizedBox(width: VSPSpacing.sm),
+                         Text(
+                          _selectedLogo == null ? 'Upload Logo' : 'Change Logo',
+                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                            color: VSPColors.background,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Add Team Members Header
           Row(
@@ -246,43 +272,43 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             children: [
               Text(
                 'Team Members (${_teamMembers.length}/12)',
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 14),
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
               ),
               TextButton.icon(
                 onPressed: _showAddPlayerSheet,
-                icon: const Icon(Icons.add_circle_outline, size: 18, color: AppTheme.neonGreen),
-                label: const Text('Add Member', style: TextStyle(color: AppTheme.neonGreen, fontWeight: FontWeight.bold)),
+                icon: const Icon(Icons.add_circle_outline, size: 18, color: VSPColors.accent),
+                label: Text('Add Member', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: VSPSpacing.sm),
           
           if (_teamMembers.isEmpty)
             Container(
               width: double.infinity,
-              padding: const EdgeInsets.symmetric(vertical: 32),
+              padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xl),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(16),
-                border: Border.all(color: Colors.white.withOpacity(0.02)),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
+                border: Border.all(color: VSPColors.divider),
               ),
               child: Column(
                 children: [
-                  Icon(Icons.group_add_outlined, color: Colors.white.withOpacity(0.1), size: 40),
+                  Icon(Icons.group_add_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.1), size: 40),
                   const SizedBox(height: 12),
                   Text(
                     'No members added yet',
-                    style: TextStyle(color: Colors.white.withOpacity(0.3), fontSize: 13),
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.3)),
                   ),
                 ],
               ),
             )
           else
             Container(
-              padding: const EdgeInsets.all(12),
+              padding: const EdgeInsets.all(VSPSpacing.sm),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(16),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
               ),
               child: Wrap(
                 spacing: 8,
@@ -291,8 +317,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   return Container(
                     padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
                     decoration: BoxDecoration(
-                      color: Colors.white.withOpacity(0.05),
-                      borderRadius: BorderRadius.circular(30),
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
                     ),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -301,19 +327,19 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                           imageUrl: member.profileImageUrl ?? '',
                           width: 28,
                           height: 28,
-                          borderRadius: 14,
+                          borderRadius: VSPRadius.full,
                         ),
                         const SizedBox(width: 8),
                         Text(
                           member.name ?? 'Player',
-                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          style: Theme.of(context).textTheme.labelSmall,
                         ),
                         const SizedBox(width: 4),
                         GestureDetector(
                           onTap: () => setState(() => _teamMembers.remove(member)),
                           child: const Padding(
                             padding: EdgeInsets.all(4.0),
-                            child: Icon(Icons.close, size: 14, color: AppTheme.textSecondary),
+                            child: Icon(Icons.close, size: 14, color: VSPColors.textSecondary),
                           ),
                         ),
                       ],
@@ -323,46 +349,29 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               ),
             ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: VSPSpacing.xl),
 
           // Bottom Buttons
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
+            Row(
+              children: [
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Cancel',
                     onPressed: () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.white.withOpacity(0.1),
-                      foregroundColor: Colors.white,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: const Text('Cancel', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
                   ),
                 ),
-              ),
-              const SizedBox(width: 16),
-              Expanded(
-                child: SizedBox(
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isSubmitting ? null : _handleCreateTeam,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
-                      elevation: 0,
-                    ),
-                    child: _isSubmitting 
-                        ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2))
-                        : const Text('Confirm', style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold)),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Confirm',
+                    onPressed: _handleCreateTeam,
+                    isLoading: _isSubmitting,
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );

@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/services/database_service.dart';
 import '../../../data/models.dart';
-import '../widgets/your_team_modal.dart';
-import 'player_home_screen.dart'; // To access MatchCard
+import '../../../core/ui/tokens/vsp_tokens.dart';
 
 class TeamDashboardScreen extends StatelessWidget {
   const TeamDashboardScreen({super.key});
@@ -11,27 +11,22 @@ class TeamDashboardScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
+        backgroundColor: VSPColors.background,
         elevation: 0,
         centerTitle: true,
         automaticallyImplyLeading: false,
-        title: const Text(
+        title: Text(
           'Matches',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 24,
-            fontWeight: FontWeight.bold,
-            fontFamily: 'Agency FB',
-          ),
+          style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: StreamBuilder<List<Booking>>(
         stream: DatabaseService().getPublicMatches(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: AppTheme.neonGreen));
+            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
           
           final bookings = snapshot.data ?? [];
@@ -42,14 +37,17 @@ class TeamDashboardScreen extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                    Icon(Icons.sports_soccer_outlined, color: Colors.white.withValues(alpha: 0.1), size: 80),
-                   const SizedBox(height: 16),
-                   const Text(
+                   const SizedBox(height: VSPSpacing.md),
+                    Text(
                     'No public matches available right now.',
-                    style: TextStyle(color: Colors.white54, fontSize: 16),
+                    style: Theme.of(context).textTheme.bodyMedium,
                   ),
-                  const Text(
+                  Text(
                     'Be the first to host one!',
-                    style: TextStyle(color: AppTheme.neonGreen, fontSize: 14, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: VSPColors.accent,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ],
               ),
@@ -57,11 +55,11 @@ class TeamDashboardScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(VSPSpacing.md),
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               return Padding(
-                padding: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.only(bottom: VSPSpacing.md),
                 child: PublicMatchCard(booking: bookings[index]),
               );
             },
@@ -72,99 +70,220 @@ class TeamDashboardScreen extends StatelessWidget {
   }
 }
 
-class PublicMatchCard extends StatelessWidget {
+class PublicMatchCard extends StatefulWidget {
   final Booking booking;
   const PublicMatchCard({super.key, required this.booking});
 
   @override
+  State<PublicMatchCard> createState() => _PublicMatchCardState();
+}
+
+class _PublicMatchCardState extends State<PublicMatchCard> {
+  bool _isLoading = false;
+
+  @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<app_auth.AuthProvider>(context);
+    final currentUser = authProvider.currentUser;
+    final currentUserImage = authProvider.userModel?.profileImageUrl;
+    final bool hasJoined = currentUser != null && widget.booking.joinedUserIds.contains(currentUser.uid);
+    final bool isHost = currentUser != null && widget.booking.createdByUserId == currentUser.uid;
+    final booking = widget.booking;
+    final remainingPlayers = booking.maxPlayers - booking.currentPlayers;
+    
+    // Per-player price calculation
+    final entryFee = (booking.totalPrice / (booking.maxPlayers > 0 ? booking.maxPlayers : 1)).toStringAsFixed(0);
+
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
-        color: const Color(0xFF1E1E1E),
-        borderRadius: BorderRadius.circular(20),
-        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        color: const Color(0xFF2D4B15), // Deep Green from mockup
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // --- HEADER ROW: Avatar + Names + Join Button ---
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
+              Container(
+                width: 48,
+                height: 48,
+                decoration: const BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: Color(0xFF1E330E), 
+                ),
+                child: ClipOval(
+                  child: Image.network(
+                    (isHost && currentUserImage != null && currentUserImage.isNotEmpty)
+                        ? currentUserImage
+                        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(booking.playerTeamName ?? 'H')}&background=random',
+                    fit: BoxFit.cover,
+                    errorBuilder: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent),
+                  ),
+                ),
+              ),
+              const SizedBox(width: VSPSpacing.md),
+              
+              // Names
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.stadiumName,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 18,
+                      booking.playerTeamName ?? "Private Host",
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
+                        fontSize: 18,
+                        color: Colors.white,
                       ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    const SizedBox(height: 4),
-                    Row(
-                      children: [
-                        const Icon(Icons.person_outline, size: 14, color: AppTheme.textSecondary),
-                        const SizedBox(width: 4),
-                        Text(
-                          "Host: ${booking.playerTeamName ?? 'Private Host'}",
-                          style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                        ),
-                      ],
+                    Text(
+                      'Captain',
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: Colors.white.withValues(alpha: 0.6),
+                      ),
                     ),
                   ],
                 ),
               ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: AppTheme.neonGreen.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                child: Text(
-                  "${booking.currentPlayers}/${booking.maxPlayers} Players",
-                  style: const TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 16),
-          const Divider(color: Colors.white10),
-          const SizedBox(height: 16),
-          Row(
-            children: [
-              _buildInfoChip(Icons.calendar_today_outlined, booking.formattedDate),
-              const SizedBox(width: 12),
-              _buildInfoChip(Icons.access_time, booking.formattedTimeRange),
-            ],
-          ),
-          const SizedBox(height: 20),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   const Text("Entry Fee", style: TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-                   Text(
-                    "EGP ${(booking.totalPrice / (booking.maxPlayers > 0 ? booking.maxPlayers : 1)).toStringAsFixed(0)}",
-                    style: const TextStyle(color: AppTheme.textPrimary, fontSize: 20, fontWeight: FontWeight.bold),
+
+              // Action Button (Join / Leave / Edit)
+              if (_isLoading)
+                const SizedBox(
+                  width: 24,
+                  height: 24,
+                  child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                )
+              else if (isHost)
+                // --- HOST ACTION: EDIT ---
+                GestureDetector(
+                  onTap: () {
+                    // TODO: Open Edit Screen
+                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit feature coming soon!')));
+                  },
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(color: VSPColors.accent, width: 1.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Edit",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
                   ),
-                ],
-              ),
-              ElevatedButton(
-                onPressed: () => _handleJoin(context),
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: AppTheme.neonGreen,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
+                )
+              else if (hasJoined)
+                // --- PARTICIPANT ACTION: LEAVE ---
+                GestureDetector(
+                  onTap: () => _handleLeave(context, currentUser.uid),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: Colors.transparent,
+                      border: Border.all(color: VSPColors.error, width: 1.5),
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      "Leave",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: VSPColors.error,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                )
+              else
+                // --- PUBLIC ACTION: JOIN ---
+                GestureDetector(
+                  onTap: booking.currentPlayers >= booking.maxPlayers 
+                      ? null 
+                      : () => _handleJoin(context, currentUser?.uid),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                    decoration: BoxDecoration(
+                      color: booking.currentPlayers >= booking.maxPlayers ? VSPColors.textSecondary : VSPColors.accent,
+                      borderRadius: BorderRadius.circular(8),
+                    ),
+                    child: Text(
+                      booking.currentPlayers >= booking.maxPlayers ? "Full" : "Join",
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: VSPColors.background,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
                 ),
-                child: const Text("Join Match", style: TextStyle(fontWeight: FontWeight.bold)),
+            ],
+          ),
+          
+          const SizedBox(height: 12),
+
+          // --- INFO ROW: The Premium Inner Box ---
+          Container(
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: Colors.black.withValues(alpha: 0.2),
+              borderRadius: BorderRadius.circular(12),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceEvenly,
+              children: [
+                Expanded(child: _buildInfoColumn("DATE", booking.formattedDate)),
+                Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.1)),
+                Expanded(child: _buildInfoColumn("TIME", _formatTimeShort(booking.formattedTimeRange))),
+                Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.1)),
+                Expanded(child: _buildInfoColumn("PRICE", "$entryFee EGP")),
+              ],
+            ),
+          ),
+
+          const SizedBox(height: 12),
+
+          // --- FOOTER ROW: Dynamic Avatar Stack & Remaining text ---
+          Row(
+            children: [
+              // Dynamic Avatar Stack (Shows icons based on current count)
+              if (booking.currentPlayers > 0)
+                SizedBox(
+                  width: (booking.currentPlayers.clamp(0, 3) * 18.0) + 14, 
+                  height: 32,
+                  child: Stack(
+                    children: List.generate(
+                      booking.currentPlayers.clamp(0, 3), 
+                      (index) => _buildStackedAvatar(index, 'https://ui-avatars.com/api/?name=Player+${index+1}&background=random&color=fff')
+                    ),
+                  ),
+                ),
+              const SizedBox(width: VSPSpacing.xs),
+              
+              // Remaining text
+              Expanded(
+                child: RichText(
+                  text: TextSpan(
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.6)),
+                    children: [
+                      const TextSpan(text: "Number of remaining "),
+                      TextSpan(
+                        text: "$remainingPlayers",
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                      ),
+                      const TextSpan(text: " out of "),
+                      TextSpan(
+                        text: "${booking.maxPlayers}",
+                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
+                      ),
+                    ],
+                  ),
+                ),
               ),
             ],
           ),
@@ -173,24 +292,105 @@ class PublicMatchCard extends StatelessWidget {
     );
   }
 
-  void _handleJoin(BuildContext context) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    // Placeholder for actual join logic
-    scaffoldMessenger.showSnackBar(
-      const SnackBar(
-        content: Text("Joined Match Successfully!", style: TextStyle(color: Colors.black)),
-        backgroundColor: AppTheme.neonGreen,
+    Widget _buildInfoColumn(String label, String value) {
+      return Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.center, // ALL centered
+        children: [
+          Text(
+            label,
+            style: const TextStyle(
+              color: Colors.white54,
+              fontSize: 10,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 0.5,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            textAlign: TextAlign.center,
+            maxLines: 2,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(
+              fontSize: 12,
+              fontWeight: FontWeight.bold,
+              color: Colors.white,
+            ),
+          ),
+        ],
+      );
+    }
+
+  Widget _buildStackedAvatar(int index, String url) {
+    return Positioned(
+      left: index * 18.0,
+      child: Container(
+        width: 32,
+        height: 32,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          border: Border.all(color: const Color(0xFF2D4B15), width: 2),
+          image: DecorationImage(
+            image: NetworkImage(url),
+            fit: BoxFit.cover,
+          ),
+        ),
       ),
     );
   }
 
-  Widget _buildInfoChip(IconData icon, String text) {
-    return Row(
-      children: [
-        Icon(icon, size: 16, color: AppTheme.neonGreen),
-        const SizedBox(width: 6),
-        Text(text, style: const TextStyle(color: Colors.white, fontSize: 13)),
-      ],
-    );
+  void _handleJoin(BuildContext context, String? userId) async {
+    if (userId == null) {
+      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login first')));
+      return;
+    }
+    
+    setState(() => _isLoading = true);
+    final success = await DatabaseService().joinPublicMatch(widget.booking.id, userId);
+    if (!context.mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Joined Match Successfully!", style: TextStyle(color: VSPColors.background)),
+          backgroundColor: VSPColors.accent,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to join match."), backgroundColor: VSPColors.error),
+      );
+    }
+  }
+
+  void _handleLeave(BuildContext context, String userId) async {
+    setState(() => _isLoading = true);
+    final success = await DatabaseService().leavePublicMatch(widget.booking.id, userId);
+    if (!context.mounted) return;
+    setState(() => _isLoading = false);
+    if (success) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text("Left Match Successfully."),
+          backgroundColor: VSPColors.warning,
+        ),
+      );
+    } else {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Failed to leave match."), backgroundColor: VSPColors.error),
+      );
+    }
+  }
+
+  // دالة صغيرة لتقصير شكل الوقت عشان يكفي المربع
+  String _formatTimeShort(String timeRange) {
+    final parts = timeRange.split(' - ');
+    if (parts.length == 2) {
+      final start = parts[0].replaceAll(':00', '');
+      final end = parts[1].replaceAll(':00', '');
+      return '$start-$end';
+    }
+    return timeRange;
   }
 }

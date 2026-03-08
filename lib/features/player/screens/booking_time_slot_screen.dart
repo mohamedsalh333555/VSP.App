@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 
 class BookingTimeSlotScreen extends StatelessWidget {
@@ -15,12 +15,12 @@ class BookingTimeSlotScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
-        backgroundColor: AppTheme.darkBackground,
-        title: const Text('Select Time Slot', style: TextStyle(color: Colors.white)),
+        backgroundColor: VSPColors.background,
+        title: Text('Select Time Slot', style: Theme.of(context).textTheme.displaySmall),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Colors.white),
+          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -28,7 +28,7 @@ class BookingTimeSlotScreen extends StatelessWidget {
         child: Text(
           'Time Slots for ${stadium.name}\n($bookingType)',
           textAlign: TextAlign.center,
-          style: const TextStyle(color: Colors.white, fontSize: 18),
+          style: Theme.of(context).textTheme.titleLarge,
         ),
       ),
     );

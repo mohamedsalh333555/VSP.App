@@ -676,8 +676,8 @@ class Booking {
       ),
       playerTeamId: data['playerTeamId'],
       playerTeamName: data['playerTeamName'],
-      opponentTeamId: data['opponentTeamId'],
-      opponentTeamName: data['opponentTeamName'],
+      opponentTeamId: data['bookingType'] == 'challenge' ? data['opponentTeamId'] : null,
+      opponentTeamName: data['bookingType'] == 'challenge' ? data['opponentTeamName'] : null,
       isPrivate: data['isPrivate'] ?? false,
       rentBall: data['rentBall'] ?? false,
       totalPrice: (data['totalPrice'] ?? 0).toDouble(),
@@ -916,6 +916,7 @@ class Team {
   final List<String> unlockedBadges;
   final int currentWinningStreak;
   final List<String> memberUids;
+  final int championshipsWon; // TOURNAMENT Logic: Total trophies won
 
   Team({
     required this.id,
@@ -940,6 +941,7 @@ class Team {
     this.unlockedBadges = const [],
     this.currentWinningStreak = 0,
     this.memberUids = const [],
+    this.championshipsWon = 0,
   });
 
   factory Team.fromFirestore(Map<String, dynamic> data, String docId) {
@@ -966,6 +968,7 @@ class Team {
       unlockedBadges: List<String>.from(data['unlockedBadges'] ?? []),
       currentWinningStreak: data['currentWinningStreak'] ?? 0,
       memberUids: List<String>.from(data['memberUids'] ?? []),
+      championshipsWon: data['championshipsWon'] ?? 0,
     );
   }
 
@@ -992,6 +995,7 @@ class Team {
       'unlockedBadges': unlockedBadges,
       'currentWinningStreak': currentWinningStreak,
       'memberUids': memberUids,
+      'championshipsWon': championshipsWon,
     };
   }
 
@@ -1015,6 +1019,7 @@ class Team {
     int? draws,
     int? losses,
     List<String>? playedOpponents,
+    int? championshipsWon,
   }) {
     return Team(
       id: id ?? this.id,
@@ -1036,6 +1041,7 @@ class Team {
       draws: draws ?? this.draws,
       losses: losses ?? this.losses,
       playedOpponents: playedOpponents ?? this.playedOpponents,
+      championshipsWon: championshipsWon ?? this.championshipsWon,
     );
   }
 
@@ -1296,57 +1302,310 @@ class Team {
   }
 }
 
+class VSP1v1Player {
+  final String id;
+  final String name;
+  final String avatarUrl;
+  final int totalPoints;
+  final int skillPoints;
+  final int goals;
+  final int tackles;
+  final int titles;
+  final int rank;
+  final String trend;
+
+  VSP1v1Player({
+    required this.id,
+    required this.name,
+    required this.avatarUrl,
+    required this.totalPoints,
+    required this.skillPoints,
+    required this.goals,
+    required this.tackles,
+    this.titles = 0,
+    required this.rank,
+    this.trend = 'stable',
+  });
+
+  factory VSP1v1Player.fromFirestore(Map<String, dynamic> data, String id) {
+    return VSP1v1Player(
+      id: id,
+      name: data['name'] ?? 'Unknown',
+      avatarUrl: data['avatarUrl'] ?? '',
+      totalPoints: (data['totalPoints'] ?? 0).toInt(),
+      skillPoints: (data['skillPoints'] ?? 0).toInt(),
+      goals: (data['goals'] ?? 0).toInt(),
+      tackles: (data['tackles'] ?? 0).toInt(),
+      titles: (data['titles'] ?? 0).toInt(),
+      rank: (data['rank'] ?? 99).toInt(),
+      trend: data['trend'] ?? 'stable',
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'name': name,
+      'avatarUrl': avatarUrl,
+      'totalPoints': totalPoints,
+      'skillPoints': skillPoints,
+      'goals': goals,
+      'tackles': tackles,
+      'titles': titles,
+      'rank': rank,
+      'trend': trend,
+    };
+  }
+
+  static List<VSP1v1Player> getMockStandings() {
+    return [
+      VSP1v1Player(
+        id: '1',
+        name: 'Ahmed Y.',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Ahmed&background=random',
+        totalPoints: 250,
+        skillPoints: 85,
+        goals: 42,
+        tackles: 15,
+        titles: 2,
+        rank: 1,
+        trend: 'stable',
+      ),
+      VSP1v1Player(
+        id: '2',
+        name: 'Kareem M.',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Kareem&background=random',
+        totalPoints: 235,
+        skillPoints: 82,
+        goals: 38,
+        tackles: 12,
+        titles: 0,
+        rank: 2,
+        trend: 'up',
+      ),
+      VSP1v1Player(
+        id: '3',
+        name: 'Omar S.',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Omar&background=random',
+        totalPoints: 210,
+        skillPoints: 78,
+        goals: 31,
+        tackles: 10,
+        titles: 1,
+        rank: 3,
+        trend: 'down',
+      ),
+      VSP1v1Player(
+        id: '4',
+        name: 'Ziad H.',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Ziad&background=random',
+        totalPoints: 195,
+        skillPoints: 65,
+        goals: 28,
+        tackles: 8,
+        titles: 0,
+        rank: 4,
+        trend: 'up',
+      ),
+      VSP1v1Player(
+        id: '5',
+        name: 'Mahmoud F.',
+        avatarUrl: 'https://ui-avatars.com/api/?name=Mahmoud&background=random',
+        totalPoints: 180,
+        skillPoints: 70,
+        goals: 25,
+        tackles: 20,
+        titles: 0,
+        rank: 5,
+        trend: 'stable',
+      ),
+    ];
+  }
+}
+
 /// Championship data model
 class Championship {
   final String id;
   final String name;
-  final String type; // Football, League, etc.
+  final String type; // Cup, League
+  final String sportType;
   final String logoUrl;
-  final String startDate;
-  final String endDate;
+  final DateTime startDate;
+  final DateTime endDate;
   final double entryFee;
   final double grandPrize;
-  final int teamsJoined;
   final int maxTeams;
-  final List<String> teamLogos;
-
+  final List<String> joinedTeams; // Team IDs
   final String ownerId;
   final String governorate;
-  final String sportType;
+  final String rules;
+  final List<String> paymentMethods; // 'cash', 'online'
+  
+  // Settings / Rules
+  final int maxPlayersPerTeam;
+  final int minPlayersPerTeam;
+  final int winningPoints;
+  final int drawPoints;
+  final int lossPoints;
+  final int matchDuration; // in minutes
+  final bool isBackAndForth;
+  final bool trophyMedals;
+  final bool redCardSuspension;
+  final bool fairPlayScoring;
+
+  // TOURNAMENT Lifecycle
+  final String status; // 'open', 'ongoing', 'completed'
+  final String? championTeamId;
+  final String? championTeamName;
 
   Championship({
     required this.id,
     required this.name,
     required this.type,
+    required this.sportType,
     required this.logoUrl,
     required this.startDate,
     required this.endDate,
     required this.entryFee,
     required this.grandPrize,
-    required this.teamsJoined,
     required this.maxTeams,
-    required this.teamLogos,
-    this.ownerId = '',
-    this.governorate = 'Cairo',
-    this.sportType = 'Football',
+    required this.joinedTeams,
+    required this.ownerId,
+    required this.governorate,
+    this.rules = '',
+    this.paymentMethods = const ['cash'],
+    this.maxPlayersPerTeam = 11,
+    this.minPlayersPerTeam = 5,
+    this.winningPoints = 3,
+    this.drawPoints = 1,
+    this.lossPoints = 0,
+    this.matchDuration = 30,
+    this.isBackAndForth = false,
+    this.trophyMedals = true,
+    this.redCardSuspension = true,
+    this.fairPlayScoring = false,
+    this.status = 'open',
+    this.championTeamId,
+    this.championTeamName,
   });
 
+  // SECURITY PATCH: Robust type parsing with crash prevention for malicious or corrupted data payloads.
   factory Championship.fromFirestore(Map<String, dynamic> data, String id) {
+    try {
+      final settings = data['settings'] as Map<String, dynamic>? ?? {};
+      
+      return Championship(
+        id: id,
+        name: data['name']?.toString() ?? '',
+        type: data['type']?.toString() ?? 'Cup',
+        sportType: data['sportType']?.toString() ?? 'Football',
+        logoUrl: (data['logoUrl'] ?? data['image'])?.toString() ?? '',
+        startDate: data['startDate'] != null 
+            ? (data['startDate'] is Timestamp ? (data['startDate'] as Timestamp).toDate() : DateTime.tryParse(data['startDate'].toString()) ?? DateTime.now())
+            : DateTime.now(),
+        endDate: data['endDate'] != null 
+            ? (data['endDate'] is Timestamp ? (data['endDate'] as Timestamp).toDate() : DateTime.tryParse(data['endDate'].toString()) ?? DateTime.now())
+            : DateTime.now(),
+        entryFee: double.tryParse((data['entryFee'] ?? data['fees'] ?? 0).toString()) ?? 0.0,
+        grandPrize: double.tryParse((data['grandPrize'] ?? data['prize'] ?? 0).toString()) ?? 0.0,
+        maxTeams: int.tryParse((data['maxTeams'] ?? data['teamsCount'] ?? 16).toString()) ?? 16,
+        joinedTeams: List<String>.from(data['joinedTeams'] ?? []),
+        ownerId: data['ownerId']?.toString() ?? '',
+        governorate: data['governorate']?.toString() ?? 'Cairo',
+        rules: data['rules']?.toString() ?? '',
+        paymentMethods: List<String>.from(data['paymentMethods'] ?? ['cash']),
+        maxPlayersPerTeam: int.tryParse(settings['maxPlayers']?.toString() ?? '11') ?? 11,
+        minPlayersPerTeam: int.tryParse(settings['minPlayers']?.toString() ?? '5') ?? 5,
+        winningPoints: int.tryParse(settings['winningPoints']?.toString() ?? '3') ?? 3,
+        drawPoints: int.tryParse(settings['drawPoints']?.toString() ?? '1') ?? 1,
+        lossPoints: int.tryParse(settings['lossPoints']?.toString() ?? '0') ?? 0,
+        matchDuration: int.tryParse(settings['matchDuration']?.toString() ?? '30') ?? 30,
+        isBackAndForth: settings['isBackAndForth'] == true,
+        trophyMedals: settings['trophyMedals'] != false,
+        redCardSuspension: settings['redCardSuspension'] != false,
+        fairPlayScoring: settings['fairPlayScoring'] == true,
+        status: data['status']?.toString() ?? 'open',
+        championTeamId: data['championTeamId']?.toString(),
+        championTeamName: data['championTeamName']?.toString(),
+      );
+    } catch (e) {
+      // Fallback object to prevent app crash if schema is completely broken
+      return Championship(
+        id: id,
+        name: 'Parsing Error',
+        type: 'Cup',
+        sportType: 'Football',
+        logoUrl: '',
+        startDate: DateTime.now(),
+        endDate: DateTime.now(),
+        entryFee: 0,
+        grandPrize: 0,
+        maxTeams: 16,
+        joinedTeams: [],
+        ownerId: '',
+        governorate: 'Cairo',
+      );
+    }
+  }
+
+  Championship copyWith({
+    String? id,
+    String? name,
+    String? type,
+    String? sportType,
+    String? logoUrl,
+    DateTime? startDate,
+    DateTime? endDate,
+    double? entryFee,
+    double? grandPrize,
+    int? maxTeams,
+    List<String>? joinedTeams,
+    String? ownerId,
+    String? governorate,
+    String? rules,
+    List<String>? paymentMethods,
+    int? maxPlayersPerTeam,
+    int? minPlayersPerTeam,
+    int? winningPoints,
+    int? drawPoints,
+    int? lossPoints,
+    int? matchDuration,
+    bool? isBackAndForth,
+    bool? trophyMedals,
+    bool? redCardSuspension,
+    bool? fairPlayScoring,
+    String? status,
+    String? championTeamId,
+    String? championTeamName,
+  }) {
     return Championship(
-      id: id,
-      name: data['name'] ?? '',
-      type: data['type'] ?? '',
-      logoUrl: data['logoUrl'] ?? '',
-      startDate: data['startDate'] ?? '',
-      endDate: data['endDate'] ?? '',
-      entryFee: (data['entryFee'] ?? 0).toDouble(),
-      grandPrize: (data['grandPrize'] ?? 0).toDouble(),
-      teamsJoined: data['teamsJoined'] ?? 0,
-      maxTeams: data['maxTeams'] ?? 16,
-      teamLogos: List<String>.from(data['teamLogos'] ?? []),
-      ownerId: data['ownerId'] ?? '',
-      governorate: data['governorate'] ?? 'Cairo',
-      sportType: data['sportType'] ?? 'Football',
+      id: id ?? this.id,
+      name: name ?? this.name,
+      type: type ?? this.type,
+      sportType: sportType ?? this.sportType,
+      logoUrl: logoUrl ?? this.logoUrl,
+      startDate: startDate ?? this.startDate,
+      endDate: endDate ?? this.endDate,
+      entryFee: entryFee ?? this.entryFee,
+      grandPrize: grandPrize ?? this.grandPrize,
+      maxTeams: maxTeams ?? this.maxTeams,
+      joinedTeams: joinedTeams ?? this.joinedTeams,
+      ownerId: ownerId ?? this.ownerId,
+      governorate: governorate ?? this.governorate,
+      rules: rules ?? this.rules,
+      paymentMethods: paymentMethods ?? this.paymentMethods,
+      maxPlayersPerTeam: maxPlayersPerTeam ?? this.maxPlayersPerTeam,
+      minPlayersPerTeam: minPlayersPerTeam ?? this.minPlayersPerTeam,
+      winningPoints: winningPoints ?? this.winningPoints,
+      drawPoints: drawPoints ?? this.drawPoints,
+      lossPoints: lossPoints ?? this.lossPoints,
+      matchDuration: matchDuration ?? this.matchDuration,
+      isBackAndForth: isBackAndForth ?? this.isBackAndForth,
+      trophyMedals: trophyMedals ?? this.trophyMedals,
+      redCardSuspension: redCardSuspension ?? this.redCardSuspension,
+      fairPlayScoring: fairPlayScoring ?? this.fairPlayScoring,
+      status: status ?? this.status,
+      championTeamId: championTeamId ?? this.championTeamId,
+      championTeamName: championTeamName ?? this.championTeamName,
     );
   }
 
@@ -1354,20 +1613,42 @@ class Championship {
     return {
       'name': name,
       'type': type,
+      'sportType': sportType,
       'logoUrl': logoUrl,
-      'startDate': startDate,
-      'endDate': endDate,
+      'startDate': startDate.toIso8601String(),
+      'endDate': endDate.toIso8601String(),
       'entryFee': entryFee,
       'grandPrize': grandPrize,
-      'teamsJoined': teamsJoined,
       'maxTeams': maxTeams,
-      'teamLogos': teamLogos,
+      'joinedTeams': joinedTeams,
       'ownerId': ownerId,
       'governorate': governorate,
-      'sportType': sportType,
+      'rules': rules,
+      'paymentMethods': paymentMethods,
+      'settings': {
+        'maxPlayers': maxPlayersPerTeam,
+        'minPlayers': minPlayersPerTeam,
+        'winningPoints': winningPoints,
+        'drawPoints': drawPoints,
+        'lossPoints': lossPoints,
+        'matchDuration': matchDuration,
+        'isBackAndForth': isBackAndForth,
+        'trophyMedals': trophyMedals,
+        'redCardSuspension': redCardSuspension,
+        'fairPlayScoring': fairPlayScoring,
+      },
+      'status': status,
+      'championTeamId': championTeamId,
+      'championTeamName': championTeamName,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }
+
+  // Helper for UI
+  String get imageUrl => logoUrl;
+  int get teamsJoined => joinedTeams.length;
+  List<String> get teamLogos => []; // To be implemented with real team data if needed
+
 
   // Mock data
   static List<Championship> getMockChampionships() {
@@ -1375,56 +1656,47 @@ class Championship {
       Championship(
         id: '1',
         name: 'Champions League',
-        type: 'Football • Cup',
+        type: 'Cup',
+        sportType: 'Football',
         logoUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=150&h=150&fit=crop&q=80',
-        startDate: 'Aug 10',
-        endDate: 'Oct 15',
+        startDate: DateTime.now().add(const Duration(days: 10)),
+        endDate: DateTime.now().add(const Duration(days: 40)),
         entryFee: 1500,
         grandPrize: 5000,
-        teamsJoined: 12,
         maxTeams: 16,
-        teamLogos: [
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&q=80',
-        ],
+        joinedTeams: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
+        ownerId: 'mock_owner',
+        governorate: 'Cairo',
       ),
       Championship(
         id: '2',
         name: 'Summer Cup',
-        type: 'Football • Knockout',
-        logoUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&h=400&fit=crop&q=80', // Real Trophy/Stadium logo
-        startDate: 'Jul 15',
-        endDate: 'Aug 20',
+        type: 'Knockout',
+        sportType: 'Football',
+        logoUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&h=400&fit=crop&q=80',
+        startDate: DateTime.now().subtract(const Duration(days: 5)),
+        endDate: DateTime.now().add(const Duration(days: 15)),
         entryFee: 500,
         grandPrize: 1500,
-        teamsJoined: 14,
         maxTeams: 16,
-        teamLogos: [
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&q=80',
-        ],
+        joinedTeams: List.generate(14, (i) => 'T$i'),
+        ownerId: 'mock_owner',
+        governorate: 'Cairo',
       ),
       Championship(
         id: '3',
         name: 'Winter League',
-        type: 'Football • League',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Premier_League_Logo.svg/1200px-Premier_League_Logo.svg.png', // Real logo
-        startDate: 'Dec 1',
-        endDate: 'Feb 28',
+        type: 'League',
+        sportType: 'Football',
+        logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Premier_League_Logo.svg/1200px-Premier_League_Logo.svg.png',
+        startDate: DateTime.now().add(const Duration(days: 90)),
+        endDate: DateTime.now().add(const Duration(days: 180)),
         entryFee: 1000,
         grandPrize: 5000,
-        teamsJoined: 4,
         maxTeams: 20,
-        teamLogos: [
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=100&h=100&fit=crop&q=80',
-        ],
+        joinedTeams: ['T1', 'T2', 'T3', 'T4'],
+        ownerId: 'mock_owner',
+        governorate: 'Cairo',
       ),
     ];
   }
@@ -1438,6 +1710,7 @@ class AppNotification {
   final String type; // 'info', 'result_confirmation'
   final bool isRead;
   final DateTime createdAt;
+  final String? bookingId; // BETA READY: Metadata for challenge actions
 
   AppNotification({
     required this.id,
@@ -1446,6 +1719,7 @@ class AppNotification {
     required this.type,
     this.isRead = false,
     required this.createdAt,
+    this.bookingId,
   });
 
   factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
@@ -1460,6 +1734,7 @@ class AppNotification {
               ? (data['createdAt'] as Timestamp).toDate() 
               : DateTime.parse(data['createdAt']))
           : DateTime.now(),
+      bookingId: data['bookingId'],
     );
   }
 
@@ -1470,6 +1745,94 @@ class AppNotification {
       'type': type,
       'isRead': isRead,
       'createdAt': createdAt.toIso8601String(),
+      'bookingId': bookingId,
     };
   }
 }
+
+/// Tournament Match — represents a single match in a knockout bracket
+class TournamentMatch {
+  final String id;
+  final String championshipId;
+  final int roundIndex; // 0 = Final, 1 = Semi, 2 = Quarters, 3 = Round of 16
+  final int matchIndex; // Position within the round
+  final String? homeTeamId;
+  final String? homeTeamName;
+  final String? awayTeamId;
+  final String? awayTeamName;
+  final int? homeScore;
+  final int? awayScore;
+  final String? winnerId;
+  final String? nextMatchId; // ID of the match the winner advances to
+  final DateTime? scheduledTime;
+
+  TournamentMatch({
+    required this.id,
+    required this.championshipId,
+    required this.roundIndex,
+    required this.matchIndex,
+    this.homeTeamId,
+    this.homeTeamName,
+    this.awayTeamId,
+    this.awayTeamName,
+    this.homeScore,
+    this.awayScore,
+    this.winnerId,
+    this.nextMatchId,
+    this.scheduledTime,
+  });
+
+  bool get isCompleted => winnerId != null;
+  bool get isReady => homeTeamId != null && awayTeamId != null;
+
+  String get roundLabel {
+    switch (roundIndex) {
+      case 0: return 'Final';
+      case 1: return 'Semi-Finals';
+      case 2: return 'Quarter-Finals';
+      case 3: return 'Round of 16';
+      default: return 'Round ${roundIndex + 1}';
+    }
+  }
+
+  factory TournamentMatch.fromFirestore(Map<String, dynamic> data, String id) {
+    return TournamentMatch(
+      id: id,
+      championshipId: data['championshipId'] ?? '',
+      roundIndex: data['roundIndex'] ?? 0,
+      matchIndex: data['matchIndex'] ?? 0,
+      homeTeamId: data['homeTeamId'],
+      homeTeamName: data['homeTeamName'],
+      awayTeamId: data['awayTeamId'],
+      awayTeamName: data['awayTeamName'],
+      homeScore: data['homeScore'],
+      awayScore: data['awayScore'],
+      winnerId: data['winnerId'],
+      nextMatchId: data['nextMatchId'],
+      scheduledTime: data['scheduledTime'] != null
+          ? (data['scheduledTime'] as Timestamp).toDate()
+          : null,
+    );
+  }
+
+  Map<String, dynamic> toFirestore() {
+    return {
+      'championshipId': championshipId,
+      'roundIndex': roundIndex,
+      'matchIndex': matchIndex,
+      'homeTeamId': homeTeamId,
+      'homeTeamName': homeTeamName,
+      'awayTeamId': awayTeamId,
+      'awayTeamName': awayTeamName,
+      'homeScore': homeScore,
+      'awayScore': awayScore,
+      'winnerId': winnerId,
+      'nextMatchId': nextMatchId,
+      'scheduledTime': scheduledTime != null ? Timestamp.fromDate(scheduledTime!) : null,
+    };
+  }
+}
+
+// === VSP OFFICIAL 1v1 LEAGUE MODELS ===
+// (Duplicated class removed, using the one defined above)
+

@@ -1,9 +1,10 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
-import '../../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
 
@@ -39,12 +40,12 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       body: Column(
         children: [
           // Header (Stack with Image and Slider Dots)
           SizedBox(
-            height: 250,
+            height: (MediaQuery.of(context).size.height * 0.35).clamp(250.0, 450.0),
             child: Stack(
               children: [
                 Positioned.fill(
@@ -61,7 +62,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               imageUrl: _displayImages[index],
                               fit: BoxFit.cover,
                               placeholder: (context, url) => Container(
-                                color: const Color(0xFF1E1E1E),
+                                color: VSPColors.surface,
                               ),
                               errorWidget: (context, url, error) => _buildVspLogoBackground(),
                             );
@@ -78,7 +79,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         end: Alignment.bottomCenter,
                         colors: [
                           Colors.transparent,
-                          AppTheme.darkBackground.withValues(alpha: 0.9),
+                          VSPColors.background,
                         ],
                       ),
                     ),
@@ -87,24 +88,24 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 // Header Icons
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCircularIcon(
-                          icon: Icons.arrow_back,
+                          icon: Icons.arrow_back_ios_new,
                           onTap: () => Navigator.pop(context),
                         ),
                         Row(
                           children: [
                             _buildCircularIcon(
-                              icon: Icons.share,
+                              icon: Icons.share_outlined,
                               onTap: () {},
                             ),
-                            const SizedBox(width: 12),
+                            const SizedBox(width: VSPSpacing.md),
                             _buildCircularIcon(
                               icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: _isFavorite ? Colors.red : AppTheme.textPrimary,
+                              color: _isFavorite ? VSPColors.accent : VSPColors.textPrimary,
                               onTap: () {
                                 setState(() => _isFavorite = !_isFavorite);
                               },
@@ -134,15 +135,14 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             ),
           ),
 
-          // Custom Pill Tab Bar
           Container(
-            color: AppTheme.darkBackground,
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            color: VSPColors.background,
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             child: Container(
               height: 48,
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(30),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
               ),
               child: AnimatedBuilder(
                 animation: _tabController,
@@ -174,10 +174,14 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       ),
       // Booking Button & Price Fixed Bottom Bar
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(16),
+        padding: const EdgeInsets.all(VSPSpacing.lg),
         decoration: BoxDecoration(
-          color: AppTheme.darkBackground,
-          border: Border(top: BorderSide(color: Colors.grey[900]!)),
+          color: VSPColors.surface,
+          borderRadius: const BorderRadius.only(
+            topLeft: Radius.circular(VSPRadius.xl),
+            topRight: Radius.circular(VSPRadius.xl),
+          ),
+          boxShadow: VSPShadow.subtle,
         ),
         child: SafeArea(
           child: Row(
@@ -186,41 +190,30 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  const Text(
+                  Text(
                     'Price per hour',
-                    style: TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                   ),
                   RichText(
                     text: TextSpan(
                       children: [
                         TextSpan(
                           text: '${widget.stadium.basePrice.toStringAsFixed(0)} ',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 24,
-                            fontWeight: FontWeight.bold,
-                            fontFamily: 'Agency FB',
-                          ),
+                          style: Theme.of(context).textTheme.displayLarge,
                         ),
-                        const TextSpan(
+                        TextSpan(
                           text: 'eg',
-                          style: TextStyle(
-                            color: Colors.white,
-                            fontSize: 16,
-                            fontWeight: FontWeight.bold,
-                          ),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
                   ),
                 ],
               ),
-              const SizedBox(width: 24),
+              const SizedBox(width: VSPSpacing.lg),
               Expanded(
-                child: ElevatedButton(
+                child: PrimaryButton(
+                  text: 'Book Now',
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -229,21 +222,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       ),
                     );
                   },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: AppTheme.neonGreen,
-                    minimumSize: const Size(double.infinity, 50),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(15), // Detailed radius as requested
-                    ),
-                  ),
-                  child: const Text(
-                    'Book Now',
-                    style: TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
                 ),
               ),
             ],
@@ -258,18 +236,19 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     return Expanded(
       child: GestureDetector(
         onTap: () => _tabController.animateTo(index),
-        child: Container(
+        child: AnimatedContainer(
+          duration: const Duration(milliseconds: 200),
           margin: const EdgeInsets.all(4),
           decoration: BoxDecoration(
-            color: isSelected ? AppTheme.neonGreen : Colors.transparent,
-            borderRadius: BorderRadius.circular(24),
+            color: isSelected ? VSPColors.accent : Colors.transparent,
+            borderRadius: BorderRadius.circular(VSPRadius.xl),
           ),
           alignment: Alignment.center,
           child: Text(
             label,
             textAlign: TextAlign.center,
             style: TextStyle(
-              color: isSelected ? Colors.black : AppTheme.textSecondary,
+              color: isSelected ? VSPColors.background : VSPColors.textSecondary,
               fontWeight: FontWeight.bold,
               fontSize: 13,
             ),
@@ -282,7 +261,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   Widget _buildCircularIcon({
     required IconData icon,
     required VoidCallback onTap,
-    Color color = AppTheme.textPrimary,
+    Color color = VSPColors.textPrimary,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -290,7 +269,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         width: 40,
         height: 40,
         decoration: BoxDecoration(
-          color: Colors.black.withValues(alpha: 0.5),
+          color: VSPColors.background.withValues(alpha: 0.6),
           shape: BoxShape.circle,
         ),
         child: Icon(icon, color: color, size: 20),
@@ -303,7 +282,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       width: isActive ? 12 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isActive ? AppTheme.neonGreen : Colors.grey.withValues(alpha: 0.5),
+        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -311,7 +290,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
 
   Widget _buildVspLogoBackground() {
     return Container(
-      color: const Color(0xFF1E1E1E),
+      color: VSPColors.surface,
       child: Center(
         child: Image.asset(
           'assets/images/logo.png', // VSP logo
@@ -333,7 +312,7 @@ class _InformationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return SingleChildScrollView(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
@@ -344,11 +323,7 @@ class _InformationTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   stadium.name,
-                  style: const TextStyle(
-                    color: AppTheme.textPrimary,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.displaySmall,
                 ),
               ),
               Column(
@@ -366,17 +341,13 @@ class _InformationTab extends StatelessWidget {
                   const SizedBox(height: 2),
                   Text(
                     '${stadium.rating.toStringAsFixed(1)} (${stadium.reviewsCount} Reviews)',
-                    style: const TextStyle(
-                      color: AppTheme.textSecondary,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ],
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: VSPSpacing.sm),
           
           // Address and Location Badge
           Row(
@@ -385,17 +356,14 @@ class _InformationTab extends StatelessWidget {
               Expanded(
                 child: Text(
                   stadium.address.isNotEmpty ? stadium.address : 'Av. De Concha Espina, 1, Chamartín, 28036 Madrid',
-                  style: const TextStyle(color: AppTheme.textSecondary, fontSize: 13),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
-              const SizedBox(width: 8),
-// Add to imports at top: import 'package:url_launcher/url_launcher.dart';
-
+              const SizedBox(width: VSPSpacing.sm),
               GestureDetector(
                 onTap: () async {
-                   final query = Uri.encodeComponent(stadium.name); // e.g. "Santiago Bernabéu Stadium"
+                   final query = Uri.encodeComponent(stadium.name);
                    final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-                   // Try launching directly
                    try {
                      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
                    } catch (e) {
@@ -405,19 +373,18 @@ class _InformationTab extends StatelessWidget {
                 child: Container(
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
-                    color: AppTheme.neonGreen,
-                    borderRadius: BorderRadius.circular(20),
+                    color: VSPColors.accent,
+                    borderRadius: BorderRadius.circular(VSPRadius.xl),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, color: Colors.black, size: 16),
+                      const Icon(Icons.location_on_outlined, color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
                         stadium.location.isNotEmpty ? stadium.location : 'Madrid',
-                        style: const TextStyle(
-                          color: Colors.black,
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: VSPColors.background,
                           fontWeight: FontWeight.bold,
-                          fontSize: 12,
                         ),
                       ),
                     ],
@@ -427,90 +394,76 @@ class _InformationTab extends StatelessWidget {
             ],
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           
           // Information Stadium
-          const Text(
+          Text(
             'Information Stadium',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Agency FB',
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 8),
+          const SizedBox(height: VSPSpacing.sm),
           Text(
             stadium.description.isNotEmpty 
               ? stadium.description 
               : 'The Santiago Bernabéu Stadium Is A Modern, Multi-Use Stadium Featuring A Retractable Roof, A Contemporary Facade, A Retractable Pitch, And Significant Improvements In Safety, Comfort, And Accessibility. It Also Includes Multifunctional Spaces Such As Restaurants, Museums, And Commercial Areas, As Well As A 360-Degree Giant Screen, With A Focus On Sustainability.',
-            style: const TextStyle(color: AppTheme.textSecondary, height: 1.5, fontSize: 13),
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
           ),
           
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           
           // Features
-          const Text(
+          Text(
             'Features',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Agency FB', 
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: VSPSpacing.md),
           Wrap(
-            spacing: 8,
-            runSpacing: 8,
+            spacing: VSPSpacing.sm,
+            runSpacing: VSPSpacing.sm,
             children: (Stadium.parseFeatures(stadium.features).isNotEmpty ? Stadium.parseFeatures(stadium.features) : ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats']).map((feature) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(12),
+                color: VSPColors.surfaceAlt,
+                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
               ),
               child: Text(
                 feature,
-                style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
+                style: Theme.of(context).textTheme.labelMedium,
               ),
             )).toList(),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
           
           // Features For Money
-          const Text(
+          Text(
             'Features For Money',
-            style: TextStyle(
-              color: AppTheme.textPrimary,
-              fontSize: 18,
-              fontWeight: FontWeight.bold,
-              fontFamily: 'Agency FB',
-            ),
+            style: Theme.of(context).textTheme.titleLarge,
           ),
-          const SizedBox(height: 12),
+          const SizedBox(height: VSPSpacing.md),
           if (stadium.hasBall)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
               decoration: BoxDecoration(
-                color: AppTheme.cardBackground,
-                borderRadius: BorderRadius.circular(12),
-                border: Border.all(color: AppTheme.neonGreen.withValues(alpha: 0.3)),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sports_soccer, color: AppTheme.neonGreen, size: 14),
+                  const Icon(Icons.sports_soccer, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(
                     'Ball Available: ${stadium.ballPrice.toStringAsFixed(0)} EGP',
-                    style: const TextStyle(color: AppTheme.neonGreen, fontSize: 12, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ],
               ),
             ),
 
-          const SizedBox(height: 32),
+          const SizedBox(height: VSPSpacing.xxl),
         ],
       ),
     );
@@ -527,76 +480,75 @@ class _PitchConditionsTab extends StatelessWidget {
     final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
 
     return SingleChildScrollView(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // ✅ Owner Notes Section (Priority Display)
           Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(VSPSpacing.md),
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
-              borderRadius: BorderRadius.circular(16),
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
-                color: AppTheme.neonGreen.withOpacity(0.4),
+                color: VSPColors.accent.withValues(alpha: 0.4),
                 width: 1,
               ),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Text(
+                Text(
                   'Owner Notes',
-                  style: TextStyle(
-                    color: AppTheme.neonGreen,
-                    fontSize: 14,
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                const SizedBox(height: 8),
+                const SizedBox(height: VSPSpacing.sm),
                 Text(
                   hasOwnerNotes
                       ? stadium.notes
                       : 'No specific notes have been added by the stadium owner.',
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 13,
-                    height: 1.5,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
                 ),
               ],
             ),
           ),
 
-          const SizedBox(height: 24),
+          const SizedBox(height: VSPSpacing.lg),
 
           // Standard Policies Section
           Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(VSPSpacing.md),
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
-              borderRadius: BorderRadius.circular(16),
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildPolicySection(
+                  context,
                   'Punctuality:',
                   'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
+                  context,
                   'Reservation Duration:',
                   'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
+                  context,
                   'Cancellation And Refund Policy:',
                   'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.',
                 ),
-                const SizedBox(height: 16),
+                const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
+                  context,
                   'Liability:',
                   'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.',
                 ),
@@ -608,26 +560,21 @@ class _PitchConditionsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPolicySection(String title, String content) {
+  Widget _buildPolicySection(BuildContext context, String title, String content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
-          style: const TextStyle(
-            color: AppTheme.neonGreen,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+            color: VSPColors.accent,
             fontWeight: FontWeight.bold,
           ),
         ),
         const SizedBox(height: 4),
         Text(
           content,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 13,
-            height: 1.5,
-          ),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
         ),
       ],
     );
@@ -644,50 +591,38 @@ class _RatingsTab extends StatelessWidget {
       children: [
         // Summary Card
         Padding(
-          padding: const EdgeInsets.all(16.0),
+          padding: const EdgeInsets.all(VSPSpacing.md),
           child: Container(
-            padding: const EdgeInsets.all(16),
+            padding: const EdgeInsets.all(VSPSpacing.md),
             decoration: BoxDecoration(
-              color: AppTheme.cardBackground,
-              borderRadius: BorderRadius.circular(16),
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
             ),
             child: Row(
               children: [
-                // Bars Column (Simplified for dynamic content)
-                const Expanded(
+                // Big Score
+                Expanded(
                   child: Column(
                     children: [
-                      // Ideally these are calculated dynamically 
-                      // For now, keeping the static visual representation
+                      Text(
+                        stadium.rating.toStringAsFixed(1),
+                        style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42),
+                      ),
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) => Icon(
+                          index < stadium.rating.round() ? Icons.star : Icons.star_border,
+                          color: Colors.amber,
+                          size: 16,
+                        )),
+                      ),
+                      const SizedBox(height: VSPSpacing.xs),
+                      Text(
+                        '${stadium.reviewsCount} Reviews',
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                      ),
                     ],
                   ),
-                ),
-                const SizedBox(width: 16),
-                // Big Score
-                Column(
-                  children: [
-                    Text(
-                      stadium.rating.toStringAsFixed(1),
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontSize: 42,
-                        fontWeight: FontWeight.bold,
-                        fontFamily: 'Agency FB',
-                      ),
-                    ),
-                    Row(
-                      children: List.generate(5, (index) => Icon(
-                        index < stadium.rating.round() ? Icons.star : Icons.star_border,
-                        color: Colors.amber,
-                        size: 16,
-                      )),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${stadium.reviewsCount} Reviews',
-                      style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12),
-                    ),
-                  ],
                 ),
               ],
             ),
@@ -705,14 +640,18 @@ class _RatingsTab extends StatelessWidget {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator());
+                return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
               }
               
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text(
-                    'No reviews yet.',
-                    style: TextStyle(color: AppTheme.textSecondary),
+                return Center(
+                  child: Padding(
+                    padding: const EdgeInsets.all(40.0),
+                    child: Text(
+                      'No reviews yet. Be the first to review!',
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                    ),
                   ),
                 );
               }
@@ -720,7 +659,7 @@ class _RatingsTab extends StatelessWidget {
               final reviews = snapshot.data!.docs;
 
               return ListView.builder(
-                padding: const EdgeInsets.all(16),
+                padding: const EdgeInsets.all(VSPSpacing.md),
                 itemCount: reviews.length,
                 itemBuilder: (context, index) {
                   final reviewDoc = reviews[index].data() as Map<String, dynamic>;
@@ -728,11 +667,10 @@ class _RatingsTab extends StatelessWidget {
                   final text = reviewDoc['reviewText'] as String? ?? '';
                   final createdAt = reviewDoc['createdAt'] as Timestamp?;
                   
-                  // For a real app, you would fetch user data via userId.
-                  // For now, using default displays.
                   return _buildReviewItem(
-                    name: 'Player', // Fallback name
-                    imageUrl: '',   // Fallback image
+                    context,
+                    name: 'Player',
+                    imageUrl: '',   
                     rating: rating,
                     timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : 'Recently',
                     comment: text,
@@ -746,32 +684,8 @@ class _RatingsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildRatingBar(int star, double pct) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 2),
-      child: Row(
-        children: [
-          SizedBox(
-            width: 12,
-            child: Text('$star', style: const TextStyle(color: AppTheme.textSecondary, fontSize: 12)),
-          ),
-          const Icon(Icons.star, size: 10, color: Colors.amber),
-          const SizedBox(width: 8),
-          Expanded(
-            child: LinearProgressIndicator(
-              value: pct,
-              backgroundColor: Colors.grey[800],
-              color: AppTheme.neonGreen,
-              minHeight: 4,
-              borderRadius: BorderRadius.circular(2),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildReviewItem({
+  Widget _buildReviewItem(
+    BuildContext context, {
     required String name,
     required String imageUrl,
     required int rating,
@@ -779,15 +693,15 @@ class _RatingsTab extends StatelessWidget {
     required String comment,
   }) {
     return Container(
-      margin: const EdgeInsets.only(bottom: 16),
+      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           CircleAvatar(
             radius: 20,
-            backgroundColor: AppTheme.cardBackground,
+            backgroundColor: VSPColors.surfaceAlt,
             backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-            child: imageUrl.isEmpty ? const Icon(Icons.person, color: Colors.white54) : null,
+            child: imageUrl.isEmpty ? const Icon(Icons.person, color: VSPColors.textSecondary) : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -799,18 +713,11 @@ class _RatingsTab extends StatelessWidget {
                   children: [
                     Text(
                       name,
-                      style: const TextStyle(
-                        color: AppTheme.textPrimary,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
+                      style: Theme.of(context).textTheme.titleSmall,
                     ),
                     Text(
                       timeAgo,
-                      style: const TextStyle(
-                        color: AppTheme.textSecondary,
-                        fontSize: 12,
-                      ),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                     ),
                   ],
                 ),
@@ -818,21 +725,17 @@ class _RatingsTab extends StatelessWidget {
                   children: List.generate(5, (index) => Icon(
                     Icons.star,
                     size: 12,
-                    color: index < rating ? Colors.amber : Colors.grey,
+                    color: index < rating ? Colors.amber : VSPColors.surfaceAlt,
                   )),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   comment,
-                  style: const TextStyle(
-                    color: AppTheme.textSecondary,
-                    fontSize: 13,
-                    height: 1.4,
-                  ),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.4),
                 ),
                 const Padding(
-                  padding: EdgeInsets.symmetric(vertical: 12),
-                  child: Divider(color: Colors.grey),
+                  padding: EdgeInsets.symmetric(vertical: VSPSpacing.md),
+                  child: Divider(color: VSPColors.divider),
                 ),
               ],
             ),

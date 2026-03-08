@@ -6,6 +6,8 @@ import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/cloudinary_service.dart';
 import '../services/notification_service.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:geocoding/geocoding.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -47,32 +49,74 @@ class AuthProvider with ChangeNotifier {
   bool get isOwner => _userModel?.role == 'owner' || _userType == 'owner';
   User? get currentUser => _firebaseUser; // Alias for convenience
 
+  bool _dataFetchError = false;
+  bool get hasDataFetchError => _dataFetchError;
+
   AuthProvider() {
     // Listen to auth state changes
     _authService.authStateChanges.listen((User? user) async {
       _firebaseUser = user;
+      _errorMessage = null; 
+      _dataFetchError = false;
       
       if (user != null) {
-        // Fetch User Data from Firestore
-        final userData = await _authService.getUserData(user.uid);
-        if (userData != null) {
-          _userModel = UserModel.fromFirestore(userData);
-          _updateFcmToken(user.uid); // Silent update
-        } else {
-          // 🚨 SAFETY VALVE: User exists in Auth but NO data in Firestore
-          // Force logout to prevent stuck Splash Screen
-          await _authService.signOut();
-          _firebaseUser = null;
-          _userModel = null;
+        _isLoading = true;
+        notifyListeners();
+        
+        try {
+          // Fetch User Data from Firestore
+          final userData = await _authService.getUserData(user.uid);
+          if (userData != null) {
+            _userModel = UserModel.fromFirestore(userData);
+            _updateFcmToken(user.uid); // Silent update
+            _dataFetchError = false;
+          } else {
+            // 🚨 GHOST SESSION FIX: Auth exists but Firestore doc is missing.
+            // Force logout to break the infinite splash screen trap.
+            debugPrint("⚠️ Ghost user detected (Auth exists, Firestore missing). Forcing logout to break the loop.");
+            await _authService.signOut();
+            _firebaseUser = null;
+            _userModel = null;
+            _userType = null;
+          }
+        } catch (e) {
+          debugPrint("❌ CRITICAL: Firestore fetch exception: $e");
+          _dataFetchError = true;
         }
       } else {
         _userModel = null;
-        _userType = null; // Clear cached userType if NOT logged in
+        _userType = null; 
+        _dataFetchError = false;
       }
       
-      _isLoading = false; // Ensure loading stops
+      _isLoading = false; 
       notifyListeners();
     });
+  }
+
+  /// Manual retry for when data fetching fails but auth is valid
+  Future<void> retryDataFetch() async {
+    if (_firebaseUser == null) return;
+    
+    _isLoading = true;
+    _dataFetchError = false;
+    notifyListeners();
+    
+    try {
+      final userData = await _authService.getUserData(_firebaseUser!.uid);
+      if (userData != null) {
+        _userModel = UserModel.fromFirestore(userData);
+        _updateFcmToken(_firebaseUser!.uid);
+        _dataFetchError = false;
+      } else {
+        _dataFetchError = true;
+      }
+    } catch (e) {
+      _dataFetchError = true;
+    } finally {
+      _isLoading = false;
+      notifyListeners();
+    }
   }
 
   /// Silently update FCM token in Firestore
@@ -84,10 +128,12 @@ class AuthProvider with ChangeNotifier {
           'fcmToken': token,
           'lastSeen': FieldValue.serverTimestamp(),
         });
-        debugPrint('FCM Token updated successfully');
+        // SECURITY PATCH: Obfuscated success message to prevent token sniffing in logs.
+        debugPrint('FCM Token sync status: SUCCESS');
       }
     } catch (e) {
-      debugPrint('Error updating FCM Token: $e');
+      // SECURITY PATCH: Masked error details for notification service failure.
+      debugPrint('Error updating FCM Token: Internal notification service error.');
     }
   }
 
@@ -189,11 +235,26 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.signInWithGoogle(role: _userType);
 
       if (result['success']) {
-        _firebaseUser = result['user'];
+        _firebaseUser = result['user'] as User?;
         final userData = await _authService.getUserData(_firebaseUser!.uid);
+        
         if (userData != null) {
           _userModel = UserModel.fromFirestore(userData);
+        } else {
+          // 🚨 HYDRATION FIX: Manually build the model for new Google users 
+          // to prevent the "Connection Problem" flickering screen.
+          _userModel = UserModel(
+            uid: _firebaseUser!.uid,
+            email: _firebaseUser!.email ?? '',
+            name: _firebaseUser!.displayName ?? '',
+            role: _userType ?? 'player',
+            isRegistrationComplete: false,
+            isEmailVerified: true,
+            hasStadium: false,
+            isIdentityVerified: false,
+          );
         }
+        
         _isLoading = false;
         notifyListeners();
         return true;
@@ -323,11 +384,14 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Sign out
+  /// Sign out - HARD RESET for Beta
   Future<void> signOut() async {
     await _authService.signOut();
     _firebaseUser = null;
     _userModel = null;
+    _userType = null;
+    _dataFetchError = false;
+    _errorMessage = null; 
     reset(); // Clear registration flow data too
     notifyListeners();
   }
@@ -336,27 +400,48 @@ class AuthProvider with ChangeNotifier {
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     if (_firebaseUser == null) return false;
 
+    // SECURITY HARDENING: Prevent malicious client-side injection of privileged fields.
+    // Only truly dangerous fields (role, wallet, points) are blocked.
+    // Onboarding flags (hasStadium, isIdentityVerified, isRegistrationComplete) are ALLOWED
+    // so the owner flow can progress naturally.
+    final sanitizedData = Map<String, dynamic>.from(data);
+    const restrictedFields = [
+      'role', 
+      'points', 
+      'walletBalance', 
+      'isVerified', 
+      'isEmailVerified',
+      'lastSeen',
+      'fcmToken'
+    ];
+    for (var field in restrictedFields) {
+      sanitizedData.remove(field);
+    }
+
+    if (sanitizedData.isEmpty) return true; // Nothing allowed to update
+
     _isLoading = true;
     notifyListeners();
 
     try {
-      bool success = await _authService.updateUserProfile(_firebaseUser!.uid, data);
+      bool success = await _authService.updateUserProfile(_firebaseUser!.uid, sanitizedData);
       if (success && _userModel != null) {
         _userModel = _userModel!.copyWith(
-          name: data['name'] ?? _userModel!.name,
-          phone: data['phone'] ?? _userModel!.phone,
-          profileImageUrl: data['profileImageUrl'] ?? _userModel!.profileImageUrl,
-          position: data['position'] ?? _userModel!.position,
-          isEmailVerified: data['isEmailVerified'] ?? _userModel!.isEmailVerified,
-          hasStadium: data['hasStadium'] ?? _userModel!.hasStadium,
-          isIdentityVerified: data['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
-          isRegistrationComplete: data['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
+          name: sanitizedData['name'] ?? _userModel!.name,
+          phone: sanitizedData['phone'] ?? _userModel!.phone,
+          profileImageUrl: sanitizedData['profileImageUrl'] ?? _userModel!.profileImageUrl,
+          position: sanitizedData['position'] ?? _userModel!.position,
+          hasStadium: sanitizedData['hasStadium'] ?? _userModel!.hasStadium,
+          isRegistrationComplete: sanitizedData['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
+          isIdentityVerified: sanitizedData['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
         );
       }
       _isLoading = false;
       notifyListeners();
       return success;
     } catch (e) {
+      // SECURITY PATCH: Sanitize internal error messages. Avoid leaking Firestore/internal details to UI.
+      debugPrint("❌ Profile update error: Masked for security.");
       _isLoading = false;
       notifyListeners();
       return false;
@@ -380,23 +465,19 @@ class AuthProvider with ChangeNotifier {
          folder: 'users/$uid/profile',
        );
 
-       if (url != null) {
-         // 2) IMMEDIATELY update local model (Optimistic Update)
-         if (_userModel != null) {
-           _userModel = _userModel!.copyWith(profileImageUrl: url);
-           notifyListeners();
-         }
+        // 2) IMMEDIATELY update local model (Optimistic Update)
+        if (_userModel != null) {
+          _userModel = _userModel!.copyWith(profileImageUrl: url);
+          notifyListeners();
+        }
 
-         // 3) Update profile data in Firestore in background
-         updateProfile({'profileImageUrl': url}).then((success) {
-           if (!success) {
-               _errorMessage = 'Failed to update profile image record.';
-               notifyListeners();
-           }
-         });
-       } else {
-         _errorMessage = 'Failed to upload profile image to cloud.';
-       }
+        // 3) Update profile data in Firestore in background
+        updateProfile({'profileImageUrl': url}).then((success) {
+          if (!success) {
+              _errorMessage = 'Failed to update profile image record.';
+              notifyListeners();
+          }
+        });
      } catch (e) {
        _errorMessage = 'Failed to upload profile image: $e';
      } finally {
@@ -408,6 +489,7 @@ class AuthProvider with ChangeNotifier {
   Future<bool> completeSocialRegistration({
     required String phone,
     required String password,
+    String? name,
     String? position,
     String? governorate,
   }) async {
@@ -429,19 +511,23 @@ class AuthProvider with ChangeNotifier {
       final Map<String, dynamic> updateData = {
         'phone': phone,
         'governorate': governorate ?? _governorate,
-        'isRegistrationComplete': true,
+        // REMOVED: 'isRegistrationComplete': true, -> Let user pass OTP first
       };
+      if (name != null && name.isNotEmpty) {
+        updateData['name'] = name;
+      }
       if (position != null) {
         updateData['position'] = position;
       }
 
-      // 3. Locally update _userModel IMMEDIATELY to prevent RootScreen loop
+      // 3. Locally update _userModel IMMEDIATELY
       if (_userModel != null) {
         _userModel = _userModel!.copyWith(
+          name: (name != null && name.isNotEmpty) ? name : _userModel!.name,
           phone: phone,
           governorate: governorate ?? _governorate,
           position: position ?? _userModel!.position,
-          isRegistrationComplete: true,
+          // REMOVED: isRegistrationComplete: true,
         );
       }
 
@@ -532,6 +618,62 @@ class AuthProvider with ChangeNotifier {
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  /// 📍 Auto-update user location based on GPS
+  Future<void> updateUserLocation() async {
+    // Only update if user is logged in
+    if (_userModel == null) return;
+
+    try {
+      // 1. Check & Request Permission
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) return;
+      }
+      if (permission == LocationPermission.deniedForever) return;
+
+      // 2. Get Current Position
+      // City-level accuracy is enough
+      final position = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(
+          accuracy: LocationAccuracy.low,
+        ),
+      );
+
+      // 3. Reverse Geocode (Get Governorate Name)
+      final placemarks = await placemarkFromCoordinates(
+        position.latitude, 
+        position.longitude,
+      );
+
+      if (placemarks.isNotEmpty) {
+        // Usually 'administrativeArea' is the Governorate (e.g. Cairo Governorate)
+        String newGov = placemarks.first.administrativeArea ?? '';
+        
+        // Cleanup: Remove "Governorate" suffix if present for cleaner UI
+        newGov = newGov.replaceAll('Governorate', '').trim();
+        
+        // Fallback to locality if empty
+        if (newGov.isEmpty) {
+          newGov = placemarks.first.locality ?? 'Cairo';
+        }
+
+        // 4. Update Profile ONLY if changed
+        // This prevents unnecessary writes to Firestore
+        if (_userModel!.governorate?.toLowerCase() != newGov.toLowerCase()) {
+          debugPrint('📍 Auto-updating location: ${_userModel!.governorate} -> $newGov');
+          
+          await updateProfile({'governorate': newGov});
+          
+          // updateProfile handles local model update & notifyListeners
+        }
+      }
+    } catch (e) {
+      debugPrint('❌ Error auto-updating location: $e');
+      // Fail silently, don't disturb user
     }
   }
 

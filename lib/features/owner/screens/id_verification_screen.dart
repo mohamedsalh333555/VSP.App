@@ -1,8 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/services/owner_document_service.dart';
 import '../../../../shared/widgets/vsp_upload_widgets.dart';
+import '../../../core/providers/auth_provider.dart';
+import 'package:provider/provider.dart';
 import 'owner_main_screen.dart';
 
 class IdVerificationScreen extends StatefulWidget {
@@ -35,17 +38,31 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         }
       });
 
-      final url = await _documentService.uploadAndSave(type: type, filePath: pickedFile.path);
+      // 1. Get UID
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final uid = authProvider.currentUser?.uid;
 
-      if (mounted) {
-        setState(() {
-          if (type == OwnerDocumentType.nationalIdFront) {
-            _idFrontUrl = url;
-          } else if (type == OwnerDocumentType.nationalIdBack) {
-            _idBackUrl = url;
-          }
-        });
+      if (uid == null) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Error: User not logged in')));
+        }
+        return;
       }
+
+      final url = await _documentService.uploadAndSave(
+        type: type, 
+        filePath: pickedFile.path,
+        uid: uid,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        if (type == OwnerDocumentType.nationalIdFront) {
+          _idFrontUrl = url;
+        } else if (type == OwnerDocumentType.nationalIdBack) {
+          _idBackUrl = url;
+        }
+      });
     } catch (e) {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
@@ -68,21 +85,17 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: AppTheme.darkBackground,
+      backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: AppTheme.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: const Text(
+        title: Text(
           'Owner information',
-          style: TextStyle(
-            color: AppTheme.textPrimary,
-            fontSize: 20,
-            fontWeight: FontWeight.bold,
-          ),
+          style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
@@ -100,21 +113,17 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                   height: 4,
                   margin: const EdgeInsets.symmetric(horizontal: 4),
                   decoration: BoxDecoration(
-                    color: index == 1 ? AppTheme.neonGreen : Colors.grey[700], 
-                    borderRadius: BorderRadius.circular(2),
+                    color: index == 1 ? VSPColors.accent : VSPColors.divider, 
+                    borderRadius: BorderRadius.circular(VSPRadius.xs),
                   ),
                 );
               }),
             ),
             const SizedBox(height: 24),
 
-            const Text(
+            Text(
               'Upload an image',
-              style: TextStyle(
-                color: AppTheme.textPrimary,
-                fontSize: 18,
-                fontWeight: FontWeight.bold,
-              ),
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
             ),
              const SizedBox(height: 16),
 
@@ -156,31 +165,17 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
             const SizedBox(height: 40),
 
-            SizedBox(
-              width: double.infinity,
-              height: 56,
-              child: ElevatedButton(
-                onPressed: (_idFrontUrl != null && _idBackUrl != null) 
-                  ? () {
-                    Navigator.pushAndRemoveUntil(
-                      context,
-                      MaterialPageRoute(builder: (_) => const OwnerMainScreen()),
-                      (route) => false,
-                    );
-                  }
-                  : null,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: (_idFrontUrl != null && _idBackUrl != null) 
-                    ? AppTheme.neonGreen 
-                    : Colors.grey[800],
-                  foregroundColor: (_idFrontUrl != null && _idBackUrl != null) 
-                    ? Colors.black 
-                    : Colors.white38,
-                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                  elevation: 0,
-                ),
-                child: const Text('Save', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16)),
-              ),
+            PrimaryButton(
+              text: 'Save',
+              onPressed: (_idFrontUrl != null && _idBackUrl != null) 
+                ? () {
+                  Navigator.pushAndRemoveUntil(
+                    context,
+                    MaterialPageRoute(builder: (_) => const OwnerMainScreen()),
+                    (route) => false,
+                  );
+                }
+                : () {}, // Effectively disabled if logic requires both
             ),
           ],
         ),
