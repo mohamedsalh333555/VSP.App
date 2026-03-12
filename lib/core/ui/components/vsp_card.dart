@@ -10,6 +10,8 @@ class VSPCard extends StatelessWidget {
   final double? width;
   final double? height;
 
+  final double? borderRadius;
+
   const VSPCard({
     super.key,
     required this.child,
@@ -19,6 +21,7 @@ class VSPCard extends StatelessWidget {
     this.border,
     this.width,
     this.height,
+    this.borderRadius,
   });
 
   @override
@@ -30,7 +33,7 @@ class VSPCard extends StatelessWidget {
       padding: padding ?? const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: color ?? VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        borderRadius: BorderRadius.circular(borderRadius ?? VSPRadius.lg),
         border: border,
       ),
       child: child,

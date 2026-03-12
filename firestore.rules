@@ -36,7 +36,7 @@ service cloud.firestore {
     // BOOKINGS: Allow read for availability checks, but restrict write
     match /bookings/{bookingId} {
       
-      // ✅ FIX: Allow any authenticated user to READ bookings
+      // âœ… FIX: Allow any authenticated user to READ bookings
       // (Necessary for: 1. Double-booking prevention Transaction,
       //  2. Showing booked/greyed-out slots in the calendar UI)
       allow read: if isAuthenticated();
@@ -65,3 +65,4 @@ service cloud.firestore {
     // Chat or other collections...
   }
 }
+

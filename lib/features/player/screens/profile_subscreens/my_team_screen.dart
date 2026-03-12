@@ -20,13 +20,20 @@ class MyTeamScreen extends StatefulWidget {
 
 class _MyTeamScreenState extends State<MyTeamScreen> {
   final TextEditingController _teamNameController = TextEditingController();
-  final TextEditingController _sportsTypeController = TextEditingController();
+  String _selectedSport = 'Football';
 
   final List<UserModel> _teamMembers = [];
   Team? _myTeam;
   bool _isLoading = true;
   String? _newLogoUrl;
   bool _isSaving = false;
+  
+  // ✅ Permission Check: Captain is always index 0 of the team's member list
+  bool get isCaptain {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    if (_myTeam == null) return true; // Creator is captain by default
+    return auth.currentUser?.uid == _myTeam!.memberUids.first;
+  }
 
   @override
   void initState() {
@@ -42,11 +49,22 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       // BETA READY: Unified fetch for Captain OR Member by UID
       final team = await DatabaseService().getUserTeam(uid);
       if (mounted) {
+        // Load member details for chips
+        List<UserModel> members = [];
+        if (team != null && team.memberUids.length > 1) {
+          // IDs from 1 to end (excluding captain)
+          final memberIds = team.memberUids.sublist(1);
+          members = await DatabaseService().getUsersByIds(memberIds);
+        }
+
         setState(() {
           _myTeam = team;
           if (team != null) {
             _teamNameController.text = team.name;
+            _selectedSport = team.sportType;
           }
+          _teamMembers.clear();
+          _teamMembers.addAll(members);
           _isLoading = false;
         });
       }
@@ -118,10 +136,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                           _myTeam?.points.toString() ?? '0', 'Points',
                           width: 80),
                       _buildStatCard(
-                          ((_myTeam?.currentPlayers ?? 0) +
-                                  _teamMembers.length +
-                                  (_myTeam == null ? 1 : 0))
-                              .toString(),
+                          (1 + _teamMembers.length).toString(),
                           'Members',
                           width: 80),
                       _buildStatCard(
@@ -142,7 +157,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.sm),
-                  _buildTextField(_teamNameController, hint: 'Enter your team name'),
+                  _buildTextField(
+                    _teamNameController, 
+                    hint: 'Enter your team name',
+                    readOnly: !isCaptain,
+                  ),
 
                   const SizedBox(height: VSPSpacing.md),
 
@@ -152,7 +171,27 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.sm),
-                  _buildTextField(_sportsTypeController, hint: 'e.g. Football, Padel'),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedSport,
+                        isExpanded: true,
+                        dropdownColor: VSPColors.surface,
+                        items: ['Football', 'Basketball', 'Volleyball', 'Handball', 'Padel']
+                            .map((s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)),
+                                ))
+                            .toList(),
+                        onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
+                      ),
+                    ),
+                  ),
 
                   const SizedBox(height: VSPSpacing.lg),
 
@@ -174,7 +213,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         child: SizedBox(
                           height: 45,
                           child: ElevatedButton.icon(
-                            onPressed: () async {
+                            onPressed: !isCaptain ? null : () async {
                               final auth = Provider.of<AuthProvider>(context,
                                   listen: false);
                               final uid = auth.userModel?.uid ?? 'unknown';
@@ -202,7 +241,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             },
                             style: ElevatedButton.styleFrom(
                               backgroundColor: VSPColors.surfaceAlt,
-                              foregroundColor: VSPColors.textPrimary,
+                              foregroundColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withOpacity(0.5),
                               elevation: 0,
                               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))
                             ),
@@ -221,19 +260,20 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Team Members (${(_myTeam?.currentPlayers ?? 0) + _teamMembers.length + (_myTeam == null ? 1 : 0)}/12)',
+                        'Team Members (${1 + _teamMembers.length}/12)',
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
-                      TextButton.icon(
-                        onPressed: _showAddPlayerSheet,
-                        icon: const Icon(Icons.add_circle_outline,
-                            size: 16, color: VSPColors.accent),
-                        label: const Text('Add Member',
-                            style: TextStyle(
-                                color: VSPColors.accent,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold)),
-                      ),
+                      if (isCaptain)
+                        TextButton.icon(
+                          onPressed: _showAddPlayerSheet,
+                          icon: const Icon(Icons.add_circle_outline,
+                              size: 16, color: VSPColors.accent),
+                          label: const Text('Add Member',
+                              style: TextStyle(
+                                  color: VSPColors.accent,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold)),
+                        ),
                     ],
                   ),
                   const SizedBox(height: VSPSpacing.sm),
@@ -254,10 +294,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              // Show members from Firestore
-                              ...(_myTeam?.playerImages ?? [])
-                                  .map((imgUrl) => _buildMemberAvatar(imgUrl)),
-                              // Show locally added members
+                              // Captain Avatar (Static)
+                              if (_myTeam != null || _newLogoUrl != null)
+                                _buildMemberAvatar(_newLogoUrl ?? _myTeam?.captainImageUrl ?? ''),
+                                
+                              // Show team members as chips
                               ..._teamMembers
                                   .map((member) => _buildMemberChip(member)),
                             ],
@@ -285,73 +326,136 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   const SizedBox(height: VSPSpacing.xxl),
 
                   // Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryButton(
-                          text: 'Delete Team',
-                          color: VSPColors.error.withValues(alpha: 0.8),
-                          textColor: VSPColors.textPrimary,
-                          onPressed: _myTeam == null
-                              ? null
-                              : () {
-                                  _showDeleteConfirmation(context);
-                                },
-                        ),
+                  if (_myTeam == null)
+                    SizedBox(
+                      width: double.infinity,
+                      child: PrimaryButton(
+                        text: 'Create Team',
+                        isLoading: _isSaving,
+                        onPressed: _isSaving ? null : () async {
+                          if (_teamNameController.text.trim().isEmpty) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(content: Text('Please enter a team name'), backgroundColor: VSPColors.error),
+                            );
+                            return;
+                          }
+
+                          setState(() => _isSaving = true);
+                          try {
+                            final auth = Provider.of<AuthProvider>(context, listen: false);
+                            final user = auth.userModel;
+                            
+                            if (user == null) throw 'User session expired';
+
+                            // Construct initial arrays
+                            List<String> finalUids = [user.uid];
+                            List<String> finalImages = [_newLogoUrl ?? user.profileImageUrl ?? ''];
+
+                            // Add players currently active in the UI (_teamMembers)
+                            for (var member in _teamMembers) {
+                              finalUids.add(member.uid);
+                              finalImages.add(member.profileImageUrl ?? '');
+                            }
+
+                            final teamId = await DatabaseService().createTeam({
+                              'name': _teamNameController.text.trim(),
+                              'sportType': _selectedSport,
+                              'captainName': user.name ?? 'Captain',
+                              'captainImageUrl': _newLogoUrl ?? user.profileImageUrl ?? '',
+                              'captainPhone': user.phone ?? '',
+                              'memberUids': finalUids,
+                              'playerImages': finalImages,
+                              'playersCount': finalUids.length,
+                              'governorate': user.governorate ?? 'Cairo',
+                              'stadium': 'TBD',
+                              'date': 'Upcoming',
+                            });
+
+                            if (teamId != null && mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                const SnackBar(content: Text('Team created successfully!'), backgroundColor: VSPColors.accent),
+                              );
+                              setState(() => _teamMembers.clear());
+                              await _fetchMyTeam();
+                            }
+                          } catch (e) {
+                             if (mounted) {
+                               ScaffoldMessenger.of(context).showSnackBar(
+                                 SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                               );
+                             }
+                          } finally {
+                            if (mounted) setState(() => _isSaving = false);
+                          }
+                        },
                       ),
-                      const SizedBox(width: VSPSpacing.md),
-                      Expanded(
-                        child: PrimaryButton(
-                          text: 'Save Changes',
-                          isLoading: _isSaving,
-                          onPressed: _isSaving
-                              ? null
-                              : () async {
-                                  if (_myTeam == null) return;
-                                  setState(() => _isSaving = true);
+                    )
+                  else
+                    Row(
+                      children: [
+                        Expanded(
+                          child: PrimaryButton(
+                            text: 'Delete Team',
+                            color: VSPColors.error.withValues(alpha: 0.8),
+                            textColor: VSPColors.textPrimary,
+                            onPressed: !isCaptain ? null : () {
+                              _showDeleteConfirmation(context);
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: VSPSpacing.md),
+                        Expanded(
+                          child: PrimaryButton(
+                            text: 'Save Changes',
+                            isLoading: _isSaving,
+                            onPressed: (_isSaving || !isCaptain)
+                                ? null
+                                : () async {
+                                    setState(() => _isSaving = true);
 
-                                  try {
-                                    List<String> currentUids = List<String>.from(_myTeam!.memberUids);
-                                    List<String> currentImages = List<String>.from(_myTeam!.playerImages);
+                                    try {
+                                      // REFACTOR: Create clean lists starting with Captain (Index 0)
+                                      List<String> finalUids = [_myTeam!.memberUids.first];
+                                      List<String> finalImages = [_newLogoUrl ?? _myTeam!.playerImages.first];
 
-                                    for (var member in _teamMembers) {
-                                      if (!currentUids.contains(member.uid)) {
-                                        currentUids.add(member.uid);
-                                        if (member.profileImageUrl != null) {
-                                          currentImages.add(member.profileImageUrl!);
-                                        }
+                                      for (var member in _teamMembers) {
+                                        finalUids.add(member.uid);
+                                        finalImages.add(member.profileImageUrl ?? '');
                                       }
-                                    }
 
-                                    final success = await DatabaseService()
-                                        .updateTeam(_myTeam!.id, {
-                                      'name': _teamNameController.text,
-                                      'captainImageUrl':
-                                          _newLogoUrl ?? _myTeam!.captainImageUrl,
-                                      'memberUids': currentUids,
-                                      'playerImages': currentImages,
-                                      'playersCount': currentUids.length,
-                                    });
+                                      final success = await DatabaseService().updateTeam(_myTeam!.id, {
+                                        'name': _teamNameController.text,
+                                        'sportType': _selectedSport,
+                                        'captainImageUrl': _newLogoUrl ?? _myTeam!.captainImageUrl,
+                                        'memberUids': finalUids,
+                                        'playerImages': finalImages,
+                                        'playersCount': finalUids.length,
+                                      });
 
-                                    if (success && mounted) {
-                                      if (context.mounted) {
+                                      if (success && mounted) {
                                         ScaffoldMessenger.of(context).showSnackBar(
                                           const SnackBar(
-                                              content: Text('Team updated!'),
-                                              backgroundColor:
-                                                  VSPColors.accent),
+                                            content: Text('Team updated successfully!'),
+                                            backgroundColor: VSPColors.accent,
+                                          ),
                                         );
-                                        Navigator.pop(context);
+                                        setState(() => _teamMembers.clear());
+                                        await _fetchMyTeam();
                                       }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                                        );
+                                      }
+                                    } finally {
+                                      if (mounted) setState(() => _isSaving = false);
                                     }
-                                  } finally {
-                                    if (mounted) setState(() => _isSaving = false);
-                                  }
-                                },
+                                  },
+                          ),
                         ),
-                      ),
-                    ],
-                  ),
+                      ],
+                    ),
                   const SizedBox(height: VSPSpacing.md),
                 ],
               ),
@@ -392,7 +496,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
   TextStyle paramTextStyle({required double fontSize}) => TextStyle(color: VSPColors.textSecondary, fontSize: fontSize);
 
-  Widget _buildTextField(TextEditingController controller, {String? hint}) {
+  Widget _buildTextField(TextEditingController controller, {String? hint, bool readOnly = false}) {
     return Container(
       decoration: BoxDecoration(
         color: VSPColors.surface,
@@ -400,6 +504,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       ),
       child: TextField(
         controller: controller,
+        readOnly: readOnly,
         style: const TextStyle(color: VSPColors.textPrimary),
         decoration: InputDecoration(
           hintText: hint,
@@ -439,13 +544,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(width: VSPSpacing.sm),
             Text(user.name ?? 'Player', style: const TextStyle(color: Colors.white, fontSize: 12)),
            const SizedBox(width: 4),
-           GestureDetector(
-             onTap: () => setState(() => _teamMembers.remove(user)),
-             child: const Padding(
-               padding: EdgeInsets.all(4.0),
-               child: Icon(Icons.close, color: Colors.white, size: 14),
-             ),
-           ),
+            if (isCaptain)
+              GestureDetector(
+                onTap: () => setState(() => _teamMembers.remove(user)),
+                child: const Padding(
+                  padding: EdgeInsets.all(4.0),
+                  child: Icon(Icons.close, color: Colors.white, size: 14),
+                ),
+              ),
         ],
       ),
     );

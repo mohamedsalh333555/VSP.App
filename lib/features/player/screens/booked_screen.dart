@@ -109,7 +109,7 @@ class _BookedScreenState extends State<BookedScreen> {
             backgroundColor: VSPColors.surface,
             child: ListView(
               physics: const AlwaysScrollableScrollPhysics(), // Ensures scrolling even if empty
-              padding: const EdgeInsets.all(VSPSpacing.md),
+              padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
               children: [
                 // Upcoming Section
                 if (data.upcoming.isNotEmpty) ...[

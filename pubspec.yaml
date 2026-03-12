@@ -79,10 +79,10 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
-  # إعدادات Adaptive Icon (أندرويد 8+)
-  adaptive_icon_background: "#000000"  # خلفية سوداء (مثل ثيم التطبيق)
+  # Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Adaptive Icon (Ø£Ù†Ø¯Ø±ÙˆÙŠØ¯ 8+)
+  adaptive_icon_background: "#000000"  # Ø®Ù„ÙÙŠØ© Ø³ÙˆØ¯Ø§Ø¡ (Ù…Ø«Ù„ Ø«ÙŠÙ… Ø§Ù„ØªØ·Ø¨ÙŠÙ‚)
   adaptive_icon_foreground: "assets/images/logo_foreground.png"
-  # هذا الرقم هو السر: كلما قل الرقم، كبر اللوجو. (الافتراضي 160، سنجعله 80)
+  # Ù‡Ø°Ø§ Ø§Ù„Ø±Ù‚Ù… Ù‡Ùˆ Ø§Ù„Ø³Ø±: ÙƒÙ„Ù…Ø§ Ù‚Ù„ Ø§Ù„Ø±Ù‚Ù…ØŒ ÙƒØ¨Ø± Ø§Ù„Ù„ÙˆØ¬Ùˆ. (Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠ 160ØŒ Ø³Ù†Ø¬Ø¹Ù„Ù‡ 80)
   adaptive_icon_foreground_inset: 80 
   min_sdk_android: 21
 
@@ -129,3 +129,4 @@ flutter:
   #
   # For details regarding fonts from package dependencies,
   # see https://flutter.dev/to/font-from-package
+

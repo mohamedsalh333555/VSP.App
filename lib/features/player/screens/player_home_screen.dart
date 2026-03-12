@@ -25,6 +25,7 @@ import '../../../core/utils/vsp_feedback.dart';
 
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/providers/stadium_provider.dart';
 import '../widgets/match_result_modal.dart';
 
 /// Player Home Page (English Only)
@@ -42,8 +43,9 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   @override
   void initState() {
     super.initState();
-    // Simulate auto-trigger check for match result
+    // Fetch stadiums data via provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
+      Provider.of<StadiumProvider>(context, listen: false).listenToStadiums();
       _checkAndShowMatchResultModal();
     });
   }
@@ -1163,8 +1165,8 @@ class _HomeContent extends StatelessWidget {
                     const SizedBox(width: VSPSpacing.sm),
                     // Filter Button
                     InkWell(
-                      onTap: () {
-                        showModalBottomSheet(
+                      onTap: () async {
+                        final result = await showModalBottomSheet<Map<String, dynamic>>(
                           context: context,
                           backgroundColor: Colors.transparent,
                           isScrollControlled: true,
@@ -1173,6 +1175,10 @@ class _HomeContent extends StatelessWidget {
                             child: const FilterBottomSheet(),
                           ),
                         );
+
+                        if (result != null && context.mounted) {
+                          context.read<StadiumProvider>().applyFilters(result);
+                        }
                       },
                       child: Container(
                         width: 50,
@@ -1200,7 +1206,7 @@ class _HomeContent extends StatelessWidget {
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.symmetric(vertical: VSPSpacing.lg),
+              padding: EdgeInsets.only(top: VSPSpacing.lg, bottom: MediaQuery.of(context).padding.bottom + 110),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -1212,39 +1218,12 @@ class _HomeContent extends StatelessWidget {
                   const SizedBox(height: VSPSpacing.md),
                   SizedBox(
                     height: 250,
-                    child: StreamBuilder<List<Stadium>>(
-                      stream: DatabaseService().getStadiums(), // REAL DATA
-                      builder: (context, snapshot) {
-                         if (AppConfig.demoMode) {
-                           final mockStadiums = Stadium.getMockStadiums().where((s) => s.isVerified == true).toList();
-                           return ListView.builder(
-                             scrollDirection: Axis.horizontal,
-                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                             itemCount: mockStadiums.length,
-                             itemBuilder: (context, index) {
-                               return VSPFadeInItem(
-                                 index: index,
-                                 child: Container(
-                                   width: 320,
-                                   margin: const EdgeInsets.only(right: 16),
-                                   child: StadiumCard(
-                                     stadium: mockStadiums[index],
-                                     onTap: () {
-                                       Navigator.push(
-                                         context,
-                                         MaterialPageRoute(
-                                           builder: (context) => StadiumDetailsScreen(stadium: mockStadiums[index]),
-                                         ),
-                                       );
-                                     },
-                                   ),
-                                 ),
-                               );
-                             },
-                           );
-                         }
+                    child: Consumer<StadiumProvider>(
+                      builder: (context, provider, _) {
+                         final isLoading = provider.isLoading;
+                         final stadiums = provider.stadiums;
 
-                         if (snapshot.connectionState == ConnectionState.waiting) {
+                         if (isLoading && stadiums.isEmpty) {
                            return ListView.builder(
                              scrollDirection: Axis.horizontal,
                              padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1260,16 +1239,27 @@ class _HomeContent extends StatelessWidget {
                             );
                           }
                           
-                          if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                          if (stadiums.isEmpty) {
                             return Center(
-                              child: Text(
-                                "No stadiums found", 
-                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.search_off, size: 48, color: VSPColors.textSecondary.withOpacity(0.3)),
+                                  const SizedBox(height: 8),
+                                  Text(
+                                    provider.isFilterActive ? "No stadiums match your filters" : "No stadiums found", 
+                                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                                  ),
+                                  if (provider.isFilterActive)
+                                    TextButton(
+                                      onPressed: () => provider.clearFilters(),
+                                      child: const Text('Clear Filters', style: TextStyle(color: VSPColors.accent)),
+                                    ),
+                                ],
                               ),
                             );
                           }
                           
-                           final stadiums = snapshot.data!;
                            return ListView.builder(
                              scrollDirection: Axis.horizontal,
                              padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -1289,7 +1279,7 @@ class _HomeContent extends StatelessWidget {
                                            builder: (context) => StadiumDetailsScreen(stadium: stadiums[index]),
                                          ),
                                        );
-                                     },
+                                      },
                                    ),
                                  ),
                                );

@@ -53,7 +53,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
 
   Widget _buildHomeContent() {
     return SingleChildScrollView(
-      padding: const EdgeInsets.fromLTRB(VSPSpacing.md, 60, VSPSpacing.md, 100),
+      padding: EdgeInsets.fromLTRB(VSPSpacing.md, 60, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [

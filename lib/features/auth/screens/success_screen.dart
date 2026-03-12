@@ -1,11 +1,11 @@
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-
-
 import '../../owner/screens/facility_onboarding_screen.dart';
 import '../../player/screens/player_home_screen.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
@@ -84,106 +84,74 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
 
-    return Scaffold(
-      body: Container(
-        decoration: BoxDecoration(
-          gradient: LinearGradient(
-            begin: Alignment.topRight,
-            end: Alignment.bottomLeft,
-            colors: [
-              VSPColors.background,
-              VSPColors.accent.withValues(alpha: 0.1),
-              VSPColors.background,
-            ],
-            stops: [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: SafeArea(
-          child: FadeTransition(
-            opacity: _fade,
-            child: SlideTransition(
-              position: _slide,
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  children: [
-                    const Spacer(flex: 2),
-
-                    // Success Icon with subtle breath animation
-                    _buildAnimatedIcon(),
-
-                    const SizedBox(height: 40),
-
-                    // Success Title
-                    Text(
-                      languageProvider.getText(AppStrings.accountCreated),
-                      style: Theme.of(context).textTheme.displaySmall?.copyWith(fontWeight: FontWeight.bold),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 16),
-
-                    // Welcome Message
-                    Text(
-                      languageProvider.getText(AppStrings.welcomeMessage),
-                      style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textSecondary),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Step Indicator
-                    Text(
-                      '4/4',
-                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: VSPColors.accent,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-
-                    const Spacer(flex: 3),
-
-                    // Get Started Button
-                    VSPAnimatedButton(
-                      text: languageProvider.getText(AppStrings.getStarted),
-                      onPressed: () => _handleGetStarted(context),
-                    ),
-
-                    const SizedBox(height: 40),
-                  ],
+      return Scaffold(
+        backgroundColor: VSPColors.background,
+        body: Stack(
+          children: [
+            // 1. Immersive Glows
+            Positioned(
+              top: -100,
+              right: -50,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.accent.withValues(alpha: 0.08),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 60, sigmaY: 60),
+                  child: Container(color: Colors.transparent),
                 ),
               ),
             ),
-          ),
-        ),
-      ),
-    );
-  }
 
-  Widget _buildAnimatedIcon() {
-    return ScaleTransition(
-      scale: _breath,
-      child: Container(
-        width: 120,
-        height: 120,
-        decoration: BoxDecoration(
-          color: VSPColors.accent.withValues(alpha: 0.1),
-          shape: BoxShape.circle,
-          boxShadow: [
-            BoxShadow(
-              color: VSPColors.accent.withValues(alpha: 0.2),
-              blurRadius: 40,
-              spreadRadius: 10,
-            ),
-          ],
-        ),
-        child: const Icon(
-          Icons.check_circle_outline,
-          size: 80,
-          color: VSPColors.accent,
-        ),
-      ),
-    );
-  }
-}
+            SafeArea(
+              child: FadeTransition(
+                opacity: _fade,
+                child: SlideTransition(
+                  position: _slide,
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                    child: Column(
+                      children: [
+                        const Spacer(flex: 3),
 
+                        // Success Celebration Header
+                        _buildAnimatedIcon(),
+
+                        const SizedBox(height: 48),
+
+                        // Success Title - High Impact
+                        Text(
+                          languageProvider.getText(AppStrings.accountCreated).toUpperCase(),
+                          style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                            fontSize: 44,
+                            height: 0.9,
+                            letterSpacing: -1,
+                          ),
+                          textAlign: TextAlign.center,
+                        ),
+
+                        const SizedBox(height: 16),
+
+                        // Welcome Message
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 20),
+                          child: Text(
+                            languageProvider.getText(AppStrings.welcomeMessage),
+                            style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                              color: VSPColors.textSecondary,
+                              height: 1.5,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ),
+
+                        const Spacer(flex: 4),
+
+                        // Get Started Action with Glassy footer
+                         Container(
+                          padding: const EdgeInsets.all(VSPSpacing.md),
+                          decoration: BoxDecoration(
+                            color: VSPColors.surface.with

@@ -156,7 +156,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 }
 
                 return ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+                  padding: EdgeInsets.fromLTRB(VSPSpacing.md, 0, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
                   physics: const BouncingScrollPhysics(),
                   itemCount: filtered.length,
                   itemBuilder: (context, index) {

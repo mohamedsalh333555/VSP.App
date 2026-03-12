@@ -60,7 +60,7 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
         ],
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+        padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [

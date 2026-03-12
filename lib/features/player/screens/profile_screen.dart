@@ -205,7 +205,7 @@ class ProfileScreen extends StatelessWidget {
             ),
             
             // Bottom Padding
-            const SizedBox(height: VSPSpacing.xxl * 2),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 110),
           ],
         ),
       ),

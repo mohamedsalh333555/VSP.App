@@ -11,6 +11,8 @@ import '../../../core/providers/auth_provider.dart';
 
 import '../../../core/services/database_service.dart';
 
+import 'payment_gateway_screen.dart';
+
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; // Assuming we need stadium info later
   final String bookingType; // 'Personal', 'Team', 'Challenge'
@@ -34,6 +36,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isPrivate = true;
   bool _isLoading = false;
   int _currentPlayers = 1;
+  String? _userTeamId;
 
   @override
   void initState() {
@@ -44,6 +47,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       _isPrivate = true;
     }
     _generateDynamicTimeSlots();
+    _fetchUserTeam();
+  }
+
+  Future<void> _fetchUserTeam() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.uid;
+    if (userId != null) {
+      final team = await DatabaseService().getUserTeam(userId);
+      if (mounted) {
+        setState(() {
+          _userTeamId = team?.id;
+        });
+      }
+    }
   }
   
   // Pricing Constants
@@ -179,7 +196,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void _showCalendarModal() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withValues(alpha: 0.8), // Dimmed background
+      barrierColor: Colors.black.withOpacity(0.8), // Dimmed background
       builder: (context) {
         DateTime tempSelectedDate = _selectedDate; // Local state for modal
         DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month); // For page navigation
@@ -264,7 +281,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceAround,
                       children: const ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sat', 'Su']
-                          .map((d) => Text(d, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)))
+                          .map((d) => Text(d, style: TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)))
                           .toList(),
                     ),
                     
@@ -526,8 +543,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
                                 color: (isBooked || isPast)
-                                    ? VSPColors.surface.withValues(alpha: 0.3)
-                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent),
+                                    ? VSPColors.surface.withOpacity(0.3)
+                                    : (isSelected ? VSPColors.accent.withOpacity(0.1) : Colors.transparent),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(
                                   color: (isBooked || isPast)
@@ -547,7 +564,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     slotLabel,
                                     style: TextStyle(
                                       color: (isBooked || isPast)
-                                          ? VSPColors.textSecondary.withValues(alpha: 0.3)
+                                          ? VSPColors.textSecondary.withOpacity(0.3)
                                           : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
                                       fontSize: 16,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -569,7 +586,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       Text(
                                         'EXPIRED',
                                         style: TextStyle(
-                                          color: VSPColors.textSecondary.withValues(alpha: 0.5),
+                                          color: VSPColors.textSecondary.withOpacity(0.5),
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -589,7 +606,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           ),
 
           Container(
-            padding: const EdgeInsets.all(VSPSpacing.lg),
+            padding: EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.lg, VSPSpacing.lg, MediaQuery.of(context).padding.bottom + VSPSpacing.lg),
             decoration: BoxDecoration(
               color: VSPColors.surfaceAlt,
               borderRadius: const BorderRadius.only(
@@ -614,7 +631,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         value: _isPrivate,
                         onChanged: (val) => setState(() => _isPrivate = val),
                         activeColor: VSPColors.accent,
-                        activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
+                        activeTrackColor: VSPColors.accent.withOpacity(0.3),
                       ),
                     ],
                   ),
@@ -656,7 +673,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             ),
                           ),
                           _buildCounterButton(Icons.add, () {
-                            final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity * 2 : 10;
+                            final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10;
                             if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++);
                           }),
                         ],
@@ -694,7 +711,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           color: _isBallRented ? VSPColors.accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
                           border: Border.all(
-                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
+                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withOpacity(0.4),
                           ),
                         ),
                         child: _isBallRented
@@ -730,7 +747,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
                       child: PrimaryButton(
-                        text: 'Confirm Booking',
+                        text: 'Proceed to Payment',
                         isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
   
@@ -787,9 +804,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   
                           // stadium.seatsCapacity actually stores "Players per Team"
                           final int trueMaxPlayers = (widget.stadium.seatsCapacity > 0) 
-                              ? widget.stadium.seatsCapacity * 2 
+                              ? widget.stadium.seatsCapacity 
                               : 10; // Default to 5v5 (10 total)
-
+  
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+  
                           // Create BookingDraft
                           final draft = BookingDraft(
                             stadiumId: widget.stadium.id,
@@ -801,6 +820,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             bookingType: bookingTypeEnum,
                             opponentTeamId: widget.opponentTeam?.id,
                             opponentTeamName: widget.opponentTeam?.name,
+                            playerTeamId: _userTeamId,
+                            playerTeamName: authProvider.userModel?.name,
                             isPrivate: _isPrivate,
                             rentBall: _isBallRented,
                             totalPrice: _totalPrice,
@@ -809,67 +830,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             maxPlayers: trueMaxPlayers,
                           );
   
-                          // DIRECT BOOKING (Cash-only)
-                          setState(() => _isLoading = true);
-                          try {
-                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-                            final userId = authProvider.currentUser?.uid ?? 'demo_user';
-
-                            // ── FIX: Attach playerTeamId for Challenge bookings ──
-                            String? myTeamId = draft.playerTeamId;
-                            String? myTeamName = draft.playerTeamName;
-
-                            // ── FIX: If personal/find-players hosting, inject user name as host name ──
-                            if (bookingTypeEnum != BookingType.challenge && myTeamName == null) {
-                              myTeamName = authProvider.userModel?.name;
-                            }
-
-                            if (bookingTypeEnum == BookingType.challenge && myTeamId == null) {
-                              final myTeam = await DatabaseService().getUserTeam(userId);
-                              if (myTeam != null) {
-                                myTeamId = myTeam.id;
-                                myTeamName = myTeam.name;
-                              } else {
-                                debugPrint('⚠️ Challenge booking: User has no team, proceeding without teamId');
-                              }
-                            }
-                            
-                            final isChallenge = bookingTypeEnum == BookingType.challenge;
-                            final cleanOpponentId = isChallenge ? draft.opponentTeamId : null;
-                            final cleanOpponentName = isChallenge ? draft.opponentTeamName : null;
-                            
-                            // Explicitly set payment to cash + inject team info
-                            final cashDraft = draft.copyWith(
-                              paymentMethod: 'cash',
-                              paymentTransactionId: 'CASH_${DateTime.now().millisecondsSinceEpoch}',
-                              playerTeamId: myTeamId,
-                              playerTeamName: myTeamName,
-                              opponentTeamId: cleanOpponentId,
-                              opponentTeamName: cleanOpponentName,
-                            );
-                            
-                            final booking = await bookingProvider.createBooking(cashDraft, userId);
-                            
-                            if (mounted && context.mounted) {
-                              setState(() => _isLoading = false);
-                              if (booking != null) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => BookingSuccessScreen(booking: booking),
-                                  ),
-                                );
-                              } else {
-                                VSPFeedback.showError(context, bookingProvider.errorMessage ?? 'Failed to confirm booking');
-                              }
-                            }
-                          } catch (e) {
-                              if (mounted && context.mounted) {
-                                setState(() => _isLoading = false);
-                                VSPFeedback.showError(context, 'Booking failed. Please check your connection and try again.');
-                              }
-                          }
+                          // Navigate to Payment Gateway
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => PaymentGatewayScreen(bookingDraft: draft),
+                            ),
+                          );
                         },
                       ),
                     ),

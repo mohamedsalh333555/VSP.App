@@ -55,7 +55,7 @@ class TeamDashboardScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(VSPSpacing.md),
+            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
             itemCount: bookings.length,
             itemBuilder: (context, index) {
               return Padding(
@@ -101,6 +101,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
         borderRadius: BorderRadius.circular(VSPRadius.xl),
       ),
       child: Column(
+        mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // --- HEADER ROW: Avatar + Names + Join Button ---

@@ -272,7 +272,7 @@ class ChampionScreenState extends State<ChampionScreen>
         if (players.isEmpty) return const Center(child: Text("No 1v1 players ranked yet", style: TextStyle(color: VSPColors.textSecondary)));
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+          padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 110),
           physics: const BouncingScrollPhysics(),
           itemCount: players.length,
           itemBuilder: (context, index) {
@@ -353,7 +353,7 @@ class ChampionScreenState extends State<ChampionScreen>
         
         if (teams.length < 3) {
           return ListView.builder(
-            padding: const EdgeInsets.all(16),
+            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
             physics: const BouncingScrollPhysics(),
             itemCount: teams.length,
             itemBuilder: (ctx, i) => VSPFadeInItem(
@@ -367,7 +367,7 @@ class ChampionScreenState extends State<ChampionScreen>
         }
 
         return SingleChildScrollView(
-          padding: const EdgeInsets.symmetric(horizontal: 16),
+          padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 110),
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
@@ -505,7 +505,7 @@ class ChampionScreenState extends State<ChampionScreen>
                  );
               }),
 
-              const SizedBox(height: 100),
+              const SizedBox(height: 20),
             ],
           ),
         );

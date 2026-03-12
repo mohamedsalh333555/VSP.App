@@ -28,6 +28,23 @@ class DatabaseService {
     }
   }
 
+  Future<List<UserModel>> getUsersByIds(List<String> ids) async {
+    if (ids.isEmpty) return [];
+    try {
+      // Note: whereIn is limited to 30 items in recent Firestore SDKs, 
+      // which is plenty for a 12-member team.
+      final snapshot = await _firestore
+          .collection('users')
+          .where(FieldPath.documentId, whereIn: ids)
+          .get();
+      
+      return snapshot.docs.map((doc) => UserModel.fromFirestore(doc.data())).toList();
+    } catch (e) {
+      debugPrint('Error getting users by IDs: $e');
+      return [];
+    }
+  }
+
   // ==================== STADIUMS ====================
   
   // Get all stadiums (with expanded limit)
@@ -329,6 +346,17 @@ class DatabaseService {
         ...bookingData,
         'createdAt': FieldValue.serverTimestamp(),
       });
+      // Save In-App Notification
+      final notification = AppNotification(
+        id: '', 
+        title: 'Booking Confirmed!', 
+        body: 'You successfully booked ${bookingData['stadiumName']}.', 
+        type: 'info', 
+        createdAt: DateTime.now(), 
+        bookingId: ref.id,
+      );
+      await _firestore.collection('users').doc(bookingData['createdByUserId']).collection('notifications').add(notification.toFirestore());
+
       return ref.id;
     } catch (e) {
       return null;

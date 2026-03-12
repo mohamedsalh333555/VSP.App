@@ -230,7 +230,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   }
 
                  return ListView.separated(
-                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
                     physics: const BouncingScrollPhysics(),
                     itemCount: slots.length,
                     separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),

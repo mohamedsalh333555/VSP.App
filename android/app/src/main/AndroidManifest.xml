@@ -38,10 +38,10 @@
         <!-- Firebase Cloud Messaging: Default notification icon & color -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
-            android:resource="@drawable/notification_icon" />
+            android:resource="@drawable/ic_stat_logo" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
-            android:resource="@color/colorAccent" />
+            android:value="#9FDF02" />
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

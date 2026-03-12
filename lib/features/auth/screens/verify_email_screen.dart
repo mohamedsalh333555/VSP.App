@@ -1,5 +1,4 @@
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import 'dart:async';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -147,204 +146,224 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: VSPColors.background,
-        systemNavigationBarIconBrightness: Brightness.light,
-      ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        body: SafeArea(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 20),
-                // Back button
-                Align(
-                  alignment: Alignment.centerLeft,
-                  child: IconButton(
-                    icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
+        body: Stack(
+          children: [
+            // 1. Background Glow
+            Positioned(
+              top: -100,
+              right: -50,
+              child: Container(
+                width: 300,
+                height: 300,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.accent.withValues(alpha: 0.05),
                 ),
-
-                const SizedBox(height: 50),
-
-                // Icon
-                Container(
-                  width: 100,
-                  height: 100,
-                  decoration: BoxDecoration(
-                    color: VSPColors.accent.withValues(alpha: 0.1),
-                    shape: BoxShape.circle,
-                  ),
-                  child: const Icon(
-                    Icons.verified_outlined,
-                    size: 52,
-                    color: VSPColors.accent,
-                  ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
+                  child: Container(color: Colors.transparent),
                 ),
+              ),
+            ),
 
-                const SizedBox(height: 32),
-
-                // Title
-                Text(
-                  'أدخل رمز التحقق',
-                  style: Theme.of(context).textTheme.displayMedium,
-                  textAlign: TextAlign.center,
-                ),
-                const SizedBox(height: 12),
-
-                // Subtitle
-                Text(
-                  auth.email.isNotEmpty
-                      ? 'تم إرسال رمز التحقق إلى:\n${auth.email}'
-                      : AppConfig.useMockOtp
-                          ? 'وضع التطوير: استخدم الرمز ${AppConfig.mockOtpCode}'
-                          : 'أدخل الرمز المُرسل إليك',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    color: VSPColors.textSecondary,
-                    height: 1.6,
-                  ),
-                ),
-
-                // DEV mode badge
-                if (AppConfig.useMockOtp) ...[
-                  const SizedBox(height: 12),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-                    decoration: BoxDecoration(
-                      color: VSPColors.warning.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(20),
-                      border: Border.all(color: VSPColors.warning.withValues(alpha: 0.4)),
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const SizedBox(height: 12),
+                    
+                    // Header Nav
+                    Row(
+                      children: [
+                        _buildNavCircle(
+                          context, 
+                          icon: Icons.arrow_back, // OTP usually simple back
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        const Spacer(),
+                        Image.asset(
+                          'assets/images/logo.png',
+                          height: 24,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
                     ),
-                    child: Text(
-                      'وضع التطوير - رمز التجربة: ${AppConfig.mockOtpCode}',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: VSPColors.warning,
-                        fontWeight: FontWeight.bold,
-                      ),
-                    ),
-                  ),
-                ],
 
-                const SizedBox(height: 48),
+                    const SizedBox(height: 60),
 
-                // OTP Input Fields (6 boxes)
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(6, (index) {
-                    return Container(
-                      width: 48,
-                      height: 58,
-                      margin: const EdgeInsets.symmetric(horizontal: 5),
+                    // Verify Animation/Icon Header
+                    Container(
+                      width: 120,
+                      height: 120,
                       decoration: BoxDecoration(
-                        color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(
-                          color: _focusNodes[index].hasFocus
-                              ? VSPColors.accent
-                              : VSPColors.divider.withValues(alpha: 0.1),
-                          width: 1.5,
+                        color: VSPColors.accent.withValues(alpha: 0.05),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
+                      ),
+                      child: const Center(
+                        child: Icon(
+                          Icons.verified_user_rounded,
+                          size: 56,
+                          color: VSPColors.accent,
                         ),
                       ),
-                      child: TextField(
-                        controller: _controllers[index],
-                        focusNode: _focusNodes[index],
-                        textAlign: TextAlign.center,
-                        keyboardType: TextInputType.number,
-                        maxLength: 1,
-                        obscureText: false,
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                          color: VSPColors.textPrimary,
-                          fontSize: 22,
-                        ),
-                        decoration: const InputDecoration(
-                          counterText: '',
-                          border: InputBorder.none,
-                        ),
-                        inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                        onChanged: (value) => _onChanged(index, value),
-                      ),
-                    );
-                  }),
-                ),
-
-                const SizedBox(height: 40),
-
-                // Verify Button
-                SizedBox(
-                  width: double.infinity,
-                  height: 56,
-                  child: ElevatedButton(
-                    onPressed: _isLoading ? null : _handleVerify,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: VSPColors.background,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                      elevation: 0,
                     ),
-                    child: _isLoading
-                        ? const SizedBox(
-                            width: 24,
-                            height: 24,
-                            child: CircularProgressIndicator(
-                              color: VSPColors.background,
-                              strokeWidth: 2.5,
+
+                    const SizedBox(height: 40),
+
+                    Text(
+                      'VERIFY ACCOUNT',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 42,
+                        height: 0.9,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 20),
+                      child: Text(
+                        auth.email.isNotEmpty
+                            ? 'A 6-digit code was sent to \n${auth.email}'
+                            : 'Enter the verification code sent to your device',
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.textSecondary,
+                          height: 1.5,
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 60),
+
+                    // OTP Boxes Container
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: List.generate(6, (index) {
+                        return Container(
+                          width: 45,
+                          height: 60,
+                          decoration: BoxDecoration(
+                            color: VSPColors.surface,
+                            borderRadius: BorderRadius.circular(VSPRadius.lg),
+                            border: Border.all(
+                              color: _focusNodes[index].hasFocus
+                                  ? VSPColors.accent
+                                  : Colors.white.withValues(alpha: 0.05),
+                              width: 2,
+                            ),
+                          ),
+                          child: TextField(
+                            controller: _controllers[index],
+                            focusNode: _focusNodes[index],
+                            textAlign: TextAlign.center,
+                            keyboardType: TextInputType.number,
+                            maxLength: 1,
+                            style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                              color: VSPColors.textPrimary,
+                            ),
+                            decoration: const InputDecoration(
+                              counterText: '',
+                              border: InputBorder.none,
+                              contentPadding: EdgeInsets.zero,
+                            ),
+                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                            onChanged: (value) => _onChanged(index, value),
+                          ),
+                        );
+                      }),
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Verification Button
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: ElevatedButton(
+                        onPressed: _isLoading ? null : _handleVerify,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: VSPColors.background,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.lg),
+                          ),
+                          elevation: 0,
+                        ),
+                        child: _isLoading
+                            ? const SizedBox(
+                                width: 20,
+                                height: 20,
+                                child: CircularProgressIndicator(
+                                  color: VSPColors.background,
+                                  strokeWidth: 2.5,
+                                ),
+                              )
+                            : Text(
+                                'CONTINUE',
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.w900,
+                                  letterSpacing: 1.1,
+                                ),
+                              ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    // Resend Action
+                    _canResend
+                        ? TextButton(
+                            onPressed: _handleResend,
+                            child: Text(
+                              'RESEND CODE',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.accent,
+                                fontWeight: FontWeight.bold,
+                                decoration: TextDecoration.underline,
+                                letterSpacing: 1.2,
+                              ),
                             ),
                           )
                         : Text(
-                            'تحقق',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
+                            'RESEND IN $_countdown SECONDS',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary.withValues(alpha: 0.4),
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.1,
+                            ),
                           ),
-                  ),
+
+                    const SizedBox(height: 40),
+
+                  ],
                 ),
-
-                const SizedBox(height: 24),
-
-                // Resend / Countdown
-                _canResend
-                    ? TextButton(
-                        onPressed: _handleResend,
-                        child: Text(
-                          'إعادة إرسال الرمز',
-                          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                            color: VSPColors.accent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                        ),
-                      )
-                    : Text(
-                        'يمكنك إعادة الإرسال بعد $_countdown ثانية',
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: VSPColors.textSecondary.withValues(alpha: 0.45),
-                        ),
-                      ),
-
-                const Spacer(),
-
-                // Bottom indicator
-                Center(
-                  child: Container(
-                    width: 134,
-                    height: 5,
-                    decoration: BoxDecoration(
-                      color: VSPColors.divider.withValues(alpha: 0.2),
-                      borderRadius: BorderRadius.circular(100),
-                    ),
-                  ),
-                ),
-                const SizedBox(height: 20),
-              ],
+              ),
             ),
-          ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
     );
   }

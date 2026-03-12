@@ -8,13 +8,17 @@ class StadiumProvider with ChangeNotifier {
   StreamSubscription? _stadiumSubscription;
   
   List<Stadium> _stadiums = [];
+  List<Stadium> _filteredStadiums = [];
+  bool _isFilterActive = false;
   bool _isLoading = false;
   String? _errorMessage;
 
   // Getters
-  List<Stadium> get stadiums => _stadiums;
+  List<Stadium> get stadiums => (_isFilterActive || _filteredStadiums.isNotEmpty) ? _filteredStadiums : _stadiums;
+  List<Stadium> get filteredStadiums => _filteredStadiums;
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
+  bool get isFilterActive => _isFilterActive;
 
   // Private helpers to manage state consistently
   void _setLoading(bool value) {
@@ -137,6 +141,49 @@ class StadiumProvider with ChangeNotifier {
       stadium.name.toLowerCase().contains(cleanQuery) ||
       stadium.location.toLowerCase().contains(cleanQuery)
     ).toList();
+  }
+
+  // Apply complex filters
+  void applyFilters(Map<String, dynamic> filters) {
+    _isFilterActive = true;
+    
+    final Map<String, dynamic> sports = filters['sports'] is Map ? Map<String, bool>.from(filters['sports']) : {};
+    final double minPrice = (filters['minPrice'] ?? 0.0).toDouble();
+    final double maxPrice = (filters['maxPrice'] ?? 3000.0).toDouble();
+    final int minRating = filters['minRating'] ?? 0;
+    final Map<String, dynamic> services = filters['selectedServices'] is Map ? Map<String, bool>.from(filters['selectedServices']) : {};
+
+    _filteredStadiums = _stadiums.where((stadium) {
+      // Sport filter
+      bool matchesSport = true;
+      final activeSports = sports.entries.where((e) => e.value).map((e) => e.key).toList();
+      if (activeSports.isNotEmpty) {
+        matchesSport = activeSports.any((s) => stadium.type.toLowerCase() == s.toLowerCase());
+      }
+
+      // Price filter
+      bool matchesPrice = stadium.pricePerHour >= minPrice && stadium.pricePerHour <= maxPrice;
+
+      // Rating filter
+      bool matchesRating = stadium.rating >= minRating;
+
+      // Services filter (All selected services must be available at the stadium)
+      bool matchesServices = true;
+      if (services['Has Ball'] == true && !stadium.hasBall) matchesServices = false;
+      if (services['Has Seats'] == true && !stadium.hasSeats) matchesServices = false;
+      if (services['Professional Lighting'] == true && !stadium.hasJerash) matchesServices = false;
+
+      return matchesSport && matchesPrice && matchesRating && matchesServices;
+    }).toList();
+
+    notifyListeners();
+  }
+
+  // Reset all filters
+  void clearFilters() {
+    _isFilterActive = false;
+    _filteredStadiums = [];
+    notifyListeners();
   }
 
   // Clear error

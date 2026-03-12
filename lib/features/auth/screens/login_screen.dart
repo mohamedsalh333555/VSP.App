@@ -1,4 +1,4 @@
-import '../../../core/ui/tokens/vsp_tokens.dart';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -82,64 +82,140 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        extendBody: true,
-        extendBodyBehindAppBar: true,
-        appBar: AppBar(
-        backgroundColor: Colors.transparent,
-        elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
-            color: VSPColors.textPrimary,
-          ),
-          onPressed: () => Navigator.pop(context),
-          ),
-      ),
-      body: SafeArea(
-        bottom: true,
-        child: SingleChildScrollView(
-          physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: 24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const SizedBox(height: 20),
-              // App Logo
-              Center(
-                child: Image.asset(
-                  'assets/images/logo.png',
-                  height: 100,
-                  fit: BoxFit.contain,
+        body: Stack(
+          children: [
+            // 1. Subtle Background Elements
+            Positioned(
+              top: -80,
+              left: -80,
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.accent.withValues(alpha: 0.05),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(color: Colors.transparent),
                 ),
               ),
-              const SizedBox(height: 30),
-              Text(
-                languageProvider.getText(AppStrings.login),
-                style: Theme.of(context).textTheme.displayLarge,
-              ),
-              const SizedBox(height: 40),
-              CustomTextField(
-                controller: _emailController,
-                hintText: languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email',
-                keyboardType: TextInputType.emailAddress,
-                prefixIcon: Icons.email_outlined,
-              ),
-              const SizedBox(height: 16),
-              CustomTextField(
-                controller: _passwordController,
-                hintText: languageProvider.isArabic ? 'كلمة المرور' : 'Password',
-                obscureText: true,
-                prefixIcon: Icons.lock_outline,
-              ),
-              const SizedBox(height: 40),
-              VSPAnimatedButton(
-                text: languageProvider.getText(AppStrings.login),
-                onPressed: () {
-                  if (_isLoading) return;
-                  _handleLogin();
-                },
-                isLoading: _isLoading,
-              ),
+            ),
+
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: 24.0, 
+                  right: 24.0, 
+                  top: 0, 
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    
+                    // Header Nav
+                    Row(
+                      children: [
+                        _buildNavCircle(
+                          context, 
+                          icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        const Spacer(),
+                        Image.asset(
+                          'assets/images/logo.png',
+                          height: 24,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    Text(
+                      languageProvider.getText(AppStrings.login),
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 48,
+                        height: 1.0,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      languageProvider.isArabic ? 'سجل دخولك لمتابعة تدريباتك وحجوزاتك' : 'Sign in to continue your sports journey',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Login Fields with Header
+                     Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent,
+                            borderRadius: BorderRadius.circular(VSPRadius.xs),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Credential Access',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            letterSpacing: 1.1,
+                            color: VSPColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
+
+                    CustomTextField(
+                      controller: _emailController,
+                      hintText: languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email Address',
+                      keyboardType: TextInputType.emailAddress,
+                      prefixIcon: Icons.email_outlined,
+                    ),
+                    const SizedBox(height: 16),
+                    CustomTextField(
+                      controller: _passwordController,
+                      hintText: languageProvider.isArabic ? 'كلمة المرور' : 'Password',
+                      obscureText: true,
+                      prefixIcon: Icons.lock_outline,
+                    ),
+                    
+                    const SizedBox(height: 12),
+                    Align(
+                      alignment: Alignment.centerRight,
+                      child: TextButton(
+                        onPressed: () {},
+                        child: Text(
+                          languageProvider.isArabic ? 'نسيت كلمة المرور؟' : 'Forgot Password?',
+                          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                            color: VSPColors.accent,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ),
+
+                    const SizedBox(height: 32),
+
+                    VSPAnimatedButton(
+                      text: languageProvider.getText(AppStrings.login),
+                      onPressed: () {
+                        if (_isLoading) return;
+                        _handleLogin();
+                      },
+                      isLoading: _isLoading,
+                    ),
 
               const SizedBox(height: 30),
 
@@ -204,12 +280,29 @@ class _LoginScreenState extends State<LoginScreen> {
                   },
                 ),
               ),
-            ],
+                  const SizedBox(height: 40),
+                ],
+              ),
+            ),
           ),
+          ],
         ),
-      ),
       ),
     );
   }
-}
+
+  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
+      ),
+    );
+  }
 

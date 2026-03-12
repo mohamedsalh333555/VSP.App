@@ -905,6 +905,7 @@ class Team {
   final int points;
   final String trend;
   final String? captainPhone;
+  final String sportType;
 
   // ── Governorate & League Fields ──
   final String governorate;
@@ -932,6 +933,7 @@ class Team {
     this.points = 0,
     this.trend = 'stable',
     this.captainPhone,
+    this.sportType = 'Football',
     this.governorate = 'Cairo',
     this.matchesPlayed = 0,
     this.wins = 0,
@@ -959,6 +961,7 @@ class Team {
       points: data['points'] ?? 0,
       trend: data['trend'] ?? 'stable',
       captainPhone: data['captainPhone'],
+      sportType: data['sportType'] ?? 'Football',
       governorate: data['governorate'] ?? 'Cairo',
       matchesPlayed: data['matchesPlayed'] ?? 0,
       wins: data['wins'] ?? 0,
@@ -986,6 +989,7 @@ class Team {
       'points': points,
       'trend': trend,
       'captainPhone': captainPhone,
+      'sportType': sportType,
       'governorate': governorate,
       'matchesPlayed': matchesPlayed,
       'wins': wins,
@@ -1020,6 +1024,7 @@ class Team {
     int? losses,
     List<String>? playedOpponents,
     int? championshipsWon,
+    String? sportType,
   }) {
     return Team(
       id: id ?? this.id,
@@ -1042,6 +1047,7 @@ class Team {
       losses: losses ?? this.losses,
       playedOpponents: playedOpponents ?? this.playedOpponents,
       championshipsWon: championshipsWon ?? this.championshipsWon,
+      sportType: sportType ?? this.sportType,
     );
   }
 

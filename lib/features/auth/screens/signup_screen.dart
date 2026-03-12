@@ -1,10 +1,10 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/theme/app_theme.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import 'verify_email_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -127,46 +127,102 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        body: SafeArea(
-          bottom: true,
-          child: SingleChildScrollView(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const SizedBox(height: 12), // Reduced top spacing
-                  IconButton(
-                    icon: Icon(
-                      languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
-                      color: VSPColors.textPrimary,
+        body: Stack(
+          children: [
+            // 1. Subtle Background Elements
+            Positioned(
+              bottom: -50,
+              left: -50,
+              child: Container(
+                width: 250,
+                height: 250,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.accent.withValues(alpha: 0.05),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+            ),
+
+            SafeArea(
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: EdgeInsets.only(
+                  left: 24.0, 
+                  right: 24.0, 
+                  top: 0, 
+                  bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const SizedBox(height: 12),
+                    
+                    // Header Nav
+                    Row(
+                      children: [
+                        _buildNavCircle(
+                          context, 
+                          icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
+                          onTap: () => Navigator.pop(context),
+                        ),
+                        const Spacer(),
+                        Image.asset(
+                          'assets/images/logo.png',
+                          height: 24,
+                          fit: BoxFit.contain,
+                        ),
+                      ],
                     ),
-                    onPressed: () => Navigator.pop(context),
-                    padding: EdgeInsets.zero,
-                    constraints: const BoxConstraints(),
-                  ),
-                  const SizedBox(height: 16), // Reduced spacing
-                  // App Logo
-                  Center(
-                    child: Image.asset(
-                      'assets/images/logo.png',
-                      height: 60, // Reduced logo height
-                      fit: BoxFit.contain,
+
+                    const SizedBox(height: 32),
+
+                    Text(
+                      languageProvider.isArabic ? 'إنشاء حساب جديد' : 'Create Account',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 38,
+                        height: 1.1,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 16),
-                  Text(
-                    languageProvider.isArabic ? 'إنشاء حساب جديد' : 'Create New Account',
-                    style: Theme.of(context).textTheme.displayMedium,
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    widget.isOwner 
-                      ? (languageProvider.isArabic ? 'سجل كصاحب ملعب' : 'Register as Owner')
-                      : (languageProvider.isArabic ? 'سجل كلاعب' : 'Register as Player'),
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textSecondary),
-                  ),
-                  const SizedBox(height: 24), // Tighter section spacing
+                    const SizedBox(height: 8),
+                    Text(
+                      widget.isOwner 
+                        ? (languageProvider.isArabic ? 'سجل كصاحب ملعب لتفعيل نظام حجوزاتك' : 'Register as owner and manage your pitch')
+                        : (languageProvider.isArabic ? 'سجل كلاعب وشارك في أقوى التحديات' : 'Register as player and start your journey'),
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.textSecondary,
+                        height: 1.4,
+                      ),
+                    ),
+
+                    const SizedBox(height: 48),
+
+                    // Progress or Form Title
+                    Row(
+                      children: [
+                        Container(
+                          width: 4,
+                          height: 20,
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent,
+                            borderRadius: BorderRadius.circular(VSPRadius.xs),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Text(
+                          'Personal Information',
+                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                            letterSpacing: 1.1,
+                            color: VSPColors.textPrimary,
+                          ),
+                        ),
+                      ],
+                    ),
+
+                    const SizedBox(height: 24),
                   
                   // Fields
                   _buildLabel(languageProvider.isArabic ? 'الاسم الكامل' : 'Full Name'),
@@ -274,7 +330,23 @@ class _SignupScreenState extends State<SignupScreen> {
               ),
             ),
           ),
+          ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        padding: const EdgeInsets.all(10),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          shape: BoxShape.circle,
+          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+        ),
+        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
     );
   }

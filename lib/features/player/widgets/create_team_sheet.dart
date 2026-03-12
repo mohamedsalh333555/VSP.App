@@ -21,7 +21,7 @@ class CreateTeamSheet extends StatefulWidget {
 
 class _CreateTeamSheetState extends State<CreateTeamSheet> {
   final _nameController = TextEditingController();
-  final String _selectedSport = 'Football';
+  String _selectedSport = 'Football';
   final List<UserModel> _teamMembers = [];
   bool _isSubmitting = false;
   XFile? _selectedLogo;
@@ -196,18 +196,25 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           // Sports Type Input
           Text('Sports Type*', style: Theme.of(context).textTheme.labelMedium),
           const SizedBox(height: 8),
-          TextField(
-            controller: TextEditingController(text: _selectedSport),
-            readOnly: true,
-            style: Theme.of(context).textTheme.bodyMedium,
-            decoration: InputDecoration(
-              filled: true,
-              fillColor: VSPColors.surface,
-              border: OutlineInputBorder(
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                borderSide: BorderSide.none,
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 16),
+            decoration: BoxDecoration(
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+            ),
+            child: DropdownButtonHideUnderline(
+              child: DropdownButton<String>(
+                value: _selectedSport,
+                isExpanded: true,
+                dropdownColor: VSPColors.surface,
+                items: ['Football', 'Basketball', 'Volleyball', 'Handball', 'Padel']
+                    .map((s) => DropdownMenuItem(
+                          value: s,
+                          child: Text(s, style: Theme.of(context).textTheme.bodyMedium),
+                        ))
+                    .toList(),
+                onChanged: (val) => setState(() => _selectedSport = val!),
               ),
-              contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
             ),
           ),
           

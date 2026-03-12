@@ -169,7 +169,7 @@ class OwnerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            const SizedBox(height: 100),
+            SizedBox(height: MediaQuery.of(context).padding.bottom + 110),
           ],
         ),
       ),

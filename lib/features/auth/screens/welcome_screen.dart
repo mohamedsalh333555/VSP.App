@@ -6,9 +6,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
 import 'login_screen.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_button.dart';
-import '../../../shared/widgets/vsp_animated_button.dart';
+import 'dart:ui';
+import '../ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 
@@ -33,139 +32,159 @@ class WelcomeScreen extends StatelessWidget {
       ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        extendBody: true,
-        extendBodyBehindAppBar: true,
-        body: SafeArea(
-          bottom: true,
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
-            child: Column(
-              children: [
-                const SizedBox(height: VSPSpacing.xxl), // Space where logo/top once was
+        body: Stack(
+          children: [
+            // 1. Dynamic Background Depth
+            Positioned(
+              top: -150,
+              left: -50,
+              child: Container(
+                width: 400,
+                height: 400,
+                decoration: BoxDecoration(
+                  shape: BoxShape.circle,
+                  color: VSPColors.accent.withValues(alpha: 0.08),
+                ),
+                child: BackdropFilter(
+                  filter: ImageFilter.blur(sigmaX: 80, sigmaY: 80),
+                  child: Container(color: Colors.transparent),
+                ),
+              ),
+            ),
+            
+            // 2. Animated Background Lines or shapes (Static for now but styled)
+             Positioned(
+              bottom: 40,
+              right: -20,
+              child: Opacity(
+                opacity: 0.1,
+                child: Image.asset(
+                  'assets/images/logo.png',
+                  width: 300,
+                  height: 300,
+                  color: VSPColors.accent,
+                ),
+              ),
+            ),
 
-                // Logo with soft diffused glow (Increased Blur) and Secret Migration Trigger
-                Stack(
-                  alignment: Alignment.center,
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    Container(
-                      width: 280, // Slightly larger for spread
-                      height: 280,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        boxShadow: [
-                          BoxShadow(
-                            color: VSPColors.accent.withValues(alpha: 0.08), // Subtle
-                            blurRadius: 120, // Increased for more diffusion
-                            spreadRadius: 40,
-                          ),
-                        ],
-                      ),
-                    ),
+                    const SizedBox(height: 60),
+
+                    // Brand Identity
                     GestureDetector(
                       onLongPress: () async {
-                        // Secret Trigger for Data Migration
                         VSPFeedback.showSuccess(context, 'Starting Data Migration...');
                         await DataMigration().seedDatabase();
                         if (context.mounted) {
                           VSPFeedback.showSuccess(context, 'Data Migration Completed!');
                         }
                       },
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        width: 180,
-                        height: 180,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(
-                            child: Text(
-                              'VSP',
-                              style: TextStyle(
-                                color: VSPColors.accent,
-                                fontSize: 64,
-                                fontWeight: FontWeight.w900,
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: VSPSpacing.xxl),
-
-                // Welcome Title - English Only
-                Text(
-                  'Welcome to VSP',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    fontSize: 38, // Keep primary impact size
-                  ),
-                  textAlign: TextAlign.center,
-                ),
-
-                const SizedBox(height: VSPSpacing.md),
-
-                // Subtitle - English, Medium weight, Clean White
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-                  child: Text(
-                    'Book your pitch easily and join teams',
-                    style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                      color: VSPColors.textPrimary,
-                    ),
-                    textAlign: TextAlign.center,
-                  ),
-                ),
-
-                const Spacer(flex: 2),
-
-                // User Type Buttons
-                Column(
-                  children: [
-                      // Player Button
-                      VSPAnimatedButton(
-                        text: 'I am a Player',
-                        onPressed: () {
-                          authProvider.setUserType('player');
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const CreateAccountScreen(isOwner: false),
-                            ),
-                          );
-                        },
-                      ),
-                      const SizedBox(height: VSPSpacing.md),
-                      // Owner Button
-                      SizedBox(
-                        height: 56,
-                        width: double.infinity,
-                        child: OutlinedButton(
-                          onPressed: () {
-                            authProvider.setUserType('owner');
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CreateAccountScreen(isOwner: true),
-                              ),
-                            );
-                          },
-                          style: OutlinedButton.styleFrom(
-                            foregroundColor: VSPColors.textPrimary,
-                            side: const BorderSide(color: VSPColors.accent, width: 1.5),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(VSPRadius.lg),
-                            ),
-                          ),
-                          child: Text(
-                            'I am Stadium Owner',
-                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
+                      child: Hero(
+                        tag: 'app_logo',
+                        child: Image.asset(
+                          'assets/images/logo.png',
+                          width: 120,
+                          height: 120,
                         ),
                       ),
-                  ],
-                ),
+                    ),
+
+                    const SizedBox(height: 40),
+
+                    // Slogan / Primary Title
+                    Text(
+                      'UNLEASH YOUR\nINNER CHAMPION',
+                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
+                        fontSize: 48,
+                        height: 0.9,
+                        letterSpacing: -1.5,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    Text(
+                        'THE PREMIER PLATFORM FOR MODERN ATHLETES',
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                          color: VSPColors.accent,
+                          letterSpacing: 2.0,
+                          fontWeight: FontWeight.w900,
+                        ),
+                        textAlign: TextAlign.center,
+                    ),
+
+                    const Spacer(),
+
+                    // Action Section
+                    Container(
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface.withValues(alpha: 0.4),
+                        borderRadius: BorderRadius.circular(VSPRadius.xl),
+                        border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                      ),
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            'READY TO JOIN?',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              letterSpacing: 1.5,
+                            ),
+                          ),
+                          const SizedBox(height: 20),
+                          VSPAnimatedButton(
+                            text: 'I AM A PLAYER',
+                            onPressed: () {
+                              authProvider.setUserType('player');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => const CreateAccountScreen(isOwner: false),
+                                ),
+                              );
+                            },
+                          ),
+                          const SizedBox(height: 12),
+                          SizedBox(
+                            height: 54,
+                            width: double.infinity,
+                            child: OutlinedButton(
+                              onPressed: () {
+                                authProvider.setUserType('owner');
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => const CreateAccountScreen(isOwner: true),
+                                  ),
+                                );
+                              },
+                              style: OutlinedButton.styleFrom(
+                                side: BorderSide(color: VSPColors.textSecondary.withValues(alpha: 0.2)),
+                                shape: RoundedRectangleBorder(
+                                  borderRadius: BorderRadius.circular(VSPRadius.lg),
+                                ),
+                              ),
+                              child: Text(
+                                'I AM STADIUM OWNER',
+                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                  fontWeight: FontWeight.bold,
+                                  color: VSPColors.textPrimary,
+                                ),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
 
                 const SizedBox(height: VSPSpacing.xl),
 

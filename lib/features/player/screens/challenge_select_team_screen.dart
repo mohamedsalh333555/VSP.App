@@ -108,7 +108,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   Text(
                     "Search for a team to challenge or pick from teams you've played against.",
                     style: TextStyle(
-                      color: VSPColors.textSecondary.withValues(alpha: 0.7),
+                      color: VSPColors.textSecondary.withOpacity(0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -157,11 +157,11 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Column(
                             children: [
-                              Icon(Icons.search_off, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+                              Icon(Icons.search_off, color: VSPColors.textSecondary.withOpacity(0.3), size: 48),
                               const SizedBox(height: 16),
                               Text(
                                 "No teams found matching '$_searchQuery'",
-                                style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+                                style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.5)),
                               ),
                             ],
                           ),
@@ -185,12 +185,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.history, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+                            Icon(Icons.history, color: VSPColors.textSecondary.withOpacity(0.3), size: 48),
                             const SizedBox(height: 16),
                             Text(
                               "You don't have previous opponents yet.\nStart by searching for a team.",
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+                              style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.5), fontSize: 13),
                             ),
                           ],
                         ),
@@ -276,7 +276,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
+          color: isSelected ? VSPColors.accent.withOpacity(0.05) : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
             color: isSelected ? VSPColors.accent : VSPColors.divider,
@@ -317,7 +317,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 if (isSelected)
                   const Icon(Icons.check_circle, color: VSPColors.accent)
                 else
-                  Icon(Icons.circle_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
+                  Icon(Icons.circle_outlined, color: VSPColors.textSecondary.withOpacity(0.3)),
               ],
             ),
             if (isSelected) ...[
@@ -384,7 +384,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: VSPColors.accent.withValues(alpha: 0.1),
+            color: VSPColors.accent.withOpacity(0.1),
             borderRadius: BorderRadius.circular(VSPRadius.sm),
           ),
           child: Text(
@@ -416,7 +416,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           Text(
             label,
             style: TextStyle(
-              color: VSPColors.textSecondary.withValues(alpha: 0.6),
+              color: VSPColors.textSecondary.withOpacity(0.6),
               fontSize: 9,
               fontWeight: FontWeight.bold,
             ),

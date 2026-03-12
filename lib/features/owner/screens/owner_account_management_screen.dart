@@ -190,7 +190,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       ),
       // 4. Fixed Confirm Button
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(VSPSpacing.md),
+        padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + VSPSpacing.md),
         color: VSPColors.background,
         child: PrimaryButton(
           text: 'Confirm',
