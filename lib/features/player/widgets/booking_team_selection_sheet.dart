@@ -95,7 +95,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
               width: 40,
               height: 4,
               decoration: BoxDecoration(
-                color: Colors.white.withValues(alpha: 0.3),
+                color: VSPColors.textSecondary.withValues(alpha: 0.3),
                 borderRadius: BorderRadius.circular(2),
               ),
             ),
@@ -197,7 +197,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             id: 'Personal',
             title: 'Personal Booking',
             subtitle: 'Booking The Pitch For Yourself Only',
-            iconUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=100',
+            iconData: Icons.person_outline, // Replaced fake Unsplash image with neutral icon
             isAvatar: true,
           ),
 

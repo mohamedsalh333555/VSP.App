@@ -111,7 +111,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'endDate': _endDate.toIso8601String(),
         'governorate': auth.governorate,
         'ownerId': auth.currentUser?.uid,
-        'image': 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+        'image': '', // Removed fake tournament image
         'teamsCount': int.parse(_selectedNumTeams),
         'maxTeams': int.parse(_selectedNumTeams),
         'joinedTeams': [],

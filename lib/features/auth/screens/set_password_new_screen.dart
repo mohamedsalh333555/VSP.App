@@ -268,12 +268,12 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
                       height: 5,
                       decoration: BoxDecoration(
                         color: VSPColors.divider,
-                        borderRadius: BorderRadius.circular(100),
+                        borderRadius: BorderRadius.circular(VSPRadius.full),
                       ),
                     ),
                   ),
 
-                  const SizedBox(height: 20),
+                  SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
                 ],
               ),
             ),

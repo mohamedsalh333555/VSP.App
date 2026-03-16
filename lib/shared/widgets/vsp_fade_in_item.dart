@@ -4,12 +4,14 @@ class VSPFadeInItem extends StatefulWidget {
   final Widget child;
   final int index;
   final Duration duration;
+  final Duration? delay;
 
   const VSPFadeInItem({
     super.key,
     required this.child,
     this.index = 0,
     this.duration = const Duration(milliseconds: 400),
+    this.delay,
   });
 
   @override
@@ -38,7 +40,9 @@ class _VSPFadeInItemState extends State<VSPFadeInItem>
       CurvedAnimation(parent: _controller, curve: Curves.easeOut),
     );
 
-    Future.delayed(Duration(milliseconds: widget.index * 50), () {
+    // Use explicit delay if provided, otherwise fall back to index-based stagger
+    final effectiveDelay = widget.delay ?? Duration(milliseconds: widget.index * 50);
+    Future.delayed(effectiveDelay, () {
       if (mounted) _controller.forward();
     });
   }

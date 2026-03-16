@@ -19,6 +19,7 @@ class OwnerBookedScreen extends StatefulWidget {
 class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   int _selectedDayIndex = 0; // Default to today
   Stadium? _selectedStadium;
+  DateTime _baseDate = DateTime.now();
 
   @override
   void initState() {
@@ -40,100 +41,118 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        automaticallyImplyLeading: true,
         centerTitle: true,
         title: Text(
           'Booked',
-          style: Theme.of(context).textTheme.displayLarge,
+          style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: Column(
         children: [
           // 1. Stadium Picker & Month Selector
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+            padding: const EdgeInsets.all(VSPSpacing.md),
             child: Row(
               children: [
-                // Stadium Dropdown
-                Consumer<StadiumProvider>(
-                  builder: (context, stadiumProvider, _) {
-                    final stadiums = stadiumProvider.stadiums;
-                    if (stadiums.isEmpty) return const SizedBox.shrink();
-                    
-                    // Safe initial selection (only if currently null)
-                    if (_selectedStadium == null && stadiums.isNotEmpty) {
-                      _selectedStadium = stadiums.first;
-                    }
-                    
-                    // Ensure current selection is still valid in potentially updated list
-                    if (_selectedStadium != null && !stadiums.contains(_selectedStadium)) {
-                      _selectedStadium = stadiums.first;
-                    }
+                // Stadium Selection Pill
+                Expanded(
+                  child: Consumer<StadiumProvider>(
+                    builder: (context, stadiumProvider, _) {
+                      final stadiums = stadiumProvider.stadiums;
+                      if (stadiums.isEmpty) return const SizedBox.shrink();
+                      
+                      // Identify the matching stadium instance from the current list to avoid reference mismatch
+                      Stadium? effectiveValue;
+                      if (stadiums.isNotEmpty) {
+                        effectiveValue = stadiums.any((s) => s.id == _selectedStadium?.id)
+                            ? stadiums.firstWhere((s) => s.id == _selectedStadium?.id)
+                            : stadiums.first;
+                      }
 
-                    return Container(
-                      margin: const EdgeInsets.only(right: VSPSpacing.md),
-                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<Stadium>(
-                          value: _selectedStadium,
-                          dropdownColor: VSPColors.surface,
-                          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
-                          hint: Text('Select Stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                          items: stadiums.map((s) => DropdownMenuItem(
-                            value: s,
-                            child: Text(s.name, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.textPrimary)),
-                          )).toList(),
-                          onChanged: (val) {
-                            setState(() {
-                              _selectedStadium = val;
-                            });
-                          },
+                      return Container(
+                        height: 44,
+                        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider, width: 0.5),
                         ),
-                      ),
-                    );
-                  },
-                ),
-
-                // Date Picker (Visual)
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.divider),
+                        child: DropdownButtonHideUnderline(
+                          child: DropdownButton<Stadium>(
+                            value: effectiveValue,
+                            dropdownColor: VSPColors.surface,
+                            icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
+                            isExpanded: true,
+                            items: stadiums.map((s) => DropdownMenuItem(
+                              value: s,
+                              child: Text(
+                                s.name, 
+                                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                                  fontWeight: FontWeight.bold, 
+                                  color: VSPColors.textPrimary,
+                                  fontSize: 13,
+                                ),
+                              ),
+                            )).toList(),
+                            onChanged: (val) {
+                              if (val != null) {
+                                setState(() {
+                                  _selectedStadium = val;
+                                });
+                              }
+                            },
+                          ),
+                        ),
+                      );
+                    },
                   ),
-                  child: Row(
-                    children: [
-                      Text(
-                        DateFormat('MMMM, yyyy').format(DateTime.now()),
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-                      ),
-                      const SizedBox(width: 8),
-                      const Icon(Icons.calendar_today_outlined, color: VSPColors.textPrimary, size: 16),
-                    ],
+                ),
+                const SizedBox(width: 12),
+                // Month Display / Date Picker Trigger
+                InkWell(
+                  onTap: () => _selectDate(context),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  child: Container(
+                    height: 44,
+                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Row(
+                      children: [
+                        Text(
+                          DateFormat('MMMM, yyyy').format(_baseDate.add(Duration(days: _selectedDayIndex))),
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            fontWeight: FontWeight.bold,
+                            color: VSPColors.textPrimary,
+                            fontSize: 13,
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        const Icon(Icons.calendar_month_outlined, color: VSPColors.textSecondary, size: 16),
+                      ],
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
-          // 2. Horizontal Calendar Strip
+          // 2. Horizontal Calendar Strip (Aligned with Player UI)
           SizedBox(
-            height: 90,
+            height: 80,
             child: ListView.builder(
               scrollDirection: Axis.horizontal,
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               physics: const BouncingScrollPhysics(),
-              itemCount: 7, // Current Week
+              itemCount: 14, // Extended to match player flow (2 weeks)
               itemBuilder: (context, index) {
-                final date = DateTime.now().add(Duration(days: index));
+                final date = _baseDate.add(Duration(days: index));
                 bool isSelected = index == _selectedDayIndex;
-                String dayName = DateFormat('EEE').format(date).toUpperCase();
+                String dayName = DateFormat('E').format(date).toUpperCase();
 
                 return GestureDetector(
                   onTap: () {
@@ -143,7 +162,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   },
                   child: Container(
                     width: 60,
-                    margin: const EdgeInsets.only(right: VSPSpacing.md),
+                    margin: const EdgeInsets.only(right: 10),
                     decoration: BoxDecoration(
                       color: isSelected ? VSPColors.accent : Colors.transparent,
                       borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -157,18 +176,20 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                       children: [
                         Text(
                           '${date.day}',
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                                color: isSelected ? Colors.black : VSPColors.textPrimary,
-                                fontWeight: FontWeight.bold,
-                              ),
+                          style: TextStyle(
+                            color: isSelected ? VSPColors.background : VSPColors.textPrimary,
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
-                        const SizedBox(height: 4),
+                        const SizedBox(height: 2),
                         Text(
                           dayName,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: isSelected ? Colors.black : VSPColors.textSecondary,
-                                fontWeight: FontWeight.w600,
-                              ),
+                          style: TextStyle(
+                            color: isSelected ? VSPColors.background : VSPColors.textSecondary,
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
                         ),
                       ],
                     ),
@@ -185,7 +206,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
           Expanded(
             child: Consumer<BookingProvider>(
                builder: (context, bookingProvider, _) {
-                 final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
+                 final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
                  final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
                  final endOfDay = startOfDay.add(const Duration(days: 1));
 
@@ -221,8 +242,8 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                         'type': booking.playerTeamName != null ? 'team' : 'individual',
                         'name': booking.playerTeamName ?? 'Individual Player',
                         'subtitle': booking.bookingType.name.toUpperCase(),
-                        'image': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150',
-                        'logo': 'https://images.unsplash.com/photo-1543351611-58f69d79443?w=150',
+                        'image': '',
+                        'logo': '',
                         'isManaged': true,
                         'booking': booking,
                       });
@@ -252,16 +273,17 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
 
   Widget _buildTimeSlotRow(Map<String, dynamic> slot) {
     return Row(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        // Time Label (Left Aligned)
+        // Time Label
         SizedBox(
-          width: 50,
-          child: Padding(
-            padding: const EdgeInsets.only(top: 18.0), // Optical alignment
-            child: Text(
-              slot['time'],
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+          width: 65,
+          child: Text(
+            slot['time'].replaceAll(' ', ''),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+              fontWeight: FontWeight.bold,
+              color: VSPColors.textSecondary,
+              fontSize: 12,
             ),
           ),
         ),
@@ -286,23 +308,37 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   Widget _buildSlotCard(Map<String, dynamic> slot) {
     if (slot['type'] == 'empty') {
       return Container(
-        height: 60,
-        alignment: Alignment.centerLeft,
-        child: Container(
-          width: 60,
-          height: 50,
-          decoration: BoxDecoration(
-             color: VSPColors.accent,
-             borderRadius: BorderRadius.circular(VSPRadius.md),
-          ),
-          alignment: Alignment.center,
-          child: Text(
-            '+ -',
-            style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: Colors.black,
-                  fontWeight: FontWeight.bold,
-                ),
-          ),
+        height: 54,
+        padding: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: Colors.transparent,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.divider, width: 1),
+        ),
+        child: Row(
+          children: [
+            const Icon(Icons.add_circle_outline, color: VSPColors.textSecondary, size: 20),
+            const SizedBox(width: 12),
+            Text(
+              'Available Slot',
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                color: VSPColors.textSecondary,
+                fontWeight: FontWeight.w500,
+              ),
+            ),
+            const Spacer(),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+              ),
+              child: const Text(
+                'OPEN',
+                style: TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
+              ),
+            ),
+          ],
         ),
       );
     }
@@ -310,34 +346,36 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     // Booked State
     bool isManaged = slot['isManaged'] ?? false;
     return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      height: 64,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: VSPColors.surface, // Dark card bg
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: isManaged ? Border.all(color: VSPColors.accent, width: 1.5) : Border.all(color: VSPColors.divider, width: 0.5),
+        border: Border.all(
+          color: isManaged ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider, 
+          width: isManaged ? 1.5 : 1,
+        ),
+        boxShadow: isManaged ? [
+          BoxShadow(
+            color: VSPColors.accent.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          )
+        ] : null,
       ),
       child: Row(
         children: [
-          // Avatar/Logo
-          if (slot['type'] == 'team')
-            Container(
-               width: 40, height: 40,
-               decoration: BoxDecoration(
-                 shape: BoxShape.circle,
-                 border: Border.all(color: VSPColors.divider, width: 1),
-                 image: DecorationImage(image: NetworkImage(slot['logo']), fit: BoxFit.cover),
-               ),
-            )
-          else
-             Container(
-               width: 40, height: 40,
-               decoration: BoxDecoration(
-                 shape: BoxShape.circle,
-                 border: Border.all(color: VSPColors.divider, width: 1),
-                 image: DecorationImage(image: NetworkImage(slot['image']), fit: BoxFit.cover),
-               ),
+          // Avatar/Logo with Fallback
+          Container(
+            width: 36,
+            height: 36,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: VSPColors.surfaceAlt,
+              border: Border.all(color: VSPColors.divider, width: 1),
             ),
+            child: const Icon(Icons.person_outline, size: 20, color: VSPColors.textSecondary),
+          ),
           
           const SizedBox(width: 12),
           
@@ -349,32 +387,22 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               children: [
                 Text(
                   slot['name'],
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
-                  slot['subtitle'], // 'Team', 'GK', etc
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                  slot['subtitle'],
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 10),
                 ),
               ],
             ),
           ),
-
-          // Edit Actions or Team Stack
-          if (slot['type'] == 'team')
-             SizedBox(
-               width: 60,
-               height: 30,
-               child: Stack(
-                 children: [
-                    _buildMiniAvatar(0, VSPColors.error),
-                    _buildMiniAvatar(1, Colors.blue),
-                    _buildMiniAvatar(2, VSPColors.accent),
-                 ],
-               ),
-             ),
-             
-          if (isManaged)
-             const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 20),
+          
+          if (isManaged) ...[
+             const Icon(Icons.more_horiz, color: VSPColors.textSecondary, size: 20),
+          ],
         ],
       ),
     );
@@ -389,6 +417,34 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
          child: const Icon(Icons.person, size: 10, color: Colors.white), // Placeholder for stacked players
        ),
      );
+  }
+
+  Future<void> _selectDate(BuildContext context) async {
+    final DateTime? picked = await showDatePicker(
+      context: context,
+      initialDate: _baseDate.add(Duration(days: _selectedDayIndex)),
+      firstDate: DateTime.now().subtract(const Duration(days: 365)),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: VSPColors.accent,
+              onPrimary: VSPColors.background,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
+            ),
+          ),
+          child: child!,
+        );
+      },
+    );
+    if (picked != null) {
+      setState(() {
+        _baseDate = DateTime(picked.year, picked.month, picked.day);
+        _selectedDayIndex = 0;
+      });
+    }
   }
 
   void _showBookingModal({required bool isEdit, required Map<String, dynamic> slot}) {
@@ -441,7 +497,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               const SizedBox(height: 15),
 
               _buildInputLabel('Date'),
-              _buildPillInput(initialValue: DateFormat('yyyy/MM/dd').format(DateTime.now().add(Duration(days: _selectedDayIndex))), enabled: false),
+              _buildPillInput(initialValue: DateFormat('yyyy/MM/dd').format(_baseDate.add(Duration(days: _selectedDayIndex))), enabled: false),
               const SizedBox(height: 15),
 
               _buildInputLabel('Time Slot'),
@@ -498,7 +554,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                           final authProvider = Provider.of<AuthProvider>(context, listen: false);
                           final uid = authProvider.firebaseUser!.uid;
 
-                          final selectedDate = DateTime.now().add(Duration(days: _selectedDayIndex));
+                          final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
                           final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
                           final endTime = startTime.add(const Duration(hours: 1));
 
@@ -590,4 +646,3 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     );
   }
 }
-

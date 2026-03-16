@@ -57,6 +57,10 @@ class BookingProvider with ChangeNotifier {
     BookingType? bookingType,
     String? opponentTeamId,
     String? opponentTeamName,
+    String? playerTeamId,
+    String? playerTeamName,
+    int? currentPlayers,
+    int? maxPlayers,
   }) {
     if (_currentDraft != null) {
       _currentDraft = _currentDraft!.copyWith(
@@ -70,6 +74,10 @@ class BookingProvider with ChangeNotifier {
         bookingType: bookingType,
         opponentTeamId: opponentTeamId,
         opponentTeamName: opponentTeamName,
+        playerTeamId: playerTeamId,
+        playerTeamName: playerTeamName,
+        currentPlayers: currentPlayers,
+        maxPlayers: maxPlayers,
       );
       notifyListeners();
     }

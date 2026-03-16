@@ -202,7 +202,7 @@ class _SetPasswordScreenState extends State<SetPasswordScreen> {
                     height: 5,
                     decoration: BoxDecoration(
                       color: VSPColors.divider,
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
                     ),
                   ),
                 ),

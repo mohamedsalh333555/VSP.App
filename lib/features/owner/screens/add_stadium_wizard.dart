@@ -280,8 +280,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
       final user = auth.firebaseUser;
       
-      debugPrint("Auth user before save: $user");
-
       if (user == null) {
         _showError("Authentication lost. Please login again.");
         return;
@@ -479,6 +477,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
           const SizedBox(height: 30),
           _buildPrimaryButton('Continue', _nextPage),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
     );
@@ -522,7 +521,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
              _buildTextField(
                'Ball Rental Price (EGP)', 
                '20.0', 
-               controller: _ballPriceController,
+              controller: _ballPriceController,
                maxLength: 5,
                keyboardType: const TextInputType.numberWithOptions(decimal: true),
                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
@@ -530,6 +529,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           ],
           const SizedBox(height: 40),
           _buildPrimaryButton('Continue', _nextPage),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
     );
@@ -587,6 +587,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
           const SizedBox(height: 40),
           _buildPrimaryButton('Submit Stadium', _nextPage, isLoading: _isSaving),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
     );

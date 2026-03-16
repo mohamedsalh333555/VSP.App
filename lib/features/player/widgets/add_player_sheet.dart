@@ -43,7 +43,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   }
 
   void _inviteViaWhatsApp() {
-    Share.share("Hey! Download VSP app and join my team: https://vsp.app/download");
+    Share.share("Hey! Join my team on the VSP app. Download the app and search for my phone number to find me!");
   }
 
   @override

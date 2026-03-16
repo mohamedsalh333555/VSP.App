@@ -33,7 +33,7 @@ class PrimaryButton extends StatelessWidget {
           backgroundColor: color ?? VSPColors.accent,
           foregroundColor: textColor ?? VSPColors.background,
           shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.md),
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
           elevation: 0,
           disabledBackgroundColor: VSPColors.surface,

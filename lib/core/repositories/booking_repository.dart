@@ -104,11 +104,33 @@ class FirestoreBookingRepository implements BookingRepository {
         _sendChallengeNotification(draft);
       }
 
+      // ── Owner Notification Logic ──
+      _sendOwnerNotification(draft, docRef.id);
+
       debugPrint('✅ Booking created successfully: ${docRef.id}');
       return booking;
     } catch (e) {
       debugPrint('❌ Error creating booking: $e');
       rethrow;
+    }
+  }
+
+  Future<void> _sendOwnerNotification(BookingDraft draft, String bookingId) async {
+    try {
+      final db = DatabaseService();
+      await db.sendNotification(
+        draft.ownerId,
+        AppNotification(
+          id: '',
+          title: 'New Booking Received! 💰',
+          body: '${draft.playerTeamName ?? "A player"} booked ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)} at ${DateFormat('h:mm a').format(draft.startTime)}.',
+          type: 'info',
+          createdAt: DateTime.now(),
+          bookingId: bookingId,
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error sending owner notification: $e');
     }
   }
 
@@ -386,15 +408,17 @@ class MockBookingRepository implements BookingRepository {
   }
 
   @override
-  Stream<List<Booking>> getUserBookings(String userId) {
-    return _controller.stream.map(
+  Stream<List<Booking>> getUserBookings(String userId) async* {
+    yield _bookings.where((b) => b.createdByUserId == userId).toList();
+    yield* _controller.stream.map(
       (bookings) => bookings.where((b) => b.createdByUserId == userId).toList(),
     );
   }
 
   @override
-  Stream<List<Booking>> getOwnerBookings(String ownerId) {
-    return _controller.stream.map(
+  Stream<List<Booking>> getOwnerBookings(String ownerId) async* {
+    yield _bookings.where((b) => b.ownerId == ownerId).toList();
+    yield* _controller.stream.map(
       (bookings) => bookings.where((b) => b.ownerId == ownerId).toList(),
     );
   }
@@ -411,7 +435,11 @@ class MockBookingRepository implements BookingRepository {
   @override
   Future<bool> updateBookingStatus(
       String bookingId, BookingStatus status) async {
-    // Mock implementation - in real scenario, we'd update the booking
+    final index = _bookings.indexWhere((b) => b.id == bookingId);
+    if (index != -1) {
+      _bookings[index] = _bookings[index].copyWith(status: status);
+      _update();
+    }
     return true;
   }
 
@@ -423,10 +451,9 @@ class MockBookingRepository implements BookingRepository {
   @override
   Stream<List<Booking>> getUpcomingBookings(String userId) {
     final now = DateTime.now();
-    return _controller.stream.map(
+    return getUserBookings(userId).map(
       (bookings) => bookings
           .where((b) =>
-              b.createdByUserId == userId &&
               b.status == BookingStatus.confirmed &&
               b.startTime.isAfter(now))
           .toList(),
@@ -435,11 +462,10 @@ class MockBookingRepository implements BookingRepository {
 
   @override
   Stream<List<Booking>> getBookingHistory(String userId) {
-    return _controller.stream.map(
+    return getUserBookings(userId).map(
       (bookings) => bookings
           .where((b) =>
-              b.createdByUserId == userId &&
-              (b.status == BookingStatus.completed || b.isCompleted))
+              b.status == BookingStatus.completed || b.isCompleted)
           .toList(),
     );
   }

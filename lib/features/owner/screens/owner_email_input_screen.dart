@@ -239,7 +239,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
                       height: 5,
                       decoration: BoxDecoration(
                         color: VSPColors.textPrimary,
-                        borderRadius: BorderRadius.circular(100),
+                        borderRadius: BorderRadius.circular(VSPRadius.full),
                       ),
                     ),
                   ),

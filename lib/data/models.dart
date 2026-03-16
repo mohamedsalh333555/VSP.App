@@ -100,6 +100,7 @@ class Stadium {
   }
 
   // Mock data
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<Stadium> getMockStadiums() {
     return [
       Stadium(
@@ -344,6 +345,7 @@ class Review {
     required this.timeAgo,
   });
 
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<Review> getMockReviews() {
     return [
       Review(
@@ -384,6 +386,7 @@ class TimeSlot {
 
   String get displayTime => '$startTime < $endTime';
 
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<TimeSlot> getMockTimeSlots() {
     return [
       TimeSlot(
@@ -782,7 +785,7 @@ class Booking {
       rentBall: draft.rentBall,
       totalPrice: draft.totalPrice,
       currency: draft.currency,
-      paymentMethod: draft.paymentMethod ?? 'card',
+      paymentMethod: draft.paymentMethod ?? 'cash', // Cash-only MVP default
       paymentTransactionId: draft.paymentTransactionId,
       status: status,
       createdByUserId: userId,
@@ -1052,6 +1055,7 @@ class Team {
   }
 
   // Mock data
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<Team> getMockTeams() {
     return [
       Team(
@@ -1362,6 +1366,7 @@ class VSP1v1Player {
     };
   }
 
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<VSP1v1Player> getMockStandings() {
     return [
       VSP1v1Player(
@@ -1657,6 +1662,7 @@ class Championship {
 
 
   // Mock data
+  // -- DEMO MOCK REGION (Safe to omit in production) --
   static List<Championship> getMockChampionships() {
     return [
       Championship(
@@ -1841,4 +1847,5 @@ class TournamentMatch {
 
 // === VSP OFFICIAL 1v1 LEAGUE MODELS ===
 // (Duplicated class removed, using the one defined above)
+
 

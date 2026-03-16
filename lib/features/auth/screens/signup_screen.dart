@@ -154,7 +154,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   left: 24.0, 
                   right: 24.0, 
                   top: 0, 
-                  bottom: MediaQuery.of(context).viewInsets.bottom + 40,
+                  bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,

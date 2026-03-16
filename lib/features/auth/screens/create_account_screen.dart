@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../shared/animations/vsp_fade_in.dart';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -90,22 +90,6 @@ class CreateAccountScreen extends StatelessWidget {
                           context, 
                           icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
                           onTap: () => Navigator.pop(context),
-                        ),
-                        const Spacer(),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                          decoration: BoxDecoration(
-                            color: VSPColors.surfaceAlt,
-                            borderRadius: BorderRadius.circular(VSPRadius.full),
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
-                          ),
-                          child: Text(
-                            isUserOwner ? 'Pro Owner' : 'Player Flow',
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              color: VSPColors.accent,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
                         ),
                       ],
                     ),
@@ -203,44 +187,62 @@ class CreateAccountScreen extends StatelessWidget {
 
                     const SizedBox(height: 32),
 
-                    // Google Sign-In
-                    if (isMobile) 
-                      VSPFadeInItem(
-                        index: 5,
-                        child: _SocialButton(
-                          width: double.infinity,
-                          height: 56,
-                          iconWidget: Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: [
-                              Image.network(
-                                'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
-                                width: 20,
-                                height: 20,
+                    // Social Sign-In Buttons (Google & Apple)
+                    VSPFadeInItem(
+                      index: 5,
+                      child: Row(
+                        children: [
+                          // 🟢 زر Apple يظهر فقط إذا كان الجهاز آيفون أو ماك
+                          if (!kIsWeb && Platform.isIOS) ...[
+                            Expanded(
+                              child: _SocialButton(
+                                height: 56,
+                                icon: Icons.apple,
+                                // Apple Sign-In not yet implemented: disabled, not misleading.
+                                onPressed: null,
                               ),
-                              const SizedBox(width: 12),
-                              Text(
-                                'Continue with Google',
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.bold,
-                                  color: VSPColors.textPrimary,
-                                ),
+                            ),
+                            const SizedBox(width: 12),
+                          ],
+                          
+                          // 🟢 زر Google يظهر للجميع
+                          Expanded(
+                            child: _SocialButton(
+                              height: 56,
+                              iconWidget: Row(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Image.network(
+                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+                                    width: 20,
+                                    height: 20,
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Text(
+                                    languageProvider.isArabic ? 'جوجل' : 'Google',
+                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                      fontWeight: FontWeight.bold,
+                                      color: VSPColors.textPrimary,
+                                    ),
+                                  ),
+                                ],
                               ),
-                            ],
+                              onPressed: () async {
+                                authProvider.setUserType(isUserOwner ? 'owner' : 'player');
+                                final success = await authProvider.signInWithGoogle();
+                                if (success && context.mounted) {
+                                  Navigator.pushAndRemoveUntil(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => const RootScreen()),
+                                    (route) => false,
+                                  );
+                                }
+                              },
+                            ),
                           ),
-                          onPressed: () async {
-                            authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                            final success = await authProvider.signInWithGoogle();
-                            if (success && context.mounted) {
-                              Navigator.pushAndRemoveUntil(
-                                context,
-                                MaterialPageRoute(builder: (_) => const RootScreen()),
-                                (route) => false,
-                              );
-                            }
-                          },
-                        ),
+                        ],
                       ),
+                    ),
 
                     const SizedBox(height: 48),
 
@@ -307,11 +309,7 @@ class CreateAccountScreen extends StatelessWidget {
       ),
     );
   }
-
-    ),
-);
-  }
-}
+} // end CreateAccountScreen
 
 /// زر أخضر نيون كبير
 class _NeonButton extends StatelessWidget {
@@ -354,7 +352,7 @@ class _NeonButton extends StatelessWidget {
 class _SocialButton extends StatelessWidget {
   final IconData? icon;
   final Widget? iconWidget;
-  final VoidCallback onPressed;
+  final VoidCallback? onPressed; // nullable: null = disabled
   final double? width;
   final double? height;
 

@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
 import '../../core/models/user_model.dart';
@@ -356,6 +357,19 @@ class DatabaseService {
         bookingId: ref.id,
       );
       await _firestore.collection('users').doc(bookingData['createdByUserId']).collection('notifications').add(notification.toFirestore());
+
+      // Notify Owner
+      if (bookingData['ownerId'] != null) {
+        final ownerNotification = AppNotification(
+          id: '',
+          title: 'New Booking Received! 💰',
+          body: '${bookingData['playerTeamName'] ?? "A player"} booked ${bookingData['stadiumName']} on ${DateFormat('MMM d').format((bookingData['startTime'] as Timestamp).toDate())} at ${DateFormat('h:mm a').format((bookingData['startTime'] as Timestamp).toDate())}.',
+          type: 'info',
+          createdAt: DateTime.now(),
+          bookingId: ref.id,
+        );
+        await _firestore.collection('users').doc(bookingData['ownerId']).collection('notifications').add(ownerNotification.toFirestore());
+      }
 
       return ref.id;
     } catch (e) {
@@ -857,6 +871,32 @@ class DatabaseService {
     }
   }
 
+  /// Host-only: remove a specific participant from a public match
+  Future<bool> removeParticipantFromPublicMatch(String bookingId, String userId) async {
+    try {
+      final docRef = _firestore.collection('bookings').doc(bookingId);
+      
+      await _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        if (!doc.exists) throw 'Match not found';
+        
+        final data = doc.data() as Map<String, dynamic>;
+        final joined = List<String>.from(data['joinedUserIds'] ?? []);
+        
+        if (!joined.contains(userId)) throw 'User is not a participant';
+        
+        transaction.update(docRef, {
+          'currentPlayers': FieldValue.increment(-1),
+          'joinedUserIds': FieldValue.arrayRemove([userId]),
+        });
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error removing participant from public match: $e');
+      return false;
+    }
+  }
+
   // BETA READY: Unified team fetch for Captains AND Members
   Future<Team?> getUserTeam(String userId) async {
     try {
@@ -1139,7 +1179,7 @@ class DatabaseService {
         .map((snapshot) {
           if (snapshot.docs.isEmpty) {
             // For demo purposes, return mock data if DB is empty
-            return VSP1v1Player.getMockStandings();
+            return [];
           }
           
           List<VSP1v1Player> players = [];

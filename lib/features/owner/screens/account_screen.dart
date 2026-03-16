@@ -6,11 +6,92 @@ import '../../../core/widgets/shimmer_image.dart';
 import 'add_stadium_wizard.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
-class AccountScreen extends StatelessWidget {
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/stadium_provider.dart';
+import '../../../data/models.dart';
+
+class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
 
   @override
+  State<AccountScreen> createState() => _AccountScreenState();
+}
+
+class _AccountScreenState extends State<AccountScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _addressController;
+  late TextEditingController _socialController;
+  bool _isLoading = false;
+  bool _isLocating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final user = authProvider.userModel;
+
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _addressController = TextEditingController(text: user?.governorate ?? '');
+    _socialController = TextEditingController(text: user?.additionalData?['socialMedia'] ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _socialController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveData() async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty) {
+      VSPFeedback.showError(context, 'Name cannot be empty');
+      return;
+    }
+    if (phone.isEmpty) {
+      VSPFeedback.showError(context, 'Phone number cannot be empty');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.updateProfile({
+      'name': name,
+      'phone': phone,
+      'governorate': _addressController.text.trim(),
+      'additionalData': {
+        ...authProvider.userModel?.additionalData ?? {},
+        'socialMedia': _socialController.text.trim(),
+      }
+    });
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (success) {
+        VSPFeedback.showSuccess(context, 'Changes Saved Successfully');
+        Navigator.pop(context);
+      } else {
+        VSPFeedback.showError(context, 'Failed to save changes');
+      }
+    }
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final stadiums = stadiumProvider.stadiums;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -34,78 +115,82 @@ class AccountScreen extends StatelessWidget {
             // Stadiums List (Horizontal)
             SizedBox(
               height: 200,
-              child: ListView(
-                scrollDirection: Axis.horizontal,
-                children: [
-                   _buildStadiumCard(context),
-                   const SizedBox(width: 16),
-                   // Placeholder for seeing another one
-                   Opacity(opacity: 0.5, child: _buildStadiumCard(context)),
-                ],
-              ),
+              child: stadiums.isEmpty
+                ? const Center(child: Text('No stadiums added yet'))
+                : ListView.builder(
+                    scrollDirection: Axis.horizontal,
+                    itemCount: stadiums.length,
+                    itemBuilder: (context, index) => Padding(
+                      padding: const EdgeInsets.only(right: 16),
+                      child: _buildStadiumCard(context, stadiums[index]),
+                    ),
+                  ),
             ),
             const SizedBox(height: 24),
 
             // Owner Info Form
             _buildLabel(context, 'Owner Name'),
-            _buildTextField(context, hint: 'Sal acd'),
+            _buildTextField(context, controller: _nameController, hint: 'Enter your name'),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Number'),
-            _buildTextField(context, hint: '+20 0111000222'),
+            _buildTextField(context, controller: _phoneController, hint: 'Enter your phone', keyboardType: TextInputType.phone),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Email'),
-            _buildTextField(context, hint: 'hana.mohamed@gmail.com'),
+            _buildTextField(context, controller: _emailController, hint: 'Enter your email', enabled: false),
             const SizedBox(height: 16),
 
-            _buildLabel(context, 'Add Address'),
-             Container(
-              height: 150,
-              width: double.infinity,
-              clipBehavior: Clip.antiAlias,
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.only(
-                  topLeft: Radius.circular(VSPRadius.md),
-                  topRight: Radius.circular(VSPRadius.md),
-                ),
-              ),
-              child: Stack(
-                children: [
-                   ShimmerImage(
-                    imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80',
-                    fit: BoxFit.cover,
-                    borderRadius: 0,
-                  ),
-                  const Center(
-                    child: Icon(Icons.location_on, size: 40, color: Colors.red),
-                  ),
-                ],
-              ),
-            ),
+            _buildLabel(context, 'Location'),
             Container(
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(VSPRadius.md),
-                  bottomRight: Radius.circular(VSPRadius.md),
-                ),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
               ),
-              child: TextField(
-                style: Theme.of(context).textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Egypt - Aswan - Elaha Youth Center',
-                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                   border: InputBorder.none,
-                   contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-                  prefixIcon: const Icon(Icons.edit_location_alt, color: VSPColors.textSecondary, size: 20),
-                ),
+              child: Row(
+                children: [
+                  const Icon(Icons.location_on, color: VSPColors.accent, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Governorate',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                        ),
+                        Text(
+                          _addressController.text.isEmpty ? 'Not set' : _addressController.text,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                  _isLocating 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
+                  : IconButton(
+                    icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                    onPressed: () async {
+                      setState(() => _isLocating = true);
+                      await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
+                      if (mounted) {
+                        setState(() {
+                          _addressController.text = Provider.of<AuthProvider>(context, listen: false).governorate;
+                          _isLocating = false;
+                        });
+                        VSPFeedback.showSuccess(context, 'Location updated!');
+                      }
+                    },
+                  ),
+                ],
               ),
             ),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Social media'),
-            _buildTextField(context, hint: 'https://www.facebook.com/search/pages/?q=VSP&sde=Abrgg...'),
+            _buildTextField(context, controller: _socialController, hint: 'Enter social media link'),
             const SizedBox(height: 24),
 
             // Documents
@@ -117,7 +202,7 @@ class AccountScreen extends StatelessWidget {
             _buildDocCard(context, 'National ID Back'),
             const SizedBox(height: 12),
 
-            _buildLabel(context, 'Tex card'), // Sic: Screenshot says "Tex card"
+            _buildLabel(context, 'Tax card'),
             _buildDocCard(context, 'Tax card'),
             const SizedBox(height: 12),
 
@@ -127,10 +212,8 @@ class AccountScreen extends StatelessWidget {
 
             PrimaryButton(
               text: 'Confirm',
-              onPressed: () {
-                 VSPFeedback.showSuccess(context, 'Changes Saved Successfully');
-                 Navigator.pop(context);
-              },
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _saveData,
             ),
             const SizedBox(height: 20),
           ],
@@ -138,7 +221,8 @@ class AccountScreen extends StatelessWidget {
       ),
     );
   }
-  Widget _buildStadiumCard(BuildContext context) {
+
+  Widget _buildStadiumCard(BuildContext context, Stadium stadium) {
     return SizedBox(
       width: 320,
       height: 200,
@@ -154,7 +238,7 @@ class AccountScreen extends StatelessWidget {
               child: Stack(
                 children: [
                     ShimmerImage(
-                      imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80',
+                      imageUrl: stadium.imageUrl,
                       width: 320,
                       height: 200,
                       borderRadius: VSPRadius.lg,
@@ -174,7 +258,7 @@ class AccountScreen extends StatelessWidget {
                 children: [
                   const Icon(Icons.location_on, color: VSPColors.accent, size: 16),
                   const SizedBox(width: 4),
-                  Text('Madrid', style: Theme.of(context).textTheme.titleSmall),
+                  Text(stadium.location, style: Theme.of(context).textTheme.titleSmall),
                 ],
               ),
             ),
@@ -183,7 +267,6 @@ class AccountScreen extends StatelessWidget {
               right: 10,
               child: GestureDetector(
                 onTap: () {
-                   // Navigate to AddStadiumWizard in Edit Mode
                    Navigator.push(context, MaterialPageRoute(builder: (_) => const AddStadiumWizard())); 
                 },
                 child: const Icon(Icons.edit_square, color: VSPColors.accent),
@@ -199,8 +282,8 @@ class AccountScreen extends StatelessWidget {
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Santiago Bernabeoa 11 VS 11 Football', style: Theme.of(context).textTheme.bodySmall),
-                            Text('Seats K90 person', style: Theme.of(context).textTheme.labelSmall),
+                            Expanded(child: Text(stadium.name, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
+                            Text('Seats ${stadium.seatsCapacity} person', style: Theme.of(context).textTheme.labelSmall),
                           ],
                         ),
                         const SizedBox(height: 4),
@@ -211,19 +294,19 @@ class AccountScreen extends StatelessWidget {
                               children: [
                                 Text('Baths', style: Theme.of(context).textTheme.labelSmall),
                                 const SizedBox(width: 4),
-                                Icon(Icons.male, color: VSPColors.textPrimary, size: 12),
-                                Icon(Icons.female, color: VSPColors.textPrimary, size: 12),
+                                const Icon(Icons.male, color: VSPColors.textPrimary, size: 12),
+                                const Icon(Icons.female, color: VSPColors.textPrimary, size: 12),
                               ],
                             ),
-                            Text('Cafeteria', style: Theme.of(context).textTheme.labelSmall),
+                            Text(stadium.cafeteria > 0 ? 'Cafeteria' : 'No Cafeteria', style: Theme.of(context).textTheme.labelSmall),
                           ],
                         ),
                         const SizedBox(height: 4),
                         Row(
                           mainAxisAlignment: MainAxisAlignment.spaceBetween,
                           children: [
-                            Text('Price 1,000,000 eu', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.accent)),
-                            Text('Jerash', style: Theme.of(context).textTheme.labelSmall),
+                            Text('Price ${stadium.pricePerHour} EGP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.accent)),
+                            Text(stadium.area, style: Theme.of(context).textTheme.labelSmall),
                           ],
                         ),
                       ],
@@ -232,8 +315,7 @@ class AccountScreen extends StatelessWidget {
                 ],
               ),
             ),
-          ],
-        ),
+        ],
       ),
     );
   }
@@ -248,15 +330,20 @@ class AccountScreen extends StatelessWidget {
      );
   }
 
-  Widget _buildTextField(BuildContext context, {required String hint}) {
+  Widget _buildTextField(BuildContext context, {required TextEditingController controller, required String hint, bool enabled = true, TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
       ),
       child: TextField(
-        style: Theme.of(context).textTheme.bodyMedium,
+        controller: controller,
+        enabled: enabled,
+        keyboardType: keyboardType,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),

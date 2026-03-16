@@ -174,7 +174,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
       child: Container(
         padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.sm),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent.withOpacity(0.1) : Colors.transparent,
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent,
           border: Border(
             left: BorderSide(
               color: isSelected ? VSPColors.accent : Colors.transparent,
@@ -212,8 +212,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         return _buildSportsContent();
       case 'Price Range':
         return _buildPriceRangeContent();
-      case 'Time':
-        return _buildTimeContent();
       case 'Ratings':
         return _buildRatingsContent();
       case 'Services':
@@ -313,18 +311,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildTimeContent() {
-    return const Center(
-      child: Text(
-        'Time filters coming soon',
-        style: TextStyle(
-          color: VSPColors.textSecondary,
-          fontSize: 14,
-        ),
-      ),
-    );
-  }
-
   Widget _buildRatingsContent() {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -384,7 +370,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   _servicesFilters[entry.key] = selected;
                 });
               },
-              selectedColor: VSPColors.accent.withOpacity(0.2),
+              selectedColor: VSPColors.accent.withValues(alpha: 0.2),
               checkmarkColor: VSPColors.accent,
               labelStyle: TextStyle(
                 color: entry.value ? VSPColors.accent : VSPColors.textPrimary,

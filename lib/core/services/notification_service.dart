@@ -36,16 +36,12 @@ class NotificationService {
   Future<void> initialize(GlobalKey<NavigatorState> navKey) async {
     _navigatorKey = navKey;
 
-    // 1. Get Token (Silent)
-    getToken().then((token) => debugPrint("FCM Token: $token"));
+    // 1. Get & store token (not logged — tokens are device credentials)
+    getToken();
 
     // 2. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
-      debugPrint('Got a message whilst in the foreground!');
-      debugPrint('Message data: ${message.data}');
-
       if (message.notification != null) {
-        debugPrint('Message also contained a notification: ${message.notification}');
         // Show local notification
         _showLocalNotification(message);
       }
@@ -65,8 +61,18 @@ class NotificationService {
     // 5. Initialize Local Notifications Settings
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('@drawable/ic_stat_logo');
-    const InitializationSettings initializationSettings =
-        InitializationSettings(android: initializationSettingsAndroid);
+    
+    const DarwinInitializationSettings initializationSettingsDarwin =
+        DarwinInitializationSettings(
+      requestAlertPermission: true,
+      requestBadgePermission: true,
+      requestSoundPermission: true,
+    );
+
+    const InitializationSettings initializationSettings = InitializationSettings(
+      android: initializationSettingsAndroid,
+      iOS: initializationSettingsDarwin,
+    );
     
     await _localNotifications.initialize(
       initializationSettings,
@@ -121,8 +127,17 @@ class NotificationService {
       priority: Priority.high,
     );
     
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    const DarwinNotificationDetails darwinPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: darwinPlatformChannelSpecifics,
+    );
 
     await _localNotifications.show(
       message.hashCode,
@@ -145,8 +160,18 @@ class NotificationService {
       importance: Importance.max,
       priority: Priority.high,
     );
-    const NotificationDetails platformChannelSpecifics =
-        NotificationDetails(android: androidPlatformChannelSpecifics);
+    
+    const DarwinNotificationDetails darwinPlatformChannelSpecifics =
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+      android: androidPlatformChannelSpecifics,
+      iOS: darwinPlatformChannelSpecifics,
+    );
 
     await NotificationService()._localNotifications.show(
       stadiumName.hashCode,

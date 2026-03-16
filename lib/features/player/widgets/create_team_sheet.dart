@@ -64,8 +64,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         'captainName': auth.userModel?.name ?? 'Captain',
         'captainPhone': auth.userModel?.phone,
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
-        // Use uploaded URL or fallback to a default generic sport image
-        'logoUrl': _uploadedLogoUrl ?? 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
+        // Use uploaded URL or fallback to empty string (no fake generic image)
+        'logoUrl': _uploadedLogoUrl ?? '',
         'playersCount': _teamMembers.length + 1, // +1 for captain
         'maxPlayers': 12,
         'memberUids': [

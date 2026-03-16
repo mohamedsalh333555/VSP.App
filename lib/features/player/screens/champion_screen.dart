@@ -322,17 +322,15 @@ class ChampionScreenState extends State<ChampionScreen>
     return StreamBuilder<List<Team>>(
       stream: DatabaseService().getTeams(governorate: _selectedLocation),
       builder: (context, snapshot) {
-        List<Team> teams = [];
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+
+        List<Team> teams = snapshot.data ?? [];
         
-        if (AppConfig.demoMode) {
-          teams = Team.getMockTeams()
-              .where((t) => t.governorate == _selectedLocation)
-              .toList();
-        } else {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-          }
-          teams = snapshot.data ?? [];
+        // Use mock only if in demoMode AND no real data
+        if (teams.isEmpty && AppConfig.demoMode) {
+          teams = Team.getMockTeams();
         }
 
         if (teams.isEmpty) {
@@ -353,7 +351,7 @@ class ChampionScreenState extends State<ChampionScreen>
         
         if (teams.length < 3) {
           return ListView.builder(
-            padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
+            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
             physics: const BouncingScrollPhysics(),
             itemCount: teams.length,
             itemBuilder: (ctx, i) => VSPFadeInItem(
@@ -591,10 +589,10 @@ class ChampionScreenState extends State<ChampionScreen>
                        child: ClipRRect(
                          borderRadius: BorderRadius.circular(12),
                          child: CachedNetworkImage(
-                           imageUrl: 'https://randomuser.me/api/portraits/men/${index + 20 + rank}.jpg',
+                           imageUrl: '', // Removed fake randomuser.me avatars
                            fit: BoxFit.cover,
                             placeholder: (context, url) => Container(color: VSPColors.surfaceAlt),
-                            errorWidget: (context, url, error) => Container(color: VSPColors.surface), 
+                            errorWidget: (context, url, error) => const Icon(Icons.person, color: VSPColors.textSecondary, size: 16), 
                          ),
                        ),
                      )
@@ -620,8 +618,8 @@ class ChampionScreenState extends State<ChampionScreen>
                    mainAxisAlignment: MainAxisAlignment.center,
                    children: [
                      Icon(
-                       rank == 3 ? Icons.arrow_drop_down : Icons.arrow_drop_up,
-                        color: rank == 3 ? VSPColors.error : VSPColors.accent,
+                       Icons.remove, // Neutral fallback for nonexistent trend data
+                        color: VSPColors.textSecondary,
                        size: 16,
                      ),
                      Text(
@@ -705,9 +703,9 @@ class ChampionScreenState extends State<ChampionScreen>
           ),
           
           // Small Trend Arrow
-          Icon(
-             rank % 2 == 0 ? Icons.arrow_drop_down : Icons.arrow_drop_up, 
-             color: rank % 2 == 0 ? VSPColors.error : VSPColors.accent, 
+          const Icon(
+             Icons.remove, // Neutral fallback for nonexistent trend data
+             color: VSPColors.textSecondary, 
              size: 16
           ),
           const SizedBox(width: 4),
@@ -763,7 +761,7 @@ class ChampionScreenState extends State<ChampionScreen>
         }
 
         return ListView.builder(
-          padding: const EdgeInsets.symmetric(vertical: 16),
+          padding: EdgeInsets.fromLTRB(0, 16, 0, MediaQuery.of(context).padding.bottom + 110),
           physics: const BouncingScrollPhysics(),
           itemCount: championships.length,
           itemBuilder: (context, index) {

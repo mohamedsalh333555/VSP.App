@@ -16,6 +16,11 @@ class VSPColors {
 
   static const textPrimary = Color(0xFFFFFFFF);
   static const textSecondary = Color(0xFFB0B3B8); // Slightly lighter for better readability
+  
+  // 🟢 New Tokens Added for Consistency
+  static const cardGreen = Color(0xFF2D4B15);
+  static const cardDarkGreen = Color(0xFF1E330E);
+  static const surfaceDark = Color(0xFF1E1E1E);
 }
 
 class VSPRadius {

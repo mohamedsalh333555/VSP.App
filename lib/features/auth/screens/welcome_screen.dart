@@ -1,14 +1,17 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/language_provider.dart';
 
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
 import 'login_screen.dart';
 import 'dart:ui';
-import '../ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/vsp_animated_button.dart';
 
 
 /// Welcome Screen - Initial landing page
@@ -67,6 +70,43 @@ class WelcomeScreen extends StatelessWidget {
               ),
             ),
 
+            // 🟢 زر تبديل اللغة (تمت إضافته هنا)
+            Positioned(
+              top: MediaQuery.of(context).padding.top + 16,
+              right: 24,
+              child: Consumer<LanguageProvider>(
+                builder: (context, langProvider, _) {
+                  return GestureDetector(
+                    onTap: () {
+                      // التبديل بضغطة واحدة
+                      langProvider.changeLanguage(langProvider.isArabic ? 'en' : 'ar');
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface.withOpacity(0.8),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.language, size: 16, color: VSPColors.accent),
+                          const SizedBox(width: 8),
+                          Text(
+                            langProvider.isArabic ? 'English' : 'عربي',
+                            style: const TextStyle(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+              ),
+            ),
+
             SafeArea(
               child: Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
@@ -77,13 +117,15 @@ class WelcomeScreen extends StatelessWidget {
 
                     // Brand Identity
                     GestureDetector(
-                      onLongPress: () async {
+                      // 🔒 DEV ONLY: Long-press to seed database.
+                      // Completely disabled in production (kDebugMode = false in release builds).
+                      onLongPress: kDebugMode ? () async {
                         VSPFeedback.showSuccess(context, 'Starting Data Migration...');
                         await DataMigration().seedDatabase();
                         if (context.mounted) {
                           VSPFeedback.showSuccess(context, 'Data Migration Completed!');
                         }
-                      },
+                      } : null,
                       child: Hero(
                         tag: 'app_logo',
                         child: Image.asset(
@@ -255,7 +297,9 @@ class WelcomeScreen extends StatelessWidget {
             ),
           ),
         ),
-      ),
-    );
+      ],
+    ),
+  ),
+);
   }
 }

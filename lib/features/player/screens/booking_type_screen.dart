@@ -104,7 +104,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
           ),
           // Continue Button
           Container(
-            padding: const EdgeInsets.all(VSPSpacing.lg),
+            padding: EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.lg, VSPSpacing.lg, MediaQuery.of(context).padding.bottom + 24),
             decoration: const BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.only(
@@ -143,10 +143,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       return;
     }
 
-    // Save choice to BookingProvider
-    final bookingProvider = context.read<BookingProvider>();
-    
-    // Map selection ID to correct BookingType and pass-through strings
+    // Map selection ID to correct BookingType
     BookingType type = BookingType.personal;
     String typeString = 'Personal';
 
@@ -158,15 +155,22 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       typeString = 'Challenge';
     }
 
-    debugPrint('🎯 Selection: $_selectedType -> Mapping to: $type (String: $typeString)');
 
-    // Save choice to BookingProvider
-    bookingProvider.updateDraft(
+    // CRITICAL FIX: Use setDraft (not updateDraft) to create a new draft skeleton
+    // with all required stadium/owner fields. updateDraft() is a no-op when draft is null.
+    final bookingProvider = context.read<BookingProvider>();
+    bookingProvider.setDraft(BookingDraft(
+      stadiumId: widget.stadium.id,
+      stadiumName: widget.stadium.name,
+      stadiumImageUrl: widget.stadium.imageUrl,
+      ownerId: widget.stadium.ownerId,
+      startTime: DateTime.now(), // placeholder - overwritten in BookingConfirmationScreen
+      endTime: DateTime.now().add(const Duration(hours: 1)), // placeholder
       bookingType: type,
-      isPrivate: _selectedType == 'Book a Pitch', 
-      opponentTeamId: null,
-      opponentTeamName: null,
-    );
+      isPrivate: _selectedType != 'Find Players', // public only for team/find-players
+      rentBall: false, // user sets this in confirmation
+      totalPrice: 0, // computed in confirmation
+    ));
 
     if (type == BookingType.challenge) {
       Navigator.push(

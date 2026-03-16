@@ -154,4 +154,50 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
                          Container(
                           padding: const EdgeInsets.all(VSPSpacing.md),
                           decoration: BoxDecoration(
-                            color: VSPColors.surface.with
+                            color: VSPColors.surface.withValues(alpha: 0.6),
+                            borderRadius: BorderRadius.circular(VSPRadius.xl),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                          ),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              VSPAnimatedButton(
+                                text: languageProvider.getText(AppStrings.getStarted),
+                                onPressed: () => _handleGetStarted(context),
+                              ),
+                            ],
+                          ),
+                        ),
+
+                        const SizedBox(height: 32),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+  }
+
+  Widget _buildAnimatedIcon() {
+    return ScaleTransition(
+      scale: _breath,
+      child: Container(
+        width: 120,
+        height: 120,
+        decoration: BoxDecoration(
+          shape: BoxShape.circle,
+          color: VSPColors.accent.withValues(alpha: 0.15),
+          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 2),
+        ),
+        child: const Icon(
+          Icons.check_rounded,
+          size: 64,
+          color: VSPColors.accent,
+        ),
+      ),
+    );
+  }
+}

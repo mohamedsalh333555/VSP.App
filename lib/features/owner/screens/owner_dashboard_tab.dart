@@ -1,3 +1,5 @@
+// Legacy / inactive screen - kept for reference
+// Replaced by OwnerDashboardScreen 
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:firebase_auth/firebase_auth.dart' hide AuthProvider;
@@ -9,6 +11,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 
+/// [LEGACY] This tab has been replaced by OwnerDashboardScreen.
+/// It is kept for reference but is no longer the active home screen.
 class OwnerDashboardTab extends StatefulWidget {
   const OwnerDashboardTab({super.key});
 

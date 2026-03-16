@@ -1,10 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../core/services/owner_document_service.dart';
 import '../../../../shared/widgets/vsp_upload_widgets.dart';
-import 'owner_main_screen.dart';
+import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/navigation/root_screen.dart';
 
 class DocumentUploadScreen extends StatefulWidget {
   const DocumentUploadScreen({super.key});
@@ -17,11 +20,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
 
-  // Form Controllers (Step 3)
-  final _nameController = TextEditingController(text: 'Sifa cc');
-  final _phoneController = TextEditingController(text: '+20 1000000232');
-  final _emailController = TextEditingController(text: 'sifaccom@gmail.com');
-  final _socialController = TextEditingController(text: 'https://wa.me/20100200222...');
+  // Form Controllers (Step 3) - Initialized in initState
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _socialController;
   
   final OwnerDocumentService _documentService = OwnerDocumentService();
 
@@ -31,9 +34,38 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   String? _commercialRegisterUrl;
   bool _isUploadingCommercial = false;
+  
+  bool _isSavingInfo = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _socialController = TextEditingController(text: user?.additionalData?['socialMedia'] ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _socialController.dispose();
+    _pageController.dispose();
+    super.dispose();
+  }
 
   // Generic upload handler
   Future<void> _handleUpload(OwnerDocumentType type) async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final uid = authProvider.currentUser?.uid;
+    if (uid == null || uid.isEmpty) {
+      VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+      return;
+    }
+
     try {
       final XFile? pickedFile = await ImagePicker().pickImage(source: ImageSource.gallery);
       if (pickedFile == null) return;
@@ -46,7 +78,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         }
       });
 
-      final url = await _documentService.uploadAndSave(type: type, filePath: pickedFile.path, uid: '');
+      final url = await _documentService.uploadAndSave(
+        type: type, 
+        filePath: pickedFile.path, 
+        uid: uid,
+      );
 
       if (mounted) {
         setState(() {
@@ -59,9 +95,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
       }
     } catch (e) {
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Upload failed: $e'), backgroundColor: Colors.red),
-        );
+        VSPFeedback.showError(context, 'Upload failed: $e');
       }
     } finally {
       if (mounted) {
@@ -76,6 +110,42 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     }
   }
 
+  Future<void> _saveFinalInfo() async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty) {
+      VSPFeedback.showError(context, 'Please enter your name');
+      return;
+    }
+    if (phone.isEmpty) {
+      VSPFeedback.showError(context, 'Please enter your phone number');
+      return;
+    }
+
+    setState(() => _isSavingInfo = true);
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+
+    final success = await authProvider.updateProfile({
+      'name': name,
+      'phone': phone,
+      'additionalData': {
+        ...authProvider.userModel?.additionalData ?? {},
+        'socialMedia': _socialController.text.trim(),
+      }
+    });
+
+    if (mounted) {
+      setState(() => _isSavingInfo = false);
+      if (success) {
+        VSPFeedback.showSuccess(context, 'Information Saved Successfully!');
+        _nextPage();
+      } else {
+        VSPFeedback.showError(context, 'Failed to save information');
+      }
+    }
+  }
+
   void _nextPage() {
     if (_currentStep < 2) {
       _pageController.nextPage(
@@ -86,18 +156,26 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         _currentStep++;
       });
     } else {
-      // Finish Flow -> Go to Dashboard
+      // Final step: set verification flags then route via RootScreen
+      _completeVerification();
+    }
+  }
+
+  Future<void> _completeVerification() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final success = await authProvider.updateProfile({
+      'isIdentityVerified': true,
+      'isRegistrationComplete': true,
+    });
+    if (!mounted) return;
+    if (success) {
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => const OwnerMainScreen()),
+        MaterialPageRoute(builder: (_) => const RootScreen()),
         (route) => false,
       );
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('Information Completed! Welcome to your Dashboard.'),
-          backgroundColor: VSPColors.accent,
-        ),
-      );
+    } else {
+      VSPFeedback.showError(context, 'Failed to complete verification');
     }
   }
 
@@ -274,25 +352,22 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
           ),
           const SizedBox(height: 20),
 
-          _buildTextField('Owner Name', 'Sifa cc', controller: _nameController),
+          _buildTextField('Owner Name', 'Enter your name', controller: _nameController),
           const SizedBox(height: 16),
-          _buildTextField('Number', '+20 1000000232', controller: _phoneController),
+          _buildTextField('Number', 'Enter your phone', controller: _phoneController),
           const SizedBox(height: 16),
-          _buildTextField('Email', 'sifaccom@gmail.com', controller: _emailController),
+          _buildTextField('Email', 'Enter your email', controller: _emailController, enabled: false),
           
           const SizedBox(height: 20),
           Text('Add Address', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
           const SizedBox(height: 10),
-          // Mock Map
+          // Mock Map Area (Neutralized)
           Container(
             height: 150,
             width: double.infinity,
             decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt, // Replaced fake map mockup image with neutral background
               borderRadius: BorderRadius.circular(VSPRadius.md),
-              image: const DecorationImage(
-                image: NetworkImage('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=800&q=80'), // Map mockup
-                fit: BoxFit.cover,
-              ),
             ),
              child:  Center(
               child: Container(
@@ -312,14 +387,21 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
             ),
           ),
            const SizedBox(height: 8),
-          Text('مركز شباب السلام', style: Theme.of(context).textTheme.labelSmall, textAlign: TextAlign.right),
+          Text(
+            _addressController.text.isEmpty ? 'Location not set' : _addressController.text,
+            style: Theme.of(context).textTheme.labelSmall,
+          ),
 
 
            const SizedBox(height: 20),
-          _buildTextField('Social media', 'https://wa.me/...', controller: _socialController),
+          _buildTextField('Social media', 'Enter social media link', controller: _socialController),
 
           const SizedBox(height: 40),
-          _buildPrimaryButton('Save', _nextPage),
+          _buildPrimaryButton(
+            'Save', 
+            _saveFinalInfo, 
+            isLoading: _isSavingInfo,
+          ),
         ],
       ),
     );
@@ -327,7 +409,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   // --- Helper Widgets (Reused design patterns) ---
 
- Widget _buildTextField(String label, String hint, {TextEditingController? controller}) {
+ Widget _buildTextField(String label, String hint, {TextEditingController? controller, bool enabled = true}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -335,13 +417,16 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
         const SizedBox(height: VSPSpacing.xs),
         Container(
           decoration: BoxDecoration(
-            color: VSPColors.surface,
+            color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
             borderRadius: BorderRadius.circular(VSPRadius.md), 
             border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
           ),
           child: TextField(
             controller: controller,
-            style: Theme.of(context).textTheme.bodyMedium,
+            enabled: enabled,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
+            ),
             decoration: InputDecoration(
               hintText: hint,
               hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
@@ -354,10 +439,11 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     );
   }
 
-  Widget _buildPrimaryButton(String text, VoidCallback onPressed, {bool isEnabled = true}) {
+  Widget _buildPrimaryButton(String text, VoidCallback onPressed, {bool isEnabled = true, bool isLoading = false}) {
     return PrimaryButton(
       text: text,
-      onPressed: isEnabled ? onPressed : () {}, 
+      isLoading: isLoading,
+      onPressed: isEnabled && !isLoading ? onPressed : null, 
     );
   }
 }

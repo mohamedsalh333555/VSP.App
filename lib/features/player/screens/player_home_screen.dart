@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
 import 'package:flutter/services.dart'; 
 import 'dart:ui';
 import 'package:intl/intl.dart';
@@ -156,14 +157,41 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           const ProfileScreen(),
         ],
       ),
-      // Bottom Navigation Bar
-      bottomNavigationBar: CustomPlayerNavBar(
+      // Bottom Navigation Bar - Updated to use Unified Widget
+      bottomNavigationBar: VspBottomNavBar(
         selectedIndex: _selectedIndex,
         onItemTapped: (index) {
           setState(() {
             _selectedIndex = index;
           });
         },
+        items: [
+          VspNavItem(
+            activeIcon: Icons.home_rounded,
+            inactiveIcon: Icons.home_outlined, 
+            label: 'Home',
+          ),
+          VspNavItem(
+            activeIcon: Icons.groups_rounded, 
+            inactiveIcon: Icons.groups_outlined,
+            label: 'Matches',
+          ),
+          VspNavItem(
+            activeIcon: Icons.emoji_events_rounded,
+            inactiveIcon: Icons.emoji_events_outlined,
+            label: 'Champion',
+          ),
+          VspNavItem(
+            activeIcon: Icons.bookmark_rounded,
+            inactiveIcon: Icons.bookmark_outline_rounded,
+            label: 'Booked',
+          ),
+          VspNavItem(
+            activeIcon: Icons.person_rounded,
+            inactiveIcon: Icons.person_outline_rounded,
+            label: 'Profile',
+          ),
+        ],
       ),
     );
   }
@@ -314,7 +342,9 @@ class _MatchCardState extends State<MatchCard> {
   bool _isLoading = false;
 
   void _onShare() {
-    VSPFeedback.showSuccess(context, 'Match link copied to clipboard!');
+    final shareContent = 'Match on VSP: ${widget.team.name} vs ${widget.team.stadium} - Ref# ${widget.team.id}';
+    Clipboard.setData(ClipboardData(text: shareContent));
+    VSPFeedback.showSuccess(context, 'Match reference copied to clipboard!');
   }
 
   @override
@@ -608,7 +638,9 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
   }
 
   void _onShare() {
-    VSPFeedback.showSuccess(context, 'Championship link copied to clipboard!');
+    final shareContent = 'Tournament on VSP: ${widget.championship.name} - Ref# ${widget.championship.id}';
+    Clipboard.setData(ClipboardData(text: shareContent));
+    VSPFeedback.showSuccess(context, 'Championship reference copied to clipboard!');
   }
 
   @override
@@ -808,146 +840,6 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
               ),
         ),
       ],
-    );
-  }
-}
-
-/// Model for Navbar Item
-class NavItem {
-  final IconData activeIcon;
-  final IconData inactiveIcon;
-  final String label;
-
-  NavItem({
-    required this.activeIcon,
-    required this.inactiveIcon,
-    required this.label,
-  });
-}
-
-/// Custom Bottom Navigation Bar for Player Flow (English Only)
-class CustomPlayerNavBar extends StatefulWidget {
-  final int selectedIndex;
-  final Function(int) onItemTapped;
-
-  const CustomPlayerNavBar({
-    super.key,
-    required this.selectedIndex,
-    required this.onItemTapped,
-  });
-
-  @override
-  State<CustomPlayerNavBar> createState() => _CustomPlayerNavBarState();
-}
-
-class _CustomPlayerNavBarState extends State<CustomPlayerNavBar> {
-  // Navigation bar item list
-  final List<NavItem> _navItems = [
-    NavItem(
-      activeIcon: Icons.home_rounded,
-      inactiveIcon: Icons.home_outlined, 
-      label: 'Home',
-    ),
-    NavItem(
-      activeIcon: Icons.groups_rounded, 
-      inactiveIcon: Icons.groups_outlined,
-      label: 'Matches',
-    ),
-    NavItem(
-      activeIcon: Icons.emoji_events_rounded,
-      inactiveIcon: Icons.emoji_events_outlined,
-      label: 'Champion',
-    ),
-    NavItem(
-      activeIcon: Icons.bookmark_rounded,
-      inactiveIcon: Icons.bookmark_outline_rounded,
-      label: 'Booked',
-    ),
-    NavItem(
-      activeIcon: Icons.person_rounded,
-      inactiveIcon: Icons.person_outline_rounded,
-      label: 'Profile',
-    ),
-  ];
-
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      margin: EdgeInsets.only(
-        left: 20, 
-        right: 20, 
-        bottom: MediaQuery.of(context).padding.bottom + 16,
-      ),
-      height: 65,
-      decoration: BoxDecoration(
-        color: VSPColors.surface.withValues(alpha: 0.85),
-        borderRadius: BorderRadius.circular(30),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
-          ),
-        ],
-      ),
-      child: ClipRRect(
-        borderRadius: BorderRadius.circular(30),
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 12),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
-              children: _navItems.asMap().entries.map((entry) {
-                final index = entry.key;
-                final item = entry.value;
-                final isSelected = index == widget.selectedIndex;
-
-                return GestureDetector(
-                  onTap: () {
-                    HapticFeedback.lightImpact();
-                    widget.onItemTapped(index);
-                  },
-                  behavior: HitTestBehavior.opaque,
-                  child: AnimatedContainer(
-                    duration: const Duration(milliseconds: 300),
-                    curve: Curves.easeInOut,
-                    padding: EdgeInsets.symmetric(
-                      horizontal: isSelected ? 16 : 12,
-                      vertical: isSelected ? 10 : 0,
-                    ),
-                    decoration: BoxDecoration(
-                      color: isSelected ? VSPColors.accent.withValues(alpha: 0.15) : Colors.transparent,
-                      borderRadius: BorderRadius.circular(20),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(
-                          isSelected ? item.activeIcon : item.inactiveIcon,
-                          color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                          size: 24,
-                        ),
-                        if (isSelected) ...[
-                          const SizedBox(width: 8),
-                          Text(
-                            item.label,
-                            style: const TextStyle(
-                              color: VSPColors.accent,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 12,
-                            ),
-                          ),
-                        ],
-                      ],
-                    ),
-                  ),
-                );
-              }).toList(),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

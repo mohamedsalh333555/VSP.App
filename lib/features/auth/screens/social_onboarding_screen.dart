@@ -331,7 +331,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                         ),
                 ),
               ),
-              const SizedBox(height: 40),
+              SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
             ],
           ),
         ),

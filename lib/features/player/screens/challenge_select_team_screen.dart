@@ -35,7 +35,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   bool _isLoadingH2H = false;
 
   // Mock History Teams (Should eventually come from Firestore too)
-  final List<Team> _historyTeams = Team.getMockTeams().take(3).toList();
+  final List<Team> _historyTeams = [];
   
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();

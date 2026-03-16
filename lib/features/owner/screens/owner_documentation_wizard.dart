@@ -99,7 +99,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       });
 
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final uid = authProvider.currentUser?.uid ?? 'demo_owner_uid';
+      final uid = authProvider.currentUser?.uid;
+      if (uid == null) {
+        setState(() => _uploadingStatus[key] = false);
+        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        return;
+      }
 
       final url = await _documentService.uploadAndSave(
         type: type,
@@ -300,6 +305,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             text: 'Save',
             onPressed: _nextPage,
           ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
     );
@@ -353,6 +359,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             text: 'Save', 
             onPressed: _nextPage,
           ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
     );

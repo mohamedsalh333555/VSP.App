@@ -24,42 +24,40 @@ class PaymentGatewayScreen extends StatefulWidget {
 }
 
 class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
-  final _cardNumberController = TextEditingController(text: '4582 1547 3265 1984');
-  final _expiryController = TextEditingController(text: '12/28');
-  final _cvvController = TextEditingController(text: '123');
-  final _nameController = TextEditingController();
-
   bool _isLoading = false;
-  String _selectedPaymentMethod = 'card';
-
-  @override
-  void initState() {
-    super.initState();
-    _nameController.text = widget.bookingDraft.playerTeamName ?? 'M. Salah';
-  }
+  // forced to cash for MVP
+  final String _selectedPaymentMethod = 'cash';
 
   void _processPayment() async {
     setState(() {
       _isLoading = true;
     });
 
-    // Simulate Payment Processing
-    await Future.delayed(const Duration(milliseconds: 2000));
+    // Short confirmation delay for UX (as requested 500-800ms)
+    await Future.delayed(const Duration(milliseconds: 600));
 
     if (!mounted) return;
 
     try {
-      // Get providers
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       
-      // Get current user ID (or use demo user)
-      final userId = authProvider.currentUser?.uid ?? 'demo_user';
+      final userId = authProvider.currentUser?.uid;
+      if (userId == null) {
+        setState(() => _isLoading = false);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Session expired. Please sign in again.'),
+            backgroundColor: Colors.red,
+          ),
+        );
+        return;
+      }
 
-      // Update draft with payment info
+      // Update draft with payment info - Architecture preserved for future
       final draftWithPayment = widget.bookingDraft.copyWith(
         paymentMethod: _selectedPaymentMethod,
-        paymentTransactionId: 'TXN_${DateTime.now().millisecondsSinceEpoch}',
+        paymentTransactionId: 'CASH_${DateTime.now().millisecondsSinceEpoch}',
       );
 
       // Create booking in database
@@ -72,7 +70,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       });
 
       if (booking != null) {
-        // Navigate to success screen
         Navigator.pushReplacement(
           context,
           MaterialPageRoute(
@@ -82,7 +79,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         );
       } else {
-        // Show error
         VSPFeedback.showError(context, bookingProvider.errorMessage ?? 'Failed to create booking');
       }
     } catch (e) {
@@ -90,17 +86,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       setState(() {
         _isLoading = false;
       });
-      VSPFeedback.showError(context, 'Payment failed: $e');
+      VSPFeedback.showError(context, 'Booking failed: $e');
     }
-  }
-
-  @override
-  void dispose() {
-    _cardNumberController.dispose();
-    _expiryController.dispose();
-    _cvvController.dispose();
-    _nameController.dispose();
-    super.dispose();
   }
 
   @override
@@ -116,13 +103,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Payment Gateway',
+          'Confirm Booking',
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Stack(
         children: [
-          // Background Glows for Premium feel
           Positioned(
             top: -100,
             right: -100,
@@ -160,82 +146,34 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
                 const VSPFadeInItem(
                   delay: Duration(milliseconds: 300),
-                  child: _SectionHeader(title: 'Choose Payment Method'),
+                  child: _SectionHeader(title: 'Payment Method'),
                 ),
                 const SizedBox(height: 16),
                 
                 VSPFadeInItem(
                   delay: const Duration(milliseconds: 400),
-                  child: Row(
-                    children: [
-                      _buildPaymentMethodChip('card', 'Card', Icons.credit_card),
-                      const SizedBox(width: 12),
-                      _buildPaymentMethodChip('wallet', 'Wallet', Icons.account_balance_wallet),
-                      const SizedBox(width: 12),
-                      _buildPaymentMethodChip('cash', 'Cash', Icons.payments_outlined),
-                    ],
-                  ),
+                  child: _buildPaymentMethodChip('cash', 'Cash (Pay at Stadium)', Icons.payments_outlined),
                 ),
 
                 const SizedBox(height: 32),
 
-                // Dynamic Content based on selection
-                if (_selectedPaymentMethod == 'card') 
-                  _CardPaymentContent(
-                    cardNumberController: _cardNumberController,
-                    expiryController: _expiryController,
-                    cvvController: _cvvController,
-                    nameController: _nameController,
-                  )
-                else if (_selectedPaymentMethod == 'wallet')
-                  const VSPFadeInItem(
-                    delay: Duration(milliseconds: 100),
-                    child: _SimpleInfoCard(
-                      icon: Icons.account_balance_wallet_outlined,
-                      title: 'VSP Wallet',
-                      subtitle: 'The amount will be deducted from your available balance. Professional and fast.',
-                    ),
-                  )
-                else
-                  const VSPFadeInItem(
-                    delay: Duration(milliseconds: 100),
-                    child: _SimpleInfoCard(
-                      icon: Icons.payments_outlined,
-                      title: 'Cash Payment',
-                      subtitle: 'Pay at the venue. Please note that cancellation policies still apply.',
-                    ),
-                  ),
-                
-                const SizedBox(height: 40),
-
-                // Secure Transaction Badge
-                VSPFadeInItem(
-                  delay: const Duration(milliseconds: 550),
-                  child: Center(
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        Icon(Icons.security, color: VSPColors.accent.withOpacity(0.5), size: 14),
-                        const SizedBox(width: 8),
-                        Text(
-                          'Secure end-to-end encrypted transaction',
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: VSPColors.textSecondary.withOpacity(0.5),
-                            letterSpacing: 0.5,
-                          ),
-                        ),
-                      ],
-                    ),
+                // MVP Cash Content
+                // Note: Online payment UI intentionally disabled for MVP; architecture preserved for future integration.
+                const VSPFadeInItem(
+                  delay: Duration(milliseconds: 100),
+                  child: _SimpleInfoCard(
+                    icon: Icons.payments_outlined,
+                    title: 'Cash Payment',
+                    subtitle: 'Payment will be made نقداً عند الوصول إلى الملعب\n(Pay upon arrival at the stadium)',
                   ),
                 ),
                 
-                const SizedBox(height: 16),
+                const SizedBox(height: 40),
 
-                // Pay Button
                 VSPFadeInItem(
                   delay: const Duration(milliseconds: 600),
                   child: PrimaryButton(
-                    text: 'Confirm & Pay ${widget.bookingDraft.totalPrice.toInt()} ${widget.bookingDraft.currency}',
+                    text: 'Confirm Booking',
                     isLoading: _isLoading,
                     onPressed: _processPayment,
                   ),
@@ -250,41 +188,32 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Widget _buildPaymentMethodChip(String value, String label, IconData icon) {
-    final isSelected = _selectedPaymentMethod == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedPaymentMethod = value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 300),
-          padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md),
-          decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent.withOpacity(0.1) : VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(
-              color: isSelected ? VSPColors.accent : VSPColors.divider,
-              width: isSelected ? 2 : 1,
+    const bool isSelected = true; // Forced for MVP
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withOpacity(0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: VSPColors.accent,
+          width: 2,
+        ),
+      ),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(icon, color: VSPColors.accent, size: 24),
+          const SizedBox(width: 12),
+          Text(
+            label,
+            style: const TextStyle(
+              color: VSPColors.accent,
+              fontWeight: FontWeight.bold,
+              fontSize: 14,
             ),
           ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Icon(
-                icon, 
-                color: isSelected ? VSPColors.accent : VSPColors.textSecondary, 
-                size: 24
-              ),
-              const SizedBox(height: 8),
-              Text(
-                label,
-                style: TextStyle(
-                  color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 12,
-                ),
-              ),
-            ],
-          ),
-        ),
+        ],
       ),
     );
   }

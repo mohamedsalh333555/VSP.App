@@ -71,11 +71,11 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   }
 
   void _copyLink() {
-    final shareLink = 'https://vsp.app/booking/${widget.booking.id}';
-    Clipboard.setData(ClipboardData(text: shareLink));
+    final shareContent = 'My booking on VSP: ${widget.booking.stadiumName} - Ref# ${widget.booking.id}';
+    Clipboard.setData(ClipboardData(text: shareContent));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Link copied!'),
+        content: const Text('Booking reference copied!'),
         backgroundColor: VSPColors.accent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
@@ -163,7 +163,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   // Share Link
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Share Link', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                    child: Text('Booking Reference', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ),
                   const SizedBox(height: VSPSpacing.sm),
                   Container(
@@ -176,8 +176,11 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            'https://vsp.app/b/${widget.booking.id.substring(0, 8)}',
-                            style: Theme.of(context).textTheme.bodySmall,
+                            'REF# ${widget.booking.id.toUpperCase()}',
+                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                              letterSpacing: 1.1,
+                              fontWeight: FontWeight.bold,
+                            ),
                           ),
                         ),
                         const SizedBox(width: VSPSpacing.sm),

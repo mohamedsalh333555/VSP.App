@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -100,7 +101,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           children: [
                             _buildCircularIcon(
                               icon: Icons.share_outlined,
-                              onTap: () {},
+                              onTap: () {
+                                Share.share(
+                                  'Check out ${widget.stadium.name} in ${widget.stadium.location} on VSP app!',
+                                );
+                              },
                             ),
                             const SizedBox(width: VSPSpacing.md),
                             _buildCircularIcon(

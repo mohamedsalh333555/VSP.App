@@ -22,8 +22,7 @@ service cloud.firestore {
     
     // Users Collection
     match /users/{userId} {
-      allow read: if isAuthenticated();
-      allow write: if isOwner(userId);
+      allow read, write: if isOwner(userId);
     }
 
     // Stadiums Collection

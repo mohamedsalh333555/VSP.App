@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/navigation/root_screen.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/services/owner_document_service.dart';
 import '../../../../shared/widgets/vsp_upload_widgets.dart';
 import '../../../core/providers/auth_provider.dart';
-import 'package:provider/provider.dart';
-import 'owner_main_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class IdVerificationScreen extends StatefulWidget {
   const IdVerificationScreen({super.key});
@@ -167,15 +168,26 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
 
             PrimaryButton(
               text: 'Save',
-              onPressed: (_idFrontUrl != null && _idBackUrl != null) 
-                ? () {
-                  Navigator.pushAndRemoveUntil(
-                    context,
-                    MaterialPageRoute(builder: (_) => const OwnerMainScreen()),
-                    (route) => false,
-                  );
-                }
-                : () {}, // Effectively disabled if logic requires both
+              onPressed: (_idFrontUrl != null && _idBackUrl != null)
+                ? () async {
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final success = await authProvider.updateProfile({
+                      'isIdentityVerified': true,
+                      'isRegistrationComplete': true,
+                    });
+                    if (!mounted) return;
+                    if (success) {
+                      // Navigate via RootScreen so gating logic re-evaluates cleanly
+                      Navigator.pushAndRemoveUntil(
+                        context,
+                        MaterialPageRoute(builder: (_) => const RootScreen()),
+                        (route) => false,
+                      );
+                    } else {
+                      VSPFeedback.showError(context, 'Failed to save verification status');
+                    }
+                  }
+                : null, // null disables the button cleanly
             ),
           ],
         ),

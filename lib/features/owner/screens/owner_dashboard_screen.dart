@@ -10,6 +10,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../widgets/custom_date_range_picker.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import 'owner_booked_screen.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -27,7 +28,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   );
   
   // Stats Values
-  final double _rating = 4.8; 
+  // Removed hardcoded _rating = 4.8
 
   @override
   void initState() {
@@ -82,14 +83,70 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: VSPSpacing.xl),
 
               // 4. Booked Today Section
-              Text(
-                'Booked Today',
-                style: Theme.of(context).textTheme.displaySmall,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Booked Today',
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                      const SizedBox(height: 2),
+                      Row(
+                        children: [
+                          Container(
+                            width: 6,
+                            height: 6,
+                            decoration: const BoxDecoration(
+                              color: VSPColors.success,
+                              shape: BoxShape.circle,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Text(
+                            'Live bookings for today',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.textSecondary,
+                                  fontSize: 10,
+                                ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
               ),
               const SizedBox(height: VSPSpacing.md),
               _buildBookedTodayList(),
               
-              const SizedBox(height: VSPSpacing.xxl * 2), // Space for bottom nav
+              const SizedBox(height: VSPSpacing.lg),
+              // Show More Button
+              Center(
+                child: TextButton(
+                  onPressed: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(builder: (context) => const OwnerBookedScreen()),
+                    );
+                  },
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        'Show more',
+                        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
+                      ),
+                      const SizedBox(width: 4),
+                      const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent, size: 18),
+                    ],
+                  ),
+                ),
+              ),
+              
+              const SizedBox(height: VSPSpacing.xxl), // Space for bottom nav
             ],
           ),
         ),
@@ -157,26 +214,29 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       _selectedStadium = 'All Stadium';
     }
 
-    String formattedDate = '${DateFormat('MMM dd').format(_selectedDateRange.start)} - ${DateFormat('MMM dd').format(_selectedDateRange.end)}';
+    String dateDisplayText = _selectedDateRange.start.day == DateTime.now().subtract(const Duration(days: 30)).day && 
+                          _selectedDateRange.end.day == DateTime.now().day 
+                          ? 'Last 30 days' 
+                          : '${DateFormat('MMM dd').format(_selectedDateRange.start)} - ${DateFormat('MMM dd').format(_selectedDateRange.end)}';
 
     return Row(
       children: [
         // Dropdown Filter (Stadiums)
         Expanded(
           child: Container(
-            height: 48, 
+            height: 44, 
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             decoration: BoxDecoration(
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.md), 
-              border: Border.all(color: VSPColors.divider),
+              border: Border.all(color: VSPColors.divider, width: 0.5),
             ),
             child: DropdownButtonHideUnderline(
               child: DropdownButton<String>(
                 value: _selectedStadium,
                 dropdownColor: VSPColors.surface,
-                icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 16),
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary),
+                icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 13),
                 isExpanded: true,
                 items: stadiumNames.map((stadium) {
                   return DropdownMenuItem(
@@ -200,19 +260,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         Expanded(
           child: InkWell(
             onTap: _pickDateRange,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
             child: Container(
-              height: 48, 
+              height: 44, 
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.divider),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
               ),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text(formattedDate, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary)),
-                   const Icon(Icons.calendar_today_outlined, color: VSPColors.textPrimary, size: 16),
+                   Text(dateDisplayText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 13)),
+                   const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
                 ],
               ),
             ),
@@ -244,13 +305,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }).toList();
 
     double revenue = 0;
-    int totalHours = 0;
-    int totalVisitors = 0;
+    int totalMinutes = 0;
     
     for (var b in filteredBookings) {
       revenue += b.totalPrice;
-      totalHours += b.endTime.difference(b.startTime).inHours;
-      totalVisitors += 12; 
+      totalMinutes += b.endTime.difference(b.startTime).inMinutes;
     }
 
     final int bookingsCount = filteredBookings.length;
@@ -259,8 +318,24 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     // Format numeric values
     String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
-    String timeStr = '${totalHours}h';
-    String visitorsStr = totalVisitors >= 1000 ? '${(totalVisitors/1000).toStringAsFixed(1)}K' : totalVisitors.toString();
+    
+    // Minute-accurate time formatting
+    String timeStr;
+    if (totalMinutes == 0) {
+      timeStr = '0m';
+    } else {
+      final h = totalMinutes ~/ 60;
+      final m = totalMinutes % 60;
+      if (h > 0 && m > 0) {
+        timeStr = '${h}h ${m}m';
+      } else if (h > 0) {
+        timeStr = '${h}h';
+      } else {
+        timeStr = '${m}m';
+      }
+    }
+    
+    String visitorsStr = 'N/A'; // Neutral fallback for unknown visitors metric
     String commissionStr = commission >= 1000 ? '${(commission/1000).toStringAsFixed(1)}K' : commission.toStringAsFixed(0);
 
     return Column(
@@ -278,21 +353,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                    decoration: BoxDecoration(
                     color: VSPColors.background,
                     shape: BoxShape.circle,
-                    border: Border.all(color: VSPColors.divider),
+                    border: Border.all(color: VSPColors.divider, width: 0.5),
                   ),
-                  child: const Icon(Icons.monetization_on_outlined, color: VSPColors.accent, size: 22),
+                  child: const Icon(Icons.monetization_on_outlined, color: VSPColors.accent, size: 24),
                 ),
                const SizedBox(width: 16),
                Column(
                  crossAxisAlignment: CrossAxisAlignment.start,
                  children: [
-                   Text('Revenue (Cash at Stadium)', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                   Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayMedium?.copyWith(color: VSPColors.accent)),
-                   const SizedBox(height: 4),
-                   Text(
-                     'Commission Pending (5%): $commissionStr EGP',
-                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.warning, fontWeight: FontWeight.bold),
-                   ),
+                   Text('Total Revenue', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                   const SizedBox(height: 2),
+                   Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28, color: VSPColors.textPrimary)),
                  ],
                ),
                const Spacer(),
@@ -307,7 +378,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                    children: [
                      Text('Details', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
                      const SizedBox(width: 4),
-                     const Icon(Icons.arrow_outward, color: VSPColors.textSecondary, size: 10)
+                     const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 8)
                    ],
                  ),
                )
@@ -328,7 +399,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   label: 'Booked',
                   value: bookedStr,
                   icon: Icons.check_circle_outline,
-                  trend: '22%',
+                  // Intentionally removed trend percentages as they are not calculated from real history yet.
                 ),
               ),
               const SizedBox(width: VSPSpacing.md),
@@ -336,8 +407,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 child: VSPStatCard(
                   label: 'Total Time',
                   value: timeStr,
-                  icon: Icons.access_time,
-                  trend: '10%',
+                  icon: Icons.access_time_outlined,
                 ),
               ),
             ],
@@ -353,9 +423,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               Expanded(
                 child: VSPStatCard(
                   label: 'Visitors',
+                  // Intentionally neutralized to N/A until real turnstile analytics exist. Do not invent formulas.
                   value: visitorsStr,
-                  icon: Icons.remove_red_eye_outlined,
-                  trend: '9%',
+                  icon: Icons.groups_outlined,
                 ),
               ),
             ],
@@ -366,26 +436,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   }
 
   Widget _buildRateCard() {
-    return VSPCard(
-      height: 110,
-      padding: const EdgeInsets.all(VSPSpacing.sm),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-        children: [
-          const Icon(Icons.star_border, color: VSPColors.textSecondary, size: 20),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text('Rate', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-              const SizedBox(height: 4),
-              Row(
-                children: List.generate(5, (index) => Icon(Icons.star, color: index < _rating.floor() ? VSPColors.warning : VSPColors.divider, size: 16)), 
-              )
-            ],
-          ),
-        ],
-      ),
+    return const VSPStatCard(
+      label: 'Rate',
+      // Intentionally neutralized to N/A until real rating API is implemented. Do not reintroduce fake numbers.
+      value: 'N/A', 
+      icon: Icons.star_outline,
     );
   }
 
@@ -395,10 +450,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final todayStart = DateTime(now.year, now.month, now.day);
     final todayEnd = todayStart.add(const Duration(days: 1));
 
-    // Filter for today's bookings
-    final todayBookings = bookingProvider.userBookings.where((b) => 
-      b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd)
-    ).toList();
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+
+    // Filter for today's bookings + Stadium Filter
+    final todayBookings = bookingProvider.userBookings.where((b) {
+      final isToday = b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd);
+      
+      bool matchesStadium = true;
+      if (_selectedStadium != 'All Stadium') {
+        final stadium = stadiumProvider.stadiums.firstWhere(
+          (s) => s.id == b.stadiumId, 
+          orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
+        );
+        matchesStadium = stadium.name == _selectedStadium;
+      }
+      
+      return isToday && matchesStadium;
+    }).toList();
 
     if (todayBookings.isEmpty) {
       return Container(
@@ -421,46 +489,77 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           return VSPFadeInItem(
             index: index + 3,
             child: Container(
-              margin: const EdgeInsets.only(bottom: 12),
+              margin: const EdgeInsets.only(bottom: 16),
               child: Row(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
                   SizedBox(
-                    width: 50,
-                    child: Text(timeStr, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold, fontSize: 16, color: VSPColors.textPrimary)),
+                    width: 60,
+                    child: Text(
+                      timeStr, 
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold, 
+                        fontSize: 16, 
+                        color: VSPColors.textPrimary.withValues(alpha: 0.8),
+                      ),
+                    ),
                   ),
                   Expanded(
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
                       decoration: BoxDecoration(
-                        gradient: LinearGradient(
-                          begin: Alignment.centerLeft,
-                          end: Alignment.centerRight,
+                        gradient: const LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
                           colors: [
-                             VSPColors.accent.withValues(alpha: 0.1),
-                             VSPColors.surface,
+                             VSPColors.cardGreen,
+                             VSPColors.cardDarkGreen,
                           ],
                         ),
-                        borderRadius: BorderRadius.circular(VSPRadius.md), 
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+                        borderRadius: BorderRadius.circular(VSPRadius.lg), 
+                        boxShadow: [
+                          BoxShadow(
+                            color: Colors.black.withValues(alpha: 0.2),
+                            blurRadius: 10,
+                            offset: const Offset(0, 4),
+                          )
+                        ],
                       ),
                       child: Row(
                         children: [
-                          CircleAvatar(
-                            radius: 20,
-                            backgroundColor: VSPColors.background,
-                            backgroundImage: booking.playerTeamName != null ? null : const NetworkImage('https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80'),
+                          Container(
+                            width: 40,
+                            height: 40,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              color: VSPColors.surfaceAlt,
+                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
+                            ),
+                            child: const Icon(Icons.person_outline, color: VSPColors.textSecondary, size: 20),
                           ),
-                          const SizedBox(width: 12),
-                          Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(booking.playerTeamName ?? 'Individual Player', style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.textPrimary)),
-                              Text(booking.bookingType == BookingType.challenge ? 'Challenge Match' : 'Normal Match', style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
-                            ],
+                          const SizedBox(width: 14),
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  booking.playerTeamName ?? 'Individual Player', 
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  booking.bookingType == BookingType.challenge 
+                                      ? 'Challenge Match' 
+                                      : (booking.bookingType == BookingType.team ? 'Team Match' : 'Player'), 
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                                ),
+                              ],
+                            ),
                           ),
-                          const Spacer(),
-                          const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 22),
+                          const SizedBox(width: 8),
+                          const Icon(Icons.more_vert, color: Colors.white54, size: 20),
                         ],
                       ),
                     ),

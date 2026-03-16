@@ -87,11 +87,11 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
 
         Text(
           'All your stadiums will appear here.',
-          style: Theme.of(context).textTheme.titleLarge,
+          style: Theme.of(context).textTheme.displaySmall,
           textAlign: TextAlign.center,
         ),
 
-        const SizedBox(height: VSPSpacing.xs),
+        const SizedBox(height: VSPSpacing.sm),
 
         Text(
           'Add your stadium now',
@@ -105,7 +105,7 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
             child: Container(
               margin: const EdgeInsets.symmetric(horizontal: 40),
               child: CachedNetworkImage(
-                imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&q=80', // Replace with specific 3D illustration if available
+                imageUrl: '', // Removed fake 3D illustration placeholder
                 fit: BoxFit.contain,
                 placeholder: (context, url) => const Center(
                   child: CircularProgressIndicator(

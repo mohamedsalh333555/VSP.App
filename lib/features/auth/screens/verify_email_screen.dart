@@ -1,7 +1,9 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
 
@@ -146,6 +148,13 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     final auth = Provider.of<AuthProvider>(context);
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle(
+        statusBarColor: Colors.transparent,
+        statusBarIconBrightness: Brightness.light,
+        systemNavigationBarColor: VSPColors.background,
+        systemNavigationBarIconBrightness: Brightness.light,
+        systemNavigationBarDividerColor: Colors.transparent,
+      ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
         body: Stack(
@@ -340,9 +349,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                               letterSpacing: 1.1,
                             ),
                           ),
-
-                    const SizedBox(height: 40),
-
+                    SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
                   ],
                 ),
               ),

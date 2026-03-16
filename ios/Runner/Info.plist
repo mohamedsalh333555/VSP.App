@@ -47,7 +47,16 @@
 	<string>This app needs access to location when open to automatically detect your governorate and show nearby stadiums and tournaments.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location to show you relevant matches and stadiums in your area.</string>
+	<key>NSPhotoLibraryUsageDescription</key>
+	<string>This app needs photo library access so you can upload profile pictures, team logos, or stadium images.</string>
+	<key>NSCameraUsageDescription</key>
+	<string>This app needs camera access so you can take and upload a photo directly.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
+	<!-- 
+		DEEP LINKING (Universal Links): 
+		Requires Associated Domains entitlement and AASA file on domain.
+		Domain verification (vsp.app) is still pending in production.
+	-->
 </dict>
 </plist>

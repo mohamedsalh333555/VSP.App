@@ -161,10 +161,14 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
               CachedNetworkImage(
                 imageUrl: stadium.imageUrl.isNotEmpty 
                     ? stadium.imageUrl 
-                    : 'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&h=600&fit=crop&q=80',
+                    : '', // Removed fake Unsplash stadium fallback
                 fit: BoxFit.cover,
                 memCacheWidth: 800,
                 placeholder: (context, url) => Container(color: VSPColors.surface),
+                errorWidget: (context, url, err) => Container(
+                  color: VSPColors.surface, 
+                  child: const Center(child: Icon(Icons.stadium_outlined, color: VSPColors.textSecondary, size: 48)),
+                ),
               ),
               // Content overlay
               Stack(

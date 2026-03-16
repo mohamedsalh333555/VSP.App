@@ -4,7 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
-import 'owner_dashboard_tab.dart';
+import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
 import 'create_tournament_screen.dart';
@@ -120,7 +120,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
       body: IndexedStack(
         index: _currentIndex,
         children: const [
-          OwnerDashboardTab(),
+          OwnerDashboardScreen(),
           OwnerCupScreen(),
           OwnerBookedScreen(),
           OwnerProfileScreen(),

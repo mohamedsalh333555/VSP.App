@@ -124,7 +124,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             )
           : SingleChildScrollView(
               physics: const BouncingScrollPhysics(), // ✅ Add Scroll Physics
-              padding: const EdgeInsets.all(VSPSpacing.md),
+              padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 100),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

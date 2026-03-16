@@ -11,24 +11,8 @@ class YourTeamModal extends StatefulWidget {
 }
 
 class _YourTeamModalState extends State<YourTeamModal> {
-  // Mock data for team members
-  final List<Map<String, String>> _members = [
-    {
-      'name': 'Saleh Ahmed',
-      'role': 'Defender',
-      'image': 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=150&h=150&fit=crop&q=80',
-    },
-    {
-      'name': 'Mahmoud Hassan',
-      'role': 'Forward',
-      'image': 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
-    },
-    {
-      'name': 'Omar Ali',
-      'role': 'Midfielder',
-      'image': 'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
-    },
-  ];
+  // Neutralized mock list to prevent fake data leaking into active UI
+  final List<Map<String, String>> _members = [];
 
   @override
   Widget build(BuildContext context) {
@@ -75,49 +59,60 @@ class _YourTeamModalState extends State<YourTeamModal> {
             ),
             const SizedBox(height: VSPSpacing.lg),
 
-            ..._members.map((member) => Padding(
-                  padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-                  child: Row(
-                    children: [
-                      ShimmerImage(
-                        imageUrl: member['image']!,
-                        width: 48,
-                        height: 48,
-                        borderRadius: 24,
-                      ),
-                      const SizedBox(width: VSPSpacing.sm),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              member['name']!,
-                              style: Theme.of(context).textTheme.titleMedium,
-                            ),
-                            Text(
-                              member['role']!,
-                              style: Theme.of(context).textTheme.labelSmall,
-                            ),
-                          ],
+            if (_members.isEmpty)
+              Padding(
+                padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                child: Text(
+                  'No team members yet.',
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary,
+                  ),
+                ),
+              )
+            else
+              ..._members.map((member) => Padding(
+                    padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                    child: Row(
+                      children: [
+                        ShimmerImage(
+                          imageUrl: member['image'] ?? '',
+                          width: 48,
+                          height: 48,
+                          borderRadius: 24,
                         ),
-                      ),
-                      TextButton(
-                        onPressed: () {
-                          setState(() {
-                            _members.remove(member);
-                          });
-                        },
-                        child: Text(
-                          'Remove',
-                          style: TextStyle(
-                            color: Colors.redAccent.withValues(alpha: 0.8),
-                            fontSize: 12,
+                        const SizedBox(width: VSPSpacing.sm),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                member['name'] ?? 'Player',
+                                style: Theme.of(context).textTheme.titleMedium,
+                              ),
+                              Text(
+                                member['role'] ?? 'Member',
+                                style: Theme.of(context).textTheme.labelSmall,
+                              ),
+                            ],
                           ),
                         ),
-                      ),
-                    ],
-                  ),
-                )),
+                        TextButton(
+                          onPressed: () {
+                            setState(() {
+                              _members.remove(member);
+                            });
+                          },
+                          child: Text(
+                            'Remove',
+                            style: TextStyle(
+                              color: Colors.redAccent.withValues(alpha: 0.8),
+                              fontSize: 12,
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  )),
 
             const SizedBox(height: VSPSpacing.md),
 

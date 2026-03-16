@@ -33,7 +33,7 @@ void main() async {
       persistenceEnabled: true,
     );
     
-    debugPrint("✅✅✅ FIREBASE INITIALIZED SUCCESSFULLY ✅✅✅");
+    debugPrint("✅ Firebase initialized");
     
     // SEEDING (Disabled for production-readiness, enabled only in Demo Mode)
     if (app_config.AppConfig.demoMode) {
@@ -56,9 +56,11 @@ void main() async {
     statusBarColor: Colors.transparent,
     statusBarIconBrightness: Brightness.light,
     systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarIconBrightness: Brightness.light,
     systemNavigationBarDividerColor: Colors.transparent,
   ));
+
+  // TODO(iOS/Android): Implement Deep Linking (uni_links / firebase_dynamic_links).
+  // This will handle social sharing intercepts and route the RootScreen directly to the shared Stadium/Team.
 
   runApp(const VSPApplication());
 }

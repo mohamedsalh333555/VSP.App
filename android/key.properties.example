@@ -1,0 +1,15 @@
+# Production Key Properties for Android Signing
+# ----------------------------------------------
+# ⚠️ SECURITY WARNING: NEVER commit the real 'key.properties' file to version control.
+# Add 'key.properties' to your .gitignore file.
+
+# 1. Create a file named 'key.properties' in this directory.
+# 2. Add the following fields with your real secrets:
+
+# storePassword=YOUR_SECRET_STORE_PASSWORD
+# keyPassword=YOUR_SECRET_KEY_PASSWORD
+# keyAlias=upload
+# storeFile=upload-keystore.jks
+
+# Note: 'storeFile' should be the path relative to the 'android/app' directory 
+# or an absolute path. If you place the .jks file in 'android/app/', just use the filename.

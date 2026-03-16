@@ -51,7 +51,7 @@ class NotificationsCenterScreen extends StatelessWidget {
           }
 
           return ListView.builder(
-            padding: const EdgeInsets.all(VSPSpacing.md),
+            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
             physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
             itemBuilder: (context, index) {

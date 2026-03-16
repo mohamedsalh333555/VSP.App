@@ -80,6 +80,25 @@ class PublicMatchCard extends StatefulWidget {
 
 class _PublicMatchCardState extends State<PublicMatchCard> {
   bool _isLoading = false;
+  String? _hostName;
+
+  @override
+  void initState() {
+    super.initState();
+    // If no team name provided, fetch the host user's name
+    if (widget.booking.playerTeamName == null || widget.booking.playerTeamName!.isEmpty) {
+      _fetchHostName();
+    }
+  }
+
+  Future<void> _fetchHostName() async {
+    final users = await DatabaseService().getUsersByIds([widget.booking.createdByUserId]);
+    if (users.isNotEmpty && mounted) {
+      setState(() {
+        _hostName = users.first.name;
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -119,7 +138,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   child: Image.network(
                     (isHost && currentUserImage != null && currentUserImage.isNotEmpty)
                         ? currentUserImage
-                        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(booking.playerTeamName ?? 'H')}&background=random',
+                        : 'https://ui-avatars.com/api/?name=${Uri.encodeComponent(booking.playerTeamName ?? _hostName ?? 'H')}&background=random',
                     fit: BoxFit.cover,
                     errorBuilder: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent),
                   ),
@@ -133,7 +152,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.playerTeamName ?? "Private Host",
+                      booking.playerTeamName ?? _hostName ?? "Host Player",
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                         fontSize: 18,
@@ -160,23 +179,19 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                 )
               else if (isHost)
-                // --- HOST ACTION: EDIT ---
+                // --- HOST ACTION: EDIT MATCH (MANAGE PARTICIPANTS) ---
                 GestureDetector(
-                  onTap: () {
-                    // TODO: Open Edit Screen
-                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit feature coming soon!')));
-                  },
+                  onTap: () => _manageParticipants(context),
                   child: Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     decoration: BoxDecoration(
-                      color: Colors.transparent,
-                      border: Border.all(color: VSPColors.accent, width: 1.5),
+                      color: VSPColors.accent,
                       borderRadius: BorderRadius.circular(8),
                     ),
                     child: Text(
-                      "Edit",
+                      "Edit Match",
                       style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                        color: VSPColors.accent,
+                        color: VSPColors.background,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
@@ -242,7 +257,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.1)),
                 Expanded(child: _buildInfoColumn("TIME", _formatTimeShort(booking.formattedTimeRange))),
                 Container(width: 1, height: 30, color: Colors.white.withValues(alpha: 0.1)),
-                Expanded(child: _buildInfoColumn("PRICE", "$entryFee EGP")),
+                Expanded(child: _buildInfoColumn("PRICE", "$entryFee EGP / player")),
               ],
             ),
           ),
@@ -266,22 +281,17 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 ),
               const SizedBox(width: VSPSpacing.xs),
               
-              // Remaining text
+              // Remaining text: "X spots left"
               Expanded(
                 child: RichText(
                   text: TextSpan(
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white.withValues(alpha: 0.6)),
                     children: [
-                      const TextSpan(text: "Number of remaining "),
                       TextSpan(
                         text: "$remainingPlayers",
                         style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
                       ),
-                      const TextSpan(text: " out of "),
-                      TextSpan(
-                        text: "${booking.maxPlayers}",
-                        style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white, fontSize: 16),
-                      ),
+                      const TextSpan(text: " spots left"),
                     ],
                   ),
                 ),
@@ -384,6 +394,15 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     }
   }
 
+  void _manageParticipants(BuildContext context) {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ManageParticipantsModal(booking: widget.booking),
+    );
+  }
+
   // دالة صغيرة لتقصير شكل الوقت عشان يكفي المربع
   String _formatTimeShort(String timeRange) {
     final parts = timeRange.split(' - ');
@@ -393,5 +412,186 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       return '$start-$end';
     }
     return timeRange;
+  }
+}
+
+class _ManageParticipantsModal extends StatefulWidget {
+  final Booking booking;
+  const _ManageParticipantsModal({required this.booking});
+
+  @override
+  State<_ManageParticipantsModal> createState() => _ManageParticipantsModalState();
+}
+
+class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
+  bool _isLoading = true;
+  List<UserModel> _participants = [];
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchUsers();
+  }
+
+  Future<void> _fetchUsers() async {
+    final users = await DatabaseService().getUsersByIds(widget.booking.joinedUserIds);
+    if (mounted) {
+      setState(() {
+        _participants = users;
+        _isLoading = false;
+      });
+    }
+  }
+
+  void _removeUser(String userId) async {
+    final success = await DatabaseService().removeParticipantFromPublicMatch(widget.booking.id, userId);
+    if (success && mounted) {
+      setState(() {
+        _participants.removeWhere((u) => u.uid == userId);
+      });
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(content: Text("Participant removed."), backgroundColor: VSPColors.warning),
+      );
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: MediaQuery.of(context).size.height * 0.7,
+      decoration: const BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
+        ),
+      ),
+      child: Column(
+        children: [
+          const SizedBox(height: 12),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: VSPColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(height: 20),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "Manage Match",
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
+                IconButton(
+                  icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ],
+            ),
+          ),
+          const Divider(color: VSPColors.divider),
+          
+          Expanded(
+            child: _isLoading 
+              ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+              : _participants.isEmpty
+                ? const Center(child: Text("No players joined yet", style: TextStyle(color: VSPColors.textSecondary)))
+                : ListView.separated(
+                    padding: const EdgeInsets.all(20),
+                    itemCount: _participants.length,
+                    separatorBuilder: (_, __) => const SizedBox(height: 12),
+                    itemBuilder: (context, index) {
+                      final user = _participants[index];
+                      final isHost = user.uid == widget.booking.createdByUserId;
+
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider, width: 0.5),
+                        ),
+                        child: Row(
+                          children: [
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: VSPColors.surfaceAlt,
+                              backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty)
+                                ? NetworkImage(user.profileImageUrl!)
+                                : null,
+                              child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty)
+                                ? const Icon(Icons.person, color: VSPColors.accent, size: 20)
+                                : null,
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(
+                                        user.name ?? "Player",
+                                        style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                                      ),
+                                      if (isHost) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: VSPColors.accent.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: VSPColors.accent, width: 0.5),
+                                          ),
+                                          child: const Text(
+                                            "HOST",
+                                            style: TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold),
+                                          ),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(
+                                    user.position ?? "Midfielder",
+                                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                                  ),
+                                ],
+                              ),
+                            ),
+                            if (!isHost)
+                              IconButton(
+                                icon: const Icon(Icons.person_remove_outlined, color: VSPColors.error, size: 20),
+                                onPressed: () => _removeUser(user.uid),
+                              )
+                            else
+                              const Padding(
+                                padding: EdgeInsets.only(right: 12),
+                                child: Icon(Icons.shield, color: VSPColors.accent, size: 18),
+                              ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+          ),
+          
+          Padding(
+            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
+            child: SizedBox(
+              width: double.infinity,
+              child: PrimaryButton(
+                text: "Done",
+                onPressed: () => Navigator.pop(context),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }

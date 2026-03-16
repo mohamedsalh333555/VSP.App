@@ -1,12 +1,15 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart'; // Import Provider
 import '../../../core/constants/create_account_strings.dart'; // Import Strings
 import '../../../core/providers/language_provider.dart'; // Import LanguageProvider
 
 import '../../owner/screens/owner_stadiums_screen.dart';
 import 'owner_email_input_screen.dart';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 
 /// Owner Entry Screen
 class OwnerEntryScreen extends StatelessWidget {
@@ -50,8 +53,9 @@ class OwnerEntryScreen extends StatelessWidget {
 
                 // Title - "Hi Owner" (Dynamic) with Dev Shortcut
                 GestureDetector(
-                  onDoubleTap: () {
-                    // Dev Mode Shortcut
+                  // 🔒 DEV ONLY: Double-tap to skip owner onboarding.
+                  // Disabled in production (kDebugMode = false in release builds).
+                  onDoubleTap: kDebugMode ? () {
                     ScaffoldMessenger.of(context).showSnackBar(
                       const SnackBar(
                         content: Text('Dev Mode: Navigating to Owner Dashboard'),
@@ -59,15 +63,13 @@ class OwnerEntryScreen extends StatelessWidget {
                         duration: Duration(seconds: 1),
                       ),
                     );
-                    
-                    // Navigate directly to populated Owner Stadiums Screen
                     Navigator.push(
                       context,
                       MaterialPageRoute(
                         builder: (context) => const OwnerStadiumsScreen(isDevMode: true),
                       ),
                     );
-                  },
+                  } : null,
                   child: Text(
                     languageProvider.getText(CreateAccountStrings.hiPitch), 
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(
@@ -134,31 +136,43 @@ class OwnerEntryScreen extends StatelessWidget {
                 const SizedBox(height: 24),
 
                 // Social Login Buttons
+                // Social Login Buttons
                 Row(
                   children: [
-                    Expanded(
-                      child: _SocialButton(
-                        icon: Icons.apple,
-                        onTap: () {
-                          // TODO: Apple Sign In
-                        },
+                    if (!kIsWeb && Platform.isIOS) ...[
+                      Expanded(
+                        child: _SocialButton(
+                          icon: Icons.apple,
+                          // Apple Sign-In not yet implemented: button is shown but disabled.
+                          // Rule of Honesty: no misleading "coming soon" message.
+                          // TODO(iOS): Implement sign_in_with_apple package when Apple Developer account provisioning is completed.
+                          onTap: null,
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 12),
+                      const SizedBox(width: 12),
+                    ],
                     Expanded(
                       child: _SocialButton(
-                        icon: Icons.facebook,
+                        iconWidget: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Image.network(
+                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
+                              width: 20,
+                              height: 20,
+                            ),
+                            const SizedBox(width: 10),
+                            Text(
+                              languageProvider.isArabic ? 'جوجل' : 'Google',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: VSPColors.textPrimary,
+                              ),
+                            ),
+                          ],
+                        ),
                         onTap: () {
-                          // TODO: Facebook Sign In
-                        },
-                      ),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: _SocialButton(
-                        iconPath: 'G', // Google icon placeholder
-                        onTap: () {
-                          // TODO: Google Sign In
+                          // TODO: Google Sign In logic
                         },
                       ),
                     ),
@@ -174,12 +188,11 @@ class OwnerEntryScreen extends StatelessWidget {
                     height: 5,
                     decoration: BoxDecoration(
                       color: VSPColors.divider,
-                      borderRadius: BorderRadius.circular(100),
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
                     ),
                   ),
                 ),
-
-                const SizedBox(height: 20),
+                SizedBox(height: MediaQuery.of(context).padding.bottom + 20),
               ],
             ),
           ),
@@ -191,12 +204,12 @@ class OwnerEntryScreen extends StatelessWidget {
 
 class _SocialButton extends StatelessWidget {
   final IconData? icon;
-  final String? iconPath;
-  final VoidCallback onTap;
+  final Widget? iconWidget;
+  final VoidCallback? onTap; // nullable: null = disabled
 
   const _SocialButton({
     this.icon,
-    this.iconPath,
+    this.iconWidget,
     required this.onTap,
   });
 
@@ -216,15 +229,9 @@ class _SocialButton extends StatelessWidget {
           ),
         ),
         child: Center(
-          child: icon != null
+          child: iconWidget ?? (icon != null
               ? Icon(icon, color: VSPColors.textPrimary, size: 28)
-              : Text(
-                  iconPath!,
-                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
-                    color: VSPColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
+              : const SizedBox.shrink()),
         ),
       ),
     );

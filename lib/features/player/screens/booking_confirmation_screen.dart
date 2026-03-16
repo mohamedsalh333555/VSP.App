@@ -50,6 +50,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     _fetchUserTeam();
   }
 
+  String? _userTeamName; // Fixed: track team name separately from user name
+
   Future<void> _fetchUserTeam() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.uid;
@@ -58,6 +60,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       if (mounted) {
         setState(() {
           _userTeamId = team?.id;
+          _userTeamName = team?.name; // Fix: use actual team name not user's display name
         });
       }
     }
@@ -747,7 +750,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
                       child: PrimaryButton(
-                        text: 'Proceed to Payment',
+                        text: 'Confirm Selections',
                         isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
   
@@ -781,13 +784,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             startMinute,
                           );
                           
-                          final endTime = DateTime(
-                            _selectedDate.year,
-                            _selectedDate.month,
-                            _selectedDate.day,
-                            endMinute >= 60 ? endHour + (endMinute ~/ 60) : endHour,
-                            endMinute % 60,
-                          );
+                          // Handle duration based on number of 30-minute slots selected
+                          final int totalSlotCount = _selectedTimeSlots.length;
+                          final endTime = startTime.add(Duration(minutes: totalSlotCount * 30));
   
                           // Convert string bookingType to enum
                           BookingType bookingTypeEnum;
@@ -807,8 +806,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               ? widget.stadium.seatsCapacity 
                               : 10; // Default to 5v5 (10 total)
   
-                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-  
                           // Create BookingDraft
                           final draft = BookingDraft(
                             stadiumId: widget.stadium.id,
@@ -821,7 +818,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             opponentTeamId: widget.opponentTeam?.id,
                             opponentTeamName: widget.opponentTeam?.name,
                             playerTeamId: _userTeamId,
-                            playerTeamName: authProvider.userModel?.name,
+                            playerTeamName: _userTeamName, // Fix: use team name, not user display name
                             isPrivate: _isPrivate,
                             rentBall: _isBallRented,
                             totalPrice: _totalPrice,

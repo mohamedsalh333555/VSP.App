@@ -4,6 +4,10 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/stadium_provider.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
   const OwnerAccountManagementScreen({super.key});
@@ -13,57 +17,72 @@ class OwnerAccountManagementScreen extends StatefulWidget {
 }
 
 class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScreen> {
-  // Mock Data
-  final TextEditingController _nameController = TextEditingController(text: 'Sal adc');
-  final TextEditingController _phoneController = TextEditingController(text: '+20 01111000222');
-  final TextEditingController _emailController = TextEditingController(text: 'hana.mohamed@gmail.com');
-  final TextEditingController _socialController = TextEditingController(text: 'https://www.facebook.com/search/pages/?q=VSPS&sde=Abrg...'); // Truncated as per image
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _socialController;
   
+  bool _isLoading = false;
+  bool _isLocating = false;
   List<Stadium> _stadiums = [];
 
   @override
   void initState() {
     super.initState();
-    // Mock Stadiums Matches the screenshot
-    _stadiums = [
-      Stadium(
-        id: '1',
-        name: 'Santiago Bernabeu 11 VS 11 Football',
-        location: 'Madrid',
-        imageUrl: 'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&h=600&fit=crop&q=80',
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 5,
-        cafeteria: 2,
-        seatsCapacity: 90000,
-        pricePerHour: 1000000,
-        area: 'Jerash',
-        isFavorite: false,
-        address: 'Madrid, Spain',
-        pitchCondition: 'Excellent',
-      ),
-      // Add more if needed for horizontal scroll demo
-      Stadium(
-         id: '2',
-         name: 'Salam Acd',
-         location: 'Aswan',
-         imageUrl: 'https://images.unsplash.com/photo-1624880357913-a8539238245b?w=800&h=600&fit=crop&q=80',
-         type: 'Volleyball',
-         size: '8 VS 8',
-         baths: 2,
-         cafeteria: 1,
-         seatsCapacity: 50,
-         pricePerHour: 250,
-         area: 'Jerash',
-         isFavorite: false,
-         address: 'Aswan, Egypt',
-         pitchCondition: 'Good',
-       ),
-    ];
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userModel = authProvider.userModel;
+    
+    _nameController = TextEditingController(text: userModel?.name ?? '');
+    _phoneController = TextEditingController(text: userModel?.phone ?? '');
+    _emailController = TextEditingController(text: userModel?.email ?? '');
+    _socialController = TextEditingController(text: userModel?.additionalData?['socialMedia'] ?? '');
+    
+    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+    _stadiums = stadiumProvider.stadiums;
+  }
+
+  Future<void> _updateUserData() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+
+    if (name.isEmpty) {
+      VSPFeedback.showError(context, 'Name cannot be empty');
+      return;
+    }
+    if (phone.isEmpty) {
+      VSPFeedback.showError(context, 'Phone number cannot be empty');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    
+    final success = await authProvider.updateProfile({
+      'name': name,
+      'phone': phone,
+      'additionalData': {
+        ...authProvider.userModel?.additionalData ?? {},
+        'socialMedia': _socialController.text.trim(),
+      }
+    });
+    
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (success) {
+        VSPFeedback.showSuccess(context, 'Profile updated successfully');
+        Navigator.pop(context);
+      } else {
+        VSPFeedback.showError(context, 'Failed to update profile');
+      }
+    }
   }
 
   @override
   Widget build(BuildContext context) {
+    final authProvider = Provider.of<AuthProvider>(context);
+    final userModel = authProvider.userModel;
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -80,20 +99,20 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         ),
       ),
       body: SingleChildScrollView(
-        padding: const EdgeInsets.only(bottom: 100), // Space for button
+        padding: const EdgeInsets.only(bottom: 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Stadium Selector (Horizontal List)
+            // 1. Stadium Selector
             SizedBox(
-              height: 220, // Height for card + padding
+              height: 220,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
                 scrollDirection: Axis.horizontal,
                 itemCount: _stadiums.length,
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 300, // Fixed width for horizontal items
+                    width: 300,
                     margin: const EdgeInsets.only(right: VSPSpacing.md),
                     child: _buildStadiumCard(_stadiums[index]),
                   );
@@ -118,38 +137,50 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    const SizedBox(height: 16),
                    
                    _buildInputLabel('Email'),
-                   _buildTextField(_emailController),
+                   _buildTextField(_emailController, enabled: false), // Email usually not editable here
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Add Address'),
-                   // Map Widget Placeholder
+                   _buildInputLabel('Location'),
                    Container(
-                     height: 150,
-                     width: double.infinity,
+                     padding: const EdgeInsets.all(VSPSpacing.md),
                      decoration: BoxDecoration(
+                       color: VSPColors.surface,
                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                       image: const DecorationImage(
-                         image: NetworkImage('https://images.unsplash.com/photo-1569336415962-a4bd9f69cd83?w=800&q=80'), // Map placeholder
-                         fit: BoxFit.cover,
-                       ),
-                       border: Border.all(color: VSPColors.divider),
+                       border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                      ),
-                   ),
-                   // Address formatted box below map
-                   Container(
-                     width: double.infinity,
-                     padding: const EdgeInsets.all(12),
-                     decoration: BoxDecoration(
-                       color: VSPColors.surface, // Dark box
-                       borderRadius: BorderRadius.only(
-                         bottomLeft: Radius.circular(VSPRadius.md),
-                         bottomRight: Radius.circular(VSPRadius.md),
-                       ),
-                     ),
-                     child: Text( // Arabic Address as plain text for now, right aligned if RTL, but keeping English LTR for structure
-                       'مصر - أسوان - مركز شباب الساحة',
-                       textAlign: TextAlign.right,
-                       style: Theme.of(context).textTheme.bodyMedium,
+                     child: Row(
+                       children: [
+                         const Icon(Icons.location_on, color: VSPColors.accent, size: 28),
+                         const SizedBox(width: 12),
+                         Expanded(
+                           child: Column(
+                             crossAxisAlignment: CrossAxisAlignment.start,
+                             children: [
+                               Text(
+                                 'Current Governorate',
+                                 style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                               ),
+                               Text(
+                                 userModel?.governorate ?? 'Not set',
+                                 style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                               ),
+                             ],
+                           ),
+                         ),
+                         _isLocating 
+                         ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
+                         : IconButton(
+                           icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                           onPressed: () async {
+                             setState(() => _isLocating = true);
+                             await authProvider.updateUserLocation();
+                             if (mounted) {
+                               setState(() => _isLocating = false);
+                               VSPFeedback.showSuccess(context, 'Location updated!');
+                             }
+                           },
+                         ),
+                       ],
                      ),
                    ),
                    
@@ -162,7 +193,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
 
             const SizedBox(height: 24),
 
-            // 3. Documents (Read Only)
+            // 3. Documents
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: Column(
@@ -176,7 +207,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    _buildDocumentCard('National ID Back', '500 KB'),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Tax card'), // Typo from image 'Tex card' corrected to 'Tax card' unless strictly 'Tex' required. Image says 'Tex card' in label, 'Tax card' in box. I will use 'Tax card'.
+                   _buildInputLabel('Tax card'),
                    _buildDocumentCard('Tax card', '300 KB'),
                    const SizedBox(height: 16),
                    
@@ -188,15 +219,13 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           ],
         ),
       ),
-      // 4. Fixed Confirm Button
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + VSPSpacing.md),
         color: VSPColors.background,
         child: PrimaryButton(
           text: 'Confirm',
-          onPressed: () {
-             Navigator.pop(context); // Go back on confirm
-          },
+          isLoading: _isLoading,
+          onPressed: _isLoading ? null : _updateUserData,
         ),
       ),
     );
@@ -212,16 +241,19 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 
-  Widget _buildTextField(TextEditingController controller) {
+  Widget _buildTextField(TextEditingController controller, {bool enabled = true}) {
     return Container(
       decoration: BoxDecoration(
-        color: VSPColors.surface, // Darker input bg
+        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(VSPRadius.md), 
         border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: TextField(
         controller: controller,
-        style: Theme.of(context).textTheme.bodyMedium,
+        enabled: enabled,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
+        ),
         decoration: const InputDecoration(
           border: InputBorder.none,
           contentPadding: EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
@@ -316,14 +348,14 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
             ),
           ),
           
-          // Top Right: Edit Icon
+          /*
+          // Top Right: Edit Icon - Future Enhancement
           Positioned(
             top: 12,
             right: 12,
             child: InkWell(
               onTap: () {
                  // Navigate to Edit Stadium
-                 ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Edit Stadium - Coming Soon')));
               },
               child: Container(
                 width: 32,
@@ -337,6 +369,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               ),
             ),
           ),
+          */
 
           // Bottom Info
           Positioned(

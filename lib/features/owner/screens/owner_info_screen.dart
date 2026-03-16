@@ -1,12 +1,88 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/widgets/shimmer_image.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import 'owner_main_screen.dart';
 
-class OwnerInfoScreen extends StatelessWidget {
+class OwnerInfoScreen extends StatefulWidget {
   const OwnerInfoScreen({super.key});
+
+  @override
+  State<OwnerInfoScreen> createState() => _OwnerInfoScreenState();
+}
+
+class _OwnerInfoScreenState extends State<OwnerInfoScreen> {
+  late TextEditingController _nameController;
+  late TextEditingController _phoneController;
+  late TextEditingController _emailController;
+  late TextEditingController _addressController;
+  late TextEditingController _socialController;
+  bool _isLoading = false;
+  bool _isLocating = false;
+
+  @override
+  void initState() {
+    super.initState();
+    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+    _nameController = TextEditingController(text: user?.name ?? '');
+    _phoneController = TextEditingController(text: user?.phone ?? '');
+    _emailController = TextEditingController(text: user?.email ?? '');
+    _addressController = TextEditingController(text: user?.governorate ?? '');
+    _socialController = TextEditingController(text: user?.additionalData?['socialMedia'] ?? '');
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _addressController.dispose();
+    _socialController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _saveData() async {
+    final name = _nameController.text.trim();
+    final phone = _phoneController.text.trim();
+    final governorate = _addressController.text.trim();
+
+    if (name.isEmpty) {
+      VSPFeedback.showError(context, 'Please enter your full name');
+      return;
+    }
+    if (phone.isEmpty) {
+      VSPFeedback.showError(context, 'Please enter your phone number');
+      return;
+    }
+
+    setState(() => _isLoading = true);
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    
+    // Save to Firestore
+    final success = await authProvider.updateProfile({
+      'name': name,
+      'phone': phone,
+      'governorate': governorate.isNotEmpty ? governorate : 'Aswan',
+      'additionalData': {
+        ...authProvider.userModel?.additionalData ?? {},
+        'socialMedia': _socialController.text.trim(),
+      }
+    });
+
+    if (mounted) {
+      setState(() => _isLoading = false);
+      if (success) {
+        _showSuccessDialog(context);
+      } else {
+        VSPFeedback.showError(context, 'Failed to save information. Please try again.');
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,76 +123,75 @@ class OwnerInfoScreen extends StatelessWidget {
             ),
             const SizedBox(height: 24),
 
-            _buildLabel(context, 'Full Name'),
-            _buildTextField(context, hint: 'Enter your name'),
+            _buildLabel('Full Name'),
+            _buildTextField(_nameController, hint: 'Enter your name'),
              const SizedBox(height: 16),
             
-            _buildLabel(context, 'Phone Number'),
-            _buildTextField(context, hint: 'Enter your phone'),
+            _buildLabel('Phone Number'),
+            _buildTextField(_phoneController, hint: 'Enter your phone', keyboardType: TextInputType.phone),
              const SizedBox(height: 16),
 
-            _buildLabel(context, 'Email'),
-            _buildTextField(context, hint: 'Enter your email'),
+            _buildLabel('Email'),
+            _buildTextField(_emailController, hint: 'Enter your email', enabled: false),
              const SizedBox(height: 16),
 
-            _buildLabel(context, 'Add Address'),
-            // Map Placeholder
+            _buildLabel('Location'),
             Container(
-              height: 180,
-              width: double.infinity,
+              padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
-                borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.md)),
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
               ),
-              clipBehavior: Clip.antiAlias,
-              child: Stack(
+              child: Row(
                 children: [
-                   ShimmerImage(
-                    imageUrl: 'https://images.unsplash.com/photo-1524661135-423995f22d0b?w=800&q=80',
-                    fit: BoxFit.cover,
-                    borderRadius: 0,
+                  const Icon(Icons.location_on, color: VSPColors.accent, size: 28),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Current Governorate',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                        ),
+                        Text(
+                          _addressController.text.isEmpty ? 'Not set' : _addressController.text,
+                          style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
-                   const Center(
-                    child: Icon(Icons.location_on, size: 40, color: VSPColors.accent), // More consistent than red
+                  _isLocating 
+                  ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
+                  : IconButton(
+                    icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                    onPressed: () async {
+                      setState(() => _isLocating = true);
+                      await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
+                      if (mounted) {
+                        setState(() {
+                          _addressController.text = Provider.of<AuthProvider>(context, listen: false).governorate;
+                          _isLocating = false;
+                        });
+                        VSPFeedback.showSuccess(context, 'Location updated!');
+                      }
+                    },
                   ),
                 ],
               ),
             ),
-            // Address Text Input (Immediately below map)
-            Container(
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.vertical(bottom: Radius.circular(VSPRadius.md)),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
-              ),
-              child: TextField(
-                style: Theme.of(context).textTheme.bodyMedium,
-                decoration: InputDecoration(
-                  hintText: 'Egypt - Aswan - Elaha Youth Center',
-                  hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
-                  border: InputBorder.none,
-                  contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-                  prefixIcon: const Icon(Icons.edit_location_alt, color: VSPColors.textSecondary, size: 20),
-                ),
-              ),
-            ),
              const SizedBox(height: 16),
 
-             _buildLabel(context, 'Social Media'),
-            _buildTextField(context, hint: 'https://www.facebook.com/search/pages/?q=VSP&sde=...'),
+             _buildLabel('Social Media'),
+            _buildTextField(_socialController, hint: 'https://instagram.com/your-account'),
 
             const SizedBox(height: 40),
 
             PrimaryButton(
               text: 'Save',
-              onPressed: () {
-                // Demo Mode Bypass
-                if (AppConfig.demoMode) {
-                   _showSuccessDialog(context);
-                   return;
-                }
-                
-                _showSuccessDialog(context);
-              },
+              isLoading: _isLoading,
+              onPressed: _isLoading ? null : _saveData,
             ),
           ],
         ),
@@ -145,7 +220,7 @@ class OwnerInfoScreen extends StatelessWidget {
                 ),
                 const SizedBox(height: VSPSpacing.xs),
                 Text(
-                  'Your stadium has been added successfully.',
+                  'Your profile has been updated successfully.',
                   textAlign: TextAlign.center,
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                 ),
@@ -168,7 +243,7 @@ class OwnerInfoScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildLabel(BuildContext context, String text) {
+  Widget _buildLabel(String text) {
      return Padding(
        padding: const EdgeInsets.only(bottom: VSPSpacing.xs),
        child: Text(
@@ -178,15 +253,20 @@ class OwnerInfoScreen extends StatelessWidget {
      );
   }
 
-  Widget _buildTextField(BuildContext context, {required String hint}) {
+  Widget _buildTextField(TextEditingController controller, {required String hint, bool enabled = true, TextInputType? keyboardType}) {
     return Container(
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
       ),
       child: TextField(
-        style: Theme.of(context).textTheme.bodyMedium,
+        controller: controller,
+        enabled: enabled,
+        keyboardType: keyboardType,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.4)),

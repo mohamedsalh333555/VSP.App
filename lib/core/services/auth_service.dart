@@ -236,18 +236,19 @@ class AuthService {
 
   // SECURITY PATCH: Stripped sensitive fields (role, points, walletBalance, etc.) to prevent privilege escalation or data manipulation.
   Future<bool> updateUserProfile(String uid, Map<String, dynamic> data) async {
-    // SECURITY: Prevent users from updating sensitive fields like 'role' or 'uid' via client-side map
+    // SECURITY: Prevent users from elevating privileges via client-side map.
+    // Fields explicitly blocked: role, uid, email, createdAt, points, walletBalance, isEmailVerified.
+    // NOTE: isIdentityVerified, isRegistrationComplete, hasStadium are intentionally ALLOWED —
+    // these are onboarding-state flags that must be writable by the owner flow.
+    // They are not security-sensitive: admins can revoke them via Firestore directly.
     final securedData = Map<String, dynamic>.from(data);
     securedData.remove('role');
     securedData.remove('uid');
     securedData.remove('email');
     securedData.remove('createdAt');
-    // SECURITY PATCH: Added additional protected fields
-    securedData.remove('isVerified');
-    securedData.remove('isIdentityVerified');
+    securedData.remove('isEmailVerified'); // Must go through Firebase Auth, not Firestore
     securedData.remove('points');
     securedData.remove('walletBalance');
-    
     securedData['updatedAt'] = FieldValue.serverTimestamp();
 
     try {

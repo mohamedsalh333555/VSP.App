@@ -88,20 +88,10 @@ class PaymentSelectionModal extends StatelessWidget {
 
             const SizedBox(height: VSPSpacing.xl),
 
-            // Pay Upon Arrival Button (for non-challenge mode)
-            if (!isChallengeMode) ...[
-              PrimaryButton(
-                text: 'Pay Upon Arrival',
-                onPressed: () => _navigateToPayment(context, 'cash'),
-                color: VSPColors.surface,
-                textColor: VSPColors.textPrimary,
-              ),
-              const SizedBox(height: VSPSpacing.md),
-            ],
-
+            // Confirm Cash Booking Button
             PrimaryButton(
-              text: 'Pay Now',
-              onPressed: () => _navigateToPayment(context, 'card'),
+              text: 'Confirm Cash Booking',
+              onPressed: () => _navigateToPayment(context, 'cash'),
             ),
           ],
         ),
