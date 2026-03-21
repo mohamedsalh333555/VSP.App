@@ -8,6 +8,7 @@ import '../../../../shared/widgets/primary_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/utils/phone_utils.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -75,7 +76,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       // 2. Update other profile data
       final success = await auth.updateProfile({
         'name': name,
-        'phone': phone,
+        'phone': PhoneUtils.normalize(phone),
         'position': _selectedPosition,
       });
 

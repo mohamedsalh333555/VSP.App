@@ -5,11 +5,19 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/utils/phone_utils.dart';
+import 'package:provider/provider.dart';
 
 class AddPlayerSheet extends StatefulWidget {
   final Function(UserModel) onPlayerAdded;
+  final List<String> existingMemberUids;
 
-  const AddPlayerSheet({super.key, required this.onPlayerAdded});
+  const AddPlayerSheet({
+    super.key,
+    required this.onPlayerAdded,
+    this.existingMemberUids = const [],
+  });
 
   @override
   State<AddPlayerSheet> createState() => _AddPlayerSheetState();
@@ -31,9 +39,24 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
       _foundUser = null;
     });
 
-    final user = await DatabaseService().getUserByPhone(phone);
+    final normalized = PhoneUtils.normalize(phone);
+    final user = await DatabaseService().getUserByPhone(normalized);
 
     if (mounted) {
+      if (user != null) {
+        final currentUid = context.read<AuthProvider>().currentUser?.uid;
+        if (user.uid == currentUid) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(content: Text('كما تعلم.. أنت الكابتن بالفعل! \n(You are the captain!)'), backgroundColor: VSPColors.accent),
+          );
+          setState(() {
+            _isSearching = false;
+            _hasSearched = true;
+          });
+          return;
+        }
+      }
+
       setState(() {
         _foundUser = user;
         _isSearching = false;
@@ -165,14 +188,34 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ],
             ),
           ),
-          PrimaryButton(
-            text: 'Add',
-            onPressed: () {
-              widget.onPlayerAdded(_foundUser!);
-              Navigator.pop(context);
-            },
-            // Customizing for inline feel
-          ),
+          if (widget.existingMemberUids.contains(_foundUser!.uid))
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+              ),
+              child: const Row(
+                children: [
+                   Icon(Icons.check, color: VSPColors.accent, size: 16),
+                   SizedBox(width: 4),
+                   Text('Joined', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                ],
+              ),
+            )
+          else
+            SizedBox(
+              width: 80,
+              height: 40,
+              child: PrimaryButton(
+                text: 'Add',
+                onPressed: () {
+                  widget.onPlayerAdded(_foundUser!);
+                  Navigator.pop(context);
+                },
+                height: 40,
+              ),
+            ),
         ],
       ),
     );

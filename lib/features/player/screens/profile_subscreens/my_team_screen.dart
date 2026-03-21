@@ -10,6 +10,8 @@ import '../../../../data/models.dart';
 import '../../widgets/add_player_sheet.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../core/services/sharing_service.dart';
+import '../../../../core/utils/phone_utils.dart';
 
 class MyTeamScreen extends StatefulWidget {
   const MyTeamScreen({super.key});
@@ -79,6 +81,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddPlayerSheet(
+        existingMemberUids: _myTeam?.memberUids ?? [],
         onPlayerAdded: (UserModel user) async {
           setState(() {
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
@@ -115,6 +118,21 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           'My Team',
           style: Theme.of(context).textTheme.displaySmall, // Unified Typography
         ),
+        actions: [
+          if (_myTeam != null)
+            IconButton(
+              icon: const Icon(Icons.share, color: VSPColors.accent),
+              onPressed: () {
+                SharingService.shareTeam(
+                  context,
+                  teamId: _myTeam!.id,
+                  teamName: _myTeam!.name,
+                  governorate: _myTeam!.governorate,
+                );
+              },
+            ),
+          const SizedBox(width: 8),
+        ],
         centerTitle: true,
       ),
       // ✅ FIX: Show Loader while fetching data, preventing blank screen/errors
@@ -200,7 +218,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     children: [
                       ShimmerImage(
                         imageUrl:
-                            _newLogoUrl ?? _myTeam?.captainImageUrl ?? '',
+                            _newLogoUrl ?? _myTeam?.logoUrl ?? '',
                         width: 50,
                         height: 50,
                         borderRadius: 25,
@@ -294,9 +312,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             spacing: 8,
                             runSpacing: 8,
                             children: [
-                              // Captain Avatar (Static)
-                              if (_myTeam != null || _newLogoUrl != null)
-                                _buildMemberAvatar(_newLogoUrl ?? _myTeam?.captainImageUrl ?? ''),
+                              // Captain Avatar (Static personal image)
+                              if (_myTeam != null)
+                                _buildMemberAvatar(_myTeam?.captainImageUrl ?? '')
+                              else if (Provider.of<AuthProvider>(context, listen: false).userModel != null)
+                                _buildMemberAvatar(Provider.of<AuthProvider>(context, listen: false).userModel!.profileImageUrl ?? ''),
                                 
                               // Show team members as chips
                               ..._teamMembers
@@ -347,9 +367,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             
                             if (user == null) throw 'User session expired';
 
-                            // Construct initial arrays
+                            // Construct initial arrays - start with Captain
                             List<String> finalUids = [user.uid];
-                            List<String> finalImages = [_newLogoUrl ?? user.profileImageUrl ?? ''];
+                            List<String> finalImages = [user.profileImageUrl ?? '']; // Captain face, NOT logo
 
                             // Add players currently active in the UI (_teamMembers)
                             for (var member in _teamMembers) {
@@ -361,8 +381,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                               'name': _teamNameController.text.trim(),
                               'sportType': _selectedSport,
                               'captainName': user.name ?? 'Captain',
-                              'captainImageUrl': _newLogoUrl ?? user.profileImageUrl ?? '',
-                              'captainPhone': user.phone ?? '',
+                              'captainImageUrl': user.profileImageUrl ?? '', // Captain's personal image
+                              'logoUrl': _newLogoUrl ?? '', // Team's logo
+                              'captainPhone': PhoneUtils.normalize(user.phone ?? ''),
                               'memberUids': finalUids,
                               'playerImages': finalImages,
                               'playersCount': finalUids.length,
@@ -415,8 +436,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
                                     try {
                                       // REFACTOR: Create clean lists starting with Captain (Index 0)
+                                      final user = Provider.of<AuthProvider>(context, listen: false).userModel;
                                       List<String> finalUids = [_myTeam!.memberUids.first];
-                                      List<String> finalImages = [_newLogoUrl ?? _myTeam!.playerImages.first];
+                                      List<String> finalImages = [user?.profileImageUrl ?? _myTeam!.playerImages.first];
 
                                       for (var member in _teamMembers) {
                                         finalUids.add(member.uid);
@@ -426,7 +448,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                       final success = await DatabaseService().updateTeam(_myTeam!.id, {
                                         'name': _teamNameController.text,
                                         'sportType': _selectedSport,
-                                        'captainImageUrl': _newLogoUrl ?? _myTeam!.captainImageUrl,
+                                        'logoUrl': _newLogoUrl ?? _myTeam!.logoUrl,
+                                        'captainImageUrl': Provider.of<AuthProvider>(context, listen: false).userModel?.profileImageUrl ?? _myTeam!.captainImageUrl,
                                         'memberUids': finalUids,
                                         'playerImages': finalImages,
                                         'playersCount': finalUids.length,
@@ -679,9 +702,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           ],
         ),
         actions: [
-          TextButton(
+          PrimaryButton(
+            text: "Got it",
+            height: 48,
             onPressed: () => Navigator.pop(context),
-            child: const Text("Got it", style: TextStyle(color: VSPColors.accent)),
           ),
         ],
       ),
@@ -699,29 +723,41 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           "Are you sure? This action cannot be undone and your team and achievements will be lost.",
           style: TextStyle(color: VSPColors.textSecondary),
         ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text("Cancel", style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
-          ),
-          PrimaryButton(
-            text: 'Delete',
-            color: VSPColors.error,
-            textColor: VSPColors.textPrimary,
-            onPressed: () async {
-              Navigator.pop(context);
-              if (_myTeam != null) {
-                final success = await DatabaseService().deleteTeam(_myTeam!.id);
-                if (success && mounted) {
-                  if (context.mounted) {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(content: Text('Team deleted successfully'), backgroundColor: VSPColors.error),
-                    );
-                    Navigator.pop(context); // Go back to profile
-                  }
-                }
-              }
-            },
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: "Cancel",
+                  height: 48,
+                  color: VSPColors.surfaceAlt,
+                  textColor: VSPColors.textPrimary,
+                  onPressed: () => Navigator.pop(context),
+                ),
+              ),
+              const SizedBox(width: VSPSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Delete',
+                  height: 48,
+                  color: VSPColors.error,
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    Navigator.pop(context);
+                    if (_myTeam != null) {
+                      final success = await DatabaseService().deleteTeam(_myTeam!.id);
+                      if (success && mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          const SnackBar(content: Text('Team deleted successfully'), backgroundColor: VSPColors.error),
+                        );
+                        Navigator.pop(context); // Go back to profile
+                      }
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),

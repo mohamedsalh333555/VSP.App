@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -34,9 +35,37 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
 
-  // Mock History Teams (Should eventually come from Firestore too)
-  final List<Team> _historyTeams = [];
-  
+  // Real History Teams fetched from bookings
+  List<Team> _historyTeams = [];
+  bool _isLoadingHistory = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _fetchHistory();
+  }
+
+  Future<void> _fetchHistory() async {
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    final uid = auth.currentUser?.uid;
+    if (uid != null) {
+      final team = await DatabaseService().getUserTeam(uid);
+      if (team != null) {
+        final history = await DatabaseService().getPreviousOpponents(team.id);
+        if (mounted) {
+          setState(() {
+            _historyTeams = history;
+            _isLoadingHistory = false;
+          });
+        }
+      } else {
+        if (mounted) setState(() => _isLoadingHistory = false);
+      }
+    } else {
+      if (mounted) setState(() => _isLoadingHistory = false);
+    }
+  }
+
   void _onSearchChanged(String query) {
     if (_debounce?.isActive ?? false) _debounce!.cancel();
     
@@ -175,7 +204,14 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
-                    if (_historyTeams.isEmpty)
+                    if (_isLoadingHistory)
+                       const Center(
+                        child: Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: CircularProgressIndicator(color: VSPColors.accent),
+                        ),
+                      )
+                    else if (_historyTeams.isEmpty)
                       Container(
                         width: double.infinity,
                         padding: const EdgeInsets.symmetric(vertical: 40),

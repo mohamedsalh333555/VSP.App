@@ -37,7 +37,6 @@ class VspBottomNavBar extends StatelessWidget {
       ),
       height: 65,
       decoration: BoxDecoration(
-        color: VSPColors.surface.withValues(alpha: 0.85),
         borderRadius: BorderRadius.circular(30),
         boxShadow: [
           BoxShadow(
@@ -51,7 +50,8 @@ class VspBottomNavBar extends StatelessWidget {
         borderRadius: BorderRadius.circular(30),
         child: BackdropFilter(
           filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-          child: Padding(
+          child: Container(
+            color: VSPColors.surface.withValues(alpha: 0.85),
             padding: const EdgeInsets.symmetric(horizontal: 12),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,

@@ -132,6 +132,7 @@ class _NotificationCard extends StatelessWidget {
                       Expanded(
                         child: VSPAnimatedButton(
                           text: 'Accept',
+                          height: 44,
                           onPressed: () => DatabaseService().respondToChallenge(
                             notification.id, 
                             notification.bookingId!, 
@@ -143,8 +144,9 @@ class _NotificationCard extends StatelessWidget {
                       Expanded(
                         child: VSPAnimatedButton(
                           text: 'Decline',
-                          color: VSPColors.surface,
-                          textColor: VSPColors.error,
+                          height: 44,
+                          color: VSPColors.surfaceAlt,
+                          textColor: VSPColors.textSecondary,
                           onPressed: () => DatabaseService().respondToChallenge(
                             notification.id, 
                             notification.bookingId!, 

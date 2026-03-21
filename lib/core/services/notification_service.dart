@@ -4,7 +4,9 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/booking_success_screen.dart';
+import '../../features/player/screens/chat_screen.dart';
 import '../repositories/booking_repository.dart';
+import '../services/logger_service.dart';
 
 class NotificationService {
   // Singleton pattern
@@ -27,7 +29,7 @@ class NotificationService {
       return await _firebaseMessaging.getToken();
     }
     
-    debugPrint('Notification permission declined');
+    VSPLogger.w('Notification permission declined');
     return null;
   }
 
@@ -60,7 +62,7 @@ class NotificationService {
 
     // 5. Initialize Local Notifications Settings
     const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('@drawable/ic_stat_logo');
+        AndroidInitializationSettings('ic_notification');
     
     const DarwinInitializationSettings initializationSettingsDarwin =
         DarwinInitializationSettings(
@@ -82,7 +84,7 @@ class NotificationService {
             final Map<String, dynamic> data = jsonDecode(response.payload!);
             _handleNotificationClick(data);
           } catch (e) {
-            debugPrint('Error parsing notification payload: $e');
+            VSPLogger.e('Error parsing notification payload', e);
           }
         }
       },
@@ -101,6 +103,19 @@ class NotificationService {
         context,
         MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
       );
+    } else if (type == 'chat' && bookingId != null) {
+      // 💬 CHAT REDIRECTION: Navigate directly to the ChatScreen
+      try {
+        final booking = await FirestoreBookingRepository().getBookingById(bookingId);
+        if (booking != null && context.mounted) {
+           Navigator.push(
+            context,
+            MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
+          );
+        }
+      } catch (e) {
+        VSPLogger.e('Error navigating to chat', e);
+      }
     } else if (bookingId != null) {
       // Fetch booking and navigate to success/details
       try {
@@ -112,7 +127,7 @@ class NotificationService {
           );
         }
       } catch (e) {
-        debugPrint('Error navigating to booking: $e');
+        VSPLogger.e('Error navigating to booking', e);
       }
     }
   }
@@ -122,9 +137,9 @@ class NotificationService {
         AndroidNotificationDetails(
       'high_importance_channel', 
       'High Importance Notifications',
-      icon: '@drawable/ic_stat_logo',
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'ic_notification',
     );
     
     const DarwinNotificationDetails darwinPlatformChannelSpecifics =
@@ -156,9 +171,9 @@ class NotificationService {
         AndroidNotificationDetails(
       'booking_channel',
       'Booking Notifications',
-      icon: '@drawable/ic_stat_logo',
       importance: Importance.max,
       priority: Priority.high,
+      icon: 'ic_notification',
     );
     
     const DarwinNotificationDetails darwinPlatformChannelSpecifics =

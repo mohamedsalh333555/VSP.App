@@ -295,7 +295,12 @@ class ChampionScreenState extends State<ChampionScreen>
                   ),
                   Icon(player.trend == 'up' ? Icons.arrow_drop_up : (player.trend == 'down' ? Icons.arrow_drop_down : Icons.remove), color: player.trend == 'up' ? VSPColors.accent : (player.trend == 'down' ? Colors.red : VSPColors.textSecondary), size: 20),
                   const SizedBox(width: 12),
-                  CircleAvatar(radius: 18, backgroundColor: VSPColors.surfaceAlt, backgroundImage: NetworkImage(player.avatarUrl.isNotEmpty ? player.avatarUrl : 'https://ui-avatars.com/api/?name=${player.name}&background=random')),
+                  CircleAvatar(
+                    radius: 18, 
+                    backgroundColor: VSPColors.surfaceAlt, 
+                    backgroundImage: player.avatarUrl.isNotEmpty ? NetworkImage(player.avatarUrl) : null,
+                    child: player.avatarUrl.isEmpty ? const Icon(Icons.person, size: 20, color: VSPColors.accent) : null,
+                  ),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -326,12 +331,7 @@ class ChampionScreenState extends State<ChampionScreen>
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
 
-        List<Team> teams = snapshot.data ?? [];
-        
-        // Use mock only if in demoMode AND no real data
-        if (teams.isEmpty && AppConfig.demoMode) {
-          teams = Team.getMockTeams();
-        }
+        final List<Team> teams = snapshot.data ?? [];
 
         if (teams.isEmpty) {
           return Center(

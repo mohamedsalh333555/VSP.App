@@ -7,6 +7,7 @@ class VSPPrimaryButton extends StatelessWidget {
   final bool isLoading;
   final Color? color;
   final Color? textColor;
+  final double? height;
 
   const VSPPrimaryButton({
     super.key,
@@ -15,12 +16,13 @@ class VSPPrimaryButton extends StatelessWidget {
     this.isLoading = false,
     this.color,
     this.textColor,
+    this.height,
   });
 
   @override
   Widget build(BuildContext context) {
     return SizedBox(
-      height: 56,
+      height: height ?? 56,
       width: double.infinity,
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,

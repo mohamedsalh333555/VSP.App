@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
 class PrimaryButton extends StatelessWidget {
@@ -9,6 +10,7 @@ class PrimaryButton extends StatelessWidget {
   final Color? textColor;
 
   final double? width;
+  final double? height;
   final EdgeInsetsGeometry? padding;
 
   const PrimaryButton({
@@ -19,6 +21,7 @@ class PrimaryButton extends StatelessWidget {
     this.color,
     this.textColor,
     this.width,
+    this.height,
     this.padding,
   });
 
@@ -26,9 +29,12 @@ class PrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return SizedBox(
       width: width ?? double.infinity,
-      height: 56,
+      height: height ?? 56,
       child: ElevatedButton(
-        onPressed: isLoading ? null : onPressed,
+        onPressed: isLoading ? null : () {
+          HapticFeedback.mediumImpact();
+          onPressed?.call();
+        },
         style: ElevatedButton.styleFrom(
           backgroundColor: color ?? VSPColors.accent,
           foregroundColor: textColor ?? VSPColors.background,

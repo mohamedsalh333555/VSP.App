@@ -1,9 +1,13 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
+import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
+import 'core/ui/tokens/vsp_tokens.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/language_provider.dart';
 import 'core/providers/auth_provider.dart' as app_auth;
@@ -16,6 +20,7 @@ import 'features/auth/screens/welcome_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'core/navigation/root_screen.dart';
 import 'core/config/app_config.dart' as app_config;
+import 'core/services/logger_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -32,22 +37,32 @@ void main() async {
     FirebaseFirestore.instance.settings = const Settings(
       persistenceEnabled: true,
     );
+
+    // CRASHLYTICS INITIALIZATION
+    FlutterError.onError = (errorDetails) {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+    };
+    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+    PlatformDispatcher.instance.onError = (error, stack) {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      return true;
+    };
     
-    debugPrint("✅ Firebase initialized");
+    VSPLogger.i("✅ Firebase initialized with Crashlytics");
     
     // SEEDING (Disabled for production-readiness, enabled only in Demo Mode)
     if (app_config.AppConfig.demoMode) {
       await DataMigration().seedDatabase(); 
     }
   } catch (e) {
-    debugPrint("❌❌❌ FIREBASE INIT FAILED: $e");
+    VSPLogger.e("❌ FIREBASE INIT FAILED", e);
   }
   
   // Initialize Notifications
   try {
     await NotificationService().initialize(navigatorKey);
   } catch (e) {
-    debugPrint("⚠️ Warning: Notification service failed: $e");
+    VSPLogger.w("⚠️ Warning: Notification service failed: $e");
   }
   
   // System UI Style
@@ -61,6 +76,46 @@ void main() async {
 
   // TODO(iOS/Android): Implement Deep Linking (uni_links / firebase_dynamic_links).
   // This will handle social sharing intercepts and route the RootScreen directly to the shared Stadium/Team.
+
+  // Custom Error Boundary
+  ErrorWidget.builder = (FlutterErrorDetails details) {
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(VSPSpacing.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.error_outline_rounded, size: 80, color: VSPColors.error),
+              const SizedBox(height: VSPSpacing.xl),
+              Text(
+                'Something went wrong! 🎮',
+                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              const Text(
+                'We encountered an unexpected error. Our team has been notified and we are working on it.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: VSPColors.textSecondary),
+              ),
+              const SizedBox(height: VSPSpacing.xl),
+              ElevatedButton(
+                onPressed: () => navigatorKey.currentState?.pushReplacementNamed('/root'),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: VSPColors.accent,
+                  foregroundColor: Colors.black,
+                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+                ),
+                child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  };
 
   runApp(const VSPApplication());
 }

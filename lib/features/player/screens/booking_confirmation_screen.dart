@@ -806,6 +806,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               ? widget.stadium.seatsCapacity 
                               : 10; // Default to 5v5 (10 total)
   
+                          // Force it to false if the booking type is 'Team'
+                          final bool isActuallyPrivate = widget.bookingType.toLowerCase() == 'team' ? false : _isPrivate;
+  
                           // Create BookingDraft
                           final draft = BookingDraft(
                             stadiumId: widget.stadium.id,
@@ -819,7 +822,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             opponentTeamName: widget.opponentTeam?.name,
                             playerTeamId: _userTeamId,
                             playerTeamName: _userTeamName, // Fix: use team name, not user display name
-                            isPrivate: _isPrivate,
+                            isPrivate: isActuallyPrivate,
                             rentBall: _isBallRented,
                             totalPrice: _totalPrice,
                             currency: 'EGP',

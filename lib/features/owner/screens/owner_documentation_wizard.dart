@@ -173,18 +173,14 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
                 'Your documents have been submitted and are now being processed. You will receive a response within 12 hours.',
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
               ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
               actions: [
-                TextButton(
+                PrimaryButton(
+                  text: 'OK',
+                  height: 48,
                   onPressed: () {
                     Navigator.of(context).pop(); 
                   },
-                  child: Text(
-                    'OK',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                          color: VSPColors.accent,
-                          fontWeight: FontWeight.bold,
-                        ),
-                  ),
                 ),
               ],
             );

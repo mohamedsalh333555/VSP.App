@@ -1,7 +1,9 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import '../../../core/theme/app_theme.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import 'welcome_screen.dart';
 import 'owner_set_password_screen.dart';
 
 /// Owner Verify Email Screen - Step 2/3
@@ -32,18 +34,34 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
     super.dispose();
   }
 
+  /// Aborts OTP — signs out the stale Firebase session and returns to Welcome.
+  Future<void> _handleAbort(BuildContext ctx) async {
+    final auth = Provider.of<AuthProvider>(ctx, listen: false);
+    await auth.signOut();
+    if (!ctx.mounted) return;
+    Navigator.of(ctx).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+      (route) => false,
+    );
+  }
+
   String _getCode() {
     return _controllers.map((c) => c.text).join();
   }
 
   @override
   Widget build(BuildContext context) {
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: const SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-      ),
-      child: Scaffold(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleAbort(context);
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: const SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+        ),
+        child: Scaffold(
         backgroundColor: VSPColors.background,
         body: SafeArea(
           child: Padding(
@@ -56,7 +74,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                 // Back Button
                 IconButton(
                   icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
-                  onPressed: () => Navigator.pop(context),
+                  onPressed: () => _handleAbort(context),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                 ),
@@ -183,7 +201,7 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
                         ),
                       ),
                       GestureDetector(
-                        onTap: () => Navigator.pop(context),
+                        onTap: () => _handleAbort(context),
                         child: Text(
                           'Send to different email',
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -239,7 +257,8 @@ class _OwnerVerifyEmailScreenState extends State<OwnerVerifyEmailScreen> {
           ),
         ),
       ),
-    );
+    ),   // AnnotatedRegion
+    );   // PopScope
   }
 }
 

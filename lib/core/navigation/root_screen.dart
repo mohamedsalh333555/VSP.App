@@ -1,4 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../../shared/widgets/primary_button.dart';
+import '../../features/auth/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../../features/auth/screens/welcome_screen.dart';
@@ -8,9 +11,11 @@ import '../../features/auth/screens/social_onboarding_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
-import '../../core/theme/app_theme.dart';
-import '../../features/auth/screens/splash_screen.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../features/player/screens/match_details_screen.dart';
+import 'package:app_links/app_links.dart';
+import 'dart:async';
+import '../services/remote_config_service.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -20,9 +25,16 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
+  late AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+  Timer? _loadingTimeout;
+  bool _loadingTimedOut = false;
+
   @override
   void initState() {
     super.initState();
+    _initRemoteConfig();
+    _initDeepLinks();
     // 📍 Trigger location check after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -30,69 +42,197 @@ class _RootScreenState extends State<RootScreen> {
       if (auth.isAuthenticated && !auth.isOwner) {
         auth.updateUserLocation();
       }
+
+      // 🛡️ Safety Net: If user is authenticated but userModel never loads within
+      // 3 seconds (e.g. Firestore offline), show a Connection Error screen.
+      if (auth.isAuthenticated && auth.userModel == null) {
+        _loadingTimeout = Timer(const Duration(seconds: 3), () {
+          if (mounted && auth.userModel == null) {
+            setState(() => _loadingTimedOut = true);
+          }
+        });
+      }
     });
+  }
+
+  Future<void> _initRemoteConfig() async {
+    final remoteConfig = RemoteConfigService();
+    await remoteConfig.initialize();
+    if (mounted) setState(() {});
+    
+    final shouldUpdate = await remoteConfig.shouldForceUpdate();
+    if (shouldUpdate && mounted) {
+      _showForceUpdateDialog(remoteConfig.forceUpdateUrl);
+    }
+  }
+
+  void _showForceUpdateDialog(String url) {
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: const Text('Update Required 🚀', style: TextStyle(color: Colors.white)),
+        content: const Text(
+          'A new version of VSP is available with improved performance and new features.',
+          style: TextStyle(color: VSPColors.textSecondary),
+        ),
+        actions: [
+          PrimaryButton(
+            text: 'Update Now',
+            onPressed: () {
+              // TODO: Launch Store URL
+            },
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+
+    // Check for initial link when app starts
+    _appLinks.getInitialLink().then((uri) {
+      if (uri != null) _handleDeepLink(uri);
+    });
+
+    // Listen to incoming links while app is running
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    debugPrint('🔗 Handling deep link: $uri');
+    
+    // Pattern: https://vsp.app/match/BOOKING_ID
+    if (uri.pathSegments.length >= 2) {
+      final type = uri.pathSegments[0]; // match, team, etc.
+      final id = uri.pathSegments[1];
+
+      if (type == 'match') {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (context) => MatchDetailsScreen(bookingId: id),
+          ),
+        );
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    _loadingTimeout?.cancel();
+    super.dispose();
   }
 
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
+    final remoteConfig = RemoteConfigService();
 
-    // 1. Loading State or Waiting for User Data → Show Splash
-    if (auth.isLoading || (auth.isAuthenticated && auth.userModel == null)) {
-      return auth.hasDataFetchError
-          ? Scaffold(
-              backgroundColor: AppTheme.darkBackground,
-              body: Center(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const SplashScreen(navigate: false),
-                    const SizedBox(height: 16),
-                    const Text('Connection issue. Retrying...',
-                        style: TextStyle(color: Colors.white54)),
-                    TextButton(
-                      onPressed: () => auth.signOut(),
-                      child: const Text('Sign out',
-                          style: TextStyle(color: Colors.amber)),
-                    ),
-                  ],
-                ),
-              ),
-            )
-          : const SplashScreen(navigate: false);
+    return AnnotatedRegion<SystemUiOverlayStyle>(
+      value: SystemUiOverlayStyle.light.copyWith(
+        statusBarColor: Colors.transparent,
+      ),
+      child: _buildRootContent(auth, remoteConfig),
+    );
+  }
+
+  Widget _buildRootContent(AuthProvider auth, RemoteConfigService remoteConfig) {
+
+    // 0. Maintenance Mode
+    if (remoteConfig.isMaintenanceMode) {
+      return const MaintenanceScreen();
     }
 
-    // 2. Not Authenticated → Welcome
+    // 1. Not Authenticated → Welcome
     if (!auth.isAuthenticated) {
       return const WelcomeScreen();
     }
 
-    // 3. Social Login users missing phone → Complete profile
-    if (auth.userModel?.phone == null || auth.userModel!.phone!.isEmpty) {
+    // 2. Authenticated but waiting for User Data → Splash (Loading)
+    if (auth.isAuthenticated && auth.userModel == null) {
+      // 🛡️ Timeout Safety Net: after 3s show a connection error with sign-out option
+      if (_loadingTimedOut) {
+        return Scaffold(
+          backgroundColor: VSPColors.background,
+          body: Center(
+            child: Padding(
+              padding: const EdgeInsets.all(32),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(Icons.wifi_off_rounded, color: VSPColors.textSecondary, size: 56),
+                  const SizedBox(height: 24),
+                  Text(
+                    'Connection Problem',
+                    style: TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  Text(
+                    'Could not load your profile. Please check your connection and try again.',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: VSPColors.textSecondary, height: 1.5),
+                  ),
+                  const SizedBox(height: 32),
+                  SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: VSPColors.background,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                      ),
+                      onPressed: () async {
+                        await auth.signOut();
+                      },
+                      child: const Text('Sign Out & Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      }
+      return const SplashScreen(navigate: false);
+    }
+
+    final user = auth.userModel!;
+
+    // 3. Prevent bypass: Social Login users missing phone → Complete Profile
+    if (user.phone == null || user.phone!.isEmpty) {
       return const SocialOnboardingScreen();
     }
 
-    // 4. Registration NOT complete → OTP Verification
-    if (!auth.userModel!.isRegistrationComplete) {
+    // 4. Registration NOT complete → Verify Email/OTP
+    if (!user.isRegistrationComplete) {
       return const VerifyEmailScreen();
     }
 
-    // 5. Owner Flow
+    // 5. Shared Moderation Check
+    if (user.isSuspended == true) {
+      return SuspendedAccountScreen(debt: user.commissionDebt);
+    }
+
+    // 6. Owner Flow
     if (auth.isOwner) {
-      final user = auth.userModel!;
-
-      // 🔴 KILL SWITCH: Suspended accounts get blocked immediately
-      if (user.isSuspended) {
-        return SuspendedAccountScreen(debt: user.commissionDebt);
-      }
-
-      // 5.1. Facility Setup (Stadium)
+      // 6.1. Facility Setup (Stadium)
       if (!user.hasStadium) {
         return const FacilityOnboardingScreen();
       }
 
-      // 5.2. Identity Verification (Documents)
+      // 6.2. Identity Verification (Documents)
       if (!user.isIdentityVerified) {
         return const OwnerDocumentationWizard();
       }
@@ -100,8 +240,47 @@ class _RootScreenState extends State<RootScreen> {
       return const OwnerMainScreen();
     }
 
-    // 6. Player → Dashboard
+    // 7. Player → Dashboard
     return const PlayerHomeScreen();
+  }
+}
+
+// ─────────────────────────────────────────────
+// 🛠️ Maintenance Mode Screen
+// ─────────────────────────────────────────────
+class MaintenanceScreen extends StatelessWidget {
+  const MaintenanceScreen({super.key});
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      body: Center(
+        child: Padding(
+          padding: const EdgeInsets.all(VSPSpacing.xl),
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.settings_suggest_rounded, size: 80, color: VSPColors.accent),
+              const SizedBox(height: VSPSpacing.xl),
+              Text(
+                'We’ll be back soon!',
+                style: Theme.of(context).textTheme.displaySmall,
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              const Text(
+                'VSP is currently undergoing scheduled maintenance to improve your experience. We apologize for the inconvenience.',
+                textAlign: TextAlign.center,
+                style: TextStyle(color: VSPColors.textSecondary),
+              ),
+              const SizedBox(height: VSPSpacing.xl),
+              CircularProgressIndicator(color: VSPColors.accent.withValues(alpha: 0.5)),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 }
 

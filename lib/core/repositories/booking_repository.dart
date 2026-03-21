@@ -4,6 +4,8 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../data/models.dart';
 import '../services/database_service.dart';
+import '../services/analytics_service.dart';
+import '../services/logger_service.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -107,10 +109,11 @@ class FirestoreBookingRepository implements BookingRepository {
       // ── Owner Notification Logic ──
       _sendOwnerNotification(draft, docRef.id);
 
-      debugPrint('✅ Booking created successfully: ${docRef.id}');
+      AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
+      VSPLogger.i('✅ Booking created successfully: ${docRef.id}');
       return booking;
     } catch (e) {
-      debugPrint('❌ Error creating booking: $e');
+      VSPLogger.e('❌ Error creating booking', e);
       rethrow;
     }
   }
@@ -160,8 +163,9 @@ class FirestoreBookingRepository implements BookingRepository {
           createdAt: DateTime.now(),
         ),
       );
+      AnalyticsService.logChallengeSent(draft.playerTeamId ?? 'unknown', draft.opponentTeamId!);
     } catch (e) {
-      debugPrint('Error sending challenge notification: $e');
+      VSPLogger.e('Error sending challenge notification', e);
     }
   }
 
@@ -222,7 +226,22 @@ class FirestoreBookingRepository implements BookingRepository {
   @override
   Future<bool> cancelBooking(String bookingId) async {
     try {
-      await _bookingsCollection.doc(bookingId).delete();
+      final doc = await _bookingsCollection.doc(bookingId).get();
+      if (!doc.exists) return false;
+
+      final data = doc.data() as Map<String, dynamic>;
+      final startTime = (data['startTime'] as Timestamp).toDate();
+
+      // Business Rule: Cannot cancel after match starts
+      if (DateTime.now().isAfter(startTime)) {
+        debugPrint('⚠️ Cannot cancel booking after start time: $bookingId');
+        return false;
+      }
+
+      await _bookingsCollection.doc(bookingId).update({
+        'status': BookingStatus.cancelled.name,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
       return true;
     } catch (e) {
       debugPrint('❌ Error cancelling booking: $e');
@@ -348,6 +367,7 @@ class FirestoreBookingRepository implements BookingRepository {
             // Disagreement on result
             await docRef.update({
               'matchResultStatus': MatchResultStatus.disputed.name,
+              'requiresAdminIntervention': true,
             });
             await saveRating();
             return false;

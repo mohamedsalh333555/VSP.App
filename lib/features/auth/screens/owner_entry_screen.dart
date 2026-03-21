@@ -154,13 +154,27 @@ class OwnerEntryScreen extends StatelessWidget {
                     Expanded(
                       child: _SocialButton(
                         iconWidget: Row(
+                          mainAxisSize: MainAxisSize.min,
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            Image.network(
-                              'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
-                              width: 20,
-                              height: 20,
-                            ),
+                             Container(
+                                width: 24,
+                                height: 24,
+                                decoration: const BoxDecoration(
+                                  color: VSPColors.textPrimary,
+                                  shape: BoxShape.circle,
+                                ),
+                                child: const Center(
+                                  child: Text(
+                                    'G', 
+                                    style: TextStyle(
+                                      color: VSPColors.background, 
+                                      fontWeight: FontWeight.w900, 
+                                      fontSize: 14
+                                    )
+                                  )
+                                ),
+                              ),
                             const SizedBox(width: 10),
                             Text(
                               languageProvider.isArabic ? 'جوجل' : 'Google',

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
@@ -8,6 +9,9 @@ import '../services/cloudinary_service.dart';
 import '../services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
+import '../services/logger_service.dart';
+import '../../../../core/utils/vsp_feedback.dart';
+import '../utils/phone_utils.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -17,6 +21,8 @@ class AuthProvider with ChangeNotifier {
   // Firebase user
   User? _firebaseUser;
   UserModel? _userModel;
+  Position? _currentPosition;
+  bool _hasCompletedOnboarding = false;
   
   // Registration flow state
   String? _userType; // 'player' or 'owner'
@@ -48,11 +54,14 @@ class AuthProvider with ChangeNotifier {
   bool get isPlayer => _userModel?.role == 'player' || _userType == 'player';
   bool get isOwner => _userModel?.role == 'owner' || _userType == 'owner';
   User? get currentUser => _firebaseUser; // Alias for convenience
+  Position? get currentPosition => _currentPosition;
+  bool get hasCompletedOnboarding => _hasCompletedOnboarding;
 
   bool _dataFetchError = false;
   bool get hasDataFetchError => _dataFetchError;
 
   AuthProvider() {
+    _loadOnboardingStatus();
     // Listen to auth state changes
     _authService.authStateChanges.listen((User? user) async {
       _firebaseUser = user;
@@ -73,14 +82,14 @@ class AuthProvider with ChangeNotifier {
           } else {
             // 🚨 GHOST SESSION FIX: Auth exists but Firestore doc is missing.
             // Force logout to break the infinite splash screen trap.
-            debugPrint("⚠️ Ghost user detected (Auth exists, Firestore missing). Forcing logout to break the loop.");
+            VSPLogger.w("⚠️ Ghost user detected (Auth exists, Firestore missing). Forcing logout.");
             await _authService.signOut();
             _firebaseUser = null;
             _userModel = null;
             _userType = null;
           }
         } catch (e) {
-          debugPrint("❌ CRITICAL: Firestore fetch exception: $e");
+          VSPLogger.e("❌ Firestore fetch exception", e);
           _dataFetchError = true;
         }
       } else {
@@ -129,11 +138,11 @@ class AuthProvider with ChangeNotifier {
           'lastSeen': FieldValue.serverTimestamp(),
         });
         // SECURITY PATCH: Obfuscated success message to prevent token sniffing in logs.
-        debugPrint('FCM Token sync status: SUCCESS');
+        VSPLogger.i('FCM Token sync status: SUCCESS');
       }
     } catch (e) {
       // SECURITY PATCH: Masked error details for notification service failure.
-      debugPrint('Error updating FCM Token: Internal notification service error.');
+      VSPLogger.w('FCM Token sync status: FAILED (Silent)');
     }
   }
 
@@ -202,12 +211,15 @@ class AuthProvider with ChangeNotifier {
         }
       }
 
-      // Update Firestore flag
-      final updateSuccess = await updateProfile({
+      // 2. Update other profile data
+      final success = await _authService.updateUserProfile(currentUser!.uid, {
+        'name': _name, // Assuming _name is set
+        'phone': PhoneUtils.normalize(_phone ?? ''), // Assuming _phone is set
+        'position': _position, // Assuming _position is set
         'isRegistrationComplete': true,
       });
-
-      if (updateSuccess) {
+      
+      if (success) {
         // Locally update model to prevent loop
         if (_userModel != null) {
           _userModel = _userModel!.copyWith(isRegistrationComplete: true);
@@ -216,7 +228,7 @@ class AuthProvider with ChangeNotifier {
 
       _isLoading = false;
       notifyListeners();
-      return updateSuccess;
+      return success;
     } catch (e) {
       _errorMessage = e.toString();
       _isLoading = false;
@@ -247,6 +259,51 @@ class AuthProvider with ChangeNotifier {
             uid: _firebaseUser!.uid,
             email: _firebaseUser!.email ?? '',
             name: _firebaseUser!.displayName ?? '',
+            role: _userType ?? 'player',
+            isRegistrationComplete: false,
+            isEmailVerified: true,
+            hasStadium: false,
+            isIdentityVerified: false,
+          );
+        }
+        
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Sign In with Apple
+  Future<bool> signInWithApple() async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final result = await _authService.signInWithApple(role: _userType);
+
+      if (result['success']) {
+        _firebaseUser = result['user'] as User?;
+        final userData = await _authService.getUserData(_firebaseUser!.uid);
+        
+        if (userData != null) {
+          _userModel = UserModel.fromFirestore(userData);
+        } else {
+          _userModel = UserModel(
+            uid: _firebaseUser!.uid,
+            email: _firebaseUser!.email ?? '',
+            name: _firebaseUser!.displayName ?? 'Apple User',
             role: _userType ?? 'player',
             isRegistrationComplete: false,
             isEmailVerified: true,
@@ -417,7 +474,11 @@ class AuthProvider with ChangeNotifier {
     for (var field in restrictedFields) {
       sanitizedData.remove(field);
     }
-
+    
+    if (sanitizedData.containsKey('phone')) {
+      sanitizedData['phone'] = PhoneUtils.normalize(sanitizedData['phone'] ?? '');
+    }
+    
     if (sanitizedData.isEmpty) return true; // Nothing allowed to update
 
     _isLoading = true;
@@ -434,6 +495,7 @@ class AuthProvider with ChangeNotifier {
           hasStadium: sanitizedData['hasStadium'] ?? _userModel!.hasStadium,
           isRegistrationComplete: sanitizedData['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
           isIdentityVerified: sanitizedData['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
+          governorate: sanitizedData['governorate'] ?? _userModel!.governorate,
         );
       }
       _isLoading = false;
@@ -496,6 +558,14 @@ class AuthProvider with ChangeNotifier {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
+    
+    // 0. Duplicate Phone Check (Phase 3 Hardening)
+    if (await _authService.isPhoneRegistered(phone)) {
+      _errorMessage = 'هذا الرقم مسجل مسبقاً، يرجى استخدام رقم آخر.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
 
     try {
       // 1. Update Password in Firebase Auth
@@ -509,7 +579,7 @@ class AuthProvider with ChangeNotifier {
 
       // 2. Prepare update data
       final Map<String, dynamic> updateData = {
-        'phone': phone,
+        'phone': PhoneUtils.normalize(phone),
         'governorate': governorate ?? _governorate,
         // REMOVED: 'isRegistrationComplete': true, -> Let user pass OTP first
       };
@@ -643,6 +713,9 @@ class AuthProvider with ChangeNotifier {
         ),
       );
 
+      _currentPosition = position;
+      notifyListeners();
+
       // 3. Reverse Geocode (Get Governorate Name)
       final placemarks = await placemarkFromCoordinates(
         position.latitude, 
@@ -672,7 +745,7 @@ class AuthProvider with ChangeNotifier {
         }
       }
     } catch (e) {
-      debugPrint('❌ Error auto-updating location: $e');
+      VSPLogger.e('Error auto-updating location', e);
       // Fail silently, don't disturb user
     }
   }
@@ -681,5 +754,46 @@ class AuthProvider with ChangeNotifier {
   void clearError() {
     _errorMessage = null;
     notifyListeners();
+  }
+
+  /// Load onboarding status from SharedPreferences
+  Future<void> _loadOnboardingStatus() async {
+    final prefs = await SharedPreferences.getInstance();
+    _hasCompletedOnboarding = prefs.getBool('has_completed_onboarding') ?? false;
+    notifyListeners();
+  }
+
+  /// Mark onboarding as complete
+  Future<void> completeOnboarding() async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setBool('has_completed_onboarding', true);
+    _hasCompletedOnboarding = true;
+    notifyListeners();
+  }
+
+  // Phase 2: User Deletion Logic (Safe Delete)
+  Future<bool> deleteAccount() async {
+    if (_userModel == null) return false;
+    _isLoading = true;
+    notifyListeners();
+
+    try {
+      final result = await _authService.deleteAccount(_userModel!.uid);
+      if (result['success']) {
+        await signOut();
+        _isLoading = false;
+        return true;
+      } else {
+        _errorMessage = result['message'];
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+    } catch (e) {
+      _errorMessage = 'An error occurred while deleting your account.';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 }

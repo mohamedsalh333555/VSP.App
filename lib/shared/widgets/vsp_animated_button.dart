@@ -7,6 +7,7 @@ class VSPAnimatedButton extends StatefulWidget {
   final bool isLoading;
   final Color? color;
   final Color? textColor;
+  final double? height;
 
   const VSPAnimatedButton({
     super.key,
@@ -15,6 +16,7 @@ class VSPAnimatedButton extends StatefulWidget {
     this.isLoading = false,
     this.color,
     this.textColor,
+    this.height,
   });
 
   @override
@@ -45,9 +47,17 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
     super.dispose();
   }
 
-  void _onTapDown(_) => _controller.reverse();
-  void _onTapUp(_) => _controller.forward();
-  void _onTapCancel() => _controller.forward();
+  void _onTapDown(_) {
+    if (mounted) _controller.reverse();
+  }
+
+  void _onTapUp(_) {
+    if (mounted) _controller.forward();
+  }
+
+  void _onTapCancel() {
+    if (mounted) _controller.forward();
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -63,6 +73,7 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
           isLoading: widget.isLoading,
           color: widget.color,
           textColor: widget.textColor,
+          height: widget.height,
         ),
       ),
     );

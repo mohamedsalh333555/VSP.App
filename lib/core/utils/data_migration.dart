@@ -338,6 +338,7 @@ class DataMigration {
         ...stadium,
         'id': docRef.id,
         'ownerId': 'seeded_owner', // Mock owner
+        'isVerified': true, 
         'createdAt': FieldValue.serverTimestamp(),
       });
     }

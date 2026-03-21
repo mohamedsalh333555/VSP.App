@@ -198,8 +198,17 @@ class CreateAccountScreen extends StatelessWidget {
                               child: _SocialButton(
                                 height: 56,
                                 icon: Icons.apple,
-                                // Apple Sign-In not yet implemented: disabled, not misleading.
-                                onPressed: null,
+                                onPressed: () async {
+                                  authProvider.setUserType(isUserOwner ? 'owner' : 'player');
+                                  final success = await authProvider.signInWithApple();
+                                  if (success && context.mounted) {
+                                    Navigator.pushAndRemoveUntil(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => const RootScreen()),
+                                      (route) => false,
+                                    );
+                                  }
+                                },
                               ),
                             ),
                             const SizedBox(width: 12),
@@ -210,12 +219,26 @@ class CreateAccountScreen extends StatelessWidget {
                             child: _SocialButton(
                               height: 56,
                               iconWidget: Row(
+                                mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Image.network(
-                                    'https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Google_%22G%22_logo.svg/1024px-Google_%22G%22_logo.svg.png',
-                                    width: 20,
-                                    height: 20,
+                                  Container(
+                                    width: 24,
+                                    height: 24,
+                                    decoration: const BoxDecoration(
+                                      color: VSPColors.textPrimary,
+                                      shape: BoxShape.circle,
+                                    ),
+                                    child: const Center(
+                                      child: Text(
+                                        'G', 
+                                        style: TextStyle(
+                                          color: VSPColors.background, 
+                                          fontWeight: FontWeight.w900, 
+                                          fontSize: 14
+                                        )
+                                      )
+                                    ),
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
@@ -353,7 +376,6 @@ class _SocialButton extends StatelessWidget {
   final IconData? icon;
   final Widget? iconWidget;
   final VoidCallback? onPressed; // nullable: null = disabled
-  final double? width;
   final double? height;
 
   const _SocialButton({
@@ -361,7 +383,6 @@ class _SocialButton extends StatelessWidget {
     this.icon,
     this.iconWidget,
     required this.onPressed,
-    this.width,
     this.height,
   });
 
@@ -370,8 +391,10 @@ class _SocialButton extends StatelessWidget {
     return GestureDetector(
       onTap: onPressed,
       child: Container(
-        width: width ?? 105,
-        height: height ?? 64,
+        // No hardcoded width — let the Expanded parent (in the Row) control the width.
+        // This prevents RenderFlex overflow on smaller devices.
+        width: double.infinity,
+        height: height ?? 56,
         decoration: BoxDecoration(
           color: Colors.transparent,
           borderRadius: BorderRadius.circular(VSPRadius.md),

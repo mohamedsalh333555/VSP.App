@@ -66,7 +66,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         bottom: false,
         child: SingleChildScrollView(
           physics: const BouncingScrollPhysics(),
-          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+          padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -146,7 +146,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
               ),
               
-              const SizedBox(height: VSPSpacing.xxl), // Space for bottom nav
+              // Removed fixed SizedBox as we use padding instead.
             ],
           ),
         ),

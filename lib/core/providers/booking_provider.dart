@@ -1,9 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
+import '../services/database_service.dart';
 import '../config/app_config.dart';
-
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
   late final BookingRepository _repository;
@@ -11,11 +12,16 @@ class BookingProvider with ChangeNotifier {
   List<Booking> _userBookings = [];
   List<Booking> _upcomingBookings = [];
   List<Booking> _historyBookings = [];
+  List<Booking> _publicMatches = []; // ✅ Dedicated list for paginated matches
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
   StreamSubscription? _bookingSubscription; // ✅ Added tracking
   
   bool _isLoading = false;
+  bool _isLoadingMoreParticipants = false;
+  bool _isLoadingMoreMatches = false;
+  bool _hasMoreMatches = true;
+  DocumentSnapshot? _lastMatchDocument;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
 
@@ -23,20 +29,16 @@ class BookingProvider with ChangeNotifier {
   List<Booking> get userBookings => _userBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   List<Booking> get upcomingBookings => _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   List<Booking> get historyBookings => _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get publicMatches => _publicMatches;
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
   bool get isLoading => _isLoading;
+  bool get isLoadingMoreMatches => _isLoadingMoreMatches;
+  bool get hasMoreMatches => _hasMoreMatches;
   String? get errorMessage => _errorMessage;
 
   BookingProvider() {
-    // Use mock repository in demo mode, Firestore in production
-    if (AppConfig.demoMode) {
-      final mockRepo = MockBookingRepository();
-      mockRepo.addMockBookings(); // Add sample data
-      _repository = mockRepo;
-    } else {
-      _repository = FirestoreBookingRepository();
-    }
+    _repository = FirestoreBookingRepository();
   }
 
   /// Set the current booking draft (used between screens)
@@ -204,6 +206,19 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      // Find the booking in local state to check time early for UI feedback
+      final booking = _userBookings.cast<Booking?>().firstWhere(
+        (b) => b?.id == bookingId, 
+        orElse: () => null
+      );
+
+      if (booking != null && DateTime.now().isAfter(booking.startTime)) {
+        _errorMessage = "لا يمكن إلغاء الحجز بعد بدء وقت اللعب. تواصل مع صاحب الملعب.";
+        _cancellingIds.remove(bookingId);
+        notifyListeners();
+        return false;
+      }
+
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
         _upcomingBookings.removeWhere((b) => b.id == bookingId);
@@ -212,13 +227,13 @@ class BookingProvider with ChangeNotifier {
         // Keep in set for a moment to allow Firestore to sync.
         await Future.delayed(const Duration(seconds: 1));
       } else {
-        _errorMessage = 'Failed to cancel on server';
+        _errorMessage = 'لا يمكن إلغاء الحجز في الوقت الحالي. قد يكون وقت المباراة قد بدأ بالفعل.';
       }
       _cancellingIds.remove(bookingId);
       notifyListeners();
       return success;
     } catch (e) {
-      _errorMessage = 'Failed to cancel booking: $e';
+      _errorMessage = 'فشل في إلغاء الحجز: $e';
       _cancellingIds.remove(bookingId);
       notifyListeners();
       return false;
@@ -228,6 +243,88 @@ class BookingProvider with ChangeNotifier {
   /// Get a specific booking
   Future<Booking?> getBookingById(String bookingId) async {
     return await _repository.getBookingById(bookingId);
+  }
+
+  /// Fetch public matches with pagination
+  Future<void> fetchPublicMatches({bool isRefresh = false}) async {
+    if (_isLoading || (_isLoadingMoreMatches && !isRefresh)) return;
+
+    if (isRefresh) {
+      _publicMatches = [];
+      _lastMatchDocument = null;
+      _hasMoreMatches = true;
+      _setLoading(true);
+    } else {
+      _isLoadingMoreMatches = true;
+      notifyListeners();
+    }
+
+    try {
+      final result = await DatabaseService().getPublicMatchesPaginated(
+        limit: 10,
+        startAfter: _lastMatchDocument,
+      );
+
+      final List<Booking> newMatches = result['items'];
+      _lastMatchDocument = result['lastDoc'];
+
+      if (isRefresh) {
+        _publicMatches = newMatches;
+      } else {
+        _publicMatches.addAll(newMatches);
+      }
+
+      if (newMatches.length < 10) {
+        _hasMoreMatches = false;
+      }
+    } catch (e) {
+      _errorMessage = 'Failed to fetch public matches: $e';
+    } finally {
+      _isLoading = false;
+      _isLoadingMoreMatches = false;
+      notifyListeners();
+    }
+  }
+
+  void _setLoading(bool value) {
+    _isLoading = value;
+    notifyListeners();
+  }
+
+  /// Join a public match
+  Future<bool> joinPublicMatch(String bookingId, String userId) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final success = await DatabaseService().joinPublicMatch(bookingId, userId);
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = 'Error joining match: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Leave a public match
+  Future<bool> leavePublicMatch(String bookingId, String userId) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final success = await DatabaseService().leavePublicMatch(bookingId, userId);
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = 'Error leaving match: $e';
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
 
   /// Submit match result for Challenge bookings

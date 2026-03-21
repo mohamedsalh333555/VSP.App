@@ -1,4 +1,5 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
 class Stadium {
@@ -16,6 +17,8 @@ class Stadium {
   final double basePrice; // Unified price source
   final String area; // Jeresh, etc.
   final bool isFavorite;
+  final double? lat;
+  final double? lng;
   
   // Extended fields for details screen
   final String address;
@@ -33,6 +36,7 @@ class Stadium {
   final String? contractUrl;
   final String? ownerIdUrl;
   final bool isVerified;
+  final bool isFeatured; // ✅ Added featured status
   final String ownerId; // ✅ Stadium owner's UID
 
   Stadium({
@@ -65,7 +69,10 @@ class Stadium {
     this.contractUrl,
     this.ownerIdUrl,
     this.isVerified = false,
+    this.isFeatured = false, // ✅ Default to false
     this.ownerId = '', // ✅ Default empty ownerId
+    this.lat,
+    this.lng,
   }) : basePrice = basePrice ?? pricePerHour;
 
   static List<String> parseFeatures(dynamic data) {
@@ -99,162 +106,7 @@ class Stadium {
     return result;
   }
 
-  // Mock data
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<Stadium> getMockStadiums() {
-    return [
-      Stadium(
-        id: '1',
-        name: 'Santiago Bernabéu',
-        location: 'Madrid',
-        imageUrl: 'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&h=600&fit=crop&q=80', // Real high-res stadium pitch
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 5,
-        cafeteria: 2,
-        seatsCapacity: 490,
-        pricePerHour: 120,
-        area: 'Jeresh',
-        isFavorite: true,
-        address: 'Av. De Concha Espina, 1, Chamartín, 28036 Madrid',
-        rating: 4.5,
-        reviewsCount: 52,
-        description: 'The Santiago Bernabéu Stadium Is A Modern, Multi-Use Stadium Featuring A Retractable Roof, A Contemporary Facade, A Retractable Pitch, And Significant Improvements In Safety, Comfort, And Accessibility. It Also Includes Multifunctional Spaces Such As Restaurants, Museums, And Commercial Areas, As Well As A 360-Degree Giant Screen, With A Focus On Sustainability.',
-        features: ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats'],
-        policies: [
-          'Punctuality:\nCustomers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.',
-          'Reservation Duration:\nThe Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).',
-          'Cancellation And Refund Policy:\nNo Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.',
-          'If The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.',
-        ],
-        pitchCondition: 'Excellent - Well maintained grass with proper drainage',
-        hasJerash: true,
-        hasSeats: true,
-        hasBall: true,
-        ballPrice: 20,
-        isVerified: true,
-        images: [
-          'https://images.unsplash.com/photo-1556056504-5c7696c4c28d?w=800&h=600&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&h=600&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80',
-        ],
-      ),
-      Stadium(
-        id: '2',
-        name: 'Camp Nou',
-        location: 'Barcelona',
-        imageUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80', // High-quality football field
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 4,
-        cafeteria: 3,
-        seatsCapacity: 600,
-        pricePerHour: 150,
-        area: 'Barcelona',
-        isFavorite: false,
-        address: 'C. d\'Aristides Maillol, 12, Les Corts, 08028 Barcelona',
-        rating: 4.8,
-        reviewsCount: 89,
-        description: 'Camp Nou is one of the most iconic football stadiums in the world, home to FC Barcelona.',
-        features: ['Baths', '11 VS 11', 'Cafeteria', 'Seats'],
-        policies: [
-          'Punctuality: Arrive on time',
-          'No outside food or drinks',
-          'Proper football attire required',
-        ],
-        pitchCondition: 'Excellent',
-        hasJerash: false,
-        hasSeats: true,
-        hasBall: true,
-        ballPrice: 25,
-        isVerified: true,
-        images: [
-          'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=800&h=600&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&h=600&fit=crop&q=80',
-        ],
-      ),
-      Stadium(
-        id: '3',
-        name: 'Allianz Arena',
-        location: 'Munich',
-        imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&h=600&fit=crop&q=80', // Stadium panorama
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 6,
-        cafeteria: 4,
-        seatsCapacity: 750,
-        pricePerHour: 180,
-        area: 'Munich',
-        isFavorite: false,
-        address: 'Werner-Heisenberg-Allee 25, 80939 München, Germany',
-        rating: 4.9,
-        reviewsCount: 128,
-        description: 'The Allianz Arena is a football stadium with a striking exterior of inflated ETFE plastic panels.',
-        features: ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats', 'Parking'],
-        policies: ['Punctuality required', 'No smoking'],
-        pitchCondition: 'Perfect',
-        hasJerash: true,
-        hasSeats: true,
-        hasBall: true,
-        ballPrice: 20,
-        isVerified: true,
-      ),
-      Stadium(
-        id: '4',
-        name: 'Old Trafford',
-        location: 'Manchester',
-        imageUrl: 'https://images.unsplash.com/photo-1431324155629-1a6deb1dec8d?w=800&h=600&fit=crop&q=80', // Night match atmosphere
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 5,
-        cafeteria: 3,
-        seatsCapacity: 680,
-        pricePerHour: 160,
-        area: 'Manchester',
-        isFavorite: true,
-        address: 'Sir Matt Busby Way, Old Trafford, Stretford, Manchester',
-        rating: 4.7,
-        reviewsCount: 95,
-        description: 'Known as the Theatre of Dreams, one of the most famous football stadiums.',
-        features: ['Baths', '11 VS 11', 'Cafeteria', 'Seats'],
-        policies: ['Arrive 15 mins early', 'ID required'],
-        pitchCondition: 'Excellent',
-        hasJerash: true,
-        hasSeats: true,
-        hasBall: true,
-        ballPrice: 25,
-      ),
-      Stadium(
-        id: '5',
-        name: 'Wembley Stadium',
-        location: 'London',
-        imageUrl: 'https://images.unsplash.com/photo-1489944440615-453fc2b6a9a9?w=800&h=600&fit=crop&q=80', // Green pitch view
-        type: 'Football',
-        size: '11 VS 11',
-        baths: 8,
-        cafeteria: 5,
-        seatsCapacity: 900,
-        pricePerHour: 200,
-        area: 'London',
-        isFavorite: false,
-        address: 'Wembley, London HA9 0WS, United Kingdom',
-        rating: 4.6,
-        reviewsCount: 156,
-        description: 'The iconic national stadium of England with its famous arch.',
-        features: ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats', 'VIP Lounge'],
-        policies: ['Online booking only', 'No refunds within 48hrs'],
-        pitchCondition: 'World Class',
-        hasJerash: true,
-        hasSeats: true,
-        hasBall: true,
-        ballPrice: 20,
-      ),
-    ];
-  }
-  
-  static Stadium getById(String id) {
-    return getMockStadiums().firstWhere((s) => s.id == id);
-  }
+
   factory Stadium.fromFirestore(Map<String, dynamic> data, String id) {
     return Stadium(
       id: id,
@@ -288,13 +140,17 @@ class Stadium {
       contractUrl: data['contractUrl'],
       ownerIdUrl: data['ownerIdUrl'],
       isVerified: data['isVerified'] ?? false,
-      ownerId: data['ownerId'] ?? '', // ✅ Read ownerId from Firestore
+      isFeatured: data['isFeatured'] ?? false,
+      ownerId: data['ownerId'] ?? '',
+      lat: (data['lat'] as num?)?.toDouble(),
+      lng: (data['lng'] as num?)?.toDouble(),
     );
   }
 
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
+      'name_lowercase': name.toLowerCase(),
       'location': location,
       'imageUrl': imageUrl,
       'images': images,
@@ -322,7 +178,10 @@ class Stadium {
       'contractUrl': contractUrl,
       'ownerIdUrl': ownerIdUrl,
       'isVerified': isVerified,
-      'ownerId': ownerId, // ✅ Save ownerId to Firestore
+      'isFeatured': isFeatured,
+      'ownerId': ownerId,
+      'lat': lat,
+      'lng': lng,
     };
   }
 }
@@ -345,27 +204,7 @@ class Review {
     required this.timeAgo,
   });
 
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<Review> getMockReviews() {
-    return [
-      Review(
-        id: '1',
-        userName: 'Mohamed Salah',
-        userImageUrl: 'https://images.unsplash.com/photo-1543351611-58f69d7c1781?w=150&h=150&fit=crop&q=80',
-        rating: 5.0,
-        comment: 'The atmosphere at Santiago Bernabéu is absolutely electric. Best pitch I have played on!',
-        timeAgo: '2 Mins Ago',
-      ),
-      Review(
-        id: '2',
-        userName: 'Kylian Mbappé',
-        userImageUrl: 'https://images.unsplash.com/photo-1552674605-db6ffd4facb5?w=150&h=150&fit=crop&q=80',
-        rating: 5.0,
-        comment: 'Great stadium with top-tier facilities for professionals. The pitch condition is perfect.',
-        timeAgo: '1 Hour Ago',
-      ),
-    ];
-  }
+
 }
 
 /// Time slot data model
@@ -386,46 +225,7 @@ class TimeSlot {
 
   String get displayTime => '$startTime < $endTime';
 
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<TimeSlot> getMockTimeSlots() {
-    return [
-      TimeSlot(
-        id: '1',
-        startTime: '06:30 Pm',
-        endTime: '08:00 Pm',
-        isAvailable: true,
-        price: 120,
-      ),
-      TimeSlot(
-        id: '2',
-        startTime: '07:00 Pm',
-        endTime: '08:30 Pm',
-        isAvailable: true,
-        price: 120,
-      ),
-      TimeSlot(
-        id: '3',
-        startTime: '07:30 Pm',
-        endTime: '09:00 Pm',
-        isAvailable: false,
-        price: 120,
-      ),
-      TimeSlot(
-        id: '4',
-        startTime: '08:00 Pm',
-        endTime: '09:30 Pm',
-        isAvailable: false,
-        price: 120,
-      ),
-      TimeSlot(
-        id: '5',
-        startTime: '08:30 Pm',
-        endTime: '10:00 Pm',
-        isAvailable: false,
-        price: 120,
-      ),
-    ];
-  }
+
 }
 
 /// Booking Status Enum
@@ -464,6 +264,8 @@ class BookingDraft {
   final String? playerTeamName;
   final String? opponentTeamId;
   final String? opponentTeamName;
+  final String? playerTeamLogoUrl;
+  final String? opponentTeamLogoUrl;
 
   final bool isPrivate;
   final bool rentBall;
@@ -486,8 +288,10 @@ class BookingDraft {
     required this.bookingType,
     this.playerTeamId,
     this.playerTeamName,
+    this.playerTeamLogoUrl,
     this.opponentTeamId,
     this.opponentTeamName,
+    this.opponentTeamLogoUrl,
     required this.isPrivate,
     required this.rentBall,
     required this.totalPrice,
@@ -508,8 +312,10 @@ class BookingDraft {
     BookingType? bookingType,
     String? playerTeamId,
     String? playerTeamName,
+    String? playerTeamLogoUrl,
     String? opponentTeamId,
     String? opponentTeamName,
+    String? opponentTeamLogoUrl,
     bool? isPrivate,
     bool? rentBall,
     double? totalPrice,
@@ -529,8 +335,10 @@ class BookingDraft {
       bookingType: bookingType ?? this.bookingType,
       playerTeamId: playerTeamId ?? this.playerTeamId,
       playerTeamName: playerTeamName ?? this.playerTeamName,
+      playerTeamLogoUrl: playerTeamLogoUrl ?? this.playerTeamLogoUrl,
       opponentTeamId: opponentTeamId ?? this.opponentTeamId,
       opponentTeamName: opponentTeamName ?? this.opponentTeamName,
+      opponentTeamLogoUrl: opponentTeamLogoUrl ?? this.opponentTeamLogoUrl,
       isPrivate: isPrivate ?? this.isPrivate,
       rentBall: rentBall ?? this.rentBall,
       totalPrice: totalPrice ?? this.totalPrice,
@@ -553,8 +361,10 @@ class BookingDraft {
       'bookingType': bookingType.name,
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
+      'playerTeamLogoUrl': playerTeamLogoUrl,
       'opponentTeamId': opponentTeamId,
       'opponentTeamName': opponentTeamName,
+      'opponentTeamLogoUrl': opponentTeamLogoUrl,
       'isPrivate': isPrivate,
       'rentBall': rentBall,
       'totalPrice': totalPrice,
@@ -585,8 +395,10 @@ class Booking {
   final BookingType bookingType;
   final String? playerTeamId;
   final String? playerTeamName;
+  final String? playerTeamLogoUrl;
   final String? opponentTeamId;
   final String? opponentTeamName;
+  final String? opponentTeamLogoUrl;
 
   // Options
   final bool isPrivate;
@@ -611,6 +423,7 @@ class Booking {
   final MatchResultStatus matchResultStatus;
   final MatchOutcome? pendingOutcome;
   final MatchOutcome? finalOutcome;
+  final bool requiresAdminIntervention;
 
   // Public Match Fields
   final int currentPlayers;
@@ -628,8 +441,10 @@ class Booking {
     required this.bookingType,
     this.playerTeamId,
     this.playerTeamName,
+    this.playerTeamLogoUrl,
     this.opponentTeamId,
     this.opponentTeamName,
+    this.opponentTeamLogoUrl,
     required this.isPrivate,
     required this.rentBall,
     required this.totalPrice,
@@ -646,6 +461,7 @@ class Booking {
     this.matchResultStatus = MatchResultStatus.noResult,
     this.pendingOutcome,
     this.finalOutcome,
+    this.requiresAdminIntervention = false,
     this.currentPlayers = 1,
     this.maxPlayers = 10,
     this.joinedUserIds = const [],
@@ -679,8 +495,10 @@ class Booking {
       ),
       playerTeamId: data['playerTeamId'],
       playerTeamName: data['playerTeamName'],
+      playerTeamLogoUrl: data['playerTeamLogoUrl'],
       opponentTeamId: data['bookingType'] == 'challenge' ? data['opponentTeamId'] : null,
       opponentTeamName: data['bookingType'] == 'challenge' ? data['opponentTeamName'] : null,
+      opponentTeamLogoUrl: data['opponentTeamLogoUrl'],
       isPrivate: data['isPrivate'] ?? false,
       rentBall: data['rentBall'] ?? false,
       totalPrice: (data['totalPrice'] ?? 0).toDouble(),
@@ -719,6 +537,7 @@ class Booking {
       finalOutcome: data['finalOutcome'] != null 
           ? MatchOutcome.values.firstWhere((e) => e.name == data['finalOutcome']) 
           : null,
+      requiresAdminIntervention: data['requiresAdminIntervention'] ?? false,
       currentPlayers: data['currentPlayers'] ?? 1,
       maxPlayers: data['maxPlayers'] ?? 10,
       joinedUserIds: List<String>.from(data['joinedUserIds'] ?? []),
@@ -737,8 +556,10 @@ class Booking {
       'bookingType': bookingType.name,
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
+      'playerTeamLogoUrl': playerTeamLogoUrl,
       'opponentTeamId': opponentTeamId,
       'opponentTeamName': opponentTeamName,
+      'opponentTeamLogoUrl': opponentTeamLogoUrl,
       'isPrivate': isPrivate,
       'rentBall': rentBall,
       'totalPrice': totalPrice,
@@ -755,6 +576,7 @@ class Booking {
       'matchResultStatus': matchResultStatus.name,
       'pendingOutcome': pendingOutcome?.name,
       'finalOutcome': finalOutcome?.name,
+      'requiresAdminIntervention': requiresAdminIntervention,
       'currentPlayers': currentPlayers,
       'maxPlayers': maxPlayers,
       'joinedUserIds': joinedUserIds,
@@ -779,8 +601,10 @@ class Booking {
       bookingType: draft.bookingType,
       playerTeamId: draft.playerTeamId,
       playerTeamName: draft.playerTeamName,
+      playerTeamLogoUrl: draft.playerTeamLogoUrl,
       opponentTeamId: draft.opponentTeamId,
       opponentTeamName: draft.opponentTeamName,
+      opponentTeamLogoUrl: draft.opponentTeamLogoUrl,
       isPrivate: draft.isPrivate,
       rentBall: draft.rentBall,
       totalPrice: draft.totalPrice,
@@ -807,8 +631,10 @@ class Booking {
     BookingType? bookingType,
     String? playerTeamId,
     String? playerTeamName,
+    String? playerTeamLogoUrl,
     String? opponentTeamId,
     String? opponentTeamName,
+    String? opponentTeamLogoUrl,
     bool? isPrivate,
     bool? rentBall,
     double? totalPrice,
@@ -825,6 +651,7 @@ class Booking {
     MatchResultStatus? matchResultStatus,
     MatchOutcome? pendingOutcome,
     MatchOutcome? finalOutcome,
+    bool? requiresAdminIntervention,
     int? currentPlayers,
     int? maxPlayers,
     List<String>? joinedUserIds,
@@ -840,8 +667,10 @@ class Booking {
       bookingType: bookingType ?? this.bookingType,
       playerTeamId: playerTeamId ?? this.playerTeamId,
       playerTeamName: playerTeamName ?? this.playerTeamName,
+      playerTeamLogoUrl: playerTeamLogoUrl ?? this.playerTeamLogoUrl,
       opponentTeamId: opponentTeamId ?? this.opponentTeamId,
       opponentTeamName: opponentTeamName ?? this.opponentTeamName,
+      opponentTeamLogoUrl: opponentTeamLogoUrl ?? this.opponentTeamLogoUrl,
       isPrivate: isPrivate ?? this.isPrivate,
       rentBall: rentBall ?? this.rentBall,
       totalPrice: totalPrice ?? this.totalPrice,
@@ -858,6 +687,7 @@ class Booking {
       matchResultStatus: matchResultStatus ?? this.matchResultStatus,
       pendingOutcome: pendingOutcome ?? this.pendingOutcome,
       finalOutcome: finalOutcome ?? this.finalOutcome,
+      requiresAdminIntervention: requiresAdminIntervention ?? this.requiresAdminIntervention,
       currentPlayers: currentPlayers ?? this.currentPlayers,
       maxPlayers: maxPlayers ?? this.maxPlayers,
       joinedUserIds: joinedUserIds ?? this.joinedUserIds,
@@ -899,6 +729,7 @@ class Team {
   final String name;
   final String captainName;
   final String captainImageUrl;
+  final String logoUrl;
   final String date;
   final String stadium;
   final double pricePerPerson;
@@ -927,6 +758,7 @@ class Team {
     required this.name,
     required this.captainName,
     required this.captainImageUrl,
+    this.logoUrl = '',
     required this.date,
     required this.stadium,
     required this.pricePerPerson,
@@ -949,18 +781,21 @@ class Team {
     this.championshipsWon = 0,
   });
 
+  String get rankTitle => EloCalculator.getRankTitle(points);
+
   factory Team.fromFirestore(Map<String, dynamic> data, String docId) {
     return Team(
       id: docId,
       name: data['name'] ?? '',
       captainName: data['captainName'] ?? 'Captain',
-      captainImageUrl: data['logoUrl'] ?? data['captainImageUrl'] ?? '',
+      captainImageUrl: data['captainImageUrl'] ?? data['logoUrl'] ?? '', 
+      logoUrl: data['logoUrl'] ?? data['captainImageUrl'] ?? '',
       date: data['date'] ?? 'Upcoming',
       stadium: data['stadium'] ?? 'TBD',
       pricePerPerson: (data['pricePerPerson'] ?? 50).toDouble(),
       currentPlayers: data['playersCount'] ?? data['currentPlayers'] ?? 11,
       maxPlayers: data['maxPlayers'] ?? 11,
-      playerImages: List<String>.from(data['members'] ?? []),
+      playerImages: List<String>.from(data['playerImages'] ?? data['members'] ?? []),
       points: data['points'] ?? 0,
       trend: data['trend'] ?? 'stable',
       captainPhone: data['captainPhone'],
@@ -981,14 +816,17 @@ class Team {
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
+      'name_lowercase': name.toLowerCase(),
       'captainName': captainName,
       'captainImageUrl': captainImageUrl,
+      'logoUrl': logoUrl,
       'date': date,
       'stadium': stadium,
       'pricePerPerson': pricePerPerson,
       'currentPlayers': currentPlayers,
       'maxPlayers': maxPlayers,
-      'members': playerImages,
+      'memberUids': memberUids,
+      'playerImages': playerImages,
       'points': points,
       'trend': trend,
       'captainPhone': captainPhone,
@@ -1001,7 +839,6 @@ class Team {
       'playedOpponents': playedOpponents,
       'unlockedBadges': unlockedBadges,
       'currentWinningStreak': currentWinningStreak,
-      'memberUids': memberUids,
       'championshipsWon': championshipsWon,
     };
   }
@@ -1054,262 +891,7 @@ class Team {
     );
   }
 
-  // Mock data
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<Team> getMockTeams() {
-    return [
-      Team(
-        id: '1',
-        name: 'Real Madrid CF',
-        captainName: 'Mohamed Salah',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/5/56/Real_Madrid_CF.svg',
-        date: 'August 6th / 7pm',
-        stadium: 'Santiago Bernabéu',
-        pricePerPerson: 100,
-        currentPlayers: 8,
-        maxPlayers: 12,
-        points: 34,
-        trend: 'up',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 10,
-        draws: 4,
-        losses: 0,
-        playedOpponents: ['2', '3', '4', '5', '6', '7', '8'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '2',
-        name: 'FC Barcelona',
-        captainName: 'Robert Lewandowski',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/4/47/FC_Barcelona_%28crest%29.svg',
-        date: 'August 7th / 8pm',
-        stadium: 'Camp Nou',
-        pricePerPerson: 120,
-        currentPlayers: 10,
-        maxPlayers: 14,
-        points: 30,
-        trend: 'up',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 9,
-        draws: 3,
-        losses: 2,
-        playedOpponents: ['1', '3', '4', '5', '6', '7', '9'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '3',
-        name: 'Manchester City',
-        captainName: 'Kevin De Bruyne',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/e/eb/Manchester_City_FC_badge.svg',
-        date: 'August 8th / 9pm',
-        stadium: 'Etihad Stadium',
-        pricePerPerson: 110,
-        currentPlayers: 5,
-        maxPlayers: 10,
-        points: 28,
-        trend: 'up',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 8,
-        draws: 4,
-        losses: 2,
-        playedOpponents: ['1', '2', '4', '5', '6'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '4',
-        name: 'Liverpool FC',
-        captainName: 'Virgil van Dijk',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/0/0c/Liverpool_FC.svg',
-        date: 'August 9th / 7pm',
-        stadium: 'Anfield',
-        pricePerPerson: 115,
-        currentPlayers: 9,
-        maxPlayers: 12,
-        points: 25,
-        trend: 'stable',
-        governorate: 'Alexandria',
-        matchesPlayed: 14,
-        wins: 7,
-        draws: 4,
-        losses: 3,
-        playedOpponents: ['1', '2', '3', '5', '7', '8'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1531746020798-e6953c6e8e04?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1492562080023-ab3db95bfbce?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1463453091185-61582044d556?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '5',
-        name: 'Bayern Munich',
-        captainName: 'Thomas Müller',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/1b/FC_Bayern_M%C3%BCnchen_logo_%282017%29.svg',
-        date: 'August 10th / 8pm',
-        stadium: 'Allianz Arena',
-        pricePerPerson: 125,
-        currentPlayers: 11,
-        maxPlayers: 14,
-        points: 22,
-        trend: 'down',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 6,
-        draws: 4,
-        losses: 4,
-        playedOpponents: ['1', '2', '3', '4', '6'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1566492031773-4f4e44671857?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1557862921-37829c790f19?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1504257432389-52343af06ae3?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1499996860823-5214fcc65f8f?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '6',
-        name: 'Paris Saint-Germain',
-        captainName: 'Marquinhos',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/a/a7/Paris_Saint-Germain_F.C..svg',
-        date: 'August 11th / 9pm',
-        stadium: 'Parc des Princes',
-        pricePerPerson: 130,
-        currentPlayers: 7,
-        maxPlayers: 11,
-        points: 19,
-        trend: 'down',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 5,
-        draws: 4,
-        losses: 5,
-        playedOpponents: ['1', '2', '3', '5'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1552058544-f2b08422138a?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1547425260-76bcadfb4f2c?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1438761681033-6461ffad8d80?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '7',
-        name: 'Chelsea FC',
-        captainName: 'Reece James',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/c/cc/Chelsea_FC.svg',
-        date: 'August 12th / 7pm',
-        stadium: 'Stamford Bridge',
-        pricePerPerson: 105,
-        currentPlayers: 6,
-        maxPlayers: 11,
-        points: 16,
-        trend: 'up',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 4,
-        draws: 4,
-        losses: 6,
-        playedOpponents: ['1', '2', '4'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '8',
-        name: 'Juventus FC',
-        captainName: 'Leonardo Bonucci',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/1/15/Juventus_FC_2017_logo.svg',
-        date: 'August 13th / 8pm',
-        stadium: 'Allianz Stadium',
-        pricePerPerson: 95,
-        currentPlayers: 8,
-        maxPlayers: 12,
-        points: 12,
-        trend: 'down',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 3,
-        draws: 3,
-        losses: 8,
-        playedOpponents: ['1', '4'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1519085360753-af0119f7cbe7?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1534528741775-53994a69daeb?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1539571696357-5a69c17a67c6?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1517841905240-472988babdf9?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '9',
-        name: 'AC Milan',
-        captainName: 'Davide Calabria',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/commons/d/d0/Logo_of_AC_Milan.svg',
-        date: 'August 14th / 9pm',
-        stadium: 'San Siro',
-        pricePerPerson: 90,
-        currentPlayers: 5,
-        maxPlayers: 10,
-        points: 9,
-        trend: 'down',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 2,
-        draws: 3,
-        losses: 9,
-        playedOpponents: ['2'],
-        playerImages: [
-          'https://images.unsplash.com/photo-1560250097-0b93528c311a?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1501196354995-cbb51c65aaea?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1544723795-3fb6469f5b39?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1524504388940-b1c1722653e1?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-      Team(
-        id: '10',
-        name: 'Atlético Madrid',
-        captainName: 'Koke Resurrección',
-        captainImageUrl: 'https://upload.wikimedia.org/wikipedia/en/f/f4/Atletico_Madrid_2017_logo.svg',
-        date: 'August 15th / 7pm',
-        stadium: 'Wanda Metropolitano',
-        pricePerPerson: 85,
-        currentPlayers: 4,
-        maxPlayers: 10,
-        points: 7,
-        trend: 'down',
-        governorate: 'Cairo',
-        matchesPlayed: 14,
-        wins: 1,
-        draws: 4,
-        losses: 9,
-        playedOpponents: [],
-        playerImages: [
-          'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1506794778202-cad84cf45f1d?w=150&h=150&fit=crop&q=80',
-          'https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=150&h=150&fit=crop&q=80',
-        ],
-      ),
-    ];
-  }
+
 }
 
 class VSP1v1Player {
@@ -1366,71 +948,7 @@ class VSP1v1Player {
     };
   }
 
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<VSP1v1Player> getMockStandings() {
-    return [
-      VSP1v1Player(
-        id: '1',
-        name: 'Ahmed Y.',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Ahmed&background=random',
-        totalPoints: 250,
-        skillPoints: 85,
-        goals: 42,
-        tackles: 15,
-        titles: 2,
-        rank: 1,
-        trend: 'stable',
-      ),
-      VSP1v1Player(
-        id: '2',
-        name: 'Kareem M.',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Kareem&background=random',
-        totalPoints: 235,
-        skillPoints: 82,
-        goals: 38,
-        tackles: 12,
-        titles: 0,
-        rank: 2,
-        trend: 'up',
-      ),
-      VSP1v1Player(
-        id: '3',
-        name: 'Omar S.',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Omar&background=random',
-        totalPoints: 210,
-        skillPoints: 78,
-        goals: 31,
-        tackles: 10,
-        titles: 1,
-        rank: 3,
-        trend: 'down',
-      ),
-      VSP1v1Player(
-        id: '4',
-        name: 'Ziad H.',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Ziad&background=random',
-        totalPoints: 195,
-        skillPoints: 65,
-        goals: 28,
-        tackles: 8,
-        titles: 0,
-        rank: 4,
-        trend: 'up',
-      ),
-      VSP1v1Player(
-        id: '5',
-        name: 'Mahmoud F.',
-        avatarUrl: 'https://ui-avatars.com/api/?name=Mahmoud&background=random',
-        totalPoints: 180,
-        skillPoints: 70,
-        goals: 25,
-        tackles: 20,
-        titles: 0,
-        rank: 5,
-        trend: 'stable',
-      ),
-    ];
-  }
+
 }
 
 /// Championship data model
@@ -1623,6 +1141,7 @@ class Championship {
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
+      'name_lowercase': name.toLowerCase(),
       'type': type,
       'sportType': sportType,
       'logoUrl': logoUrl,
@@ -1661,57 +1180,7 @@ class Championship {
   List<String> get teamLogos => []; // To be implemented with real team data if needed
 
 
-  // Mock data
-  // -- DEMO MOCK REGION (Safe to omit in production) --
-  static List<Championship> getMockChampionships() {
-    return [
-      Championship(
-        id: '1',
-        name: 'Champions League',
-        type: 'Cup',
-        sportType: 'Football',
-        logoUrl: 'https://images.unsplash.com/photo-1574629810360-7efbbe195018?w=150&h=150&fit=crop&q=80',
-        startDate: DateTime.now().add(const Duration(days: 10)),
-        endDate: DateTime.now().add(const Duration(days: 40)),
-        entryFee: 1500,
-        grandPrize: 5000,
-        maxTeams: 16,
-        joinedTeams: ['T1', 'T2', 'T3', 'T4', 'T5', 'T6', 'T7', 'T8', 'T9', 'T10', 'T11', 'T12'],
-        ownerId: 'mock_owner',
-        governorate: 'Cairo',
-      ),
-      Championship(
-        id: '2',
-        name: 'Summer Cup',
-        type: 'Knockout',
-        sportType: 'Football',
-        logoUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=400&h=400&fit=crop&q=80',
-        startDate: DateTime.now().subtract(const Duration(days: 5)),
-        endDate: DateTime.now().add(const Duration(days: 15)),
-        entryFee: 500,
-        grandPrize: 1500,
-        maxTeams: 16,
-        joinedTeams: List.generate(14, (i) => 'T$i'),
-        ownerId: 'mock_owner',
-        governorate: 'Cairo',
-      ),
-      Championship(
-        id: '3',
-        name: 'Winter League',
-        type: 'League',
-        sportType: 'Football',
-        logoUrl: 'https://upload.wikimedia.org/wikipedia/en/thumb/f/f2/Premier_League_Logo.svg/1200px-Premier_League_Logo.svg.png',
-        startDate: DateTime.now().add(const Duration(days: 90)),
-        endDate: DateTime.now().add(const Duration(days: 180)),
-        entryFee: 1000,
-        grandPrize: 5000,
-        maxTeams: 20,
-        joinedTeams: ['T1', 'T2', 'T3', 'T4'],
-        ownerId: 'mock_owner',
-        governorate: 'Cairo',
-      ),
-    ];
-  }
+
 }
 
 /// Notification data model
@@ -1842,6 +1311,36 @@ class TournamentMatch {
       'nextMatchId': nextMatchId,
       'scheduledTime': scheduledTime != null ? Timestamp.fromDate(scheduledTime!) : null,
     };
+  }
+}
+
+/// Dynamic Marketing Promotion model
+class Promotion {
+  final String id;
+  final String title;
+  final String imageUrl;
+  final String? deepLink;
+  final String type; // 'match', 'stadium', 'championship', 'external'
+  final bool isActive;
+
+  Promotion({
+    required this.id,
+    required this.title,
+    required this.imageUrl,
+    this.deepLink,
+    required this.type,
+    this.isActive = true,
+  });
+
+  factory Promotion.fromFirestore(Map<String, dynamic> data, String id) {
+    return Promotion(
+      id: id,
+      title: data['title'] ?? '',
+      imageUrl: data['imageUrl'] ?? '',
+      deepLink: data['deepLink'],
+      type: data['type'] ?? 'info',
+      isActive: data['isActive'] ?? true,
+    );
   }
 }
 

@@ -3,7 +3,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/services/database_service.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
@@ -41,7 +41,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
   }
 
   Future<void> _checkUserTeam() async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.uid;
     
     if (uid != null) {
@@ -125,23 +125,36 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
   void _handleContinue() async {
     if (_selectedType == null) return;
 
-    if (_selectedType == 'Create Team to Compete' || _selectedType == 'Team Incomplete') {
-      if (_selectedType == 'Team Incomplete') {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('You need 5+ players to play ranked matches.'),
-            backgroundColor: VSPColors.warning,
-          ),
+    // GUIDED FLOW: If they want to challenge but team is invalid, help them fix it
+    if (_selectedType == 'Create Team to Compete' || _selectedType == 'Team Incomplete' || _selectedType == 'Challenge Match') {
+      if (!_hasTeam || _teamPlayersCount < 5) {
+        // Navigation into team screen to fix it
+        await Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const MyTeamScreen()),
         );
-        return;
+        
+        // Re-check after return
+        await _checkUserTeam();
+        
+        // If still invalid, stop here (they probably didn't finish)
+        if (!_hasTeam || _teamPlayersCount < 5) {
+           ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('You still need a complete team of 5+ to play challenge matches.'),
+              backgroundColor: VSPColors.warning,
+            ),
+          );
+          return;
+        }
+        
+        // If NOW valid, update selection to Challenge and continue automatically!
+        _selectedType = 'Challenge Match';
       }
-      // Must create a valid team first!
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (_) => const MyTeamScreen()),
-      ).then((_) => _checkUserTeam());
-      return;
     }
+
+    // Map selection ID to correct BookingType
+    // ... continues with the rest of the method below ...
 
     // Map selection ID to correct BookingType
     BookingType type = BookingType.personal;

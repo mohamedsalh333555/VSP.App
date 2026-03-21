@@ -1,4 +1,6 @@
 import 'dart:ui';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart' show kIsWeb;
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -237,51 +239,96 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              // ── Google Sign-In Button ──
-              SizedBox(
-                width: double.infinity,
-                height: 52,
-                child: OutlinedButton.icon(
-                  icon: const Text(
-                    'G',
-                    style: TextStyle(
-                      fontSize: 22,
-                      fontWeight: FontWeight.w900,
-                      color: Color(0xFF4285F4), // Google blue
-                    ),
-                  ),
-                  label: Text(
-                    languageProvider.isArabic ? 'تسجيل الدخول عبر جوجل' : 'Sign in with Google',
-                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: VSPColors.textPrimary,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  style: OutlinedButton.styleFrom(
-                    side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                    backgroundColor: VSPColors.surface,
-                  ),
-                      onPressed: _isLoading ? null : () async {
-                    setState(() => _isLoading = true);
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    final success = await authProvider.signInWithGoogle();
+              Row(
+                children: [
+                   if (!kIsWeb && Platform.isIOS) ...[
+                     Expanded(
+                       child: SizedBox(
+                         height: 52,
+                         child: OutlinedButton.icon(
+                           icon: const Icon(Icons.apple, color: Colors.white, size: 24),
+                           label: Text(
+                             languageProvider.isArabic ? 'آبل' : 'Apple',
+                             style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                               color: VSPColors.textPrimary,
+                               fontWeight: FontWeight.w500,
+                             ),
+                           ),
+                           style: OutlinedButton.styleFrom(
+                             side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
+                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                             backgroundColor: Colors.black, // Apple black background
+                           ),
+                           onPressed: _isLoading ? null : () async {
+                             setState(() => _isLoading = true);
+                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                             final success = await authProvider.signInWithApple();
 
-                    if (!context.mounted) return;
-                    setState(() => _isLoading = false);
+                             if (!context.mounted) return;
+                             setState(() => _isLoading = false);
 
-                    if (success) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (context) => const RootScreen()),
-                        (route) => false,
-                      );
-                    } else {
-                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
-                    }
-                  },
-                ),
+                             if (success) {
+                               Navigator.of(context).pushAndRemoveUntil(
+                                 MaterialPageRoute(builder: (context) => const RootScreen()),
+                                 (route) => false,
+                               );
+                             } else {
+                               VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
+                             }
+                           },
+                         ),
+                       ),
+                     ),
+                     const SizedBox(width: 12),
+                   ],
+
+                   Expanded(
+                     child: SizedBox(
+                       height: 52,
+                       child: OutlinedButton.icon(
+                         icon: const Text(
+                           'G',
+                           style: TextStyle(
+                             fontSize: 22,
+                             fontWeight: FontWeight.w900,
+                             color: Color(0xFF4285F4),
+                           ),
+                         ),
+                         label: Text(
+                           languageProvider.isArabic ? 'جوجل' : 'Google',
+                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                             color: VSPColors.textPrimary,
+                             fontWeight: FontWeight.w500,
+                           ),
+                         ),
+                         style: OutlinedButton.styleFrom(
+                           side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
+                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                           backgroundColor: VSPColors.surface,
+                         ),
+                         onPressed: _isLoading ? null : () async {
+                           setState(() => _isLoading = true);
+                           final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                           final success = await authProvider.signInWithGoogle();
+
+                           if (!context.mounted) return;
+                           setState(() => _isLoading = false);
+
+                           if (success) {
+                             Navigator.of(context).pushAndRemoveUntil(
+                               MaterialPageRoute(builder: (context) => const RootScreen()),
+                               (route) => false,
+                             );
+                           } else {
+                             VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+                           }
+                         },
+                       ),
+                     ),
+                   ),
+                ],
               ),
-                  const SizedBox(height: 40),
+              const SizedBox(height: 40),
                 ],
               ),
             ),

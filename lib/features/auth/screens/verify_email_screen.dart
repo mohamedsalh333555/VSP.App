@@ -8,6 +8,7 @@ import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
 
 import '../../../core/navigation/root_screen.dart';
+import 'welcome_screen.dart';
 import '../../owner/screens/add_stadium_wizard.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
@@ -77,14 +78,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     if (AppConfig.useMockOtp) {
       // ✅ Mock OTP Verification
       await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
+      if (!mounted) return;
 
       if (code == AppConfig.mockOtpCode) {
         final auth = Provider.of<AuthProvider>(context, listen: false);
 
         // Mark registration as complete in Firestore
         await auth.updateProfile({'isRegistrationComplete': true});
-
-        if (!context.mounted) return;
+        if (!mounted) return;
         
         // Role-based redirection
         if (auth.isOwner) {
@@ -103,18 +104,31 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           );
         }
       } else {
-        if (mounted) setState(() => _isLoading = false);
+        setState(() => _isLoading = false);
         VSPFeedback.showError(context, 'رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
       }
     } else {
-      // if (verified) { ... } else { ... }
-      if (!context.mounted) return;
+      // Real OTP Logic goes here
+      await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
+      if (!mounted) return;
       setState(() => _isLoading = false);
       VSPFeedback.showError(context, 'Real OTP not activated yet.');
     }
   }
 
   // Removed _showError helper in favor of VSPFeedback
+
+  /// Aborts OTP — signs out the stale Firebase session and returns to Welcome.
+  /// Called by both the back button and hardware back gesture.
+  Future<void> _handleAbort(BuildContext ctx) async {
+    final auth = Provider.of<AuthProvider>(ctx, listen: false);
+    await auth.signOut();
+    if (!ctx.mounted) return;
+    Navigator.of(ctx).pushAndRemoveUntil(
+      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+      (route) => false,
+    );
+  }
 
   void _handleResend() {
     if (!_canResend) return;
@@ -147,15 +161,21 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
 
-    return AnnotatedRegion<SystemUiOverlayStyle>(
-      value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
-        statusBarIconBrightness: Brightness.light,
-        systemNavigationBarColor: VSPColors.background,
-        systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
-      ),
-      child: Scaffold(
+    return PopScope(
+      // Intercept hardware back — sign out instead of popping into dead state
+      canPop: false,
+      onPopInvokedWithResult: (didPop, _) {
+        if (!didPop) _handleAbort(context);
+      },
+      child: AnnotatedRegion<SystemUiOverlayStyle>(
+        value: SystemUiOverlayStyle(
+          statusBarColor: Colors.transparent,
+          statusBarIconBrightness: Brightness.light,
+          systemNavigationBarColor: VSPColors.background,
+          systemNavigationBarIconBrightness: Brightness.light,
+          systemNavigationBarDividerColor: Colors.transparent,
+        ),
+        child: Scaffold(
         backgroundColor: VSPColors.background,
         body: Stack(
           children: [
@@ -191,8 +211,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: Icons.arrow_back, // OTP usually simple back
-                          onTap: () => Navigator.pop(context),
+                          icon: Icons.arrow_back,
+                          onTap: () => _handleAbort(context),
                         ),
                         const Spacer(),
                         Image.asset(
@@ -357,6 +377,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
           ],
         ),
       ),
+    ),
     );
   }
 

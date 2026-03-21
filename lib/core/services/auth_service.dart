@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
+import '../utils/phone_utils.dart';
 
 class AuthService {
   // Active Instances
@@ -31,7 +32,14 @@ class AuthService {
     // 1. Basic Sanitization
     final cleanEmail = email.trim().toLowerCase();
     
-    // 2. Role Validation (Security Constraint)
+    // 2. Duplicate Phone Check (Phase 3 Hardening)
+    final rawPhone = userData['phone']?.toString() ?? '';
+    final phone = PhoneUtils.normalize(rawPhone);
+    if (await isPhoneRegistered(phone)) {
+       return {'success': false, 'message': 'رقم الهاتف مسجل مسبقاً.'};
+    }
+
+    // 3. Role Validation (Security Constraint)
     final allowedRoles = ['player', 'owner'];
     if (!allowedRoles.contains(role)) {
       return {'success': false, 'message': 'رتبة غير صالحة.'};
@@ -52,7 +60,7 @@ class AuthService {
           'role': role,
           'name': userData['name']?.toString().trim() ?? '',
           'position': userData['position'] ?? 'GK',
-          'phone': userData['phone']?.toString().trim() ?? '',
+          'phone': PhoneUtils.normalize(userData['phone']?.toString() ?? ''),
           'isEmailVerified': false,
           'hasStadium': false,
           'isIdentityVerified': false,
@@ -223,6 +231,46 @@ class AuthService {
     }
   }
 
+  // Sign In with Apple (iOS only ideally, but Firebase handles web fallback)
+  Future<Map<String, dynamic>> signInWithApple({String? role}) async {
+    try {
+      final appleProvider = AppleAuthProvider();
+      // Request full name and email
+      appleProvider.addScope('email');
+      appleProvider.addScope('name');
+
+      final UserCredential userCredential = await _auth.signInWithProvider(appleProvider);
+      final user = userCredential.user;
+
+      if (user != null) {
+        final doc = await _firestore.collection('users').doc(user.uid).get();
+
+        if (!doc.exists) {
+          final validatedRole = (role == 'owner' || role == 'player') ? role : 'player';
+          
+          await _firestore.collection('users').doc(user.uid).set({
+            'uid': user.uid,
+            'email': user.email ?? '', // Apple might hide email
+            'name': user.displayName ?? 'Apple User',
+            'phone': '',
+            'role': validatedRole,
+            'photoUrl': user.photoURL,
+            'isEmailVerified': true, // Apple accounts are verified
+            'hasStadium': false,
+            'isIdentityVerified': false,
+            'createdAt': FieldValue.serverTimestamp(),
+            'isRegistrationComplete': false,
+          });
+        }
+        return {'success': true, 'user': user};
+      }
+      return {'success': false, 'message': 'فشل تسجيل الدخول عبر آبل.'};
+    } catch (e) {
+      _logSecurityEvent('APPLE_AUTH_ERROR', e);
+      return {'success': false, 'message': 'حدث خطأ في خدمة آبل.'};
+    }
+  }
+
   // Get User Data
   Future<Map<String, dynamic>?> getUserData(String uid) async {
     try {
@@ -268,5 +316,69 @@ class AuthService {
       _logSecurityEvent('PASSWORD_UPDATE_FAILED', e);
       return false;
     }
+  }
+
+  // Phase 2: User Deletion Logic (Safe Delete)
+  Future<Map<String, dynamic>> deleteAccount(String uid) async {
+    try {
+      // 1. Promote Next Captain in Teams
+      final teamSnap = await _firestore.collection('teams')
+          .where('memberUids', arrayContains: uid)
+          .get();
+
+      final batch = _firestore.batch();
+      
+      for (var doc in teamSnap.docs) {
+        final data = doc.data();
+        final memberUids = List<String>.from(data['memberUids'] ?? []);
+        
+        // If they are the captain (first in list)
+        if (memberUids.isNotEmpty && memberUids[0] == uid) {
+          memberUids.removeAt(0);
+          if (memberUids.isNotEmpty) {
+            // Promote next member
+            final nextCaptainUid = memberUids[0];
+            final nextCaptainDoc = await _firestore.collection('users').doc(nextCaptainUid).get();
+            final nextCaptainName = nextCaptainDoc.data()?['name'] ?? 'Captain';
+            
+            batch.update(doc.reference, {
+              'memberUids': memberUids,
+              'captainName': nextCaptainName,
+            });
+          } else {
+            // No more members, delete team
+            batch.delete(doc.reference);
+          }
+        } else {
+          // Just remove them from members
+          memberUids.remove(uid);
+          batch.update(doc.reference, {'memberUids': memberUids});
+        }
+      }
+
+      // 2. Delete User Profile
+      batch.delete(_firestore.collection('users').doc(uid));
+      
+      await batch.commit();
+
+      // 3. Delete Auth User
+      await _auth.currentUser?.delete();
+      
+      return {'success': true};
+    } catch (e) {
+      _logSecurityEvent('ACCOUNT_DELETION_FAILED', e);
+      return {'success': false, 'message': 'فشل في حذف الحساب.'};
+    }
+  }
+
+  // duplicate phone check
+  Future<bool> isPhoneRegistered(String phone) async {
+    if (phone.isEmpty) return false;
+    final cleanPhone = PhoneUtils.normalize(phone);
+    final snapshot = await _firestore.collection('users')
+        .where('phone', isEqualTo: cleanPhone)
+        .limit(1)
+        .get();
+    return snapshot.docs.isNotEmpty;
   }
 }

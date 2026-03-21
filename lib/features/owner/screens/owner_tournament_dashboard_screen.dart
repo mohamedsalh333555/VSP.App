@@ -97,18 +97,31 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                   },
                 ),
               ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
           actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
-            ),
-            PrimaryButton(
-              text: 'Confirm',
-              onPressed: selectedTeamId == null ? () {} : () async {
-                Navigator.pop(context);
-                _crownChampion(selectedTeamId!, selectedTeamName!);
-              },
-              width: 100,
+            Row(
+              children: [
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Cancel',
+                    height: 48,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Confirm',
+                    height: 48,
+                    onPressed: selectedTeamId == null ? null : () {
+                      Navigator.pop(context);
+                      _crownChampion(selectedTeamId!, selectedTeamName!);
+                    },
+                  ),
+                ),
+              ],
             ),
           ],
         ),

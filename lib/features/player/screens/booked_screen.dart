@@ -1,8 +1,11 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import 'chat_screen.dart';
+import '../../../core/providers/language_provider.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -332,21 +335,31 @@ class _BookingCard extends StatelessWidget {
             Row(
               children: [
                 Expanded(
-                  child: VSPAnimatedButton(
-                    text: 'Cancel',
-                    color: VSPColors.surface,
-                    textColor: VSPColors.error,
-                    onPressed: () {
-                      _showCancelDialog(context);
-                    },
+                  child: Builder(
+                    builder: (context) {
+                      final bool canCancel = DateTime.now().isBefore(booking.startTime);
+                      return VSPAnimatedButton(
+                        text: 'Cancel',
+                        color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
+                        textColor: canCancel ? VSPColors.error : VSPColors.textSecondary,
+                        onPressed: canCancel ? () {
+                          _showCancelDialog(context);
+                        } : null,
+                      );
+                    }
                   ),
                 ),
                 const SizedBox(width: VSPSpacing.sm),
                 Expanded(
                   child: VSPAnimatedButton(
-                    text: 'Share',
+                    text: 'Chat',
                     onPressed: () {
-                      // Share or view details
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ChatScreen(booking: booking),
+                        ),
+                      );
                     },
                   ),
                 ),
@@ -551,49 +564,63 @@ class _BookingCard extends StatelessWidget {
           'Are you sure you want to cancel this booking? This action cannot be undone.',
           style: Theme.of(context).textTheme.bodyMedium,
         ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context),
-            child: Text('Keep Booking', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
-          ),
-          VSPAnimatedButton(
-            text: 'Cancel Booking',
-            color: Colors.red,
-            textColor: Colors.white,
-            onPressed: () async {
-              // Cancel booking
-              final provider = Provider.of<BookingProvider>(context, listen: false);
-              
-              // Show quick loading snackbar
-              ScaffoldMessenger.of(context).showSnackBar(
-                const SnackBar(
-                  content: Text('Cancelling booking...'),
-                  duration: Duration(seconds: 1),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Keep Booking',
+                  height: 48,
+                  color: VSPColors.surfaceAlt,
+                  textColor: VSPColors.textPrimary,
+                  onPressed: () => Navigator.pop(context),
                 ),
-              );
-              
-              Navigator.pop(context); // Close dialog
+              ),
+              const SizedBox(width: VSPSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Cancel Booking',
+                  height: 48,
+                  color: VSPColors.error,
+                  textColor: Colors.white,
+                  onPressed: () async {
+                    // Cancel booking
+                    final provider = Provider.of<BookingProvider>(context, listen: false);
+                    
+                    // Show quick loading snackbar
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cancelling booking...'),
+                        duration: Duration(seconds: 1),
+                      ),
+                    );
+                    
+                    Navigator.pop(context); // Close dialog
 
-              final success = await provider.cancelBooking(booking.id);
-              
-              if (!context.mounted) return;
-              
-              if (success) {
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Booking cancelled successfully'),
-                    backgroundColor: VSPColors.warning,
-                  ),
-                );
-              } else {
-                ScaffoldMessenger.of(context).showSnackBar(
-                   SnackBar(
-                    content: Text(provider.errorMessage ?? 'Failed to cancel'),
-                    backgroundColor: VSPColors.error,
-                  ),
-                );
-              }
-            },
+                    final success = await provider.cancelBooking(booking.id);
+                    
+                    if (!context.mounted) return;
+                    
+                    if (success) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Booking cancelled successfully'),
+                          backgroundColor: VSPColors.warning,
+                        ),
+                      );
+                    } else {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                         SnackBar(
+                          content: Text(provider.errorMessage ?? 'Failed to cancel'),
+                          backgroundColor: VSPColors.error,
+                        ),
+                      );
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),

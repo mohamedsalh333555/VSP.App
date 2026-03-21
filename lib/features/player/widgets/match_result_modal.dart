@@ -134,12 +134,28 @@ class _MatchResultModalState extends State<MatchResultModal> {
             _buildRatingSection(),
 
             const SizedBox(height: 32),
-
-            // Submit Button
-            PrimaryButton(
-              text: 'Submit Result',
-              onPressed: _selectedIndex == -1 ? null : _handleSubmit,
-              isLoading: false,
+            // Actions
+            Row(
+              children: [
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Cancel',
+                    height: 48,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
+                    onPressed: () => Navigator.pop(context),
+                  ),
+                ),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Submit Result',
+                    height: 48,
+                    onPressed: _selectedIndex == -1 ? null : _handleSubmit,
+                    isLoading: false,
+                  ),
+                ),
+              ],
             ),
           ],
         ),

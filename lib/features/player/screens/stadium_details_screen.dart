@@ -62,6 +62,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                             return CachedNetworkImage(
                               imageUrl: _displayImages[index],
                               fit: BoxFit.cover,
+                              memCacheHeight: 800,
+                              maxHeightDiskCache: 1200,
                               placeholder: (context, url) => Container(
                                 color: VSPColors.surface,
                               ),
@@ -360,7 +362,7 @@ class _InformationTab extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  stadium.address.isNotEmpty ? stadium.address : 'Av. De Concha Espina, 1, Chamartín, 28036 Madrid',
+                  stadium.address.isNotEmpty ? stadium.address : 'N/A',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
@@ -386,7 +388,7 @@ class _InformationTab extends StatelessWidget {
                       const Icon(Icons.location_on_outlined, color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        stadium.location.isNotEmpty ? stadium.location : 'Madrid',
+                        stadium.location.isNotEmpty ? stadium.location : 'N/A',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: VSPColors.background,
                           fontWeight: FontWeight.bold,
@@ -410,7 +412,7 @@ class _InformationTab extends StatelessWidget {
           Text(
             stadium.description.isNotEmpty 
               ? stadium.description 
-              : 'The Santiago Bernabéu Stadium Is A Modern, Multi-Use Stadium Featuring A Retractable Roof, A Contemporary Facade, A Retractable Pitch, And Significant Improvements In Safety, Comfort, And Accessibility. It Also Includes Multifunctional Spaces Such As Restaurants, Museums, And Commercial Areas, As Well As A 360-Degree Giant Screen, With A Focus On Sustainability.',
+              : 'No description provided.',
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
           ),
           
@@ -425,7 +427,7 @@ class _InformationTab extends StatelessWidget {
           Wrap(
             spacing: VSPSpacing.sm,
             runSpacing: VSPSpacing.sm,
-            children: (Stadium.parseFeatures(stadium.features).isNotEmpty ? Stadium.parseFeatures(stadium.features) : ['Baths', '11 VS 11', 'Cafeteria', 'Jerash', 'Seats']).map((feature) => Container(
+            children: (Stadium.parseFeatures(stadium.features).isNotEmpty ? Stadium.parseFeatures(stadium.features) : []).map((feature) => Container(
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
               decoration: BoxDecoration(
                 color: VSPColors.surfaceAlt,

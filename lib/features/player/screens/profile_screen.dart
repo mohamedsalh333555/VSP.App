@@ -1,4 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
+import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/ui/components/vsp_section_title.dart';
+import 'package:vsp_application/core/utils/elo_calculator.dart';
 import 'profile_subscreens/my_team_screen.dart';
 import 'profile_subscreens/payment_methods_screen.dart';
 import 'profile_subscreens/notifications_screen.dart';
@@ -8,14 +12,17 @@ import 'profile_subscreens/help_center_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
+import '../../admin/screens/admin_dashboard.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../auth/screens/welcome_screen.dart';
-import '../../../core/services/database_service.dart';
-import '../../../data/models.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_section_title.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
+import '../../../core/services/stats_service.dart';
+import '../../../core/widgets/radar_chart.dart';
+import 'dart:ui';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
+import 'package:flutter/services.dart';
+import '../../../core/services/database_service.dart';
 class ProfileScreen extends StatelessWidget {
   const ProfileScreen({super.key});
 
@@ -41,94 +48,181 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Profile Header Card - REFINED
-            VSPCard(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    crossAxisAlignment: CrossAxisAlignment.center,
-                    children: [
-                      // Avatar with Green Border
-                      Container(
-                        width: 92,
-                        height: 92,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: VSPColors.accent, width: 2),
-                        ),
-                        child: CircleAvatar(
-                          backgroundColor: Colors.transparent,
-                          backgroundImage: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
-                              ? CachedNetworkImageProvider(userProfileUrl) 
-                              : null,
-                          child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                              ? const Icon(Icons.person, size: 40, color: Colors.white54)
-                              : null,
+            // Premium Player Card - REDESIGNED
+            FutureBuilder<Map<String, dynamic>>(
+              future: StatsService().getPlayerStats(auth.currentUser!.uid),
+              builder: (context, statsSnapshot) {
+                return FutureBuilder<Team?>(
+                  future: DatabaseService().getUserTeam(auth.currentUser!.uid),
+                  builder: (context, teamSnapshot) {
+                    final team = teamSnapshot.data;
+                    final stats = statsSnapshot.data ?? {};
+                    final elo = team?.points ?? 1200;
+                    final rank = EloCalculator.getRankTitle(elo);
+                    final skillMetrics = StatsService().getSkillMetrics(auth.userModel?.position, elo);
+
+                    return Container(
+                      width: double.infinity,
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        gradient: LinearGradient(
+                          begin: Alignment.topLeft,
+                          end: Alignment.bottomRight,
+                          colors: [
+                            Colors.white.withOpacity(0.15),
+                            Colors.white.withOpacity(0.05),
+                          ],
                         ),
                       ),
-                      const SizedBox(width: VSPSpacing.md),
-                      // Stats - REFINED
-                      Expanded(
-                        child: FutureBuilder<Team?>(
-                          future: DatabaseService().getUserTeam(auth.currentUser!.uid),
-                          builder: (context, snapshot) {
-                            if (snapshot.connectionState == ConnectionState.waiting) {
-                              return const Center(
-                                child: SizedBox(
-                                  width: 20,
-                                  height: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    color: VSPColors.accent,
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        child: BackdropFilter(
+                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+                          child: Padding(
+                            padding: const EdgeInsets.all(VSPSpacing.lg),
+                            child: Column(
+                              children: [
+                                // Header: Rank & Profile
+                                Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                          decoration: BoxDecoration(
+                                            color: VSPColors.accent.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(VSPRadius.xs),
+                                            border: Border.all(color: VSPColors.accent.withOpacity(0.5)),
+                                          ),
+                                          child: Text(
+                                            rank.toUpperCase(),
+                                            style: const TextStyle(
+                                              color: VSPColors.accent,
+                                              fontSize: 12,
+                                              fontWeight: FontWeight.w900,
+                                              letterSpacing: 1.2,
+                                            ),
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          auth.userModel?.name ?? 'Player',
+                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+                                        ),
+                                        Text(
+                                          'Position: ${auth.userModel?.position ?? "ST"}',
+                                          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                                        ),
+                                      ],
+                                    ),
+                                    GestureDetector(
+                                      onLongPress: () {
+                                        // 🔐 SECRET GATE: Long press profile image for Admin Dashboard
+                                        HapticFeedback.heavyImpact();
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          const SnackBar(content: Text('⚡ Admin Mode Activated', style: TextStyle(color: VSPColors.accent)))
+                                        );
+                                        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
+                                      },
+                                      child: Container(
+                                        width: 80,
+                                        height: 80,
+                                        decoration: BoxDecoration(
+                                          shape: BoxShape.circle,
+                                          border: Border.all(color: VSPColors.accent, width: 2),
+                                          image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
+                                            ? DecorationImage(
+                                                image: CachedNetworkImageProvider(userProfileUrl),
+                                                fit: BoxFit.cover,
+                                              )
+                                            : null,
+                                        ),
+                                        child: (userProfileUrl == null || userProfileUrl.isEmpty)
+                                            ? const Icon(Icons.person, color: VSPColors.accent, size: 40)
+                                            : null,
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                
+                                const Divider(color: Colors.white10, height: 40),
+
+                                // Skill Chart & Main Stats
+                                Row(
+                                  children: [
+                                    Expanded(
+                                      flex: 3,
+                                      child: VSPRadarChart(
+                                        values: skillMetrics,
+                                        size: 140,
+                                      ),
+                                    ),
+                                    Expanded(
+                                      flex: 2,
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.end,
+                                        children: [
+                                          _buildCardStat('WIN RATE', '${stats['winRate'] ?? "0"}%', VSPColors.accent),
+                                          const SizedBox(height: 16),
+                                          _buildCardStat('GOALS', '${stats['totalGoals'] ?? "0"}', Colors.white),
+                                          const SizedBox(height: 16),
+                                          _buildCardStat('MATCHES', '${stats['matchesPlayed'] ?? "0"}', Colors.white),
+                                        ],
+                                      ),
+                                    ),
+                                  ],
+                                ),
+                                
+                                const SizedBox(height: 16),
+                                // Favorite Stadium Footer
+                                Container(
+                                  width: double.infinity,
+                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                                  decoration: BoxDecoration(
+                                    color: Colors.black.withOpacity(0.3),
+                                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.center,
+                                    children: [
+                                      const Icon(Icons.star, color: VSPColors.warning, size: 14),
+                                      const SizedBox(width: 8),
+                                      Text(
+                                        'FAVORITE STADIUM: ${stats['favoriteStadium'] ?? "None"}',
+                                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ],
                                   ),
                                 ),
-                              );
-                            }
-                            final team = snapshot.data;
-                            return Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceAround,
-                              children: [
-                                _buildStatItem(context, 'Wins', team?.wins.toString() ?? '0'),
-                                _buildStatItem(context, 'Matches', team?.matchesPlayed.toString() ?? '0'),
                               ],
-                            );
-                          },
-                        ),
-                      ),
-                      // Edit Button
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(builder: (context) => const EditProfileScreen()),
-                          );
-                        },
-                        child: Container(
-                          padding: const EdgeInsets.all(VSPSpacing.sm),
-                          decoration: BoxDecoration(
-                            color: VSPColors.background,
-                            shape: BoxShape.circle,
-                            border: Border.all(color: Colors.white.withValues(alpha: 0.1)),
-                          ),
-                          child: const Icon(
-                            Icons.edit_outlined,
-                            color: VSPColors.accent,
-                            size: 20,
+                            ),
                           ),
                         ),
                       ),
-                    ],
-                  ),
-                  const SizedBox(height: VSPSpacing.md),
-                  // Info Text - REFINED (Aligned with Avatar left edge)
-                  Text(
-                    'Name / ${auth.userModel?.name ?? "Player"}  |  Position / ${auth.userModel?.position ?? "GK"}',
-                    style: Theme.of(context).textTheme.labelMedium,
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
+                    );
+                  },
+                );
+              },
+            ),
+
+            const SizedBox(height: VSPSpacing.lg),
+
+            // Achievement Badges Section
+            const VSPSectionTitle('Achievements'),
+            const SizedBox(height: VSPSpacing.sm),
+            SizedBox(
+              height: 90,
+              child: ListView(
+                scrollDirection: Axis.horizontal,
+                children: [
+                  _buildBadge('Night Owl', Icons.nightlight_round, true),
+                  _buildBadge('Top Scorer', Icons.military_tech, true),
+                  _buildBadge('Clean Sheet', Icons.shield, false),
+                  _buildBadge('Marathoner', Icons.directions_run, false),
+                  _buildBadge('Fair Play', Icons.handshake, true),
                 ],
               ),
             ),
@@ -186,6 +280,13 @@ class ProfileScreen extends StatelessWidget {
             ),
 
             const SizedBox(height: 16),
+            VSPMenuItem(
+              icon: Icons.feedback_outlined,
+              title: 'Feedback',
+              subtitle: 'Report an issue or suggest a feature',
+              onTap: () => _showFeedbackDialog(context),
+            ),
+            const SizedBox(height: 16),
 
             // Logout Button
             VSPMenuItem(
@@ -214,6 +315,48 @@ class ProfileScreen extends StatelessWidget {
 
 
 
+  Widget _buildCardStat(String label, String value, Color valueColor) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.end,
+      children: [
+        Text(
+          label,
+          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.bold),
+        ),
+        Text(
+          value,
+          style: TextStyle(color: valueColor, fontSize: 18, fontWeight: FontWeight.bold),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildBadge(String name, IconData icon, bool isUnlocked) {
+    return Container(
+      width: 70,
+      margin: const EdgeInsets.only(right: 12),
+      child: Column(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isUnlocked ? VSPColors.accent.withOpacity(0.1) : Colors.white.withOpacity(0.05),
+              border: Border.all(color: isUnlocked ? VSPColors.accent : Colors.white10),
+            ),
+            child: Icon(icon, color: isUnlocked ? VSPColors.accent : Colors.white24, size: 24),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            name,
+            style: TextStyle(color: isUnlocked ? Colors.white : Colors.white24, fontSize: 10, fontWeight: FontWeight.bold),
+            textAlign: TextAlign.center,
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStatItem(BuildContext context, String label, String value) {
     return Column(
       mainAxisAlignment: MainAxisAlignment.center,
@@ -235,5 +378,97 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
+  void _showFeedbackDialog(BuildContext context) {
+    String feedbackText = '';
+    XFile? attachedImage;
 
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) => AlertDialog(
+          backgroundColor: VSPColors.surface,
+          title: const Text('Send Feedback', style: TextStyle(color: Colors.white)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              TextField(
+                maxLines: 3,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Describe the issue...',
+                  hintStyle: const TextStyle(color: Colors.white24),
+                  fillColor: VSPColors.background,
+                  filled: true,
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                ),
+                onChanged: (val) => feedbackText = val,
+              ),
+              const SizedBox(height: 16),
+              if (attachedImage != null)
+                Padding(
+                  padding: const EdgeInsets.only(bottom: 16),
+                  child: Stack(
+                    children: [
+                      ClipRRect(
+                        borderRadius: BorderRadius.circular(8),
+                        child: Image.file(
+                          File(attachedImage!.path),
+                          height: 100,
+                          width: double.infinity,
+                          fit: BoxFit.cover,
+                        ),
+                      ),
+                      Positioned(
+                        top: 4,
+                        right: 4,
+                        child: GestureDetector(
+                          onTap: () => setDialogState(() => attachedImage = null),
+                          child: Container(
+                            padding: const EdgeInsets.all(4),
+                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+              OutlinedButton.icon(
+                onPressed: () async {
+                  final picker = ImagePicker();
+                  final pickedFile = await picker.pickImage(source: ImageSource.gallery);
+                  if (pickedFile != null) setDialogState(() => attachedImage = pickedFile);
+                },
+                icon: const Icon(Icons.add_a_photo, color: VSPColors.accent),
+                label: const Text('Attach Screenshot', style: TextStyle(color: VSPColors.accent)),
+                style: OutlinedButton.styleFrom(side: const BorderSide(color: VSPColors.accent)),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('Cancel'),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent),
+              onPressed: () async {
+                if (feedbackText.isEmpty) {
+                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter some feedback')));
+                   return;
+                }
+                // In production, upload image and save feedback to Firestore
+                HapticFeedback.mediumImpact();
+                if (context.mounted) {
+                  Navigator.pop(context);
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!')));
+                }
+              },
+              child: const Text('Submit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }

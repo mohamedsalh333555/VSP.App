@@ -87,10 +87,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
         backgroundColor: VSPColors.surface,
         title: Text('Error', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error)),
         content: Text(message, style: Theme.of(context).textTheme.bodyMedium),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
-          TextButton(
+          PrimaryButton(
+            text: 'OK',
+            height: 48,
             onPressed: () => Navigator.pop(context),
-            child: Text('OK', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent)),
           ),
         ],
       ),
@@ -128,14 +130,28 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
             ),
           ],
         ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false),
-            child: Text('Cancel', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
-          ),
-          PrimaryButton(
-            text: 'Confirm & Pay Cash',
-            onPressed: () => Navigator.pop(context, true),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Cancel',
+                  height: 48,
+                  color: VSPColors.surfaceAlt,
+                  textColor: VSPColors.textPrimary,
+                  onPressed: () => Navigator.pop(context, false),
+                ),
+              ),
+              const SizedBox(width: VSPSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Confirm & Pay',
+                  height: 48,
+                  onPressed: () => Navigator.pop(context, true),
+                ),
+              ),
+            ],
           ),
         ],
       ),
@@ -178,7 +194,10 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                   ? widget.championship.logoUrl 
                   : '', // BETA READY: Removed fake logo fallback
                 fit: BoxFit.cover,
-                errorBuilder: (context, error, stackTrace) => Container(color: VSPColors.surfaceAlt),
+                errorBuilder: (context, error, stackTrace) => Container(
+                  color: VSPColors.surfaceAlt,
+                  child: const Center(child: Icon(Icons.emoji_events, color: VSPColors.accent, size: 48)),
+                ),
               ),
             ),
           ),
@@ -268,7 +287,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                   'About The Tournament',
                   widget.championship.rules.isNotEmpty 
                     ? widget.championship.rules 
-                    : 'Welcome to the tournament! Details will be provided by the organizer.',
+                    : 'Information not provided.',
                 ),
                 _buildSection(
                   'Match Rules And Regulations',

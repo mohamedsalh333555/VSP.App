@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/core/services/sharing_service.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
@@ -18,9 +19,12 @@ import 'booked_screen.dart';
 import 'champion_screen.dart';
 import 'profile_screen.dart';
 import 'notifications_center_screen.dart';
+import 'global_search_screen.dart';
+import 'match_details_screen.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import '../../../shared/widgets/stadium_card.dart';
+import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
@@ -28,6 +32,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../widgets/match_result_modal.dart';
+import '../../../core/widgets/promo_slider.dart';
+import '../../../core/widgets/skeleton_loader.dart';
 
 /// Player Home Page (English Only)
 class PlayerHomeScreen extends StatefulWidget {
@@ -46,7 +52,20 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
     super.initState();
     // Fetch stadiums data via provider
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      Provider.of<StadiumProvider>(context, listen: false).listenToStadiums();
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      auth.updateUserLocation().then((_) {
+        // Once location is fetched, we could trigger a sort, 
+        // but sortByDistance needs to be called when we have the position.
+        if (auth.currentPosition != null) {
+          Provider.of<StadiumProvider>(context, listen: false).sortByDistance(auth.currentPosition);
+        }
+        
+        // APPLY GOVERNORATE FILTER ON INIT
+        if (auth.userModel?.governorate != null) {
+          Provider.of<StadiumProvider>(context, listen: false).applyGovernorateFilter(auth.userModel?.governorate);
+        }
+      });
+      Provider.of<StadiumProvider>(context, listen: false).fetchStadiums(isRefresh: true);
       _checkAndShowMatchResultModal();
     });
   }
@@ -638,9 +657,11 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
   }
 
   void _onShare() {
-    final shareContent = 'Tournament on VSP: ${widget.championship.name} - Ref# ${widget.championship.id}';
-    Clipboard.setData(ClipboardData(text: shareContent));
-    VSPFeedback.showSuccess(context, 'Championship reference copied to clipboard!');
+    SharingService.shareChampionship(
+      id: widget.championship.id,
+      name: widget.championship.name,
+      date: DateFormat('MMM d').format(widget.championship.startDate),
+    );
   }
 
   @override
@@ -669,17 +690,20 @@ class _ChampionshipCardState extends State<ChampionshipCard> {
                   shape: BoxShape.circle,
                   border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1), width: 1.5),
                 ),
-                  child: ClipRRect(
-                    borderRadius: BorderRadius.circular(VSPRadius.full),
-                    child: CachedNetworkImage(
-                    imageUrl: widget.championship.logoUrl,
-                    width: 44,
-                    height: 44,
-                    fit: BoxFit.cover,
-                    memCacheWidth: 80,
-                    memCacheHeight: 80,
-                    placeholder: (context, url) => Container(color: VSPColors.surface),
-                  ),
+                child: ClipRRect(
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  child: widget.championship.logoUrl.isNotEmpty
+                    ? CachedNetworkImage(
+                        imageUrl: widget.championship.logoUrl,
+                        width: 44,
+                        height: 44,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 80,
+                        memCacheHeight: 80,
+                        placeholder: (context, url) => Container(color: VSPColors.surface),
+                        errorWidget: (context, url, error) => const Icon(Icons.emoji_events, color: VSPColors.accent),
+                      )
+                    : const Icon(Icons.emoji_events, color: VSPColors.accent),
                 ),
               ),
               const SizedBox(width: VSPSpacing.sm),
@@ -1022,10 +1046,16 @@ class _HomeContent extends StatelessWidget {
                           border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                         ),
                         child: TextField(
-                          controller: searchController,
-                          style: Theme.of(context).textTheme.bodyMedium,
+                          readOnly: true,
+                          onTap: () {
+                            HapticFeedback.lightImpact();
+                            Navigator.push(
+                              context, 
+                              MaterialPageRoute(builder: (context) => const GlobalSearchScreen())
+                            );
+                          },
                           decoration: InputDecoration(
-                            hintText: 'Search...',
+                            hintText: 'Search stadiums, teams, or cups...',
                             hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: VSPColors.textSecondary.withValues(alpha: 0.5),
                             ),
@@ -1102,9 +1132,69 @@ class _HomeContent extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // 📢 Marketing Promotions
+                  StreamBuilder<List<Promotion>>(
+                    stream: DatabaseService().getPromotionsStream(),
+                    builder: (context, snapshot) {
+                      final promos = snapshot.data ?? [];
+                      final displayPromos = promos;
+                      if (displayPromos.isEmpty) return const SizedBox.shrink();
+
+                      return PromoSlider(promotions: displayPromos);
+                    },
+                  ),
+
+                  const SizedBox(height: VSPSpacing.lg),
+
+                  // ⏰ Upcoming Match Reminder
+                  Consumer<BookingProvider>(
+                    builder: (context, provider, _) {
+                      final upcoming = provider.upcomingBookings.isNotEmpty ? provider.upcomingBookings.first : null;
+                      if (upcoming == null) return const SizedBox.shrink();
+                      
+                      final hoursLeft = upcoming.startTime.difference(DateTime.now()).inHours;
+                      if (hoursLeft > 24) return const SizedBox.shrink();
+
+                      return Container(
+                        margin: const EdgeInsets.symmetric(horizontal: 16),
+                        padding: const EdgeInsets.all(16),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withOpacity(0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent.withOpacity(0.3)),
+                        ),
+                        child: Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.all(8),
+                              decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
+                              child: const Icon(Icons.alarm, color: Colors.black, size: 20),
+                            ),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('UPCOMING MATCH', style: TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  Text('${upcoming.stadiumName} @ ${upcoming.formattedTimeRange.split('-')[0]}', style: const TextStyle(fontWeight: FontWeight.bold)),
+                                ],
+                              ),
+                            ),
+                            TextButton(
+                              onPressed: () => onNavigate(3),
+                              child: const Text('DETAILS', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
+                  ),
+
+                  const SizedBox(height: VSPSpacing.xl),
+
                   // Stadium Section
                   _SectionHeader(
-                    title: 'Stadium',
+                    title: 'Nearby Stadiums',
                     onSeeAll: () {},
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -1120,16 +1210,9 @@ class _HomeContent extends StatelessWidget {
                              scrollDirection: Axis.horizontal,
                              padding: const EdgeInsets.symmetric(horizontal: 16),
                              itemCount: 3,
-                             itemBuilder: (_, __) => Container(
-                               width: 320,
-                               margin: const EdgeInsets.only(right: 16),
-                               decoration: BoxDecoration(
-                                 color: VSPColors.surface,
-                                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                                ),
-                              ),
-                            );
-                          }
+                             itemBuilder: (_, __) => const CardSkeleton(),
+                           );
+                         }
                           
                           if (stadiums.isEmpty) {
                             return Center(
@@ -1195,7 +1278,12 @@ class _HomeContent extends StatelessWidget {
                       stream: DatabaseService().getPublicMatches(), 
                       builder: (context, matchSnapshot) {
                           if (matchSnapshot.connectionState == ConnectionState.waiting) {
-                             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                             return ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              padding: const EdgeInsets.symmetric(horizontal: 16),
+                              itemCount: 3,
+                              itemBuilder: (_, __) => const CardSkeleton(),
+                            );
                           }
                           
                           final matches = matchSnapshot.hasData ? matchSnapshot.data! : [];
@@ -1244,15 +1332,15 @@ class _HomeContent extends StatelessWidget {
                       ),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
-                          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                           return ListView.builder(
+                            scrollDirection: Axis.horizontal,
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: 3,
+                            itemBuilder: (_, __) => const CardSkeleton(),
+                          );
                         }
 
-                        List<Championship> championships = snapshot.data ?? [];
-
-                        // Fallback to mock only if empty AND demo mode is on
-                        if (championships.isEmpty && AppConfig.demoMode) {
-                          championships = Championship.getMockChampionships();
-                        }
+                        final List<Championship> championships = snapshot.data ?? [];
 
                          if (championships.isEmpty) {
                           return Center(
@@ -1284,6 +1372,8 @@ class _HomeContent extends StatelessWidget {
                       },
                     ),
                   ),
+
+                  const SizedBox(height: 16),
 
                   const SizedBox(height: 16),
                 ],
@@ -1353,6 +1443,9 @@ class _HomeContent extends StatelessWidget {
                       trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null,
                       onTap: () {
                         auth.updateProfile({'governorate': gov});
+                        if (context.mounted) {
+                          context.read<StadiumProvider>().applyGovernorateFilter(gov);
+                        }
                         Navigator.pop(context);
                       },
                     );

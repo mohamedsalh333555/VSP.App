@@ -164,7 +164,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                   child: _SimpleInfoCard(
                     icon: Icons.payments_outlined,
                     title: 'Cash Payment',
-                    subtitle: 'Payment will be made نقداً عند الوصول إلى الملعب\n(Pay upon arrival at the stadium)',
+                    subtitle: 'You will pay in cash when you arrive at the stadium.',
                   ),
                 ),
                 

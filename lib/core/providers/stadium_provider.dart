@@ -1,7 +1,10 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../services/database_service.dart';
+import '../utils/geo_helper.dart';
+import 'package:geolocator/geolocator.dart';
 
 class StadiumProvider with ChangeNotifier {
   final DatabaseService _databaseService = DatabaseService();
@@ -11,12 +14,18 @@ class StadiumProvider with ChangeNotifier {
   List<Stadium> _filteredStadiums = [];
   bool _isFilterActive = false;
   bool _isLoading = false;
+  bool _isLoadingMore = false;
+  bool _hasMore = true;
+  DocumentSnapshot? _lastDocument;
   String? _errorMessage;
+  String? _selectedGovernorate;
 
   // Getters
   List<Stadium> get stadiums => (_isFilterActive || _filteredStadiums.isNotEmpty) ? _filteredStadiums : _stadiums;
   List<Stadium> get filteredStadiums => _filteredStadiums;
   bool get isLoading => _isLoading;
+  bool get isLoadingMore => _isLoadingMore;
+  bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   bool get isFilterActive => _isFilterActive;
 
@@ -33,24 +42,55 @@ class StadiumProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Listen to stadiums stream with lifecycle management
-  void listenToStadiums() {
-    _stadiumSubscription?.cancel();
-    
-    _setError(null);
-    _setLoading(true);
+  // Fetch stadiums with pagination
+  Future<void> fetchStadiums({bool isRefresh = false}) async {
+    if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
-    _stadiumSubscription = _databaseService.getStadiums().listen(
-      (data) {
-        _stadiums = data;
-        _errorMessage = null;
+    if (isRefresh) {
+      _stadiums = [];
+      _lastDocument = null;
+      _hasMore = true;
+      _setLoading(true);
+    } else {
+      _isLoadingMore = true;
+      notifyListeners();
+    }
+
+    try {
+      final result = await _databaseService.getStadiumsPaginated(
+        limit: 10,
+        startAfter: _lastDocument,
+      );
+
+      final List<Stadium> newStadiums = result['items'];
+      _lastDocument = result['lastDoc'];
+
+      if (isRefresh) {
+        _stadiums = newStadiums;
+      } else {
+        _stadiums.addAll(newStadiums);
+      }
+
+      if (newStadiums.length < 10) {
+        _hasMore = false;
+      }
+      
+      _setError(null);
+      
+      // PERSISTENT GOVERNORATE FILTER: Re-apply if active
+      if (_selectedGovernorate != null && _selectedGovernorate!.isNotEmpty) {
+        applyGovernorateFilter(_selectedGovernorate);
+      }
+    } catch (e) {
+      _setError('Failed to fetch stadiums: ${e.toString()}');
+    } finally {
+      if (isRefresh) {
         _setLoading(false);
-      },
-      onError: (error) {
-        _setError('Failed to fetch stadiums: ${error.toString()}');
-        _setLoading(false);
-      },
-    );
+      } else {
+        _isLoadingMore = false;
+        notifyListeners();
+      }
+    }
   }
 
   // Listen specifically to owner's stadiums
@@ -125,6 +165,25 @@ class StadiumProvider with ChangeNotifier {
     ).toList();
   }
 
+  // Filter stadiums by governorate
+  void applyGovernorateFilter(String? governorate) {
+    _selectedGovernorate = governorate;
+    if (governorate == null || governorate.isEmpty) {
+      clearFilters();
+      return;
+    }
+    
+    _isFilterActive = true;
+    final query = governorate.trim().toLowerCase();
+    
+    _filteredStadiums = _stadiums.where((stadium) => 
+      stadium.area.toLowerCase().contains(query) || 
+      stadium.location.toLowerCase().contains(query)
+    ).toList();
+    
+    notifyListeners();
+  }
+
   // Filter stadiums by price range
   List<Stadium> filterByPriceRange(double minPrice, double maxPrice) {
     return _stadiums.where((stadium) => 
@@ -179,6 +238,35 @@ class StadiumProvider with ChangeNotifier {
     notifyListeners();
   }
 
+  // Sort stadiums by distance
+  void sortByDistance(Position? userPosition) {
+    if (userPosition == null) return;
+
+    _stadiums.sort((a, b) {
+      if (a.lat == null || a.lng == null) return 1;
+      if (b.lat == null || b.lng == null) return -1;
+
+      final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
+      final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
+      
+      return distA.compareTo(distB);
+    });
+
+    if (_isFilterActive) {
+      _filteredStadiums.sort((a, b) {
+        if (a.lat == null || a.lng == null) return 1;
+        if (b.lat == null || b.lng == null) return -1;
+
+        final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
+        final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
+        
+        return distA.compareTo(distB);
+      });
+    }
+
+    notifyListeners();
+  }
+
   // Reset all filters
   void clearFilters() {
     _isFilterActive = false;
@@ -189,6 +277,33 @@ class StadiumProvider with ChangeNotifier {
   // Clear error
   void clearError() {
     _setError(null);
+  }
+
+  // Phase 2: Stadium Deletion Safeguard
+  Future<bool> deleteStadium(String stadiumId) async {
+    _setError(null);
+    _setLoading(true);
+
+    try {
+      bool success = await _databaseService.deleteStadium(stadiumId);
+      if (success) {
+        // Remove from local list if present
+        _stadiums.removeWhere((s) => s.id == stadiumId);
+        if (_isFilterActive) {
+          _filteredStadiums.removeWhere((s) => s.id == stadiumId);
+        }
+        _setLoading(false);
+        return true;
+      } else {
+        _setError('Failed to delete stadium safely. Check your connection.');
+        _setLoading(false);
+        return false;
+      }
+    } catch (e) {
+      _setError('Error during stadium deletion: ${e.toString()}');
+      _setLoading(false);
+      return false;
+    }
   }
 
   @override

@@ -6,6 +6,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/cloudinary_service.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/utils/phone_utils.dart';
 
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -62,7 +63,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       final teamData = {
         'name': name,
         'captainName': auth.userModel?.name ?? 'Captain',
-        'captainPhone': auth.userModel?.phone,
+        'captainPhone': PhoneUtils.normalize(auth.userModel?.phone ?? ''),
         'captainImageUrl': auth.userModel?.profileImageUrl ?? '',
         // Use uploaded URL or fallback to empty string (no fake generic image)
         'logoUrl': _uploadedLogoUrl ?? '',

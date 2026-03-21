@@ -2,8 +2,14 @@ import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:math';
-import '../../core/models/user_model.dart';
+import '../models/user_model.dart';
+import '../models/chat_model.dart';
+import '../utils/elo_calculator.dart';
+import '../services/analytics_service.dart';
+import '../services/logger_service.dart';
 import '../../data/models.dart';
+import '../config/app_config.dart';
+import '../utils/phone_utils.dart';
 
 class DatabaseService {
   final FirebaseFirestore _firestore;
@@ -15,16 +21,17 @@ class DatabaseService {
 
   Future<UserModel?> getUserByPhone(String phone) async {
     try {
+      final normalizedPhone = PhoneUtils.normalize(phone);
       final snapshot = await _firestore
           .collection('users')
-          .where('phone', isEqualTo: phone)
+          .where('phone', isEqualTo: normalizedPhone)
           .limit(1)
           .get();
 
       if (snapshot.docs.isEmpty) return null;
       return UserModel.fromFirestore(snapshot.docs.first.data());
     } catch (e) {
-      debugPrint('Error getting user by phone: $e');
+      VSPLogger.e('Error getting user by phone', e);
       return null;
     }
   }
@@ -50,13 +57,18 @@ class DatabaseService {
   
   // Get all stadiums (with expanded limit)
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
-    return _firestore
-        .collection('stadiums')
-        .where('isVerified', isEqualTo: true) // ✅ Only show verified stadiums to players
+    Query query = _firestore.collection('stadiums');
+    
+    // Bypass verification check in demo mode so players can see stadiums
+    if (!AppConfig.demoMode) {
+      query = query.where('isVerified', isEqualTo: true);
+    }
+    
+    return query
         .limit(limit)
         .snapshots()
         .map((snapshot) => snapshot.docs
-            .map((doc) => Stadium.fromFirestore(doc.data(), doc.id))
+            .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
             .toList());
   }
 
@@ -460,6 +472,19 @@ class DatabaseService {
             .toList());
   }
 
+  // ==================== PROMOTIONS ====================
+
+  /// Stream of active promotions for marketing
+  Stream<List<Promotion>> getPromotionsStream() {
+    return _firestore
+        .collection('promotions')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Promotion.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
   // ==================== TEAMS & RANKING ====================
   // Fetch teams with optional governorate filter
   Stream<List<Team>> getTeams({String? governorate}) {
@@ -475,9 +500,10 @@ class DatabaseService {
 
   Future<Team?> getTeamByCaptainPhone(String phone) async {
     try {
+      final normalizedPhone = PhoneUtils.normalize(phone);
       final snapshot = await _firestore
           .collection('teams')
-          .where('captainPhone', isEqualTo: phone)
+          .where('captainPhone', isEqualTo: normalizedPhone)
           .limit(1)
           .get();
 
@@ -566,44 +592,22 @@ class DatabaseService {
 
       if (!homeSnap.exists || !awaySnap.exists) return;
 
-      final homePlayed = List<String>.from(homeSnap.data()?['playedOpponents'] ?? []);
-      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
+      int homeRating = (homeSnap.data()?['points'] ?? 1000).toInt();
+      int awayRating = (awaySnap.data()?['points'] ?? 1000).toInt();
 
-      // ── New Opponent Algorithm ──
-      // If NO, bonus = 1, else bonus = 0
-      bool isNewForHome = !homePlayed.contains(awayTeamId);
-      bool isNewForAway = !awayPlayed.contains(homeTeamId);
-      int bonusHome = isNewForHome ? 1 : 0;
-      int bonusAway = isNewForAway ? 1 : 0;
+      double eloOutcome = 0.5;
+      if (finalOutcome == MatchOutcome.homeWin) eloOutcome = 1.0;
+      if (finalOutcome == MatchOutcome.awayWin) eloOutcome = 0.0;
 
-      int homePts = 0;
-      int awayPts = 0;
-      String homeTrend = 'stable';
-      String awayTrend = 'stable';
+      final newRatings = EloCalculator.calculateNewRatings(
+        homeRating: homeRating,
+        awayRating: awayRating,
+        outcome: eloOutcome,
+      );
 
-      if (finalOutcome == MatchOutcome.homeWin) {
-        // Home Win: 3 pts + bonus; Away Loss: 0 pts + bonus
-        homePts = 3 + bonusHome;
-        awayPts = bonusAway;
-        homeTrend = 'up';
-        awayTrend = 'down';
-      } else if (finalOutcome == MatchOutcome.awayWin) {
-        // Home Loss: 0 pts + bonus; Away Win: 3 pts + bonus
-        homePts = bonusHome;
-        awayPts = 3 + bonusAway;
-        homeTrend = 'down';
-        awayTrend = 'up';
-      } else {
-        // Draw: 1 pt + bonus for both
-        homePts = 1 + bonusHome;
-        awayPts = 1 + bonusAway;
-        homeTrend = 'stable';
-        awayTrend = 'stable';
-      }
-
-      // ── Gamification: Streaks & Badges ──
-      
       // Home Team Logic
+      final homePlayed = List<String>.from(homeSnap.data()?['playedOpponents'] ?? []);
+      bool isNewForHome = !homePlayed.contains(awayTeamId);
       int homeStreak = (finalOutcome == MatchOutcome.homeWin) 
           ? (homeSnap.data()?['currentWinningStreak'] ?? 0) + 1 
           : 0;
@@ -612,9 +616,10 @@ class DatabaseService {
       
       if (homeMatchesTotal >= 10 && !homeBadges.contains('gladiator')) homeBadges.add('gladiator');
       if (homeStreak >= 3 && !homeBadges.contains('streak_3')) homeBadges.add('streak_3');
-      if (homePlayed.length + (isNewForHome ? 1 : 0) >= 5 && !homeBadges.contains('explorer')) homeBadges.add('explorer');
 
       // Away Team Logic
+      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
+      bool isNewForAway = !awayPlayed.contains(homeTeamId);
       int awayStreak = (finalOutcome == MatchOutcome.awayWin) 
           ? (awaySnap.data()?['currentWinningStreak'] ?? 0) + 1 
           : 0;
@@ -623,16 +628,15 @@ class DatabaseService {
       
       if (awayMatchesTotal >= 10 && !awayBadges.contains('gladiator')) awayBadges.add('gladiator');
       if (awayStreak >= 3 && !awayBadges.contains('streak_3')) awayBadges.add('streak_3');
-      if (awayPlayed.length + (isNewForAway ? 1 : 0) >= 5 && !awayBadges.contains('explorer')) awayBadges.add('explorer');
 
       // Update Home Team
       transaction.update(homeRef, {
-        'points': FieldValue.increment(homePts),
+        'points': newRatings['home'],
         'matchesPlayed': FieldValue.increment(1),
         'wins': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
         'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
         'losses': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
-        'trend': homeTrend,
+        'trend': newRatings['home']! > homeRating ? 'up' : (newRatings['home']! < homeRating ? 'down' : 'stable'),
         'currentWinningStreak': homeStreak,
         'unlockedBadges': homeBadges,
         if (isNewForHome) 'playedOpponents': FieldValue.arrayUnion([awayTeamId]),
@@ -640,12 +644,12 @@ class DatabaseService {
 
       // Update Away Team
       transaction.update(awayRef, {
-        'points': FieldValue.increment(awayPts),
+        'points': newRatings['away'],
         'matchesPlayed': FieldValue.increment(1),
         'wins': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
         'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
         'losses': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
-        'trend': awayTrend,
+        'trend': newRatings['away']! > awayRating ? 'up' : (newRatings['away']! < awayRating ? 'down' : 'stable'),
         'currentWinningStreak': awayStreak,
         'unlockedBadges': awayBadges,
         if (isNewForAway) 'playedOpponents': FieldValue.arrayUnion([homeTeamId]),
@@ -664,13 +668,14 @@ class DatabaseService {
     try {
       if (query.isEmpty) return [];
 
-      final isPhone = RegExp(r'^[0-9]+$').hasMatch(query);
+      final isPhone = RegExp(r'^\+?[0-9]{3,}$').hasMatch(query);
       Query queryRef = _firestore.collection('teams');
 
       if (isPhone) {
-        queryRef = queryRef.where('captainPhone', isEqualTo: query);
+        final normalized = PhoneUtils.normalize(query);
+        queryRef = queryRef.where('captainPhone', isEqualTo: normalized);
       } else {
-        // Simple case-insensitive start-search
+        // Simple case-insensitive start-search (normalized for case in DB ideally, but VSP uses prefix match)
         queryRef = queryRef
             .where('name', isGreaterThanOrEqualTo: query)
             .where('name', isLessThanOrEqualTo: '$query\uf8ff')
@@ -683,6 +688,40 @@ class DatabaseService {
           .toList();
     } catch (e) {
       debugPrint('Error searching teams: $e');
+      return [];
+    }
+  }
+
+  /// Previous Opponents: Find teams played against in COMPLETED matches
+  Future<List<Team>> getPreviousOpponents(String myTeamId) async {
+    try {
+      final snapshot = await _firestore.collection('bookings')
+          .where('playerTeamId', isEqualTo: myTeamId)
+          .where('bookingType', isEqualTo: 'challenge')
+          .where('status', isEqualTo: 'completed')
+          .orderBy('createdAt', descending: true)
+          .limit(10)
+          .get();
+
+      final Set<String> opponentIds = {};
+      for (var doc in snapshot.docs) {
+        final oppId = doc.data()['opponentTeamId'];
+        if (oppId != null) opponentIds.add(oppId);
+      }
+
+      if (opponentIds.isEmpty) return [];
+
+      // Fetch full team models
+      final teams = <Team>[];
+      for (var id in opponentIds) {
+        final tDoc = await _firestore.collection('teams').doc(id).get();
+        if (tDoc.exists) {
+           teams.add(Team.fromFirestore(tDoc.data()!, tDoc.id));
+        }
+      }
+      return teams;
+    } catch (e) {
+      debugPrint('Error fetching history: $e');
       return [];
     }
   }
@@ -798,11 +837,10 @@ class DatabaseService {
 
             // 2. Filter locally in Dart
             matches = matches.where((b) {
-              final isPublic = b.isPrivate == false;
+              final isPublic = b.isPrivate == false; 
               final isFuture = b.startTime.isAfter(now);
-              final hasSpace = b.currentPlayers < (b.maxPlayers > 0 ? b.maxPlayers : 1);
+              final hasSpace = b.currentPlayers < (b.maxPlayers > 0 ? b.maxPlayers : 10);
               final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
-              
               return isPublic && isFuture && hasSpace && isRightType;
             }).toList();
 
@@ -839,9 +877,10 @@ class DatabaseService {
           'joinedUserIds': FieldValue.arrayUnion([userId]),
         });
       });
+      AnalyticsService.logMatchJoined(bookingId, 'public');
       return true;
     } catch (e) {
-      debugPrint('Error joining public match: $e');
+      VSPLogger.e('Error joining public match', e);
       return false;
     }
   }
@@ -1178,7 +1217,7 @@ class DatabaseService {
         .snapshots()
         .map((snapshot) {
           if (snapshot.docs.isEmpty) {
-            // For demo purposes, return mock data if DB is empty
+            // No players in league yet
             return [];
           }
           
@@ -1191,5 +1230,314 @@ class DatabaseService {
           }
           return players;
         });
+  }
+
+  // ==================== CHAT ====================
+
+  Stream<List<ChatMessage>> getChatMessages(String bookingId) {
+    return _firestore
+        .collection('bookings')
+        .doc(bookingId)
+        .collection('messages')
+        .orderBy('timestamp', descending: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => ChatMessage.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
+
+  Future<void> sendMessage(String bookingId, ChatMessage message) async {
+    try {
+      final batch = _firestore.batch();
+      
+      // 1. Add Message
+      final messageRef = _firestore
+          .collection('bookings')
+          .doc(bookingId)
+          .collection('messages')
+          .doc();
+      batch.set(messageRef, message.toFirestore());
+      
+      // 2. Fetch participants for unread increment
+      final bookingDoc = await _firestore.collection('bookings').doc(bookingId).get();
+      final participants = List<String>.from(bookingDoc.data()?['joinedUserIds'] ?? []);
+      
+      Map<String, dynamic> unreadUpdates = {};
+      for (var uid in participants) {
+        if (uid != message.senderId) {
+          unreadUpdates['unreadCounts.$uid'] = FieldValue.increment(1);
+        }
+      }
+
+      // 3. Update summary
+      batch.update(_firestore.collection('bookings').doc(bookingId), {
+        'lastMessage': message.text,
+        'lastMessageTime': FieldValue.serverTimestamp(),
+        ...unreadUpdates,
+      });
+
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error sending message: $e');
+    }
+  }
+
+  /// Mark all messages as read for a specific user in a booking
+  Future<void> markMessagesAsRead(String bookingId, String userId) async {
+    try {
+      await _firestore.collection('bookings').doc(bookingId).update({
+        'unreadCounts.$userId': 0,
+      });
+    } catch (e) {
+      debugPrint('Error marking messages as read: $e');
+    }
+  }
+
+  // ==================== PAGINATION & PERFORMANCE ====================
+
+  /// Fetch stadiums in batches of 10
+  Future<Map<String, dynamic>> getStadiumsPaginated({
+    int limit = 10,
+    DocumentSnapshot? startAfter,
+  }) async {
+    try {
+      Query query = _firestore.collection('stadiums');
+      
+      if (!AppConfig.demoMode) {
+        query = query.where('isVerified', isEqualTo: true);
+      }
+      
+      query = query.orderBy('createdAt', descending: true).limit(limit);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.get();
+      final items = snapshot.docs
+          .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+      
+      return {
+        'items': items,
+        'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
+    } catch (e) {
+      debugPrint('Error fetching paginated stadiums: $e');
+      return {'items': [], 'lastDoc': null};
+    }
+  }
+
+  /// Fetch public matches in batches of 10
+  Future<Map<String, dynamic>> getPublicMatchesPaginated({
+    int limit = 10,
+    DocumentSnapshot? startAfter,
+  }) async {
+    try {
+      Query query = _firestore
+          .collection('bookings')
+          .where('status', isEqualTo: BookingStatus.confirmed.name)
+          .orderBy('createdAt', descending: true)
+          .limit(limit);
+
+      if (startAfter != null) {
+        query = query.startAfterDocument(startAfter);
+      }
+
+      final snapshot = await query.get();
+      final now = DateTime.now();
+      
+      final items = snapshot.docs
+          .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+          .where((b) {
+            // Must be Public (Find Players)
+            final isPublic = b.isPrivate == false; 
+            
+            // Must be in the Future
+            final isFuture = b.startTime.isAfter(now);
+            
+            // Must have space
+            final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
+            final hasSpace = b.currentPlayers < max;
+            
+            // Focus on TEAM type for "Find Players" feed
+            // We allow team and personal for now, but team is the primary "Joinable" type from confirmation flow
+            final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
+            
+            final isValid = isPublic && isFuture && hasSpace && isRightType;
+            
+            if (!isValid) {
+              debugPrint('Filtered out match: ${b.id} (Public: $isPublic, Future: $isFuture, Space: $hasSpace, RightType: $isRightType)');
+            }
+            
+            return isValid;
+          }).toList();
+      
+      return {
+        'items': items,
+        'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+      };
+    } catch (e) {
+      debugPrint('Error fetching paginated matches: $e');
+      return {'items': [], 'lastDoc': null};
+    }
+  }
+
+  // ==================== GLOBAL UNIFIED SEARCH ====================
+
+  /// Search across Stadiums, Teams, and Championships simultaneously
+  Future<Map<String, List<dynamic>>> globalUnifiedSearch(String query) async {
+    final term = query.trim().toLowerCase();
+    if (term.isEmpty) return {'stadiums': [], 'teams': [], 'championships': []};
+
+    try {
+      // 1. Search Stadiums
+      final stadiumSnap = await _firestore.collection('stadiums')
+          .where('name_lowercase', isGreaterThanOrEqualTo: term)
+          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
+          .limit(5)
+          .get();
+      
+      final stadiums = stadiumSnap.docs.map((d) => Stadium.fromFirestore(d.data(), d.id)).toList();
+
+      // 2. Search Teams
+      final teamSnap = await _firestore.collection('teams')
+          .where('name_lowercase', isGreaterThanOrEqualTo: term)
+          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
+          .limit(5)
+          .get();
+      
+      final teams = teamSnap.docs.map((d) => Team.fromFirestore(d.data(), d.id)).toList();
+
+      // 3. Search Championships
+      final champSnap = await _firestore.collection('championships')
+          .where('name_lowercase', isGreaterThanOrEqualTo: term)
+          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
+          .limit(5)
+          .get();
+      
+      final championships = champSnap.docs.map((d) => Championship.fromFirestore(d.data(), d.id)).toList();
+
+      return {
+        'stadiums': stadiums,
+        'teams': teams,
+        'championships': championships,
+      };
+    } catch (e) {
+      debugPrint('Error in global search: $e');
+      return {'stadiums': [], 'teams': [], 'championships': []};
+    }
+  }
+
+  // ==================== COMMUNITY SAFETY & MODERATION ====================
+
+  /// Report a user, team, or match for misconduct
+  Future<bool> reportEntity({
+    required String reporterId,
+    required String targetId,
+    required String targetType, // 'user', 'team', 'match'
+    required String reason,
+    String? details,
+  }) async {
+    try {
+      await _firestore.collection('reports').add({
+        'reporterId': reporterId,
+        'targetId': targetId,
+        'targetType': targetType,
+        'reason': reason,
+        'details': details,
+        'status': 'pending', // pending, reviewed, resolved
+        'createdAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error reporting entity', e);
+      return false;
+    }
+  }
+
+  /// Get reports for admin dashboard
+  Stream<List<Map<String, dynamic>>> getReportsStream() {
+    return _firestore.collection('reports')
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map((snap) => snap.docs.map((d) => {...d.data(), 'id': d.id}).toList());
+  }
+
+  /// Admin action: Warn or Suspend user
+  Future<void> updateUserModerationStatus(String userId, {required bool isSuspended, String? warningMessage}) async {
+    try {
+      final batch = _firestore.batch();
+      final userRef = _firestore.collection('users').doc(userId);
+      
+      batch.update(userRef, {
+        'isSuspended': isSuspended,
+        if (warningMessage != null) 'lastWarning': warningMessage,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+
+      // If warning, also send a notification
+      if (warningMessage != null) {
+        final notificationRef = userRef.collection('notifications').doc();
+        batch.set(notificationRef, {
+          'title': 'Safety Warning ⚠️',
+          'body': warningMessage,
+          'type': 'warning',
+          'isRead': false,
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+      }
+
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error updating user moderation status: $e');
+    }
+  }
+
+  // Phase 2: Stadium Deletion Safeguard
+  Future<bool> deleteStadium(String stadiumId) async {
+    try {
+      // 1. Get Upcoming Bookings
+      final bookingSnap = await _firestore.collection('bookings')
+          .where('stadiumId', isEqualTo: stadiumId)
+          .where('status', isEqualTo: 'upcoming')
+          .get();
+
+      final batch = _firestore.batch();
+      
+      for (var doc in bookingSnap.docs) {
+        batch.update(doc.reference, {
+          'status': 'cancelled_by_owner',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        
+        // 2. Notify Players
+        final bookingData = doc.data();
+        final userId = bookingData['createdByUserId'];
+        if (userId != null) {
+          final notificationRef = _firestore.collection('users').doc(userId).collection('notifications').doc();
+          batch.set(notificationRef, {
+            'title': 'Booking Cancelled 🏟️',
+            'body': 'Your booking at ${bookingData['stadiumName']} was cancelled as the stadium is no longer available.',
+            'type': 'cancelled_by_owner',
+            'isRead': false,
+            'createdAt': FieldValue.serverTimestamp(),
+            'bookingId': doc.id,
+          });
+        }
+      }
+
+      // 3. Mark Stadium as Deleted/Unverified
+      batch.update(_firestore.collection('stadiums').doc(stadiumId), {
+        'isVerified': false,
+        'deletedAt': FieldValue.serverTimestamp(),
+      });
+
+      await batch.commit();
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error during stadium deletion cascade', e);
+      return false;
+    }
   }
 }
