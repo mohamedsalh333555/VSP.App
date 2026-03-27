@@ -3,7 +3,7 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'add_stadium_wizard.dart';
@@ -19,7 +19,7 @@ class MyStadiumsScreen extends StatefulWidget {
 }
 
 class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
-  final DatabaseService _databaseService = DatabaseService();
+  final StadiumRepository _databaseService = StadiumRepository();
   final String? _ownerId = FirebaseAuth.instance.currentUser?.uid;
 
   @override

@@ -137,7 +137,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   Text(
                     "Search for a team to challenge or pick from teams you've played against.",
                     style: TextStyle(
-                      color: VSPColors.textSecondary.withOpacity(0.7),
+                      color: VSPColors.textSecondary.withValues(alpha: 0.7),
                       fontSize: 14,
                     ),
                   ),
@@ -186,7 +186,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Column(
                             children: [
-                              Icon(Icons.search_off, color: VSPColors.textSecondary.withOpacity(0.3), size: 48),
+                              Icon(Icons.search_off, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                               const SizedBox(height: 16),
                               Text(
                                 "No teams found matching '$_searchQuery'",
@@ -312,7 +312,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.all(VSPSpacing.md),
         decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent.withOpacity(0.05) : VSPColors.surface,
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
             color: isSelected ? VSPColors.accent : VSPColors.divider,
@@ -336,9 +336,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                     children: [
                       Text(
                         team.name,
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 16,
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
                           fontWeight: FontWeight.bold,
                         ),
                       ),
@@ -357,7 +355,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               ],
             ),
             if (isSelected) ...[
-              const Divider(color: Colors.white10, height: 32),
+              const Divider(color: VSPColors.divider, height: 32),
               if (_isLoadingH2H)
                 const Center(
                   child: Padding(
@@ -401,7 +399,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         const Text(
           "HEAD-TO-HEAD HISTORY",
           style: TextStyle(
-            color: Colors.white70,
+            color: VSPColors.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.bold,
             letterSpacing: 1.2,
@@ -411,7 +409,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         Row(
           children: [
             _buildH2HStatItem("YOUR WINS", wins, VSPColors.accent),
-            _buildH2HStatItem("DRAWS", draws, Colors.white60),
+            _buildH2HStatItem("DRAWS", draws, VSPColors.textSecondary),
             _buildH2HStatItem("THEIR WINS", opposingWins, VSPColors.error),
           ],
         ),
@@ -452,7 +450,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           Text(
             label,
             style: TextStyle(
-              color: VSPColors.textSecondary.withOpacity(0.6),
+              color: VSPColors.textSecondary.withValues(alpha: 0.6),
               fontSize: 9,
               fontWeight: FontWeight.bold,
             ),

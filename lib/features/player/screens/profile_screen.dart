@@ -10,10 +10,12 @@ import 'profile_subscreens/privacy_policy_screen.dart';
 import 'profile_subscreens/language_screen.dart';
 import 'profile_subscreens/help_center_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
+import 'profile_subscreens/favorites_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../admin/screens/admin_dashboard.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/config/app_config.dart';
 import '../../auth/screens/welcome_screen.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
 import '../../../core/services/stats_service.dart';
@@ -21,6 +23,7 @@ import '../../../core/widgets/radar_chart.dart';
 import 'dart:ui';
 import 'dart:io';
 import 'package:image_picker/image_picker.dart';
+import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:flutter/services.dart';
 import '../../../core/services/database_service.dart';
 class ProfileScreen extends StatelessWidget {
@@ -43,7 +46,10 @@ class ProfileScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: SingleChildScrollView(
         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -65,13 +71,13 @@ class ProfileScreen extends StatelessWidget {
                       width: double.infinity,
                       decoration: BoxDecoration(
                         borderRadius: BorderRadius.circular(VSPRadius.lg),
-                        border: Border.all(color: Colors.white.withOpacity(0.1)),
+                        border: Border.all(color: VSPColors.white12),
                         gradient: LinearGradient(
                           begin: Alignment.topLeft,
                           end: Alignment.bottomRight,
                           colors: [
-                            Colors.white.withOpacity(0.15),
-                            Colors.white.withOpacity(0.05),
+                            VSPColors.textPrimary.withValues(alpha: 0.15),
+                            VSPColors.textPrimary.withValues(alpha: 0.05),
                           ],
                         ),
                       ),
@@ -114,7 +120,7 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                         Text(
                                           'Position: ${auth.userModel?.position ?? "ST"}',
-                                          style: TextStyle(color: Colors.white.withOpacity(0.6), fontSize: 13),
+                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                                         ),
                                       ],
                                     ),
@@ -148,7 +154,7 @@ class ProfileScreen extends StatelessWidget {
                                   ],
                                 ),
                                 
-                                const Divider(color: Colors.white10, height: 40),
+                                const Divider(color: VSPColors.divider, height: 40),
 
                                 // Skill Chart & Main Stats
                                 Row(
@@ -165,11 +171,11 @@ class ProfileScreen extends StatelessWidget {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                          _buildCardStat('WIN RATE', '${stats['winRate'] ?? "0"}%', VSPColors.accent),
-                                          const SizedBox(height: 16),
-                                          _buildCardStat('GOALS', '${stats['totalGoals'] ?? "0"}', Colors.white),
-                                          const SizedBox(height: 16),
-                                          _buildCardStat('MATCHES', '${stats['matchesPlayed'] ?? "0"}', Colors.white),
+                                            _buildCardStat(context, 'WIN RATE', '${stats['winRate'] ?? "0"}%', VSPColors.accent),
+                                            const SizedBox(height: 16),
+                                            _buildCardStat(context, 'GOALS', '${stats['totalGoals'] ?? "0"}', VSPColors.textPrimary),
+                                            const SizedBox(height: 16),
+                                            _buildCardStat(context, 'MATCHES', '${stats['matchesPlayed'] ?? "0"}', VSPColors.textPrimary),
                                         ],
                                       ),
                                     ),
@@ -182,7 +188,7 @@ class ProfileScreen extends StatelessWidget {
                                   width: double.infinity,
                                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                                   decoration: BoxDecoration(
-                                    color: Colors.black.withOpacity(0.3),
+                                    color: VSPColors.background.withValues(alpha: 0.5),
                                     borderRadius: BorderRadius.circular(VSPRadius.md),
                                   ),
                                   child: Row(
@@ -192,7 +198,7 @@ class ProfileScreen extends StatelessWidget {
                                       const SizedBox(width: 8),
                                       Text(
                                         'FAVORITE STADIUM: ${stats['favoriteStadium'] ?? "None"}',
-                                        style: TextStyle(color: Colors.white.withOpacity(0.8), fontSize: 11, fontWeight: FontWeight.bold),
+                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                   ),
@@ -218,11 +224,11 @@ class ProfileScreen extends StatelessWidget {
               child: ListView(
                 scrollDirection: Axis.horizontal,
                 children: [
-                  _buildBadge('Night Owl', Icons.nightlight_round, true),
-                  _buildBadge('Top Scorer', Icons.military_tech, true),
-                  _buildBadge('Clean Sheet', Icons.shield, false),
-                  _buildBadge('Marathoner', Icons.directions_run, false),
-                  _buildBadge('Fair Play', Icons.handshake, true),
+                  _buildBadge(context, 'Night Owl', Icons.nightlight_round, true),
+                  _buildBadge(context, 'Top Scorer', Icons.military_tech, true),
+                  _buildBadge(context, 'Clean Sheet', Icons.shield, false),
+                  _buildBadge(context, 'Marathoner', Icons.directions_run, false),
+                  _buildBadge(context, 'Fair Play', Icons.handshake, true),
                 ],
               ),
             ),
@@ -238,40 +244,48 @@ class ProfileScreen extends StatelessWidget {
               subtitle: 'Manage Your Team Information',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
             ),
-            const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
-              icon: Icons.payment_outlined,
-              title: 'Payment Methods',
-              subtitle: 'Manage Your Payment Methods',
-              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
+              icon: Icons.favorite_border,
+              title: 'Favorite Stadiums',
+              subtitle: 'View Your Liked Facilities',
+              onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
             ),
+            if (AppConfig.enableOnlinePayment) ...[
+              VSPMenuItem(
+                icon: Icons.payment_outlined,
+                title: 'Payment Methods',
+                subtitle: 'Manage Your Payment Methods',
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
+              ),
+              const SizedBox(height: VSPSpacing.md),
+            ],
 
             const SizedBox(height: VSPSpacing.lg),
 
             // Preferences Section - REFINED HEADER
             const VSPSectionTitle('Preferences'),
-            const SizedBox(height: 12),
+            const SizedBox(height: VSPSpacing.sm),
             VSPMenuItem(
               icon: Icons.notifications_none_outlined,
               title: 'Notifications',
               subtitle: 'Manage Your Notification Settings',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.shield_outlined,
               title: 'Privacy',
               subtitle: 'Privacy Policy',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.translate,
               title: 'Language',
               subtitle: 'Manage Your Language Preferences',
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
             ),
-             const SizedBox(height: 16),
+             const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.help_outline,
               title: 'Help Center',
@@ -279,14 +293,14 @@ class ProfileScreen extends StatelessWidget {
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
             ),
 
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.feedback_outlined,
               title: 'Feedback',
               subtitle: 'Report an issue or suggest a feature',
               onTap: () => _showFeedbackDialog(context),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: VSPSpacing.md),
 
             // Logout Button
             VSPMenuItem(
@@ -310,18 +324,19 @@ class ProfileScreen extends StatelessWidget {
           ],
         ),
       ),
+    ),
     );
   }
 
 
 
-  Widget _buildCardStat(String label, String value, Color valueColor) {
+  Widget _buildCardStat(BuildContext context, String label, String value, Color valueColor) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.end,
       children: [
         Text(
           label,
-          style: TextStyle(color: Colors.white.withOpacity(0.5), fontSize: 10, fontWeight: FontWeight.bold),
+          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
         ),
         Text(
           value,
@@ -331,7 +346,7 @@ class ProfileScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildBadge(String name, IconData icon, bool isUnlocked) {
+  Widget _buildBadge(BuildContext context, String name, IconData icon, bool isUnlocked) {
     return Container(
       width: 70,
       margin: const EdgeInsets.only(right: 12),
@@ -341,15 +356,15 @@ class ProfileScreen extends StatelessWidget {
             padding: const EdgeInsets.all(12),
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isUnlocked ? VSPColors.accent.withOpacity(0.1) : Colors.white.withOpacity(0.05),
-              border: Border.all(color: isUnlocked ? VSPColors.accent : Colors.white10),
+              color: isUnlocked ? VSPColors.accentSoft : VSPColors.surfaceAlt,
+              border: Border.all(color: isUnlocked ? VSPColors.accent : VSPColors.divider),
             ),
-            child: Icon(icon, color: isUnlocked ? VSPColors.accent : Colors.white24, size: 24),
+            child: Icon(icon, color: isUnlocked ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3), size: 24),
           ),
           const SizedBox(height: 6),
           Text(
             name,
-            style: TextStyle(color: isUnlocked ? Colors.white : Colors.white24, fontSize: 10, fontWeight: FontWeight.bold),
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: isUnlocked ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.3), fontWeight: FontWeight.bold),
             textAlign: TextAlign.center,
           ),
         ],
@@ -387,19 +402,21 @@ class ProfileScreen extends StatelessWidget {
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: VSPColors.surface,
-          title: const Text('Send Feedback', style: TextStyle(color: Colors.white)),
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: const Text('Send Feedback', style: TextStyle(color: VSPColors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               TextField(
                 maxLines: 3,
-                style: const TextStyle(color: Colors.white),
+                style: const TextStyle(color: VSPColors.textPrimary),
                 decoration: InputDecoration(
                   hintText: 'Describe the issue...',
-                  hintStyle: const TextStyle(color: Colors.white24),
+                  hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                   fillColor: VSPColors.background,
                   filled: true,
-                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
                 ),
                 onChanged: (val) => feedbackText = val,
               ),
@@ -425,8 +442,8 @@ class ProfileScreen extends StatelessWidget {
                           onTap: () => setDialogState(() => attachedImage = null),
                           child: Container(
                             padding: const EdgeInsets.all(4),
-                            decoration: const BoxDecoration(color: Colors.black54, shape: BoxShape.circle),
-                            child: const Icon(Icons.close, color: Colors.white, size: 16),
+                            decoration: BoxDecoration(color: VSPColors.background.withValues(alpha: 0.7), shape: BoxShape.circle),
+                            child: const Icon(Icons.close, color: VSPColors.textPrimary, size: 16),
                           ),
                         ),
                       ),
@@ -448,23 +465,23 @@ class ProfileScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: const Text('Cancel'),
+              child: Text('Cancel', style: TextStyle(color: VSPColors.textSecondary)),
             ),
-            ElevatedButton(
-              style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent),
+            PrimaryButton(
+              text: 'Submit',
+              width: 120,
+              height: 44,
               onPressed: () async {
                 if (feedbackText.isEmpty) {
                    ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter some feedback')));
                    return;
                 }
-                // In production, upload image and save feedback to Firestore
                 HapticFeedback.mediumImpact();
                 if (context.mounted) {
                   Navigator.pop(context);
                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!')));
                 }
               },
-              child: const Text('Submit', style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
             ),
           ],
         ),

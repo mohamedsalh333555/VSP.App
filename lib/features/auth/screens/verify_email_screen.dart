@@ -89,10 +89,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         
         // Role-based redirection
         if (auth.isOwner) {
-          // Direct new owners to add their first stadium
+          // Redirect to RootScreen which will decide the correct onboarding step
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (_) => const AddStadiumWizard()),
+            MaterialPageRoute(builder: (_) => const RootScreen()),
             (route) => false,
           );
         } else {
@@ -108,7 +108,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         VSPFeedback.showError(context, 'رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
       }
     } else {
-      // Real OTP Logic goes here
+      // NOTE: Real OTP is not activated for the current MVP release.
+      // The app must be compiled with useMockOtp = true or this path will fail.
       await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
       if (!mounted) return;
       setState(() => _isLoading = false);
@@ -294,6 +295,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                             focusNode: _focusNodes[index],
                             textAlign: TextAlign.center,
                             keyboardType: TextInputType.number,
+                            autofillHints: const [AutofillHints.oneTimeCode],
                             maxLength: 1,
                             style: Theme.of(context).textTheme.displayMedium?.copyWith(
                               color: VSPColors.textPrimary,

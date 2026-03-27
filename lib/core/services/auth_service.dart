@@ -4,6 +4,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import '../utils/phone_utils.dart';
+import 'logger_service.dart';
+import '../constants/egypt_governorates.dart';
 
 class AuthService {
   // Active Instances
@@ -128,11 +130,31 @@ class AuthService {
 
   // Sign Out
   Future<void> signOut() async {
+    VSPLogger.i('🚪 Sign-Out Initiated');
+    
+    // 1. Firebase Sign-Out
     try {
       await _auth.signOut();
     } catch (e) {
-      _logSecurityEvent('SIGN_OUT_ERROR', e);
+      _logSecurityEvent('FIREBASE_SIGN_OUT_ERROR', e);
+      VSPLogger.e('❌ Firebase signOut error', e);
     }
+
+    // 2. Google Sign-Out (Try to disconnect to clear all scopes/cache)
+    try {
+      final googleSignIn = GoogleSignIn();
+      if (await googleSignIn.isSignedIn()) {
+        await googleSignIn.signOut();
+        await googleSignIn.disconnect();
+        VSPLogger.i('✅ Google account disconnected');
+      }
+    } catch (e) {
+      // Often fails if not initialized or already disconnected, but catch avoids PlatformException crash
+      _logSecurityEvent('GOOGLE_SIGN_OUT_CHANNEL_ERROR', e);
+      VSPLogger.w('⚠️ Google sign-out non-critical error: $e');
+    }
+    
+    VSPLogger.i('👋 Sign-Out Complete');
   }
 
   // Send Password Reset Email
@@ -284,6 +306,10 @@ class AuthService {
 
   // SECURITY PATCH: Stripped sensitive fields (role, points, walletBalance, etc.) to prevent privilege escalation or data manipulation.
   Future<bool> updateUserProfile(String uid, Map<String, dynamic> data) async {
+    // TODO: SECURITY - BIG REMINDER FOR BACKEND TEAM
+    // Client-side field removal is NOT enough. You MUST enforce Firestore Security Rules 
+    // to strictly prevent writes to `role`, `commissionDebt`, and `walletBalance` by regular users.
+    
     // SECURITY: Prevent users from elevating privileges via client-side map.
     // Fields explicitly blocked: role, uid, email, createdAt, points, walletBalance, isEmailVerified.
     // NOTE: isIdentityVerified, isRegistrationComplete, hasStadium are intentionally ALLOWED —
@@ -297,13 +323,27 @@ class AuthService {
     securedData.remove('isEmailVerified'); // Must go through Firebase Auth, not Firestore
     securedData.remove('points');
     securedData.remove('walletBalance');
+    
+    // 🌍 Standardize Governorate
+    if (securedData.containsKey('governorate')) {
+      final String? gov = securedData['governorate']?.toString();
+      if (gov != null) {
+        // We import it here or at top
+        securedData['governorate'] = EgyptGovernorates.resolveGoogleName(gov);
+      }
+    }
+
     securedData['updatedAt'] = FieldValue.serverTimestamp();
 
     try {
-      await _firestore.collection('users').doc(uid).update(securedData);
+      // 🔴 FIX: Use set(merge: true) instead of update()
+      // This allows 'Ghost Users' (who have Auth but no Firestore doc) to have their
+      // profile created automatically during onboarding completion.
+      await _firestore.collection('users').doc(uid).set(securedData, SetOptions(merge: true));
       return true;
     } catch (e) {
       _logSecurityEvent('UPDATE_PROFILE_FAILED', e);
+      VSPLogger.e('❌ Failed to update/create user profile for UID: $uid', e);
       return false;
     }
   }

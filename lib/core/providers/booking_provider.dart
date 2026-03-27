@@ -5,10 +5,11 @@ import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
 import '../services/database_service.dart';
 import '../config/app_config.dart';
+
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
   late final BookingRepository _repository;
-  
+
   List<Booking> _userBookings = [];
   List<Booking> _upcomingBookings = [];
   List<Booking> _historyBookings = [];
@@ -16,7 +17,7 @@ class BookingProvider with ChangeNotifier {
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
   StreamSubscription? _bookingSubscription; // ✅ Added tracking
-  
+
   bool _isLoading = false;
   bool _isLoadingMoreParticipants = false;
   bool _isLoadingMoreMatches = false;
@@ -26,9 +27,12 @@ class BookingProvider with ChangeNotifier {
   final Set<String> _cancellingIds = {};
 
   // Getters
-  List<Booking> get userBookings => _userBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
-  List<Booking> get upcomingBookings => _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
-  List<Booking> get historyBookings => _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get userBookings =>
+      _userBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get upcomingBookings =>
+      _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get historyBookings =>
+      _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   List<Booking> get publicMatches => _publicMatches;
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
@@ -109,7 +113,7 @@ class BookingProvider with ChangeNotifier {
       _upcomingBookings.insert(0, booking);
       _userBookings.insert(0, booking);
       _currentDraft = null; // Clear draft after successful creation
-      
+
       _isLoading = false;
       notifyListeners();
       return booking;
@@ -132,7 +136,7 @@ class BookingProvider with ChangeNotifier {
       _currentBooking = booking;
       _upcomingBookings.insert(0, booking);
       _userBookings.insert(0, booking);
-      
+
       _isLoading = false;
       notifyListeners();
       return booking;
@@ -147,56 +151,70 @@ class BookingProvider with ChangeNotifier {
   /// Load user's bookings
   void loadUserBookings(String userId) {
     _bookingSubscription?.cancel();
-    _bookingSubscription = _repository.getUserBookings(userId).listen(
-      (bookings) {
-        _userBookings = bookings;
-        // Split into upcoming and history
-        final now = DateTime.now();
-        _upcomingBookings = bookings
-            .where((b) => 
-                b.status == BookingStatus.confirmed && 
-                b.endTime.isAfter(now))
-            .toList();
-        _historyBookings = bookings
-            .where((b) => 
-                b.status == BookingStatus.completed || 
-                b.status == BookingStatus.cancelled ||
-                (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
-            .toList();
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = 'Failed to load bookings: $e';
-        notifyListeners();
-      },
-    );
+    _bookingSubscription = _repository
+        .getUserBookings(userId)
+        .listen(
+          (bookings) {
+            _userBookings = bookings;
+            // Split into upcoming and history
+            final now = DateTime.now();
+            _upcomingBookings = bookings
+                .where(
+                  (b) =>
+                      b.status == BookingStatus.confirmed &&
+                      b.endTime.isAfter(now),
+                )
+                .toList();
+            _historyBookings = bookings
+                .where(
+                  (b) =>
+                      b.status == BookingStatus.completed ||
+                      b.status == BookingStatus.cancelled ||
+                      (b.status == BookingStatus.confirmed &&
+                          b.endTime.isBefore(now)),
+                )
+                .toList();
+            notifyListeners();
+          },
+          onError: (e) {
+            _errorMessage = 'Failed to load bookings: $e';
+            notifyListeners();
+          },
+        );
   }
 
   /// Load owner's bookings (for stadium owners)
   void loadOwnerBookings(String ownerId) {
     _bookingSubscription?.cancel();
-    _bookingSubscription = _repository.getOwnerBookings(ownerId).listen(
-      (bookings) {
-        _userBookings = bookings;
-        final now = DateTime.now();
-        _upcomingBookings = bookings
-            .where((b) => 
-                b.status == BookingStatus.confirmed && 
-                b.endTime.isAfter(now))
-            .toList();
-        _historyBookings = bookings
-            .where((b) => 
-                b.status == BookingStatus.completed || 
-                b.status == BookingStatus.cancelled ||
-                (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
-            .toList();
-        notifyListeners();
-      },
-      onError: (e) {
-        _errorMessage = 'Failed to load bookings: $e';
-        notifyListeners();
-      },
-    );
+    _bookingSubscription = _repository
+        .getOwnerBookings(ownerId)
+        .listen(
+          (bookings) {
+            _userBookings = bookings;
+            final now = DateTime.now();
+            _upcomingBookings = bookings
+                .where(
+                  (b) =>
+                      b.status == BookingStatus.confirmed &&
+                      b.endTime.isAfter(now),
+                )
+                .toList();
+            _historyBookings = bookings
+                .where(
+                  (b) =>
+                      b.status == BookingStatus.completed ||
+                      b.status == BookingStatus.cancelled ||
+                      (b.status == BookingStatus.confirmed &&
+                          b.endTime.isBefore(now)),
+                )
+                .toList();
+            notifyListeners();
+          },
+          onError: (e) {
+            _errorMessage = 'Failed to load bookings: $e';
+            notifyListeners();
+          },
+        );
   }
 
   /// Cancel a booking
@@ -208,12 +226,13 @@ class BookingProvider with ChangeNotifier {
     try {
       // Find the booking in local state to check time early for UI feedback
       final booking = _userBookings.cast<Booking?>().firstWhere(
-        (b) => b?.id == bookingId, 
-        orElse: () => null
+        (b) => b?.id == bookingId,
+        orElse: () => null,
       );
 
       if (booking != null && DateTime.now().isAfter(booking.startTime)) {
-        _errorMessage = "لا يمكن إلغاء الحجز بعد بدء وقت اللعب. تواصل مع صاحب الملعب.";
+        _errorMessage =
+            "لا يمكن إلغاء الحجز بعد بدء وقت اللعب. تواصل مع صاحب الملعب.";
         _cancellingIds.remove(bookingId);
         notifyListeners();
         return false;
@@ -227,7 +246,8 @@ class BookingProvider with ChangeNotifier {
         // Keep in set for a moment to allow Firestore to sync.
         await Future.delayed(const Duration(seconds: 1));
       } else {
-        _errorMessage = 'لا يمكن إلغاء الحجز في الوقت الحالي. قد يكون وقت المباراة قد بدأ بالفعل.';
+        _errorMessage =
+            'لا يمكن إلغاء الحجز في الوقت الحالي. قد يكون وقت المباراة قد بدأ بالفعل.';
       }
       _cancellingIds.remove(bookingId);
       notifyListeners();
@@ -245,43 +265,26 @@ class BookingProvider with ChangeNotifier {
     return await _repository.getBookingById(bookingId);
   }
 
-  /// Fetch public matches with pagination
+  /// Fetch public matches directly from the unified active stream to avoid pagination mismatch
   Future<void> fetchPublicMatches({bool isRefresh = false}) async {
-    if (_isLoading || (_isLoadingMoreMatches && !isRefresh)) return;
+    if (_isLoading) return;
 
     if (isRefresh) {
-      _publicMatches = [];
-      _lastMatchDocument = null;
-      _hasMoreMatches = true;
       _setLoading(true);
-    } else {
-      _isLoadingMoreMatches = true;
-      notifyListeners();
     }
 
     try {
-      final result = await DatabaseService().getPublicMatchesPaginated(
-        limit: 10,
-        startAfter: _lastMatchDocument,
-      );
+      // Use the exact same stream function as the Home view for 100% consistency
+      final stream = DatabaseService().getPublicMatches();
+      final matches = await stream.first;
 
-      final List<Booking> newMatches = result['items'];
-      _lastMatchDocument = result['lastDoc'];
-
-      if (isRefresh) {
-        _publicMatches = newMatches;
-      } else {
-        _publicMatches.addAll(newMatches);
-      }
-
-      if (newMatches.length < 10) {
-        _hasMoreMatches = false;
-      }
+      _publicMatches = matches;
+      _hasMoreMatches =
+          false; // Disable pagination as we fetch all valid upcoming
     } catch (e) {
       _errorMessage = 'Failed to fetch public matches: $e';
     } finally {
       _isLoading = false;
-      _isLoadingMoreMatches = false;
       notifyListeners();
     }
   }
@@ -295,9 +298,12 @@ class BookingProvider with ChangeNotifier {
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      final success = await DatabaseService().joinPublicMatch(bookingId, userId);
+      final success = await DatabaseService().joinPublicMatch(
+        bookingId,
+        userId,
+      );
       _isLoading = false;
       notifyListeners();
       return success;
@@ -313,9 +319,12 @@ class BookingProvider with ChangeNotifier {
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
     _isLoading = true;
     notifyListeners();
-    
+
     try {
-      final success = await DatabaseService().leavePublicMatch(bookingId, userId);
+      final success = await DatabaseService().leavePublicMatch(
+        bookingId,
+        userId,
+      );
       _isLoading = false;
       notifyListeners();
       return success;
@@ -347,7 +356,7 @@ class BookingProvider with ChangeNotifier {
         rating: rating,
         review: review,
       );
-      
+
       if (!success) {
         _errorMessage = 'Failed to submit result or results do not match.';
       }
@@ -361,6 +370,19 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  /// Update payment status
+  Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    final success = await _repository.updatePaymentStatus(bookingId, isPaid);
+    if (success) {
+      final index = _userBookings.indexWhere((b) => b.id == bookingId);
+      if (index != -1) {
+        _userBookings[index] = _userBookings[index].copyWith(isPaid: isPaid);
+        notifyListeners();
+      }
+    }
+    return success;
   }
 
   /// Get bookings for a specific stadium and date (Stream)

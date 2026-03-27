@@ -8,6 +8,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import 'verify_email_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/constants/egypt_governorates.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -46,13 +48,22 @@ class _SignupScreenState extends State<SignupScreen> {
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-
     if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
       VSPFeedback.showError(
         context, 
         Provider.of<LanguageProvider>(context, listen: false).isArabic 
             ? 'يرجى ملء جميع الحقول' 
             : 'Please fill all fields'
+      );
+      return;
+    }
+
+    if (phone.length < 10) {
+      VSPFeedback.showError(
+        context, 
+        Provider.of<LanguageProvider>(context, listen: false).isArabic 
+            ? 'يرجى إدخال رقم هاتف صحيح' 
+            : 'Please enter a valid phone number'
       );
       return;
     }
@@ -120,7 +131,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: VSPColors.background.withValues(alpha: 0),
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
@@ -142,7 +153,7 @@ class _SignupScreenState extends State<SignupScreen> {
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
-                  child: Container(color: Colors.transparent),
+                  child: Container(color: VSPColors.background.withValues(alpha: 0)),
                 ),
               ),
             ),
@@ -239,6 +250,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _phoneController,
                     hintText: '01xxxxxxxxx',
                     keyboardType: TextInputType.phone,
+                    textInputAction: TextInputAction.next,
                     prefixIcon: Icons.phone_outlined,
                     maxLength: 15,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
@@ -290,40 +302,10 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   
                   const SizedBox(height: 32),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        boxShadow: [
-                          BoxShadow(
-                            color: VSPColors.accent.withValues(alpha: 0.2),
-                            blurRadius: 15,
-                            offset: const Offset(0, 4),
-                          ),
-                        ],
-                      ),
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleSignup,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.accent,
-                          foregroundColor: VSPColors.background,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                          elevation: 0, 
-                        ),
-                        child: _isLoading 
-                          ? const SizedBox(
-                              height: 24,
-                              width: 24,
-                              child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 3),
-                            )
-                          : Text(
-                              languageProvider.isArabic ? 'إنشاء الحساب' : 'Create Account',
-                              style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
-                            ),
-                      ),
-                    ),
+                  PrimaryButton(
+                    text: languageProvider.isArabic ? 'إنشاء الحساب' : 'Create Account',
+                    isLoading: _isLoading,
+                    onPressed: _isLoading ? null : _handleSignup,
                   ),
                   const SizedBox(height: 40),
                 ],
@@ -344,7 +326,7 @@ class _SignupScreenState extends State<SignupScreen> {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
@@ -406,11 +388,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildGovernorateDropdown(LanguageProvider lang) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final govs = [
-      'Cairo', 'Giza', 'Alexandria', 'Dakahlia', 'Red Sea', 
-      'Luxor', 'Aswan', 'Gharbia', 'Port Said', 'Suez', 
-      'Ismailia', 'Minya', 'Assiut'
-    ];
+    final govs = EgyptGovernorates.allGovernorates;
     
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),

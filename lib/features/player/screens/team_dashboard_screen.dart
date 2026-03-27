@@ -12,7 +12,9 @@ import '../../../core/services/sharing_service.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
+import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
+import '../../../shared/widgets/team_card_hero.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
   const TeamDashboardScreen({super.key});
@@ -29,18 +31,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   void initState() {
     super.initState();
     _fetchUserTeam();
-    _scrollController.addListener(_onScroll);
-    
-    // Initial fetch
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      context.read<BookingProvider>().fetchPublicMatches(isRefresh: true);
-    });
-  }
-
-  void _onScroll() {
-    if (_scrollController.position.pixels >= _scrollController.position.maxScrollExtent - 200) {
-      context.read<BookingProvider>().fetchPublicMatches();
-    }
+    // Initial fetch not needed for StreamBuilder anymore
   }
 
   @override
@@ -70,78 +61,132 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
           'Matches',
           style: Theme.of(context).textTheme.displayMedium,
         ),
-        actions: const [
-          SizedBox(width: 8),
+        actions: [
+          if (_userTeam != null)
+            IconButton(
+              icon: const Icon(Icons.share_outlined, color: VSPColors.accent),
+              onPressed: () => _showTeamCard(context, _userTeam!),
+            ),
+          IconButton(
+            icon: const Icon(Icons.support_agent_outlined, color: VSPColors.textSecondary),
+            onPressed: () => SupportService().openSupport(context),
+          ),
+          const SizedBox(width: 8),
         ],
       ),
-      body: Consumer<BookingProvider>(
-        builder: (context, provider, _) {
-          if (provider.isLoading && provider.publicMatches.isEmpty) {
-            return ListView.builder(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              itemCount: 5,
-              itemBuilder: (context, index) => const CardSkeleton(),
-            );
-          }
-          
-          final bookings = provider.publicMatches;
-          
-          if (bookings.isEmpty) {
-            return Center(
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                   Icon(Icons.sports_soccer_outlined, color: Colors.white.withValues(alpha: 0.1), size: 80),
-                   const SizedBox(height: VSPSpacing.md),
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: StreamBuilder<List<Booking>>(
+          stream: DatabaseService().getPublicMatches(),
+          builder: (context, snapshot) {
+            if (snapshot.connectionState == ConnectionState.waiting) {
+              return ListView.builder(
+                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),
+                itemCount: 5,
+                itemBuilder: (context, index) => const CardSkeleton(),
+              );
+            }
+  
+            final bookings = snapshot.data ?? [];
+  
+            if (bookings.isEmpty) {
+              return Center(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(
+                      Icons.sports_soccer_outlined,
+                      color: VSPColors.textPrimary.withValues(alpha: 0.1),
+                      size: 80,
+                    ),
+                    const SizedBox(height: VSPSpacing.md),
                     Text(
-                    'No public matches available right now.',
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                  Text(
-                    'Be the first to host one!',
-                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                      color: VSPColors.accent,
-                      fontWeight: FontWeight.bold,
+                      'No public matches available right now.',
+                      style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                  ),
-                ],
+                    Text(
+                      'Be the first to host one!',
+                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ),
+              );
+            }
+  
+            return ListView.builder(
+              padding: EdgeInsets.fromLTRB(
+                16,
+                VSPSpacing.md,
+                16,
+                MediaQuery.of(context).padding.bottom + 110,
               ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () => provider.fetchPublicMatches(isRefresh: true),
-            color: VSPColors.accent,
-            child: ListView.builder(
-              controller: _scrollController,
-              padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
-              itemCount: bookings.length + (provider.isLoadingMoreMatches ? 1 : 0),
+              itemCount: bookings.length,
               itemBuilder: (context, index) {
-                if (index == bookings.length) {
-                  return const Center(
-                    child: Padding(
-                      padding: EdgeInsets.all(VSPSpacing.md),
-                      child: CircularProgressIndicator(color: VSPColors.accent),
-                    ),
-                  );
-                }
-                
                 return Padding(
                   padding: const EdgeInsets.only(bottom: VSPSpacing.md),
                   child: PublicMatchCard(
                     booking: bookings[index],
-                    highlighted: _userTeam != null && 
-                               bookings[index].bookingType == BookingType.team &&
-                               bookings[index].playerTeamId != null, 
+                    highlighted:
+                        _userTeam != null &&
+                        bookings[index].bookingType == BookingType.team &&
+                        bookings[index].playerTeamId != null,
                   ),
                 );
               },
+            );
+          },
+        ),
+      ),
+    );
+  }
+
+  void _showTeamCard(BuildContext context, Team team) {
+    VSPFeedback.triggerSuccess();
+    showDialog(
+      context: context,
+      builder: (context) => Dialog(
+        backgroundColor: Colors.transparent,
+        insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 40),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TeamCardHero(team: team),
+            const SizedBox(height: VSPSpacing.xl),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                ElevatedButton.icon(
+                  onPressed: () => Navigator.pop(context),
+                  icon: const Icon(Icons.close),
+                  label: const Text('Close'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.surfaceAlt,
+                    foregroundColor: VSPColors.textPrimary,
+                  ),
+                ),
+                const SizedBox(width: VSPSpacing.md),
+                ElevatedButton.icon(
+                  onPressed: () {
+                    SharingService().shareText(
+                      'Check out my team ${team.name} on VSP! We are ranked ${team.rankTitle}. ⚽🏆',
+                    );
+                  },
+                  icon: const Icon(Icons.share),
+                  label: const Text('Share Link'),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: VSPColors.background,
+                  ),
+                ),
+              ],
             ),
-          );
-        }
+          ],
+        ),
       ),
     );
   }
 }
-
-

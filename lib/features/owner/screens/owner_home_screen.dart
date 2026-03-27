@@ -706,7 +706,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceAround,
             children: [
               _buildNavItem(Icons.home_filled, 'Home', 0),
-              _buildNavItem(Icons.emoji_events_outlined, 'Cup', 1),
+              _buildNavItem(Icons.emoji_events_outlined, 'Tournaments', 1),
               _buildNavItem(Icons.calendar_today_outlined, 'Booked', 2),
               _buildNavItem(Icons.person_outline, 'Profile', 3),
             ],
@@ -1074,29 +1074,10 @@ class _ManualBookingSheetState extends State<_ManualBookingSheet> {
                 // Submit
                 SizedBox(
                   width: double.infinity,
-                  child: ElevatedButton(
+                  child: PrimaryButton(
+                    text: 'Confirm Booking',
+                    isLoading: _isSubmitting,
                     onPressed: _isSubmitting ? null : _submit,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 15),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                      ),
-                    ),
-                    child: _isSubmitting
-                        ? const SizedBox(
-                            width: 20,
-                            height: 20,
-                            child: CircularProgressIndicator(
-                              strokeWidth: 2,
-                              color: Colors.black,
-                            ),
-                          )
-                        : const Text(
-                            'Confirm Booking',
-                            style: TextStyle(fontWeight: FontWeight.bold),
-                          ),
                   ),
                 ),
               ],

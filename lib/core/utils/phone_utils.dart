@@ -6,13 +6,13 @@ class PhoneUtils {
     String normalized = phone.replaceAll(RegExp(r'\D'), '');
 
     // 2. Handle common Egyptian prefix scenarios
-    // If it starts with '20' (common international code for Egypt), remove it
-    if (normalized.startsWith('20') && normalized.length > 10) {
+    // If it starts with '20' and is exactly 12 digits (e.g. 201012345678)
+    if (normalized.startsWith('20') && normalized.length == 12) {
       normalized = normalized.substring(2);
     }
     
-    // Ensure it starts with '0' if it's a 10-digit number (e.g. 1012345678 -> 01012345678)
-    if (normalized.length == 10 && !normalized.startsWith('0')) {
+    // Ensure it starts with '0' if it's a 10-digit number and starts with a valid Egyptian operator code (10, 11, 12, 15)
+    if (normalized.length == 10 && normalized.startsWith(RegExp(r'1[0125]'))) {
       normalized = '0$normalized';
     }
 

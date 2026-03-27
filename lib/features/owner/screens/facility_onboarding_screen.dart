@@ -3,7 +3,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../data/models.dart';
@@ -45,7 +45,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
           child: Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
             child: StreamBuilder<List<Stadium>>(
-              stream: DatabaseService().getOwnerStadiums(uid),
+              stream: StadiumRepository().getOwnerStadiums(uid),
               builder: (context, snapshot) {
                 final stadiums = snapshot.data ?? [];
                 final hasStadiums = stadiums.isNotEmpty;

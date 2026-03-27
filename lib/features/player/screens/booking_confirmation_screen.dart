@@ -132,20 +132,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   int _parseTimeToMinutes(String timeStr) {
     if (timeStr.isEmpty) return 0;
     try {
-      final time = timeStr.trim().toUpperCase();
-      final isPm = time.contains('PM');
-      final isAm = time.contains('AM');
+      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
+      final match = timeRegex.firstMatch(timeStr);
       
-      final cleanTime = time.replaceAll('PM', '').replaceAll('AM', '').trim();
-      final parts = cleanTime.split(':');
-      int hour = int.parse(parts[0]);
-      int minute = parts.length > 1 ? int.parse(parts[1]) : 0;
-
-      if (isPm && hour != 12) hour += 12;
-      if (isAm && hour == 12) hour = 0;
+      if (match == null) return 0;
+      
+      int hour = int.parse(match.group(1)!);
+      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+      String? period = match.group(3)?.toUpperCase();
+      
+      if (period == 'PM' && hour != 12) hour += 12;
+      if (period == 'AM' && hour == 12) hour = 0;
       
       return hour * 60 + minute;
     } catch (e) {
+      debugPrint('Error parsing time: $e');
       return 0;
     }
   }
@@ -199,7 +200,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void _showCalendarModal() {
     showDialog(
       context: context,
-      barrierColor: Colors.black.withOpacity(0.8), // Dimmed background
+      barrierColor: VSPColors.background.withValues(alpha: 0.8), // Dimmed background
       builder: (context) {
         DateTime tempSelectedDate = _selectedDate; // Local state for modal
         DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month); // For page navigation
@@ -574,22 +575,22 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                                     ),
                                   ),
-                                  if (isBooked) ...[
-                                    const SizedBox(width: 12),
-                                    const Text(
-                                      'BOOKED',
-                                      style: TextStyle(
-                                        color: VSPColors.error,
-                                        fontSize: 12,
-                                        fontWeight: FontWeight.bold,
+                                    if (isBooked) ...[
+                                      const SizedBox(width: 12),
+                                      const Text(
+                                        'BOOKED',
+                                        style: TextStyle(
+                                          color: VSPColors.error,
+                                          fontSize: 12,
+                                          fontWeight: FontWeight.bold,
+                                        ),
                                       ),
-                                    ),
                                     ] else if (isPast) ...[
                                       const SizedBox(width: 12),
                                       Text(
                                         'EXPIRED',
                                         style: TextStyle(
-                                          color: VSPColors.textSecondary.withOpacity(0.5),
+                                          color: VSPColors.textSecondary.withValues(alpha: 0.5),
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
                                         ),
@@ -714,7 +715,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           color: _isBallRented ? VSPColors.accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
                           border: Border.all(
-                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withOpacity(0.4),
+                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
                           ),
                         ),
                         child: _isBallRented
@@ -804,7 +805,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           // stadium.seatsCapacity actually stores "Players per Team"
                           final int trueMaxPlayers = (widget.stadium.seatsCapacity > 0) 
                               ? widget.stadium.seatsCapacity 
-                              : 10; // Default to 5v5 (10 total)
+                              : 5; // Default to 5v5 (5 per side)
   
                           // Force it to false if the booking type is 'Team'
                           final bool isActuallyPrivate = widget.bookingType.toLowerCase() == 'team' ? false : _isPrivate;

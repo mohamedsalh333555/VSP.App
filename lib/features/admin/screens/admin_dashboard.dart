@@ -168,10 +168,10 @@ class _ReportsTab extends StatelessWidget {
               style: const TextStyle(color: Colors.white),
               decoration: InputDecoration(
                 hintText: 'Message to user...',
-                hintStyle: const TextStyle(color: Colors.white24),
+                hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                 fillColor: VSPColors.background,
                 filled: true,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)),
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
               ),
               onChanged: (val) => message = val,
             ),

@@ -15,9 +15,11 @@ class UserModel {
   final bool isIdentityVerified;
   final bool isRegistrationComplete;
   final String? governorate;
+  final List<String> favoriteStadiums;
 
   // 🔴 Kill Switch & Debt Flags
   final bool isSuspended;
+  final bool isBlocked; // ✅ Administrative user block
   final double commissionDebt;
 
   UserModel({
@@ -36,7 +38,9 @@ class UserModel {
     this.isRegistrationComplete = false,
     this.governorate,
     this.isSuspended = false,
+    this.isBlocked = false,
     this.commissionDebt = 0.0,
+    this.favoriteStadiums = const [],
   });
 
   // Create UserModel from Firestore document
@@ -57,7 +61,9 @@ class UserModel {
       isRegistrationComplete: data['isRegistrationComplete'] ?? false,
       governorate: data['governorate'],
       isSuspended: data['isSuspended'] ?? false,
+      isBlocked: data['isBlocked'] ?? false,
       commissionDebt: (data['commissionDebt'] ?? 0).toDouble(),
+      favoriteStadiums: List<String>.from(data['favoriteStadiums'] ?? []),
     );
   }
 
@@ -78,7 +84,9 @@ class UserModel {
       'isRegistrationComplete': isRegistrationComplete,
       'governorate': governorate,
       'isSuspended': isSuspended,
+      'isBlocked': isBlocked,
       'commissionDebt': commissionDebt,
+      'favoriteStadiums': favoriteStadiums,
     };
   }
 
@@ -99,7 +107,9 @@ class UserModel {
     bool? isRegistrationComplete,
     String? governorate,
     bool? isSuspended,
+    bool? isBlocked,
     double? commissionDebt,
+    List<String>? favoriteStadiums,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -117,7 +127,9 @@ class UserModel {
       isRegistrationComplete: isRegistrationComplete ?? this.isRegistrationComplete,
       governorate: governorate ?? this.governorate,
       isSuspended: isSuspended ?? this.isSuspended,
+      isBlocked: isBlocked ?? this.isBlocked,
       commissionDebt: commissionDebt ?? this.commissionDebt,
+      favoriteStadiums: favoriteStadiums ?? this.favoriteStadiums,
     );
   }
 }

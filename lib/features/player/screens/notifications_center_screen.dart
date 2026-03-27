@@ -30,6 +30,13 @@ class NotificationsCenterScreen extends StatelessWidget {
           'Notifications',
           style: Theme.of(context).textTheme.displaySmall,
         ),
+        actions: [
+          TextButton(
+            onPressed: () => DatabaseService().markAllAsRead(userId),
+            child: const Text('Mark All', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
+          ),
+          const SizedBox(width: 8),
+        ],
       ),
       body: StreamBuilder<List<AppNotification>>(
         stream: DatabaseService().getUserNotifications(userId),
@@ -50,15 +57,33 @@ class NotificationsCenterScreen extends StatelessWidget {
             );
           }
 
-          return ListView.builder(
+          return ListView.separated(
             padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
             physics: const BouncingScrollPhysics(),
             itemCount: notifications.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 0),
             itemBuilder: (context, index) {
               final notification = notifications[index];
               return VSPFadeInItem(
                 index: index,
-                child: _NotificationCard(notification: notification),
+                child: Dismissible(
+                  key: ValueKey(notification.id),
+                  direction: DismissDirection.endToStart,
+                  background: Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.only(right: 20),
+                    margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: VSPColors.error.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    ),
+                    child: const Icon(Icons.delete_outline, color: VSPColors.error, size: 24),
+                  ),
+                  onDismissed: (_) {
+                    DatabaseService().deleteNotification(userId, notification.id);
+                  },
+                  child: _NotificationCard(notification: notification, userId: userId),
+                ),
               );
             },
           );
@@ -70,97 +95,112 @@ class NotificationsCenterScreen extends StatelessWidget {
 
 class _NotificationCard extends StatelessWidget {
   final AppNotification notification;
+  final String userId;
 
-  const _NotificationCard({required this.notification});
+  const _NotificationCard({required this.notification, required this.userId});
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
-      padding: const EdgeInsets.all(VSPSpacing.md),
-      decoration: BoxDecoration(
-        color: notification.isRead ? VSPColors.surface : VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(
-          color: notification.isRead ? Colors.transparent : VSPColors.accent.withValues(alpha: 0.3),
-        ),
-      ),
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Container(
-            padding: const EdgeInsets.all(10),
-            decoration: BoxDecoration(
-              color: _getIconColor(notification.type).withValues(alpha: 0.1),
-              shape: BoxShape.circle,
-            ),
-            child: Icon(
-              _getIcon(notification.type),
-              color: _getIconColor(notification.type),
-              size: 20,
-            ),
+    return InkWell(
+      onTap: notification.isRead ? null : () => DatabaseService().markNotificationAsRead(userId, notification.id),
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
+      child: Container(
+        margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+        padding: const EdgeInsets.all(VSPSpacing.md),
+        decoration: BoxDecoration(
+          color: notification.isRead ? VSPColors.surface.withValues(alpha: 0.5) : VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(
+            color: notification.isRead ? VSPColors.divider.withValues(alpha: 0.1) : VSPColors.accent.withValues(alpha: 0.3),
           ),
-          const SizedBox(width: VSPSpacing.md),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      notification.title,
-                      style: Theme.of(context).textTheme.titleMedium,
-                    ),
-                    Text(
-                      _formatTime(notification.createdAt),
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-                    ),
-                  ],
-                ),
-                const SizedBox(height: VSPSpacing.xs),
-                Text(
-                  notification.body,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.8)),
-                ),
-
-                // BETA READY: Interactive actions for challenges
-                if (notification.type == 'challenge' && !notification.isRead && notification.bookingId != null) ...[
-                  const SizedBox(height: VSPSpacing.md),
+        ),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: _getIconColor(notification.type).withValues(alpha: 0.1),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(
+                _getIcon(notification.type),
+                color: _getIconColor(notification.type),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: VSPSpacing.md),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
                   Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Expanded(
-                        child: VSPAnimatedButton(
-                          text: 'Accept',
-                          height: 44,
-                          onPressed: () => DatabaseService().respondToChallenge(
-                            notification.id, 
-                            notification.bookingId!, 
-                            true
+                      Flexible(
+                        child: Text(
+                          notification.title,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                            fontWeight: notification.isRead ? FontWeight.normal : FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: VSPSpacing.sm),
-                      Expanded(
-                        child: VSPAnimatedButton(
-                          text: 'Decline',
-                          height: 44,
-                          color: VSPColors.surfaceAlt,
-                          textColor: VSPColors.textSecondary,
-                          onPressed: () => DatabaseService().respondToChallenge(
-                            notification.id, 
-                            notification.bookingId!, 
-                            false
-                          ),
-                        ),
+                      Text(
+                        _formatTime(notification.createdAt),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                       ),
                     ],
                   ),
+                  const SizedBox(height: VSPSpacing.xs),
+                  Text(
+                    notification.body,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: notification.isRead ? VSPColors.textSecondary.withValues(alpha: 0.6) : VSPColors.textSecondary,
+                    ),
+                  ),
+  
+                  // BETA READY: Interactive actions for challenges
+                  if (notification.type == 'challenge' && !notification.isRead && notification.bookingId != null) ...[
+                    const SizedBox(height: VSPSpacing.md),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: VSPAnimatedButton(
+                            text: 'Accept',
+                            height: 44,
+                            onPressed: () => DatabaseService().respondToChallenge(
+                              userId,
+                              notification.id, 
+                              notification.bookingId!, 
+                              true
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: VSPSpacing.sm),
+                        Expanded(
+                          child: VSPAnimatedButton(
+                            text: 'Decline',
+                            height: 44,
+                            color: VSPColors.surfaceAlt,
+                            textColor: VSPColors.textSecondary,
+                            onPressed: () => DatabaseService().respondToChallenge(
+                              userId,
+                              notification.id, 
+                              notification.bookingId!, 
+                              false
+                            ),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
                 ],
-              ],
+              ),
             ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -171,6 +211,28 @@ class _NotificationCard extends StatelessWidget {
         return Icons.sports_soccer;
       case 'result_confirmation':
         return Icons.emoji_events_outlined;
+      case 'booking_confirmed':
+        return Icons.check_circle_outline;
+      case 'booking_new':
+        return Icons.calendar_today;
+      case 'booking_cancelled':
+        return Icons.cancel_outlined;
+      case 'debt_warning':
+        return Icons.warning_amber_rounded;
+      case 'debt_grace':
+        return Icons.timer_outlined;
+      case 'account_blocked':
+        return Icons.block;
+      case 'player_blocked':
+        return Icons.person_off_outlined;
+      case 'stadium_approved':
+        return Icons.verified_outlined;
+      case 'public_match_joined':
+        return Icons.person_add_alt_1;
+      case 'match_full':
+        return Icons.groups;
+      case 'chat':
+        return Icons.chat_bubble_outline;
       case 'info':
       default:
         return Icons.info_outline;
@@ -180,9 +242,23 @@ class _NotificationCard extends StatelessWidget {
   Color _getIconColor(String type) {
     switch (type) {
       case 'challenge':
+      case 'booking_confirmed':
+      case 'stadium_approved':
+      case 'public_match_joined':
+      case 'match_full':
         return VSPColors.accent;
+      case 'booking_cancelled':
+      case 'debt_warning':
+      case 'debt_grace':
+      case 'account_blocked':
+      case 'player_blocked':
+        return VSPColors.error;
       case 'result_confirmation':
         return VSPColors.accent;
+      case 'chat':
+        return const Color(0xFF818CF8); // Indigo
+      case 'booking_new':
+        return VSPColors.success;
       case 'info':
       default:
         return Colors.blue;

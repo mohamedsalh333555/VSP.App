@@ -8,6 +8,8 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -20,7 +22,6 @@ class StadiumDetailsScreen extends StatefulWidget {
 
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
-  bool _isFavorite = false;
   int _currentImageIndex = 0;
   late final List<String> _displayImages;
 
@@ -28,7 +29,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _isFavorite = widget.stadium.isFavorite;
     _displayImages = widget.stadium.images.isNotEmpty ? widget.stadium.images : [widget.stadium.imageUrl];
   }
 
@@ -81,7 +81,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
                         colors: [
-                          Colors.transparent,
+                          VSPColors.background.withValues(alpha: 0),
                           VSPColors.background,
                         ],
                       ),
@@ -91,7 +91,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 // Header Icons
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    padding: const EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
@@ -109,12 +109,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                                 );
                               },
                             ),
-                            const SizedBox(width: VSPSpacing.md),
-                            _buildCircularIcon(
-                              icon: _isFavorite ? Icons.favorite : Icons.favorite_border,
-                              color: _isFavorite ? VSPColors.accent : VSPColors.textPrimary,
-                              onTap: () {
-                                setState(() => _isFavorite = !_isFavorite);
+                            const SizedBox(width: 16),
+                            Consumer<AuthProvider>(
+                              builder: (context, auth, _) {
+                                final isFavorite = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
+                                return _buildCircularIcon(
+                                  icon: isFavorite ? Icons.favorite : Icons.favorite_border,
+                                  color: isFavorite ? VSPColors.accent : VSPColors.textPrimary,
+                                  onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
+                                );
                               },
                             ),
                           ],
@@ -303,7 +306,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           'assets/images/logo.png', // VSP logo
           width: 80,
           height: 80,
-          color: Colors.white.withValues(alpha: 0.06),
+          color: VSPColors.textPrimary.withValues(alpha: 0.06),
           colorBlendMode: BlendMode.modulate,
         ),
       ),
@@ -431,7 +434,7 @@ class _InformationTab extends StatelessWidget {
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
               decoration: BoxDecoration(
                 color: VSPColors.surfaceAlt,
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                border: Border.all(color: VSPColors.white12),
                 borderRadius: BorderRadius.circular(VSPRadius.md),
               ),
               child: Text(

@@ -2,12 +2,12 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
-import '../services/database_service.dart';
+import '../repositories/stadium_repository.dart';
 import '../utils/geo_helper.dart';
 import 'package:geolocator/geolocator.dart';
 
 class StadiumProvider with ChangeNotifier {
-  final DatabaseService _databaseService = DatabaseService();
+  final StadiumRepository _databaseService = StadiumRepository();
   StreamSubscription? _stadiumSubscription;
   
   List<Stadium> _stadiums = [];
@@ -21,13 +21,15 @@ class StadiumProvider with ChangeNotifier {
   String? _selectedGovernorate;
 
   // Getters
-  List<Stadium> get stadiums => (_isFilterActive || _filteredStadiums.isNotEmpty) ? _filteredStadiums : _stadiums;
+  List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
+  List<Stadium> get allStadiums => _stadiums;
   List<Stadium> get filteredStadiums => _filteredStadiums;
   bool get isLoading => _isLoading;
   bool get isLoadingMore => _isLoadingMore;
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   bool get isFilterActive => _isFilterActive;
+  String? get selectedGovernorate => _selectedGovernorate;
 
   // Private helpers to manage state consistently
   void _setLoading(bool value) {
@@ -48,6 +50,7 @@ class StadiumProvider with ChangeNotifier {
 
     if (isRefresh) {
       _stadiums = [];
+      _filteredStadiums = [];
       _lastDocument = null;
       _hasMore = true;
       _setLoading(true);
@@ -60,6 +63,7 @@ class StadiumProvider with ChangeNotifier {
       final result = await _databaseService.getStadiumsPaginated(
         limit: 10,
         startAfter: _lastDocument,
+        governorate: _selectedGovernorate,
       );
 
       final List<Stadium> newStadiums = result['items'];
@@ -76,11 +80,6 @@ class StadiumProvider with ChangeNotifier {
       }
       
       _setError(null);
-      
-      // PERSISTENT GOVERNORATE FILTER: Re-apply if active
-      if (_selectedGovernorate != null && _selectedGovernorate!.isNotEmpty) {
-        applyGovernorateFilter(_selectedGovernorate);
-      }
     } catch (e) {
       _setError('Failed to fetch stadiums: ${e.toString()}');
     } finally {
@@ -167,21 +166,16 @@ class StadiumProvider with ChangeNotifier {
 
   // Filter stadiums by governorate
   void applyGovernorateFilter(String? governorate) {
+    if (_selectedGovernorate == governorate) return;
+    
     _selectedGovernorate = governorate;
-    if (governorate == null || governorate.isEmpty) {
-      clearFilters();
-      return;
-    }
+    _stadiums = [];
+    _filteredStadiums = [];
+    _lastDocument = null;
+    _hasMore = true;
+    _isFilterActive = false; 
     
-    _isFilterActive = true;
-    final query = governorate.trim().toLowerCase();
-    
-    _filteredStadiums = _stadiums.where((stadium) => 
-      stadium.area.toLowerCase().contains(query) || 
-      stadium.location.toLowerCase().contains(query)
-    ).toList();
-    
-    notifyListeners();
+    fetchStadiums(isRefresh: true);
   }
 
   // Filter stadiums by price range

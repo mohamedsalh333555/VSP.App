@@ -10,6 +10,7 @@ import '../../player/screens/profile_subscreens/payment_methods_screen.dart';
 import '../../auth/screens/welcome_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'owner_account_management_screen.dart';
+import '../../../core/config/app_config.dart';
 // Subscription screen removed — no longer accessible from profile
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
@@ -57,21 +58,22 @@ class OwnerProfileScreen extends StatelessWidget {
                 },
               ),
             ),
-            VSPFadeInItem(
-              index: 1,
-              child: VSPMenuItem(
-                icon: Icons.payment_outlined,
-                title: 'Payment Methods',
-                subtitle: 'Manage Your Payment Methods',
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                        builder: (context) => const PaymentMethodsScreen()),
-                  );
-                },
+            if (AppConfig.enableOnlinePayment)
+              VSPFadeInItem(
+                index: 1,
+                child: VSPMenuItem(
+                  icon: Icons.payment_outlined,
+                  title: 'Payment Methods',
+                  subtitle: 'Manage Your Payment Methods',
+                  onTap: () {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                          builder: (context) => const PaymentMethodsScreen()),
+                    );
+                  },
+                ),
               ),
-            ),
 
             const SizedBox(height: VSPSpacing.lg),
 

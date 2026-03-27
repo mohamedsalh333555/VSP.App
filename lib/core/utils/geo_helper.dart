@@ -1,4 +1,5 @@
 import 'dart:math';
+import 'package:url_launcher/url_launcher.dart';
 
 class GeoHelper {
   /// Calculate distance between two coordinates in Kilometers
@@ -16,6 +17,17 @@ class GeoHelper {
       return '${(km * 1000).toStringAsFixed(0)} m';
     } else {
       return '${km.toStringAsFixed(1)} km';
+    }
+  }
+
+  /// Opens Google Maps with provided coordinates
+  static Future<void> openInMaps(double lat, double lng, String label) async {
+    final Uri googleMapsUrl = Uri.parse("https://www.google.com/maps/search/?api=1&query=$lat,$lng");
+    
+    if (await canLaunchUrl(googleMapsUrl)) {
+      await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+    } else {
+      throw 'Could not launch $googleMapsUrl';
     }
   }
 }

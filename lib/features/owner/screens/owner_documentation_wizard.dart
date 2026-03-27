@@ -22,7 +22,8 @@ class OwnerDocumentationWizard extends StatefulWidget {
 class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   final PageController _pageController = PageController();
   int _currentStep = 0;
-  
+  bool _isSaving = false; // blocks the Save button during profile update
+
   final OwnerDocumentService _documentService = OwnerDocumentService();
 
   // Document upload state
@@ -36,7 +37,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     'idFront': false,
     'idBack': false,
   };
-  
+
   @override
   void dispose() {
     _pageController.dispose();
@@ -129,74 +130,116 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     }
   }
 
+  /// Validate required uploads for the current step before advancing.
   void _nextPage() {
-    if (_currentStep < 1) {
+    if (_currentStep == 0) {
+      // Step 1: commercial register is mandatory.
+      if (_uploadedDocUrls['commercialRegister'] == null) {
+        VSPFeedback.showError(
+          context,
+          'Please upload your Commercial Register before continuing.',
+        );
+        return;
+      }
       _pageController.nextPage(
         duration: const Duration(milliseconds: 300),
         curve: Curves.easeInOut,
       );
-      setState(() {
-        _currentStep++;
-      });
+      setState(() => _currentStep++);
     } else {
+      // Step 2: both ID sides are mandatory.
+      if (_uploadedDocUrls['idFront'] == null) {
+        VSPFeedback.showError(
+          context,
+          'Please upload the front side of your National ID.',
+        );
+        return;
+      }
+      if (_uploadedDocUrls['idBack'] == null) {
+        VSPFeedback.showError(
+          context,
+          'Please upload the back side of your National ID.',
+        );
+        return;
+      }
       _saveDocumentsAndShowReview();
     }
   }
   
+  /// Finalise onboarding: write flags, then (and ONLY then) show success and navigate.
+  /// If the profile update throws, the catch block shows an error and stops — no dialog,
+  /// no navigation, no loop back into OwnerDocumentationWizard.
   Future<void> _saveDocumentsAndShowReview() async {
+    if (_isSaving) return; // guard against double-tap
+    setState(() => _isSaving = true);
+
     try {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      
-      if (authProvider.firebaseUser != null) {
-        await authProvider.updateProfile({
-          'isIdentityVerified': true,
-          'isRegistrationComplete': true,
-        });
-      }
-      
-      if (!context.mounted) return;
-      
-      await showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return AlertDialog(
-              backgroundColor: VSPColors.surface, 
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(VSPRadius.lg),
-              ),
-              title: Text(
-                'Documents under review',
-                style: Theme.of(context).textTheme.titleLarge,
-              ),
-              content: Text(
-                'Your documents have been submitted and are now being processed. You will receive a response within 12 hours.',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-              ),
-              actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-              actions: [
-                PrimaryButton(
-                  text: 'OK',
-                  height: 48,
-                  onPressed: () {
-                    Navigator.of(context).pop(); 
-                  },
-                ),
-              ],
-            );
-          },
-        );
 
-        if (mounted && context.mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => const RootScreen()),
-            (route) => false,
-          );
-        }
-    } catch (e) {
+      if (authProvider.firebaseUser == null) {
+        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        setState(() => _isSaving = false);
+        return;
+      }
+
+      // Write to Firestore — if this throws, we skip the success dialog entirely.
+      await authProvider.updateProfile({
+        'isIdentityVerified': true,
+        'isRegistrationComplete': true,
+      });
+
+      // Only reached when updateProfile succeeds without throwing.
       if (!mounted || !context.mounted) return;
-      VSPFeedback.showError(context, 'Failed to save: $e');
+      setState(() => _isSaving = false);
+
+      await showDialog(
+        context: context,
+        barrierDismissible: false,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: VSPColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+          ),
+          title: Text(
+            'Registration Complete! 🎉',
+            style: Theme.of(ctx).textTheme.titleLarge,
+          ),
+          content: Text(
+            'Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.',
+            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
+              color: VSPColors.textSecondary,
+            ),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(
+            horizontal: VSPSpacing.md,
+            vertical: VSPSpacing.md,
+          ),
+          actions: [
+            PrimaryButton(
+              text: 'Go to Dashboard',
+              height: 48,
+              onPressed: () => Navigator.of(ctx).pop(),
+            ),
+          ],
+        ),
+      );
+
+      // Navigate only after the dialog is dismissed.
+      if (mounted && context.mounted) {
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (_) => const RootScreen()),
+          (route) => false,
+        );
+      }
+    } catch (e) {
+      // updateProfile failed — show error, do NOT navigate, do NOT loop.
+      if (!mounted || !context.mounted) return;
+      setState(() => _isSaving = false);
+      VSPFeedback.showError(
+        context,
+        'Failed to save your information. Please check your connection and try again.',
+      );
     }
   }
 
@@ -298,8 +341,10 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
           const SizedBox(height: VSPSpacing.xxl),
           PrimaryButton(
-            text: 'Save',
-            onPressed: _nextPage,
+            text: _isSaving ? 'Saving...' : 'Save & Continue',
+            onPressed: (_isSaving || (_uploadingStatus['commercialRegister'] ?? false))
+                ? null
+                : _nextPage,
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
@@ -352,8 +397,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
           const SizedBox(height: VSPSpacing.xl),
           PrimaryButton(
-            text: 'Save', 
-            onPressed: _nextPage,
+            text: _isSaving ? 'Saving...' : 'Submit Documents',
+            onPressed: (_isSaving ||
+                    (_uploadingStatus['idFront'] ?? false) ||
+                    (_uploadingStatus['idBack'] ?? false))
+                ? null
+                : _nextPage,
           ),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],

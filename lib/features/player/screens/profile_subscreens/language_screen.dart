@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../core/providers/language_provider.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -9,11 +11,14 @@ class LanguageScreen extends StatefulWidget {
 }
 
 class _LanguageScreenState extends State<LanguageScreen> {
-  String _selectedLanguage = 'English';
-
   @override
   Widget build(BuildContext context) {
-    final languages = ['English', 'Arabic', 'Spanish', 'French', 'German', 'Chinese'];
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    
+    final languages = [
+      {'name': 'English', 'code': 'en'},
+      {'name': 'العربية', 'code': 'ar'},
+    ];
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -25,7 +30,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Language',
+          languageProvider.isArabic ? 'اللغة' : 'Language',
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -34,7 +39,13 @@ class _LanguageScreenState extends State<LanguageScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            ...languages.map((lang) => _buildLanguageItem(lang)),
+            ...languages.map((lang) => _buildLanguageItem(
+              context, 
+              lang['name']!, 
+              lang['code']!, 
+              languageProvider.currentLanguage == lang['code'],
+              (code) => languageProvider.changeLanguage(code),
+            )),
             
             const Spacer(),
             
@@ -47,7 +58,10 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   backgroundColor: VSPColors.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
-                child: const Text('Done', style: TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  languageProvider.isArabic ? 'تم' : 'Done', 
+                  style: const TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)
+                ),
               ),
             ),
             const SizedBox(height: 20),
@@ -57,10 +71,9 @@ class _LanguageScreenState extends State<LanguageScreen> {
     );
   }
 
-  Widget _buildLanguageItem(String language) {
-    final isSelected = _selectedLanguage == language;
+  Widget _buildLanguageItem(BuildContext context, String name, String code, bool isSelected, Function(String) onSelect) {
     return GestureDetector(
-      onTap: () => setState(() => _selectedLanguage = language),
+      onTap: () => onSelect(code),
       child: Container(
         margin: const EdgeInsets.only(bottom: 12),
         padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
@@ -72,7 +85,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         child: Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text(language, style: Theme.of(context).textTheme.bodyLarge),
+            Text(name, style: Theme.of(context).textTheme.bodyLarge),
             Container(
               width: 24,
               height: 24,

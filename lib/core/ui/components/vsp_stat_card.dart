@@ -55,7 +55,7 @@ class VSPStatCard extends StatelessWidget {
             value,
             style: Theme.of(context).textTheme.displaySmall?.copyWith(
                   fontWeight: FontWeight.bold,
-                  color: VSPColors.textPrimary,
+                  color: color ?? VSPColors.textPrimary,
                 ),
           ),
           if (trend != null) ...[

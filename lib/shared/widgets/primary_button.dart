@@ -13,6 +13,8 @@ class PrimaryButton extends StatelessWidget {
   final double? height;
   final EdgeInsetsGeometry? padding;
 
+  final IconData? icon;
+
   const PrimaryButton({
     super.key,
     required this.text,
@@ -23,6 +25,7 @@ class PrimaryButton extends StatelessWidget {
     this.width,
     this.height,
     this.padding,
+    this.icon,
   });
 
   @override
@@ -56,12 +59,22 @@ class PrimaryButton extends StatelessWidget {
                   ),
                 ),
               )
-            : Text(
-                text,
-                style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                  color: textColor ?? VSPColors.background,
-                  fontSize: 16, // Keeping 16 as it was specifically requested or set before, but using theme as base
-                ),
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (icon != null) ...[
+                    Icon(icon, size: 20),
+                    const SizedBox(width: 8),
+                  ],
+                  Text(
+                    text,
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                      color: textColor ?? VSPColors.background,
+                      fontSize: 16,
+                    ),
+                  ),
+                ],
               ),
       ),
     );

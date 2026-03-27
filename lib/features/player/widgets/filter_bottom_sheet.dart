@@ -16,10 +16,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
   
   // Filter states
   final Map<String, bool> _sportsFilters = {
-    'Football': true,
-    'Basketball': false,
-    'Volleyball': false,
-    'Handball': false,
+    for (var sport in VSPConstants.sports) sport: sport == 'Football',
   };
 
   RangeValues _priceRange = const RangeValues(0, 3000);

@@ -1,5 +1,6 @@
 import 'package:flutter/foundation.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import '../constants/egypt_governorates.dart';
 
 class DataMigration {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
@@ -13,8 +14,6 @@ class DataMigration {
       if (stadiumQuery.docs.isEmpty) {
         debugPrint('🏟️ Seeding Stadiums...');
         await _seedStadiums();
-      } else {
-        debugPrint('✅ Stadiums already seeded.');
       }
 
       // 2. Check if Teams exist
@@ -22,11 +21,13 @@ class DataMigration {
       if (teamQuery.docs.isEmpty) {
         debugPrint('⚽ Seeding Teams...');
         await _seedTeams();
-      } else {
-        debugPrint('✅ Teams already seeded.');
       }
 
-      debugPrint('🎉 Database Seeding Complete!');
+      // 3. Repair existing data integrity (Phase 4 Hardening)
+      debugPrint('🔧 Repairing data integrity...');
+      await repairStadiumsData();
+
+      debugPrint('🎉 Database Seeding & Repair Complete!');
     } catch (e) {
       debugPrint('❌ Error during seeding: $e');
     }
@@ -475,5 +476,70 @@ class DataMigration {
     }
 
     await batch.commit();
+  }
+
+  /// 🛠️ Repair existing stadiums with missing metadata or inconsistent governorates
+  Future<void> repairStadiumsData() async {
+    try {
+      final snapshot = await _firestore.collection('stadiums').get();
+      final batch = _firestore.batch();
+      int count = 0;
+
+      for (var doc in snapshot.docs) {
+        final data = doc.data();
+        bool needsUpdate = false;
+        final Map<String, dynamic> updates = {};
+
+        // 1. Ensure isBlocked exists
+        if (!data.containsKey('isBlocked')) {
+          updates['isBlocked'] = false;
+          needsUpdate = true;
+        }
+
+        // 2. Ensure createdAt exists (Query orderBy requirement)
+        if (!data.containsKey('createdAt')) {
+          updates['createdAt'] = FieldValue.serverTimestamp();
+          needsUpdate = true;
+        }
+
+        // 3. Standardize Governorate if it exists but is messy
+        if (data.containsKey('governorate')) {
+          final String? rawGov = data['governorate']?.toString();
+          if (rawGov != null && rawGov.isNotEmpty) {
+            final String standardGov = EgyptGovernorates.resolveGoogleName(rawGov);
+            if (rawGov != standardGov) {
+              updates['governorate'] = standardGov;
+              needsUpdate = true;
+            }
+          }
+        } else {
+          // Robust fallback: Derive governorate from area or location
+          final String source = (data['area'] ?? data['location'] ?? '').toString();
+          if (source.isNotEmpty) {
+            final String derivedGov = EgyptGovernorates.resolveGoogleName(source);
+            updates['governorate'] = derivedGov;
+            needsUpdate = true;
+          }
+        }
+
+        // 4. Ensure name_lowercase exists for search
+        if (!data.containsKey('name_lowercase') && data.containsKey('name')) {
+          updates['name_lowercase'] = data['name'].toLowerCase();
+          needsUpdate = true;
+        }
+
+        if (needsUpdate) {
+          batch.update(doc.reference, updates);
+          count++;
+        }
+      }
+
+      if (count > 0) {
+        await batch.commit();
+        debugPrint('✅ Repaired $count stadium records.');
+      }
+    } catch (e) {
+      debugPrint('❌ Repair failed: $e');
+    }
   }
 }

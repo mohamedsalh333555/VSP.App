@@ -3,14 +3,17 @@ import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import 'owner_tournament_dashboard_screen.dart';
-import 'create_tournament_screen.dart';
+import 'create_tournament_wizard.dart';
+import 'package:share_plus/share_plus.dart';
 
 class OwnerCupScreen extends StatefulWidget {
-  const OwnerCupScreen({super.key});
+  final Function(bool isEmpty)? onTournamentListChanged;
+  const OwnerCupScreen({super.key, this.onTournamentListChanged});
 
   @override
   State<OwnerCupScreen> createState() => _OwnerCupScreenState();
@@ -31,7 +34,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         automaticallyImplyLeading: false, // Root tab, no back button
         centerTitle: true,
         title: Text(
-          'Cup',
+          'Tournaments',
           style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
@@ -93,7 +96,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               children: [
                 Expanded(
                   child: _buildFilterDropdown(
-                    ['Football', 'Basketball', 'Volleyball', 'Padel'], 
+                    VSPConstants.sports, 
                     _selectedSport, 
                     (v) => setState(() => _selectedSport = v!)
                   ),
@@ -115,7 +118,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           // 3. List of Tournaments - Wired to Firestore
           Expanded(
             child: StreamBuilder<List<Championship>>(
-              stream: DatabaseService().getChampionshipsStream(
+              stream: TournamentRepository().getChampionshipsStream(
                 sportType: _selectedSport,
               ),
               builder: (context, snapshot) {
@@ -140,16 +143,21 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   return isRightCategory && isRightStatus;
                 }).toList();
 
+                // 🚀 Sync FAB visibility with parent
+                WidgetsBinding.instance.addPostFrameCallback((_) {
+                  widget.onTournamentListChanged?.call(filtered.isEmpty);
+                });
+
                 if (filtered.isEmpty) {
                   return VSPEmptyState(
                     icon: Icons.emoji_events_outlined,
-                    title: 'No ${_selectedCategory}s Found',
-                    subtitle: 'Create a tournament to start hosting competitions at your stadium!',
-                    buttonText: 'Create Tournament',
+                    title: 'No Tournaments Yet',
+                    subtitle: 'Start organizing your first tournament and attract more players!',
+                    buttonText: 'Create Your First',
                     onButtonPressed: () {
                       Navigator.push(
                         context,
-                        MaterialPageRoute(builder: (context) => const CreateTournamentScreen()),
+                        MaterialPageRoute(builder: (context) => const CreateTournamentWizard()),
                       );
                     },
                   );
@@ -290,7 +298,12 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                    // Edit Button
                    InkWell(
                      onTap: () {
-                       // Navigate to Edit
+                       Navigator.push(
+                         context,
+                         MaterialPageRoute(
+                           builder: (context) => CreateTournamentWizard(tournament: tournament),
+                         ),
+                       );
                      },
                      borderRadius: BorderRadius.circular(20),
                      child: Container(
@@ -308,7 +321,12 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                    // Share Button
                    InkWell(
                      onTap: () {
-                       // Share logic
+                       final String shareText = 'Join my tournament "${tournament.name}"! 🏆\n'
+                                                '📅 Date: ${DateFormat('MMM d').format(tournament.startDate)} - ${DateFormat('MMM d').format(tournament.endDate)}\n'
+                                                '💰 Prize: ${tournament.grandPrize.toInt()} EGP\n'
+                                                '⚽ Entry: ${tournament.entryFee.toInt()} EGP\n'
+                                                'Register now on VSP Application!';
+                       Share.share(shareText);
                      },
                      borderRadius: BorderRadius.circular(20),
                      child: Container(
@@ -355,13 +373,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                    ),
                  ),
                if (tournament.joinedTeams.isNotEmpty) const SizedBox(width: 8),
-               Text(
-                 'Teams Joined: ${tournament.joinedTeams.length} / ${tournament.maxTeams}',
-                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: VSPColors.textSecondary,
-                    fontWeight: FontWeight.w500,
-                  ),
-               ),
+                Text(
+                  'Teams: ${tournament.joinedTeams.length} / ${tournament.maxTeams}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                     color: VSPColors.textSecondary,
+                     fontWeight: FontWeight.w500,
+                   ),
+                ),
              ],
            )
         ],

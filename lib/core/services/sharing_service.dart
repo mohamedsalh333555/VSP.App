@@ -62,4 +62,9 @@ class SharingService {
     
     await Share.share(text, subject: 'View Team on VSP');
   }
+
+  /// Generic text sharing (Fixed for CMO Social Strategy)
+  Future<void> shareText(String text, {String? subject}) async {
+    await Share.share(text, subject: subject);
+  }
 }

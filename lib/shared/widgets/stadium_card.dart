@@ -5,6 +5,7 @@ import '../../core/providers/auth_provider.dart';
 import '../../core/utils/geo_helper.dart';
 import '../../data/models.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter/services.dart';
 
 /// Stadium Card with Real Image Background and Glass Effect
 /// Refactored from PlayerHomeScreen for reusability
@@ -25,17 +26,18 @@ class StadiumCard extends StatelessWidget {
       child: Container(
         height: 230,
         decoration: BoxDecoration(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(color: VSPColors.divider, width: 1),
           boxShadow: [
             BoxShadow(
               color: Colors.black.withValues(alpha: 0.3),
-              blurRadius: 12,
-              offset: const Offset(0, 6),
+              blurRadius: 15,
+              offset: const Offset(0, 8),
             ),
           ],
         ),
         child: ClipRRect(
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
           child: Stack(
             fit: StackFit.expand,
             children: [
@@ -70,17 +72,17 @@ class StadiumCard extends StatelessWidget {
                 ),
               ),
               
-              // Bottom strong overlay for info
-              const Positioned.fill(
+              // Bottom strong overlay for info (Protection Layer)
+              Positioned.fill(
                 child: DecoratedBox(
                   decoration: BoxDecoration(
                     gradient: LinearGradient(
-                      begin: Alignment.center,
+                      begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: [0.2, 1.0],
+                      stops: const [0.6, 1.0],
                       colors: [
                         Colors.transparent,
-                        VSPColors.background,
+                        VSPColors.background.withValues(alpha: 0.9),
                       ],
                     ),
                   ),
@@ -131,19 +133,31 @@ class StadiumCard extends StatelessWidget {
                     _buildDistanceBadge(context),
                     const SizedBox(width: VSPSpacing.sm),
                     // FAVORITE BUTTON
-                    Container(
-                      width: 36,
-                      height: 36,
-                      decoration: BoxDecoration(
-                        color: VSPColors.background.withValues(alpha: 0.7),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
-                      ),
-                      child: Icon(
-                        stadium.isFavorite ? Icons.favorite : Icons.favorite_border,
-                        color: stadium.isFavorite ? VSPColors.error : VSPColors.textPrimary,
-                        size: 20,
-                      ),
+                    Consumer<AuthProvider>(
+                      builder: (context, auth, _) {
+                        final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) == true;
+                        return GestureDetector(
+                          behavior: HitTestBehavior.opaque,
+                          onTap: () {
+                            HapticFeedback.mediumImpact();
+                            auth.toggleFavoriteStadium(stadium.id);
+                          },
+                          child: Container(
+                            width: 36,
+                            height: 36,
+                            decoration: BoxDecoration(
+                              color: VSPColors.background.withValues(alpha: 0.7),
+                              shape: BoxShape.circle,
+                              border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
+                            ),
+                            child: Icon(
+                              isFav ? Icons.favorite : Icons.favorite_border,
+                              color: isFav ? VSPColors.error : Colors.white,
+                              size: 20,
+                            ),
+                          ),
+                        );
+                      },
                     ),
                   ],
                 ),

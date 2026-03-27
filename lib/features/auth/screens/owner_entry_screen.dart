@@ -1,3 +1,4 @@
+// LEGACY - not used in active orientation (using SignupScreen)
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

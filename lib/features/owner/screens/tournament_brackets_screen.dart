@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 
 class TournamentBracketsScreen extends StatelessWidget {
@@ -28,7 +28,7 @@ class TournamentBracketsScreen extends StatelessWidget {
         ),
       ),
       body: StreamBuilder<List<TournamentMatch>>(
-        stream: DatabaseService().getTournamentMatches(championship.id),
+        stream: TournamentRepository().getTournamentMatches(championship.id),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -162,7 +162,7 @@ class TournamentBracketsScreen extends StatelessWidget {
 
               Navigator.pop(context);
               
-              await DatabaseService().updateTournamentMatchScore(
+              await TournamentRepository().updateTournamentMatchScore(
                 matchId: match.id,
                 homeScore: h,
                 awayScore: a,

@@ -7,7 +7,7 @@ import '../widgets/owner_bottom_nav_bar.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
-import 'create_tournament_screen.dart';
+import 'create_tournament_wizard.dart';
 import 'owner_booked_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
@@ -21,6 +21,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   int _currentIndex = 0;
   StreamSubscription? _stadiumListener;
   final Map<String, bool> _lastVerifiedStatus = {};
+  final ValueNotifier<bool> _showTournamentFAB = ValueNotifier<bool>(false);
 
   @override
   void initState() {
@@ -119,37 +120,46 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
       backgroundColor: VSPColors.background,
       body: IndexedStack(
         index: _currentIndex,
-        children: const [
-          OwnerDashboardScreen(),
-          OwnerCupScreen(),
-          OwnerBookedScreen(),
-          OwnerProfileScreen(),
+        children: [
+          const OwnerDashboardScreen(),
+          OwnerCupScreen(onTournamentListChanged: (isEmpty) {
+            _showTournamentFAB.value = !isEmpty;
+          }),
+          const OwnerBookedScreen(),
+          const OwnerProfileScreen(),
         ],
       ),
 
-      floatingActionButton: AnimatedScale(
-        scale: _currentIndex == 1 ? 1.0 : 0.0,
-        duration: const Duration(milliseconds: 300),
-        curve: Curves.easeInOut,
-        child: _currentIndex == 1 
-          ? SizedBox(
-              width: 200,
-              height: 50,
-              child: FloatingActionButton.extended(
-                onPressed: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateTournamentScreen()));
-                },
-                backgroundColor: VSPColors.accent,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                label: Text(
-                  'Create a tournament',
-                  style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
-                ),
-                icon: const Icon(Icons.add, color: Colors.black),
-                elevation: 4,
-              ),
-            )
-          : const SizedBox.shrink(),
+      floatingActionButton: ValueListenableBuilder<bool>(
+        valueListenable: _showTournamentFAB,
+        builder: (context, showTournamentFAB, child) {
+          final bool isVisible = _currentIndex == 1 && showTournamentFAB;
+          
+          return AnimatedScale(
+            scale: isVisible ? 1.0 : 0.0,
+            duration: const Duration(milliseconds: 300),
+            curve: Curves.easeInOut,
+            child: isVisible 
+              ? SizedBox(
+                  width: 200,
+                  height: 50,
+                  child: FloatingActionButton.extended(
+                    onPressed: () {
+                       Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateTournamentWizard()));
+                    },
+                    backgroundColor: VSPColors.accent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                    label: Text(
+                      'Create Tournament',
+                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
+                    ),
+                    icon: const Icon(Icons.add, color: Colors.black),
+                    elevation: 4,
+                  ),
+                )
+              : const SizedBox.shrink(),
+          );
+        }
       ),
       floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
 

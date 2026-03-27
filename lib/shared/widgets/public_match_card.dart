@@ -1,20 +1,22 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/providers/auth_provider.dart' as app_auth;
-import '../../../core/services/database_service.dart';
-import '../../../core/services/sharing_service.dart';
-import '../../../core/utils/vsp_feedback.dart';
-import '../../../shared/widgets/primary_button.dart';
-import '../../../data/models.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
+import '../../core/providers/auth_provider.dart' as app_auth;
+import '../../core/services/database_service.dart';
+import '../../core/services/sharing_service.dart';
+import '../../core/utils/vsp_feedback.dart';
+import 'primary_button.dart';
+import '../../data/models.dart';
+import '../../core/models/user_model.dart';
+import '../../core/repositories/tournament_repository.dart';
 
 class PublicMatchCard extends StatefulWidget {
   final Booking booking;
   final bool highlighted;
-  
+
   const PublicMatchCard({
-    super.key, 
-    required this.booking, 
+    super.key,
+    required this.booking,
     this.highlighted = false,
   });
 
@@ -34,17 +36,19 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   }
 
   Future<void> _fetchDetails() async {
-    // Fetch Host Name
-    if (widget.booking.playerTeamName == null || widget.booking.playerTeamName!.isEmpty) {
-      final users = await DatabaseService().getUsersByIds([widget.booking.createdByUserId]);
-      if (users.isNotEmpty && mounted) {
+    final users = await DatabaseService().getUsersByIds([
+      widget.booking.createdByUserId,
+    ]);
+    if (users.isNotEmpty && mounted) {
+      if (users.first.name != null && users.first.name!.isNotEmpty) {
         setState(() => _hostName = users.first.name);
       }
     }
 
-    // Fetch Host Team Elo if it's a team match
     if (widget.booking.playerTeamId != null) {
-      final teams = await DatabaseService().getTeamsByIds([widget.booking.playerTeamId!]);
+      final teams = await TournamentRepository().getTeamsByIds([
+        widget.booking.playerTeamId!,
+      ]);
       if (teams.isNotEmpty && mounted) {
         setState(() => _hostTeam = teams.first);
       }
@@ -55,64 +59,61 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   Widget build(BuildContext context) {
     final authProvider = Provider.of<app_auth.AuthProvider>(context);
     final currentUser = authProvider.currentUser;
-    final currentUserImage = authProvider.userModel?.profileImageUrl;
-    final bool hasJoined = currentUser != null && widget.booking.joinedUserIds.contains(currentUser.uid);
-    final bool isHost = currentUser != null && widget.booking.createdByUserId == currentUser.uid;
     final booking = widget.booking;
-    final remainingPlayers = booking.maxPlayers - booking.currentPlayers;
+    final bool hasJoined =
+        currentUser != null &&
+        booking.joinedUserIds.contains(currentUser.uid);
+    final bool isHost =
+        currentUser != null &&
+        booking.createdByUserId == currentUser.uid;
     
-    final entryFee = (booking.totalPrice / (booking.maxPlayers > 0 ? booking.maxPlayers : 1)).toStringAsFixed(0);
+    final totalFieldCapacity = booking.maxPlayers > 0 ? booking.maxPlayers * 2 : 10;
+    final remainingPlayers = (totalFieldCapacity - booking.currentPlayers).clamp(0, totalFieldCapacity);
+    final entryFee = (booking.totalPrice / totalFieldCapacity).toStringAsFixed(0);
 
     return Container(
-      padding: const EdgeInsets.all(VSPSpacing.md),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: widget.highlighted 
-            ? Border.all(color: VSPColors.accent, width: 1.5) 
-            : Border.all(color: VSPColors.divider, width: 1),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, 4),
-          ),
-          if (widget.highlighted)
-            BoxShadow(
-              color: VSPColors.accent.withValues(alpha: 0.1),
-              blurRadius: 15,
-            ),
-        ],
+        color: VSPColors.surface, 
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(
+          color: widget.highlighted ? VSPColors.accent : VSPColors.divider,
+          width: 1,
+        ),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // HEADER ROW with Host Info
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              _buildTypeBadge(booking.bookingType.name.toUpperCase()),
+              if (isHost)
+                _buildStatusBadge('MY MATCH', VSPColors.accent)
+              else if (hasJoined)
+                _buildStatusBadge('JOINED', Colors.blue)
+              else if (booking.currentPlayers >= totalFieldCapacity)
+                _buildStatusBadge('FULL', VSPColors.textSecondary)
+              else
+                _buildStatusBadge('OPEN', Colors.green),
+            ],
+          ),
+          const SizedBox(height: 16),
           Row(
             children: [
               Container(
-                width: 44,
-                height: 44,
+                width: 52,
+                height: 52,
                 decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
                   shape: BoxShape.circle,
-                  color: VSPColors.accent.withValues(alpha: 0.1),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+                  border: Border.all(color: VSPColors.divider, width: 1),
                 ),
                 child: ClipOval(
-                  child: (isHost && currentUserImage != null && currentUserImage.isNotEmpty)
-                      ? Image.network(
-                          currentUserImage,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent, size: 20),
-                        )
-                      : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
-                          ? Image.network(
-                              booking.playerTeamLogoUrl!,
-                              fit: BoxFit.cover,
-                              errorBuilder: (_, __, ___) => const Icon(Icons.groups, color: VSPColors.accent, size: 20),
-                            )
-                          : const Icon(Icons.person, color: VSPColors.accent, size: 20),
+                  child: (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
+                      ? Image.network(booking.playerTeamLogoUrl!, fit: BoxFit.cover)
+                      : const Icon(Icons.person, color: VSPColors.accent, size: 24),
                 ),
               ),
               const SizedBox(width: 12),
@@ -121,122 +122,66 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      booking.playerTeamName ?? _hostName ?? "Host Player",
+                      _hostName ?? booking.playerTeamName ?? "Host",
                       style: const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 16,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 18,
+                        letterSpacing: 0.5,
                       ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                    Row(
-                      children: [
-                        Text(
-                          _hostTeam != null ? 'Elo: ${_hostTeam!.points}' : 'Match Host',
-                          style: TextStyle(
-                            color: VSPColors.textSecondary.withValues(alpha: 0.7),
-                            fontSize: 11,
-                          ),
-                        ),
-                        if (_hostTeam != null) ...[
-                          const SizedBox(width: 4),
-                          _buildRankBadge(_hostTeam!.points),
-                        ],
-                        if (widget.highlighted) ...[
-                          const SizedBox(width: 8),
-                          const Icon(Icons.star, color: VSPColors.accent, size: 10),
-                          const SizedBox(width: 2),
-                          const Text(
-                            'PRO',
-                            style: TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.black),
-                          ),
-                        ],
-                      ],
+                    Text(
+                      booking.stadiumName,
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 12,
+                      ),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ],
                 ),
               ),
               IconButton(
-                padding: EdgeInsets.zero,
-                constraints: const BoxConstraints(),
-                icon: const Icon(Icons.ios_share, color: Colors.white60, size: 18),
+                visualDensity: VisualDensity.compact,
+                icon: const Icon(Icons.ios_share, color: VSPColors.textSecondary, size: 20),
                 onPressed: () => _handleShare(booking),
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
-          
-          // STADIUM NAME & BADGES
-          Text(
-            booking.stadiumName,
-            style: const TextStyle(
-              color: VSPColors.accent,
-              fontWeight: FontWeight.w800,
-              fontSize: 14,
-            ),
-          ),
-          const SizedBox(height: 8),
-
-          // INFO GRID
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
-              color: Colors.white.withValues(alpha: 0.03),
+              color: Colors.black.withValues(alpha: 0.4),
               borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
             ),
             child: Row(
+              mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: _buildInfoItem(Icons.calendar_today, booking.formattedDate)),
-                Container(width: 1, height: 20, color: Colors.white10),
-                Expanded(child: _buildInfoItem(Icons.access_time, _formatTimeShort(booking.formattedTimeRange))),
-                Container(width: 1, height: 20, color: Colors.white10),
-                Expanded(child: _buildInfoItem(Icons.payments_outlined, "$entryFee EGP")),
+                _buildCompactInfo(Icons.calendar_month, booking.formattedDate),
+                _buildDivider(),
+                _buildCompactInfo(Icons.schedule, _formatTimeShort(booking.formattedTimeRange)),
+                _buildDivider(),
+                _buildCompactInfo(Icons.payments_outlined, "$entryFee EGP"),
               ],
             ),
           ),
-
           const SizedBox(height: 16),
-
-          // FOOTER: SPOTS & ACTION
           Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  RichText(
-                    text: TextSpan(
-                      style: const TextStyle(color: Colors.white70, fontSize: 13),
-                      children: [
-                        TextSpan(
-                          text: "$remainingPlayers", 
-                          style: const TextStyle(fontWeight: FontWeight.w900, color: Colors.white, fontSize: 18)
-                        ),
-                        const TextSpan(text: " spots left"),
-                      ],
-                    ),
-                  ),
-                  Text(
-                    "${booking.currentPlayers}/${booking.maxPlayers} joined",
-                    style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 10),
-                  ),
-                ],
+              _buildSpotsIndicator(remainingPlayers, booking.currentPlayers, totalFieldCapacity),
+              _buildMainButton(
+                context: context,
+                isHost: isHost,
+                hasJoined: hasJoined,
+                isFull: booking.currentPlayers >= totalFieldCapacity,
+                currentUser: currentUser,
               ),
-              const Spacer(),
-              if (_isLoading)
-                const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
-              else if (isHost)
-                _buildActionButton("Edit", VSPColors.accent, () => _manageParticipants(context))
-              else if (hasJoined)
-                _buildActionButton("Leave", VSPColors.error, () => _handleLeave(context, currentUser.uid), isOutlined: true)
-              else
-                _buildActionButton(
-                  booking.currentPlayers >= booking.maxPlayers ? "Full" : "Join", 
-                  booking.currentPlayers >= booking.maxPlayers ? Colors.white24 : VSPColors.accent, 
-                  booking.currentPlayers >= booking.maxPlayers ? null : () => _handleJoin(context, currentUser?.uid)
-                ),
             ],
           ),
         ],
@@ -244,56 +189,205 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     );
   }
 
-  Widget _buildInfoItem(IconData icon, String value) {
+  Widget _buildSpotsIndicator(int remaining, int current, int total) {
     return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Icon(icon, size: 12, color: VSPColors.textSecondary),
-        const SizedBox(height: 4),
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.baseline,
+          textBaseline: TextBaseline.alphabetic,
+          children: [
+            Text(
+              "$remaining",
+              style: const TextStyle(
+                color: VSPColors.accent,
+                fontWeight: FontWeight.w900,
+                fontSize: 20,
+              ),
+            ),
+            const SizedBox(width: 4),
+            const Text(
+              "SPOTS LEFT",
+              style: TextStyle(
+                color: VSPColors.textSecondary,
+                fontWeight: FontWeight.bold,
+                fontSize: 10,
+              ),
+            ),
+          ],
+        ),
         Text(
-          value, 
-          textAlign: TextAlign.center, 
-          style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold, color: Colors.white)
+          "$current/$total PLAYERS JOINED",
+          style: TextStyle(
+            color: VSPColors.textSecondary.withValues(alpha: 0.6),
+            fontSize: 10,
+            fontWeight: FontWeight.w500,
+          ),
         ),
       ],
     );
   }
 
-  Widget _buildActionButton(String label, Color color, VoidCallback? onTap, {bool isOutlined = false}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
-        decoration: BoxDecoration(
-          color: isOutlined ? Colors.transparent : color,
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: isOutlined ? Border.all(color: color, width: 1.5) : null,
-        ),
-        child: Text(
-          label, 
-          style: TextStyle(
-            color: isOutlined ? color : VSPColors.background, 
-            fontWeight: FontWeight.w900, 
-            fontSize: 13
-          )
+  Widget _buildTypeBadge(String text) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Text(
+        text,
+        style: const TextStyle(
+          color: VSPColors.accent,
+          fontSize: 9,
+          fontWeight: FontWeight.w900,
+          letterSpacing: 1.0,
         ),
       ),
     );
   }
 
-  Widget _buildRankBadge(int points) {
-    Color color = Colors.grey;
-    String label = 'BRONZE';
-    if (points >= 2000) { color = Colors.amber; label = 'GOLD'; }
-    else if (points >= 1500) { color = Colors.blueGrey; label = 'SILVER'; }
-    
+  Widget _buildStatusBadge(String text, Color color) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.15), 
-        borderRadius: BorderRadius.circular(4), 
-        border: Border.all(color: color.withValues(alpha: 0.5), width: 0.5)
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
       ),
-      child: Text(label, style: TextStyle(color: color, fontSize: 8, fontWeight: FontWeight.bold)),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 6,
+            height: 6,
+            decoration: BoxDecoration(color: color, shape: BoxShape.circle),
+          ),
+          const SizedBox(width: 6),
+          Text(
+            text,
+            style: TextStyle(
+              color: color,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCompactInfo(IconData icon, String label) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Icon(icon, color: VSPColors.accent, size: 14),
+        const SizedBox(width: 6),
+        Text(
+          label,
+          style: const TextStyle(
+            color: Colors.white,
+            fontSize: 11,
+            fontWeight: FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildDivider() {
+    return Container(
+      width: 1,
+      height: 14,
+      color: Colors.white10,
+    );
+  }
+
+  Widget _buildMainButton({
+    required BuildContext context,
+    required bool isHost,
+    required bool hasJoined,
+    required bool isFull,
+    dynamic currentUser,
+  }) {
+    if (_isLoading) {
+      return const SizedBox(
+        width: 100,
+        height: 44,
+        child: Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2)),
+      );
+    }
+
+    if (isHost) {
+      return _buildRawButton(
+        label: "MANAGE",
+        color: VSPColors.accent,
+        onTap: () => _manageParticipants(context),
+        isOutlined: false,
+      );
+    }
+
+    if (hasJoined) {
+      return _buildRawButton(
+        label: "LEAVE",
+        color: Colors.redAccent,
+        onTap: () => _handleLeave(context, currentUser?.uid),
+        isOutlined: true,
+      );
+    }
+
+    if (isFull) {
+      return _buildRawButton(
+        label: "FULL",
+        color: VSPColors.textSecondary,
+        onTap: null,
+      );
+    }
+
+    return _buildRawButton(
+      label: "JOIN",
+      color: VSPColors.accent,
+      onTap: () => _handleJoin(context, currentUser?.uid),
+    );
+  }
+
+  Widget _buildRawButton({
+    required String label,
+    required Color color,
+    required VoidCallback? onTap,
+    bool isOutlined = false,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: Container(
+        height: 44.0,
+        padding: const EdgeInsets.symmetric(horizontal: 32),
+        decoration: BoxDecoration(
+          color: isOutlined ? Colors.transparent : color,
+          borderRadius: BorderRadius.circular(12),
+          border: isOutlined ? Border.all(color: color, width: 2) : null,
+          boxShadow: isOutlined ? null : [
+            BoxShadow(
+              color: color.withValues(alpha: 0.3),
+              blurRadius: 8,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Center(
+          child: Text(
+            label,
+            style: TextStyle(
+              color: isOutlined ? color : Colors.black,
+              fontWeight: FontWeight.w900,
+              fontSize: 14,
+              letterSpacing: 1.0,
+            ),
+          ),
+        ),
+      ),
     );
   }
 
@@ -312,28 +406,40 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       return;
     }
     setState(() => _isLoading = true);
-    final success = await DatabaseService().joinPublicMatch(widget.booking.id, userId);
+    final success = await DatabaseService().joinPublicMatch(
+      widget.booking.id,
+      userId,
+    );
     if (!context.mounted) return;
     setState(() => _isLoading = false);
-    if (success) { VSPFeedback.showSuccess(context, "Joined Match Successfully!"); }
-    else { VSPFeedback.showError(context, "Failed to join match."); }
+    if (success) {
+      VSPFeedback.showSuccess(context, "Joined Match Successfully!");
+    } else {
+      VSPFeedback.showError(context, "Failed to join match.");
+    }
   }
 
   void _handleLeave(BuildContext context, String userId) async {
     setState(() => _isLoading = true);
-    final success = await DatabaseService().leavePublicMatch(widget.booking.id, userId);
+    final success = await DatabaseService().leavePublicMatch(
+      widget.booking.id,
+      userId,
+    );
     if (!context.mounted) return;
     setState(() => _isLoading = false);
-    if (success) { VSPFeedback.showSuccess(context, "Left Match Successfully."); }
-    else { VSPFeedback.showError(context, "Failed to leave match."); }
+    if (success) {
+      VSPFeedback.showSuccess(context, "Left Match Successfully.");
+    } else {
+      VSPFeedback.showError(context, "Failed to leave match.");
+    }
   }
 
   void _manageParticipants(BuildContext context) {
     showModalBottomSheet(
-      context: context, 
-      isScrollControlled: true, 
-      backgroundColor: Colors.transparent, 
-      builder: (context) => _ManageParticipantsModal(booking: widget.booking)
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (context) => _ManageParticipantsModal(booking: widget.booking),
     );
   }
 
@@ -359,10 +465,14 @@ class _ManageParticipantsModal extends StatefulWidget {
 class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   bool _isLoading = true;
   List<UserModel> _participants = [];
+  int _hostBasePlayers = 0;
+  bool _isUpdatingCount = false;
 
   @override
   void initState() {
     super.initState();
+    _hostBasePlayers = widget.booking.currentPlayers - widget.booking.joinedUserIds.length;
+    if (_hostBasePlayers < 0) _hostBasePlayers = 0;
     _fetchUsers();
   }
 
@@ -377,12 +487,44 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   }
 
   void _removeUser(String userId) async {
-    final success = await DatabaseService().removeParticipantFromPublicMatch(widget.booking.id, userId);
+    final success = await DatabaseService().removeParticipantFromPublicMatch(
+      widget.booking.id,
+      userId,
+    );
     if (success && mounted) {
       setState(() {
         _participants.removeWhere((u) => u.uid == userId);
       });
       VSPFeedback.showSuccess(context, "Participant removed.");
+    }
+  }
+
+  void _updateHostPlayers(int delta) async {
+    final newCount = _hostBasePlayers + delta;
+    if (newCount < 0) return;
+    
+    final max = widget.booking.maxPlayers > 0 ? widget.booking.maxPlayers : 5;
+    final totalFieldCapacity = max * 2;
+    if (newCount + widget.booking.joinedUserIds.length > totalFieldCapacity) {
+      VSPFeedback.showError(context, "Maximum stadium capacity reached.");
+      return;
+    }
+
+    setState(() => _isUpdatingCount = true);
+    final success = await DatabaseService().updatePublicMatchHostSpots(
+      widget.booking.id,
+      newCount,
+    );
+    
+    if (mounted) {
+      setState(() {
+        _isUpdatingCount = false;
+        if (success) {
+          _hostBasePlayers = newCount;
+        } else {
+          VSPFeedback.showError(context, "Failed to update spots.");
+        }
+      });
     }
   }
 
@@ -400,7 +542,14 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
       child: Column(
         children: [
           const SizedBox(height: 12),
-          Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2))),
+          Container(
+            width: 40,
+            height: 4,
+            decoration: BoxDecoration(
+              color: VSPColors.divider,
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
           const SizedBox(height: 20),
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 20),
@@ -408,15 +557,68 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text("Manage Match", style: Theme.of(context).textTheme.displaySmall),
-                IconButton(icon: const Icon(Icons.close, color: VSPColors.textSecondary), onPressed: () => Navigator.pop(context)),
+                IconButton(
+                  icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                  onPressed: () => Navigator.pop(context),
+                ),
               ],
             ),
           ),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const Text("Players you are bringing", style: TextStyle(fontWeight: FontWeight.bold)),
+                      Text("Manage your reserved spots", style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                    ],
+                  ),
+                  Row(
+                    children: [
+                      IconButton(
+                        onPressed: (_isUpdatingCount || _hostBasePlayers <= 0) ? null : () => _updateHostPlayers(-1),
+                        icon: Icon(Icons.remove_circle_outline, color: _hostBasePlayers <= 0 ? VSPColors.textSecondary : VSPColors.error),
+                      ),
+                      SizedBox(
+                        width: 24,
+                        child: Center(
+                          child: _isUpdatingCount 
+                             ? const SizedBox(width: 16, height: 16, child: CircularProgressIndicator(strokeWidth: 2))
+                             : Text("$_hostBasePlayers", style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                        ),
+                      ),
+                      IconButton(
+                        onPressed: _isUpdatingCount ? null : () => _updateHostPlayers(1),
+                        icon: const Icon(Icons.add_circle_outline, color: VSPColors.accent),
+                      ),
+                    ],
+                  ),
+                ],
+              ),
+            ),
+          ),
           const Divider(color: VSPColors.divider),
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+            child: Align(
+              alignment: Alignment.centerLeft,
+              child: Text("Joined from App", style: TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
+            ),
+          ),
           Expanded(
-            child: _isLoading 
-              ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-              : _participants.isEmpty
+            child: _isLoading
+                ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+                : _participants.isEmpty
                 ? const Center(child: Text("No players joined yet", style: TextStyle(color: VSPColors.textSecondary)))
                 : ListView.separated(
                     padding: const EdgeInsets.all(20),
@@ -427,22 +629,55 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                       final isHost = user.uid == widget.booking.createdByUserId;
                       return Container(
                         padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.divider, width: 0.5)),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider, width: 0.5),
+                        ),
                         child: Row(
                           children: [
-                            CircleAvatar(radius: 20, backgroundColor: VSPColors.surfaceAlt, backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ? NetworkImage(user.profileImageUrl!) : null, child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty) ? const Icon(Icons.person, color: VSPColors.accent, size: 20) : null),
+                            CircleAvatar(
+                              radius: 20,
+                              backgroundColor: VSPColors.surfaceAlt,
+                              backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ? NetworkImage(user.profileImageUrl!) : null,
+                              child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty) ? const Icon(Icons.person, color: VSPColors.accent, size: 20) : null,
+                            ),
                             const SizedBox(width: 12),
-                            Expanded(child: Column(crossAxisAlignment: CrossAxisAlignment.start, children: [Row(children: [Text(user.name ?? "Player", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)), if (isHost) ...[const SizedBox(width: 8), Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: VSPColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: VSPColors.accent, width: 0.5)), child: const Text("HOST", style: TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold)))]]), Text(user.position ?? "Midfielder", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary))])),
-                            if (!isHost) IconButton(icon: const Icon(Icons.person_remove_outlined, color: VSPColors.error, size: 20), onPressed: () => _removeUser(user.uid)) else const Padding(padding: EdgeInsets.only(right: 12), child: Icon(Icons.shield, color: VSPColors.accent, size: 18)),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Row(
+                                    children: [
+                                      Text(user.name ?? "Player", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                      if (isHost) ...[
+                                        const SizedBox(width: 8),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                          decoration: BoxDecoration(
+                                            color: VSPColors.accent.withOpacity(0.1),
+                                            borderRadius: BorderRadius.circular(4),
+                                            border: Border.all(color: VSPColors.accent, width: 0.5),
+                                          ),
+                                          child: const Text("HOST", style: TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold)),
+                                        ),
+                                      ],
+                                    ],
+                                  ),
+                                  Text(user.position ?? "Midfielder", style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                                ],
+                              ),
+                            ),
+                            if (!isHost)
+                              IconButton(
+                                icon: const Icon(Icons.person_remove_outlined, color: VSPColors.error, size: 20),
+                                onPressed: () => _removeUser(user.uid),
+                              ),
                           ],
                         ),
                       );
                     },
                   ),
-          ),
-          Padding(
-            padding: EdgeInsets.fromLTRB(20, 0, 20, MediaQuery.of(context).padding.bottom + 20),
-            child: SizedBox(width: double.infinity, child: PrimaryButton(text: "Done", onPressed: () => Navigator.pop(context))),
           ),
         ],
       ),

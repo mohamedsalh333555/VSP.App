@@ -64,20 +64,47 @@ class _BookedScreenState extends State<BookedScreen> {
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
-      body: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, bool loading})>(
-        selector: (_, provider) => (
-          upcoming: provider.upcomingBookings,
-          history: provider.historyBookings,
-          loading: provider.isLoading,
-        ),
-        builder: (context, data, child) {
-          if (data.loading) {
-            return const Center(
-              child: CircularProgressIndicator(color: VSPColors.accent),
-            );
-          }
-
-          if (data.upcoming.isEmpty && data.history.isEmpty) {
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, bool loading})>(
+          selector: (_, provider) => (
+            upcoming: provider.upcomingBookings,
+            history: provider.historyBookings,
+            loading: provider.isLoading,
+          ),
+          builder: (context, data, child) {
+            if (data.loading) {
+              return const Center(
+                child: CircularProgressIndicator(color: VSPColors.accent),
+              );
+            }
+  
+            if (data.upcoming.isEmpty && data.history.isEmpty) {
+              return RefreshIndicator(
+                onRefresh: () async {
+                  final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                  final userId = authProvider.currentUser?.uid;
+                  if (userId != null) {
+                    Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+                    await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
+                  }
+                },
+                color: VSPColors.accent,
+                backgroundColor: VSPColors.surface,
+                child: SingleChildScrollView(
+                  physics: const AlwaysScrollableScrollPhysics(),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    child: SizedBox(
+                      height: MediaQuery.of(context).size.height * 0.7,
+                      child: _buildEmptyState(),
+                    ),
+                  ),
+                ),
+              );
+            }
+  
             return RefreshIndicator(
               onRefresh: () async {
                 final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
@@ -89,31 +116,10 @@ class _BookedScreenState extends State<BookedScreen> {
               },
               color: VSPColors.accent,
               backgroundColor: VSPColors.surface,
-              child: SingleChildScrollView(
-                physics: const AlwaysScrollableScrollPhysics(),
-                child: SizedBox(
-                  height: MediaQuery.of(context).size.height * 0.7,
-                  child: _buildEmptyState(),
-                ),
-              ),
-            );
-          }
-
-          return RefreshIndicator(
-            onRefresh: () async {
-              final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-              final userId = authProvider.currentUser?.uid;
-              if (userId != null) {
-                Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
-              }
-            },
-            color: VSPColors.accent,
-            backgroundColor: VSPColors.surface,
-            child: ListView(
-              physics: const AlwaysScrollableScrollPhysics(), // Ensures scrolling even if empty
-              padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
-              children: [
+              child: ListView(
+                physics: const AlwaysScrollableScrollPhysics(), // Ensures scrolling even if empty
+                padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 110),
+                children: [
                 // Upcoming Section
                 if (data.upcoming.isNotEmpty) ...[
                   Text(
@@ -167,6 +173,7 @@ class _BookedScreenState extends State<BookedScreen> {
           );
         },
       ),
+    ),
     );
   }
 
@@ -244,11 +251,9 @@ class _BookingCard extends StatelessWidget {
                   children: [
                     Text(
                       booking.stadiumName,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontSize: 16,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                        color: VSPColors.textPrimary,
                         fontWeight: FontWeight.w800,
-                        
                         letterSpacing: 0.5,
                       ),
                       maxLines: 1,
@@ -288,17 +293,17 @@ class _BookingCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.md),
             decoration: BoxDecoration(
-              color: Colors.black.withValues(alpha: 0.2),
+              color: VSPColors.background.withValues(alpha: 0.2),
               borderRadius: BorderRadius.circular(12),
             ),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoColumn('Date', booking.formattedDate),
-                Container(width: 1, height: 24, color: Colors.white.withValues(alpha: 0.1)),
-                _buildInfoColumn('Time', _formatTimeShort(booking.formattedTimeRange)),
-                Container(width: 1, height: 24, color: Colors.white.withValues(alpha: 0.1)),
-                _buildInfoColumn('Price', '${booking.totalPrice.toInt()} ${booking.currency}'),
+                _buildInfoColumn(context, 'Date', booking.formattedDate),
+                Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
+                _buildInfoColumn(context, 'Time', _formatTimeShort(booking.formattedTimeRange)),
+                Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
+                _buildInfoColumn(context, 'Price', '${booking.totalPrice.toInt()} ${booking.currency}'),
               ],
             ),
           ),
@@ -315,12 +320,12 @@ class _BookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.sports_soccer, color: Colors.orange, size: 20),
+                  const Icon(Icons.sports_soccer, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
                     'VS ${booking.opponentTeamName}',
                     style: const TextStyle(
-                      color: Colors.orange,
+                      color: VSPColors.warning,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
@@ -380,7 +385,8 @@ class _BookingCard extends StatelessWidget {
 
   Widget _buildChallengeResultAction(BuildContext context) {
     // Determine current user's team ID safely.
-    final currentTeamId = myTeamId ?? booking.playerTeamId ?? 'team_1'; 
+    final currentTeamId = myTeamId ?? booking.playerTeamId; 
+    if (currentTeamId == null) return const SizedBox.shrink();
     
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
       return _buildAddResultButton(context, currentTeamId);
@@ -459,17 +465,25 @@ class _BookingCard extends StatelessWidget {
   }
 
   Widget _buildChallengeStatusBadge() {
-    final currentTeamId = booking.playerTeamId ?? 'team_1';
+    final currentTeamId = myTeamId ?? booking.playerTeamId;
+    if (currentTeamId == null) return const SizedBox.shrink();
+
     final isHome = currentTeamId == booking.playerTeamId;
+    final isAway = currentTeamId == booking.opponentTeamId;
+    
+    // If user isn't in either team (shouldn't happen for booked screen entries), show generic Completed
+    if (!isHome && !isAway) return const SizedBox.shrink();
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
       if (outcome == MatchOutcome.draw) {
         return _buildStatusBadge('Draw', Colors.blue);
       } else if (outcome == MatchOutcome.homeWin) {
-        return _buildStatusBadge(isHome ? 'Win' : 'Loss', isHome ? Colors.amber : Colors.red);
+        final isWon = isHome;
+        return _buildStatusBadge(isWon ? 'Win' : 'Loss', isWon ? Colors.amber : Colors.red);
       } else if (outcome == MatchOutcome.awayWin) {
-        return _buildStatusBadge(isHome ? 'Loss' : 'Win', isHome ? Colors.red : Colors.amber);
+        final isWon = isAway;
+        return _buildStatusBadge(isWon ? 'Win' : 'Loss', isWon ? Colors.amber : Colors.red);
       }
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
       return _buildStatusBadge('Disputed', VSPColors.warning);
@@ -515,7 +529,7 @@ class _BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildInfoColumn(String label, String value) {
+  Widget _buildInfoColumn(BuildContext context, String label, String value) {
     return Column(
       children: [
         Text(
@@ -530,9 +544,8 @@ class _BookingCard extends StatelessWidget {
         const SizedBox(height: VSPSpacing.xs),
         Text(
           value,
-          style: const TextStyle(
-            color: Colors.white,
-            fontSize: 14,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+            color: VSPColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
         ),
@@ -583,7 +596,7 @@ class _BookingCard extends StatelessWidget {
                   text: 'Cancel Booking',
                   height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.background,
                   onPressed: () async {
                     // Cancel booking
                     final provider = Provider.of<BookingProvider>(context, listen: false);

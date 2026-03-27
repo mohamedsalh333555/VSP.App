@@ -50,9 +50,15 @@ void main() async {
     
     VSPLogger.i("✅ Firebase initialized with Crashlytics");
     
-    // SEEDING (Disabled for production-readiness, enabled only in Demo Mode)
+    // DATA MIGRATIONS & REPAIR
+    // We always run repair to ensure stadium visibility for legacy data.
+    // seedDatabase handles the full initial demo set if demoMode is active.
     if (app_config.AppConfig.demoMode) {
       await DataMigration().seedDatabase(); 
+    } else {
+      // ⚠️ DISABLED FOR PRODUCTION LAUNCH: Heavy DB scan on every startup.
+      // Run this ONCE via a Cloud Function or admin panel instead.
+      // await DataMigration().repairStadiumsData();
     }
   } catch (e) {
     VSPLogger.e("❌ FIREBASE INIT FAILED", e);

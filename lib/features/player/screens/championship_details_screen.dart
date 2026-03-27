@@ -5,6 +5,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'player_home_screen.dart'; 
 import '../../owner/screens/tournament_brackets_screen.dart';
@@ -64,7 +65,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
       if (mounted) {
         final confirmed = await _showPaymentDialog(team);
         if (confirmed == true) {
-          final success = await db.joinChampionship(widget.championship.id, team.id);
+          final success = await TournamentRepository().joinChampionship(widget.championship.id, team.id);
           if (success && mounted) {
             _showSuccessSnackBar('تم الانضمام للبطولة بنجاح! بالتوفيق فريق ${team.name} 🏆');
             Navigator.pop(context); // Go back after joining
@@ -203,20 +204,20 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
           ),
           
           // Back & Favorite Buttons
-          Positioned(
-            top: MediaQuery.of(context).padding.top + 10,
-            left: VSPSpacing.md,
-            right: VSPSpacing.md,
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                _buildInteractiveCircleIcon(
-                  context, 
-                  Icons.arrow_back_ios_new, 
-                  () => Navigator.of(context).pop(),
-                ),
-                const _FavoriteButton(),
-              ],
+          SafeArea(
+            child: Padding(
+              padding: const EdgeInsets.only(top: 10, left: 16, right: 16),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  _buildInteractiveCircleIcon(
+                    context, 
+                    Icons.arrow_back_ios_new, 
+                    () => Navigator.of(context).pop(),
+                  ),
+                  const _FavoriteButton(),
+                ],
+              ),
             ),
           ),
 

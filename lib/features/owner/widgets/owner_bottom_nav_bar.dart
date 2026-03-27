@@ -25,7 +25,7 @@ class OwnerBottomNavBar extends StatelessWidget {
         VspNavItem(
           activeIcon: Icons.emoji_events,
           inactiveIcon: Icons.emoji_events_outlined,
-          label: 'Cup',
+          label: 'Tournaments',
         ),
         VspNavItem(
           activeIcon: Icons.work,

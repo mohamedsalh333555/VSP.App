@@ -260,7 +260,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                       end: Alignment.topCenter,
                       colors: [
                         VSPColors.background.withValues(alpha: 0.9),
-                        Colors.transparent,
+                        VSPColors.background.withValues(alpha: 0),
                       ],
                     ),
                   ),
@@ -311,7 +311,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
   }
   Widget _buildChallengeBookingOption(BuildContext context) {
     if (_isLoadingTeam) {
-      return const Center(child: CircularProgressIndicator());
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2.5));
     }
 
     if (!_hasTeam) {

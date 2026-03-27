@@ -42,6 +42,9 @@ abstract class BookingRepository {
     String? review,
   });
 
+  /// Update payment status
+  Future<bool> updatePaymentStatus(String bookingId, bool isPaid);
+
   /// Get bookings for a specific stadium and date
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date);
 }
@@ -396,6 +399,21 @@ class FirestoreBookingRepository implements BookingRepository {
               .where((b) => b.status != BookingStatus.cancelled)
               .toList());
     }
+
+    @override
+    Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+      try {
+        await _bookingsCollection.doc(bookingId).update({
+          'isPaid': isPaid,
+          'paymentStatus': isPaid ? 'paid' : 'pending',
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+        return true;
+      } catch (e) {
+        debugPrint('❌ Error updating payment status: $e');
+        return false;
+      }
+    }
   }
 
 /// Mock implementation for demo/testing
@@ -557,6 +575,16 @@ class MockBookingRepository implements BookingRepository {
             b.startTime.isBefore(endOfDay) &&
             b.status != BookingStatus.cancelled)
         .toList());
+  }
+
+  @override
+  Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    final index = _bookings.indexWhere((b) => b.id == bookingId);
+    if (index != -1) {
+      _bookings[index] = _bookings[index].copyWith(isPaid: isPaid);
+      _update();
+    }
+    return true;
   }
 
   /// Add mock bookings for testing

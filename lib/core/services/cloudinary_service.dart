@@ -9,6 +9,10 @@ class CloudinaryService {
   static const String _cloudName = 'du0qye54d';    // غيّرها لو مختلف
   static const String _uploadPreset = 'vsp_unsigned';
 
+  // TODO: CRITICAL SECURITY - Implement "Signed Uploads" via Firebase Cloud Function
+  // Unsigned uploads for ID cards and sensitive contracts are a critical security risk.
+  // The client should request a signature payload from our backend before calling Cloudinary.
+
   // SECURITY PATCH: Enforce strict file extensions for images to prevent malicious script uploads.
   Future<String> uploadImage(
     XFile file, {

@@ -1,4 +1,5 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
+// LEGACY - not used in active orientation (using unified VerifyEmailScreen)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';

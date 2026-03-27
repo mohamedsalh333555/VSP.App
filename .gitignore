@@ -1,4 +1,196 @@
-# Flutter/Dart
+ممتاز، لكن هنا لازم أكون **صارم جدًا**:
+
+## أنا **لا أوافق بالكامل** على حكمه الأخير:  
+> **BETA READY (MVP)**
+
+لأسباب واضحة من نفس الرد بتاعه.
+
+---
+
+# أولًا: التناقض الواضح في رده
+
+هو كتب:
+- **Owner Flow Final Path = PASS**
+- ثم وصف الفلو كالتالي:
+  1. VerifyEmailScreen
+  2. RootScreen
+  3. FacilityOnboardingScreen
+  4. AddStadiumWizard
+  5. Confirm Stadium
+  6. RootScreen re-evaluates
+  7. OwnerDocumentationWizard
+  8. OwnerMainScreen
+
+## المشكلة هنا
+في وصفك الأصلي أنت قلت:
+> الشاشة الأولى بها زرين  
+> زر إضافة ملعب  
+> وبعد الإضافة يرجع لنفس الشاشة  
+> ثم يضغط زر رفع المستند والهوية  
+> ثم يذهب لرئيسية المالك
+
+يعني الفلو المطلوب منك **من نفس الشاشة الأولى**:
+- Add Stadium
+- ثم Upload Documents
+
+### بينما هو بيقول:
+- Confirm & Continue
+- RootScreen يعيد التقييم
+- ثم يروح OwnerDocumentationWizard
+
+### هل هذا غلط؟
+**مش غلط وظيفيًا 100%**  
+لكن:
+- **ليس مطابقًا تمامًا للوصف الذي أنت حددته**
+- فيه step زيادة معتمدة على إعادة تقييم `RootScreen`
+- يعني الفلو أصبح:
+  - شاشة البداية
+  - زر confirm
+  - root يعيد routing
+  - ثم شاشة المستندات
+
+بدلاً من:
+- نفس الشاشة فيها زرين واضحين
+  - Add Stadium
+  - Upload Documents
+
+---
+
+# ثانيًا: هو قال "Legacy files not reachable" لكن لم يثبت Reachability فعليًا 100%
+هو عمل searches عن أسماء الملفات، وده جيد، لكن **still not enough** لو فيه:
+- indirect navigation
+- old imports
+- actions hidden
+- conditional routes
+
+يعني هو أثبت بدرجة جيدة أنهم **غير مستوردين بشكل مباشر**
+لكن ليس proof كامل على أن كل active flow خالٍ منهم في runtime behavior.
+
+---
+
+# ثالثًا: أخطر نقطة — `BETA READY` ما زالت متسرعة
+هو نفسه كتب:
+- backend enforcement missing
+- FCM not implemented
+
+وده okay لو MVP  
+لكن الحكم Beta Ready لازم يكون مبني على:
+- كل core active flows متوافقة مع product spec
+
+وهنا عندنا نقطة أساسية:
+## هل owner onboarding مطابق 100% للي أنت طلبته؟
+الإجابة: **ليس مؤكدًا**
+
+---
+
+# رابعًا: الحكم الصحيح من وجهة نظري
+## الوضع الحالي:
+### **قريب جدًا من Beta Ready**
+لكن أنا أصنفه:
+## **Pre-Beta / Soft Beta Candidate**
+وليس “Beta Ready” النهائي  
+إلا بعد حسم نقطة واحدة:
+
+---
+
+# النقطة الحاسمة المتبقية
+## هل `FacilityOnboardingScreen` نفسها الآن تحتوي فعليًا الزرين المطلوبين بالمفهوم الصحيح؟
+
+أنت وصفتها بدقة:
+- الشاشة الأولى بها زرين
+- زر 1: إضافة ملعب
+- زر 2: رفع المستند والهوية
+- بعد إضافة الملعب يرجع لنفس الشاشة
+- ومن نفس الشاشة يضغط رفع المستندات
+
+### بينما من تقريره الحالي:
+- هو اعتمد على RootScreen re-evaluation step
+- وده قد يكون:
+  - acceptable architecturally
+  - لكن **ليس بالضرورة مطابق UX-wise** لما أنت طلبته
+
+---
+
+# إذن: هل يوجد شيء لسه لازم نسألك عنه؟
+أيوه، سؤال واحد فقط يحسم الأمر:
+
+## هل تقبل أن يكون الفلو:
+### Add Stadium → Confirm & Continue → RootScreen reroute → OwnerDocumentationWizard
+**بدل**
+### Add Stadium → رجوع لنفس الشاشة → زر Upload Documents من نفس الشاشة
+
+لو **أنت تقبل ده**  
+يبقى فعلاً المشروع قريب جدًا من Beta Ready.
+
+أما لو **أنت لا تقبله**  
+يبقى Antigravity **لم يحقق الفلو بالضبط كما طلبت**، حتى لو قفل الثغرات.
+
+---
+
+# البرومبت الذي أنصحك ترسله الآن
+هذا أفضل Prompt الآن لأنه يختبر **المطابقة مع مواصفاتك بالضبط**:
+
+```prompt
+We need one final UX-spec verification for OWNER onboarding.
+
+Do not audit security or legacy only.
+Audit whether the current owner onboarding matches the intended product behavior exactly.
+
+INTENDED UX SPEC:
+- The first owner onboarding screen must contain TWO clear actions:
+  1) Add Stadium
+  2) Upload Documents / Identity
+- When the owner adds a stadium successfully, they must return to the SAME first onboarding screen.
+- From that SAME screen, they must be able to add another stadium, or press Upload Documents.
+- The owner should not need an intermediate RootScreen reroute step to discover the next onboarding action.
+- After successful document upload, they go to OwnerMainScreen.
+
+Now verify:
+1. Does FacilityOnboardingScreen itself expose both actions clearly?
+2. After AddStadiumWizard returns, does the user remain on that same screen?
+3. Can the user directly go from that same screen into document upload?
+4. Is the current flow dependent on RootScreen re-evaluation to continue onboarding?
+5. If yes, does that violate the intended UX spec above?
+
+Output exactly:
+- MATCHES UX SPEC
+- DOES NOT MATCH UX SPEC
+- FILE-LEVEL EVIDENCE
+- CURRENT OWNER UX FLOW
+- GAP BETWEEN CURRENT FLOW AND INTENDED FLOW
+- REQUIRED FINAL CHANGE (if any)
+
+Important:
+Do not say “beta ready” in this answer.
+This answer is only about exact UX flow compliance with the intended owner onboarding behavior.
+```
+
+---
+
+# رأيي المهني النهائي الحالي
+## اللي اتصلح فعلاً:
+- bypass المستندات غالبًا اتقفل
+- success semantics اتصلحت
+- OTP active path اتوحد
+- payment honesty اتحسنت
+- settings honesty اتحسنت
+- legacy surface اتنظف
+
+## اللي لسه محتاج حسم:
+- **هل owner UX النهائي مطابق بالضبط للي أنت طلبته؟**
+
+---
+
+# لو تحب رأيي المباشر الآن
+أنا شايف:
+- **وظيفيًا**: غالبًا شغال
+- **معماريًا**: مقبول
+- **لكن من منظور spec**: لسه محتاج تأكيد أخير على owner onboarding UX
+
+---
+
+إذا تحب، أنا أقدر أعمل لك الآن **الحكم النهائي بنفسي** على الفلو ده من الكود اللي رفعته أنت، بدون انتظار Antigravity، وأقولك:
+## هل `FacilityOnboardingScreen` الحالية أصلًا كانت بتطابق المطلوب أم لا؟# Flutter/Dart
 .dart_tool/
 .packages
 .pub-cache/

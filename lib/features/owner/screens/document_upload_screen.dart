@@ -25,6 +25,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _socialController;
+  late TextEditingController _addressController;
   
   final OwnerDocumentService _documentService = OwnerDocumentService();
 
@@ -45,6 +46,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     _phoneController = TextEditingController(text: user?.phone ?? '');
     _emailController = TextEditingController(text: user?.email ?? '');
     _socialController = TextEditingController(text: user?.additionalData?['socialMedia'] ?? '');
+    _addressController = TextEditingController(text: user?.governorate ?? '');
   }
 
   @override
@@ -53,6 +55,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
     _phoneController.dispose();
     _emailController.dispose();
     _socialController.dispose();
+    _addressController.dispose();
     _pageController.dispose();
     super.dispose();
   }

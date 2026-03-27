@@ -208,7 +208,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                 value: _selectedSport,
                 isExpanded: true,
                 dropdownColor: VSPColors.surface,
-                items: ['Football', 'Basketball', 'Volleyball', 'Handball', 'Padel']
+                items: VSPConstants.sports
                     .map((s) => DropdownMenuItem(
                           value: s,
                           child: Text(s, style: Theme.of(context).textTheme.bodyMedium),

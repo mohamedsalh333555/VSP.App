@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -6,6 +7,7 @@ import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import 'championship_details_screen.dart';
 import 'player_home_screen.dart'; // For ChampionshipCard
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -76,10 +78,13 @@ class ChampionScreenState extends State<ChampionScreen>
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
-      body: Column(
-        children: [
-          Container(
-            margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+      body: SafeArea(
+        top: true,
+        bottom: false,
+        child: Column(
+          children: [
+            Container(
+              margin: const EdgeInsets.symmetric(horizontal: 16),
             height: 50,
             decoration: BoxDecoration(
               color: VSPColors.surface,
@@ -159,18 +164,14 @@ class ChampionScreenState extends State<ChampionScreen>
 
           // Filters Row - Symmetrical Dropdowns
           Container(
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+            padding: const EdgeInsets.symmetric(horizontal: 16),
             child: Row(
               children: [
                 // Dropdown 1: Governorates
                 Expanded(
                   child: _buildFunctionalDropdown(
                     value: _selectedLocation,
-                    items: const [
-                      'Cairo', 'Alexandria', 'Giza', 'Dakahlia', 'Red Sea', 
-                      'Luxor', 'Aswan', 'Gharbia', 'Port Said', 'Suez', 
-                      'Ismailia', 'Minya', 'Assiut'
-                    ],
+                    items: EgyptGovernorates.allGovernorates,
                     onChanged: (val) => setState(() => _selectedLocation = val!),
                   ),
                 ),
@@ -179,7 +180,7 @@ class ChampionScreenState extends State<ChampionScreen>
                 Expanded(
                   child: _buildFunctionalDropdown(
                     value: _selectedSport,
-                    items: const ['Football', 'Basketball', 'Volleyball', 'Handball', 'Padel'],
+                    items: VSPConstants.sports,
                     onChanged: (val) => setState(() => _selectedSport = val!),
                   ),
                 ),
@@ -210,6 +211,7 @@ class ChampionScreenState extends State<ChampionScreen>
           ),
         ],
       ),
+    ),
     );
   }
 
@@ -351,7 +353,7 @@ class ChampionScreenState extends State<ChampionScreen>
         
         if (teams.length < 3) {
           return ListView.builder(
-            padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 24),
+            padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 24),
             physics: const BouncingScrollPhysics(),
             itemCount: teams.length,
             itemBuilder: (ctx, i) => VSPFadeInItem(
@@ -733,7 +735,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _buildChampionshipsTab() {
     return StreamBuilder<List<Championship>>(
-      stream: DatabaseService().getChampionshipsStream(
+      stream: TournamentRepository().getChampionshipsStream(
         governorate: _selectedLocation,
         sportType: _selectedSport,
       ),

@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import '../../../core/theme/app_theme.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 class CustomDateRangePicker extends StatefulWidget {
   final DateTimeRange? initialDateRange;
@@ -54,11 +55,11 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
   @override
   Widget build(BuildContext context) {
     return Dialog(
-      backgroundColor: const Color(0xFF1E1E1E), // Dark Grey Background
-      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(20)),
-      insetPadding: const EdgeInsets.symmetric(horizontal: 20),
+      backgroundColor: VSPColors.surface,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+      insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
       child: Padding(
-        padding: const EdgeInsets.all(20),
+        padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
@@ -68,24 +69,21 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
               children: [
                 IconButton(
                   onPressed: () => _changeMonth(-1),
-                  icon: const Icon(Icons.chevron_left, color: Colors.white),
+                  icon: const Icon(Icons.chevron_left, color: VSPColors.textPrimary),
                 ),
                 Text(
                   DateFormat('MMMM yyyy').format(_focusedMonth),
-                  style: const TextStyle(
-                    color: Colors.white,
-                    fontSize: 20,
+                  style: Theme.of(context).textTheme.titleLarge?.copyWith(
                     fontWeight: FontWeight.bold,
-                    
                   ),
                 ),
                 IconButton(
                   onPressed: () => _changeMonth(1),
-                  icon: const Icon(Icons.chevron_right, color: Colors.white),
+                  icon: const Icon(Icons.chevron_right, color: VSPColors.textPrimary),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: VSPSpacing.md),
 
             // 2. Date Inputs Display
             Row(
@@ -93,61 +91,49 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                 Expanded(child: _buildDateInput(_startDate, 'Start Date')),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
-                  child: Text('-', style: TextStyle(color: Colors.grey)),
+                  child: Text('-', style: TextStyle(color: VSPColors.textSecondary)),
                 ),
                 Expanded(child: _buildDateInput(_endDate, 'End Date')),
               ],
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: VSPSpacing.md),
 
             // 3. Calendar Grid
             _buildWeekDays(),
-            const SizedBox(height: 8),
+            const SizedBox(height: VSPSpacing.sm),
             SizedBox(
               height: 240, // Fixed height for calendar days
               child: _buildDaysGrid(),
             ),
-            const SizedBox(height: 20),
+            const SizedBox(height: VSPSpacing.md),
 
             // 4. Action Buttons (Footer)
             Row(
               children: [
                 Expanded(
-                  child: OutlinedButton(
+                  child: PrimaryButton(
+                    text: 'Reset',
+                    height: 48,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
                     onPressed: () {
                        setState(() {
                          _startDate = null;
                          _endDate = null;
                        });
                     },
-                    style: OutlinedButton.styleFrom(
-                      foregroundColor: Colors.white,
-                      side: const BorderSide(color: Colors.grey),
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                    ),
-                    child: const Text('Reset', style: TextStyle(fontSize: 16)), // Text Changed to Reset
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: VSPSpacing.md),
                 Expanded(
-                  child: ElevatedButton(
+                  child: PrimaryButton(
+                    text: 'Apply',
+                    height: 48,
                     onPressed: (_startDate != null && _endDate != null)
                         ? () {
                             Navigator.pop(context, DateTimeRange(start: _startDate!, end: _endDate!));
                           }
                         : null,
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: AppTheme.neonGreen,
-                      foregroundColor: Colors.black,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      disabledBackgroundColor: AppTheme.neonGreen.withValues(alpha: 0.3),
-                    ),
-                    child: const Text(
-                      'Apply',
-                      style: TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
-                    ),
                   ),
                 ),
               ],
@@ -160,18 +146,16 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
 
   Widget _buildDateInput(DateTime? date, String placeholder) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+      padding: const EdgeInsets.symmetric(vertical: 10, horizontal: VSPSpacing.md),
       decoration: BoxDecoration(
-        border: Border.all(color: Colors.grey[700]!),
-        borderRadius: BorderRadius.circular(10),
+        border: Border.all(color: VSPColors.divider),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
       child: Center(
         child: Text(
           date != null ? DateFormat('MMM dd, yyyy').format(date) : placeholder,
-          style: TextStyle(
-            color: date != null ? Colors.white : Colors.grey,
-            fontSize: 14,
-            
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+            color: date != null ? VSPColors.textPrimary : VSPColors.textSecondary,
           ),
         ),
       ),
@@ -184,7 +168,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
       mainAxisAlignment: MainAxisAlignment.spaceAround,
       children: days.map((d) => SizedBox(
         width: 30,
-        child: Center(child: Text(d, style: const TextStyle(color: Colors.grey, fontSize: 12))),
+        child: Center(child: Text(d, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary))),
       )).toList(),
     );
   }
@@ -221,17 +205,17 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
           child: Container(
             margin: const EdgeInsets.all(4),
             decoration: BoxDecoration(
-              color: isSelected ? AppTheme.neonGreen : (inRange ? AppTheme.neonGreen.withValues(alpha: 0.2) : Colors.transparent),
+              color: isSelected ? VSPColors.accent : (inRange ? VSPColors.accent.withValues(alpha: 0.2) : Colors.transparent),
               shape: BoxShape.circle,
               border: isToday && !isSelected && !inRange
-                  ? Border.all(color: AppTheme.neonGreen, width: 1) // Glowing effect for today
+                  ? Border.all(color: VSPColors.accent, width: 1)
                   : null,
             ),
             child: Center(
               child: Text(
                 '$dayNum',
                 style: TextStyle(
-                  color: isSelected ? Colors.black : Colors.white,
+                  color: isSelected ? VSPColors.background : VSPColors.textPrimary,
                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),

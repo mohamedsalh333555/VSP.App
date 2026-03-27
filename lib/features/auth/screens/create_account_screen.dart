@@ -16,6 +16,7 @@ import '../../../core/providers/language_provider.dart';
 
 import 'signup_screen.dart';
 import '../../../core/navigation/root_screen.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 /// شاشة إنشاء حساب جديد - تظهر بعد اختيار الدور
 class CreateAccountScreen extends StatelessWidget {
@@ -45,11 +46,11 @@ class CreateAccountScreen extends StatelessWidget {
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
-        statusBarColor: Colors.transparent,
+        statusBarColor: VSPColors.background.withValues(alpha: 0),
         statusBarIconBrightness: Brightness.light,
         systemNavigationBarColor: VSPColors.background,
         systemNavigationBarIconBrightness: Brightness.light,
-        systemNavigationBarDividerColor: Colors.transparent,
+        systemNavigationBarDividerColor: VSPColors.background.withValues(alpha: 0),
       ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
@@ -68,7 +69,7 @@ class CreateAccountScreen extends StatelessWidget {
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                  child: Container(color: Colors.transparent),
+                  child: Container(color: VSPColors.background.withValues(alpha: 0)),
                 ),
               ),
             ),
@@ -133,7 +134,7 @@ class CreateAccountScreen extends StatelessWidget {
                         decoration: BoxDecoration(
                           color: VSPColors.surface.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                         ),
                         child: Text(
                           subtitle,
@@ -326,7 +327,7 @@ class CreateAccountScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
@@ -346,27 +347,10 @@ class _NeonButton extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      width: double.infinity,
-      height: 60, // Increased height
-      child: ElevatedButton(
-        onPressed: onPressed,
-        style: ElevatedButton.styleFrom(
-          backgroundColor: VSPColors.accent,
-          foregroundColor: VSPColors.background,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-          ),
-          elevation: 0,
-        ),
-        child: Text(
-          text,
-          style: Theme.of(context).textTheme.labelLarge?.copyWith(
-            fontWeight: FontWeight.w900,
-            letterSpacing: 0.8,
-          ),
-        ),
-      ),
+    return PrimaryButton(
+      text: text,
+      onPressed: onPressed,
+      height: 60,
     );
   }
 }
@@ -396,10 +380,10 @@ class _SocialButton extends StatelessWidget {
         width: double.infinity,
         height: height ?? 56,
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: VSPColors.background.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: VSPColors.divider,
+            color: VSPColors.divider.withValues(alpha: 0.1),
             width: 1.5,
           ),
         ),

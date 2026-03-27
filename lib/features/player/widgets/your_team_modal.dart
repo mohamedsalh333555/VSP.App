@@ -26,7 +26,7 @@ class _YourTeamModalState extends State<YourTeamModal> {
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(
-            color: Colors.white.withValues(alpha: 0.05),
+            color: VSPColors.divider,
             width: 1,
           ),
         ),
@@ -45,7 +45,7 @@ class _YourTeamModalState extends State<YourTeamModal> {
                   onTap: () => Navigator.pop(context),
                   child: const Icon(
                     Icons.close,
-                    color: Colors.white,
+                    color: VSPColors.textPrimary,
                   ),
                 ),
               ],
@@ -127,7 +127,7 @@ class _YourTeamModalState extends State<YourTeamModal> {
                 color: Colors.transparent,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
                 border: Border.all(
-                  color: Colors.white.withValues(alpha: 0.1),
+                  color: VSPColors.divider,
                 ),
               ),
               child: Row(
@@ -162,7 +162,8 @@ class _YourTeamModalState extends State<YourTeamModal> {
                 Expanded(
                   child: PrimaryButton(
                     text: 'Cancel',
-                    color: Colors.white.withValues(alpha: 0.05),
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
                     onPressed: () => Navigator.pop(context),
                   ),
                 ),

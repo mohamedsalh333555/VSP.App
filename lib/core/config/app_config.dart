@@ -1,6 +1,6 @@
 class AppConfig {
   static const bool bypassOtp = false;
-  static const bool demoMode = false;
+  static const bool demoMode = true;
   static const bool enableOnlinePayment = false;
 
   // OTP Configuration

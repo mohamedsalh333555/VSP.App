@@ -7,6 +7,7 @@ import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../data/models.dart';
 
 class OwnerBookedScreen extends StatefulWidget {
@@ -32,6 +33,35 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
       }
     });
+  }
+
+  int _parseTimeToHour(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 8;
+    try {
+      final parts = timeStr.trim().split(' ');
+      if (parts.length != 2) return 8;
+      final timeParts = parts[0].split(':');
+      int hour = int.parse(timeParts[0]);
+      final period = parts[1].toUpperCase();
+      if (period == 'PM' && hour != 12) hour += 12;
+      if (period == 'AM' && hour == 12) hour = 0;
+      return hour;
+    } catch (e) {
+      return 8;
+    }
+  }
+
+  String _formatHour(int h) {
+    final hour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    final period = (h >= 12 && h < 24) ? 'PM' : 'AM';
+    return '$hour:00 $period';
+  }
+
+  String _formatHourMin(int h, int m) {
+    final hour = h == 0 ? 12 : (h > 12 ? h - 12 : h);
+    final period = (h >= 12 && h < 24) ? 'PM' : 'AM';
+    final minute = m.toString().padLeft(2, '0');
+    return '$hour:$minute $period';
   }
 
   @override
@@ -204,50 +234,121 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
           
           // 3. Time Slots List
           Expanded(
-            child: Consumer<BookingProvider>(
-               builder: (context, bookingProvider, _) {
+            child: Consumer2<BookingProvider, StadiumProvider>(
+               builder: (context, bookingProvider, stadiumProvider, _) {
+                 final stadiums = stadiumProvider.stadiums;
+                 final selectedStadium = stadiums.any((s) => s.id == _selectedStadium?.id)
+                     ? stadiums.firstWhere((s) => s.id == _selectedStadium?.id)
+                     : (stadiums.isNotEmpty ? stadiums.first : null);
+
                  final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
                  final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
                  final endOfDay = startOfDay.add(const Duration(days: 1));
 
                   final dayBookings = bookingProvider.userBookings.where((b) => 
-                    b.stadiumId == _selectedStadium?.id &&
+                    b.stadiumId == selectedStadium?.id &&
                     b.startTime.isAfter(startOfDay) && b.startTime.isBefore(endOfDay)
                   ).toList();
 
-                  // Generate time slots from 8 AM to 12 AM
+                  // Generate time slots based on stadium hours (30-minute intervals)
                   List<Map<String, dynamic>> slots = [];
-                  for (int i = 8; i <= 24; i++) {
-                    final hourStr = i > 12 ? (i - 12).toString() : i.toString();
-                    final period = i >= 12 && i < 24 ? 'PM' : (i == 24 ? 'AM' : 'AM');
-                    final timeStr = '$hourStr:00 $period';
-                    
-                    final booking = dayBookings.firstWhere(
-                      (b) => b.startTime.hour == i,
-                      orElse: () => Booking(
-                        id: 'none', stadiumId: '', stadiumName: '', ownerId: '',
-                        startTime: DateTime.now(), endTime: DateTime.now(), totalPrice: 0,
-                        status: BookingStatus.confirmed, createdAt: DateTime.now(),
-                        bookingType: BookingType.personal, createdByUserId: '',
-                        isPrivate: false, rentBall: false, paymentMethod: 'cash',
+                  if (selectedStadium != null) {
+                    try {
+                      final int startH = _parseTimeToHour(selectedStadium.openingTime);
+                      final int endH = _parseTimeToHour(selectedStadium.closingTime);
+                      final int breakStartH = selectedStadium.isSplitShift ? _parseTimeToHour(selectedStadium.breakStartTime) : -1;
+                      final int breakEndH = selectedStadium.isSplitShift ? _parseTimeToHour(selectedStadium.breakEndTime) : -1;
+                      
+                      int currentH = startH;
+                      int currentM = 0;
+                      int safeguard = 0;
+                      
+                      // Handle 24h as a special case where start == end
+                      bool is24h = startH == endH;
+                      
+                      while (safeguard < 48) { // max 48 half-hour slots in a day
+                        final timeStr = _formatHourMin(currentH, currentM);
+                        
+                        // Check if we've reached the end
+                        if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
+                        
+                        // Check if in break range
+                        bool isBreak = false;
+                        if (selectedStadium.isSplitShift && breakStartH != -1 && breakEndH != -1) {
+                           if (breakStartH < breakEndH) {
+                             isBreak = currentH >= breakStartH && currentH < breakEndH;
+                           } else {
+                             // Over-night break
+                             isBreak = currentH >= breakStartH || currentH < breakEndH;
+                           }
+                        }
+
+                        // Match booking by checking if the slot falls within any booking's time range
+                        final slotTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, currentH, currentM);
+                        final booking = dayBookings.firstWhere(
+                          (b) => slotTime.isAtSameMomentAs(b.startTime) || (slotTime.isAfter(b.startTime) && slotTime.isBefore(b.endTime)),
+                          orElse: () => Booking(
+                            id: 'none', stadiumId: '', stadiumName: '', ownerId: '',
+                            startTime: DateTime.now(), endTime: DateTime.now(), totalPrice: 0,
+                            status: BookingStatus.confirmed, createdAt: DateTime.now(),
+                            bookingType: BookingType.personal, createdByUserId: '',
+                            isPrivate: false, rentBall: false, paymentMethod: 'cash',
+                          ),
+                        );
+
+                        if (isBreak) {
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break'});
+                        } else if (booking.id == 'none') {
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty'});
+                        } else {
+                          final bool isManual = booking.paymentTransactionId != null && booking.paymentTransactionId!.contains('MANUAL');
+                          slots.add({
+                            'time': timeStr,
+                            'hour': currentH,
+                            'minute': currentM,
+                            'type': isManual ? 'manual' : (booking.playerTeamName != null ? 'team' : 'individual'),
+                            'name': booking.playerTeamName ?? 'Individual Player',
+                            'subtitle': isManual ? 'BOOKED MANUALLY' : booking.bookingType.name.toUpperCase(),
+                            'image': '',
+                            'logo': '',
+                            'isManaged': true,
+                            'isManual': isManual,
+                            'booking': booking,
+                          });
+                        }
+                        
+                        // Increment by 30 minutes
+                        currentM += 30;
+                        if (currentM >= 60) {
+                          currentM = 0;
+                          currentH = (currentH + 1) % 24;
+                        }
+                        safeguard++;
+                      }
+                    } catch (e) {
+                      debugPrint('Error generating slots: $e');
+                      slots.clear();
+                    }
+                  }
+
+                  if (slots.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(VSPSpacing.xl),
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(Icons.error_outline, size: 48, color: VSPColors.error),
+                            const SizedBox(height: 16),
+                            Text(
+                              selectedStadium == null ? 'Please select a stadium' : 'Please check your working hours settings or set them first',
+                              textAlign: TextAlign.center,
+                              style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                            ),
+                          ],
+                        ),
                       ),
                     );
-
-                    if (booking.id == 'none') {
-                      slots.add({'time': timeStr, 'hour': i, 'type': 'empty'});
-                    } else {
-                      slots.add({
-                        'time': timeStr,
-                        'hour': i,
-                        'type': booking.playerTeamName != null ? 'team' : 'individual',
-                        'name': booking.playerTeamName ?? 'Individual Player',
-                        'subtitle': booking.bookingType.name.toUpperCase(),
-                        'image': '',
-                        'logo': '',
-                        'isManaged': true,
-                        'booking': booking,
-                      });
-                    }
                   }
 
                  return ListView.separated(
@@ -317,25 +418,31 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
         ),
         child: Row(
           children: [
-            const Icon(Icons.add_circle_outline, color: VSPColors.textSecondary, size: 20),
+            const Icon(Icons.add_circle, color: VSPColors.textSecondary, size: 24),
             const SizedBox(width: 12),
             Text(
-              'Available Slot',
+              'Add Manual Booking',
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: VSPColors.textSecondary,
-                fontWeight: FontWeight.w500,
+                fontWeight: FontWeight.bold,
               ),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: VSPColors.accent.withValues(alpha: 0.1),
+                color: (slot['type'] == 'break') 
+                    ? VSPColors.textSecondary.withValues(alpha: 0.1)
+                    : VSPColors.accent.withValues(alpha: 0.1),
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
               ),
-              child: const Text(
-                'OPEN',
-                style: TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
+              child: Text(
+                (slot['type'] == 'break') ? 'CLOSED / BREAK' : 'OPEN',
+                style: TextStyle(
+                  color: (slot['type'] == 'break') ? VSPColors.textSecondary : VSPColors.accent, 
+                  fontSize: 10, 
+                  fontWeight: FontWeight.bold
+                ),
               ),
             ),
           ],
@@ -344,20 +451,23 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     }
     
     // Booked State
-    bool isManaged = slot['isManaged'] ?? false;
+    final booking = slot['booking'] as Booking?;
+    bool isManual = slot['isManual'] ?? false;
+    bool isPaid = booking?.isPaid ?? false;
+
     return Container(
-      height: 64,
+      height: 70,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
-        color: VSPColors.surface,
+        color: isManual ? VSPColors.surface : VSPColors.background,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isManaged ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider, 
-          width: isManaged ? 1.5 : 1,
+          color: isManual ? Colors.blueAccent.withValues(alpha: 0.5) : VSPColors.divider, 
+          width: 1,
         ),
-        boxShadow: isManaged ? [
+        boxShadow: isManual ? [
           BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.1),
+            color: Colors.blueAccent.withValues(alpha: 0.05),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -365,21 +475,22 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       ),
       child: Row(
         children: [
-          // Avatar/Logo with Fallback
           Container(
-            width: 36,
-            height: 36,
+            width: 40,
+            height: 40,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: VSPColors.surfaceAlt,
-              border: Border.all(color: VSPColors.divider, width: 1),
+              color: isManual ? Colors.blueAccent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
             ),
-            child: const Icon(Icons.person_outline, size: 20, color: VSPColors.textSecondary),
+            child: Icon(
+              isManual ? Icons.edit_note : Icons.sports_soccer, 
+              size: 22, 
+              color: isManual ? Colors.blueAccent : VSPColors.accent
+            ),
           ),
           
-          const SizedBox(width: 12),
+          const SizedBox(width: 14),
           
-          // Name & Info
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -387,22 +498,46 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               children: [
                 Text(
                   slot['name'],
-                  style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, fontSize: 13),
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    fontWeight: FontWeight.bold, 
+                    fontSize: 14,
+                  ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
                 const SizedBox(height: 2),
-                Text(
-                  slot['subtitle'],
-                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 10),
+                Row(
+                  children: [
+                    Text(
+                      slot['subtitle'],
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                      decoration: BoxDecoration(
+                        color: isPaid ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.error.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(4),
+                      ),
+                      child: Text(
+                        isPaid ? 'PAID' : 'UNPAID',
+                        style: TextStyle(
+                          color: isPaid ? VSPColors.success : VSPColors.error,
+                          fontSize: 9,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ),
               ],
             ),
           ),
           
-          if (isManaged) ...[
-             const Icon(Icons.more_horiz, color: VSPColors.textSecondary, size: 20),
-          ],
+          const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 14),
         ],
       ),
     );
@@ -457,14 +592,18 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
   }
 
   Widget _buildBookingSheet(bool isEdit, Map<String, dynamic> slot) {
+    final booking = slot['booking'] as Booking?;
     final nameController = TextEditingController(text: isEdit ? (slot['name'] ?? '') : '');
-    final phoneController = TextEditingController(text: isEdit ? '0111000222' : '');
+    final phoneController = TextEditingController(text: isEdit ? (booking?.playerPhone ?? '') : '');
+    final noteController = TextEditingController(text: isEdit ? (booking?.notes ?? '') : '');
+    bool isPaid = booking?.isPaid ?? false;
     bool isSaving = false;
+    bool isDeleting = false;
 
     return StatefulBuilder(
       builder: (context, setModalState) {
         return Container(
-          height: MediaQuery.of(context).size.height * 0.75,
+          height: MediaQuery.of(context).size.height * 0.85,
           padding: const EdgeInsets.all(VSPSpacing.md),
           decoration: BoxDecoration(
             color: VSPColors.surface,
@@ -482,37 +621,98 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   decoration: BoxDecoration(color: VSPColors.textSecondary.withValues(alpha: 0.3), borderRadius: BorderRadius.circular(2)),
                 ),
               ),
-              const SizedBox(height: 20),
+              const SizedBox(height: 16),
               
-              Center(
-                child: Text(
-                  isEdit ? 'Booking Details' : 'Manual Booking',
-                  style: Theme.of(context).textTheme.displaySmall,
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    isEdit ? 'Booking Details' : 'Manual Booking',
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                  if (isEdit)
+                    IconButton(
+                      icon: const Icon(Icons.delete_outline, color: VSPColors.error),
+                      onPressed: isDeleting ? null : () async {
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: VSPColors.surface,
+                            title: const Text('Cancel Booking?'),
+                            content: const Text('Are you sure you want to remove this booking? This action cannot be undone.'),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: const Text('NO')),
+                              TextButton(onPressed: () => Navigator.pop(ctx, true), child: const Text('YES', style: TextStyle(color: VSPColors.error))),
+                            ],
+                          ),
+                        );
+                        if (confirm == true) {
+                          setModalState(() => isDeleting = true);
+                          await Provider.of<BookingProvider>(this.context, listen: false).cancelBooking(booking!.id);
+                          if (mounted) Navigator.pop(this.context);
+                        }
+                      },
+                    ),
+                ],
+              ),
+               const SizedBox(height: 20),
+
+              Expanded(
+                child: SingleChildScrollView(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      _buildInputLabel('Time & Stadium'),
+                      _buildPillInput(initialValue: '${slot['time']} - ${_selectedStadium?.name ?? "Stadium"}', enabled: false),
+                      const SizedBox(height: 15),
+
+                      _buildInputLabel('Customer Name'),
+                      _buildPillTextField(controller: nameController, hint: 'Enter name'),
+                      const SizedBox(height: 15),
+
+                      _buildInputLabel('Phone Number'),
+                      _buildPillTextField(controller: phoneController, hint: '01xxxxxxxxx (Optional)'),
+                      const SizedBox(height: 15),
+
+                      _buildInputLabel('Internal Notes'),
+                      _buildPillTextField(controller: noteController, hint: 'e.g. Paid deposit, special request...'),
+                      const SizedBox(height: 20),
+
+                      // Payment Toggle
+                      Container(
+                        padding: const EdgeInsets.all(VSPSpacing.md),
+                        decoration: BoxDecoration(
+                          color: VSPColors.background,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider, width: 0.5),
+                        ),
+                        child: Row(
+                          children: [
+                            const Icon(Icons.payments_outlined, color: VSPColors.accent),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  const Text('Payment Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
+                                  Text(isPaid ? 'Fully Paid' : 'Pending Payment', style: TextStyle(color: isPaid ? VSPColors.success : VSPColors.error, fontSize: 11)),
+                                ],
+                              ),
+                            ),
+                            Switch(
+                              value: isPaid,
+                              activeColor: VSPColors.success,
+                              onChanged: (val) => setModalState(() => isPaid = val),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-               const SizedBox(height: 30),
 
-              _buildInputLabel('Stadium'),
-              _buildPillInput(initialValue: _selectedStadium?.name ?? 'No Stadium Selected', enabled: false),
-              const SizedBox(height: 15),
-
-              _buildInputLabel('Date'),
-              _buildPillInput(initialValue: DateFormat('yyyy/MM/dd').format(_baseDate.add(Duration(days: _selectedDayIndex))), enabled: false),
-              const SizedBox(height: 15),
-
-              _buildInputLabel('Time Slot'),
-              _buildPillInput(initialValue: '${slot['time']} - ${slot['hour'] + 1}:00', enabled: false),
-              const SizedBox(height: 15),
-
-              _buildInputLabel('Customer Name'),
-              _buildPillTextField(controller: nameController, hint: 'Enter name'),
-              const SizedBox(height: 15),
-
-              _buildInputLabel('Phone Number'),
-              _buildPillTextField(controller: phoneController, hint: '01xxxxxxxxx'),
-              const SizedBox(height: 15),
-
-              const Spacer(),
+              const SizedBox(height: 20),
               
               Row(
                 children: [
@@ -527,7 +727,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                         ),
                         child: Text(
-                          'Cancel',
+                          'Close',
                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                 color: VSPColors.textSecondary,
                                 fontWeight: FontWeight.bold,
@@ -539,42 +739,55 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   const SizedBox(width: 15),
                   Expanded(
                     child: VSPAnimatedButton(
-                      text: 'Confirm',
+                      text: isEdit ? 'Update' : 'Confirm',
                       isLoading: isSaving,
                       onPressed: isSaving ? () {} : () async {
-                        if (nameController.text.isEmpty || _selectedStadium == null) {
-                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter name and select stadium')));
+                        if (nameController.text.trim().isEmpty) {
+                          ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter customer name')));
                           return;
                         }
 
                         setModalState(() => isSaving = true);
 
                         try {
-                          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                          final uid = authProvider.firebaseUser!.uid;
+                          final bookingProvider = Provider.of<BookingProvider>(this.context, listen: false);
+                          
+                          if (isEdit) {
+                            // Update existing (Manual or Real)
+                            // Note: we use updateProfile logic style but for bookings
+                            await FirebaseFirestore.instance.collection('bookings').doc(booking!.id).update({
+                              'playerTeamName': nameController.text.trim(),
+                              'playerPhone': phoneController.text.trim(),
+                              'notes': noteController.text.trim(),
+                              'isPaid': isPaid,
+                              'paymentStatus': isPaid ? 'paid' : 'pending',
+                              'updatedAt': FieldValue.serverTimestamp(),
+                            });
+                          } else {
+                            // Create New Manual
+                            final stadiumProvider = Provider.of<StadiumProvider>(this.context, listen: false);
+                            final authProvider = Provider.of<AuthProvider>(this.context, listen: false);
+                            final uid = authProvider.firebaseUser!.uid;
+                            final stadium = stadiumProvider.stadiums.firstWhere((s) => s.id == _selectedStadium?.id, orElse: () => stadiumProvider.stadiums.first);
 
-                          final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
-                          final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
-                          final endTime = startTime.add(const Duration(hours: 1));
+                            final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
+                            final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, slot['hour'] as int);
+                            final endTime = startTime.add(const Duration(hours: 1));
 
-                          final draft = BookingDraft(
-                            stadiumId: _selectedStadium!.id,
-                            stadiumName: _selectedStadium!.name,
-                            stadiumImageUrl: _selectedStadium!.imageUrl,
-                            ownerId: uid,
-                            startTime: startTime,
-                            endTime: endTime,
-                            bookingType: BookingType.personal,
-                            playerTeamName: nameController.text,
-                            isPrivate: true,
-                            rentBall: false,
-                            totalPrice: _selectedStadium!.pricePerHour.toDouble(),
-                            paymentMethod: 'cash',
-                            paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
-                          );
+                            final draft = BookingDraft(
+                              stadiumId: stadium.id, stadiumName: stadium.name, stadiumImageUrl: stadium.imageUrl,
+                              ownerId: uid, startTime: startTime, endTime: endTime,
+                              bookingType: BookingType.personal, playerTeamName: nameController.text,
+                              playerPhone: phoneController.text, notes: noteController.text,
+                              isPrivate: true, rentBall: false,
+                              totalPrice: stadium.pricePerHour.toDouble(),
+                              isPaid: isPaid,
+                              paymentMethod: 'cash', paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+                            );
 
-                          await bookingProvider.createBooking(draft, uid); // Use owner UID as creator for manual
+                            await bookingProvider.createBooking(draft, uid);
+                          }
+                          
                           if (context.mounted) Navigator.pop(context);
                         } catch (e) {
                           ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
@@ -586,7 +799,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                   ),
                 ],
               ),
-               const SizedBox(height: 20),
+               const SizedBox(height: 10),
             ],
           ),
         );

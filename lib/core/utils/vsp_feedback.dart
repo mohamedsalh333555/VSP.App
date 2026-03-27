@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../ui/tokens/vsp_tokens.dart';
 
 class VSPFeedback {
@@ -20,6 +21,10 @@ class VSPFeedback {
       textColor: Colors.white,
       icon: Icons.error_outline,
     );
+  }
+
+  static void triggerSuccess() {
+    HapticFeedback.lightImpact();
   }
 
   static void _showSnackBar({

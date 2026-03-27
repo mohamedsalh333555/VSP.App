@@ -171,7 +171,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               leading: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(8)),
-                child: Icon(icon, color: Colors.white70, size: 20),
+                child: Icon(icon, color: VSPColors.textSecondary, size: 20),
               ),
               title: Text(name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w500)),
               subtitle: Text(sub, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),

@@ -4,6 +4,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'tournament_brackets_screen.dart'; // 🟢 IMPORT
 
@@ -26,22 +27,63 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     _currentChampionship = widget.championship;
   }
 
-  // 🟢 UPDATED: Generate Fixtures Logic
+  // 🟢 UPDATED: Generate Fixtures Logic (with Force Start option)
   Future<void> _handleStartTournament() async {
-    // 1. Validate Team Count
-    if (_currentChampionship.joinedTeams.length < _currentChampionship.maxTeams) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Cannot start: Waiting for more teams to join!')),
+    final teamCount = _currentChampionship.joinedTeams.length;
+
+    // If teams are less than maxTeams, show force start confirmation
+    if (teamCount < _currentChampionship.maxTeams) {
+      final shouldForceStart = await showDialog<bool>(
+        context: context,
+        builder: (ctx) => AlertDialog(
+          backgroundColor: VSPColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: Text('Force Start Tournament?', style: Theme.of(context).textTheme.titleLarge),
+          content: Text(
+            'Tournament is not full ($teamCount / ${_currentChampionship.maxTeams} teams). '
+            'Are you sure you want to force start?\n\n'
+            'Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.',
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Cancel',
+                    height: 44,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
+                    onPressed: () => Navigator.pop(ctx, false),
+                  ),
+                ),
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: PrimaryButton(
+                    text: 'Force Start',
+                    height: 44,
+                    color: VSPColors.warning,
+                    textColor: Colors.black,
+                    onPressed: () => Navigator.pop(ctx, true),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
       );
-      return;
+
+      if (shouldForceStart != true) return;
     }
 
     setState(() => _isLoading = true);
     try {
-      // 2. Run Algorithm
-      await DatabaseService().generateFixtures(_currentChampionship.id);
+      // Run Algorithm
+      await TournamentRepository().generateFixtures(_currentChampionship.id);
       
-      // 3. Update Local State
+      // Update Local State
       setState(() {
         _currentChampionship = _currentChampionship.copyWith(status: 'ongoing');
       });
@@ -132,13 +174,125 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   Future<void> _crownChampion(String teamId, String teamName) async {
     setState(() => _isLoading = true);
     try {
-      await DatabaseService().crownChampion(_currentChampionship.id, teamId, teamName);
+      await TournamentRepository().crownChampion(_currentChampionship.id, teamId, teamName);
       setState(() {
          _currentChampionship = _currentChampionship.copyWith(status: 'completed');
       });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
+  }
+
+  void _showAddTeamManuallyDialog() {
+    final nameCtrl = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text('Add Team Manually', style: Theme.of(context).textTheme.titleLarge),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              'Register a team that signed up via phone or in-person.',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+            ),
+            const SizedBox(height: VSPSpacing.md),
+            TextField(
+              controller: nameCtrl,
+              style: Theme.of(context).textTheme.bodyMedium,
+              decoration: InputDecoration(
+                hintText: 'Team name',
+                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                filled: true,
+                fillColor: VSPColors.background,
+                border: OutlineInputBorder(
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  borderSide: BorderSide.none,
+                ),
+              ),
+            ),
+          ],
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+        actions: [
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Cancel',
+                  height: 44,
+                  color: VSPColors.surfaceAlt,
+                  textColor: VSPColors.textPrimary,
+                  onPressed: () => Navigator.pop(ctx),
+                ),
+              ),
+              const SizedBox(width: VSPSpacing.md),
+              Expanded(
+                child: PrimaryButton(
+                  text: 'Add',
+                  height: 44,
+                  onPressed: () async {
+                    final teamName = nameCtrl.text.trim();
+                    if (teamName.isEmpty) return;
+                    Navigator.pop(ctx);
+                    
+                    setState(() => _isLoading = true);
+                    try {
+                      // Create a placeholder team doc in Firestore
+                      final teamId = await DatabaseService().createTeam({
+                        'name': teamName,
+                        'captainId': 'manual_entry',
+                        'captainName': 'Manual Registration',
+                        'captainImage': '',
+                        'sport': _currentChampionship.sportType,
+                        'members': [],
+                        'memberNames': [],
+                        'memberImages': [],
+                        'createdAt': DateTime.now().toIso8601String(),
+                      });
+                      
+                      if (teamId != null) {
+                        // Join the team to the championship
+                        await TournamentRepository().joinChampionship(
+                          _currentChampionship.id,
+                          teamId,
+                          skipMemberCheck: true,
+                        );
+                        // Refresh state
+                        setState(() {
+                          _currentChampionship = _currentChampionship.copyWith(
+                            joinedTeams: [..._currentChampionship.joinedTeams, teamId],
+                          );
+                        });
+                        if (mounted) {
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: Text('Team "$teamName" added!'),
+                              backgroundColor: VSPColors.success,
+                            ),
+                          );
+                        }
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isLoading = false);
+                    }
+                  },
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
   }
 
   @override
@@ -156,7 +310,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         centerTitle: true,
       ),
       body: FutureBuilder<List<Team>>(
-        future: DatabaseService().getTeamsByIds(_currentChampionship.joinedTeams),
+        future: TournamentRepository().getTeamsByIds(_currentChampionship.joinedTeams),
         builder: (context, snapshot) {
           final teams = snapshot.data ?? [];
           
@@ -197,6 +351,31 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                       color: VSPColors.textSecondary, 
                       fontWeight: FontWeight.bold
                     )),
+                    const Spacer(),
+                    if (_currentChampionship.status == 'open' && _currentChampionship.joinedTeams.length < _currentChampionship.maxTeams)
+                      GestureDetector(
+                        onTap: () => _showAddTeamManuallyDialog(),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(VSPRadius.full),
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              const Icon(Icons.person_add_alt_1, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              Text('Add Team', style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.accent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 10,
+                              )),
+                            ],
+                          ),
+                        ),
+                      ),
                   ],
                 ),
               ),

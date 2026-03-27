@@ -10,6 +10,8 @@ import '../../../core/providers/booking_provider.dart';
 import '../widgets/custom_date_range_picker.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/services/database_service.dart';
+import '../../../features/player/screens/notifications_center_screen.dart';
 import 'owner_booked_screen.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
@@ -26,6 +28,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
   );
+  
+  bool _filterPendingOnly = false; // ✅ Added debt filter state
   
   // Stats Values
   // Removed hardcoded _rating = 4.8
@@ -122,28 +126,44 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: VSPSpacing.md),
               _buildBookedTodayList(),
               
-              const SizedBox(height: VSPSpacing.lg),
-              // Show More Button
-              Center(
-                child: TextButton(
-                  onPressed: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(builder: (context) => const OwnerBookedScreen()),
-                    );
-                  },
-                  child: Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(
-                        'Show more',
-                        style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
+              // Show More Button — only visible when > 3 bookings
+              Builder(
+                builder: (context) {
+                  final bookingProvider = Provider.of<BookingProvider>(context);
+                  final now = DateTime.now();
+                  final todayStart = DateTime(now.year, now.month, now.day);
+                  final todayEnd = todayStart.add(const Duration(days: 1));
+                  final todayCount = bookingProvider.userBookings.where((b) {
+                    return b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd);
+                  }).length;
+
+                  if (todayCount <= 3) return const SizedBox.shrink();
+
+                  return Padding(
+                    padding: const EdgeInsets.only(top: VSPSpacing.lg),
+                    child: Center(
+                      child: TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (context) => const OwnerBookedScreen()),
+                          );
+                        },
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(
+                              'Show more',
+                              style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
+                            ),
+                            const SizedBox(width: 4),
+                            const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent, size: 18),
+                          ],
+                        ),
                       ),
-                      const SizedBox(width: 4),
-                      const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent, size: 18),
-                    ],
-                  ),
-                ),
+                    ),
+                  );
+                },
               ),
               
               // Removed fixed SizedBox as we use padding instead.
@@ -166,8 +186,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hi ${auth.userModel?.name ?? "Owner"}',
+              'Hi ${(auth.userModel?.name ?? "Owner").split(' ').first}',
               style: Theme.of(context).textTheme.displayMedium,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
@@ -176,32 +198,47 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ),
           ],
         ),
-        Container(
-          padding: const EdgeInsets.all(VSPSpacing.sm),
-          decoration: BoxDecoration(
-            color: VSPColors.surface,
+        Material(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          child: InkWell(
             borderRadius: BorderRadius.circular(VSPRadius.md),
-          ),
-          child: Stack(
-            children: [
-              const Icon(Icons.notifications_outlined, color: VSPColors.textPrimary, size: 24),
-              // Green Badge
-              Positioned(
-                top: 0,
-                right: 2,
-                child: Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: VSPColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-            ],
+            onTap: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (context) => const NotificationsCenterScreen()),
+              );
+            },
+            child: Container(
+              padding: const EdgeInsets.all(VSPSpacing.sm),
+            child: StreamBuilder<int>(
+              stream: DatabaseService().getUnreadNotificationCount(auth.firebaseUser?.uid ?? ''),
+              builder: (context, snap) {
+                final count = snap.data ?? 0;
+                return Stack(
+                  children: [
+                    const Icon(Icons.notifications_outlined, color: VSPColors.textPrimary, size: 24),
+                    if (count > 0)
+                      Positioned(
+                        top: 0,
+                        right: 0,
+                        child: Container(
+                          width: 8,
+                          height: 8,
+                          decoration: const BoxDecoration(
+                            color: VSPColors.error,
+                            shape: BoxShape.circle,
+                          ),
+                        ),
+                      ),
+                  ],
+                );
+              },
+            ),
           ),
         ),
-      ],
+      ),
+    ],
     );
   }
 
@@ -301,22 +338,31 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       bool matchesDate = booking.startTime.isAfter(_selectedDateRange.start) && 
                          booking.startTime.isBefore(_selectedDateRange.end.add(const Duration(days: 1)));
       
-      return matchesStadium && matchesDate;
+      bool matchesDebtFilter = !_filterPendingOnly || !booking.isPaid; // ✅ Debt filter filter logic
+      
+      return matchesStadium && matchesDate && matchesDebtFilter;
     }).toList();
 
     double revenue = 0;
+    double debts = 0; // ✅ Debt calculation logic
     int totalMinutes = 0;
     
     for (var b in filteredBookings) {
-      revenue += b.totalPrice;
+      if (b.isPaid) {
+        revenue += b.totalPrice;
+      } else {
+        debts += b.totalPrice;
+      }
       totalMinutes += b.endTime.difference(b.startTime).inMinutes;
     }
 
     final int bookingsCount = filteredBookings.length;
     final double commission = revenue * 0.05;
+    double netRevenue = revenue - commission;
 
     // Format numeric values
     String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
+    String netStr = netRevenue >= 1000 ? '${(netRevenue/1000).toStringAsFixed(1)}K' : netRevenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
     
     // Minute-accurate time formatting
@@ -335,113 +381,136 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       }
     }
     
-    String visitorsStr = 'N/A'; // Neutral fallback for unknown visitors metric
+    String debtStr = debts >= 1000 ? '${(debts/1000).toStringAsFixed(1)}K' : debts.toStringAsFixed(0);
     String commissionStr = commission >= 1000 ? '${(commission/1000).toStringAsFixed(1)}K' : commission.toStringAsFixed(0);
 
     return Column(
       children: [
-        // Revenue Card (Large Top)
+        // 1. Revenue Card (Premium Design)
         VSPFadeInItem(
           index: 0,
-          child: VSPCard(
+          child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            child: Row(
+            padding: const EdgeInsets.all(VSPSpacing.lg),
+            decoration: BoxDecoration(
+              gradient: LinearGradient(
+                colors: [VSPColors.accent, VSPColors.accent.withValues(alpha: 0.8)],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              boxShadow: [
+                BoxShadow(color: VSPColors.accent.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10)),
+              ],
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Container(
-                  padding: const EdgeInsets.all(VSPSpacing.sm),
-                   decoration: BoxDecoration(
-                    color: VSPColors.background,
-                    shape: BoxShape.circle,
-                    border: Border.all(color: VSPColors.divider, width: 0.5),
-                  ),
-                  child: const Icon(Icons.monetization_on_outlined, color: VSPColors.accent, size: 24),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text('Total Revenue', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                    const Icon(Icons.account_balance_wallet_outlined, color: Colors.black, size: 24),
+                  ],
                 ),
-               const SizedBox(width: 16),
-               Column(
-                 crossAxisAlignment: CrossAxisAlignment.start,
-                 children: [
-                   Text('Total Revenue', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                   const SizedBox(height: 2),
-                   Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 28, color: VSPColors.textPrimary)),
-                 ],
-               ),
-               const Spacer(),
-               // Details Button
-               Container(
-                 padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                 decoration: BoxDecoration(
-                   color: VSPColors.surfaceAlt,
-                   borderRadius: BorderRadius.circular(20), 
-                 ),
-                 child: Row(
-                   children: [
-                     Text('Details', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
-                     const SizedBox(width: 4),
-                     const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 8)
-                   ],
-                 ),
-               )
-            ],
+                const SizedBox(height: 8),
+                Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.black, letterSpacing: -1)),
+                const SizedBox(height: 12),
+                Row(
+                  children: [
+                    _buildMiniBadge('Net: ${netStr} EGP', Colors.black.withValues(alpha: 0.1)),
+                    const SizedBox(width: 8),
+                    _buildMiniBadge('Fees: ${commissionStr}', Colors.black.withValues(alpha: 0.1)),
+                  ],
+                ),
+              ],
+            ),
           ),
         ),
-        ),
         
-        const SizedBox(height: 12),
+        const SizedBox(height: 20),
 
-        // 2x2 Grid
+        // 2. Main Stats Row
         VSPFadeInItem(
           index: 1,
           child: Row(
             children: [
               Expanded(
                 child: VSPStatCard(
-                  label: 'Booked',
-                  value: bookedStr,
-                  icon: Icons.check_circle_outline,
-                  // Intentionally removed trend percentages as they are not calculated from real history yet.
+                  label: 'Hours Booked',
+                  value: timeStr,
+                  icon: Icons.history_toggle_off_rounded,
                 ),
               ),
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: VSPStatCard(
-                  label: 'Total Time',
-                  value: timeStr,
-                  icon: Icons.access_time_outlined,
+                  label: 'Active Bookings',
+                  value: bookedStr,
+                  icon: Icons.confirmation_number_outlined,
                 ),
               ),
             ],
           ),
         ),
         const SizedBox(height: VSPSpacing.md),
+        
+        // 3. Debt Row
         VSPFadeInItem(
           index: 2,
-          child: Row(
-            children: [
-              Expanded(child: _buildRateCard()),
-              const SizedBox(width: VSPSpacing.md),
-              Expanded(
-                child: VSPStatCard(
-                  label: 'Visitors',
-                  // Intentionally neutralized to N/A until real turnstile analytics exist. Do not invent formulas.
-                  value: visitorsStr,
-                  icon: Icons.groups_outlined,
+          child: Material(
+            color: Colors.transparent,
+            child: InkWell(
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              onTap: () {
+                setState(() => _filterPendingOnly = !_filterPendingOnly);
+              },
+              child: Container(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: _filterPendingOnly ? VSPColors.error.withValues(alpha: 0.1) : VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: _filterPendingOnly ? VSPColors.error.withValues(alpha: 0.5) : VSPColors.divider, width: 1),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(8),
+                      decoration: BoxDecoration(color: VSPColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
+                      child: const Icon(Icons.money_off_rounded, color: VSPColors.error, size: 20),
+                    ),
+                    const SizedBox(width: 12),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text('Unpaid Debts', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                        Text('${debtStr} EGP', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                      ],
+                    ),
+                    const Spacer(),
+                    if (_filterPendingOnly)
+                       const Text('FILTERING...', style: TextStyle(color: VSPColors.error, fontSize: 10, fontWeight: FontWeight.bold)),
+                    Icon(Icons.chevron_right, color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+                  ],
                 ),
               ),
-            ],
+            ),
           ),
         ),
       ],
     );
   }
 
-  Widget _buildRateCard() {
-    return const VSPStatCard(
-      label: 'Rate',
-      // Intentionally neutralized to N/A until real rating API is implemented. Do not reintroduce fake numbers.
-      value: 'N/A', 
-      icon: Icons.star_outline,
+  Widget _buildMiniBadge(String text, Color color) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(VSPRadius.sm)),
+      child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600)),
     );
+  }
+
+  Widget _buildRateCard() {
+    return const SizedBox.shrink(); // Integrated into grid or removed for layout logic via StatCard replacements above
   }
 
   Widget _buildBookedTodayList() {
@@ -553,13 +622,29 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                   booking.bookingType == BookingType.challenge 
                                       ? 'Challenge Match' 
                                       : (booking.bookingType == BookingType.team ? 'Team Match' : 'Player'), 
-                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: Colors.white70),
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                 ),
                               ],
                             ),
                           ),
                           const SizedBox(width: 8),
-                          const Icon(Icons.more_vert, color: Colors.white54, size: 20),
+                          Column(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                                decoration: BoxDecoration(
+                                  color: booking.isPaid ? VSPColors.success.withValues(alpha: 0.2) : VSPColors.error.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(4),
+                                ),
+                                child: Text(
+                                  booking.isPaid ? 'PAID' : 'DEBT',
+                                  style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
+                                ),
+                              ),
+                              const SizedBox(height: 4),
+                              const Icon(Icons.more_vert, color: VSPColors.textSecondary, size: 20),
+                            ],
+                          ),
                         ],
                       ),
                     ),

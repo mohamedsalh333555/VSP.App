@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/chat_model.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/chat_repository.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -30,7 +30,7 @@ class _ChatScreenState extends State<ChatScreen> {
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser != null) {
-        DatabaseService().markMessagesAsRead(widget.booking.id, auth.currentUser!.uid);
+        ChatRepository().markMessagesAsRead(widget.booking.id, auth.currentUser!.uid);
       }
     });
   }
@@ -50,7 +50,7 @@ class _ChatScreenState extends State<ChatScreen> {
       timestamp: DateTime.now(),
     );
 
-    DatabaseService().sendMessage(widget.booking.id, message);
+    ChatRepository().sendMessage(widget.booking.id, message);
     AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
     _messageController.clear();
   }
@@ -70,11 +70,11 @@ class _ChatScreenState extends State<ChatScreen> {
           children: [
             Text(
               widget.booking.stadiumName,
-              style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
             Text(
               '${widget.booking.playerTeamName ?? "Public Match"} Chat',
-              style: TextStyle(fontSize: 12, color: VSPColors.textSecondary),
+              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
             ),
           ],
         ),
@@ -87,7 +87,7 @@ class _ChatScreenState extends State<ChatScreen> {
         children: [
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: DatabaseService().getChatMessages(widget.booking.id),
+              stream: ChatRepository().getChatMessages(widget.booking.id),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

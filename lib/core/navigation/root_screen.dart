@@ -16,6 +16,7 @@ import '../../features/player/screens/match_details_screen.dart';
 import 'package:app_links/app_links.dart';
 import 'dart:async';
 import '../services/remote_config_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
@@ -46,7 +47,7 @@ class _RootScreenState extends State<RootScreen> {
       // 🛡️ Safety Net: If user is authenticated but userModel never loads within
       // 3 seconds (e.g. Firestore offline), show a Connection Error screen.
       if (auth.isAuthenticated && auth.userModel == null) {
-        _loadingTimeout = Timer(const Duration(seconds: 3), () {
+        _loadingTimeout = Timer(const Duration(seconds: 10), () {
           if (mounted && auth.userModel == null) {
             setState(() => _loadingTimedOut = true);
           }
@@ -106,6 +107,15 @@ class _RootScreenState extends State<RootScreen> {
   void _handleDeepLink(Uri uri) {
     debugPrint('🔗 Handling deep link: $uri');
     
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    
+    // 🛡️ AUTH GUARD: If not fully authenticated/onboarded, save for later
+    if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
+      debugPrint('💾 Saving pending deep link for after login: $uri');
+      SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
+      return;
+    }
+
     // Pattern: https://vsp.app/match/BOOKING_ID
     if (uri.pathSegments.length >= 2) {
       final type = uri.pathSegments[0]; // match, team, etc.
@@ -120,6 +130,19 @@ class _RootScreenState extends State<RootScreen> {
         );
       }
     }
+  }
+
+  void _checkAndNavigatePendingDeepLink() {
+    SharedPreferences.getInstance().then((prefs) {
+      final pendingLink = prefs.getString('pending_deep_link');
+      if (pendingLink != null) {
+        prefs.remove('pending_deep_link');
+        final uri = Uri.parse(pendingLink);
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          _handleDeepLink(uri);
+        });
+      }
+    });
   }
 
   @override
@@ -154,9 +177,14 @@ class _RootScreenState extends State<RootScreen> {
       return const WelcomeScreen();
     }
 
-    // 2. Authenticated but waiting for User Data → Splash (Loading)
+    // 2. Ghost User Detection → Redirect to Profile Completion
+    if (auth.isGhostUser) {
+      return const SocialOnboardingScreen();
+    }
+
+    // 3. Authenticated but waiting for User Data → Splash (Loading)
     if (auth.isAuthenticated && auth.userModel == null) {
-      // 🛡️ Timeout Safety Net: after 3s show a connection error with sign-out option
+      // 🛡️ Timeout Safety Net: after 10s show a connection error with sign-out option
       if (_loadingTimedOut) {
         return Scaffold(
           backgroundColor: VSPColors.background,
@@ -237,10 +265,12 @@ class _RootScreenState extends State<RootScreen> {
         return const OwnerDocumentationWizard();
       }
 
+      _checkAndNavigatePendingDeepLink();
       return const OwnerMainScreen();
     }
 
     // 7. Player → Dashboard
+    _checkAndNavigatePendingDeepLink();
     return const PlayerHomeScreen();
   }
 }

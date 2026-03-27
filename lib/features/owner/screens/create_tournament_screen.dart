@@ -6,6 +6,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/database_service.dart';
+import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 class CreateTournamentScreen extends StatefulWidget {
@@ -133,7 +134,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         }
       };
 
-      final id = await DatabaseService().createChampionship(champData);
+      final id = await TournamentRepository().createChampionship(champData);
       
       if (id != null && mounted) {
         Navigator.pop(context);
@@ -181,7 +182,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               _buildDropdown(['Cup', 'League'], _selectedTypeTournament, (v) => setState(() => _selectedTypeTournament = v!)),
               const SizedBox(height: 16),
               _buildInputLabel('Type Sport'),
-              _buildDropdown(['Football', 'Basketball', 'Tennis'], _selectedSport, (v) => setState(() => _selectedSport = v!)),
+              _buildDropdown(VSPConstants.sports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
               const SizedBox(height: 24),
 
               // --- Dates ---

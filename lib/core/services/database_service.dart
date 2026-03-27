@@ -7,6 +7,7 @@ import '../models/chat_model.dart';
 import '../utils/elo_calculator.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
+import 'notification_handler.dart';
 import '../../data/models.dart';
 import '../config/app_config.dart';
 import '../utils/phone_utils.dart';
@@ -51,126 +52,6 @@ class DatabaseService {
       debugPrint('Error getting users by IDs: $e');
       return [];
     }
-  }
-
-  // ==================== STADIUMS ====================
-  
-  // Get all stadiums (with expanded limit)
-  Stream<List<Stadium>> getStadiums({int limit = 50}) {
-    Query query = _firestore.collection('stadiums');
-    
-    // Bypass verification check in demo mode so players can see stadiums
-    if (!AppConfig.demoMode) {
-      query = query.where('isVerified', isEqualTo: true);
-    }
-    
-    return query
-        .limit(limit)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
-  }
-
-  // Get stadium by ID
-  Future<Stadium?> getStadiumById(String stadiumId) async {
-    try {
-      DocumentSnapshot doc = await _firestore.collection('stadiums').doc(stadiumId).get();
-      if (doc.exists) {
-        return Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Get raw stadium data for editing
-  Future<Map<String, dynamic>?> getStadiumSnapshot(String stadiumId) async {
-    try {
-      DocumentSnapshot doc = await _firestore.collection('stadiums').doc(stadiumId).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>?;
-      }
-      return null;
-    } catch (e) {
-      return null;
-    }
-  }
-
-  // Get stadiums for a specific owner
-  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
-     return _firestore
-        .collection('stadiums')
-        .where('ownerId', isEqualTo: ownerId)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Stadium.fromFirestore(doc.data(), doc.id))
-            .toList());
-  }
-
-  // Add new stadium (Owner)
-  Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
-    try {
-      // SECURITY HARDENING: Strip sensitive fields from generic creation
-      final sanitizedData = Map<String, dynamic>.from(stadiumData);
-      sanitizedData.remove('isVerified');
-      sanitizedData.remove('createdAt');
-
-      DocumentReference ref = await _firestore.collection('stadiums').add({
-        ...sanitizedData,
-        'isVerified': false, // Force false for new stadiums
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      return ref.id;
-    } catch (e) {
-      debugPrint('Error adding stadium: Masked for security');
-      return null;
-    }
-  }
-
-  // SECURITY PATCH: Sanitize stadium updates to prevent hijacking verified status or owner identity.
-  Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
-    try {
-      final securedData = Map<String, dynamic>.from(data);
-      // SECURITY: Prevents unauthorized verification bypass or stadium ownership theft
-      securedData.remove('isVerified');
-      securedData.remove('ownerId');
-      securedData.remove('createdAt');
-      
-      await _firestore.collection('stadiums').doc(stadiumId).update(securedData);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-  
-  // Create stadium with named parameters (helper)
-  Future<String?> createStadium({
-    required String name,
-    required String location,
-    required double pricePerHour,
-    required int seatsCapacity,
-    required String imageUrl,
-    required String ownerId,
-    String notes = '', // ✅ Added notes
-    String? contractUrl,
-    String? ownerIdUrl,
-    Map<String, dynamic>? features,
-  }) async {
-    return await addStadium({
-      'name': name,
-      'location': location,
-      'pricePerHour': pricePerHour,
-      'seatsCapacity': seatsCapacity,
-      'imageUrl': imageUrl,
-      'ownerId': ownerId,
-      'notes': notes, // ✅ Added notes
-      'contractUrl': contractUrl,
-      'ownerIdUrl': ownerIdUrl,
-      'isVerified': false, // Default to false for new stadiums
-      'features': features ?? {},
-    });
   }
 
   // ==================== MATCHES ====================
@@ -249,95 +130,6 @@ class DatabaseService {
     }
   }
 
-  // ==================== CHAMPIONSHIPS ====================
-  
-  // Get all championships
-  Stream<List<Championship>> getChampionshipsStream({String? governorate, String? sportType}) {
-    Query query = _firestore.collection('championships');
-    
-    if (governorate != null && governorate.isNotEmpty) {
-      query = query.where('governorate', isEqualTo: governorate);
-    }
-    
-    if (sportType != null && sportType.isNotEmpty) {
-      query = query.where('sportType', isEqualTo: sportType);
-    }
-
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => Championship.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
-  }
-
-  Future<String?> createChampionship(Map<String, dynamic> data) async {
-    try {
-      // SECURITY HARDENING
-      final sanitizedData = Map<String, dynamic>.from(data);
-      sanitizedData.remove('joinedTeams');
-      sanitizedData.remove('status');
-      sanitizedData.remove('creatorId');
-
-      final docRef = await _firestore.collection('championships').add({
-        ...sanitizedData,
-        'status': 'open',
-        'joinedTeams': [],
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      return docRef.id;
-    } catch (e) {
-      debugPrint('Error creating championship: Masked for security');
-      return null;
-    }
-  }
-
-  // Join a championship with 5-player rule
-  Future<bool> joinChampionship(String championshipId, String teamId) async {
-    try {
-      final teamRef = _firestore.collection('teams').doc(teamId);
-      final champRef = _firestore.collection('championships').doc(championshipId);
-      
-      await _firestore.runTransaction((transaction) async {
-        final teamSnap = await transaction.get(teamRef);
-        final champSnap = await transaction.get(champRef);
-        
-        if (!teamSnap.exists) throw Exception('المجموعة لا توجد.');
-        if (!champSnap.exists) throw Exception('البطولة لا توجد.');
-
-        final teamData = teamSnap.data() as Map<String, dynamic>;
-        final champData = champSnap.data() as Map<String, dynamic>;
-
-        // 1. Check Team Size (Rule: Min 5 Players)
-        final List members = teamData['memberUids'] ?? [];
-        final int playerCount = teamData['playersCount'] ?? members.length;
-        
-        if (playerCount < 5) {
-          throw Exception('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
-        }
-
-        // 2. Check Championship Capacity
-        final List joinedTeams = champData['joinedTeams'] ?? [];
-        final int maxTeams = champData['maxTeams'] ?? 16;
-
-        if (joinedTeams.length >= maxTeams) {
-          throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
-        }
-
-        if (joinedTeams.contains(teamId)) {
-          throw Exception('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
-        }
-
-        // 3. Update Championship
-        transaction.update(champRef, {
-          'joinedTeams': FieldValue.arrayUnion([teamId]),
-        });
-      });
-
-      return true;
-    } catch (e) {
-      debugPrint('Error joining championship: $e');
-      rethrow; // Re-throw so UI can handle exact error message
-    }
-  }
-
   // ==================== BOOKINGS ====================
   
   // Get bookings for owner
@@ -349,6 +141,17 @@ class DatabaseService {
         .snapshots()
         .map((snapshot) => snapshot.docs
             .map((doc) => {...doc.data(), 'id': doc.id})
+            .toList());
+  }
+
+  // Get stadiums for owner
+  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
+    return _firestore
+        .collection('stadiums')
+        .where('ownerId', isEqualTo: ownerId)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Stadium.fromFirestore(doc.data(), doc.id))
             .toList());
   }
 
@@ -498,6 +301,17 @@ class DatabaseService {
     }).toList());
   }
 
+  Future<Team?> getTeam(String teamId) async {
+    try {
+      final doc = await _firestore.collection('teams').doc(teamId).get();
+      if (!doc.exists) return null;
+      return Team.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+    } catch (e) {
+      debugPrint('Error getting team: $e');
+      return null;
+    }
+  }
+
   Future<Team?> getTeamByCaptainPhone(String phone) async {
     try {
       final normalizedPhone = PhoneUtils.normalize(phone);
@@ -592,66 +406,89 @@ class DatabaseService {
 
       if (!homeSnap.exists || !awaySnap.exists) return;
 
-      int homeRating = (homeSnap.data()?['points'] ?? 1000).toInt();
-      int awayRating = (awaySnap.data()?['points'] ?? 1000).toInt();
+      int homePoints = (homeSnap.data()?['points'] ?? 0).toInt();
+      int awayPoints = (awaySnap.data()?['points'] ?? 0).toInt();
 
-      double eloOutcome = 0.5;
-      if (finalOutcome == MatchOutcome.homeWin) eloOutcome = 1.0;
-      if (finalOutcome == MatchOutcome.awayWin) eloOutcome = 0.0;
-
-      final newRatings = EloCalculator.calculateNewRatings(
-        homeRating: homeRating,
-        awayRating: awayRating,
-        outcome: eloOutcome,
-      );
-
-      // Home Team Logic
       final homePlayed = List<String>.from(homeSnap.data()?['playedOpponents'] ?? []);
+      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
+      final homeBeaten = List<String>.from(homeSnap.data()?['beatenOpponents'] ?? []);
+      final awayBeaten = List<String>.from(awaySnap.data()?['beatenOpponents'] ?? []);
+
+      int homePointsEarned = 0;
+      int awayPointsEarned = 0;
+
+      List<String> homeBadges = List<String>.from(homeSnap.data()?['unlockedBadges'] ?? []);
+      List<String> awayBadges = List<String>.from(awaySnap.data()?['unlockedBadges'] ?? []);
+
       bool isNewForHome = !homePlayed.contains(awayTeamId);
+      bool isNewForAway = !awayPlayed.contains(homeTeamId);
+
+      if (finalOutcome == MatchOutcome.draw) {
+        homePointsEarned = 1;
+        awayPointsEarned = 1;
+      } else if (finalOutcome == MatchOutcome.homeWin) {
+        if (homeBeaten.contains(awayTeamId)) {
+          homePointsEarned = 3;
+        } else {
+          homePointsEarned = 5;
+          if (!homeBadges.contains('Giant Killer')) homeBadges.add('Giant Killer');
+          if (isNewForHome && !homeBadges.contains('New Territory')) homeBadges.add('New Territory');
+          homeBeaten.add(awayTeamId); // Mark as beaten
+        }
+        awayPointsEarned = 0;
+      } else if (finalOutcome == MatchOutcome.awayWin) {
+        if (awayBeaten.contains(homeTeamId)) {
+          awayPointsEarned = 3;
+        } else {
+          awayPointsEarned = 5;
+          if (!awayBadges.contains('Giant Killer')) awayBadges.add('Giant Killer');
+          if (isNewForAway && !awayBadges.contains('New Territory')) awayBadges.add('New Territory');
+          awayBeaten.add(homeTeamId); // Mark as beaten
+        }
+        homePointsEarned = 0;
+      }
+
       int homeStreak = (finalOutcome == MatchOutcome.homeWin) 
           ? (homeSnap.data()?['currentWinningStreak'] ?? 0) + 1 
           : 0;
-      List<String> homeBadges = List<String>.from(homeSnap.data()?['unlockedBadges'] ?? []);
-      int homeMatchesTotal = (homeSnap.data()?['matchesPlayed'] ?? 0) + 1;
-      
-      if (homeMatchesTotal >= 10 && !homeBadges.contains('gladiator')) homeBadges.add('gladiator');
-      if (homeStreak >= 3 && !homeBadges.contains('streak_3')) homeBadges.add('streak_3');
-
-      // Away Team Logic
-      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
-      bool isNewForAway = !awayPlayed.contains(homeTeamId);
       int awayStreak = (finalOutcome == MatchOutcome.awayWin) 
           ? (awaySnap.data()?['currentWinningStreak'] ?? 0) + 1 
           : 0;
-      List<String> awayBadges = List<String>.from(awaySnap.data()?['unlockedBadges'] ?? []);
+          
+      int homeMatchesTotal = (homeSnap.data()?['matchesPlayed'] ?? 0) + 1;
       int awayMatchesTotal = (awaySnap.data()?['matchesPlayed'] ?? 0) + 1;
+      
+      if (homeMatchesTotal >= 10 && !homeBadges.contains('gladiator')) homeBadges.add('gladiator');
+      if (homeStreak >= 3 && !homeBadges.contains('streak_3')) homeBadges.add('streak_3');
       
       if (awayMatchesTotal >= 10 && !awayBadges.contains('gladiator')) awayBadges.add('gladiator');
       if (awayStreak >= 3 && !awayBadges.contains('streak_3')) awayBadges.add('streak_3');
 
       // Update Home Team
       transaction.update(homeRef, {
-        'points': newRatings['home'],
+        'points': homePoints + homePointsEarned,
         'matchesPlayed': FieldValue.increment(1),
         'wins': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
         'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
         'losses': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
-        'trend': newRatings['home']! > homeRating ? 'up' : (newRatings['home']! < homeRating ? 'down' : 'stable'),
+        'trend': homePointsEarned > 0 ? 'up' : 'stable',
         'currentWinningStreak': homeStreak,
         'unlockedBadges': homeBadges,
+        'beatenOpponents': homeBeaten,
         if (isNewForHome) 'playedOpponents': FieldValue.arrayUnion([awayTeamId]),
       });
 
       // Update Away Team
       transaction.update(awayRef, {
-        'points': newRatings['away'],
+        'points': awayPoints + awayPointsEarned,
         'matchesPlayed': FieldValue.increment(1),
         'wins': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
         'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
         'losses': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
-        'trend': newRatings['away']! > awayRating ? 'up' : (newRatings['away']! < awayRating ? 'down' : 'stable'),
+        'trend': awayPointsEarned > 0 ? 'up' : 'stable',
         'currentWinningStreak': awayStreak,
         'unlockedBadges': awayBadges,
+        'beatenOpponents': awayBeaten,
         if (isNewForAway) 'playedOpponents': FieldValue.arrayUnion([homeTeamId]),
       });
       
@@ -750,6 +587,40 @@ class DatabaseService {
     }
   }
 
+  Future<void> markNotificationAsRead(String userId, String notificationId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .doc(notificationId)
+          .update({'isRead': true});
+    } catch (e) {
+      debugPrint('Error marking notification as read: $e');
+    }
+  }
+
+  Future<void> markAllAsRead(String userId) async {
+    try {
+      final snapshot = await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .where('isRead', isEqualTo: false)
+          .get();
+      
+      if (snapshot.docs.isEmpty) return;
+
+      final batch = _firestore.batch();
+      for (var doc in snapshot.docs) {
+        batch.update(doc.reference, {'isRead': true});
+      }
+      await batch.commit();
+    } catch (e) {
+      debugPrint('Error marking all as read: $e');
+    }
+  }
+
   Future<Map<String, int>> getHeadToHeadStats(String teamAId, String teamBId) async {
     try {
       final q1 = await _firestore.collection('bookings')
@@ -818,6 +689,20 @@ class DatabaseService {
     }
   }
 
+  Future<bool> removeMemberFromTeam(String teamId, String userId, String profileImageUrl) async {
+    try {
+      await _firestore.collection('teams').doc(teamId).update({
+        'memberUids': FieldValue.arrayRemove([userId]),
+        'playerImages': FieldValue.arrayRemove([profileImageUrl]),
+        'playersCount': FieldValue.increment(-1),
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error removing member from team: $e');
+      return false;
+    }
+  }
+
   // ==================== PUBLIC MATCHES ====================
 
   Stream<List<Booking>> getPublicMatches() {
@@ -839,7 +724,9 @@ class DatabaseService {
             matches = matches.where((b) {
               final isPublic = b.isPrivate == false; 
               final isFuture = b.startTime.isAfter(now);
-              final hasSpace = b.currentPlayers < (b.maxPlayers > 0 ? b.maxPlayers : 10);
+              // Capacity logic: maxPlayers is per-team, so field capacity is x2
+              final fieldCapacity = b.maxPlayers > 0 ? b.maxPlayers * 2 : 10;
+              final hasSpace = b.currentPlayers < fieldCapacity;
               final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
               return isPublic && isFuture && hasSpace && isRightType;
             }).toList();
@@ -859,17 +746,23 @@ class DatabaseService {
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     try {
       final docRef = _firestore.collection('bookings').doc(bookingId);
-      
+      String hostId = '';
+      String stadiumName = '';
+      String joiningUserName = 'A player';
+
       await _firestore.runTransaction((transaction) async {
         final doc = await transaction.get(docRef);
         if (!doc.exists) throw 'Match not found';
         
         final data = doc.data() as Map<String, dynamic>;
+        hostId = data['ownerId'] ?? data['createdByUserId'] ?? '';
+        stadiumName = data['stadiumName'] ?? 'Match';
         final current = data['currentPlayers'] ?? 0;
         final max = data['maxPlayers'] ?? 0;
         final joined = List<String>.from(data['joinedUserIds'] ?? []);
         
-        if (current >= max) throw 'Match is full';
+        final totalFieldCapacity = max > 0 ? max * 2 : 10;
+        if (current >= totalFieldCapacity) throw 'Match is full';
         if (joined.contains(userId)) throw 'Already joined';
         
         transaction.update(docRef, {
@@ -877,6 +770,44 @@ class DatabaseService {
           'joinedUserIds': FieldValue.arrayUnion([userId]),
         });
       });
+
+      // 1. Transaction Complete
+      
+      // 2. Determine if match is now full
+      final finalDoc = await docRef.get();
+      final finalData = finalDoc.data() as Map<String, dynamic>;
+      final finalCurrent = finalData['currentPlayers'] ?? 0;
+      final finalMax = finalData['maxPlayers'] ?? 0;
+      final totalCapacity = finalMax > 0 ? finalMax * 2 : 10;
+      final participantIds = List<String>.from(finalData['joinedUserIds'] ?? []);
+
+      // 3. Get joining user name for notification
+      try {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+          joiningUserName = userDoc.data()?['name'] ?? 'A player';
+        }
+      } catch (_) {}
+
+      // 4. Send Notifications
+      if (hostId.isNotEmpty && hostId != userId) {
+        await NotificationHandler.notifyPlayerJoinedMatch(
+          hostId: hostId,
+          playerName: joiningUserName,
+          stadiumName: stadiumName,
+          bookingId: bookingId,
+        );
+      }
+
+      // Check if full
+      if (finalCurrent >= totalCapacity) {
+        await NotificationHandler.notifyMatchIsFull(
+          playerIds: participantIds,
+          stadiumName: stadiumName,
+          bookingId: bookingId,
+        );
+      }
+
       AnalyticsService.logMatchJoined(bookingId, 'public');
       return true;
     } catch (e) {
@@ -888,12 +819,17 @@ class DatabaseService {
   Future<bool> leavePublicMatch(String bookingId, String userId) async {
     try {
       final docRef = _firestore.collection('bookings').doc(bookingId);
-      
+      String hostId = '';
+      String stadiumName = '';
+      String leavingUserName = 'A player';
+
       await _firestore.runTransaction((transaction) async {
         final doc = await transaction.get(docRef);
         if (!doc.exists) throw 'Match not found';
         
         final data = doc.data() as Map<String, dynamic>;
+        hostId = data['ownerId'] ?? data['createdByUserId'] ?? '';
+        stadiumName = data['stadiumName'] ?? 'Match';
         final joined = List<String>.from(data['joinedUserIds'] ?? []);
         
         if (!joined.contains(userId)) throw 'Not a participant';
@@ -903,6 +839,28 @@ class DatabaseService {
           'joinedUserIds': FieldValue.arrayRemove([userId]),
         });
       });
+
+      // Get user name for notification
+      try {
+        final userDoc = await _firestore.collection('users').doc(userId).get();
+        if (userDoc.exists) {
+            leavingUserName = userDoc.data()?['name'] ?? 'A player';
+        }
+      } catch (_) {}
+
+      if (hostId.isNotEmpty && hostId != userId) {
+        await sendNotification(
+          hostId,
+          AppNotification(
+            id: '',
+            title: 'Player Left Match ⚠️',
+            body: '$leavingUserName left your match at $stadiumName.',
+            type: 'info',
+            createdAt: DateTime.now(),
+            bookingId: bookingId,
+          ),
+        );
+      }
       return true;
     } catch (e) {
       debugPrint('Error leaving public match: $e');
@@ -914,12 +872,14 @@ class DatabaseService {
   Future<bool> removeParticipantFromPublicMatch(String bookingId, String userId) async {
     try {
       final docRef = _firestore.collection('bookings').doc(bookingId);
-      
+      String stadiumName = 'Match';
+
       await _firestore.runTransaction((transaction) async {
         final doc = await transaction.get(docRef);
         if (!doc.exists) throw 'Match not found';
         
         final data = doc.data() as Map<String, dynamic>;
+        stadiumName = data['stadiumName'] ?? 'Match';
         final joined = List<String>.from(data['joinedUserIds'] ?? []);
         
         if (!joined.contains(userId)) throw 'User is not a participant';
@@ -929,9 +889,53 @@ class DatabaseService {
           'joinedUserIds': FieldValue.arrayRemove([userId]),
         });
       });
+
+      // Notify the removed player
+      await sendNotification(
+        userId,
+        AppNotification(
+          id: '',
+          title: 'Match Participation Cancelled ❕',
+          body: 'The host has removed you from the match at $stadiumName.',
+          type: 'info',
+          createdAt: DateTime.now(),
+          bookingId: bookingId,
+        ),
+      );
+
       return true;
     } catch (e) {
       debugPrint('Error removing participant from public match: $e');
+      return false;
+    }
+  }
+
+  /// Host-only: Update the number of initial players the host brings
+  Future<bool> updatePublicMatchHostSpots(String bookingId, int newHostSpotsCount) async {
+    try {
+      final docRef = _firestore.collection('bookings').doc(bookingId);
+      await _firestore.runTransaction((transaction) async {
+        final doc = await transaction.get(docRef);
+        if (!doc.exists) throw 'Match not found';
+        
+        final data = doc.data() as Map<String, dynamic>;
+        final joinedUserIds = List<String>.from(data['joinedUserIds'] ?? []);
+        
+        final newCurrentPlayers = joinedUserIds.length + newHostSpotsCount;
+        final max = data['maxPlayers'] ?? 0;
+        final totalFieldCapacity = max > 0 ? max * 2 : 10;
+        
+        if (newCurrentPlayers > totalFieldCapacity) {
+          throw 'Exceeds stadium capacity';
+        }
+        
+        transaction.update(docRef, {
+          'currentPlayers': newCurrentPlayers,
+        });
+      });
+      return true;
+    } catch (e) {
+      debugPrint('Error updating host spots: $e');
       return false;
     }
   }
@@ -955,12 +959,12 @@ class DatabaseService {
   }
 
   // BETA READY: Interactive notification action logic
-  Future<void> respondToChallenge(String notificationId, String bookingId, bool accept) async {
+  Future<void> respondToChallenge(String userId, String notificationId, String bookingId, bool accept) async {
     try {
       final batch = _firestore.batch();
       
       // 1. Mark notification as read
-      batch.update(_firestore.collection('notifications').doc(notificationId), {
+      batch.update(_firestore.collection('users').doc(userId).collection('notifications').doc(notificationId), {
         'isRead': true,
       });
 
@@ -974,58 +978,7 @@ class DatabaseService {
       debugPrint('Error responding to challenge: $e');
     }
   }
-  // TOURNAMENT Logic: Update championship status (e.g., from 'open' to 'ongoing')
-  Future<void> updateChampionshipStatus(String championshipId, String status) async {
-    try {
-      await _firestore.collection('championships').doc(championshipId).update({
-        'status': status,
-      });
-    } catch (e) {
-      debugPrint('Error updating championship status: $e');
-    }
-  }
 
-  // TOURNAMENT Logic: Finalize tournament and increment winning team's trophies
-  Future<void> crownChampion(String championshipId, String winningTeamId, String winningTeamName) async {
-    try {
-      final batch = _firestore.batch();
-      
-      // 1. Mark championship as completed
-      batch.update(_firestore.collection('championships').doc(championshipId), {
-        'status': 'completed',
-        'championTeamId': winningTeamId,
-        'championTeamName': winningTeamName,
-      });
-
-      // 2. Increment team's trophies and add badge
-      batch.update(_firestore.collection('teams').doc(winningTeamId), {
-        'championshipsWon': FieldValue.increment(1),
-        'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
-      });
-
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Error crowning champion: $e');
-      throw 'Failed to crown champion';
-    }
-  }
-
-  // TOURNAMENT Logic: Fetch joined teams for dashboard
-  Future<List<Team>> getTeamsByIds(List<String> ids) async {
-    if (ids.isEmpty) return [];
-    try {
-      // Note: Firestore 'whereIn' is limited to 10-30 items depending on sdk, 
-      // but usually championships have a max team count.
-      final query = await _firestore.collection('teams')
-          .where(FieldPath.documentId, whereIn: ids)
-          .get();
-      
-      return query.docs.map((d) => Team.fromFirestore(d.data(), d.id)).toList();
-    } catch (e) {
-      debugPrint('Error getting teams by IDs: $e');
-      return [];
-    }
-  }
 
   // BETA READY: Delete team logic
   Future<bool> deleteTeam(String teamId) async {
@@ -1038,175 +991,6 @@ class DatabaseService {
     }
   }
 
-  // ==================== TOURNAMENT BRACKET ENGINE ====================
-
-  /// Generates the full knockout bracket tree for a championship.
-  /// Supports 4, 8, 16, or 32 teams. Teams are randomly shuffled (draw).
-  Future<void> generateFixtures(String championshipId) async {
-    try {
-      // 1. Get Championship & Teams
-      final champDoc = await _firestore.collection('championships').doc(championshipId).get();
-      if (!champDoc.exists) throw 'Championship not found';
-
-      final champData = champDoc.data() as Map<String, dynamic>;
-      final List<String> teamIds = List<String>.from(champData['joinedTeams'] ?? []);
-
-      // Validation: must be power of 2
-      int teamCount = teamIds.length;
-      if (![4, 8, 16, 32].contains(teamCount)) {
-        throw 'Number of teams must be 4, 8, 16, or 32 for a knockout bracket. Current: $teamCount';
-      }
-
-      // 2. Fetch Team Names
-      final teams = await getTeamsByIds(teamIds);
-      final teamMap = {for (var t in teams) t.id: t.name};
-
-      // 3. Shuffle Teams (Random Draw)
-      final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
-
-      // 4. Determine Rounds
-      // Round 0 = Final (1 match), Round 1 = Semi (2 matches), Round 2 = Quarters (4 matches), etc.
-      int totalRounds = (log(teamCount) / log(2)).round();
-      int firstRoundIndex = totalRounds - 1;
-
-      final batch = _firestore.batch();
-      final matchesCollection = _firestore.collection('tournament_matches');
-
-      // Helper: deterministic match IDs
-      String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
-
-      // 5. Generate All Match Slots
-      for (int r = 0; r <= firstRoundIndex; r++) {
-        int matchCount = pow(2, r).toInt();
-
-        for (int m = 0; m < matchCount; m++) {
-          final docRef = matchesCollection.doc(getMatchId(r, m));
-
-          // Link to parent match in the next round closer to Final
-          String? nextMatchId;
-          if (r > 0) {
-            nextMatchId = getMatchId(r - 1, m ~/ 2);
-          }
-
-          // Only populate teams in the FIRST round (furthest from Final)
-          String? homeId, homeName, awayId, awayName;
-          if (r == firstRoundIndex) {
-            int teamIndexBase = m * 2;
-            if (teamIndexBase < shuffledIds.length) {
-              homeId = shuffledIds[teamIndexBase];
-              homeName = teamMap[homeId];
-            }
-            if (teamIndexBase + 1 < shuffledIds.length) {
-              awayId = shuffledIds[teamIndexBase + 1];
-              awayName = teamMap[awayId];
-            }
-          }
-
-          final matchData = TournamentMatch(
-            id: docRef.id,
-            championshipId: championshipId,
-            roundIndex: r,
-            matchIndex: m,
-            nextMatchId: nextMatchId,
-            homeTeamId: homeId,
-            homeTeamName: homeName,
-            awayTeamId: awayId,
-            awayTeamName: awayName,
-          );
-
-          batch.set(docRef, matchData.toFirestore());
-        }
-      }
-
-      // 6. Update Championship Status to 'ongoing'
-      batch.update(champDoc.reference, {'status': 'ongoing'});
-
-      await batch.commit();
-      debugPrint('✅ Fixtures generated for $championshipId: $totalRounds rounds, $teamCount teams');
-    } catch (e) {
-      debugPrint('Error generating fixtures: $e');
-      rethrow;
-    }
-  }
-
-  /// Updates a match score and automatically propagates the winner to the next round.
-  Future<void> updateTournamentMatchScore({
-    required String matchId,
-    required int homeScore,
-    required int awayScore,
-    required String winnerId,
-    required String winnerName,
-  }) async {
-    try {
-      final matchRef = _firestore.collection('tournament_matches').doc(matchId);
-
-      await _firestore.runTransaction((transaction) async {
-        final matchDoc = await transaction.get(matchRef);
-        if (!matchDoc.exists) throw 'Match not found';
-
-        final matchData = matchDoc.data() as Map<String, dynamic>;
-        final String? nextMatchId = matchData['nextMatchId'];
-        final int matchIndex = matchData['matchIndex'];
-
-        // 1. Update Current Match Score & Winner
-        transaction.update(matchRef, {
-          'homeScore': homeScore,
-          'awayScore': awayScore,
-          'winnerId': winnerId,
-        });
-
-        // 2. Propagate Winner to Next Match
-        if (nextMatchId != null) {
-          final nextMatchRef = _firestore.collection('tournament_matches').doc(nextMatchId);
-
-          // Even matchIndex → Home slot, Odd → Away slot in parent match
-          String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
-
-          transaction.update(nextMatchRef, {
-            '${slotField}TeamId': winnerId,
-            '${slotField}TeamName': winnerName,
-          });
-        } else if (matchData['roundIndex'] == 0) {
-          // 🏆 This was the FINAL — automatically crown champion
-          final champRef = _firestore.collection('championships').doc(matchData['championshipId']);
-          final teamRef = _firestore.collection('teams').doc(winnerId);
-
-          transaction.update(champRef, {
-            'status': 'completed',
-            'championTeamId': winnerId,
-            'championTeamName': winnerName,
-          });
-
-          transaction.update(teamRef, {
-            'championshipsWon': FieldValue.increment(1),
-            'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
-          });
-        }
-      });
-    } catch (e) {
-      debugPrint('Error updating tournament match score: $e');
-      rethrow;
-    }
-  }
-
-  /// Real-time stream of all bracket matches for a championship.
-  Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) {
-    return _firestore
-        .collection('tournament_matches')
-        .where('championshipId', isEqualTo: championshipId)
-        .snapshots()
-        .map((snapshot) {
-      final matches = snapshot.docs
-          .map((doc) => TournamentMatch.fromFirestore(doc.data(), doc.id))
-          .toList();
-      // Sort: highest roundIndex first (first rounds at top), then by matchIndex
-      matches.sort((a, b) {
-        if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
-        return a.matchIndex.compareTo(b.matchIndex);
-      });
-      return matches;
-    });
-  }
 
   // ==================== VSP 1v1 LEAGUE ====================
   
@@ -1232,101 +1016,9 @@ class DatabaseService {
         });
   }
 
-  // ==================== CHAT ====================
-
-  Stream<List<ChatMessage>> getChatMessages(String bookingId) {
-    return _firestore
-        .collection('bookings')
-        .doc(bookingId)
-        .collection('messages')
-        .orderBy('timestamp', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => ChatMessage.fromFirestore(doc.data(), doc.id))
-            .toList());
-  }
-
-  Future<void> sendMessage(String bookingId, ChatMessage message) async {
-    try {
-      final batch = _firestore.batch();
-      
-      // 1. Add Message
-      final messageRef = _firestore
-          .collection('bookings')
-          .doc(bookingId)
-          .collection('messages')
-          .doc();
-      batch.set(messageRef, message.toFirestore());
-      
-      // 2. Fetch participants for unread increment
-      final bookingDoc = await _firestore.collection('bookings').doc(bookingId).get();
-      final participants = List<String>.from(bookingDoc.data()?['joinedUserIds'] ?? []);
-      
-      Map<String, dynamic> unreadUpdates = {};
-      for (var uid in participants) {
-        if (uid != message.senderId) {
-          unreadUpdates['unreadCounts.$uid'] = FieldValue.increment(1);
-        }
-      }
-
-      // 3. Update summary
-      batch.update(_firestore.collection('bookings').doc(bookingId), {
-        'lastMessage': message.text,
-        'lastMessageTime': FieldValue.serverTimestamp(),
-        ...unreadUpdates,
-      });
-
-      await batch.commit();
-    } catch (e) {
-      debugPrint('Error sending message: $e');
-    }
-  }
-
-  /// Mark all messages as read for a specific user in a booking
-  Future<void> markMessagesAsRead(String bookingId, String userId) async {
-    try {
-      await _firestore.collection('bookings').doc(bookingId).update({
-        'unreadCounts.$userId': 0,
-      });
-    } catch (e) {
-      debugPrint('Error marking messages as read: $e');
-    }
-  }
 
   // ==================== PAGINATION & PERFORMANCE ====================
 
-  /// Fetch stadiums in batches of 10
-  Future<Map<String, dynamic>> getStadiumsPaginated({
-    int limit = 10,
-    DocumentSnapshot? startAfter,
-  }) async {
-    try {
-      Query query = _firestore.collection('stadiums');
-      
-      if (!AppConfig.demoMode) {
-        query = query.where('isVerified', isEqualTo: true);
-      }
-      
-      query = query.orderBy('createdAt', descending: true).limit(limit);
-
-      if (startAfter != null) {
-        query = query.startAfterDocument(startAfter);
-      }
-
-      final snapshot = await query.get();
-      final items = snapshot.docs
-          .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-      
-      return {
-        'items': items,
-        'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
-      };
-    } catch (e) {
-      debugPrint('Error fetching paginated stadiums: $e');
-      return {'items': [], 'lastDoc': null};
-    }
-  }
 
   /// Fetch public matches in batches of 10
   Future<Map<String, dynamic>> getPublicMatchesPaginated({
@@ -1494,50 +1186,56 @@ class DatabaseService {
     }
   }
 
-  // Phase 2: Stadium Deletion Safeguard
-  Future<bool> deleteStadium(String stadiumId) async {
+
+  // ── DEBT MANAGEMENT ────────────────────────────────
+  
+  /// Get all unpaid bookings for a user (isPaid == false)
+  Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {
     try {
-      // 1. Get Upcoming Bookings
-      final bookingSnap = await _firestore.collection('bookings')
-          .where('stadiumId', isEqualTo: stadiumId)
-          .where('status', isEqualTo: 'upcoming')
+      final snapshot = await _firestore
+          .collection('bookings')
+          .where('userId', isEqualTo: userId)
+          .where('isPaid', isEqualTo: false)
           .get();
-
-      final batch = _firestore.batch();
       
-      for (var doc in bookingSnap.docs) {
-        batch.update(doc.reference, {
-          'status': 'cancelled_by_owner',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        
-        // 2. Notify Players
-        final bookingData = doc.data();
-        final userId = bookingData['createdByUserId'];
-        if (userId != null) {
-          final notificationRef = _firestore.collection('users').doc(userId).collection('notifications').doc();
-          batch.set(notificationRef, {
-            'title': 'Booking Cancelled 🏟️',
-            'body': 'Your booking at ${bookingData['stadiumName']} was cancelled as the stadium is no longer available.',
-            'type': 'cancelled_by_owner',
-            'isRead': false,
-            'createdAt': FieldValue.serverTimestamp(),
-            'bookingId': doc.id,
-          });
-        }
-      }
-
-      // 3. Mark Stadium as Deleted/Unverified
-      batch.update(_firestore.collection('stadiums').doc(stadiumId), {
-        'isVerified': false,
-        'deletedAt': FieldValue.serverTimestamp(),
-      });
-
-      await batch.commit();
-      return true;
+      return snapshot.docs.map((doc) => Booking.fromFirestore(doc.data(), doc.id)).toList();
     } catch (e) {
-      VSPLogger.e('Error during stadium deletion cascade', e);
-      return false;
+      VSPLogger.e('Error fetching unpaid bookings for user $userId', e);
+      return [];
     }
+  }
+
+  /// Update user profile fields in Firestore (e.g., isBlocked)
+  Future<void> updateUserProfile(String userId, Map<String, dynamic> data) async {
+    try {
+      await _firestore.collection('users').doc(userId).update(data);
+    } catch (e) {
+      VSPLogger.e('Error updating user profile $userId', e);
+    }
+  }
+
+  /// Delete a notification (for swipe-to-dismiss)
+  Future<void> deleteNotification(String userId, String notificationId) async {
+    try {
+      await _firestore
+          .collection('users')
+          .doc(userId)
+          .collection('notifications')
+          .doc(notificationId)
+          .delete();
+    } catch (e) {
+      VSPLogger.e('Error deleting notification $notificationId', e);
+    }
+  }
+
+  /// Get unread notification count for badge
+  Stream<int> getUnreadNotificationCount(String userId) {
+    return _firestore
+        .collection('users')
+        .doc(userId)
+        .collection('notifications')
+        .where('isRead', isEqualTo: false)
+        .snapshots()
+        .map((snap) => snap.docs.length);
   }
 }

@@ -214,7 +214,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 },
               ),
               IconButton(
-                icon: const Icon(Icons.report_problem_outlined, color: Colors.white54),
+                icon: const Icon(Icons.report_problem_outlined, color: VSPColors.textSecondary),
                 onPressed: _onReport,
               ),
               const SizedBox(width: 8),

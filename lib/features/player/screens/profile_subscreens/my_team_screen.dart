@@ -29,6 +29,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   bool _isLoading = true;
   String? _newLogoUrl;
   bool _isSaving = false;
+  XFile? _selectedLogo; // 🖼️ Deferred upload: only upload on save
   
   // ✅ Permission Check: Captain is always index 0 of the team's member list
   bool get isCaptain {
@@ -81,7 +82,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddPlayerSheet(
-        existingMemberUids: _myTeam?.memberUids ?? [],
+        existingMemberUids: [
+           _myTeam?.memberUids.first ?? '', 
+           ..._teamMembers.map((m) => m.uid)
+        ],
         onPlayerAdded: (UserModel user) async {
           setState(() {
             if (!_teamMembers.any((m) => m.uid == user.uid)) {
@@ -200,7 +204,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         value: _selectedSport,
                         isExpanded: true,
                         dropdownColor: VSPColors.surface,
-                        items: ['Football', 'Basketball', 'Volleyball', 'Handball', 'Padel']
+                        items: VSPConstants.sports
                             .map((s) => DropdownMenuItem(
                                   value: s,
                                   child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)),
@@ -223,49 +227,27 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         height: 50,
                         borderRadius: 25,
                         errorWidget: const Icon(Icons.person,
-                            color: Colors.white54),
+                            color: VSPColors.textSecondary),
                       ),
                       const SizedBox(width: VSPSpacing.md),
                       // ✅ Use VSPPrimaryButton or styled ElevatedButton
                       Expanded(
-                        child: SizedBox(
+                        child: PrimaryButton(
+                          text: 'Upload Photo',
                           height: 45,
-                          child: ElevatedButton.icon(
-                            onPressed: !isCaptain ? null : () async {
-                              final auth = Provider.of<AuthProvider>(context,
-                                  listen: false);
-                              final uid = auth.userModel?.uid ?? 'unknown';
-
-                              final picker = ImagePicker();
-                              final XFile? image = await picker.pickImage(
-                                source: ImageSource.gallery,
-                                imageQuality: 70,
-                              );
-                              if (image != null) {
-                                setState(() => _isSaving = true);
-                                try {
-                                  final url = await CloudinaryService()
-                                      .uploadImage(
-                                    image,
-                                    folder: 'teams/$uid/logo',
-                                  );
-                                  if (mounted) {
-                                    setState(() => _newLogoUrl = url);
-                                  }
-                                } finally {
-                                  if (mounted) setState(() => _isSaving = false);
-                                }
-                              }
-                            },
-                            style: ElevatedButton.styleFrom(
-                              backgroundColor: VSPColors.surfaceAlt,
-                              foregroundColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withOpacity(0.5),
-                              elevation: 0,
-                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))
-                            ),
-                            icon: const Icon(Icons.cloud_upload_outlined, size: 18),
-                            label: const Text('Upload Photo'),
-                          ),
+                          color: VSPColors.surfaceAlt,
+                          textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
+                          icon: Icons.cloud_upload_outlined,
+                          onPressed: !isCaptain ? null : () async {
+                            final picker = ImagePicker();
+                            final XFile? image = await picker.pickImage(
+                              source: ImageSource.gallery,
+                              imageQuality: 70,
+                            );
+                            if (image != null && mounted) {
+                              setState(() => _selectedLogo = image);
+                            }
+                          },
                         ),
                       ),
                     ],
@@ -306,7 +288,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         ? Center(
                             child: Text('Add your team members',
                                 style: TextStyle(
-                                    color: Colors.white.withValues(alpha: 0.3),
+                                    color: VSPColors.textSecondary.withValues(alpha: 0.3),
                                     fontSize: 12)))
                         : Wrap(
                             spacing: 8,
@@ -367,6 +349,15 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             
                             if (user == null) throw 'User session expired';
 
+                            // 🖼️ Deferred upload: upload logo only on save
+                            String? logoUrl = _newLogoUrl;
+                            if (_selectedLogo != null) {
+                              logoUrl = await CloudinaryService().uploadImage(
+                                _selectedLogo!,
+                                folder: 'teams/${user.uid}/logo',
+                              );
+                            }
+
                             // Construct initial arrays - start with Captain
                             List<String> finalUids = [user.uid];
                             List<String> finalImages = [user.profileImageUrl ?? '']; // Captain face, NOT logo
@@ -382,7 +373,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                               'sportType': _selectedSport,
                               'captainName': user.name ?? 'Captain',
                               'captainImageUrl': user.profileImageUrl ?? '', // Captain's personal image
-                              'logoUrl': _newLogoUrl ?? '', // Team's logo
+                              'logoUrl': logoUrl ?? '', // Team's logo
                               'captainPhone': PhoneUtils.normalize(user.phone ?? ''),
                               'memberUids': finalUids,
                               'playerImages': finalImages,
@@ -435,8 +426,17 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                     setState(() => _isSaving = true);
 
                                     try {
-                                      // REFACTOR: Create clean lists starting with Captain (Index 0)
+                                      // 🖼️ Deferred upload: upload logo only on save
                                       final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+                                      String? logoUrl = _newLogoUrl;
+                                      if (_selectedLogo != null) {
+                                        logoUrl = await CloudinaryService().uploadImage(
+                                          _selectedLogo!,
+                                          folder: 'teams/${user?.uid ?? 'unknown'}/logo',
+                                        );
+                                      }
+
+                                      // REFACTOR: Create clean lists starting with Captain (Index 0)
                                       List<String> finalUids = [_myTeam!.memberUids.first];
                                       List<String> finalImages = [user?.profileImageUrl ?? _myTeam!.playerImages.first];
 
@@ -448,8 +448,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                       final success = await DatabaseService().updateTeam(_myTeam!.id, {
                                         'name': _teamNameController.text,
                                         'sportType': _selectedSport,
-                                        'logoUrl': _newLogoUrl ?? _myTeam!.logoUrl,
-                                        'captainImageUrl': Provider.of<AuthProvider>(context, listen: false).userModel?.profileImageUrl ?? _myTeam!.captainImageUrl,
+                                        'logoUrl': logoUrl ?? _myTeam!.logoUrl,
+                                        'captainImageUrl': user?.profileImageUrl ?? _myTeam!.captainImageUrl,
                                         'memberUids': finalUids,
                                         'playerImages': finalImages,
                                         'playersCount': finalUids.length,
@@ -500,7 +500,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
            Row(
              mainAxisAlignment: MainAxisAlignment.center,
              children: [
-               if (isRedArrow) const Icon(Icons.arrow_drop_down, color: Colors.red, size: 20),
+               if (isRedArrow) const Icon(Icons.arrow_drop_down, color: VSPColors.error, size: 20),
                Text(
                  value, 
                  style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24),
@@ -544,7 +544,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       radius: 16,
       backgroundColor: VSPColors.surface,
       backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-      child: imageUrl.isEmpty ? const Icon(Icons.person, color: Colors.white54, size: 16) : null,
+      child: imageUrl.isEmpty ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 16) : null,
     );
   }
 
@@ -552,7 +552,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 4),
       decoration: BoxDecoration(
-        color: Colors.white.withValues(alpha: 0.05),
+        color: VSPColors.white12,
         borderRadius: BorderRadius.circular(20),
       ),
       child: Row(
@@ -562,17 +562,33 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               radius: 12,
               backgroundColor: VSPColors.surface,
               backgroundImage: (user.profileImageUrl?.isNotEmpty ?? false) ? NetworkImage(user.profileImageUrl!) : null,
-              child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(Icons.person, color: Colors.white54, size: 12) : null,
+              child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 12) : null,
             ),
             const SizedBox(width: VSPSpacing.sm),
-            Text(user.name ?? 'Player', style: const TextStyle(color: Colors.white, fontSize: 12)),
+            Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12)),
            const SizedBox(width: 4),
             if (isCaptain)
               GestureDetector(
-                onTap: () => setState(() => _teamMembers.remove(user)),
+                onTap: () async {
+                  final userToRemove = user;
+                  setState(() {
+                    _teamMembers.removeWhere((m) => m.uid == userToRemove.uid);
+                    // Note: We do not manually mutate _myTeam here because its fields are generated
+                    // and we will rely on _fetchMyTeam() below to sync the exact state from Firestore.
+                  });
+                  
+                  if (_myTeam != null) {
+                    await DatabaseService().removeMemberFromTeam(
+                      _myTeam!.id, 
+                      userToRemove.uid, 
+                      userToRemove.profileImageUrl ?? ''
+                    );
+                    _fetchMyTeam(); // Sync state with server
+                  }
+                },
                 child: const Padding(
                   padding: EdgeInsets.all(4.0),
-                  child: Icon(Icons.close, color: Colors.white, size: 14),
+                  child: Icon(Icons.close, color: VSPColors.textPrimary, size: 14),
                 ),
               ),
         ],
@@ -648,14 +664,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         shape: BoxShape.circle,
                         color: isUnlocked ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surfaceAlt.withValues(alpha: 0.5),
                         border: Border.all(
-                          color: isUnlocked ? VSPColors.accent : Colors.white10,
+                          color: isUnlocked ? VSPColors.accent : VSPColors.divider,
                           width: 2,
                         ),
                         boxShadow: isUnlocked ? VSPShadow.subtle : [],
                       ),
                       child: Icon(
                         badge['icon'] as IconData,
-                        color: isUnlocked ? VSPColors.accent : Colors.white24,
+                        color: isUnlocked ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
                         size: 30,
                       ),
                     ),
@@ -663,7 +679,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     Text(
                       badge['name'] as String,
                       style: TextStyle(
-                        color: isUnlocked ? VSPColors.textPrimary : Colors.white24,
+                        color: isUnlocked ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.3),
                         fontSize: 11,
                         fontWeight: FontWeight.bold,
                       ),
@@ -684,7 +700,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(name, style: TextStyle(color: isUnlocked ? VSPColors.accent : Colors.white, fontWeight: FontWeight.bold)),
+        title: Text(name, style: TextStyle(color: isUnlocked ? VSPColors.accent : VSPColors.textPrimary, fontWeight: FontWeight.bold)),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -718,7 +734,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: const Text("Delete Team", style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+        title: const Text("Delete Team", style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
         content: const Text(
           "Are you sure? This action cannot be undone and your team and achievements will be lost.",
           style: TextStyle(color: VSPColors.textSecondary),
@@ -742,7 +758,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   text: 'Delete',
                   height: 48,
                   color: VSPColors.error,
-                  textColor: Colors.white,
+                  textColor: VSPColors.background,
                   onPressed: () async {
                     Navigator.pop(context);
                     if (_myTeam != null) {

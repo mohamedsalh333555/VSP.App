@@ -5,8 +5,13 @@ import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/booking_success_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
+import '../../features/player/screens/booked_screen.dart';
 import '../repositories/booking_repository.dart';
 import '../services/logger_service.dart';
+
+import 'package:firebase_auth/firebase_auth.dart';
+import '../../data/models.dart';
+import '../services/database_service.dart';
 
 class NotificationService {
   // Singleton pattern
@@ -38,29 +43,28 @@ class NotificationService {
   Future<void> initialize(GlobalKey<NavigatorState> navKey) async {
     _navigatorKey = navKey;
 
-    // 1. Get & store token (not logged — tokens are device credentials)
+    // 1. Get & store token
     getToken();
 
     // 2. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
       if (message.notification != null) {
-        // Show local notification
         _showLocalNotification(message);
       }
     });
 
-    // 3. Background/Terminated Handler (App opened from notification)
+    // 3. Background/Terminated Handler
     FirebaseMessaging.onMessageOpenedApp.listen((RemoteMessage message) {
       _handleNotificationClick(message.data);
     });
 
-    // 4. Initial Message (App launched from notification while terminated)
+    // 4. Initial Message
     RemoteMessage? initialMessage = await FirebaseMessaging.instance.getInitialMessage();
     if (initialMessage != null) {
       _handleNotificationClick(initialMessage.data);
     }
 
-    // 5. Initialize Local Notifications Settings
+    // 5. Initialize Local Notifications
     const AndroidInitializationSettings initializationSettingsAndroid =
         AndroidInitializationSettings('ic_notification');
     
@@ -91,44 +95,106 @@ class NotificationService {
     );
   }
 
+  Future<void> scheduleMatchReminder({
+    required String bookingId,
+    required String stadiumName,
+    required DateTime matchTime,
+  }) async {
+    final reminderTime = matchTime.subtract(const Duration(hours: 2));
+    if (reminderTime.isBefore(DateTime.now())) return;
+
+    const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+      'match_reminders',
+      'Match Reminders',
+      channelDescription: 'Reminders sent 2 hours before a match starts',
+      importance: Importance.high,
+      priority: Priority.high,
+    );
+
+    const NotificationDetails details = NotificationDetails(android: androidDetails);
+
+    // Note: In a production app, we would use zonedSchedule. 
+    // Here we use a simplified version for the MVP demonstration.
+    await _localNotifications.show(
+      bookingId.hashCode,
+      'Match Reminder ⚽',
+      'Your match at $stadiumName starts in 2 hours! Don\'t forget your gear.',
+      details,
+      payload: jsonEncode({'type': 'booking', 'id': bookingId}),
+    );
+    
+    VSPLogger.i('Scheduled reminder for $bookingId at $reminderTime');
+  }
+
   void _handleNotificationClick(Map<String, dynamic> data) async {
     final context = _navigatorKey?.currentContext;
     if (context == null) return;
 
-    final type = data['type'];
-    final bookingId = data['bookingId'];
+    final String? type = data['type'];
+    final String? bookingId = data['bookingId'];
 
-    if (type == 'challenge') {
+    VSPLogger.i('Handling notification click: type=$type, bookingId=$bookingId');
+
+    // 1. CHAT
+    if (type == 'chat' && bookingId != null) {
+      _navigateToChat(context, bookingId);
+      return;
+    }
+
+    // 2. CHALLENGE
+    if (type == 'challenge' || type == 'challenge_declined' || type == 'challenge_accepted') {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
       );
-    } else if (type == 'chat' && bookingId != null) {
-      // 💬 CHAT REDIRECTION: Navigate directly to the ChatScreen
-      try {
-        final booking = await FirestoreBookingRepository().getBookingById(bookingId);
-        if (booking != null && context.mounted) {
-           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
-          );
-        }
-      } catch (e) {
-        VSPLogger.e('Error navigating to chat', e);
+      return;
+    }
+
+    // 3. BOOKING RELATED
+    if (bookingId != null) {
+      if (type == 'booking_new' || type == 'booking_confirmed') {
+        _navigateToBooking(context, bookingId);
+      } else {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => const BookedScreen()),
+        );
       }
-    } else if (bookingId != null) {
-      // Fetch booking and navigate to success/details
-      try {
-        final booking = await FirestoreBookingRepository().getBookingById(bookingId);
-        if (booking != null && context.mounted) {
-           Navigator.push(
-            context,
-            MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
-          );
-        }
-      } catch (e) {
-        VSPLogger.e('Error navigating to booking', e);
+      return;
+    }
+
+    // 4. FALLBACK
+    Navigator.push(
+      context,
+      MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+    );
+  }
+
+  Future<void> _navigateToChat(BuildContext context, String bookingId) async {
+    try {
+      final booking = await FirestoreBookingRepository().getBookingById(bookingId);
+      if (booking != null && context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
+        );
       }
+    } catch (e) {
+      VSPLogger.e('Error navigating to chat', e);
+    }
+  }
+
+  Future<void> _navigateToBooking(BuildContext context, String bookingId) async {
+    try {
+      final booking = await FirestoreBookingRepository().getBookingById(bookingId);
+      if (booking != null && context.mounted) {
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)),
+        );
+      }
+    } catch (e) {
+      VSPLogger.e('Error navigating to booking', e);
     }
   }
 
@@ -161,7 +227,26 @@ class NotificationService {
       platformChannelSpecifics,
       payload: jsonEncode(message.data),
     );
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null && message.notification?.title != null) {
+      final appNotif = AppNotification(
+        id: '',
+        title: message.notification!.title!,
+        body: message.notification!.body ?? '',
+        type: message.data['type'] ?? 'info',
+        bookingId: message.data['bookingId'],
+        createdAt: DateTime.now(),
+        isRead: false,
+      );
+      try {
+        await DatabaseService().sendNotification(uid, appNotif);
+      } catch (e) {
+        VSPLogger.e('Error saving FCM to Firestore', e);
+      }
+    }
   }
+
   static Future<void> showBookingConfirmation({
     required String stadiumName,
     required DateTime bookingDate,
@@ -188,11 +273,31 @@ class NotificationService {
       iOS: darwinPlatformChannelSpecifics,
     );
 
+    final title = 'Booking Confirmed! ⚽';
+    final bodyStr = 'You booked $stadiumName on ${bookingDate.month}/${bookingDate.day} at $timeSlot.';
+
     await NotificationService()._localNotifications.show(
       stadiumName.hashCode,
-      'Booking Confirmed! ⚽',
-      'You booked $stadiumName on ${bookingDate.month}/${bookingDate.day} at $timeSlot.',
+      title,
+      bodyStr,
       platformChannelSpecifics,
     );
+
+    final uid = FirebaseAuth.instance.currentUser?.uid;
+    if (uid != null) {
+      final appNotif = AppNotification(
+        id: '',
+        title: title,
+        body: bodyStr,
+        type: 'info',
+        createdAt: DateTime.now(),
+        isRead: false,
+      );
+      try {
+        await DatabaseService().sendNotification(uid, appNotif);
+      } catch (e) {
+        VSPLogger.e('Error saving booking confirmation to Firestore', e);
+      }
+    }
   }
 }

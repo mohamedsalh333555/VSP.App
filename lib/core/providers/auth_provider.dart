@@ -12,6 +12,8 @@ import 'package:geocoding/geocoding.dart';
 import '../services/logger_service.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../utils/phone_utils.dart';
+import '../services/notification_handler.dart';
+import '../../../../core/constants/egypt_governorates.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -60,6 +62,9 @@ class AuthProvider with ChangeNotifier {
   bool _dataFetchError = false;
   bool get hasDataFetchError => _dataFetchError;
 
+  bool _isGhostUser = false;
+  bool get isGhostUser => _isGhostUser;
+
   AuthProvider() {
     _loadOnboardingStatus();
     // Listen to auth state changes
@@ -77,25 +82,38 @@ class AuthProvider with ChangeNotifier {
           final userData = await _authService.getUserData(user.uid);
           if (userData != null) {
             _userModel = UserModel.fromFirestore(userData);
+            _isGhostUser = false;
             _updateFcmToken(user.uid); // Silent update
             _dataFetchError = false;
+
+            // ── DEBT CHECKER (Phase 4 Automation) ──
+            // Audit unpaid bookings and send alerts/execute blocks
+            NotificationHandler.checkAndSendDebtAlerts(user.uid);
+            
+            if (_userModel?.isBlocked ?? false) {
+              VSPLogger.w("🚫 User ${user.uid} is BLOCKED due to debt.");
+            }
           } else {
-            // 🚨 GHOST SESSION FIX: Auth exists but Firestore doc is missing.
-            // Force logout to break the infinite splash screen trap.
-            VSPLogger.w("⚠️ Ghost user detected (Auth exists, Firestore missing). Forcing logout.");
-            await _authService.signOut();
-            _firebaseUser = null;
+            // 🚨 GHOST SESSION DETECTION: Auth exists but Firestore doc is missing.
+            VSPLogger.w("⚠️ Ghost user detected (UID: ${user.uid}). Auth exists, Firestore missing.");
+            _isGhostUser = true;
             _userModel = null;
-            _userType = null;
           }
         } catch (e) {
-          VSPLogger.e("❌ Firestore fetch exception", e);
+          VSPLogger.e("❌ AuthProvider: Firestore fetch exception", e);
           _dataFetchError = true;
+          _isGhostUser = false;
+        } finally {
+          _isLoading = false;
+          notifyListeners();
         }
       } else {
         _userModel = null;
+        _isGhostUser = false;
         _userType = null; 
         _dataFetchError = false;
+        _isLoading = false;
+        notifyListeners();
       }
       
       _isLoading = false; 
@@ -496,6 +514,7 @@ class AuthProvider with ChangeNotifier {
           isRegistrationComplete: sanitizedData['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
           isIdentityVerified: sanitizedData['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
           governorate: sanitizedData['governorate'] ?? _userModel!.governorate,
+          favoriteStadiums: sanitizedData['favoriteStadiums'] ?? _userModel!.favoriteStadiums,
         );
       }
       _isLoading = false;
@@ -508,6 +527,19 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return false;
     }
+  }
+
+  Future<void> toggleFavoriteStadium(String stadiumId) async {
+    if (_userModel == null) return;
+
+    final updatedList = List<String>.from(_userModel!.favoriteStadiums);
+    if (updatedList.contains(stadiumId)) {
+      updatedList.remove(stadiumId);
+    } else {
+      updatedList.add(stadiumId);
+    }
+
+    await updateProfile({'favoriteStadiums': updatedList});
   }
 
   /// Update Profile Photo (now uses Cloudinary instead of Firebase Storage)
@@ -550,7 +582,6 @@ class AuthProvider with ChangeNotifier {
 
   Future<bool> completeSocialRegistration({
     required String phone,
-    required String password,
     String? name,
     String? position,
     String? governorate,
@@ -568,16 +599,7 @@ class AuthProvider with ChangeNotifier {
     }
 
     try {
-      // 1. Update Password in Firebase Auth
-      final passSuccess = await _authService.updatePassword(password);
-      if (!passSuccess) {
-        _errorMessage = 'Failed to set password. Your session might have expired. Please log in again.';
-        _isLoading = false;
-        notifyListeners();
-        return false;
-      }
-
-      // 2. Prepare update data
+      // 1. Prepare update data
       final Map<String, dynamic> updateData = {
         'phone': PhoneUtils.normalize(phone),
         'governorate': governorate ?? _governorate,
@@ -601,8 +623,11 @@ class AuthProvider with ChangeNotifier {
         );
       }
 
-      // 4. Sync to Firestore in the background
+      // 4. Sync to Firestore
       await updateProfile(updateData);
+      
+      // 5. Critical: Clear ghost status now that Firestore doc exists
+      _isGhostUser = false;
 
       _isLoading = false;
       notifyListeners();
@@ -723,25 +748,13 @@ class AuthProvider with ChangeNotifier {
       );
 
       if (placemarks.isNotEmpty) {
-        // Usually 'administrativeArea' is the Governorate (e.g. Cairo Governorate)
-        String newGov = placemarks.first.administrativeArea ?? '';
-        
-        // Cleanup: Remove "Governorate" suffix if present for cleaner UI
-        newGov = newGov.replaceAll('Governorate', '').trim();
-        
-        // Fallback to locality if empty
-        if (newGov.isEmpty) {
-          newGov = placemarks.first.locality ?? 'Cairo';
-        }
+        final rawName = placemarks.first.administrativeArea ?? placemarks.first.subAdministrativeArea ?? placemarks.first.locality;
+        final newGov = EgyptGovernorates.resolveGoogleName(rawName);
 
         // 4. Update Profile ONLY if changed
-        // This prevents unnecessary writes to Firestore
-        if (_userModel!.governorate?.toLowerCase() != newGov.toLowerCase()) {
+        if (_userModel!.governorate != newGov) {
           debugPrint('📍 Auto-updating location: ${_userModel!.governorate} -> $newGov');
-          
           await updateProfile({'governorate': newGov});
-          
-          // updateProfile handles local model update & notifyListeners
         }
       }
     } catch (e) {

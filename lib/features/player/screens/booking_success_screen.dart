@@ -7,6 +7,10 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booked_screen.dart';
 
+import 'package:provider/provider.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/services/notification_handler.dart';
+import '../../../core/services/database_service.dart';
 import '../../../core/services/notification_service.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
@@ -56,11 +60,45 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   }
 
   Future<void> _showBookingNotification() async {
-    await NotificationService.showBookingConfirmation(
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final playerName = authProvider.userModel?.name ?? 'A player';
+
+    // 1. Notify Player (Local + Firestore)
+    await NotificationHandler.notifyBookingConfirmed(
+      userId: widget.booking.createdByUserId,
       stadiumName: widget.booking.stadiumName,
-      bookingDate: widget.booking.startTime,
+      bookingId: widget.booking.id,
       timeSlot: widget.booking.formattedTimeRange,
     );
+
+    // 2. Notify Owner (Firestore)
+    if (widget.booking.ownerId.isNotEmpty) {
+      await NotificationHandler.notifyNewBookingReceived(
+        ownerId: widget.booking.ownerId,
+        stadiumName: widget.booking.stadiumName,
+        playerName: playerName,
+        bookingId: widget.booking.id,
+        timeSlot: widget.booking.formattedTimeRange,
+      );
+    }
+
+    // 3. Notify Opponent (if Challenge)
+    if (widget.booking.bookingType == BookingType.challenge && widget.booking.opponentTeamId != null) {
+      try {
+        final opponentTeam = await DatabaseService().getTeam(widget.booking.opponentTeamId!);
+        if (opponentTeam != null && opponentTeam.memberUids.isNotEmpty) {
+          // The first member in memberUids is the captain
+          final captainId = opponentTeam.memberUids.first;
+          await NotificationHandler.notifyChallengeReceived(
+            opponentCaptainId: captainId, 
+            challengerTeamName: widget.booking.playerTeamName ?? 'A Team', 
+            bookingId: widget.booking.id,
+          );
+        }
+      } catch (e) {
+        debugPrint('Error sending challenge notification: $e');
+      }
+    }
   }
 
   @override

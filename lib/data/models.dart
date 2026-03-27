@@ -19,6 +19,7 @@ class Stadium {
   final bool isFavorite;
   final double? lat;
   final double? lng;
+  final String? governorate; // ✅ Added for filtering
   
   // Extended fields for details screen
   final String address;
@@ -38,6 +39,14 @@ class Stadium {
   final bool isVerified;
   final bool isFeatured; // ✅ Added featured status
   final String ownerId; // ✅ Stadium owner's UID
+  final bool isBlocked; // ✅ Administrative block flag for debt management
+  
+  // Working Hours (Standardized)
+  final String openingTime; 
+  final String closingTime;
+  final bool isSplitShift;
+  final String? breakStartTime;
+  final String? breakEndTime;
 
   Stadium({
     required this.id,
@@ -71,8 +80,15 @@ class Stadium {
     this.isVerified = false,
     this.isFeatured = false, // ✅ Default to false
     this.ownerId = '', // ✅ Default empty ownerId
+    this.isBlocked = false,
+    this.openingTime = '08:00 AM',
+    this.closingTime = '12:00 AM',
+    this.isSplitShift = false,
+    this.breakStartTime,
+    this.breakEndTime,
     this.lat,
     this.lng,
+    this.governorate, // ✅ Added for filtering
   }) : basePrice = basePrice ?? pricePerHour;
 
   static List<String> parseFeatures(dynamic data) {
@@ -112,6 +128,7 @@ class Stadium {
       id: id,
       name: data['name'] ?? '',
       location: data['location'] ?? '',
+      governorate: data['governorate'], // ✅ Added for filtering
       type: data['type'] ?? 'Football',
       size: data['size'] ?? '5 VS 5',
       imageUrl: data['imageUrl'] ?? '',
@@ -123,7 +140,7 @@ class Stadium {
       seatsCapacity: data['seatsCapacity'] ?? 0,
       pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
       basePrice: (data['basePrice'] ?? data['pricePerHour'] ?? 0).toDouble(),
-      area: data['area'] ?? '',
+      area: data['area'] ?? data['governorate'] ?? '',
       isFavorite: data['isFavorite'] ?? false,
       address: data['address'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
@@ -142,6 +159,11 @@ class Stadium {
       isVerified: data['isVerified'] ?? false,
       isFeatured: data['isFeatured'] ?? false,
       ownerId: data['ownerId'] ?? '',
+      openingTime: data['features']?['workingHours']?['start'] ?? '08:00 AM',
+      closingTime: data['features']?['workingHours']?['end'] ?? '12:00 AM',
+      isSplitShift: data['features']?['isSplitShift'] ?? false,
+      breakStartTime: data['features']?['breakTime']?['start'],
+      breakEndTime: data['features']?['breakTime']?['end'],
       lat: (data['lat'] as num?)?.toDouble(),
       lng: (data['lng'] as num?)?.toDouble(),
     );
@@ -152,6 +174,7 @@ class Stadium {
       'name': name,
       'name_lowercase': name.toLowerCase(),
       'location': location,
+      'governorate': governorate, // ✅ Added for filtering
       'imageUrl': imageUrl,
       'images': images,
       'type': type,
@@ -277,6 +300,9 @@ class BookingDraft {
   final String? paymentTransactionId;
   final int currentPlayers;
   final int maxPlayers;
+  final String? playerPhone;
+  final String? notes;
+  final bool isPaid;
 
   BookingDraft({
     required this.stadiumId,
@@ -300,6 +326,9 @@ class BookingDraft {
     this.paymentTransactionId,
     this.currentPlayers = 1,
     this.maxPlayers = 10,
+    this.playerPhone,
+    this.notes,
+    this.isPaid = false,
   });
 
   BookingDraft copyWith({
@@ -324,6 +353,9 @@ class BookingDraft {
     String? paymentTransactionId,
     int? currentPlayers,
     int? maxPlayers,
+    String? playerPhone,
+    String? notes,
+    bool? isPaid,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -347,6 +379,9 @@ class BookingDraft {
       paymentTransactionId: paymentTransactionId ?? this.paymentTransactionId,
       currentPlayers: currentPlayers ?? this.currentPlayers,
       maxPlayers: maxPlayers ?? this.maxPlayers,
+      playerPhone: playerPhone ?? this.playerPhone,
+      notes: notes ?? this.notes,
+      isPaid: isPaid ?? this.isPaid,
     );
   }
 
@@ -373,6 +408,8 @@ class BookingDraft {
       'paymentTransactionId': paymentTransactionId,
       'currentPlayers': currentPlayers,
       'maxPlayers': maxPlayers,
+      'playerPhone': playerPhone,
+      'notes': notes,
     };
   }
 }
@@ -415,6 +452,8 @@ class Booking {
   final String createdByUserId;
   final DateTime createdAt;
   final DateTime? updatedAt;
+  final String? playerPhone;
+  final String? notes;
 
   // Match Result (for Challenge bookings)
   final int? homeScore;
@@ -429,6 +468,10 @@ class Booking {
   final int currentPlayers;
   final int maxPlayers;
   final List<String> joinedUserIds;
+
+  // Financial Detail (Debt Management)
+  final bool isPaid;
+  final String paymentStatus; // 'pending', 'paid', 'refunded'
 
   Booking({
     required this.id,
@@ -465,6 +508,10 @@ class Booking {
     this.currentPlayers = 1,
     this.maxPlayers = 10,
     this.joinedUserIds = const [],
+    this.isPaid = false,
+    this.paymentStatus = 'pending',
+    this.playerPhone,
+    this.notes,
   });
 
   /// Create Booking from Firestore document
@@ -541,6 +588,10 @@ class Booking {
       currentPlayers: data['currentPlayers'] ?? 1,
       maxPlayers: data['maxPlayers'] ?? 10,
       joinedUserIds: List<String>.from(data['joinedUserIds'] ?? []),
+      isPaid: data['isPaid'] ?? false,
+      paymentStatus: data['paymentStatus'] ?? (data['isPaid'] == true ? 'paid' : 'pending'),
+      playerPhone: data['playerPhone'],
+      notes: data['notes'],
     );
   }
 
@@ -580,6 +631,10 @@ class Booking {
       'currentPlayers': currentPlayers,
       'maxPlayers': maxPlayers,
       'joinedUserIds': joinedUserIds,
+      'isPaid': isPaid,
+      'paymentStatus': paymentStatus,
+      'playerPhone': playerPhone,
+      'notes': notes,
     };
   }
 
@@ -617,6 +672,9 @@ class Booking {
       currentPlayers: draft.currentPlayers,
       maxPlayers: draft.maxPlayers,
       joinedUserIds: [userId],
+      playerPhone: draft.playerPhone,
+      notes: draft.notes,
+      isPaid: draft.isPaid,
     );
   }
 
@@ -655,6 +713,7 @@ class Booking {
     int? currentPlayers,
     int? maxPlayers,
     List<String>? joinedUserIds,
+    bool? isPaid,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -691,6 +750,7 @@ class Booking {
       currentPlayers: currentPlayers ?? this.currentPlayers,
       maxPlayers: maxPlayers ?? this.maxPlayers,
       joinedUserIds: joinedUserIds ?? this.joinedUserIds,
+      isPaid: isPaid ?? this.isPaid,
     );
   }
 
@@ -748,6 +808,7 @@ class Team {
   final int draws;
   final int losses;
   final List<String> playedOpponents;
+  final List<String> beatenOpponents;
   final List<String> unlockedBadges;
   final int currentWinningStreak;
   final List<String> memberUids;
@@ -775,6 +836,7 @@ class Team {
     this.draws = 0,
     this.losses = 0,
     this.playedOpponents = const [],
+    this.beatenOpponents = const [],
     this.unlockedBadges = const [],
     this.currentWinningStreak = 0,
     this.memberUids = const [],
@@ -806,6 +868,7 @@ class Team {
       draws: data['draws'] ?? 0,
       losses: data['losses'] ?? 0,
       playedOpponents: List<String>.from(data['playedOpponents'] ?? []),
+      beatenOpponents: List<String>.from(data['beatenOpponents'] ?? []),
       unlockedBadges: List<String>.from(data['unlockedBadges'] ?? []),
       currentWinningStreak: data['currentWinningStreak'] ?? 0,
       memberUids: List<String>.from(data['memberUids'] ?? []),
@@ -837,6 +900,7 @@ class Team {
       'draws': draws,
       'losses': losses,
       'playedOpponents': playedOpponents,
+      'beatenOpponents': beatenOpponents,
       'unlockedBadges': unlockedBadges,
       'currentWinningStreak': currentWinningStreak,
       'championshipsWon': championshipsWon,
@@ -863,6 +927,7 @@ class Team {
     int? draws,
     int? losses,
     List<String>? playedOpponents,
+    List<String>? beatenOpponents,
     int? championshipsWon,
     String? sportType,
   }) {
@@ -886,6 +951,7 @@ class Team {
       draws: draws ?? this.draws,
       losses: losses ?? this.losses,
       playedOpponents: playedOpponents ?? this.playedOpponents,
+      beatenOpponents: beatenOpponents ?? this.beatenOpponents,
       championshipsWon: championshipsWon ?? this.championshipsWon,
       sportType: sportType ?? this.sportType,
     );
@@ -1191,7 +1257,8 @@ class AppNotification {
   final String type; // 'info', 'result_confirmation'
   final bool isRead;
   final DateTime createdAt;
-  final String? bookingId; // BETA READY: Metadata for challenge actions
+  final String? bookingId; 
+  final Map<String, dynamic>? metadata;
 
   AppNotification({
     required this.id,
@@ -1201,6 +1268,7 @@ class AppNotification {
     this.isRead = false,
     required this.createdAt,
     this.bookingId,
+    this.metadata,
   });
 
   factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
@@ -1216,6 +1284,7 @@ class AppNotification {
               : DateTime.parse(data['createdAt']))
           : DateTime.now(),
       bookingId: data['bookingId'],
+      metadata: data['metadata'] is Map<String, dynamic> ? Map<String, dynamic>.from(data['metadata']) : null,
     );
   }
 
@@ -1225,8 +1294,9 @@ class AppNotification {
       'body': body,
       'type': type,
       'isRead': isRead,
-      'createdAt': createdAt.toIso8601String(),
+      'createdAt': Timestamp.fromDate(createdAt),
       'bookingId': bookingId,
+      'metadata': metadata,
     };
   }
 }

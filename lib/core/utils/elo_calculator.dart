@@ -23,11 +23,11 @@ class EloCalculator {
   }
 
   static String getRankTitle(int points) {
-    if (points >= 2000) return 'Legendary';
-    if (points >= 1500) return 'Diamond';
-    if (points >= 1200) return 'Platinum';
-    if (points >= 1000) return 'Gold';
-    if (points >= 800) return 'Silver';
+    if (points >= 100) return 'Legendary';
+    if (points >= 75) return 'Diamond';
+    if (points >= 50) return 'Platinum';
+    if (points >= 30) return 'Gold';
+    if (points >= 15) return 'Silver';
     return 'Bronze';
   }
 }
