@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
 import '../../../core/providers/language_provider.dart';
@@ -60,7 +61,7 @@ class _BookedScreenState extends State<BookedScreen> {
               )
             : null,
         title: Text(
-          'Booked',
+          AppLocalizations.of(context)!.bookedTitle,
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -92,7 +93,7 @@ class _BookedScreenState extends State<BookedScreen> {
                 },
                 color: VSPColors.accent,
                 backgroundColor: VSPColors.surface,
-                child: SingleChildScrollView(
+                child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -123,7 +124,7 @@ class _BookedScreenState extends State<BookedScreen> {
                 // Upcoming Section
                 if (data.upcoming.isNotEmpty) ...[
                   Text(
-                    'Upcoming',
+                    AppLocalizations.of(context)!.upcoming,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -148,7 +149,7 @@ class _BookedScreenState extends State<BookedScreen> {
                 // History Section
                 if (data.history.isNotEmpty) ...[
                   Text(
-                    'History',
+                    AppLocalizations.of(context)!.history,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -180,9 +181,9 @@ class _BookedScreenState extends State<BookedScreen> {
   Widget _buildEmptyState() {
     return VSPEmptyState(
       icon: Icons.calendar_today_outlined,
-      title: 'No Bookings Yet',
-      subtitle: 'Book a stadium or join a match to see your schedule here!',
-      buttonText: 'Explore Stadiums',
+      title: AppLocalizations.of(context)!.noBookings,
+      subtitle: AppLocalizations.of(context)!.noBookingsSubtitle,
+      buttonText: AppLocalizations.of(context)!.exploreStadiums,
       onButtonPressed: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
@@ -265,7 +266,7 @@ class _BookingCard extends StatelessWidget {
                         _buildTag(booking.bookingType.name.toUpperCase()),
                         if (booking.isPrivate) ...[
                           const SizedBox(width: VSPSpacing.sm),
-                          _buildTag('PRIVATE', color: VSPColors.warning),
+                          _buildTag(AppLocalizations.of(context)!.private, color: VSPColors.warning),
                         ],
                       ],
                     ),
@@ -275,14 +276,14 @@ class _BookingCard extends StatelessWidget {
 
               // Status or Actions
               if (!isHistory) ...[
-                _buildStatusBadge('Confirmed', VSPColors.accent),
+                _buildStatusBadge(AppLocalizations.of(context)!.confirmed, VSPColors.accent),
               ] else ...[
                 if (booking.bookingType == BookingType.challenge)
                   _buildChallengeStatusBadge()
                 else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
-                  _buildStatusBadge('Submit Result', VSPColors.warning)
+                  _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning)
                 else
-                  _buildStatusBadge('Completed', VSPColors.textSecondary),
+                  _buildStatusBadge(AppLocalizations.of(context)!.completed, VSPColors.textSecondary),
               ],
             ],
           ),
@@ -299,11 +300,11 @@ class _BookingCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoColumn(context, 'Date', booking.formattedDate),
+                _buildInfoColumn(context, AppLocalizations.of(context)!.date, booking.formattedDate),
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, 'Time', _formatTimeShort(booking.formattedTimeRange)),
+                _buildInfoColumn(context, AppLocalizations.of(context)!.time, _formatTimeShort(booking.formattedTimeRange)),
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, 'Price', '${booking.totalPrice.toInt()} ${booking.currency}'),
+                _buildInfoColumn(context, AppLocalizations.of(context)!.price, '${booking.totalPrice.toInt()} ${AppLocalizations.of(context)!.egCurrency}'),
               ],
             ),
           ),
@@ -323,7 +324,7 @@ class _BookingCard extends StatelessWidget {
                   const Icon(Icons.sports_soccer, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
-                    'VS ${booking.opponentTeamName}',
+                    AppLocalizations.of(context)!.vsOpponent(booking.opponentTeamName ?? ""),
                     style: const TextStyle(
                       color: VSPColors.warning,
                       fontWeight: FontWeight.bold,
@@ -344,7 +345,7 @@ class _BookingCard extends StatelessWidget {
                     builder: (context) {
                       final bool canCancel = DateTime.now().isBefore(booking.startTime);
                       return VSPAnimatedButton(
-                        text: 'Cancel',
+                        text: AppLocalizations.of(context)!.cancel,
                         color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
                         textColor: canCancel ? VSPColors.error : VSPColors.textSecondary,
                         onPressed: canCancel ? () {
@@ -357,7 +358,7 @@ class _BookingCard extends StatelessWidget {
                 const SizedBox(width: VSPSpacing.sm),
                 Expanded(
                   child: VSPAnimatedButton(
-                    text: 'Chat',
+                    text: AppLocalizations.of(context)!.chat,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -401,7 +402,7 @@ class _BookingCard extends StatelessWidget {
             border: Border.all(color: Colors.white12),
           ),
           child: Text(
-            'Waiting for opponent result...',
+            AppLocalizations.of(context)!.waitingOpponent,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: VSPColors.textSecondary,
@@ -421,7 +422,7 @@ class _BookingCard extends StatelessWidget {
 
   Widget _buildAddResultButton(BuildContext context, String currentTeamId) {
     return VSPAnimatedButton(
-      text: 'Add Result',
+      text: AppLocalizations.of(context)!.addResult,
       onPressed: () {
         showDialog(
           context: context,
@@ -444,15 +445,15 @@ class _BookingCard extends StatelessWidget {
               if (success) {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Result Submitted Successfully!'),
+                  SnackBar(
+                    content: Text(AppLocalizations.of(context)!.resultSuccess),
                     backgroundColor: VSPColors.accent,
                   ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(provider.errorMessage ?? 'Failed to submit result'),
+                    content: Text(provider.errorMessage ?? AppLocalizations.of(context)!.resultFailed),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -477,16 +478,16 @@ class _BookingCard extends StatelessWidget {
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
       if (outcome == MatchOutcome.draw) {
-        return _buildStatusBadge('Draw', Colors.blue);
+        return _buildStatusBadge(AppLocalizations.of(context)!.draw, Colors.blue);
       } else if (outcome == MatchOutcome.homeWin) {
         final isWon = isHome;
-        return _buildStatusBadge(isWon ? 'Win' : 'Loss', isWon ? Colors.amber : Colors.red);
+        return _buildStatusBadge(isWon ? AppLocalizations.of(context)!.win : AppLocalizations.of(context)!.loss, isWon ? Colors.amber : Colors.red);
       } else if (outcome == MatchOutcome.awayWin) {
         final isWon = isAway;
-        return _buildStatusBadge(isWon ? 'Win' : 'Loss', isWon ? Colors.amber : Colors.red);
+        return _buildStatusBadge(isWon ? AppLocalizations.of(context)!.win : AppLocalizations.of(context)!.loss, isWon ? Colors.amber : Colors.red);
       }
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
-      return _buildStatusBadge('Disputed', VSPColors.warning);
+      return _buildStatusBadge(AppLocalizations.of(context)!.disputed, VSPColors.warning);
     }
     
     return const SizedBox.shrink();
@@ -570,11 +571,11 @@ class _BookingCard extends StatelessWidget {
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
         title: Text(
-          'Cancel Booking?',
+          AppLocalizations.of(context)!.cancelBooking,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         content: Text(
-          'Are you sure you want to cancel this booking? This action cannot be undone.',
+          AppLocalizations.of(context)!.cancelBookingConfirm,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
@@ -583,7 +584,7 @@ class _BookingCard extends StatelessWidget {
             children: [
               Expanded(
                 child: PrimaryButton(
-                  text: 'Keep Booking',
+                  text: AppLocalizations.of(context)!.keepBooking,
                   height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
@@ -593,7 +594,7 @@ class _BookingCard extends StatelessWidget {
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Cancel Booking',
+                  text: AppLocalizations.of(context)!.cancel,
                   height: 48,
                   color: VSPColors.error,
                   textColor: VSPColors.background,
@@ -603,9 +604,9 @@ class _BookingCard extends StatelessWidget {
                     
                     // Show quick loading snackbar
                     ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Cancelling booking...'),
-                        duration: Duration(seconds: 1),
+                      SnackBar(
+                        content: Text(AppLocalizations.of(context)!.cancelling),
+                        duration: const Duration(seconds: 1),
                       ),
                     );
                     
@@ -617,15 +618,15 @@ class _BookingCard extends StatelessWidget {
                     
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
-                        const SnackBar(
-                          content: Text('Booking cancelled successfully'),
+                        SnackBar(
+                          content: Text(AppLocalizations.of(context)!.cancelSuccess),
                           backgroundColor: VSPColors.warning,
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                          SnackBar(
-                          content: Text(provider.errorMessage ?? 'Failed to cancel'),
+                          content: Text(provider.errorMessage ?? AppLocalizations.of(context)!.cancelFailed),
                           backgroundColor: VSPColors.error,
                         ),
                       );

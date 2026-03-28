@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
@@ -109,11 +110,11 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   }
 
   void _copyLink() {
-    final shareContent = 'My booking on VSP: ${widget.booking.stadiumName} - Ref# ${widget.booking.id}';
+    final shareContent = AppLocalizations.of(context)!.shareBookingMessage(widget.booking.stadiumName, widget.booking.id);
     Clipboard.setData(ClipboardData(text: shareContent));
     ScaffoldMessenger.of(context).showSnackBar(
       SnackBar(
-        content: const Text('Booking reference copied!'),
+        content: Text(AppLocalizations.of(context)!.bookingRefCopied),
         backgroundColor: VSPColors.accent,
         behavior: SnackBarBehavior.floating,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
@@ -125,7 +126,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: Colors.black.withOpacity(0.85),
+      backgroundColor: Colors.black.withValues(alpha: 0.85),
       body: Stack(
         alignment: Alignment.topCenter,
         children: [
@@ -159,7 +160,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   
                   // Title
                   Text(
-                    'Your reservation has been\ncompleted successfully',
+                    AppLocalizations.of(context)!.bookingSuccess,
                     textAlign: TextAlign.center,
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
@@ -189,7 +190,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                           const SizedBox(height: 12),
                           _buildDetailRow(
                             Icons.sports_soccer, 
-                            'VS ${widget.booking.opponentTeamName ?? 'Opponent'}'
+                            AppLocalizations.of(context)!.vsOpponent(widget.booking.opponentTeamName ?? 'Opponent')
                           ),
                         ],
                       ],
@@ -201,7 +202,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   // Share Link
                   Align(
                     alignment: Alignment.centerLeft,
-                    child: Text('Booking Reference', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                    child: Text(AppLocalizations.of(context)!.bookingReference, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ),
                   const SizedBox(height: VSPSpacing.sm),
                   Container(
@@ -214,7 +215,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                       children: [
                         Expanded(
                           child: Text(
-                            'REF# ${widget.booking.id.toUpperCase()}',
+                            AppLocalizations.of(context)!.refHash(widget.booking.id.toUpperCase()),
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               letterSpacing: 1.1,
                               fontWeight: FontWeight.bold,
@@ -244,7 +245,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     children: [
                       Expanded(
                         child: PrimaryButton(
-                          text: 'My Bookings',
+                          text: AppLocalizations.of(context)!.myBookings,
                           color: VSPColors.surfaceAlt,
                           textColor: VSPColors.textPrimary,
                           onPressed: () {
@@ -259,7 +260,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                       const SizedBox(width: VSPSpacing.md),
                       Expanded(
                         child: PrimaryButton(
-                          text: 'Home',
+                          text: AppLocalizations.of(context)!.home,
                           onPressed: () {
                             // Reset to the very first screen (Dashboard)
                             Navigator.of(context).popUntil((route) => route.isFirst);

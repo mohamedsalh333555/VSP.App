@@ -3,6 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -69,7 +70,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   Future<void> _handleVerify() async {
     final code = _getCode();
     if (code.length < 6) {
-      VSPFeedback.showError(context, 'يرجى إدخال رمز التحقق كاملاً (6 أرقام)');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.fillAllFields); // Or specific key if added
       return;
     }
 
@@ -105,7 +106,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
         }
       } else {
         setState(() => _isLoading = false);
-        VSPFeedback.showError(context, 'رمز التحقق غير صحيح. جرب: ${AppConfig.mockOtpCode}');
+        VSPFeedback.showError(context, '${AppLocalizations.of(context)!.verify}: ${AppConfig.mockOtpCode}');
       }
     } else {
       // NOTE: Real OTP is not activated for the current MVP release.
@@ -200,6 +201,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
 
             SafeArea(
               child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
@@ -247,7 +249,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                     const SizedBox(height: 40),
 
                     Text(
-                      'VERIFY ACCOUNT',
+                      AppLocalizations.of(context)!.verifyAccount,
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 42,
                         height: 0.9,
@@ -261,8 +263,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                       padding: const EdgeInsets.symmetric(horizontal: 20),
                       child: Text(
                         auth.email.isNotEmpty
-                            ? 'A 6-digit code was sent to \n${auth.email}'
-                            : 'Enter the verification code sent to your device',
+                            ? '${AppLocalizations.of(context)!.otpSentTo} \n${auth.email}'
+                            : AppLocalizations.of(context)!.enterOtpPlaceholder,
                         textAlign: TextAlign.center,
                         style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                           color: VSPColors.textSecondary,
@@ -338,7 +340,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                                 ),
                               )
                             : Text(
-                                'CONTINUE',
+                                AppLocalizations.of(context)!.continueButton,
                                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.w900,
                                   letterSpacing: 1.1,
@@ -354,7 +356,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                         ? TextButton(
                             onPressed: _handleResend,
                             child: Text(
-                              'RESEND CODE',
+                              AppLocalizations.of(context)!.resendCode,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.accent,
                                 fontWeight: FontWeight.bold,
@@ -364,7 +366,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
                             ),
                           )
                         : Text(
-                            'RESEND IN $_countdown SECONDS',
+                            AppLocalizations.of(context)!.resendIn(_countdown),
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: VSPColors.textSecondary.withValues(alpha: 0.4),
                               fontWeight: FontWeight.bold,

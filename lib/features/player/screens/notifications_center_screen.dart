@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
@@ -5,7 +6,7 @@ import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/notification_repository.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
@@ -27,19 +28,19 @@ class NotificationsCenterScreen extends StatelessWidget {
         ),
         centerTitle: true,
         title: Text(
-          'Notifications',
+          AppLocalizations.of(context)!.notifications,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         actions: [
           TextButton(
-            onPressed: () => DatabaseService().markAllAsRead(userId),
-            child: const Text('Mark All', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
+            onPressed: () => NotificationRepository().markAllAsRead(userId),
+            child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.accent, fontSize: 13)),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: StreamBuilder<List<AppNotification>>(
-        stream: DatabaseService().getUserNotifications(userId),
+        stream: NotificationRepository().getUserNotifications(userId),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -50,9 +51,9 @@ class NotificationsCenterScreen extends StatelessWidget {
           if (notifications.isEmpty) {
             return VSPEmptyState(
               icon: Icons.notifications_off_outlined,
-              title: 'No Notifications Yet',
-              subtitle: 'We will notify you about your matches and challenges.',
-              buttonText: 'Back to Dashboard',
+              title: AppLocalizations.of(context)!.noNotificationsTitle,
+              subtitle: AppLocalizations.of(context)!.noNotificationsSubtitle,
+              buttonText: AppLocalizations.of(context)!.backToDashboard,
               onButtonPressed: () => Navigator.pop(context),
             );
           }
@@ -80,7 +81,7 @@ class NotificationsCenterScreen extends StatelessWidget {
                     child: const Icon(Icons.delete_outline, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
-                    DatabaseService().deleteNotification(userId, notification.id);
+                    NotificationRepository().deleteNotification(userId, notification.id);
                   },
                   child: _NotificationCard(notification: notification, userId: userId),
                 ),
@@ -102,7 +103,7 @@ class _NotificationCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return InkWell(
-      onTap: notification.isRead ? null : () => DatabaseService().markNotificationAsRead(userId, notification.id),
+      onTap: notification.isRead ? null : () => NotificationRepository().markNotificationAsRead(userId, notification.id),
       borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: Container(
         margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
@@ -148,7 +149,7 @@ class _NotificationCard extends StatelessWidget {
                         ),
                       ),
                       Text(
-                        _formatTime(notification.createdAt),
+                        _formatTime(context, notification.createdAt),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                       ),
                     ],
@@ -168,9 +169,9 @@ class _NotificationCard extends StatelessWidget {
                       children: [
                         Expanded(
                           child: VSPAnimatedButton(
-                            text: 'Accept',
+                            text: AppLocalizations.of(context)!.accept,
                             height: 44,
-                            onPressed: () => DatabaseService().respondToChallenge(
+                            onPressed: () => NotificationRepository().respondToChallenge(
                               userId,
                               notification.id, 
                               notification.bookingId!, 
@@ -181,11 +182,11 @@ class _NotificationCard extends StatelessWidget {
                         const SizedBox(width: VSPSpacing.sm),
                         Expanded(
                           child: VSPAnimatedButton(
-                            text: 'Decline',
+                            text: AppLocalizations.of(context)!.decline,
                             height: 44,
                             color: VSPColors.surfaceAlt,
                             textColor: VSPColors.textSecondary,
-                            onPressed: () => DatabaseService().respondToChallenge(
+                            onPressed: () => NotificationRepository().respondToChallenge(
                               userId,
                               notification.id, 
                               notification.bookingId!, 
@@ -265,12 +266,12 @@ class _NotificationCard extends StatelessWidget {
     }
   }
 
-  String _formatTime(DateTime dt) {
+  String _formatTime(BuildContext context, DateTime dt) {
     final now = DateTime.now();
     final diff = now.difference(dt);
 
-    if (diff.inMinutes < 60) return '${diff.inMinutes}m ago';
-    if (diff.inHours < 24) return '${diff.inHours}h ago';
-    return DateFormat('MMM d').format(dt);
+    if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minutesAgo(diff.inMinutes);
+    if (diff.inHours < 24) return AppLocalizations.of(context)!.hoursAgo(diff.inHours);
+    return DateFormat('MMM d', AppLocalizations.of(context)!.localeName).format(dt);
   }
 }

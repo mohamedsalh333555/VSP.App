@@ -1,11 +1,13 @@
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
-import 'database_service.dart';
+import '../repositories/notification_repository.dart';
+import '../repositories/user_repository.dart';
 import 'logger_service.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
 class NotificationHandler {
-  static final _db = DatabaseService();
+  static final _notificationRepo = NotificationRepository();
+  static final _userRepo = UserRepository();
 
   // --------------------------------------------------------------------------
   // 1. BOOKING FLOW
@@ -26,7 +28,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(userId, notif);
+    await _notificationRepo.sendNotification(userId, notif);
   }
 
   /// Notify owner that they have a new booking
@@ -45,7 +47,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(ownerId, notif);
+    await _notificationRepo.sendNotification(ownerId, notif);
   }
 
   /// Notify owner that a booking was cancelled
@@ -62,7 +64,7 @@ class NotificationHandler {
       type: 'booking_cancelled',
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(ownerId, notif);
+    await _notificationRepo.sendNotification(ownerId, notif);
   }
 
   /// Notify player that owner cancelled the booking
@@ -78,7 +80,7 @@ class NotificationHandler {
       type: 'booking_cancelled',
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(userId, notif);
+    await _notificationRepo.sendNotification(userId, notif);
   }
 
   // --------------------------------------------------------------------------
@@ -100,7 +102,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(hostId, notif);
+    await _notificationRepo.sendNotification(hostId, notif);
   }
 
   /// Special: Notify host that match is now full
@@ -118,7 +120,7 @@ class NotificationHandler {
         bookingId: bookingId,
         createdAt: DateTime.now(),
       );
-      await _db.sendNotification(uid, notif);
+      await _notificationRepo.sendNotification(uid, notif);
     }
   }
 
@@ -140,7 +142,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(opponentCaptainId, notif);
+    await _notificationRepo.sendNotification(opponentCaptainId, notif);
   }
 
   /// Notify challenger that their challenge was accepted
@@ -157,7 +159,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(challengerCaptainId, notif);
+    await _notificationRepo.sendNotification(challengerCaptainId, notif);
   }
 
   /// Notify challenger that their challenge was declined
@@ -172,7 +174,7 @@ class NotificationHandler {
       type: 'challenge_declined',
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(challengerCaptainId, notif);
+    await _notificationRepo.sendNotification(challengerCaptainId, notif);
   }
 
   // --------------------------------------------------------------------------
@@ -191,7 +193,7 @@ class NotificationHandler {
       type: 'stadium_approved',
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(ownerId, notif);
+    await _notificationRepo.sendNotification(ownerId, notif);
   }
 
   /// Notify owner that documents need attention
@@ -205,7 +207,7 @@ class NotificationHandler {
       type: 'stadium_verification_needed',
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(ownerId, notif);
+    await _notificationRepo.sendNotification(ownerId, notif);
   }
 
   /// Notify participants about a new chat message
@@ -224,7 +226,7 @@ class NotificationHandler {
         bookingId: bookingId,
         createdAt: DateTime.now(),
       );
-      await _db.sendNotification(uid, notif);
+      await _notificationRepo.sendNotification(uid, notif);
     }
   }
 
@@ -249,7 +251,7 @@ class NotificationHandler {
         'stadiumName': stadiumName,
       },
     );
-    await _db.sendNotification(userId, notif);
+    await _notificationRepo.sendNotification(userId, notif);
   }
 
   // --------------------------------------------------------------------------
@@ -269,7 +271,7 @@ class NotificationHandler {
       bookingId: bookingId,
       createdAt: DateTime.now(),
     );
-    await _db.sendNotification(teamCaptainId, notif);
+    await _notificationRepo.sendNotification(teamCaptainId, notif);
   }
 
   // --------------------------------------------------------------------------
@@ -280,7 +282,7 @@ class NotificationHandler {
   /// NO blocking logic — only reminders.
   static Future<void> checkAndSendDebtAlerts(String userId) async {
     try {
-      final unpaidBookings = await _db.getUnpaidBookingsForUser(userId);
+      final unpaidBookings = await _userRepo.getUnpaidBookingsForUser(userId);
 
       for (final booking in unpaidBookings) {
         // Send a gentle reminder for any unpaid booking

@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
@@ -24,7 +25,7 @@ class StadiumCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 230,
+        height: 210,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           border: Border.all(color: VSPColors.divider, width: 1),
@@ -204,7 +205,7 @@ class StadiumCard extends StatelessWidget {
                           crossAxisAlignment: CrossAxisAlignment.end,
                           children: [
                             Text(
-                              '${stadium.pricePerHour.toInt()} EGP',
+                              '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 color: VSPColors.accent,
                                 fontWeight: FontWeight.w900,
@@ -212,7 +213,7 @@ class StadiumCard extends StatelessWidget {
                               ),
                             ),
                             Text(
-                              'per hour',
+                              AppLocalizations.of(context)!.perHour,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.textSecondary,
                                 fontSize: 9,

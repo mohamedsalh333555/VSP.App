@@ -98,7 +98,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.only(bottom: 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -175,6 +175,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                              setState(() => _isLocating = true);
                              await authProvider.updateUserLocation();
                              if (mounted) {
+                               if (!context.mounted) return;
                                setState(() => _isLocating = false);
                                VSPFeedback.showSuccess(context, 'Location updated!');
                              }

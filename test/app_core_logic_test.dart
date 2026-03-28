@@ -3,6 +3,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:vsp_application/core/repositories/match_repository.dart';
+import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:vsp_application/core/repositories/tournament_repository.dart';
 
 void main() {
   group('VSP App Core Logic Tests (The Ultimate Test)', () {
@@ -11,11 +14,12 @@ void main() {
 
     setUp(() {
       fakeFirestore = FakeFirebaseFirestore();
-      dbService = DatabaseService(firestore: fakeFirestore);
+      // MatchRepository is a singleton or uses Firestore via dependency injection
+      // For tests, we use the firestore argument
     });
 
     test('1. Double Booking Prevention (Race Condition)', () async {
-      print('🔹 Testing Double Booking Prevention...');
+      // // print('🔹 Testing Double Booking Prevention...');
       
       // 1. Create a Stadium
       await fakeFirestore.collection('stadiums').doc('stad_1').set({
@@ -74,11 +78,11 @@ void main() {
       }
 
       expect(isOverlapping, true, reason: "System must detect overlapping time!");
-      print('✅ Overlap strictly prevented. Double booking is impossible.');
+      // // print('✅ Overlap strictly prevented. Double booking is impossible.');
     });
 
     test('2. Public Matches Join/Leave Logic', () async {
-      print('🔹 Testing Public Matches Logic...');
+      // // print('🔹 Testing Public Matches Logic...');
       
       // 1. Create a Public Match with Max 10 players
       final docRef = await fakeFirestore.collection('bookings').add({
@@ -93,28 +97,28 @@ void main() {
       final matchId = docRef.id;
 
       // 2. User 2 joins
-      bool joined = await dbService.joinPublicMatch(matchId, 'user_2');
+      bool joined = await MatchRepository(firestore: fakeFirestore).joinPublicMatch(matchId, 'user_2');
       expect(joined, true, reason: "User 2 should join successfully");
 
       var matchDoc = await fakeFirestore.collection('bookings').doc(matchId).get();
       expect(matchDoc['currentPlayers'], 2);
 
       // 3. User 2 tries to join AGAIN
-      bool joinedAgain = await dbService.joinPublicMatch(matchId, 'user_2');
+      bool joinedAgain = await MatchRepository(firestore: fakeFirestore).joinPublicMatch(matchId, 'user_2');
       expect(joinedAgain, false, reason: "Should not allow joining twice");
 
       // 4. User 2 leaves
-      bool left = await dbService.leavePublicMatch(matchId, 'user_2');
+      bool left = await MatchRepository(firestore: fakeFirestore).leavePublicMatch(matchId, 'user_2');
       expect(left, true, reason: "User 2 should leave successfully");
 
       matchDoc = await fakeFirestore.collection('bookings').doc(matchId).get();
       expect(matchDoc['currentPlayers'], 1);
 
-      print('✅ Public Matches Join/Leave & Constraints Working Perfectly.');
+      // // print('✅ Public Matches Join/Leave & Constraints Working Perfectly.');
     });
 
     test('3. The Kill Switch (Owner Suspension)', () async {
-      print('🔹 Testing The Kill Switch...');
+      // // print('🔹 Testing The Kill Switch...');
       
       // 1. Create User
       await fakeFirestore.collection('users').doc('owner_99').set({
@@ -132,7 +136,7 @@ void main() {
       final isSuspended = userDoc['isSuspended'];
 
       expect(isSuspended, true, reason: "Owner must be suspended");
-      print('✅ Kill Switch works. Owner is blocked at RootScreen.');
+      // // print('✅ Kill Switch works. Owner is blocked at RootScreen.');
     });
   });
 }

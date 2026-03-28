@@ -25,7 +25,7 @@ class HelpCenterScreen extends StatelessWidget {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -86,13 +86,13 @@ class HelpCenterScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(color: color.withOpacity(0.3)),
+          border: Border.all(color: color.withValues(alpha: 0.3)),
         ),
         child: Row(
           children: [
             Container(
               padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withOpacity(0.1), shape: BoxShape.circle),
+              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
               child: Icon(icon, color: color),
             ),
             const SizedBox(width: VSPSpacing.md),

@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/data/models.dart';
@@ -42,14 +43,14 @@ class ProfileScreen extends StatelessWidget {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          'Profile',
+          AppLocalizations.of(context)!.profile,
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
       body: SafeArea(
         top: true,
         bottom: false,
-        child: SingleChildScrollView(
+        child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -64,7 +65,18 @@ class ProfileScreen extends StatelessWidget {
                     final team = teamSnapshot.data;
                     final stats = statsSnapshot.data ?? {};
                     final elo = team?.points ?? 1200;
-                    final rank = EloCalculator.getRankTitle(elo);
+                    final rankKey = EloCalculator.getRankTitle(elo);
+                    
+                    String localizedRank = "";
+                    switch(rankKey) {
+                      case 'legendary': localizedRank = AppLocalizations.of(context)!.legendary; break;
+                      case 'diamond': localizedRank = AppLocalizations.of(context)!.diamond; break;
+                      case 'platinum': localizedRank = AppLocalizations.of(context)!.platinum; break;
+                      case 'gold': localizedRank = AppLocalizations.of(context)!.gold; break;
+                      case 'silver': localizedRank = AppLocalizations.of(context)!.silver; break;
+                      default: localizedRank = AppLocalizations.of(context)!.bronze;
+                    }
+
                     final skillMetrics = StatsService().getSkillMetrics(auth.userModel?.position, elo);
 
                     return Container(
@@ -99,12 +111,12 @@ class ProfileScreen extends StatelessWidget {
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
                                           decoration: BoxDecoration(
-                                            color: VSPColors.accent.withOpacity(0.2),
+                                            color: VSPColors.accent.withValues(alpha: 0.2),
                                             borderRadius: BorderRadius.circular(VSPRadius.xs),
-                                            border: Border.all(color: VSPColors.accent.withOpacity(0.5)),
+                                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
                                           ),
                                           child: Text(
-                                            rank.toUpperCase(),
+                                            localizedRank.toUpperCase(),
                                             style: const TextStyle(
                                               color: VSPColors.accent,
                                               fontSize: 12,
@@ -115,11 +127,11 @@ class ProfileScreen extends StatelessWidget {
                                         ),
                                         const SizedBox(height: 8),
                                         Text(
-                                          auth.userModel?.name ?? 'Player',
+                                          auth.userModel?.name ?? AppLocalizations.of(context)!.player,
                                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                                         ),
                                         Text(
-                                          'Position: ${auth.userModel?.position ?? "ST"}',
+                                          AppLocalizations.of(context)!.positionLabel(auth.userModel?.position ?? "ST"),
                                           style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                                         ),
                                       ],
@@ -129,7 +141,7 @@ class ProfileScreen extends StatelessWidget {
                                         // 🔐 SECRET GATE: Long press profile image for Admin Dashboard
                                         HapticFeedback.heavyImpact();
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(content: Text('⚡ Admin Mode Activated', style: TextStyle(color: VSPColors.accent)))
+                                          SnackBar(content: Text(AppLocalizations.of(context)!.adminModeActivated, style: const TextStyle(color: VSPColors.accent)))
                                         );
                                         Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
                                       },
@@ -171,11 +183,11 @@ class ProfileScreen extends StatelessWidget {
                                       child: Column(
                                         crossAxisAlignment: CrossAxisAlignment.end,
                                         children: [
-                                            _buildCardStat(context, 'WIN RATE', '${stats['winRate'] ?? "0"}%', VSPColors.accent),
+                                            _buildCardStat(context, AppLocalizations.of(context)!.winRate, '${stats['winRate'] ?? "0"}%', VSPColors.accent),
                                             const SizedBox(height: 16),
-                                            _buildCardStat(context, 'GOALS', '${stats['totalGoals'] ?? "0"}', VSPColors.textPrimary),
+                                            _buildCardStat(context, AppLocalizations.of(context)!.goals, '${stats['totalGoals'] ?? "0"}', VSPColors.textPrimary),
                                             const SizedBox(height: 16),
-                                            _buildCardStat(context, 'MATCHES', '${stats['matchesPlayed'] ?? "0"}', VSPColors.textPrimary),
+                                            _buildCardStat(context, AppLocalizations.of(context)!.matches, '${stats['matchesPlayed'] ?? "0"}', VSPColors.textPrimary),
                                         ],
                                       ),
                                     ),
@@ -197,7 +209,7 @@ class ProfileScreen extends StatelessWidget {
                                       const Icon(Icons.star, color: VSPColors.warning, size: 14),
                                       const SizedBox(width: 8),
                                       Text(
-                                        'FAVORITE STADIUM: ${stats['favoriteStadium'] ?? "None"}',
+                                        AppLocalizations.of(context)!.favoriteStadiumLabel(stats['favoriteStadium'] ?? AppLocalizations.of(context)!.none),
                                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
                                       ),
                                     ],
@@ -217,7 +229,7 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: VSPSpacing.lg),
 
             // Achievement Badges Section
-            const VSPSectionTitle('Achievements'),
+            VSPSectionTitle(AppLocalizations.of(context)!.achievements),
             const SizedBox(height: VSPSpacing.sm),
             SizedBox(
               height: 90,
@@ -236,25 +248,25 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: VSPSpacing.lg),
 
             // Account Section - REFINED HEADER
-            const VSPSectionTitle('Account'),
+            VSPSectionTitle(AppLocalizations.of(context)!.account),
             const SizedBox(height: VSPSpacing.sm),
             VSPMenuItem(
               icon: Icons.groups_outlined,
-              title: 'My Team',
-              subtitle: 'Manage Your Team Information',
+              title: AppLocalizations.of(context)!.myTeam,
+              subtitle: AppLocalizations.of(context)!.manageTeamInfo,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
             ),
             VSPMenuItem(
               icon: Icons.favorite_border,
-              title: 'Favorite Stadiums',
-              subtitle: 'View Your Liked Facilities',
+              title: AppLocalizations.of(context)!.favoriteStadiums,
+              subtitle: AppLocalizations.of(context)!.viewLikedFacilities,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
             ),
             if (AppConfig.enableOnlinePayment) ...[
               VSPMenuItem(
                 icon: Icons.payment_outlined,
-                title: 'Payment Methods',
-                subtitle: 'Manage Your Payment Methods',
+                title: AppLocalizations.of(context)!.paymentMethods,
+                subtitle: AppLocalizations.of(context)!.managePaymentMethods,
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
               ),
               const SizedBox(height: VSPSpacing.md),
@@ -263,41 +275,41 @@ class ProfileScreen extends StatelessWidget {
             const SizedBox(height: VSPSpacing.lg),
 
             // Preferences Section - REFINED HEADER
-            const VSPSectionTitle('Preferences'),
+            VSPSectionTitle(AppLocalizations.of(context)!.preferences),
             const SizedBox(height: VSPSpacing.sm),
             VSPMenuItem(
               icon: Icons.notifications_none_outlined,
-              title: 'Notifications',
-              subtitle: 'Manage Your Notification Settings',
+              title: AppLocalizations.of(context)!.notifications,
+              subtitle: AppLocalizations.of(context)!.manageNotificationSettings,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
             ),
             const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.shield_outlined,
-              title: 'Privacy',
-              subtitle: 'Privacy Policy',
+              title: AppLocalizations.of(context)!.privacy,
+              subtitle: AppLocalizations.of(context)!.privacyPolicy,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
             ),
             const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.translate,
-              title: 'Language',
-              subtitle: 'Manage Your Language Preferences',
+              title: AppLocalizations.of(context)!.language,
+              subtitle: AppLocalizations.of(context)!.manageLanguagePreferences,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
             ),
              const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.help_outline,
-              title: 'Help Center',
-              subtitle: 'Get Help & Support',
+              title: AppLocalizations.of(context)!.helpCenter,
+              subtitle: AppLocalizations.of(context)!.getHelpSupport,
               onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
             ),
 
             const SizedBox(height: VSPSpacing.md),
             VSPMenuItem(
               icon: Icons.feedback_outlined,
-              title: 'Feedback',
-              subtitle: 'Report an issue or suggest a feature',
+              title: AppLocalizations.of(context)!.feedback,
+              subtitle: AppLocalizations.of(context)!.reportIssueFeature,
               onTap: () => _showFeedbackDialog(context),
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -305,8 +317,8 @@ class ProfileScreen extends StatelessWidget {
             // Logout Button
             VSPMenuItem(
               icon: Icons.logout,
-              title: 'Logout',
-              subtitle: 'Sign out of your account',
+              title: AppLocalizations.of(context)!.logout,
+              subtitle: AppLocalizations.of(context)!.signOutAccount,
               isLogout: true,
               onTap: () async {
                 await Provider.of<AuthProvider>(context, listen: false).signOut();
@@ -404,7 +416,7 @@ class ProfileScreen extends StatelessWidget {
           backgroundColor: VSPColors.surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: const Text('Send Feedback', style: TextStyle(color: VSPColors.textPrimary)),
+          title: Text(AppLocalizations.of(context)!.sendFeedback, style: const TextStyle(color: VSPColors.textPrimary)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
@@ -412,7 +424,7 @@ class ProfileScreen extends StatelessWidget {
                 maxLines: 3,
                 style: const TextStyle(color: VSPColors.textPrimary),
                 decoration: InputDecoration(
-                  hintText: 'Describe the issue...',
+                  hintText: AppLocalizations.of(context)!.describeIssue,
                   hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                   fillColor: VSPColors.background,
                   filled: true,
@@ -457,7 +469,7 @@ class ProfileScreen extends StatelessWidget {
                   if (pickedFile != null) setDialogState(() => attachedImage = pickedFile);
                 },
                 icon: const Icon(Icons.add_a_photo, color: VSPColors.accent),
-                label: const Text('Attach Screenshot', style: TextStyle(color: VSPColors.accent)),
+                label: Text(AppLocalizations.of(context)!.attachScreenshot, style: const TextStyle(color: VSPColors.accent)),
                 style: OutlinedButton.styleFrom(side: const BorderSide(color: VSPColors.accent)),
               ),
             ],
@@ -465,21 +477,21 @@ class ProfileScreen extends StatelessWidget {
           actions: [
             TextButton(
               onPressed: () => Navigator.pop(context),
-              child: Text('Cancel', style: TextStyle(color: VSPColors.textSecondary)),
+              child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: VSPColors.textSecondary)),
             ),
             PrimaryButton(
-              text: 'Submit',
+              text: AppLocalizations.of(context)!.submit,
               width: 120,
               height: 44,
               onPressed: () async {
                 if (feedbackText.isEmpty) {
-                   ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please enter some feedback')));
+                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.pleaseEnterFeedback)));
                    return;
                 }
                 HapticFeedback.mediumImpact();
                 if (context.mounted) {
                   Navigator.pop(context);
-                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Thank you for your feedback!')));
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.thankYouFeedback)));
                 }
               },
             ),

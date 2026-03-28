@@ -1,7 +1,9 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
-import '../../../../core/services/cloudinary_service.dart';
+import '../../../../core/services/storage_service.dart';
+import 'dart:io';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/services/database_service.dart';
 import '../../../../core/models/user_model.dart';
@@ -119,7 +121,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'My Team',
+          AppLocalizations.of(context)!.myTeam,
           style: Theme.of(context).textTheme.displaySmall, // Unified Typography
         ),
         actions: [
@@ -144,7 +146,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           ? const Center(
               child: CircularProgressIndicator(color: VSPColors.accent),
             )
-          : SingleChildScrollView(
+          : SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               physics: const BouncingScrollPhysics(), // ✅ Add Scroll Physics
               padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 100),
               child: Column(
@@ -155,18 +157,18 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       _buildStatCard(
-                          _myTeam?.points.toString() ?? '0', 'Points',
+                          _myTeam?.points.toString() ?? '0', AppLocalizations.of(context)!.points,
                           width: 80),
                       _buildStatCard(
                           (1 + _teamMembers.length).toString(),
-                          'Members',
+                          AppLocalizations.of(context)!.members,
                           width: 80),
                       _buildStatCard(
                           _myTeam?.championshipsWon.toString() ?? '0',
-                          'Trophies',
+                          AppLocalizations.of(context)!.trophies,
                           width: 85),
                       _buildStatCard(
-                          _myTeam?.wins.toString() ?? '0', 'Wins',
+                          _myTeam?.wins.toString() ?? '0', AppLocalizations.of(context)!.wins,
                           width: 85),
                     ],
                   ),
@@ -175,13 +177,13 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
                   // Team Name
                   Text(
-                    'Team Name',
+                    AppLocalizations.of(context)!.teamName,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.sm),
                   _buildTextField(
                     _teamNameController, 
-                    hint: 'Enter your team name',
+                    hint: AppLocalizations.of(context)!.enterTeamName,
                     readOnly: !isCaptain,
                   ),
 
@@ -189,7 +191,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
                   // Sports Type
                   Text(
-                    'Sports Type',
+                    AppLocalizations.of(context)!.sportsType,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.sm),
@@ -233,7 +235,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       // ✅ Use VSPPrimaryButton or styled ElevatedButton
                       Expanded(
                         child: PrimaryButton(
-                          text: 'Upload Photo',
+                          text: AppLocalizations.of(context)!.uploadPhoto,
                           height: 45,
                           color: VSPColors.surfaceAlt,
                           textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
@@ -260,7 +262,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Team Members (${1 + _teamMembers.length}/12)',
+                        AppLocalizations.of(context)!.teamMembersHeader(1 + _teamMembers.length, 12),
                         style: Theme.of(context).textTheme.bodyMedium,
                       ),
                       if (isCaptain)
@@ -268,8 +270,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                           onPressed: _showAddPlayerSheet,
                           icon: const Icon(Icons.add_circle_outline,
                               size: 16, color: VSPColors.accent),
-                          label: const Text('Add Member',
-                              style: TextStyle(
+                          label: Text(AppLocalizations.of(context)!.addMember,
+                              style: const TextStyle(
                                   color: VSPColors.accent,
                                   fontSize: 12,
                                   fontWeight: FontWeight.bold)),
@@ -286,7 +288,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     ),
                     child: (_myTeam == null && _teamMembers.isEmpty)
                         ? Center(
-                            child: Text('Add your team members',
+                            child: Text(AppLocalizations.of(context)!.addMembersHint,
                                 style: TextStyle(
                                     color: VSPColors.textSecondary.withValues(alpha: 0.3),
                                     fontSize: 12)))
@@ -316,8 +318,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       child: Padding(
                         padding: EdgeInsets.all(20),
                         child: Text(
-                          "Register your team to start unlocking achievements!",
-                          style: TextStyle(
+                          AppLocalizations.of(context)!.registerTeamPrompt,
+                          style: const TextStyle(
                               color: VSPColors.textSecondary,
                               fontSize: 13,
                               fontStyle: FontStyle.italic),
@@ -332,12 +334,12 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     SizedBox(
                       width: double.infinity,
                       child: PrimaryButton(
-                        text: 'Create Team',
+                        text: AppLocalizations.of(context)!.createTeam,
                         isLoading: _isSaving,
                         onPressed: _isSaving ? null : () async {
                           if (_teamNameController.text.trim().isEmpty) {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              const SnackBar(content: Text('Please enter a team name'), backgroundColor: VSPColors.error),
+                              SnackBar(content: Text(AppLocalizations.of(context)!.enterTeamNameError), backgroundColor: VSPColors.error),
                             );
                             return;
                           }
@@ -352,9 +354,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             // 🖼️ Deferred upload: upload logo only on save
                             String? logoUrl = _newLogoUrl;
                             if (_selectedLogo != null) {
-                              logoUrl = await CloudinaryService().uploadImage(
-                                _selectedLogo!,
-                                folder: 'teams/${user.uid}/logo',
+                              logoUrl = await StorageService().uploadFile(
+                                file: File(_selectedLogo!.path),
+                                path: 'teams/${user.uid}/logo/logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
                               );
                             }
 
@@ -384,16 +386,18 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                             });
 
                             if (teamId != null && mounted) {
+                              if (!context.mounted) return;
                               ScaffoldMessenger.of(context).showSnackBar(
-                                const SnackBar(content: Text('Team created successfully!'), backgroundColor: VSPColors.accent),
+                                SnackBar(content: Text(AppLocalizations.of(context)!.teamCreatedSuccess), backgroundColor: VSPColors.accent),
                               );
                               setState(() => _teamMembers.clear());
                               await _fetchMyTeam();
                             }
                           } catch (e) {
                              if (mounted) {
+                               if (!context.mounted) return;
                                ScaffoldMessenger.of(context).showSnackBar(
-                                 SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                                 SnackBar(content: Text(AppLocalizations.of(context)!.errorOccurred(e.toString())), backgroundColor: VSPColors.error),
                                );
                              }
                           } finally {
@@ -407,7 +411,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       children: [
                         Expanded(
                           child: PrimaryButton(
-                            text: 'Delete Team',
+                            text: AppLocalizations.of(context)!.deleteTeam,
                             color: VSPColors.error.withValues(alpha: 0.8),
                             textColor: VSPColors.textPrimary,
                             onPressed: !isCaptain ? null : () {
@@ -418,7 +422,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         const SizedBox(width: VSPSpacing.md),
                         Expanded(
                           child: PrimaryButton(
-                            text: 'Save Changes',
+                            text: AppLocalizations.of(context)!.saveChanges,
                             isLoading: _isSaving,
                             onPressed: (_isSaving || !isCaptain)
                                 ? null
@@ -430,9 +434,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                       final user = Provider.of<AuthProvider>(context, listen: false).userModel;
                                       String? logoUrl = _newLogoUrl;
                                       if (_selectedLogo != null) {
-                                        logoUrl = await CloudinaryService().uploadImage(
-                                          _selectedLogo!,
-                                          folder: 'teams/${user?.uid ?? 'unknown'}/logo',
+                                        logoUrl = await StorageService().uploadFile(
+                                          file: File(_selectedLogo!.path),
+                                          path: 'teams/${user?.uid ?? 'unknown'}/logo/logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
                                         );
                                       }
 
@@ -456,9 +460,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                       });
 
                                       if (success && mounted) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          const SnackBar(
-                                            content: Text('Team updated successfully!'),
+                                          SnackBar(
+                                            content: Text(AppLocalizations.of(context)!.teamUpdatedSuccess),
                                             backgroundColor: VSPColors.accent,
                                           ),
                                         );
@@ -467,8 +472,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                                       }
                                     } catch (e) {
                                       if (mounted) {
+                                        if (!context.mounted) return;
                                         ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                                          SnackBar(content: Text(AppLocalizations.of(context)!.errorOccurred(e.toString())), backgroundColor: VSPColors.error),
                                         );
                                       }
                                     } finally {
@@ -609,9 +615,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            const Text(
-              'Team Achievements',
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.teamAchievements,
+              style: const TextStyle(
                 color: VSPColors.textPrimary,
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
@@ -632,7 +638,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     const Icon(Icons.bolt, color: VSPColors.warning, size: 14),
                     const SizedBox(width: 4),
                     Text(
-                      '${team.currentWinningStreak} Win Streak',
+                      AppLocalizations.of(context)!.winStreak(team.currentWinningStreak),
                       style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
                     ),
                   ],
@@ -734,10 +740,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: const Text("Delete Team", style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
-        content: const Text(
-          "Are you sure? This action cannot be undone and your team and achievements will be lost.",
-          style: TextStyle(color: VSPColors.textSecondary),
+        title: Text(AppLocalizations.of(context)!.deleteTeam, style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+        content: Text(
+          AppLocalizations.of(context)!.deleteTeamConfirm,
+          style: const TextStyle(color: VSPColors.textSecondary),
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
@@ -745,7 +751,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             children: [
               Expanded(
                 child: PrimaryButton(
-                  text: "Cancel",
+                  text: AppLocalizations.of(context)!.cancel,
                   height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
@@ -755,7 +761,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Delete',
+                  text: AppLocalizations.of(context)!.delete,
                   height: 48,
                   color: VSPColors.error,
                   textColor: VSPColors.background,
@@ -764,8 +770,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     if (_myTeam != null) {
                       final success = await DatabaseService().deleteTeam(_myTeam!.id);
                       if (success && mounted) {
+                        if (!context.mounted) return;
                         ScaffoldMessenger.of(context).showSnackBar(
-                          const SnackBar(content: Text('Team deleted successfully'), backgroundColor: VSPColors.error),
+                          SnackBar(content: Text(AppLocalizations.of(context)!.teamDeletedSuccess), backgroundColor: VSPColors.error),
                         );
                         Navigator.pop(context); // Go back to profile
                       }

@@ -4,7 +4,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/cloudinary_service.dart';
+import '../../../core/services/storage_service.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/utils/phone_utils.dart';
 
@@ -12,6 +12,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'add_player_sheet.dart';
+import '../../../core/repositories/team_repository.dart';
 
 class CreateTeamSheet extends StatefulWidget {
   const CreateTeamSheet({super.key});
@@ -53,9 +54,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
       // 1. Upload Logo if selected
       if (_selectedLogo != null) {
-        _uploadedLogoUrl = await CloudinaryService().uploadImage(
-          _selectedLogo!,
-          folder: 'teams/$uid/logos',
+        _uploadedLogoUrl = await StorageService().uploadFile(
+          file: File(_selectedLogo!.path),
+          path: 'teams/$uid/logos/team_logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
       }
 
@@ -81,7 +82,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
         'sportType': _selectedSport,
       };
 
-      final teamId = await DatabaseService().createTeam(teamData);
+      final teamId = await TeamRepository().createTeam(teamData);
 
       if (teamId != null && mounted) {
         Navigator.pop(context, true);

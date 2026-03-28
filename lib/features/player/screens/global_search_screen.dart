@@ -1,6 +1,8 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import '../../../core/services/database_service.dart';
+import 'dart:async';
+import '../../../core/repositories/search_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'match_details_screen.dart';
@@ -21,6 +23,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
   
   // Recent searches will be populated from user interaction
   final List<String> _recentSearches = [];
+  Timer? _debounce;
 
   @override
   void initState() {
@@ -29,6 +32,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
     if (widget.initialQuery != null && widget.initialQuery!.isNotEmpty) {
       _performSearch(widget.initialQuery!);
     }
+  }
+
+  void _onSearchChanged(String query) {
+    if (_debounce?.isActive ?? false) _debounce!.cancel();
+    _debounce = Timer(const Duration(milliseconds: 500), () {
+      _performSearch(query);
+    });
   }
 
   Future<void> _performSearch(String query) async {
@@ -42,7 +52,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
     setState(() => _isSearching = true);
     
-    final results = await DatabaseService().globalUnifiedSearch(query);
+    final results = await SearchRepository().globalUnifiedSearch(query);
     
     if (mounted) {
       setState(() {
@@ -54,6 +64,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
 
   @override
   void dispose() {
+    _debounce?.cancel();
     _searchController.dispose();
     super.dispose();
   }
@@ -71,12 +82,12 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
           controller: _searchController,
           autofocus: widget.initialQuery == null,
           style: const TextStyle(color: Colors.white),
-          decoration: const InputDecoration(
-            hintText: 'Search stadiums, teams, or cups...',
-            hintStyle: TextStyle(color: VSPColors.textSecondary),
+          decoration: InputDecoration(
+            hintText: AppLocalizations.of(context)!.searchHint,
+            hintStyle: const TextStyle(color: VSPColors.textSecondary),
             border: InputBorder.none,
           ),
-          onChanged: (val) => _performSearch(val),
+          onChanged: (val) => _onSearchChanged(val),
         ),
         actions: [
           if (_searchController.text.isNotEmpty)
@@ -91,13 +102,13 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       ),
       body: _isSearching
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : SingleChildScrollView(
+          : SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.all(VSPSpacing.md),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   if (_searchController.text.isEmpty) ...[
-                    const Text('Recent Searches', style: TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
+                    Text(AppLocalizations.of(context)!.recentSearches, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
                     const SizedBox(height: VSPSpacing.md),
                     Wrap(
                       spacing: 8,
@@ -111,16 +122,16 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
                       )).toList(),
                     ),
                   ] else if (!hasResults) ...[
-                    const Center(
+                    Center(
                       child: Padding(
-                        padding: EdgeInsets.only(top: 100),
-                        child: Text('No results found.', style: TextStyle(color: VSPColors.textSecondary)),
+                        padding: const EdgeInsets.only(top: 100),
+                        child: Text(AppLocalizations.of(context)!.noResults, style: const TextStyle(color: VSPColors.textSecondary)),
                       ),
                     ),
                   ] else ...[
-                    _buildCategory('Stadiums 🏟️', _results['stadiums'] as List<Stadium>),
-                    _buildCategory('Teams ⚽', _results['teams'] as List<Team>),
-                    _buildCategory('Championships 🏆', _results['championships'] as List<Championship>),
+                    _buildCategory(AppLocalizations.of(context)!.stadiumsCategory, _results['stadiums'] as List<Stadium>),
+                    _buildCategory(AppLocalizations.of(context)!.teamsCategory, _results['teams'] as List<Team>),
+                    _buildCategory(AppLocalizations.of(context)!.championshipsCategory, _results['championships'] as List<Championship>),
                   ],
                 ],
               ),
@@ -161,9 +172,10 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               // TODO: Navigate to TeamProfile
             } else if (item is Championship) {
               name = item.name;
-              sub = '${item.grandPrize} Prize';
+              sub = AppLocalizations.of(context)!.prizeLabel(item.grandPrize.toString());
               icon = Icons.emoji_events;
               // TODO: Navigate to ChampionshipDetails
+              onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => ChampionshipDetailsScreen(championship: item)));
             }
 
             return ListTile(

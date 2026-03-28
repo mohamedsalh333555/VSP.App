@@ -166,7 +166,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.only(bottom: 100),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),

@@ -265,7 +265,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
           // Step Content
           Expanded(
-            child: SingleChildScrollView(
+            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               physics: const BouncingScrollPhysics(),
               child: AnimatedSwitcher(

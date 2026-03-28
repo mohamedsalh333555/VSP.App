@@ -107,7 +107,7 @@ class _AccountScreenState extends State<AccountScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -176,6 +176,7 @@ class _AccountScreenState extends State<AccountScreen> {
                       setState(() => _isLocating = true);
                       await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
                       if (mounted) {
+                        if (!context.mounted) return;
                         setState(() {
                           _addressController.text = Provider.of<AuthProvider>(context, listen: false).governorate;
                           _isLocating = false;

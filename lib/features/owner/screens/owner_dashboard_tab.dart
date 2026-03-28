@@ -63,7 +63,7 @@ class _OwnerDashboardTabState extends State<OwnerDashboardTab> {
           const SizedBox(width: 8),
         ],
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,

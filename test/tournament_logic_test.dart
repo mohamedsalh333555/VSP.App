@@ -2,6 +2,9 @@ import 'package:flutter_test/flutter_test.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:vsp_application/core/repositories/match_repository.dart';
+import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:vsp_application/core/repositories/tournament_repository.dart';
 
 void main() {
   group('Tournament System Tests', () {
@@ -41,11 +44,11 @@ void main() {
         'governorate': 'Cairo',
       });
 
-      print('🔹 Step 1: Championship Created with 4 Teams.');
+      // // print('🔹 Step 1: Championship Created with 4 Teams.');
 
       // 2. Action: Generate Fixtures
       await dbService.generateFixtures('champ1');
-      print('🔹 Step 2: Fixtures Generated.');
+      // // print('🔹 Step 2: Fixtures Generated.');
 
       // 3. Verification: Check Matches Count
       // With 4 teams, we expect 3 matches total (2 semis, 1 final)
@@ -60,14 +63,14 @@ void main() {
       final finalMatchDoc = matchesSnap.docs.firstWhere((m) => m['roundIndex'] == 0);
       expect(finalMatchDoc['homeTeamId'], isNull, reason: "Final match should be empty initially");
 
-      print('✅ Fixture Generation Test Passed.');
+      // // print('✅ Fixture Generation Test Passed.');
 
       // 4. Action: Play Match 1 (Team A vs Team B)
       // Let's find the match where t1 is playing
       final match1 = round1Matches.firstWhere((m) => m['homeTeamId'] == 't1' || m['awayTeamId'] == 't1');
       final String match1Id = match1.id;
       
-      print('🔹 Step 3: Simulating Match 1 (Winner: Team A)...');
+      // // print('🔹 Step 3: Simulating Match 1 (Winner: Team A)...');
       
       // Assume Team A (t1) wins 3-0
       await dbService.updateTournamentMatchScore(
@@ -88,7 +91,7 @@ void main() {
 
       expect(isHomeSlot || isAwaySlot, true, reason: "Winner T1 should be moved to the Final Match");
       
-      print('✅ Progression Test Passed: Team A is in the Final!');
+      // // print('✅ Progression Test Passed: Team A is in the Final!');
     });
   });
 }

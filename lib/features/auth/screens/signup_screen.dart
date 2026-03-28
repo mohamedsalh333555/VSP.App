@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
@@ -51,9 +52,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
       VSPFeedback.showError(
         context, 
-        Provider.of<LanguageProvider>(context, listen: false).isArabic 
-            ? 'يرجى ملء جميع الحقول' 
-            : 'Please fill all fields'
+        AppLocalizations.of(context)!.fillAllFields
       );
       return;
     }
@@ -61,9 +60,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (phone.length < 10) {
       VSPFeedback.showError(
         context, 
-        Provider.of<LanguageProvider>(context, listen: false).isArabic 
-            ? 'يرجى إدخال رقم هاتف صحيح' 
-            : 'Please enter a valid phone number'
+        AppLocalizations.of(context)!.invalidPhone
       );
       return;
     }
@@ -71,9 +68,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (password != confirmPassword) {
       VSPFeedback.showError(
         context, 
-        Provider.of<LanguageProvider>(context, listen: false).isArabic 
-            ? 'كلمات المرور غير متطابقة' 
-            : 'Passwords do not match'
+        AppLocalizations.of(context)!.passwordMismatch
       );
       return;
     }
@@ -81,9 +76,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (password.length < 6) {
       VSPFeedback.showError(
         context, 
-        Provider.of<LanguageProvider>(context, listen: false).isArabic 
-            ? 'كلمة المرور يجب أن تكون 6 أحرف على الأقل' 
-            : 'Password must be at least 6 characters'
+        AppLocalizations.of(context)!.passwordTooShort
       );
       return;
     }
@@ -160,6 +153,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
             SafeArea(
               child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.only(
                   left: 24.0, 
@@ -192,7 +186,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 32),
 
                     Text(
-                      languageProvider.isArabic ? 'إنشاء حساب جديد' : 'Create Account',
+                      AppLocalizations.of(context)!.createNewAccount,
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 38,
                         height: 1.1,
@@ -201,8 +195,8 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 8),
                     Text(
                       widget.isOwner 
-                        ? (languageProvider.isArabic ? 'سجل كصاحب ملعب لتفعيل نظام حجوزاتك' : 'Register as owner and manage your pitch')
-                        : (languageProvider.isArabic ? 'سجل كلاعب وشارك في أقوى التحديات' : 'Register as player and start your journey'),
+                        ? AppLocalizations.of(context)!.registerOwnerSubtitle
+                        : AppLocalizations.of(context)!.registerPlayerSubtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: VSPColors.textSecondary,
                         height: 1.4,
@@ -224,7 +218,7 @@ class _SignupScreenState extends State<SignupScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Personal Information',
+                          AppLocalizations.of(context)!.personalInformation,
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             letterSpacing: 1.1,
                             color: VSPColors.textPrimary,
@@ -236,16 +230,16 @@ class _SignupScreenState extends State<SignupScreen> {
                     const SizedBox(height: 24),
                   
                   // Fields
-                  _buildLabel(languageProvider.isArabic ? 'الاسم الكامل' : 'Full Name'),
+                  _buildLabel(AppLocalizations.of(context)!.fullName),
                   CustomTextField(
                     controller: _nameController,
-                    hintText: languageProvider.isArabic ? 'أدخل اسمك' : 'Enter your name',
+                    hintText: AppLocalizations.of(context)!.enterName,
                     prefixIcon: Icons.person_outline,
                     maxLength: 50,
                   ),
                   
                   const SizedBox(height: 16),
-                  _buildLabel(languageProvider.isArabic ? 'رقم الهاتف' : 'Phone Number'),
+                  _buildLabel(AppLocalizations.of(context)!.phoneNumber),
                   CustomTextField(
                     controller: _phoneController,
                     hintText: '01xxxxxxxxx',
@@ -257,7 +251,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
 
                   const SizedBox(height: 16),
-                  _buildLabel(languageProvider.isArabic ? 'المحافظة' : 'Governorate'),
+                  _buildLabel(AppLocalizations.of(context)!.governorate),
                   _buildGovernorateDropdown(languageProvider),
 
                   // Position Selector (Players Only)
@@ -267,7 +261,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ],
                   
                   const SizedBox(height: 16),
-                  _buildLabel(languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email Address'),
+                  _buildLabel(AppLocalizations.of(context)!.emailAddress),
                   CustomTextField(
                     controller: _emailController,
                     hintText: 'example@email.com',
@@ -276,7 +270,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   
                   const SizedBox(height: 16),
-                  _buildLabel(languageProvider.isArabic ? 'كلمة المرور' : 'Password'),
+                  _buildLabel(AppLocalizations.of(context)!.password),
                   CustomTextField(
                     controller: _passwordController,
                     hintText: '********',
@@ -289,7 +283,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   
                   const SizedBox(height: 16),
-                  _buildLabel(languageProvider.isArabic ? 'تأكيد كلمة المرور' : 'Confirm Password'),
+                  _buildLabel(AppLocalizations.of(context)!.confirmPassword),
                   CustomTextField(
                     controller: _confirmPasswordController,
                     hintText: '********',
@@ -303,7 +297,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   const SizedBox(height: 32),
                   PrimaryButton(
-                    text: languageProvider.isArabic ? 'إنشاء الحساب' : 'Create Account',
+                    text: AppLocalizations.of(context)!.createAccount,
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _handleSignup,
                   ),
@@ -338,8 +332,9 @@ class _SignupScreenState extends State<SignupScreen> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(languageProvider.isArabic ? 'المركز المفضل' : 'Preferred Position'),
+        _buildLabel(AppLocalizations.of(context)!.preferredPosition),
         SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
           scrollDirection: Axis.horizontal,
           physics: const BouncingScrollPhysics(),
           child: Row(

@@ -24,7 +24,7 @@ class OwnerDebtScreen extends StatelessWidget {
           final isBlocked = auth.userModel?.isSuspended ?? false;
           final threshold = 500.0;
 
-          return SingleChildScrollView(
+          return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             padding: const EdgeInsets.all(VSPSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,

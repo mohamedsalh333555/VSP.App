@@ -68,7 +68,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       backgroundColor: VSPColors.background,
       body: SafeArea(
         bottom: false,
-        child: SingleChildScrollView(
+        child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
           physics: const BouncingScrollPhysics(),
           padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
           child: Column(

@@ -3,6 +3,9 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:vsp_application/core/services/auth_service.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/repositories/match_repository.dart';
+import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:vsp_application/core/repositories/tournament_repository.dart';
 // Note: We test the service logic directly to ensure Firestore operations are solid.
 // Testing the AuthProvider directly in CLI requires complex mocking of FirebaseAuth and UI contexts,
 // so we test the underlying AuthService which AuthProvider relies on.
@@ -26,7 +29,7 @@ void main() {
     });
 
     test('1. Edit Profile Logic & Security Checks', () async {
-      print('🔹 Testing Edit Profile Logic...');
+      // // print('🔹 Testing Edit Profile Logic...');
       
       const testUid = 'player_123';
 
@@ -71,11 +74,11 @@ void main() {
       expect(updatedDoc['role'], 'player', reason: "Role MUST NOT change");
       expect(updatedDoc['isSuspended'], false, reason: "Suspension MUST NOT change");
 
-      print('✅ Edit Profile & Security Sanitization Working Perfectly.');
+      // // print('✅ Edit Profile & Security Sanitization Working Perfectly.');
     });
 
     test('2. VSP 1v1 Official League Fetch & Sort', () async {
-      print('🔹 Testing 1v1 League Standings...');
+      // // print('🔹 Testing 1v1 League Standings...');
       
       // 1. Seed Fake Data into the specific 1v1 collection
       await fakeFirestore.collection('vsp_1VS1_players').doc('p1').set({
@@ -118,7 +121,7 @@ void main() {
       expect(players[2].name, 'Player B', reason: "Player B has 50 pts, must be 3rd");
       expect(players[2].rank, 3, reason: "Rank must be 3");
 
-      print('✅ 1v1 League Data Fetching & Ranking Working Perfectly.');
+      // // print('✅ 1v1 League Data Fetching & Ranking Working Perfectly.');
     });
   });
 }

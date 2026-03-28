@@ -2,66 +2,32 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helper functions
-    function isAuthenticated() {
-      return request.auth != null;
-    }
-    
-    function isAdmin() {
-      return isAuthenticated() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
-    }
-    
-    function isOwner(userId) {
-      return isAuthenticated() && request.auth.uid == userId;
-    }
+    function isAuthenticated() { return request.auth != null; }
+    function isOwner(userId) { return request.auth.uid == userId; }
 
     match /users/{userId} {
       allow read: if isAuthenticated();
       allow create: if isAuthenticated() && isOwner(userId);
-      allow update: if isAuthenticated() && isOwner(userId) 
-        && (!request.resource.data.diff(resource.data).affectedKeys().hasAny(['rankLevel', 'isSuspended', 'role', 'points', 'commissionDebt']) || isAdmin());
+      // 🚨 الحماية القاتلة: منع المستخدم من تعديل رتبته، ديونه، أو رصيده
+      allow update: if isAuthenticated() && isOwner(userId)
+                    && !request.resource.data.diff(resource.data).affectedKeys()
+                        .hasAny(['role', 'commissionDebt', 'walletBalance', 'isSuspended', 'isBlocked', 'points']);
+      allow delete: if isAuthenticated() && isOwner(userId);
     }
-    
+
     match /stadiums/{stadiumId} {
       allow read: if true;
       allow create: if isAuthenticated();
-      allow update, delete: if isAuthenticated() && (resource.data.ownerId == request.auth.uid || isAdmin());
-    }
-    
-    match /teams/{teamId} {
-      allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.captainId == request.auth.uid || isAdmin());
-      allow delete: if isAuthenticated() && (resource.data.captainId == request.auth.uid || isAdmin());
+      // منع المالك من توثيق ملعبه بنفسه
+      allow update: if isAuthenticated() && resource.data.ownerId == request.auth.uid
+                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified']);
+      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
     }
 
     match /bookings/{bookingId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated();
-      allow update: if isAuthenticated() && (resource.data.createdByUserId == request.auth.uid || resource.data.ownerId == request.auth.uid || isAdmin());
-      allow delete: if isAdmin();
-    }
-
-    match /messages/{bookingId}/chat/{messageId} {
-       allow read, write: if isAuthenticated(); 
-    }
-    
-    match /reports/{reportId} {
-      allow create: if isAuthenticated();
-      allow read, update, delete: if isAdmin();
-    }
-    
-    match /fcm_tokens/{tokenId} {
-       allow read, write: if isAuthenticated() && (resource == null || resource.data.userId == request.auth.uid);
-    }
-
-    // Public app config (maintenance mode, min version, etc.)
-    // Anyone (including unauthenticated users) can READ this so the app
-    // can check maintenance mode BEFORE the user signs in.
-    // Only Firebase Admin SDK / Console can write.
-    match /config/{document=**} {
-      allow read: if true;
-      allow write: if false;
+      allow create, update: if isAuthenticated();
+      allow delete: if isAuthenticated() && resource.data.createdByUserId == request.auth.uid;
     }
   }
 }

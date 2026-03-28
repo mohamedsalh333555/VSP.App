@@ -40,6 +40,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
       });
 
       // 1. Get UID
+      if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final uid = authProvider.currentUser?.uid;
 
@@ -100,7 +101,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -178,12 +179,14 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
                     if (!mounted) return;
                     if (success) {
                       // Navigate via RootScreen so gating logic re-evaluates cleanly
+                      if (!context.mounted) return;
                       Navigator.pushAndRemoveUntil(
                         context,
                         MaterialPageRoute(builder: (_) => const RootScreen()),
                         (route) => false,
                       );
                     } else {
+                      if (!context.mounted) return;
                       VSPFeedback.showError(context, 'Failed to save verification status');
                     }
                   }

@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -30,7 +31,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          languageProvider.isArabic ? 'اللغة' : 'Language',
+          AppLocalizations.of(context)!.language,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -59,7 +60,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
                 child: Text(
-                  languageProvider.isArabic ? 'تم' : 'Done', 
+                  AppLocalizations.of(context)!.done, 
                   style: const TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)
                 ),
               ),

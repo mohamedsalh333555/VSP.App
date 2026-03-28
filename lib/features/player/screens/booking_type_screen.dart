@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -63,7 +64,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         title: Text(
-          'Choose What Suits You',
+          AppLocalizations.of(context)!.chooseBookingType,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         backgroundColor: VSPColors.background,
@@ -77,23 +78,23 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
+            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
                   _buildBookingOption(
                     context,
                     id: 'Book a Pitch',
-                    title: 'Book a Pitch',
-                    subtitle: 'Private booking for you and friends. No ranking.',
+                    title: AppLocalizations.of(context)!.bookPitch,
+                    subtitle: AppLocalizations.of(context)!.bookPitchSubtitle,
                     imageUrl: 'https://images.unsplash.com/photo-1500648767791-00dcc994a43e?w=800&q=80',
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   _buildBookingOption(
                     context,
                     id: 'Find Players',
-                    title: 'Find Players',
-                    subtitle: 'Public match. Allow others to join to complete numbers.',
+                    title: AppLocalizations.of(context)!.findPlayers,
+                    subtitle: AppLocalizations.of(context)!.findPlayersSubtitle,
                     imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&q=80',
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -113,7 +114,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
               ),
             ),
             child: PrimaryButton(
-              text: 'Continue',
+              text: AppLocalizations.of(context)!.continueButton,
               onPressed: _selectedType == null ? null : _handleContinue,
             ),
           ),
@@ -139,9 +140,10 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         
         // If still invalid, stop here (they probably didn't finish)
         if (!_hasTeam || _teamPlayersCount < 5) {
+          if (!mounted) return;
            ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(
-              content: Text('You still need a complete team of 5+ to play challenge matches.'),
+            SnackBar(
+              content: Text(AppLocalizations.of(context)!.teamIncompleteError),
               backgroundColor: VSPColors.warning,
             ),
           );
@@ -171,12 +173,16 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
 
     // CRITICAL FIX: Use setDraft (not updateDraft) to create a new draft skeleton
     // with all required stadium/owner fields. updateDraft() is a no-op when draft is null.
+    if (!mounted) return;
     final bookingProvider = context.read<BookingProvider>();
+    final authProvider = context.read<app_auth.AuthProvider>();
     bookingProvider.setDraft(BookingDraft(
       stadiumId: widget.stadium.id,
       stadiumName: widget.stadium.name,
       stadiumImageUrl: widget.stadium.imageUrl,
       ownerId: widget.stadium.ownerId,
+      hostName: authProvider.userModel?.name,
+      hostAvatarUrl: authProvider.userModel?.profileImageUrl,
       startTime: DateTime.now(), // placeholder - overwritten in BookingConfirmationScreen
       endTime: DateTime.now().add(const Duration(hours: 1)), // placeholder
       bookingType: type,
@@ -186,6 +192,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     ));
 
     if (type == BookingType.challenge) {
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -196,6 +203,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         ),
       );
     } else {
+      if (!mounted) return;
       Navigator.push(
         context,
         MaterialPageRoute(
@@ -318,8 +326,8 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       return _buildBookingOption(
         context,
         id: 'Create Team to Compete',
-        title: 'Create Team to Compete',
-        subtitle: 'You need a team of 5+ players to play competitive matches. Start here!',
+        title: AppLocalizations.of(context)!.createTeamToCompete,
+        subtitle: AppLocalizations.of(context)!.createTeamSubtitle,
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.lock_outline,
       );
@@ -329,8 +337,8 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       return _buildBookingOption(
         context,
         id: 'Team Incomplete',
-        title: 'Team Incomplete',
-        subtitle: 'You need 5+ players to play ranked matches. Add more players!',
+        title: AppLocalizations.of(context)!.teamIncomplete,
+        subtitle: AppLocalizations.of(context)!.teamIncompleteSubtitle,
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.warning_amber_rounded,
       );
@@ -339,8 +347,8 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     return _buildBookingOption(
         context,
         id: 'Challenge Match',
-        title: 'Challenge Match',
-        subtitle: 'Compete against other teams and rank up.',
+        title: AppLocalizations.of(context)!.challengeMatch,
+        subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle,
         imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
         icon: Icons.emoji_events_outlined,
     );

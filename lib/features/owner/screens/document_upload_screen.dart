@@ -259,7 +259,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   // Step 1: Business Docs (Tax Card, Commercial Register)
   Widget _buildStep1BusinessDocs() {
-     return SingleChildScrollView(
+     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -317,7 +317,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   // Step 2: National ID
   Widget _buildStep2PersonalID() {
-     return SingleChildScrollView(
+     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -344,7 +344,7 @@ class _DocumentUploadScreenState extends State<DocumentUploadScreen> {
 
   // Step 3: Final Info
   Widget _buildStep3FinalInfo() {
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(20),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

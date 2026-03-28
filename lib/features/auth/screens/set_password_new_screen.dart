@@ -111,6 +111,7 @@ class _SetPasswordNewScreenState extends State<SetPasswordNewScreen> {
         body: SafeArea(
           bottom: true,
           child: SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 24.0),
               child: Column(

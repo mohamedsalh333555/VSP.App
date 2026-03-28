@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -58,7 +59,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final phone = _phoneController.text.trim();
 
     if (name.isEmpty) {
-      VSPFeedback.showError(context, 'Name cannot be empty.');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.nameEmptyError);
       return;
     }
 
@@ -83,16 +84,16 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       if (mounted) {
         setState(() => _isLoading = false);
         if (success) {
-          VSPFeedback.showSuccess(context, 'Profile updated successfully!');
+          VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.profileUpdatedSuccess);
           Navigator.pop(context); // Go back to profile screen
         } else {
-          VSPFeedback.showError(context, 'Failed to update profile.');
+          VSPFeedback.showError(context, AppLocalizations.of(context)!.profileUpdateFailed);
         }
       }
     } catch (e) {
       if (mounted) {
         setState(() => _isLoading = false);
-        VSPFeedback.showError(context, 'An error occurred: $e');
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.errorOccurred(e.toString()));
       }
     }
   }
@@ -111,13 +112,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Edit Profile',
+          AppLocalizations.of(context)!.editProfile,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
       body: SafeArea(
-        child: SingleChildScrollView(
+        child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
           padding: EdgeInsets.only(
             left: VSPSpacing.lg,
             right: VSPSpacing.lg,
@@ -171,12 +172,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // --- Form Fields ---
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Full Name', style: Theme.of(context).textTheme.labelMedium),
+                child: Text(AppLocalizations.of(context)!.fullName, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
               CustomTextField(
                 controller: _nameController,
-                hintText: 'Enter your name',
+                hintText: AppLocalizations.of(context)!.enterName,
                 prefixIcon: Icons.person_outline,
               ),
 
@@ -184,12 +185,12 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Phone Number', style: Theme.of(context).textTheme.labelMedium),
+                child: Text(AppLocalizations.of(context)!.phoneNumber, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
               CustomTextField(
                 controller: _phoneController,
-                hintText: 'Enter your phone number',
+                hintText: AppLocalizations.of(context)!.enterPhone,
                 keyboardType: TextInputType.phone,
                 prefixIcon: Icons.phone_outlined,
               ),
@@ -198,7 +199,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               Align(
                 alignment: Alignment.centerLeft,
-                child: Text('Preferred Position', style: Theme.of(context).textTheme.labelMedium),
+                child: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
               
@@ -237,7 +238,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               // --- Save Button ---
               PrimaryButton(
-                text: 'Save Changes',
+                text: AppLocalizations.of(context)!.saveChanges,
                 isLoading: _isLoading,
                 onPressed: _saveChanges,
               ),

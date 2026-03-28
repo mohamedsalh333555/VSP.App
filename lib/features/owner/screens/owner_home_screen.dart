@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
@@ -119,7 +120,7 @@ class _OwnerHomeScreenState extends State<OwnerHomeScreen> {
     final stadiums = stadium.stadiums;
     final todayBookings = _getTodayBookings(allBookings);
 
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: EdgeInsets.fromLTRB(
         VSPSpacing.md,
         MediaQuery.of(context).padding.top + 16,

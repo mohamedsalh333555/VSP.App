@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -27,7 +28,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
     final db = DatabaseService();
 
     if (!auth.isAuthenticated) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login first')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.loginToJoinError)));
       return;
     }
 
@@ -40,7 +41,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
 
       if (team == null) {
         if (mounted) {
-          _showErrorDialog('للانضمام للبطولة، يجب أن تكون قائد فريق.');
+          _showErrorDialog(AppLocalizations.of(context)!.captainRequiredError);
         }
         return;
       }
@@ -48,7 +49,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
       // 2. Check Rule: Min 5 Players
       if (team.memberUids.length < 5) {
         if (mounted) {
-           _showErrorDialog('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
+           _showErrorDialog(AppLocalizations.of(context)!.minPlayersError);
         }
         return;
       }
@@ -56,7 +57,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
       // 3. Check if already joined
       if (widget.championship.joinedTeams.contains(team.id)) {
         if (mounted) {
-           _showErrorDialog('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
+           _showErrorDialog(AppLocalizations.of(context)!.alreadyJoinedError);
         }
         return;
       }
@@ -67,7 +68,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
         if (confirmed == true) {
           final success = await TournamentRepository().joinChampionship(widget.championship.id, team.id);
           if (success && mounted) {
-            _showSuccessSnackBar('تم الانضمام للبطولة بنجاح! بالتوفيق فريق ${team.name} 🏆');
+            _showSuccessSnackBar(AppLocalizations.of(context)!.tournamentJoinSuccess(team.name));
             Navigator.pop(context); // Go back after joining
           }
         }
@@ -86,12 +87,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
-        title: Text('Error', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error)),
+        title: Text(AppLocalizations.of(context)!.errorLabel, style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error)),
         content: Text(message, style: Theme.of(context).textTheme.bodyMedium),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
           PrimaryButton(
-            text: 'OK',
+            text: AppLocalizations.of(context)!.ok,
             height: 48,
             onPressed: () => Navigator.pop(context),
           ),
@@ -111,7 +112,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
             const Icon(Icons.payment, color: VSPColors.accent, size: 48),
             const SizedBox(height: VSPSpacing.md),
             Text(
-              'Join Confirmation',
+              AppLocalizations.of(context)!.joinConfirmation,
               style: Theme.of(context).textTheme.titleLarge,
             ),
           ],
@@ -120,12 +121,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
           mainAxisSize: MainAxisSize.min,
           children: [
              Text(
-              'Entry Fee: ${widget.championship.entryFee.toInt()} EGP',
+              AppLocalizations.of(context)!.entryFee(widget.championship.entryFee.toInt(), AppLocalizations.of(context)!.egCurrency),
               style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent),
             ),
             const SizedBox(height: VSPSpacing.md),
             Text(
-              'Payment will be made in Cash at the stadium when the tournament begins.',
+              AppLocalizations.of(context)!.tournamentPaymentDesc,
               textAlign: TextAlign.center,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
             ),
@@ -137,7 +138,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
             children: [
               Expanded(
                 child: PrimaryButton(
-                  text: 'Cancel',
+                  text: AppLocalizations.of(context)!.cancel,
                   height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
@@ -147,7 +148,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Confirm & Pay',
+                  text: AppLocalizations.of(context)!.confirmAndPay,
                   height: 48,
                   onPressed: () => Navigator.pop(context, true),
                 ),
@@ -222,7 +223,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
           ),
 
           // Main Content
-          SingleChildScrollView(
+          SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             padding: const EdgeInsets.only(top: 220), // Start below header
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -257,7 +258,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
                            children: [
                              Text(
-                               'Schedule',
+                               AppLocalizations.of(context)!.schedule,
                                style: Theme.of(context).textTheme.titleMedium,
                              ),
                              Container(
@@ -266,16 +267,16 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                                  color: VSPColors.surfaceAlt,
                                  borderRadius: BorderRadius.circular(VSPRadius.sm),
                                ),
-                               child: Text('Expand', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                               child: Text(AppLocalizations.of(context)!.expand, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                              )
                            ],
                          ),
                          const SizedBox(height: VSPSpacing.md),
                          // Vertical timeline
-                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.startDate), 'Start Date', true, true),
-                         _buildTimelineStep('Match Day 1', 'Group Stage', true, true),
-                         _buildTimelineStep('Match Day 2', 'Quarter Finals', false, true),
-                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.endDate), 'Final Match', false, false),
+                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.startDate), AppLocalizations.of(context)!.startDate, true, true),
+                         _buildTimelineStep('Match Day 1', AppLocalizations.of(context)!.groupStage, true, true),
+                         _buildTimelineStep('Match Day 2', AppLocalizations.of(context)!.quarterFinals, false, true),
+                         _buildTimelineStep(DateFormat('MMM d').format(widget.championship.endDate), AppLocalizations.of(context)!.finalMatch, false, false),
                       ],
                     ),
                   ),
@@ -285,18 +286,18 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
 
                 // 4. Content Sections
                 _buildSection(
-                  'About The Tournament',
+                  AppLocalizations.of(context)!.aboutTournament,
                   widget.championship.rules.isNotEmpty 
                     ? widget.championship.rules 
-                    : 'Information not provided.',
+                    : AppLocalizations.of(context)!.noDescription,
                 ),
                 _buildSection(
-                  'Match Rules And Regulations',
-                  'Each Match Lasts ${widget.championship.matchDuration} Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.',
+                  AppLocalizations.of(context)!.matchRules,
+                  AppLocalizations.of(context)!.matchRulesContent(widget.championship.matchDuration),
                 ),
                 _buildSection(
-                  'Important Instructions For Players',
-                  'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers\' Instructions.',
+                  AppLocalizations.of(context)!.importantInstructions,
+                  AppLocalizations.of(context)!.importantInstructionsContent,
                 ),
 
                 const SizedBox(height: 100), // Space for Join Button
@@ -310,7 +311,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
         child: (widget.championship.status == 'ongoing' || widget.championship.status == 'completed')
             ? PrimaryButton(
-                text: 'View Tournament Brackets',
+                text: AppLocalizations.of(context)!.viewBrackets,
                 onPressed: () {
                   Navigator.push(
                     context,
@@ -324,7 +325,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                 },
               )
             : PrimaryButton(
-                text: 'Join',
+                text: AppLocalizations.of(context)!.join,
                 isLoading: _isJoining,
                 onPressed: _handleJoin,
               ),

@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
@@ -117,25 +118,25 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Select Opponent Team',
+          AppLocalizations.of(context)!.selectOpponentTeam,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(
+            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    "Choose Opponent",
+                    AppLocalizations.of(context)!.chooseOpponent,
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: 8),
                   Text(
-                    "Search for a team to challenge or pick from teams you've played against.",
+                    AppLocalizations.of(context)!.chooseOpponentSubtitle,
                     style: TextStyle(
                       color: VSPColors.textSecondary.withValues(alpha: 0.7),
                       fontSize: 14,
@@ -155,7 +156,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       style: Theme.of(context).textTheme.bodyLarge,
                       onChanged: _onSearchChanged,
                       decoration: InputDecoration(
-                        hintText: "Search by Team Name or Captain's Phone",
+                        hintText: AppLocalizations.of(context)!.searchTeamPlaceholder,
                         hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                         prefixIcon: const Icon(Icons.search, color: VSPColors.accent),
                         border: InputBorder.none,
@@ -169,7 +170,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   // Search Results or History
                   if (_searchQuery.isNotEmpty) ...[
                     Text(
-                      'Search Results',
+                      AppLocalizations.of(context)!.searchResults,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
@@ -189,8 +190,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                               Icon(Icons.search_off, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                               const SizedBox(height: 16),
                               Text(
-                                "No teams found matching '$_searchQuery'",
-                                style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.5)),
+                                AppLocalizations.of(context)!.noTeamsFound(_searchQuery),
+                                style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                               ),
                             ],
                           ),
@@ -200,7 +201,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       ..._searchedTeams.map((team) => _buildTeamCard(team)),
                   ] else ...[
                     Text(
-                      'Teams You Played Against',
+                      AppLocalizations.of(context)!.previousOpponents,
                       style: Theme.of(context).textTheme.titleLarge,
                     ),
                     const SizedBox(height: 16),
@@ -221,12 +222,12 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.history, color: VSPColors.textSecondary.withOpacity(0.3), size: 48),
+                            Icon(Icons.history, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                             const SizedBox(height: 16),
                             Text(
-                              "You don't have previous opponents yet.\nStart by searching for a team.",
+                              AppLocalizations.of(context)!.noPreviousOpponents,
                               textAlign: TextAlign.center,
-                              style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.5), fontSize: 13),
+                              style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
                             ),
                           ],
                         ),
@@ -252,7 +253,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
             ),
             child: SafeArea(
               child: PrimaryButton(
-                text: 'Continue',
+                text: AppLocalizations.of(context)!.continueButton,
                 onPressed: _selectedTeam == null
                     ? null
                     : () {
@@ -342,7 +343,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       ),
                       const SizedBox(height: 4),
                       Text(
-                        "Matches played: ${team.matchesPlayed}",
+                        AppLocalizations.of(context)!.matchesPlayedCount(team.matchesPlayed),
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
@@ -351,7 +352,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 if (isSelected)
                   const Icon(Icons.check_circle, color: VSPColors.accent)
                 else
-                  Icon(Icons.circle_outlined, color: VSPColors.textSecondary.withOpacity(0.3)),
+                  Icon(Icons.circle_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
               ],
             ),
             if (isSelected) ...[
@@ -370,9 +371,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
               else if (_h2hStats != null && _h2hStats!['totalMatches']! > 0)
                 _buildH2HContent()
               else if (_h2hStats != null)
-                const Text(
-                  "First time playing against them. Set the tone!",
-                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
+                Text(
+                  AppLocalizations.of(context)!.firstTimePlaying,
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
                 ),
             ],
           ],
@@ -386,19 +387,19 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     final opposingWins = _h2hStats!['teamBWins']!;
     final draws = _h2hStats!['draws']!;
     
-    String hypeMessage = "The series is tied! Break the deadlock!";
+    String hypeMessage = AppLocalizations.of(context)!.seriesTied;
     if (wins > opposingWins) {
-      hypeMessage = "You dominate them. Keep the streak alive!";
+      hypeMessage = AppLocalizations.of(context)!.youDominate;
     } else if (wins < opposingWins) {
-      hypeMessage = "Time for revenge! They have the upper hand.";
+      hypeMessage = AppLocalizations.of(context)!.timeForRevenge;
     }
 
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const Text(
-          "HEAD-TO-HEAD HISTORY",
-          style: TextStyle(
+        Text(
+          AppLocalizations.of(context)!.headToHeadHistory,
+          style: const TextStyle(
             color: VSPColors.textSecondary,
             fontSize: 10,
             fontWeight: FontWeight.bold,
@@ -408,9 +409,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         const SizedBox(height: 16),
         Row(
           children: [
-            _buildH2HStatItem("YOUR WINS", wins, VSPColors.accent),
-            _buildH2HStatItem("DRAWS", draws, VSPColors.textSecondary),
-            _buildH2HStatItem("THEIR WINS", opposingWins, VSPColors.error),
+            _buildH2HStatItem(AppLocalizations.of(context)!.yourWins, wins, VSPColors.accent),
+            _buildH2HStatItem(AppLocalizations.of(context)!.draws, draws, VSPColors.textSecondary),
+            _buildH2HStatItem(AppLocalizations.of(context)!.theirWins, opposingWins, VSPColors.error),
           ],
         ),
         const SizedBox(height: 16),
@@ -418,7 +419,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
           width: double.infinity,
           padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
           decoration: BoxDecoration(
-            color: VSPColors.accent.withOpacity(0.1),
+            color: VSPColors.accent.withValues(alpha: 0.1),
             borderRadius: BorderRadius.circular(VSPRadius.sm),
           ),
           child: Text(

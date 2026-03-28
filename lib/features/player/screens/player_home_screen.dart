@@ -4,10 +4,12 @@ import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/repositories/match_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -87,11 +89,11 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
         selectedIndex: _selectedIndex,
         onItemTapped: (index) => setState(() => _selectedIndex = index),
         items: [
-          VspNavItem(activeIcon: Icons.home_rounded, inactiveIcon: Icons.home_outlined, label: 'Home'),
-          VspNavItem(activeIcon: Icons.groups_rounded, inactiveIcon: Icons.groups_outlined, label: 'Matches'),
-          VspNavItem(activeIcon: Icons.emoji_events_rounded, inactiveIcon: Icons.emoji_events_outlined, label: 'Champion'),
-          VspNavItem(activeIcon: Icons.bookmark_rounded, inactiveIcon: Icons.bookmark_outline_rounded, label: 'Booked'),
-          VspNavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: 'Profile'),
+          VspNavItem(activeIcon: Icons.home_rounded, inactiveIcon: Icons.home_outlined, label: AppLocalizations.of(context)!.homeNav),
+          VspNavItem(activeIcon: Icons.groups_rounded, inactiveIcon: Icons.groups_outlined, label: AppLocalizations.of(context)!.matchesNav),
+          VspNavItem(activeIcon: Icons.emoji_events_rounded, inactiveIcon: Icons.emoji_events_outlined, label: AppLocalizations.of(context)!.championNav),
+          VspNavItem(activeIcon: Icons.bookmark_rounded, inactiveIcon: Icons.bookmark_outline_rounded, label: AppLocalizations.of(context)!.bookedNav),
+          VspNavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: AppLocalizations.of(context)!.profileNav),
         ],
       ),
     );
@@ -118,7 +120,7 @@ class _SectionHeader extends StatelessWidget {
           VSPSectionTitle(title),
           TextButton(
             onPressed: onSeeAll,
-            child: const Text('See all', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+            child: Text(AppLocalizations.of(context)!.seeAll, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
           ),
         ],
       ),
@@ -156,8 +158,13 @@ class ChampionshipCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTypeBadge("TOURNAMENT"),
-              _buildStatusBadge(championship.status.toUpperCase(), championship.status == 'open' ? Colors.green : VSPColors.accent),
+              _buildTypeBadge(AppLocalizations.of(context)!.tournament),
+              _buildStatusBadge(
+                championship.status == 'open' 
+                    ? AppLocalizations.of(context)!.open.toUpperCase() 
+                    : AppLocalizations.of(context)!.full.toUpperCase(), 
+                championship.status == 'open' ? Colors.green : VSPColors.accent
+              ),
             ],
           ),
           const SizedBox(height: 16),
@@ -197,9 +204,9 @@ class ChampionshipCard extends StatelessWidget {
               children: [
                 _buildCompactInfo(Icons.calendar_month, DateFormat('MMM d').format(championship.startDate)),
                 _buildDivider(),
-                _buildCompactInfo(Icons.emoji_events_outlined, "${championship.grandPrize.toInt()} eg"),
+                _buildCompactInfo(Icons.emoji_events_outlined, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
                 _buildDivider(),
-                _buildCompactInfo(Icons.payments_outlined, "${championship.entryFee.toInt()} eg"),
+                _buildCompactInfo(Icons.payments_outlined, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
               ],
             ),
           ),
@@ -224,9 +231,9 @@ class ChampionshipCard extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(width: 4),
-                      const Text(
-                        "SPOTS LEFT",
-                        style: TextStyle(
+                      Text(
+                        AppLocalizations.of(context)!.spotsLeft,
+                        style: const TextStyle(
                           color: VSPColors.textSecondary,
                           fontWeight: FontWeight.bold,
                           fontSize: 10,
@@ -234,7 +241,7 @@ class ChampionshipCard extends StatelessWidget {
                       ),
                     ],
                   ),
-                  Text("${championship.joinedTeams.length}/${championship.maxTeams} TEAMS JOINED", style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500)),
+                  Text(AppLocalizations.of(context)!.teamsJoined(championship.joinedTeams.length, championship.maxTeams), style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500)),
                 ],
               ),
               GestureDetector(
@@ -242,7 +249,7 @@ class ChampionshipCard extends StatelessWidget {
                 child: Container(
                   height: 44.0, padding: const EdgeInsets.symmetric(horizontal: 32),
                   decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(12)),
-                  child: const Center(child: Text("JOIN", style: TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.0))),
+                  child: Center(child: Text(AppLocalizations.of(context)!.joinMatch, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.0))),
                 ),
               ),
             ],
@@ -276,7 +283,7 @@ class _HomeContent extends StatelessWidget {
       children: [
         _buildTopBar(context, auth),
         Expanded(
-          child: SingleChildScrollView(
+          child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             physics: const BouncingScrollPhysics(),
             padding: const EdgeInsets.only(bottom: 120),
             child: Column(
@@ -317,10 +324,10 @@ class _HomeContent extends StatelessWidget {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text('Hi ${auth.userModel?.name?.split(' ').first ?? "Player"}', style: Theme.of(context).textTheme.titleLarge),
+                      Text('${AppLocalizations.of(context)!.hi} ${auth.userModel?.name?.split(' ').first ?? AppLocalizations.of(context)!.playerDefaultName}', style: Theme.of(context).textTheme.titleLarge),
                       GestureDetector(
                         onTap: () => _handleLocationPicker(context, auth),
-                        child: Row(children: [const Icon(Icons.location_on, color: VSPColors.accent, size: 14), const SizedBox(width: 4), Text(auth.userModel?.governorate ?? 'Select Location', style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline))]),
+                        child: Row(children: [const Icon(Icons.location_on, color: VSPColors.accent, size: 14), const SizedBox(width: 4), Text(auth.userModel?.governorate ?? AppLocalizations.of(context)!.selectLocation, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline))]),
                       ),
                     ],
                   ),
@@ -346,9 +353,9 @@ class _HomeContent extends StatelessWidget {
               height: 50,
               padding: const EdgeInsets.only(left: 6, right: 16),
               decoration: BoxDecoration(
-                color: VSPColors.surface,
+                color: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 1),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
               ),
               child: Row(
                 children: [
@@ -359,7 +366,7 @@ class _HomeContent extends StatelessWidget {
                       color: VSPColors.background.withValues(alpha: 0.5),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.search, color: VSPColors.textSecondary, size: 20),
+                    child: const Icon(Icons.search, color: VSPColors.accent, size: 20),
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -368,8 +375,8 @@ class _HomeContent extends StatelessWidget {
                       style: const TextStyle(color: Colors.white, fontSize: 14),
                       textAlignVertical: TextAlignVertical.center,
                       decoration: InputDecoration(
-                        hintText: 'Search stadiums...',
-                        hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.4), fontSize: 14),
+                        hintText: AppLocalizations.of(context)!.searchStadiums,
+                        hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
                         border: InputBorder.none,
                         focusedBorder: InputBorder.none,
                         enabledBorder: InputBorder.none,
@@ -415,7 +422,7 @@ class _HomeContent extends StatelessWidget {
     );
   }
 
-  Widget _buildPromos() => StreamBuilder<List<Promotion>>(stream: DatabaseService().getPromotionsStream(), builder: (context, snapshot) => snapshot.hasData ? PromoSlider(promotions: snapshot.data!) : const SizedBox.shrink());
+  Widget _buildPromos() => StreamBuilder<List<Promotion>>(stream: StadiumRepository().getPromotionsStream(), builder: (context, snapshot) => snapshot.hasData ? PromoSlider(promotions: snapshot.data!) : const SizedBox.shrink());
 
   Widget _buildStadiumsList(BuildContext context, StadiumProvider provider) {
     if (provider.stadiums.isEmpty && !provider.isLoading) {
@@ -425,7 +432,7 @@ class _HomeContent extends StatelessWidget {
         child: Column(
           children: [
             Text(
-              'No stadiums found in $cityName',
+              '${AppLocalizations.of(context)!.noStadiumsFoundIn} $cityName',
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
             ),
             const SizedBox(height: 12),
@@ -435,7 +442,7 @@ class _HomeContent extends StatelessWidget {
                 backgroundColor: VSPColors.surfaceAlt,
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
               ),
-              child: const Text('Refresh', style: TextStyle(color: VSPColors.accent)),
+              child: Text(AppLocalizations.of(context)!.refresh, style: const TextStyle(color: VSPColors.accent)),
             )
           ],
         ),
@@ -444,10 +451,10 @@ class _HomeContent extends StatelessWidget {
 
     return Column(
       children: [
-        _SectionHeader(title: 'Nearby Stadiums', onSeeAll: () {}),
+        _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums, onSeeAll: () {}),
         const SizedBox(height: 16),
         SizedBox(
-          height: 230,
+          height: 210,
           child: provider.isLoading && provider.stadiums.isEmpty
               ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
               : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: provider.stadiums.length, itemBuilder: (context, i) => Container(width: 300, margin: const EdgeInsets.only(right: 12), child: StadiumCard(stadium: provider.stadiums[i], onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StadiumDetailsScreen(stadium: provider.stadiums[i])))))),
@@ -458,15 +465,15 @@ class _HomeContent extends StatelessWidget {
 
   Widget _buildMatchesList(BuildContext context) {
     return StreamBuilder<List<Booking>>(
-      stream: DatabaseService().getPublicMatches(), 
+      stream: MatchRepository().getPublicMatches(), 
       builder: (context, snapshot) {
         final matches = snapshot.data ?? [];
         return Column(
           children: [
-            _SectionHeader(title: 'Join Matches', onSeeAll: () => onNavigate(1)),
+            _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => onNavigate(1)),
             const SizedBox(height: 16),
             SizedBox(
-              height: 250,
+              height: 220,
               child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
                   ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
                   : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: matches.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: PublicMatchCard(booking: matches[i])))),
@@ -484,10 +491,10 @@ class _HomeContent extends StatelessWidget {
         final championships = snapshot.data ?? [];
         return Column(
           children: [
-            _SectionHeader(title: 'Join Championships', onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1})),
+            _SectionHeader(title: AppLocalizations.of(context)!.joinChampionships, onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1})),
             const SizedBox(height: 16),
             SizedBox(
-              height: 250,
+              height: 220,
               child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
                   ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
                   : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: championships.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: ChampionshipCard(championship: championships[i])))),
@@ -501,7 +508,7 @@ class _HomeContent extends StatelessWidget {
   void _handleLocationPicker(BuildContext context, AuthProvider auth) {
     showModalBottomSheet(context: context, backgroundColor: VSPColors.surface, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))), builder: (context) {
       final governorates = EgyptGovernorates.allGovernorates;
-      return Container(padding: const EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [Text('Select Location', style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 16), Expanded(child: ListView.builder(itemCount: governorates.length, itemBuilder: (context, index) { final gov = governorates[index]; final isSelected = auth.userModel?.governorate == gov; return ListTile(leading: Icon(Icons.location_city, color: isSelected ? VSPColors.accent : VSPColors.textSecondary), title: Text(gov, style: TextStyle(color: isSelected ? VSPColors.accent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)), trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null, onTap: () { auth.updateProfile({'governorate': gov}); context.read<StadiumProvider>().applyGovernorateFilter(gov); Navigator.pop(context); }); }))]));
+      return Container(padding: const EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [Text(AppLocalizations.of(context)!.selectLocation, style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 16), Expanded(child: ListView.builder(itemCount: governorates.length, itemBuilder: (context, index) { final gov = governorates[index]; final isSelected = auth.userModel?.governorate == gov; return ListTile(leading: Icon(Icons.location_city, color: isSelected ? VSPColors.accent : VSPColors.textSecondary), title: Text(gov, style: TextStyle(color: isSelected ? VSPColors.accent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)), trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null, onTap: () { auth.updateProfile({'governorate': gov}); context.read<StadiumProvider>().applyGovernorateFilter(gov); Navigator.pop(context); }); }))]));
     });
   }
 }

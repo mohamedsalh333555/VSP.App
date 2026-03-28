@@ -1,4 +1,6 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -46,8 +48,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       if (userId == null) {
         setState(() => _isLoading = false);
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Session expired. Please sign in again.'),
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.sessionExpiredError),
             backgroundColor: Colors.red,
           ),
         );
@@ -79,14 +81,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         );
       } else {
-        VSPFeedback.showError(context, bookingProvider.errorMessage ?? 'Failed to create booking');
+        VSPFeedback.showError(context, bookingProvider.errorMessage ?? AppLocalizations.of(context)!.bookingCreateFailed);
       }
     } catch (e) {
       if (!mounted) return;
       setState(() {
         _isLoading = false;
       });
-      VSPFeedback.showError(context, 'Booking failed: $e');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.bookingFailedError(e.toString()));
     }
   }
 
@@ -103,7 +105,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Confirm Booking',
+          AppLocalizations.of(context)!.confirmBooking,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -117,7 +119,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               height: 300,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: VSPColors.accent.withOpacity(0.12),
+                color: VSPColors.accent.withValues(alpha: 0.12),
               ),
               child: BackdropFilter(
                 filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100),
@@ -126,14 +128,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             ),
           ),
           
-          SingleChildScrollView(
+          SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             padding: const EdgeInsets.all(VSPSpacing.lg),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const VSPFadeInItem(
-                  delay: Duration(milliseconds: 100),
-                  child: _SectionHeader(title: 'Booking Summary'),
+                VSPFadeInItem(
+                  delay: const Duration(milliseconds: 100),
+                  child: _SectionHeader(title: AppLocalizations.of(context)!.bookingSummary),
                 ),
                 const SizedBox(height: 16),
                 
@@ -144,27 +146,27 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 
                 const SizedBox(height: 32),
 
-                const VSPFadeInItem(
-                  delay: Duration(milliseconds: 300),
-                  child: _SectionHeader(title: 'Payment Method'),
+                VSPFadeInItem(
+                  delay: const Duration(milliseconds: 300),
+                  child: _SectionHeader(title: AppLocalizations.of(context)!.paymentMethod),
                 ),
                 const SizedBox(height: 16),
                 
                 VSPFadeInItem(
                   delay: const Duration(milliseconds: 400),
-                  child: _buildPaymentMethodChip('cash', 'Cash (Pay at Stadium)', Icons.payments_outlined),
+                  child: _buildPaymentMethodChip('cash', AppLocalizations.of(context)!.cashPayAtStadium, Icons.payments_outlined),
                 ),
 
                 const SizedBox(height: 32),
 
                 // MVP Cash Content
                 // Note: Online payment UI intentionally disabled for MVP; architecture preserved for future integration.
-                const VSPFadeInItem(
-                  delay: Duration(milliseconds: 100),
+                VSPFadeInItem(
+                  delay: const Duration(milliseconds: 100),
                   child: _SimpleInfoCard(
                     icon: Icons.payments_outlined,
-                    title: 'Cash Payment',
-                    subtitle: 'You will pay in cash when you arrive at the stadium.',
+                    title: AppLocalizations.of(context)!.cashPayment,
+                    subtitle: AppLocalizations.of(context)!.cashPaymentDesc,
                   ),
                 ),
                 
@@ -173,7 +175,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 VSPFadeInItem(
                   delay: const Duration(milliseconds: 600),
                   child: PrimaryButton(
-                    text: 'Confirm Booking',
+                    text: AppLocalizations.of(context)!.confirmBooking,
                     isLoading: _isLoading,
                     onPressed: _processPayment,
                   ),
@@ -194,7 +196,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
       decoration: BoxDecoration(
-        color: VSPColors.accent.withOpacity(0.1),
+        color: VSPColors.accent.withValues(alpha: 0.1),
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
           color: VSPColors.accent,
@@ -263,7 +265,7 @@ class _BookingSummaryCard extends StatelessWidget {
         border: Border.all(color: VSPColors.divider),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withOpacity(0.2),
+            color: Colors.black.withValues(alpha: 0.2),
             blurRadius: 10,
             offset: const Offset(0, 4),
           )
@@ -278,7 +280,7 @@ class _BookingSummaryCard extends StatelessWidget {
                 width: 48,
                 height: 48,
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withOpacity(0.1),
+                  color: VSPColors.accent.withValues(alpha: 0.1),
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                 ),
                 child: const Icon(Icons.stadium_outlined, color: VSPColors.accent),
@@ -293,7 +295,7 @@ class _BookingSummaryCard extends StatelessWidget {
                       style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18),
                     ),
                     Text(
-                      bookingDraft.bookingType == BookingType.challenge ? 'Challenge Match' : 'Private Booking',
+                      bookingDraft.bookingType == BookingType.challenge ? AppLocalizations.of(context)!.challengeMatch : AppLocalizations.of(context)!.privateBooking,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                     ),
                   ],
@@ -309,11 +311,11 @@ class _BookingSummaryCard extends StatelessWidget {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildSummaryItem(context, Icons.calendar_today_outlined, 
-                '${bookingDraft.startTime.day} ${_getMonthName(bookingDraft.startTime.month)}'),
+                '${bookingDraft.startTime.day} ${DateFormat.MMM(Intl.defaultLocale).format(bookingDraft.startTime)}'),
               _buildSummaryItem(context, Icons.access_time, 
                 '${bookingDraft.startTime.hour}:${bookingDraft.startTime.minute.toString().padLeft(2, '0')}'),
               _buildSummaryItem(context, Icons.sports_soccer, 
-                bookingDraft.bookingType == BookingType.challenge ? 'Ranked' : 'Friendly'),
+                bookingDraft.bookingType == BookingType.challenge ? AppLocalizations.of(context)!.ranked : AppLocalizations.of(context)!.friendly),
             ],
           ),
           const SizedBox(height: 20),
@@ -327,7 +329,7 @@ class _BookingSummaryCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(
-                  'Subtotal Amount',
+                  AppLocalizations.of(context)!.subtotalAmount,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                 ),
                 Text(
@@ -358,10 +360,7 @@ class _BookingSummaryCard extends StatelessWidget {
     );
   }
 
-  String _getMonthName(int month) {
-    const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
-    return months[month - 1];
-  }
+  // DateFormat.MMM(Intl.defaultLocale) replaces manually defined _getMonthName
 }
 
 class _SimpleInfoCard extends StatelessWidget {
@@ -390,7 +389,7 @@ class _SimpleInfoCard extends StatelessWidget {
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: VSPColors.accent.withOpacity(0.1),
+              color: VSPColors.accent.withValues(alpha: 0.1),
               shape: BoxShape.circle,
             ),
             child: Icon(icon, color: VSPColors.accent, size: 48),

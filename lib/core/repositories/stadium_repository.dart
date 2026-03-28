@@ -224,4 +224,16 @@ class StadiumRepository {
       return false;
     }
   }
+  // ==================== PROMOTIONS ====================
+
+  /// Stream of active promotions for marketing
+  Stream<List<Promotion>> getPromotionsStream() {
+    return _firestore
+        .collection('promotions')
+        .where('isActive', isEqualTo: true)
+        .snapshots()
+        .map((snapshot) => snapshot.docs
+            .map((doc) => Promotion.fromFirestore(doc.data(), doc.id))
+            .toList());
+  }
 }

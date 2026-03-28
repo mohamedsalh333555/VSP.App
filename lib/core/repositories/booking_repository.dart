@@ -3,7 +3,9 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import '../../data/models.dart';
-import '../services/database_service.dart';
+import '../repositories/notification_repository.dart';
+import '../repositories/user_repository.dart';
+import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 
@@ -64,9 +66,17 @@ class FirestoreBookingRepository implements BookingRepository {
       // For the Cash-Only MVP, we auto-confirm all bookings.
       const status = BookingStatus.confirmed;
 
+      // ── Data Denormalization: Add host info to booking ──
+      final userDoc = await _firestore.collection('users').doc(userId).get();
+      final hostName = userDoc.data()?['name'] ?? 'Player';
+      final hostAvatar = userDoc.data()?['profileImageUrl'] ?? '';
+
       final booking = Booking.fromDraft(
         id: docRef.id,
-        draft: draft,
+        draft: draft.copyWith(
+          hostName: hostName,
+          hostAvatarUrl: hostAvatar,
+        ),
         userId: userId,
         status: status,
       );
@@ -123,8 +133,7 @@ class FirestoreBookingRepository implements BookingRepository {
 
   Future<void> _sendOwnerNotification(BookingDraft draft, String bookingId) async {
     try {
-      final db = DatabaseService();
-      await db.sendNotification(
+      await NotificationRepository().sendNotification(
         draft.ownerId,
         AppNotification(
           id: '',
@@ -142,7 +151,6 @@ class FirestoreBookingRepository implements BookingRepository {
 
   Future<void> _sendChallengeNotification(BookingDraft draft) async {
     try {
-      final db = DatabaseService();
       // 1. Get opponent team to find captain phone
       final teamDoc = await _firestore.collection('teams').doc(draft.opponentTeamId).get();
       if (!teamDoc.exists) return;
@@ -152,11 +160,11 @@ class FirestoreBookingRepository implements BookingRepository {
       if (captainPhone == null) return;
 
       // 2. Find captain user ID by phone
-      final captainUser = await db.getUserByPhone(captainPhone);
+      final captainUser = await UserRepository().getUserByPhone(captainPhone);
       if (captainUser == null) return;
 
       // 3. Send notification
-      await db.sendNotification(
+      await NotificationRepository().sendNotification(
         captainUser.uid,
         AppNotification(
           id: '', // Firestore auto-generates
@@ -164,6 +172,7 @@ class FirestoreBookingRepository implements BookingRepository {
           body: 'You are playing against ${draft.playerTeamName ?? "another team"} at ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)}.',
           type: 'info',
           createdAt: DateTime.now(),
+          hasAction: false,
         ),
       );
       AnalyticsService.logChallengeSent(draft.playerTeamId ?? 'unknown', draft.opponentTeamId!);
@@ -357,7 +366,7 @@ class FirestoreBookingRepository implements BookingRepository {
               final homeTeamId = data['playerTeamId'];
               final awayTeamId = data['opponentTeamId'];
               if (homeTeamId != null && awayTeamId != null) {
-                await DatabaseService().updateMatchResult(
+                await TeamRepository().updateMatchResult(
                   bookingId, 
                   homeTeamId, 
                   awayTeamId, 

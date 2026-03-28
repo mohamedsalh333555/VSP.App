@@ -175,12 +175,14 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           setState(() => _isLocationLoading = false);
+          if (!context.mounted) return;
           VSPFeedback.showError(context, 'Location permission denied');
           return;
         }
       }
       if (permission == LocationPermission.deniedForever) {
         setState(() => _isLocationLoading = false);
+        if (!context.mounted) return;
         VSPFeedback.showError(context, 'Location permission permanently denied. Please enable it in Settings.');
         return;
       }
@@ -193,7 +195,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       // 📍 Silicon Valley Strategy: Reverse Geocoding to extract Governorate
       await _reverseGeocode(position.latitude, position.longitude);
     } catch (e) {
-      if(mounted) _showError('Could not fetch location');
+      if(mounted) {
+        if (!context.mounted) return;
+        _showError('Could not fetch location');
+      }
     } finally {
       if (mounted) setState(() => _isLocationLoading = false);
     }
@@ -254,7 +259,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         setState(() => _images.add(imageEntry));
         
         // Upload
-        final url = await _storageService.uploadFile(file: imageFile, path: 'stadiums/images', fileName: 'std_${DateTime.now().millisecondsSinceEpoch}.jpg');
+        final url = await _storageService.uploadFile(file: imageFile, path: 'stadiums/images/std_${DateTime.now().millisecondsSinceEpoch}.jpg');
         if (!mounted) return;
         setState(() {
           imageEntry['url'] = url;
@@ -462,7 +467,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   // --- Steps ---
 
   Widget _buildStep1Details() {
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -562,7 +567,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             maxLength: 500,
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(
+          SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             scrollDirection: Axis.horizontal,
             child: Row(
               children: [
@@ -595,7 +600,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildStep2Features() {
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         children: [
@@ -647,7 +652,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildStep3Images() {
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         children: [

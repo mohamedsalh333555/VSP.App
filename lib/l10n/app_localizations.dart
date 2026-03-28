@@ -1,0 +1,2366 @@
+import 'dart:async';
+
+import 'package:flutter/foundation.dart';
+import 'package:flutter/widgets.dart';
+import 'package:flutter_localizations/flutter_localizations.dart';
+import 'package:intl/intl.dart' as intl;
+
+import 'app_localizations_ar.dart';
+import 'app_localizations_en.dart';
+
+// ignore_for_file: type=lint
+
+/// Callers can lookup localized strings with an instance of AppLocalizations
+/// returned by `AppLocalizations.of(context)`.
+///
+/// Applications need to include `AppLocalizations.delegate()` in their app's
+/// `localizationDelegates` list, and the locales they support in the app's
+/// `supportedLocales` list. For example:
+///
+/// ```dart
+/// import 'l10n/app_localizations.dart';
+///
+/// return MaterialApp(
+///   localizationsDelegates: AppLocalizations.localizationsDelegates,
+///   supportedLocales: AppLocalizations.supportedLocales,
+///   home: MyApplicationHome(),
+/// );
+/// ```
+///
+/// ## Update pubspec.yaml
+///
+/// Please make sure to update your pubspec.yaml to include the following
+/// packages:
+///
+/// ```yaml
+/// dependencies:
+///   # Internationalization support.
+///   flutter_localizations:
+///     sdk: flutter
+///   intl: any # Use the pinned version from flutter_localizations
+///
+///   # Rest of dependencies
+/// ```
+///
+/// ## iOS Applications
+///
+/// iOS applications define key application metadata, including supported
+/// locales, in an Info.plist file that is built into the application bundle.
+/// To configure the locales supported by your app, you’ll need to edit this
+/// file.
+///
+/// First, open your project’s ios/Runner.xcworkspace Xcode workspace file.
+/// Then, in the Project Navigator, open the Info.plist file under the Runner
+/// project’s Runner folder.
+///
+/// Next, select the Information Property List item, select Add Item from the
+/// Editor menu, then select Localizations from the pop-up menu.
+///
+/// Select and expand the newly-created Localizations item then, for each
+/// locale your application supports, add a new item and select the locale
+/// you wish to add from the pop-up menu in the Value field. This list should
+/// be consistent with the languages listed in the AppLocalizations.supportedLocales
+/// property.
+abstract class AppLocalizations {
+  AppLocalizations(String locale)
+    : localeName = intl.Intl.canonicalizedLocale(locale.toString());
+
+  final String localeName;
+
+  static AppLocalizations? of(BuildContext context) {
+    return Localizations.of<AppLocalizations>(context, AppLocalizations);
+  }
+
+  static const LocalizationsDelegate<AppLocalizations> delegate =
+      _AppLocalizationsDelegate();
+
+  /// A list of this localizations delegate along with the default localizations
+  /// delegates.
+  ///
+  /// Returns a list of localizations delegates containing this delegate along with
+  /// GlobalMaterialLocalizations.delegate, GlobalCupertinoLocalizations.delegate,
+  /// and GlobalWidgetsLocalizations.delegate.
+  ///
+  /// Additional delegates can be added by appending to this list in
+  /// MaterialApp. This list does not have to be used at all if a custom list
+  /// of delegates is preferred or required.
+  static const List<LocalizationsDelegate<dynamic>> localizationsDelegates =
+      <LocalizationsDelegate<dynamic>>[
+        delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+      ];
+
+  /// A list of this localizations delegate's supported locales.
+  static const List<Locale> supportedLocales = <Locale>[
+    Locale('ar'),
+    Locale('en'),
+  ];
+
+  /// No description provided for @welcomeTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to VSP'**
+  String get welcomeTitle;
+
+  /// No description provided for @welcomeSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Book your pitch easily and join teams'**
+  String get welcomeSubtitle;
+
+  /// No description provided for @iAmPlayer.
+  ///
+  /// In en, this message translates to:
+  /// **'I AM A PLAYER'**
+  String get iAmPlayer;
+
+  /// No description provided for @iAmOwner.
+  ///
+  /// In en, this message translates to:
+  /// **'I AM STADIUM OWNER'**
+  String get iAmOwner;
+
+  /// No description provided for @alreadyHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Already have an account?'**
+  String get alreadyHaveAccount;
+
+  /// No description provided for @login.
+  ///
+  /// In en, this message translates to:
+  /// **'Login'**
+  String get login;
+
+  /// No description provided for @arabic.
+  ///
+  /// In en, this message translates to:
+  /// **'Arabic'**
+  String get arabic;
+
+  /// No description provided for @english.
+  ///
+  /// In en, this message translates to:
+  /// **'English'**
+  String get english;
+
+  /// No description provided for @enterEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Your Email'**
+  String get enterEmail;
+
+  /// No description provided for @emailHint.
+  ///
+  /// In en, this message translates to:
+  /// **'example@email.com'**
+  String get emailHint;
+
+  /// No description provided for @continueButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue'**
+  String get continueButton;
+
+  /// No description provided for @verifyEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify Your Email'**
+  String get verifyEmail;
+
+  /// No description provided for @verificationCodeSent.
+  ///
+  /// In en, this message translates to:
+  /// **'Verification code sent to'**
+  String get verificationCodeSent;
+
+  /// No description provided for @enterCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter Code'**
+  String get enterCode;
+
+  /// No description provided for @resendCode.
+  ///
+  /// In en, this message translates to:
+  /// **'Resend Code'**
+  String get resendCode;
+
+  /// No description provided for @verify.
+  ///
+  /// In en, this message translates to:
+  /// **'Verify'**
+  String get verify;
+
+  /// No description provided for @setPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Your Password'**
+  String get setPassword;
+
+  /// No description provided for @passwordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get passwordHint;
+
+  /// No description provided for @confirmPasswordHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPasswordHint;
+
+  /// No description provided for @createAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Account'**
+  String get createAccount;
+
+  /// No description provided for @accountCreated.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Created Successfully!'**
+  String get accountCreated;
+
+  /// No description provided for @welcomeMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Welcome to VSP Family'**
+  String get welcomeMessage;
+
+  /// No description provided for @getStarted.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Started'**
+  String get getStarted;
+
+  /// No description provided for @facilityDetails.
+  ///
+  /// In en, this message translates to:
+  /// **'Facility Details'**
+  String get facilityDetails;
+
+  /// No description provided for @stadiumName.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium Name'**
+  String get stadiumName;
+
+  /// No description provided for @location.
+  ///
+  /// In en, this message translates to:
+  /// **'Location'**
+  String get location;
+
+  /// No description provided for @socialMedia.
+  ///
+  /// In en, this message translates to:
+  /// **'Social Media Links'**
+  String get socialMedia;
+
+  /// No description provided for @uploadDocuments.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Documents'**
+  String get uploadDocuments;
+
+  /// No description provided for @commercialRegister.
+  ///
+  /// In en, this message translates to:
+  /// **'Commercial Register'**
+  String get commercialRegister;
+
+  /// No description provided for @taxCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Tax Card'**
+  String get taxCard;
+
+  /// No description provided for @nationalId.
+  ///
+  /// In en, this message translates to:
+  /// **'National ID Photo'**
+  String get nationalId;
+
+  /// No description provided for @submit.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit'**
+  String get submit;
+
+  /// No description provided for @hiSporty.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi Player'**
+  String get hiSporty;
+
+  /// No description provided for @playerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start By Creating An Account. This Makes It Easier To Book Your Next Match.'**
+  String get playerSubtitle;
+
+  /// No description provided for @hiPitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi Owner'**
+  String get hiPitch;
+
+  /// No description provided for @ownerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Start By Creating An Account. This Makes It Easier To Manage Your Stadium.'**
+  String get ownerSubtitle;
+
+  /// No description provided for @createNewAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Create new account'**
+  String get createNewAccount;
+
+  /// No description provided for @continueWithEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue With Email'**
+  String get continueWithEmail;
+
+  /// No description provided for @or.
+  ///
+  /// In en, this message translates to:
+  /// **'OR'**
+  String get or;
+
+  /// No description provided for @termsText.
+  ///
+  /// In en, this message translates to:
+  /// **'By using VSP , you agree to the\nTerms and '**
+  String get termsText;
+
+  /// No description provided for @privacyPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy Policy.'**
+  String get privacyPolicy;
+
+  /// No description provided for @emailAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'Email Address'**
+  String get emailAddress;
+
+  /// No description provided for @password.
+  ///
+  /// In en, this message translates to:
+  /// **'Password'**
+  String get password;
+
+  /// No description provided for @unleashChampion.
+  ///
+  /// In en, this message translates to:
+  /// **'UNLEASH YOUR\nINNER CHAMPION'**
+  String get unleashChampion;
+
+  /// No description provided for @premierPlatform.
+  ///
+  /// In en, this message translates to:
+  /// **'THE PREMIER PLATFORM FOR MODERN ATHLETES'**
+  String get premierPlatform;
+
+  /// No description provided for @readyToJoin.
+  ///
+  /// In en, this message translates to:
+  /// **'READY TO JOIN?'**
+  String get readyToJoin;
+
+  /// No description provided for @signOutCurrentAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of current account'**
+  String get signOutCurrentAccount;
+
+  /// No description provided for @credentialAccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Credential Access'**
+  String get credentialAccess;
+
+  /// No description provided for @forgotPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Forgot Password?'**
+  String get forgotPassword;
+
+  /// No description provided for @orContinueWith.
+  ///
+  /// In en, this message translates to:
+  /// **'Or continue with'**
+  String get orContinueWith;
+
+  /// No description provided for @apple.
+  ///
+  /// In en, this message translates to:
+  /// **'Apple'**
+  String get apple;
+
+  /// No description provided for @google.
+  ///
+  /// In en, this message translates to:
+  /// **'Google'**
+  String get google;
+
+  /// No description provided for @termsOfService.
+  ///
+  /// In en, this message translates to:
+  /// **'Terms of Service'**
+  String get termsOfService;
+
+  /// No description provided for @byUsingVsp.
+  ///
+  /// In en, this message translates to:
+  /// **'By using VSP, you agree to the '**
+  String get byUsingVsp;
+
+  /// No description provided for @and.
+  ///
+  /// In en, this message translates to:
+  /// **' and '**
+  String get and;
+
+  /// No description provided for @signInSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign in to continue your sports journey'**
+  String get signInSubtitle;
+
+  /// No description provided for @fullName.
+  ///
+  /// In en, this message translates to:
+  /// **'Full Name'**
+  String get fullName;
+
+  /// No description provided for @enterName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your name'**
+  String get enterName;
+
+  /// No description provided for @phoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone Number'**
+  String get phoneNumber;
+
+  /// No description provided for @governorate.
+  ///
+  /// In en, this message translates to:
+  /// **'Governorate'**
+  String get governorate;
+
+  /// No description provided for @preferredPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferred Position'**
+  String get preferredPosition;
+
+  /// No description provided for @confirmPassword.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Password'**
+  String get confirmPassword;
+
+  /// No description provided for @personalInformation.
+  ///
+  /// In en, this message translates to:
+  /// **'Personal Information'**
+  String get personalInformation;
+
+  /// No description provided for @registerOwnerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register as owner and manage your pitch'**
+  String get registerOwnerSubtitle;
+
+  /// No description provided for @registerPlayerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Register as player and start your journey'**
+  String get registerPlayerSubtitle;
+
+  /// No description provided for @fillAllFields.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill all fields'**
+  String get fillAllFields;
+
+  /// No description provided for @invalidPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid phone number'**
+  String get invalidPhone;
+
+  /// No description provided for @passwordMismatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Passwords do not match'**
+  String get passwordMismatch;
+
+  /// No description provided for @passwordTooShort.
+  ///
+  /// In en, this message translates to:
+  /// **'Password must be at least 6 characters'**
+  String get passwordTooShort;
+
+  /// No description provided for @verifyAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'VERIFY ACCOUNT'**
+  String get verifyAccount;
+
+  /// No description provided for @otpSentTo.
+  ///
+  /// In en, this message translates to:
+  /// **'A 6-digit code was sent to '**
+  String get otpSentTo;
+
+  /// No description provided for @enterOtpPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter the verification code sent to your device'**
+  String get enterOtpPlaceholder;
+
+  /// No description provided for @resendIn.
+  ///
+  /// In en, this message translates to:
+  /// **'RESEND IN {seconds} SECONDS'**
+  String resendIn(int seconds);
+
+  /// No description provided for @homeNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get homeNav;
+
+  /// No description provided for @matchesNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches'**
+  String get matchesNav;
+
+  /// No description provided for @championNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Champion'**
+  String get championNav;
+
+  /// No description provided for @bookedNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get bookedNav;
+
+  /// No description provided for @profileNav.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileNav;
+
+  /// No description provided for @seeAll.
+  ///
+  /// In en, this message translates to:
+  /// **'See all'**
+  String get seeAll;
+
+  /// No description provided for @nearbyStadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Nearby Stadiums'**
+  String get nearbyStadiums;
+
+  /// No description provided for @joinMatches.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Matches'**
+  String get joinMatches;
+
+  /// No description provided for @joinChampionships.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Championships'**
+  String get joinChampionships;
+
+  /// No description provided for @searchStadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Search stadiums, teams...'**
+  String get searchStadiums;
+
+  /// No description provided for @selectLocation.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Location'**
+  String get selectLocation;
+
+  /// No description provided for @noStadiumsFoundIn.
+  ///
+  /// In en, this message translates to:
+  /// **'No stadiums found in '**
+  String get noStadiumsFoundIn;
+
+  /// No description provided for @refresh.
+  ///
+  /// In en, this message translates to:
+  /// **'Refresh'**
+  String get refresh;
+
+  /// No description provided for @hi.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi'**
+  String get hi;
+
+  /// No description provided for @playerDefaultName.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get playerDefaultName;
+
+  /// No description provided for @tournament.
+  ///
+  /// In en, this message translates to:
+  /// **'TOURNAMENT'**
+  String get tournament;
+
+  /// No description provided for @egCurrency.
+  ///
+  /// In en, this message translates to:
+  /// **'eg'**
+  String get egCurrency;
+
+  /// No description provided for @spotsLeft.
+  ///
+  /// In en, this message translates to:
+  /// **'SPOTS LEFT'**
+  String get spotsLeft;
+
+  /// No description provided for @teamsJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'{joinedCount}/{maxCount} TEAMS JOINED'**
+  String teamsJoined(int joinedCount, int maxCount);
+
+  /// No description provided for @joinMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Match'**
+  String get joinMatch;
+
+  /// No description provided for @information.
+  ///
+  /// In en, this message translates to:
+  /// **'Information'**
+  String get information;
+
+  /// No description provided for @pitchConditions.
+  ///
+  /// In en, this message translates to:
+  /// **'Pitch Conditions'**
+  String get pitchConditions;
+
+  /// No description provided for @ratings.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings'**
+  String get ratings;
+
+  /// No description provided for @pricePerHour.
+  ///
+  /// In en, this message translates to:
+  /// **'Price per hour'**
+  String get pricePerHour;
+
+  /// No description provided for @bookNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Book Now'**
+  String get bookNow;
+
+  /// No description provided for @reviews.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Reviews'**
+  String reviews(int count);
+
+  /// No description provided for @na.
+  ///
+  /// In en, this message translates to:
+  /// **'N/A'**
+  String get na;
+
+  /// No description provided for @informationStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Information Stadium'**
+  String get informationStadium;
+
+  /// No description provided for @noDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'No description provided.'**
+  String get noDescription;
+
+  /// No description provided for @features.
+  ///
+  /// In en, this message translates to:
+  /// **'Features'**
+  String get features;
+
+  /// No description provided for @featuresForMoney.
+  ///
+  /// In en, this message translates to:
+  /// **'Features For Money'**
+  String get featuresForMoney;
+
+  /// No description provided for @ballAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'Ball Available: {price} {currency}'**
+  String ballAvailable(String price, String currency);
+
+  /// No description provided for @ownerNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner Notes'**
+  String get ownerNotes;
+
+  /// No description provided for @noOwnerNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'No specific notes have been added by the stadium owner.'**
+  String get noOwnerNotes;
+
+  /// No description provided for @punctuality.
+  ///
+  /// In en, this message translates to:
+  /// **'Punctuality:'**
+  String get punctuality;
+
+  /// No description provided for @punctualityPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.'**
+  String get punctualityPolicy;
+
+  /// No description provided for @reservationDuration.
+  ///
+  /// In en, this message translates to:
+  /// **'Reservation Duration:'**
+  String get reservationDuration;
+
+  /// No description provided for @reservationDurationPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).'**
+  String get reservationDurationPolicy;
+
+  /// No description provided for @cancellationPolicyTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancellation And Refund Policy:'**
+  String get cancellationPolicyTitle;
+
+  /// No description provided for @cancellationPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.'**
+  String get cancellationPolicy;
+
+  /// No description provided for @liability.
+  ///
+  /// In en, this message translates to:
+  /// **'Liability:'**
+  String get liability;
+
+  /// No description provided for @liabilityPolicy.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.'**
+  String get liabilityPolicy;
+
+  /// No description provided for @noReviews.
+  ///
+  /// In en, this message translates to:
+  /// **'No reviews yet. Be the first to review!'**
+  String get noReviews;
+
+  /// No description provided for @recently.
+  ///
+  /// In en, this message translates to:
+  /// **'Recently'**
+  String get recently;
+
+  /// No description provided for @player.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get player;
+
+  /// No description provided for @bookedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get bookedTitle;
+
+  /// No description provided for @upcoming.
+  ///
+  /// In en, this message translates to:
+  /// **'Upcoming'**
+  String get upcoming;
+
+  /// No description provided for @history.
+  ///
+  /// In en, this message translates to:
+  /// **'History'**
+  String get history;
+
+  /// No description provided for @noBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'No Bookings Yet'**
+  String get noBookings;
+
+  /// No description provided for @noBookingsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a stadium or join a match to see your schedule here!'**
+  String get noBookingsSubtitle;
+
+  /// No description provided for @exploreStadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Explore Stadiums'**
+  String get exploreStadiums;
+
+  /// No description provided for @private.
+  ///
+  /// In en, this message translates to:
+  /// **'PRIVATE'**
+  String get private;
+
+  /// No description provided for @confirmed.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirmed'**
+  String get confirmed;
+
+  /// No description provided for @submitResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Result'**
+  String get submitResult;
+
+  /// No description provided for @completed.
+  ///
+  /// In en, this message translates to:
+  /// **'Completed'**
+  String get completed;
+
+  /// No description provided for @date.
+  ///
+  /// In en, this message translates to:
+  /// **'Date'**
+  String get date;
+
+  /// No description provided for @time.
+  ///
+  /// In en, this message translates to:
+  /// **'Time'**
+  String get time;
+
+  /// No description provided for @price.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get price;
+
+  /// No description provided for @vsOpponent.
+  ///
+  /// In en, this message translates to:
+  /// **'VS {opponent}'**
+  String vsOpponent(String opponent);
+
+  /// No description provided for @cancel.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel'**
+  String get cancel;
+
+  /// No description provided for @chat.
+  ///
+  /// In en, this message translates to:
+  /// **'Chat'**
+  String get chat;
+
+  /// No description provided for @waitingOpponent.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for opponent result...'**
+  String get waitingOpponent;
+
+  /// No description provided for @addResult.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Result'**
+  String get addResult;
+
+  /// No description provided for @resultSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Result Submitted Successfully!'**
+  String get resultSuccess;
+
+  /// No description provided for @resultFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit result'**
+  String get resultFailed;
+
+  /// No description provided for @draw.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw'**
+  String get draw;
+
+  /// No description provided for @win.
+  ///
+  /// In en, this message translates to:
+  /// **'Win'**
+  String get win;
+
+  /// No description provided for @loss.
+  ///
+  /// In en, this message translates to:
+  /// **'Loss'**
+  String get loss;
+
+  /// No description provided for @disputed.
+  ///
+  /// In en, this message translates to:
+  /// **'Disputed'**
+  String get disputed;
+
+  /// No description provided for @cancelBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel Booking?'**
+  String get cancelBooking;
+
+  /// No description provided for @cancelBookingConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure you want to cancel this booking? This action cannot be undone.'**
+  String get cancelBookingConfirm;
+
+  /// No description provided for @keepBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Keep Booking'**
+  String get keepBooking;
+
+  /// No description provided for @cancelling.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancelling booking...'**
+  String get cancelling;
+
+  /// No description provided for @cancelSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking cancelled successfully'**
+  String get cancelSuccess;
+
+  /// No description provided for @cancelFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to cancel'**
+  String get cancelFailed;
+
+  /// No description provided for @shareStadiumText.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out {stadiumName} in {location} on VSP app!'**
+  String shareStadiumText(String stadiumName, String location);
+
+  /// No description provided for @perHour.
+  ///
+  /// In en, this message translates to:
+  /// **'per hour'**
+  String get perHour;
+
+  /// No description provided for @myMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'MY MATCH'**
+  String get myMatch;
+
+  /// No description provided for @joined.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined'**
+  String get joined;
+
+  /// No description provided for @full.
+  ///
+  /// In en, this message translates to:
+  /// **'FULL'**
+  String get full;
+
+  /// No description provided for @open.
+  ///
+  /// In en, this message translates to:
+  /// **'OPEN'**
+  String get open;
+
+  /// No description provided for @host.
+  ///
+  /// In en, this message translates to:
+  /// **'Host'**
+  String get host;
+
+  /// No description provided for @playersJoined.
+  ///
+  /// In en, this message translates to:
+  /// **'{current}/{total} PLAYERS JOINED'**
+  String playersJoined(int current, int total);
+
+  /// No description provided for @manage.
+  ///
+  /// In en, this message translates to:
+  /// **'MANAGE'**
+  String get manage;
+
+  /// No description provided for @leave.
+  ///
+  /// In en, this message translates to:
+  /// **'LEAVE'**
+  String get leave;
+
+  /// No description provided for @vspTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'VSP Team'**
+  String get vspTeam;
+
+  /// No description provided for @loginFirst.
+  ///
+  /// In en, this message translates to:
+  /// **'Please login first'**
+  String get loginFirst;
+
+  /// No description provided for @joinSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined Match Successfully!'**
+  String get joinSuccess;
+
+  /// No description provided for @joinFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to join match.'**
+  String get joinFailed;
+
+  /// No description provided for @leaveSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Left Match Successfully.'**
+  String get leaveSuccess;
+
+  /// No description provided for @leaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to leave match.'**
+  String get leaveFailed;
+
+  /// No description provided for @participantRemoved.
+  ///
+  /// In en, this message translates to:
+  /// **'Participant removed.'**
+  String get participantRemoved;
+
+  /// No description provided for @maxCapacityReached.
+  ///
+  /// In en, this message translates to:
+  /// **'Maximum stadium capacity reached.'**
+  String get maxCapacityReached;
+
+  /// No description provided for @updateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update spots.'**
+  String get updateFailed;
+
+  /// No description provided for @manageMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Match'**
+  String get manageMatch;
+
+  /// No description provided for @bringingPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Players you are bringing'**
+  String get bringingPlayers;
+
+  /// No description provided for @manageSpots.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage your reserved spots'**
+  String get manageSpots;
+
+  /// No description provided for @joinedFromApp.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined from App'**
+  String get joinedFromApp;
+
+  /// No description provided for @noPlayersYet.
+  ///
+  /// In en, this message translates to:
+  /// **'No players joined yet'**
+  String get noPlayersYet;
+
+  /// No description provided for @profile.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profile;
+
+  /// No description provided for @positionLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Position: {pos}'**
+  String positionLabel(String pos);
+
+  /// No description provided for @adminModeActivated.
+  ///
+  /// In en, this message translates to:
+  /// **'Admin Mode Activated'**
+  String get adminModeActivated;
+
+  /// No description provided for @winRate.
+  ///
+  /// In en, this message translates to:
+  /// **'WIN RATE'**
+  String get winRate;
+
+  /// No description provided for @goals.
+  ///
+  /// In en, this message translates to:
+  /// **'GOALS'**
+  String get goals;
+
+  /// No description provided for @matches.
+  ///
+  /// In en, this message translates to:
+  /// **'MATCHES'**
+  String get matches;
+
+  /// No description provided for @favoriteStadiumLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'FAVORITE STADIUM: {stadium}'**
+  String favoriteStadiumLabel(String stadium);
+
+  /// No description provided for @achievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Achievements'**
+  String get achievements;
+
+  /// No description provided for @account.
+  ///
+  /// In en, this message translates to:
+  /// **'Account'**
+  String get account;
+
+  /// No description provided for @myTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'My Team'**
+  String get myTeam;
+
+  /// No description provided for @manageTeamInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Your Team Information'**
+  String get manageTeamInfo;
+
+  /// No description provided for @favoriteStadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'Favorite Stadiums'**
+  String get favoriteStadiums;
+
+  /// No description provided for @viewLikedFacilities.
+  ///
+  /// In en, this message translates to:
+  /// **'View Your Liked Facilities'**
+  String get viewLikedFacilities;
+
+  /// No description provided for @paymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Methods'**
+  String get paymentMethods;
+
+  /// No description provided for @managePaymentMethods.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Your Payment Methods'**
+  String get managePaymentMethods;
+
+  /// No description provided for @preferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Preferences'**
+  String get preferences;
+
+  /// No description provided for @notifications.
+  ///
+  /// In en, this message translates to:
+  /// **'Notifications'**
+  String get notifications;
+
+  /// No description provided for @manageNotificationSettings.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Your Notification Settings'**
+  String get manageNotificationSettings;
+
+  /// No description provided for @privacy.
+  ///
+  /// In en, this message translates to:
+  /// **'Privacy'**
+  String get privacy;
+
+  /// No description provided for @language.
+  ///
+  /// In en, this message translates to:
+  /// **'Language'**
+  String get language;
+
+  /// No description provided for @manageLanguagePreferences.
+  ///
+  /// In en, this message translates to:
+  /// **'Manage Your Language Preferences'**
+  String get manageLanguagePreferences;
+
+  /// No description provided for @helpCenter.
+  ///
+  /// In en, this message translates to:
+  /// **'Help Center'**
+  String get helpCenter;
+
+  /// No description provided for @getHelpSupport.
+  ///
+  /// In en, this message translates to:
+  /// **'Get Help & Support'**
+  String get getHelpSupport;
+
+  /// No description provided for @feedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Feedback'**
+  String get feedback;
+
+  /// No description provided for @reportIssueFeature.
+  ///
+  /// In en, this message translates to:
+  /// **'Report an issue or suggest a feature'**
+  String get reportIssueFeature;
+
+  /// No description provided for @logout.
+  ///
+  /// In en, this message translates to:
+  /// **'Logout'**
+  String get logout;
+
+  /// No description provided for @signOutAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign out of your account'**
+  String get signOutAccount;
+
+  /// No description provided for @sendFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Send Feedback'**
+  String get sendFeedback;
+
+  /// No description provided for @describeIssue.
+  ///
+  /// In en, this message translates to:
+  /// **'Describe the issue...'**
+  String get describeIssue;
+
+  /// No description provided for @attachScreenshot.
+  ///
+  /// In en, this message translates to:
+  /// **'Attach Screenshot'**
+  String get attachScreenshot;
+
+  /// No description provided for @done.
+  ///
+  /// In en, this message translates to:
+  /// **'Done'**
+  String get done;
+
+  /// No description provided for @pleaseEnterFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter some feedback'**
+  String get pleaseEnterFeedback;
+
+  /// No description provided for @thankYouFeedback.
+  ///
+  /// In en, this message translates to:
+  /// **'Thank you for your feedback!'**
+  String get thankYouFeedback;
+
+  /// No description provided for @legendary.
+  ///
+  /// In en, this message translates to:
+  /// **'Legendary'**
+  String get legendary;
+
+  /// No description provided for @diamond.
+  ///
+  /// In en, this message translates to:
+  /// **'Diamond'**
+  String get diamond;
+
+  /// No description provided for @platinum.
+  ///
+  /// In en, this message translates to:
+  /// **'Platinum'**
+  String get platinum;
+
+  /// No description provided for @gold.
+  ///
+  /// In en, this message translates to:
+  /// **'Gold'**
+  String get gold;
+
+  /// No description provided for @silver.
+  ///
+  /// In en, this message translates to:
+  /// **'Silver'**
+  String get silver;
+
+  /// No description provided for @bronze.
+  ///
+  /// In en, this message translates to:
+  /// **'Bronze'**
+  String get bronze;
+
+  /// No description provided for @champion.
+  ///
+  /// In en, this message translates to:
+  /// **'Champion'**
+  String get champion;
+
+  /// No description provided for @ranking.
+  ///
+  /// In en, this message translates to:
+  /// **'Ranking'**
+  String get ranking;
+
+  /// No description provided for @championships.
+  ///
+  /// In en, this message translates to:
+  /// **'Championships'**
+  String get championships;
+
+  /// No description provided for @teams.
+  ///
+  /// In en, this message translates to:
+  /// **'Teams'**
+  String get teams;
+
+  /// No description provided for @oneVsOnePlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'1v1 Players'**
+  String get oneVsOnePlayers;
+
+  /// No description provided for @noOneVsOneRanked.
+  ///
+  /// In en, this message translates to:
+  /// **'No 1v1 players ranked yet'**
+  String get noOneVsOneRanked;
+
+  /// No description provided for @skillPointsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'SKILL: {skill} | G: {goals}'**
+  String skillPointsLabel(int skill, int goals);
+
+  /// No description provided for @pts.
+  ///
+  /// In en, this message translates to:
+  /// **'PTS'**
+  String get pts;
+
+  /// No description provided for @noTeamsInLoc.
+  ///
+  /// In en, this message translates to:
+  /// **'No teams in {location} yet'**
+  String noTeamsInLoc(String location);
+
+  /// No description provided for @vspOfficialLeague.
+  ///
+  /// In en, this message translates to:
+  /// **'VSP 1V1 OFFICIAL LEAGUE'**
+  String get vspOfficialLeague;
+
+  /// No description provided for @watchHighlights.
+  ///
+  /// In en, this message translates to:
+  /// **'Watch highlights & follow the ultimate street ranking!'**
+  String get watchHighlights;
+
+  /// No description provided for @teamStats.
+  ///
+  /// In en, this message translates to:
+  /// **'MP: {mp} | W: {w} | D: {d} | L: {l}'**
+  String teamStats(int mp, int w, int d, int l);
+
+  /// No description provided for @pointsCount.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} pts'**
+  String pointsCount(int count);
+
+  /// No description provided for @noChampionshipsInLoc.
+  ///
+  /// In en, this message translates to:
+  /// **'No championships in {location} yet'**
+  String noChampionshipsInLoc(String location);
+
+  /// No description provided for @chooseBookingType.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose What Suits You'**
+  String get chooseBookingType;
+
+  /// No description provided for @bookPitch.
+  ///
+  /// In en, this message translates to:
+  /// **'Book a Pitch'**
+  String get bookPitch;
+
+  /// No description provided for @bookPitchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Private booking for you and friends. No ranking.'**
+  String get bookPitchSubtitle;
+
+  /// No description provided for @findPlayers.
+  ///
+  /// In en, this message translates to:
+  /// **'Find Players'**
+  String get findPlayers;
+
+  /// No description provided for @findPlayersSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Public match. Allow others to join to complete numbers.'**
+  String get findPlayersSubtitle;
+
+  /// No description provided for @teamIncompleteError.
+  ///
+  /// In en, this message translates to:
+  /// **'You still need a complete team of 5+ to play challenge matches.'**
+  String get teamIncompleteError;
+
+  /// No description provided for @createTeamToCompete.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Team to Compete'**
+  String get createTeamToCompete;
+
+  /// No description provided for @createTeamSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You need a team of 5+ players to play competitive matches. Start here!'**
+  String get createTeamSubtitle;
+
+  /// No description provided for @teamIncomplete.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Incomplete'**
+  String get teamIncomplete;
+
+  /// No description provided for @teamIncompleteSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'You need 5+ players to play ranked matches. Add more players!'**
+  String get teamIncompleteSubtitle;
+
+  /// No description provided for @challengeMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Challenge Match'**
+  String get challengeMatch;
+
+  /// No description provided for @challengeMatchSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Compete against other teams and rank up.'**
+  String get challengeMatchSubtitle;
+
+  /// No description provided for @selectDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Date'**
+  String get selectDate;
+
+  /// No description provided for @selectTime.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Time'**
+  String get selectTime;
+
+  /// No description provided for @bookedStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'BOOKED'**
+  String get bookedStatus;
+
+  /// No description provided for @expiredStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'EXPIRED'**
+  String get expiredStatus;
+
+  /// No description provided for @privateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Private'**
+  String get privateLabel;
+
+  /// No description provided for @currentPlayersWithYou.
+  ///
+  /// In en, this message translates to:
+  /// **'Current Players with You'**
+  String get currentPlayersWithYou;
+
+  /// No description provided for @playersInGroupSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'How many players are already in your group?'**
+  String get playersInGroupSubtitle;
+
+  /// No description provided for @rentBallLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Rent Ball (+{price} {currency})'**
+  String rentBallLabel(int price, String currency);
+
+  /// No description provided for @payPerBallSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Pay Per Ball At This Pitch'**
+  String get payPerBallSubtitle;
+
+  /// No description provided for @totalPriceLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Price'**
+  String get totalPriceLabel;
+
+  /// No description provided for @priceEgp.
+  ///
+  /// In en, this message translates to:
+  /// **'{price} EGP'**
+  String priceEgp(int price);
+
+  /// No description provided for @confirmSelections.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Selections'**
+  String get confirmSelections;
+
+  /// No description provided for @apply.
+  ///
+  /// In en, this message translates to:
+  /// **'Apply'**
+  String get apply;
+
+  /// No description provided for @bookingSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Your reservation has been completed successfully'**
+  String get bookingSuccess;
+
+  /// No description provided for @bookingReference.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Reference'**
+  String get bookingReference;
+
+  /// No description provided for @refHash.
+  ///
+  /// In en, this message translates to:
+  /// **'REF# {id}'**
+  String refHash(String id);
+
+  /// No description provided for @myBookings.
+  ///
+  /// In en, this message translates to:
+  /// **'My Bookings'**
+  String get myBookings;
+
+  /// No description provided for @home.
+  ///
+  /// In en, this message translates to:
+  /// **'Home'**
+  String get home;
+
+  /// No description provided for @bookingRefCopied.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking reference copied!'**
+  String get bookingRefCopied;
+
+  /// No description provided for @shareBookingMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'My booking on VSP: {stadium} - Ref# {id}'**
+  String shareBookingMessage(String stadium, String id);
+
+  /// No description provided for @selectOpponentTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Opponent Team'**
+  String get selectOpponentTeam;
+
+  /// No description provided for @chooseOpponent.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Opponent'**
+  String get chooseOpponent;
+
+  /// No description provided for @chooseOpponentSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Search for a team to challenge or pick from teams you\'ve played against.'**
+  String get chooseOpponentSubtitle;
+
+  /// No description provided for @searchTeamPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'Search by Team Name or Captain\'s Phone'**
+  String get searchTeamPlaceholder;
+
+  /// No description provided for @searchResults.
+  ///
+  /// In en, this message translates to:
+  /// **'Search Results'**
+  String get searchResults;
+
+  /// No description provided for @noTeamsFound.
+  ///
+  /// In en, this message translates to:
+  /// **'No teams found matching \'{query}\''**
+  String noTeamsFound(String query);
+
+  /// No description provided for @previousOpponents.
+  ///
+  /// In en, this message translates to:
+  /// **'Teams You Played Against'**
+  String get previousOpponents;
+
+  /// No description provided for @noPreviousOpponents.
+  ///
+  /// In en, this message translates to:
+  /// **'You don\'t have previous opponents yet.\nStart by searching for a team.'**
+  String get noPreviousOpponents;
+
+  /// No description provided for @matchesPlayedCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches played: {count}'**
+  String matchesPlayedCount(int count);
+
+  /// No description provided for @firstTimePlaying.
+  ///
+  /// In en, this message translates to:
+  /// **'First time playing against them. Set the tone!'**
+  String get firstTimePlaying;
+
+  /// No description provided for @headToHeadHistory.
+  ///
+  /// In en, this message translates to:
+  /// **'HEAD-TO-HEAD HISTORY'**
+  String get headToHeadHistory;
+
+  /// No description provided for @yourWins.
+  ///
+  /// In en, this message translates to:
+  /// **'YOUR WINS'**
+  String get yourWins;
+
+  /// No description provided for @draws.
+  ///
+  /// In en, this message translates to:
+  /// **'DRAWS'**
+  String get draws;
+
+  /// No description provided for @theirWins.
+  ///
+  /// In en, this message translates to:
+  /// **'THEIR WINS'**
+  String get theirWins;
+
+  /// No description provided for @seriesTied.
+  ///
+  /// In en, this message translates to:
+  /// **'The series is tied! Break the deadlock!'**
+  String get seriesTied;
+
+  /// No description provided for @youDominate.
+  ///
+  /// In en, this message translates to:
+  /// **'You dominate them. Keep the streak alive!'**
+  String get youDominate;
+
+  /// No description provided for @timeForRevenge.
+  ///
+  /// In en, this message translates to:
+  /// **'Time for revenge! They have the upper hand.'**
+  String get timeForRevenge;
+
+  /// No description provided for @editProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Profile'**
+  String get editProfile;
+
+  /// No description provided for @enterPhone.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your phone number'**
+  String get enterPhone;
+
+  /// No description provided for @saveChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Save Changes'**
+  String get saveChanges;
+
+  /// No description provided for @nameEmptyError.
+  ///
+  /// In en, this message translates to:
+  /// **'Name cannot be empty.'**
+  String get nameEmptyError;
+
+  /// No description provided for @profileUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile updated successfully!'**
+  String get profileUpdatedSuccess;
+
+  /// No description provided for @profileUpdateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to update profile.'**
+  String get profileUpdateFailed;
+
+  /// No description provided for @errorOccurred.
+  ///
+  /// In en, this message translates to:
+  /// **'An error occurred: {error}'**
+  String errorOccurred(String error);
+
+  /// No description provided for @points.
+  ///
+  /// In en, this message translates to:
+  /// **'Points'**
+  String get points;
+
+  /// No description provided for @members.
+  ///
+  /// In en, this message translates to:
+  /// **'Members'**
+  String get members;
+
+  /// No description provided for @trophies.
+  ///
+  /// In en, this message translates to:
+  /// **'Trophies'**
+  String get trophies;
+
+  /// No description provided for @teamName.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Name'**
+  String get teamName;
+
+  /// No description provided for @enterTeamName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter your team name'**
+  String get enterTeamName;
+
+  /// No description provided for @sportsType.
+  ///
+  /// In en, this message translates to:
+  /// **'Sports Type'**
+  String get sportsType;
+
+  /// No description provided for @uploadPhoto.
+  ///
+  /// In en, this message translates to:
+  /// **'Upload Photo'**
+  String get uploadPhoto;
+
+  /// No description provided for @teamMembersHeader.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Members ({current}/{max})'**
+  String teamMembersHeader(int current, int max);
+
+  /// No description provided for @addMember.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Member'**
+  String get addMember;
+
+  /// No description provided for @addMembersHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Add your team members'**
+  String get addMembersHint;
+
+  /// No description provided for @teamAchievements.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Achievements'**
+  String get teamAchievements;
+
+  /// No description provided for @winStreak.
+  ///
+  /// In en, this message translates to:
+  /// **'{count} Win Streak'**
+  String winStreak(int count);
+
+  /// No description provided for @registerTeamPrompt.
+  ///
+  /// In en, this message translates to:
+  /// **'Register your team to start unlocking achievements!'**
+  String get registerTeamPrompt;
+
+  /// No description provided for @createTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Team'**
+  String get createTeam;
+
+  /// No description provided for @deleteTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete Team'**
+  String get deleteTeam;
+
+  /// No description provided for @deleteTeamConfirm.
+  ///
+  /// In en, this message translates to:
+  /// **'Are you sure? This action cannot be undone and your team and achievements will be lost.'**
+  String get deleteTeamConfirm;
+
+  /// No description provided for @enterTeamNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a team name'**
+  String get enterTeamNameError;
+
+  /// No description provided for @teamCreatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team created successfully!'**
+  String get teamCreatedSuccess;
+
+  /// No description provided for @teamUpdatedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team updated successfully!'**
+  String get teamUpdatedSuccess;
+
+  /// No description provided for @teamDeletedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team deleted successfully'**
+  String get teamDeletedSuccess;
+
+  /// No description provided for @confirmBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm Booking'**
+  String get confirmBooking;
+
+  /// No description provided for @bookingSummary.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking Summary'**
+  String get bookingSummary;
+
+  /// No description provided for @paymentMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Method'**
+  String get paymentMethod;
+
+  /// No description provided for @cashPayAtStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash (Pay at Stadium)'**
+  String get cashPayAtStadium;
+
+  /// No description provided for @cashPayment.
+  ///
+  /// In en, this message translates to:
+  /// **'Cash Payment'**
+  String get cashPayment;
+
+  /// No description provided for @cashPaymentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'You will pay in cash when you arrive at the stadium.'**
+  String get cashPaymentDesc;
+
+  /// No description provided for @sessionExpiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'Session expired. Please sign in again.'**
+  String get sessionExpiredError;
+
+  /// No description provided for @bookingCreateFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to create booking'**
+  String get bookingCreateFailed;
+
+  /// No description provided for @bookingFailedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Booking failed: {error}'**
+  String bookingFailedError(Object error);
+
+  /// No description provided for @privateBooking.
+  ///
+  /// In en, this message translates to:
+  /// **'Private Booking'**
+  String get privateBooking;
+
+  /// No description provided for @ranked.
+  ///
+  /// In en, this message translates to:
+  /// **'Ranked'**
+  String get ranked;
+
+  /// No description provided for @friendly.
+  ///
+  /// In en, this message translates to:
+  /// **'Friendly'**
+  String get friendly;
+
+  /// No description provided for @subtotalAmount.
+  ///
+  /// In en, this message translates to:
+  /// **'Subtotal Amount'**
+  String get subtotalAmount;
+
+  /// No description provided for @loginToJoinError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please login to join matches'**
+  String get loginToJoinError;
+
+  /// No description provided for @matchJoinSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully joined the match!'**
+  String get matchJoinSuccess;
+
+  /// No description provided for @reportMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Report Match'**
+  String get reportMatch;
+
+  /// No description provided for @reportSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Help us maintain a safe community. Why are you reporting this match?'**
+  String get reportSubtitle;
+
+  /// No description provided for @reportReasonSpam.
+  ///
+  /// In en, this message translates to:
+  /// **'Spam'**
+  String get reportReasonSpam;
+
+  /// No description provided for @reportReasonInappropriate.
+  ///
+  /// In en, this message translates to:
+  /// **'Inappropriate Content'**
+  String get reportReasonInappropriate;
+
+  /// No description provided for @reportReasonHarassment.
+  ///
+  /// In en, this message translates to:
+  /// **'Harassment'**
+  String get reportReasonHarassment;
+
+  /// No description provided for @reportReasonFake.
+  ///
+  /// In en, this message translates to:
+  /// **'Fake Match'**
+  String get reportReasonFake;
+
+  /// No description provided for @reportReasonOther.
+  ///
+  /// In en, this message translates to:
+  /// **'Other'**
+  String get reportReasonOther;
+
+  /// No description provided for @reportSubmitted.
+  ///
+  /// In en, this message translates to:
+  /// **'Report submitted for review.'**
+  String get reportSubmitted;
+
+  /// No description provided for @reportFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to submit report.'**
+  String get reportFailed;
+
+  /// No description provided for @matchNotFound.
+  ///
+  /// In en, this message translates to:
+  /// **'Match not found'**
+  String get matchNotFound;
+
+  /// No description provided for @goBack.
+  ///
+  /// In en, this message translates to:
+  /// **'Go back'**
+  String get goBack;
+
+  /// No description provided for @publicMatchAt.
+  ///
+  /// In en, this message translates to:
+  /// **'Public Match at {stadium}'**
+  String publicMatchAt(String stadium);
+
+  /// No description provided for @vsMatchFormat.
+  ///
+  /// In en, this message translates to:
+  /// **'{team1} VS {team2}'**
+  String vsMatchFormat(String team1, String team2);
+
+  /// No description provided for @playersCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Players ({current}/{max})'**
+  String playersCount(int current, int max);
+
+  /// No description provided for @playerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Player {index}'**
+  String playerLabel(int index);
+
+  /// No description provided for @matchFull.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Full'**
+  String get matchFull;
+
+  /// No description provided for @captainRequiredError.
+  ///
+  /// In en, this message translates to:
+  /// **'To join the tournament, you must be a team captain.'**
+  String get captainRequiredError;
+
+  /// No description provided for @minPlayersError.
+  ///
+  /// In en, this message translates to:
+  /// **'Your team must have at least 5 players to participate.'**
+  String get minPlayersError;
+
+  /// No description provided for @alreadyJoinedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Your team has already joined this tournament.'**
+  String get alreadyJoinedError;
+
+  /// No description provided for @tournamentJoinSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Successfully joined the tournament! Good luck to team {team} 🏆'**
+  String tournamentJoinSuccess(String team);
+
+  /// No description provided for @joinConfirmation.
+  ///
+  /// In en, this message translates to:
+  /// **'Join Confirmation'**
+  String get joinConfirmation;
+
+  /// No description provided for @entryFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Entry Fee: {amount} {currency}'**
+  String entryFee(int amount, String currency);
+
+  /// No description provided for @tournamentPaymentDesc.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment will be made in Cash at the stadium when the tournament begins.'**
+  String get tournamentPaymentDesc;
+
+  /// No description provided for @confirmAndPay.
+  ///
+  /// In en, this message translates to:
+  /// **'Confirm & Pay'**
+  String get confirmAndPay;
+
+  /// No description provided for @schedule.
+  ///
+  /// In en, this message translates to:
+  /// **'Schedule'**
+  String get schedule;
+
+  /// No description provided for @expand.
+  ///
+  /// In en, this message translates to:
+  /// **'Expand'**
+  String get expand;
+
+  /// No description provided for @startDate.
+  ///
+  /// In en, this message translates to:
+  /// **'Start Date'**
+  String get startDate;
+
+  /// No description provided for @groupStage.
+  ///
+  /// In en, this message translates to:
+  /// **'Group Stage'**
+  String get groupStage;
+
+  /// No description provided for @quarterFinals.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter Finals'**
+  String get quarterFinals;
+
+  /// No description provided for @finalMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Final Match'**
+  String get finalMatch;
+
+  /// No description provided for @aboutTournament.
+  ///
+  /// In en, this message translates to:
+  /// **'About The Tournament'**
+  String get aboutTournament;
+
+  /// No description provided for @matchRules.
+  ///
+  /// In en, this message translates to:
+  /// **'Match Rules And Regulations'**
+  String get matchRules;
+
+  /// No description provided for @importantInstructions.
+  ///
+  /// In en, this message translates to:
+  /// **'Important Instructions For Players'**
+  String get importantInstructions;
+
+  /// No description provided for @viewBrackets.
+  ///
+  /// In en, this message translates to:
+  /// **'View Tournament Brackets'**
+  String get viewBrackets;
+
+  /// No description provided for @matchRulesContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Each Match Lasts {duration} Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.'**
+  String matchRulesContent(int duration);
+
+  /// No description provided for @importantInstructionsContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers\' Instructions.'**
+  String get importantInstructionsContent;
+
+  /// No description provided for @searchHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Search stadiums, teams, or cups...'**
+  String get searchHint;
+
+  /// No description provided for @recentSearches.
+  ///
+  /// In en, this message translates to:
+  /// **'Recent Searches'**
+  String get recentSearches;
+
+  /// No description provided for @noResults.
+  ///
+  /// In en, this message translates to:
+  /// **'No results found.'**
+  String get noResults;
+
+  /// No description provided for @stadiumsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadiums 🏟️'**
+  String get stadiumsCategory;
+
+  /// No description provided for @teamsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Teams ⚽'**
+  String get teamsCategory;
+
+  /// No description provided for @championshipsCategory.
+  ///
+  /// In en, this message translates to:
+  /// **'Championships 🏆'**
+  String get championshipsCategory;
+
+  /// No description provided for @prizeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'{prize} Prize'**
+  String prizeLabel(Object prize);
+
+  /// No description provided for @markAll.
+  ///
+  /// In en, this message translates to:
+  /// **'Mark All'**
+  String get markAll;
+
+  /// No description provided for @noNotificationsTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'No Notifications Yet'**
+  String get noNotificationsTitle;
+
+  /// No description provided for @noNotificationsSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'We will notify you about your matches and challenges.'**
+  String get noNotificationsSubtitle;
+
+  /// No description provided for @backToDashboard.
+  ///
+  /// In en, this message translates to:
+  /// **'Back to Dashboard'**
+  String get backToDashboard;
+
+  /// No description provided for @accept.
+  ///
+  /// In en, this message translates to:
+  /// **'Accept'**
+  String get accept;
+
+  /// No description provided for @decline.
+  ///
+  /// In en, this message translates to:
+  /// **'Decline'**
+  String get decline;
+
+  /// No description provided for @minutesAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}m ago'**
+  String minutesAgo(int count);
+
+  /// No description provided for @hoursAgo.
+  ///
+  /// In en, this message translates to:
+  /// **'{count}h ago'**
+  String hoursAgo(int count);
+
+  /// No description provided for @matchesTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Matches'**
+  String get matchesTitle;
+
+  /// No description provided for @noMatchesAvailable.
+  ///
+  /// In en, this message translates to:
+  /// **'No public matches available right now.'**
+  String get noMatchesAvailable;
+
+  /// No description provided for @hostOne.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the first to host one!'**
+  String get hostOne;
+
+  /// No description provided for @shareLink.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Link'**
+  String get shareLink;
+
+  /// No description provided for @shareTeamText.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out my team {name} on VSP! We are ranked {rank}. ⚽🏆'**
+  String shareTeamText(Object name, Object rank);
+}
+
+class _AppLocalizationsDelegate
+    extends LocalizationsDelegate<AppLocalizations> {
+  const _AppLocalizationsDelegate();
+
+  @override
+  Future<AppLocalizations> load(Locale locale) {
+    return SynchronousFuture<AppLocalizations>(lookupAppLocalizations(locale));
+  }
+
+  @override
+  bool isSupported(Locale locale) =>
+      <String>['ar', 'en'].contains(locale.languageCode);
+
+  @override
+  bool shouldReload(_AppLocalizationsDelegate old) => false;
+}
+
+AppLocalizations lookupAppLocalizations(Locale locale) {
+  // Lookup logic when only language code is specified.
+  switch (locale.languageCode) {
+    case 'ar':
+      return AppLocalizationsAr();
+    case 'en':
+      return AppLocalizationsEn();
+  }
+
+  throw FlutterError(
+    'AppLocalizations.delegate failed to load unsupported locale "$locale". This is likely '
+    'an issue with the localizations generation tool. Please file an issue '
+    'on GitHub with a reproducible sample app and the gen-l10n configuration '
+    'that was used.',
+  );
+}

@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -105,7 +105,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               icon: Icons.share_outlined,
                               onTap: () {
                                 Share.share(
-                                  'Check out ${widget.stadium.name} in ${widget.stadium.location} on VSP app!',
+                                  AppLocalizations.of(context)!.shareStadiumText(widget.stadium.name, widget.stadium.location),
                                 );
                               },
                             ),
@@ -159,9 +159,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 builder: (context, child) {
                   return Row(
                     children: [
-                      _buildTabItem(0, 'Information'),
-                      _buildTabItem(1, 'Pitch Conditions'),
-                      _buildTabItem(2, 'Ratings'),
+                      _buildTabItem(0, AppLocalizations.of(context)!.information),
+                      _buildTabItem(1, AppLocalizations.of(context)!.pitchConditions),
+                      _buildTabItem(2, AppLocalizations.of(context)!.ratings),
                     ],
                   );
                 },
@@ -201,7 +201,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Price per hour',
+                    AppLocalizations.of(context)!.pricePerHour,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                   ),
                   RichText(
@@ -212,7 +212,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         TextSpan(
-                          text: 'eg',
+                          text: AppLocalizations.of(context)!.egCurrency,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -223,7 +223,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               const SizedBox(width: VSPSpacing.lg),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Book Now',
+                  text: AppLocalizations.of(context)!.bookNow,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -321,7 +321,7 @@ class _InformationTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -350,7 +350,7 @@ class _InformationTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    '${stadium.rating.toStringAsFixed(1)} (${stadium.reviewsCount} Reviews)',
+                    AppLocalizations.of(context)!.reviews(stadium.reviewsCount),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -365,7 +365,7 @@ class _InformationTab extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  stadium.address.isNotEmpty ? stadium.address : 'N/A',
+                  stadium.address.isNotEmpty ? stadium.address : AppLocalizations.of(context)!.na,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
@@ -391,7 +391,7 @@ class _InformationTab extends StatelessWidget {
                       const Icon(Icons.location_on_outlined, color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        stadium.location.isNotEmpty ? stadium.location : 'N/A',
+                        stadium.location.isNotEmpty ? stadium.location : AppLocalizations.of(context)!.na,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: VSPColors.background,
                           fontWeight: FontWeight.bold,
@@ -408,14 +408,14 @@ class _InformationTab extends StatelessWidget {
           
           // Information Stadium
           Text(
-            'Information Stadium',
+            AppLocalizations.of(context)!.informationStadium,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.sm),
           Text(
             stadium.description.isNotEmpty 
               ? stadium.description 
-              : 'No description provided.',
+              : AppLocalizations.of(context)!.noDescription,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
           ),
           
@@ -423,7 +423,7 @@ class _InformationTab extends StatelessWidget {
           
           // Features
           Text(
-            'Features',
+            AppLocalizations.of(context)!.features,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.md),
@@ -448,7 +448,7 @@ class _InformationTab extends StatelessWidget {
           
           // Features For Money
           Text(
-            'Features For Money',
+            AppLocalizations.of(context)!.featuresForMoney,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.md),
@@ -466,7 +466,7 @@ class _InformationTab extends StatelessWidget {
                   const Icon(Icons.sports_soccer, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(
-                    'Ball Available: ${stadium.ballPrice.toStringAsFixed(0)} EGP',
+                    AppLocalizations.of(context)!.ballAvailable(stadium.ballPrice.toStringAsFixed(0), AppLocalizations.of(context)!.egCurrency),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -489,7 +489,7 @@ class _PitchConditionsTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
 
-    return SingleChildScrollView(
+    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -510,7 +510,7 @@ class _PitchConditionsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  'Owner Notes',
+                  AppLocalizations.of(context)!.ownerNotes,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
@@ -520,7 +520,7 @@ class _PitchConditionsTab extends StatelessWidget {
                 Text(
                   hasOwnerNotes
                       ? stadium.notes
-                      : 'No specific notes have been added by the stadium owner.',
+                      : AppLocalizations.of(context)!.noOwnerNotes,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
                 ),
               ],
@@ -541,26 +541,26 @@ class _PitchConditionsTab extends StatelessWidget {
               children: [
                 _buildPolicySection(
                   context,
-                  'Punctuality:',
-                  'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.',
+                  AppLocalizations.of(context)!.punctuality,
+                  AppLocalizations.of(context)!.punctualityPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  'Reservation Duration:',
-                  'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).',
+                  AppLocalizations.of(context)!.reservationDuration,
+                  AppLocalizations.of(context)!.reservationDurationPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  'Cancellation And Refund Policy:',
-                  'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.',
+                  AppLocalizations.of(context)!.cancellationPolicyTitle,
+                  AppLocalizations.of(context)!.cancellationPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  'Liability:',
-                  'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.',
+                  AppLocalizations.of(context)!.liability,
+                  AppLocalizations.of(context)!.liabilityPolicy,
                 ),
               ],
             ),
@@ -628,7 +628,7 @@ class _RatingsTab extends StatelessWidget {
                       ),
                       const SizedBox(height: VSPSpacing.xs),
                       Text(
-                        '${stadium.reviewsCount} Reviews',
+                        AppLocalizations.of(context)!.reviews(stadium.reviewsCount),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
@@ -658,7 +658,7 @@ class _RatingsTab extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(40.0),
                     child: Text(
-                      'No reviews yet. Be the first to review!',
+                      AppLocalizations.of(context)!.noReviews,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                     ),
@@ -679,10 +679,10 @@ class _RatingsTab extends StatelessWidget {
                   
                   return _buildReviewItem(
                     context,
-                    name: 'Player',
+                    name: AppLocalizations.of(context)!.player,
                     imageUrl: '',   
                     rating: rating,
-                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : 'Recently',
+                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : AppLocalizations.of(context)!.recently,
                     comment: text,
                   );
                 },

@@ -43,12 +43,12 @@ class RadarChartPainter extends CustomPainter {
     final angle = (2 * pi) / axisCount;
 
     final linePaint = Paint()
-      ..color = Colors.white.withOpacity(0.1)
+      ..color = Colors.white.withValues(alpha: 0.1)
       ..strokeWidth = 1.0
       ..style = PaintingStyle.stroke;
 
     final fillPaint = Paint()
-      ..color = color.withOpacity(0.4)
+      ..color = color.withValues(alpha: 0.4)
       ..style = PaintingStyle.fill;
 
     final borderPaint = Paint()

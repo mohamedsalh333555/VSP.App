@@ -8,6 +8,7 @@ import 'package:provider/provider.dart';
 import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
@@ -107,6 +108,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
             SafeArea(
               child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.only(
                   left: 24.0, 
@@ -139,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 32),
 
                     Text(
-                      languageProvider.getText(AppStrings.login),
+                      AppLocalizations.of(context)!.login,
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 48,
                         height: 1.0,
@@ -147,7 +149,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     ),
                     const SizedBox(height: 8),
                     Text(
-                      languageProvider.isArabic ? 'سجل دخولك لمتابعة تدريباتك وحجوزاتك' : 'Sign in to continue your sports journey',
+                      AppLocalizations.of(context)!.signInSubtitle,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: VSPColors.textSecondary,
                         height: 1.4,
@@ -169,7 +171,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         ),
                         const SizedBox(width: 12),
                         Text(
-                          'Credential Access',
+                          AppLocalizations.of(context)!.credentialAccess,
                           style: Theme.of(context).textTheme.titleSmall?.copyWith(
                             letterSpacing: 1.1,
                             color: VSPColors.textPrimary,
@@ -182,14 +184,14 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     CustomTextField(
                       controller: _emailController,
-                      hintText: languageProvider.isArabic ? 'البريد الإلكتروني' : 'Email Address',
+                      hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
                       prefixIcon: Icons.email_outlined,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       controller: _passwordController,
-                      hintText: languageProvider.isArabic ? 'كلمة المرور' : 'Password',
+                      hintText: AppLocalizations.of(context)!.password,
                       obscureText: true,
                       prefixIcon: Icons.lock_outline,
                     ),
@@ -200,7 +202,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       child: TextButton(
                         onPressed: () {},
                         child: Text(
-                          languageProvider.isArabic ? 'نسيت كلمة المرور؟' : 'Forgot Password?',
+                          AppLocalizations.of(context)!.forgotPassword,
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
                             color: VSPColors.accent,
                             fontWeight: FontWeight.bold,
@@ -212,7 +214,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     const SizedBox(height: 32),
 
                     VSPAnimatedButton(
-                      text: languageProvider.getText(AppStrings.login),
+                      text: AppLocalizations.of(context)!.login,
                       onPressed: () {
                         if (_isLoading) return;
                         _handleLogin();
@@ -229,7 +231,7 @@ class _LoginScreenState extends State<LoginScreen> {
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
-                      languageProvider.isArabic ? 'أو' : 'Or continue with',
+                      AppLocalizations.of(context)!.orContinueWith,
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
                     ),
                   ),
@@ -239,7 +241,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
               const SizedBox(height: 20),
 
-              Row(
+                    Row(
                 children: [
                    if (!kIsWeb && Platform.isIOS) ...[
                      Expanded(
@@ -248,7 +250,7 @@ class _LoginScreenState extends State<LoginScreen> {
                          child: OutlinedButton.icon(
                            icon: const Icon(Icons.apple, color: Colors.white, size: 24),
                            label: Text(
-                             languageProvider.isArabic ? 'آبل' : 'Apple',
+                             AppLocalizations.of(context)!.apple,
                              style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                color: VSPColors.textPrimary,
                                fontWeight: FontWeight.w500,
@@ -295,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                            ),
                          ),
                          label: Text(
-                           languageProvider.isArabic ? 'جوجل' : 'Google',
+                           AppLocalizations.of(context)!.google,
                            style: Theme.of(context).textTheme.labelLarge?.copyWith(
                              color: VSPColors.textPrimary,
                              fontWeight: FontWeight.w500,

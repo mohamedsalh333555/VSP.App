@@ -54,7 +54,7 @@ class TournamentBracketsScreen extends StatelessWidget {
           // Sort rounds (High index = Early rounds, Low index = Final)
           final sortedRoundIndices = rounds.keys.toList()..sort((a, b) => b.compareTo(a));
 
-          return SingleChildScrollView(
+          return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             scrollDirection: Axis.horizontal,
             child: Row(
               crossAxisAlignment: CrossAxisAlignment.start,

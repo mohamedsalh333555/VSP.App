@@ -289,6 +289,8 @@ class BookingDraft {
   final String? opponentTeamName;
   final String? playerTeamLogoUrl;
   final String? opponentTeamLogoUrl;
+  final String? hostName;
+  final String? hostAvatarUrl;
 
   final bool isPrivate;
   final bool rentBall;
@@ -315,6 +317,8 @@ class BookingDraft {
     this.playerTeamId,
     this.playerTeamName,
     this.playerTeamLogoUrl,
+    this.hostName,
+    this.hostAvatarUrl,
     this.opponentTeamId,
     this.opponentTeamName,
     this.opponentTeamLogoUrl,
@@ -342,6 +346,8 @@ class BookingDraft {
     String? playerTeamId,
     String? playerTeamName,
     String? playerTeamLogoUrl,
+    String? hostName,
+    String? hostAvatarUrl,
     String? opponentTeamId,
     String? opponentTeamName,
     String? opponentTeamLogoUrl,
@@ -368,6 +374,8 @@ class BookingDraft {
       playerTeamId: playerTeamId ?? this.playerTeamId,
       playerTeamName: playerTeamName ?? this.playerTeamName,
       playerTeamLogoUrl: playerTeamLogoUrl ?? this.playerTeamLogoUrl,
+      hostName: hostName ?? this.hostName,
+      hostAvatarUrl: hostAvatarUrl ?? this.hostAvatarUrl,
       opponentTeamId: opponentTeamId ?? this.opponentTeamId,
       opponentTeamName: opponentTeamName ?? this.opponentTeamName,
       opponentTeamLogoUrl: opponentTeamLogoUrl ?? this.opponentTeamLogoUrl,
@@ -397,6 +405,8 @@ class BookingDraft {
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
       'playerTeamLogoUrl': playerTeamLogoUrl,
+      'hostName': hostName,
+      'hostAvatarUrl': hostAvatarUrl,
       'opponentTeamId': opponentTeamId,
       'opponentTeamName': opponentTeamName,
       'opponentTeamLogoUrl': opponentTeamLogoUrl,
@@ -433,6 +443,8 @@ class Booking {
   final String? playerTeamId;
   final String? playerTeamName;
   final String? playerTeamLogoUrl;
+  final String? hostName;
+  final String? hostAvatarUrl;
   final String? opponentTeamId;
   final String? opponentTeamName;
   final String? opponentTeamLogoUrl;
@@ -485,6 +497,8 @@ class Booking {
     this.playerTeamId,
     this.playerTeamName,
     this.playerTeamLogoUrl,
+    this.hostName,
+    this.hostAvatarUrl,
     this.opponentTeamId,
     this.opponentTeamName,
     this.opponentTeamLogoUrl,
@@ -543,6 +557,8 @@ class Booking {
       playerTeamId: data['playerTeamId'],
       playerTeamName: data['playerTeamName'],
       playerTeamLogoUrl: data['playerTeamLogoUrl'],
+      hostName: data['hostName'],
+      hostAvatarUrl: data['hostAvatarUrl'],
       opponentTeamId: data['bookingType'] == 'challenge' ? data['opponentTeamId'] : null,
       opponentTeamName: data['bookingType'] == 'challenge' ? data['opponentTeamName'] : null,
       opponentTeamLogoUrl: data['opponentTeamLogoUrl'],
@@ -608,6 +624,8 @@ class Booking {
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
       'playerTeamLogoUrl': playerTeamLogoUrl,
+      'hostName': hostName,
+      'hostAvatarUrl': hostAvatarUrl,
       'opponentTeamId': opponentTeamId,
       'opponentTeamName': opponentTeamName,
       'opponentTeamLogoUrl': opponentTeamLogoUrl,
@@ -657,6 +675,8 @@ class Booking {
       playerTeamId: draft.playerTeamId,
       playerTeamName: draft.playerTeamName,
       playerTeamLogoUrl: draft.playerTeamLogoUrl,
+      hostName: draft.hostName,
+      hostAvatarUrl: draft.hostAvatarUrl,
       opponentTeamId: draft.opponentTeamId,
       opponentTeamName: draft.opponentTeamName,
       opponentTeamLogoUrl: draft.opponentTeamLogoUrl,

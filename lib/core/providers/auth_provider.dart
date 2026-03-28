@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -5,7 +6,7 @@ import 'package:image_picker/image_picker.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
-import '../services/cloudinary_service.dart';
+import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
@@ -17,7 +18,7 @@ import '../../../../core/constants/egypt_governorates.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
-  final CloudinaryService _cloudinaryService = CloudinaryService();
+  final StorageService _storageService = StorageService();
   final NotificationService _notificationService = NotificationService();
   
   // Firebase user
@@ -542,7 +543,7 @@ class AuthProvider with ChangeNotifier {
     await updateProfile({'favoriteStadiums': updatedList});
   }
 
-  /// Update Profile Photo (now uses Cloudinary instead of Firebase Storage)
+  /// Update Profile Photo
   Future<void> updateProfilePhoto(XFile file) async {
      if (_firebaseUser == null) return;
      
@@ -553,11 +554,12 @@ class AuthProvider with ChangeNotifier {
      try {
        final uid = _firebaseUser!.uid;
 
-       // 1) Upload image to Cloudinary in a specific user folder
-       final url = await _cloudinaryService.uploadImage(
-         file,
-         folder: 'users/$uid/profile',
+       // 1) Upload image to Firebase Storage
+       final url = await _storageService.uploadProfilePicture(
+         file: File(file.path),
+         userId: uid,
        );
+       if (url == null) throw 'Upload returned null';
 
         // 2) IMMEDIATELY update local model (Optimistic Update)
         if (_userModel != null) {

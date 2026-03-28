@@ -1,0 +1,1229 @@
+// ignore: unused_import
+import 'package:intl/intl.dart' as intl;
+import 'app_localizations.dart';
+
+// ignore_for_file: type=lint
+
+/// The translations for English (`en`).
+class AppLocalizationsEn extends AppLocalizations {
+  AppLocalizationsEn([String locale = 'en']) : super(locale);
+
+  @override
+  String get welcomeTitle => 'Welcome to VSP';
+
+  @override
+  String get welcomeSubtitle => 'Book your pitch easily and join teams';
+
+  @override
+  String get iAmPlayer => 'I AM A PLAYER';
+
+  @override
+  String get iAmOwner => 'I AM STADIUM OWNER';
+
+  @override
+  String get alreadyHaveAccount => 'Already have an account?';
+
+  @override
+  String get login => 'Login';
+
+  @override
+  String get arabic => 'Arabic';
+
+  @override
+  String get english => 'English';
+
+  @override
+  String get enterEmail => 'Enter Your Email';
+
+  @override
+  String get emailHint => 'example@email.com';
+
+  @override
+  String get continueButton => 'Continue';
+
+  @override
+  String get verifyEmail => 'Verify Your Email';
+
+  @override
+  String get verificationCodeSent => 'Verification code sent to';
+
+  @override
+  String get enterCode => 'Enter Code';
+
+  @override
+  String get resendCode => 'Resend Code';
+
+  @override
+  String get verify => 'Verify';
+
+  @override
+  String get setPassword => 'Set Your Password';
+
+  @override
+  String get passwordHint => 'Password';
+
+  @override
+  String get confirmPasswordHint => 'Confirm Password';
+
+  @override
+  String get createAccount => 'Create Account';
+
+  @override
+  String get accountCreated => 'Account Created Successfully!';
+
+  @override
+  String get welcomeMessage => 'Welcome to VSP Family';
+
+  @override
+  String get getStarted => 'Get Started';
+
+  @override
+  String get facilityDetails => 'Facility Details';
+
+  @override
+  String get stadiumName => 'Stadium Name';
+
+  @override
+  String get location => 'Location';
+
+  @override
+  String get socialMedia => 'Social Media Links';
+
+  @override
+  String get uploadDocuments => 'Upload Documents';
+
+  @override
+  String get commercialRegister => 'Commercial Register';
+
+  @override
+  String get taxCard => 'Tax Card';
+
+  @override
+  String get nationalId => 'National ID Photo';
+
+  @override
+  String get submit => 'Submit';
+
+  @override
+  String get hiSporty => 'Hi Player';
+
+  @override
+  String get playerSubtitle =>
+      'Start By Creating An Account. This Makes It Easier To Book Your Next Match.';
+
+  @override
+  String get hiPitch => 'Hi Owner';
+
+  @override
+  String get ownerSubtitle =>
+      'Start By Creating An Account. This Makes It Easier To Manage Your Stadium.';
+
+  @override
+  String get createNewAccount => 'Create new account';
+
+  @override
+  String get continueWithEmail => 'Continue With Email';
+
+  @override
+  String get or => 'OR';
+
+  @override
+  String get termsText => 'By using VSP , you agree to the\nTerms and ';
+
+  @override
+  String get privacyPolicy => 'Privacy Policy.';
+
+  @override
+  String get emailAddress => 'Email Address';
+
+  @override
+  String get password => 'Password';
+
+  @override
+  String get unleashChampion => 'UNLEASH YOUR\nINNER CHAMPION';
+
+  @override
+  String get premierPlatform => 'THE PREMIER PLATFORM FOR MODERN ATHLETES';
+
+  @override
+  String get readyToJoin => 'READY TO JOIN?';
+
+  @override
+  String get signOutCurrentAccount => 'Sign out of current account';
+
+  @override
+  String get credentialAccess => 'Credential Access';
+
+  @override
+  String get forgotPassword => 'Forgot Password?';
+
+  @override
+  String get orContinueWith => 'Or continue with';
+
+  @override
+  String get apple => 'Apple';
+
+  @override
+  String get google => 'Google';
+
+  @override
+  String get termsOfService => 'Terms of Service';
+
+  @override
+  String get byUsingVsp => 'By using VSP, you agree to the ';
+
+  @override
+  String get and => ' and ';
+
+  @override
+  String get signInSubtitle => 'Sign in to continue your sports journey';
+
+  @override
+  String get fullName => 'Full Name';
+
+  @override
+  String get enterName => 'Enter your name';
+
+  @override
+  String get phoneNumber => 'Phone Number';
+
+  @override
+  String get governorate => 'Governorate';
+
+  @override
+  String get preferredPosition => 'Preferred Position';
+
+  @override
+  String get confirmPassword => 'Confirm Password';
+
+  @override
+  String get personalInformation => 'Personal Information';
+
+  @override
+  String get registerOwnerSubtitle => 'Register as owner and manage your pitch';
+
+  @override
+  String get registerPlayerSubtitle =>
+      'Register as player and start your journey';
+
+  @override
+  String get fillAllFields => 'Please fill all fields';
+
+  @override
+  String get invalidPhone => 'Please enter a valid phone number';
+
+  @override
+  String get passwordMismatch => 'Passwords do not match';
+
+  @override
+  String get passwordTooShort => 'Password must be at least 6 characters';
+
+  @override
+  String get verifyAccount => 'VERIFY ACCOUNT';
+
+  @override
+  String get otpSentTo => 'A 6-digit code was sent to ';
+
+  @override
+  String get enterOtpPlaceholder =>
+      'Enter the verification code sent to your device';
+
+  @override
+  String resendIn(int seconds) {
+    return 'RESEND IN $seconds SECONDS';
+  }
+
+  @override
+  String get homeNav => 'Home';
+
+  @override
+  String get matchesNav => 'Matches';
+
+  @override
+  String get championNav => 'Champion';
+
+  @override
+  String get bookedNav => 'Booked';
+
+  @override
+  String get profileNav => 'Profile';
+
+  @override
+  String get seeAll => 'See all';
+
+  @override
+  String get nearbyStadiums => 'Nearby Stadiums';
+
+  @override
+  String get joinMatches => 'Join Matches';
+
+  @override
+  String get joinChampionships => 'Join Championships';
+
+  @override
+  String get searchStadiums => 'Search stadiums, teams...';
+
+  @override
+  String get selectLocation => 'Select Location';
+
+  @override
+  String get noStadiumsFoundIn => 'No stadiums found in ';
+
+  @override
+  String get refresh => 'Refresh';
+
+  @override
+  String get hi => 'Hi';
+
+  @override
+  String get playerDefaultName => 'Player';
+
+  @override
+  String get tournament => 'TOURNAMENT';
+
+  @override
+  String get egCurrency => 'eg';
+
+  @override
+  String get spotsLeft => 'SPOTS LEFT';
+
+  @override
+  String teamsJoined(int joinedCount, int maxCount) {
+    return '$joinedCount/$maxCount TEAMS JOINED';
+  }
+
+  @override
+  String get joinMatch => 'Join Match';
+
+  @override
+  String get information => 'Information';
+
+  @override
+  String get pitchConditions => 'Pitch Conditions';
+
+  @override
+  String get ratings => 'Ratings';
+
+  @override
+  String get pricePerHour => 'Price per hour';
+
+  @override
+  String get bookNow => 'Book Now';
+
+  @override
+  String reviews(int count) {
+    return '$count Reviews';
+  }
+
+  @override
+  String get na => 'N/A';
+
+  @override
+  String get informationStadium => 'Information Stadium';
+
+  @override
+  String get noDescription => 'No description provided.';
+
+  @override
+  String get features => 'Features';
+
+  @override
+  String get featuresForMoney => 'Features For Money';
+
+  @override
+  String ballAvailable(String price, String currency) {
+    return 'Ball Available: $price $currency';
+  }
+
+  @override
+  String get ownerNotes => 'Owner Notes';
+
+  @override
+  String get noOwnerNotes =>
+      'No specific notes have been added by the stadium owner.';
+
+  @override
+  String get punctuality => 'Punctuality:';
+
+  @override
+  String get punctualityPolicy =>
+      'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.';
+
+  @override
+  String get reservationDuration => 'Reservation Duration:';
+
+  @override
+  String get reservationDurationPolicy =>
+      'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).';
+
+  @override
+  String get cancellationPolicyTitle => 'Cancellation And Refund Policy:';
+
+  @override
+  String get cancellationPolicy =>
+      'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.';
+
+  @override
+  String get liability => 'Liability:';
+
+  @override
+  String get liabilityPolicy =>
+      'Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.';
+
+  @override
+  String get noReviews => 'No reviews yet. Be the first to review!';
+
+  @override
+  String get recently => 'Recently';
+
+  @override
+  String get player => 'Player';
+
+  @override
+  String get bookedTitle => 'Booked';
+
+  @override
+  String get upcoming => 'Upcoming';
+
+  @override
+  String get history => 'History';
+
+  @override
+  String get noBookings => 'No Bookings Yet';
+
+  @override
+  String get noBookingsSubtitle =>
+      'Book a stadium or join a match to see your schedule here!';
+
+  @override
+  String get exploreStadiums => 'Explore Stadiums';
+
+  @override
+  String get private => 'PRIVATE';
+
+  @override
+  String get confirmed => 'Confirmed';
+
+  @override
+  String get submitResult => 'Submit Result';
+
+  @override
+  String get completed => 'Completed';
+
+  @override
+  String get date => 'Date';
+
+  @override
+  String get time => 'Time';
+
+  @override
+  String get price => 'Price';
+
+  @override
+  String vsOpponent(String opponent) {
+    return 'VS $opponent';
+  }
+
+  @override
+  String get cancel => 'Cancel';
+
+  @override
+  String get chat => 'Chat';
+
+  @override
+  String get waitingOpponent => 'Waiting for opponent result...';
+
+  @override
+  String get addResult => 'Add Result';
+
+  @override
+  String get resultSuccess => 'Result Submitted Successfully!';
+
+  @override
+  String get resultFailed => 'Failed to submit result';
+
+  @override
+  String get draw => 'Draw';
+
+  @override
+  String get win => 'Win';
+
+  @override
+  String get loss => 'Loss';
+
+  @override
+  String get disputed => 'Disputed';
+
+  @override
+  String get cancelBooking => 'Cancel Booking?';
+
+  @override
+  String get cancelBookingConfirm =>
+      'Are you sure you want to cancel this booking? This action cannot be undone.';
+
+  @override
+  String get keepBooking => 'Keep Booking';
+
+  @override
+  String get cancelling => 'Cancelling booking...';
+
+  @override
+  String get cancelSuccess => 'Booking cancelled successfully';
+
+  @override
+  String get cancelFailed => 'Failed to cancel';
+
+  @override
+  String shareStadiumText(String stadiumName, String location) {
+    return 'Check out $stadiumName in $location on VSP app!';
+  }
+
+  @override
+  String get perHour => 'per hour';
+
+  @override
+  String get myMatch => 'MY MATCH';
+
+  @override
+  String get joined => 'Joined';
+
+  @override
+  String get full => 'FULL';
+
+  @override
+  String get open => 'OPEN';
+
+  @override
+  String get host => 'Host';
+
+  @override
+  String playersJoined(int current, int total) {
+    return '$current/$total PLAYERS JOINED';
+  }
+
+  @override
+  String get manage => 'MANAGE';
+
+  @override
+  String get leave => 'LEAVE';
+
+  @override
+  String get vspTeam => 'VSP Team';
+
+  @override
+  String get loginFirst => 'Please login first';
+
+  @override
+  String get joinSuccess => 'Joined Match Successfully!';
+
+  @override
+  String get joinFailed => 'Failed to join match.';
+
+  @override
+  String get leaveSuccess => 'Left Match Successfully.';
+
+  @override
+  String get leaveFailed => 'Failed to leave match.';
+
+  @override
+  String get participantRemoved => 'Participant removed.';
+
+  @override
+  String get maxCapacityReached => 'Maximum stadium capacity reached.';
+
+  @override
+  String get updateFailed => 'Failed to update spots.';
+
+  @override
+  String get manageMatch => 'Manage Match';
+
+  @override
+  String get bringingPlayers => 'Players you are bringing';
+
+  @override
+  String get manageSpots => 'Manage your reserved spots';
+
+  @override
+  String get joinedFromApp => 'Joined from App';
+
+  @override
+  String get noPlayersYet => 'No players joined yet';
+
+  @override
+  String get profile => 'Profile';
+
+  @override
+  String positionLabel(String pos) {
+    return 'Position: $pos';
+  }
+
+  @override
+  String get adminModeActivated => 'Admin Mode Activated';
+
+  @override
+  String get winRate => 'WIN RATE';
+
+  @override
+  String get goals => 'GOALS';
+
+  @override
+  String get matches => 'MATCHES';
+
+  @override
+  String favoriteStadiumLabel(String stadium) {
+    return 'FAVORITE STADIUM: $stadium';
+  }
+
+  @override
+  String get achievements => 'Achievements';
+
+  @override
+  String get account => 'Account';
+
+  @override
+  String get myTeam => 'My Team';
+
+  @override
+  String get manageTeamInfo => 'Manage Your Team Information';
+
+  @override
+  String get favoriteStadiums => 'Favorite Stadiums';
+
+  @override
+  String get viewLikedFacilities => 'View Your Liked Facilities';
+
+  @override
+  String get paymentMethods => 'Payment Methods';
+
+  @override
+  String get managePaymentMethods => 'Manage Your Payment Methods';
+
+  @override
+  String get preferences => 'Preferences';
+
+  @override
+  String get notifications => 'Notifications';
+
+  @override
+  String get manageNotificationSettings => 'Manage Your Notification Settings';
+
+  @override
+  String get privacy => 'Privacy';
+
+  @override
+  String get language => 'Language';
+
+  @override
+  String get manageLanguagePreferences => 'Manage Your Language Preferences';
+
+  @override
+  String get helpCenter => 'Help Center';
+
+  @override
+  String get getHelpSupport => 'Get Help & Support';
+
+  @override
+  String get feedback => 'Feedback';
+
+  @override
+  String get reportIssueFeature => 'Report an issue or suggest a feature';
+
+  @override
+  String get logout => 'Logout';
+
+  @override
+  String get signOutAccount => 'Sign out of your account';
+
+  @override
+  String get sendFeedback => 'Send Feedback';
+
+  @override
+  String get describeIssue => 'Describe the issue...';
+
+  @override
+  String get attachScreenshot => 'Attach Screenshot';
+
+  @override
+  String get done => 'Done';
+
+  @override
+  String get pleaseEnterFeedback => 'Please enter some feedback';
+
+  @override
+  String get thankYouFeedback => 'Thank you for your feedback!';
+
+  @override
+  String get legendary => 'Legendary';
+
+  @override
+  String get diamond => 'Diamond';
+
+  @override
+  String get platinum => 'Platinum';
+
+  @override
+  String get gold => 'Gold';
+
+  @override
+  String get silver => 'Silver';
+
+  @override
+  String get bronze => 'Bronze';
+
+  @override
+  String get champion => 'Champion';
+
+  @override
+  String get ranking => 'Ranking';
+
+  @override
+  String get championships => 'Championships';
+
+  @override
+  String get teams => 'Teams';
+
+  @override
+  String get oneVsOnePlayers => '1v1 Players';
+
+  @override
+  String get noOneVsOneRanked => 'No 1v1 players ranked yet';
+
+  @override
+  String skillPointsLabel(int skill, int goals) {
+    return 'SKILL: $skill | G: $goals';
+  }
+
+  @override
+  String get pts => 'PTS';
+
+  @override
+  String noTeamsInLoc(String location) {
+    return 'No teams in $location yet';
+  }
+
+  @override
+  String get vspOfficialLeague => 'VSP 1V1 OFFICIAL LEAGUE';
+
+  @override
+  String get watchHighlights =>
+      'Watch highlights & follow the ultimate street ranking!';
+
+  @override
+  String teamStats(int mp, int w, int d, int l) {
+    return 'MP: $mp | W: $w | D: $d | L: $l';
+  }
+
+  @override
+  String pointsCount(int count) {
+    return '$count pts';
+  }
+
+  @override
+  String noChampionshipsInLoc(String location) {
+    return 'No championships in $location yet';
+  }
+
+  @override
+  String get chooseBookingType => 'Choose What Suits You';
+
+  @override
+  String get bookPitch => 'Book a Pitch';
+
+  @override
+  String get bookPitchSubtitle =>
+      'Private booking for you and friends. No ranking.';
+
+  @override
+  String get findPlayers => 'Find Players';
+
+  @override
+  String get findPlayersSubtitle =>
+      'Public match. Allow others to join to complete numbers.';
+
+  @override
+  String get teamIncompleteError =>
+      'You still need a complete team of 5+ to play challenge matches.';
+
+  @override
+  String get createTeamToCompete => 'Create Team to Compete';
+
+  @override
+  String get createTeamSubtitle =>
+      'You need a team of 5+ players to play competitive matches. Start here!';
+
+  @override
+  String get teamIncomplete => 'Team Incomplete';
+
+  @override
+  String get teamIncompleteSubtitle =>
+      'You need 5+ players to play ranked matches. Add more players!';
+
+  @override
+  String get challengeMatch => 'Challenge Match';
+
+  @override
+  String get challengeMatchSubtitle =>
+      'Compete against other teams and rank up.';
+
+  @override
+  String get selectDate => 'Select Date';
+
+  @override
+  String get selectTime => 'Select Time';
+
+  @override
+  String get bookedStatus => 'BOOKED';
+
+  @override
+  String get expiredStatus => 'EXPIRED';
+
+  @override
+  String get privateLabel => 'Private';
+
+  @override
+  String get currentPlayersWithYou => 'Current Players with You';
+
+  @override
+  String get playersInGroupSubtitle =>
+      'How many players are already in your group?';
+
+  @override
+  String rentBallLabel(int price, String currency) {
+    return 'Rent Ball (+$price $currency)';
+  }
+
+  @override
+  String get payPerBallSubtitle => 'Pay Per Ball At This Pitch';
+
+  @override
+  String get totalPriceLabel => 'Price';
+
+  @override
+  String priceEgp(int price) {
+    return '$price EGP';
+  }
+
+  @override
+  String get confirmSelections => 'Confirm Selections';
+
+  @override
+  String get apply => 'Apply';
+
+  @override
+  String get bookingSuccess =>
+      'Your reservation has been completed successfully';
+
+  @override
+  String get bookingReference => 'Booking Reference';
+
+  @override
+  String refHash(String id) {
+    return 'REF# $id';
+  }
+
+  @override
+  String get myBookings => 'My Bookings';
+
+  @override
+  String get home => 'Home';
+
+  @override
+  String get bookingRefCopied => 'Booking reference copied!';
+
+  @override
+  String shareBookingMessage(String stadium, String id) {
+    return 'My booking on VSP: $stadium - Ref# $id';
+  }
+
+  @override
+  String get selectOpponentTeam => 'Select Opponent Team';
+
+  @override
+  String get chooseOpponent => 'Choose Opponent';
+
+  @override
+  String get chooseOpponentSubtitle =>
+      'Search for a team to challenge or pick from teams you\'ve played against.';
+
+  @override
+  String get searchTeamPlaceholder => 'Search by Team Name or Captain\'s Phone';
+
+  @override
+  String get searchResults => 'Search Results';
+
+  @override
+  String noTeamsFound(String query) {
+    return 'No teams found matching \'$query\'';
+  }
+
+  @override
+  String get previousOpponents => 'Teams You Played Against';
+
+  @override
+  String get noPreviousOpponents =>
+      'You don\'t have previous opponents yet.\nStart by searching for a team.';
+
+  @override
+  String matchesPlayedCount(int count) {
+    return 'Matches played: $count';
+  }
+
+  @override
+  String get firstTimePlaying =>
+      'First time playing against them. Set the tone!';
+
+  @override
+  String get headToHeadHistory => 'HEAD-TO-HEAD HISTORY';
+
+  @override
+  String get yourWins => 'YOUR WINS';
+
+  @override
+  String get draws => 'DRAWS';
+
+  @override
+  String get theirWins => 'THEIR WINS';
+
+  @override
+  String get seriesTied => 'The series is tied! Break the deadlock!';
+
+  @override
+  String get youDominate => 'You dominate them. Keep the streak alive!';
+
+  @override
+  String get timeForRevenge => 'Time for revenge! They have the upper hand.';
+
+  @override
+  String get editProfile => 'Edit Profile';
+
+  @override
+  String get enterPhone => 'Enter your phone number';
+
+  @override
+  String get saveChanges => 'Save Changes';
+
+  @override
+  String get nameEmptyError => 'Name cannot be empty.';
+
+  @override
+  String get profileUpdatedSuccess => 'Profile updated successfully!';
+
+  @override
+  String get profileUpdateFailed => 'Failed to update profile.';
+
+  @override
+  String errorOccurred(String error) {
+    return 'An error occurred: $error';
+  }
+
+  @override
+  String get points => 'Points';
+
+  @override
+  String get members => 'Members';
+
+  @override
+  String get trophies => 'Trophies';
+
+  @override
+  String get teamName => 'Team Name';
+
+  @override
+  String get enterTeamName => 'Enter your team name';
+
+  @override
+  String get sportsType => 'Sports Type';
+
+  @override
+  String get uploadPhoto => 'Upload Photo';
+
+  @override
+  String teamMembersHeader(int current, int max) {
+    return 'Team Members ($current/$max)';
+  }
+
+  @override
+  String get addMember => 'Add Member';
+
+  @override
+  String get addMembersHint => 'Add your team members';
+
+  @override
+  String get teamAchievements => 'Team Achievements';
+
+  @override
+  String winStreak(int count) {
+    return '$count Win Streak';
+  }
+
+  @override
+  String get registerTeamPrompt =>
+      'Register your team to start unlocking achievements!';
+
+  @override
+  String get createTeam => 'Create Team';
+
+  @override
+  String get deleteTeam => 'Delete Team';
+
+  @override
+  String get deleteTeamConfirm =>
+      'Are you sure? This action cannot be undone and your team and achievements will be lost.';
+
+  @override
+  String get enterTeamNameError => 'Please enter a team name';
+
+  @override
+  String get teamCreatedSuccess => 'Team created successfully!';
+
+  @override
+  String get teamUpdatedSuccess => 'Team updated successfully!';
+
+  @override
+  String get teamDeletedSuccess => 'Team deleted successfully';
+
+  @override
+  String get confirmBooking => 'Confirm Booking';
+
+  @override
+  String get bookingSummary => 'Booking Summary';
+
+  @override
+  String get paymentMethod => 'Payment Method';
+
+  @override
+  String get cashPayAtStadium => 'Cash (Pay at Stadium)';
+
+  @override
+  String get cashPayment => 'Cash Payment';
+
+  @override
+  String get cashPaymentDesc =>
+      'You will pay in cash when you arrive at the stadium.';
+
+  @override
+  String get sessionExpiredError => 'Session expired. Please sign in again.';
+
+  @override
+  String get bookingCreateFailed => 'Failed to create booking';
+
+  @override
+  String bookingFailedError(Object error) {
+    return 'Booking failed: $error';
+  }
+
+  @override
+  String get privateBooking => 'Private Booking';
+
+  @override
+  String get ranked => 'Ranked';
+
+  @override
+  String get friendly => 'Friendly';
+
+  @override
+  String get subtotalAmount => 'Subtotal Amount';
+
+  @override
+  String get loginToJoinError => 'Please login to join matches';
+
+  @override
+  String get matchJoinSuccess => 'Successfully joined the match!';
+
+  @override
+  String get reportMatch => 'Report Match';
+
+  @override
+  String get reportSubtitle =>
+      'Help us maintain a safe community. Why are you reporting this match?';
+
+  @override
+  String get reportReasonSpam => 'Spam';
+
+  @override
+  String get reportReasonInappropriate => 'Inappropriate Content';
+
+  @override
+  String get reportReasonHarassment => 'Harassment';
+
+  @override
+  String get reportReasonFake => 'Fake Match';
+
+  @override
+  String get reportReasonOther => 'Other';
+
+  @override
+  String get reportSubmitted => 'Report submitted for review.';
+
+  @override
+  String get reportFailed => 'Failed to submit report.';
+
+  @override
+  String get matchNotFound => 'Match not found';
+
+  @override
+  String get goBack => 'Go back';
+
+  @override
+  String publicMatchAt(String stadium) {
+    return 'Public Match at $stadium';
+  }
+
+  @override
+  String vsMatchFormat(String team1, String team2) {
+    return '$team1 VS $team2';
+  }
+
+  @override
+  String playersCount(int current, int max) {
+    return 'Players ($current/$max)';
+  }
+
+  @override
+  String playerLabel(int index) {
+    return 'Player $index';
+  }
+
+  @override
+  String get matchFull => 'Match Full';
+
+  @override
+  String get captainRequiredError =>
+      'To join the tournament, you must be a team captain.';
+
+  @override
+  String get minPlayersError =>
+      'Your team must have at least 5 players to participate.';
+
+  @override
+  String get alreadyJoinedError =>
+      'Your team has already joined this tournament.';
+
+  @override
+  String tournamentJoinSuccess(String team) {
+    return 'Successfully joined the tournament! Good luck to team $team 🏆';
+  }
+
+  @override
+  String get joinConfirmation => 'Join Confirmation';
+
+  @override
+  String entryFee(int amount, String currency) {
+    return 'Entry Fee: $amount $currency';
+  }
+
+  @override
+  String get tournamentPaymentDesc =>
+      'Payment will be made in Cash at the stadium when the tournament begins.';
+
+  @override
+  String get confirmAndPay => 'Confirm & Pay';
+
+  @override
+  String get schedule => 'Schedule';
+
+  @override
+  String get expand => 'Expand';
+
+  @override
+  String get startDate => 'Start Date';
+
+  @override
+  String get groupStage => 'Group Stage';
+
+  @override
+  String get quarterFinals => 'Quarter Finals';
+
+  @override
+  String get finalMatch => 'Final Match';
+
+  @override
+  String get aboutTournament => 'About The Tournament';
+
+  @override
+  String get matchRules => 'Match Rules And Regulations';
+
+  @override
+  String get importantInstructions => 'Important Instructions For Players';
+
+  @override
+  String get viewBrackets => 'View Tournament Brackets';
+
+  @override
+  String matchRulesContent(int duration) {
+    return 'Each Match Lasts $duration Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.';
+  }
+
+  @override
+  String get importantInstructionsContent =>
+      'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers\' Instructions.';
+
+  @override
+  String get searchHint => 'Search stadiums, teams, or cups...';
+
+  @override
+  String get recentSearches => 'Recent Searches';
+
+  @override
+  String get noResults => 'No results found.';
+
+  @override
+  String get stadiumsCategory => 'Stadiums 🏟️';
+
+  @override
+  String get teamsCategory => 'Teams ⚽';
+
+  @override
+  String get championshipsCategory => 'Championships 🏆';
+
+  @override
+  String prizeLabel(Object prize) {
+    return '$prize Prize';
+  }
+
+  @override
+  String get markAll => 'Mark All';
+
+  @override
+  String get noNotificationsTitle => 'No Notifications Yet';
+
+  @override
+  String get noNotificationsSubtitle =>
+      'We will notify you about your matches and challenges.';
+
+  @override
+  String get backToDashboard => 'Back to Dashboard';
+
+  @override
+  String get accept => 'Accept';
+
+  @override
+  String get decline => 'Decline';
+
+  @override
+  String minutesAgo(int count) {
+    return '${count}m ago';
+  }
+
+  @override
+  String hoursAgo(int count) {
+    return '${count}h ago';
+  }
+
+  @override
+  String get matchesTitle => 'Matches';
+
+  @override
+  String get noMatchesAvailable => 'No public matches available right now.';
+
+  @override
+  String get hostOne => 'Be the first to host one!';
+
+  @override
+  String get shareLink => 'Share Link';
+
+  @override
+  String shareTeamText(Object name, Object rank) {
+    return 'Check out my team $name on VSP! We are ranked $rank. ⚽🏆';
+  }
+}

@@ -101,7 +101,7 @@ class _OwnerInfoScreenState extends State<OwnerInfoScreen> {
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.all(16),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
@@ -170,6 +170,7 @@ class _OwnerInfoScreenState extends State<OwnerInfoScreen> {
                       setState(() => _isLocating = true);
                       await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
                       if (mounted) {
+                        if (!context.mounted) return;
                         setState(() {
                           _addressController.text = Provider.of<AuthProvider>(context, listen: false).governorate;
                           _isLocating = false;

@@ -35,7 +35,7 @@ class _OwnerStadiumsScreenState extends State<OwnerStadiumsScreen> {
           .listenToOwnerStadiums(auth.firebaseUser!.uid);
       } else if (widget.isDevMode) {
         // Fallback for dev mode shortcut if no live user
-        Provider.of<StadiumProvider>(context, listen: false).listenToStadiums();
+        Provider.of<StadiumProvider>(context, listen: false).fetchStadiums();
       }
     });
   }

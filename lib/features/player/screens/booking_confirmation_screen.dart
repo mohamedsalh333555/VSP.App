@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -349,7 +350,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       children: [
                         Expanded(
                           child: PrimaryButton(
-                            text: 'Cancel',
+                            text: AppLocalizations.of(context)!.cancel,
                             onPressed: () => Navigator.pop(context),
                             color: VSPColors.surfaceAlt,
                             textColor: VSPColors.textPrimary,
@@ -358,7 +359,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         const SizedBox(width: VSPSpacing.md),
                         Expanded(
                           child: PrimaryButton(
-                            text: 'Apply',
+                            text: AppLocalizations.of(context)!.apply,
                             onPressed: () {
                               setState(() {
                                 _selectedDate = tempSelectedDate;
@@ -392,7 +393,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         ),
         centerTitle: true,
         title: Text(
-          'Book Now',
+          AppLocalizations.of(context)!.bookNow,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -440,9 +441,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text(
-                        'Select Date',
-                        style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      Text(
+                        AppLocalizations.of(context)!.selectDate,
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       const SizedBox(height: VSPSpacing.sm),
                       SizedBox(
@@ -505,13 +506,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
           // Scrollable Time Slots
           Expanded(
-            child: SingleChildScrollView(
+            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.all(16),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    'Select Time',
+                    AppLocalizations.of(context)!.selectTime,
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -547,8 +548,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
                                 color: (isBooked || isPast)
-                                    ? VSPColors.surface.withOpacity(0.3)
-                                    : (isSelected ? VSPColors.accent.withOpacity(0.1) : Colors.transparent),
+                                    ? VSPColors.surface.withValues(alpha: 0.3)
+                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(
                                   color: (isBooked || isPast)
@@ -568,7 +569,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     slotLabel,
                                     style: TextStyle(
                                       color: (isBooked || isPast)
-                                          ? VSPColors.textSecondary.withOpacity(0.3)
+                                          ? VSPColors.textSecondary.withValues(alpha: 0.3)
                                           : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
                                       fontSize: 16,
                                       fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
@@ -577,9 +578,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   ),
                                     if (isBooked) ...[
                                       const SizedBox(width: 12),
-                                      const Text(
-                                        'BOOKED',
-                                        style: TextStyle(
+                                      Text(
+                                        AppLocalizations.of(context)!.bookedStatus,
+                                        style: const TextStyle(
                                           color: VSPColors.error,
                                           fontSize: 12,
                                           fontWeight: FontWeight.bold,
@@ -588,7 +589,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     ] else if (isPast) ...[
                                       const SizedBox(width: 12),
                                       Text(
-                                        'EXPIRED',
+                                        AppLocalizations.of(context)!.expiredStatus,
                                         style: TextStyle(
                                           color: VSPColors.textSecondary.withValues(alpha: 0.5),
                                           fontSize: 12,
@@ -628,14 +629,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
                       Text(
-                        'Private',
+                        AppLocalizations.of(context)!.privateLabel,
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       Switch(
                         value: _isPrivate,
                         onChanged: (val) => setState(() => _isPrivate = val),
                         activeColor: VSPColors.accent,
-                        activeTrackColor: VSPColors.accent.withOpacity(0.3),
+                        activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
                       ),
                     ],
                   ),
@@ -651,11 +652,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Current Players with You',
+                            AppLocalizations.of(context)!.currentPlayersWithYou,
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           Text(
-                            'How many players are already in your group?',
+                            AppLocalizations.of(context)!.playersInGroupSubtitle,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                           ),
                         ],
@@ -697,12 +698,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            'Rent Ball (+${_ballPrice.toInt()} EGP)',
+                            AppLocalizations.of(context)!.rentBallLabel(_ballPrice.toInt(), AppLocalizations.of(context)!.egCurrency),
                             style: Theme.of(context).textTheme.titleMedium,
                           ),
                           const SizedBox(height: VSPSpacing.xs),
                           Text(
-                            'Pay Per Ball At This Pitch',
+                            AppLocalizations.of(context)!.payPerBallSubtitle,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                           ),
                         ],
@@ -739,11 +740,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Price',
+                          AppLocalizations.of(context)!.totalPriceLabel,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         ),
                         Text(
-                          '${_totalPrice.toInt()} EGP',
+                          AppLocalizations.of(context)!.priceEgp(_totalPrice.toInt()),
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                       ],
@@ -751,9 +752,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
                       child: PrimaryButton(
-                        text: 'Confirm Selections',
+                        text: AppLocalizations.of(context)!.confirmSelections,
                         isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          final currentUserModel = authProvider.userModel;
   
                           // Build start and end times from selected slots
                           final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
@@ -823,6 +826,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             opponentTeamName: widget.opponentTeam?.name,
                             playerTeamId: _userTeamId,
                             playerTeamName: _userTeamName, // Fix: use team name, not user display name
+                            hostName: currentUserModel?.name,
+                            hostAvatarUrl: currentUserModel?.profileImageUrl,
                             isPrivate: isActuallyPrivate,
                             rentBall: _isBallRented,
                             totalPrice: _totalPrice,

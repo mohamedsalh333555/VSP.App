@@ -10,7 +10,7 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../../core/constants/create_account_strings.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 
@@ -37,12 +37,12 @@ class CreateAccountScreen extends StatelessWidget {
 
     // تحديد النصوص بناءً على نوع المستخدم
     final String greeting = !isUserOwner
-        ? languageProvider.getText(CreateAccountStrings.hiSporty)
-        : languageProvider.getText(CreateAccountStrings.hiPitch);
+        ? AppLocalizations.of(context)!.hiSporty
+        : AppLocalizations.of(context)!.hiPitch;
 
     final String subtitle = !isUserOwner
-        ? languageProvider.getText(CreateAccountStrings.playerSubtitle)
-        : languageProvider.getText(CreateAccountStrings.ownerSubtitle);
+        ? AppLocalizations.of(context)!.playerSubtitle
+        : AppLocalizations.of(context)!.ownerSubtitle;
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
@@ -77,6 +77,7 @@ class CreateAccountScreen extends StatelessWidget {
             // 2. Main Content
             SafeArea(
               child: SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: const EdgeInsets.symmetric(horizontal: 24.0),
                 child: Column(
@@ -113,7 +114,7 @@ class CreateAccountScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 8),
                           Text(
-                            languageProvider.getText(CreateAccountStrings.createNewAccount),
+                            AppLocalizations.of(context)!.createNewAccount,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: VSPColors.textSecondary,
                               letterSpacing: 1.2,
@@ -152,7 +153,7 @@ class CreateAccountScreen extends StatelessWidget {
                     VSPFadeInItem(
                       index: 3,
                       child: _NeonButton(
-                        text: languageProvider.getText(CreateAccountStrings.continueWithEmail),
+                        text: AppLocalizations.of(context)!.continueWithEmail,
                         onPressed: () {
                           authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                           Navigator.push(
@@ -175,7 +176,7 @@ class CreateAccountScreen extends StatelessWidget {
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
-                              languageProvider.getText(CreateAccountStrings.or),
+                              AppLocalizations.of(context)!.or,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.textSecondary.withValues(alpha: 0.5),
                               ),
@@ -243,7 +244,7 @@ class CreateAccountScreen extends StatelessWidget {
                                   ),
                                   const SizedBox(width: 12),
                                   Text(
-                                    languageProvider.isArabic ? 'جوجل' : 'Google',
+                                    AppLocalizations.of(context)!.google,
                                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                       fontWeight: FontWeight.bold,
                                       color: VSPColors.textPrimary,
@@ -284,18 +285,18 @@ class CreateAccountScreen extends StatelessWidget {
                                 height: 1.5,
                               ),
                               children: [
-                                const TextSpan(text: 'By using VSP, you agree to the \n'),
+                                TextSpan(text: AppLocalizations.of(context)!.byUsingVsp),
                                 TextSpan(
-                                  text: 'Terms of Service',
+                                  text: AppLocalizations.of(context)!.termsOfService,
                                   style: const TextStyle(
                                     color: VSPColors.accent,
                                     fontWeight: FontWeight.bold,
                                     decoration: TextDecoration.underline,
                                   ),
                                 ),
-                                const TextSpan(text: ' and '),
+                                TextSpan(text: AppLocalizations.of(context)!.and),
                                 TextSpan(
-                                  text: 'Privacy Policy.',
+                                  text: AppLocalizations.of(context)!.privacyPolicy,
                                   style: const TextStyle(
                                     color: VSPColors.accent,
                                     fontWeight: FontWeight.bold,

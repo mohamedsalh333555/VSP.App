@@ -648,8 +648,10 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                         );
                         if (confirm == true) {
                           setModalState(() => isDeleting = true);
+                          if (!mounted) return;
                           await Provider.of<BookingProvider>(this.context, listen: false).cancelBooking(booking!.id);
-                          if (mounted) Navigator.pop(this.context);
+                          if (!mounted) return;
+                          Navigator.pop(this.context);
                         }
                       },
                     ),
@@ -658,7 +660,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                const SizedBox(height: 20),
 
               Expanded(
-                child: SingleChildScrollView(
+                child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
@@ -790,7 +792,9 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                           
                           if (context.mounted) Navigator.pop(context);
                         } catch (e) {
-                          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text('Error: $e')));
+                          }
                         } finally {
                           setModalState(() => isSaving = false);
                         }

@@ -2,7 +2,8 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:image_picker/image_picker.dart';
 
-import 'cloudinary_service.dart';
+import 'dart:io';
+import 'storage_service.dart';
 
 enum OwnerDocumentType {
   commercialRegister,
@@ -14,16 +15,20 @@ enum OwnerDocumentType {
 class OwnerDocumentService {
   final _auth = FirebaseAuth.instance;
   final _firestore = FirebaseFirestore.instance;
-  final CloudinaryService _cloudinary = CloudinaryService();
+  final StorageService _storage = StorageService();
 
   Future<String> uploadAndSave({
     required OwnerDocumentType type,
     required String filePath,
     required String uid,
   }) async {
-    // 1) رفع الملف على Cloudinary
-    final folder = 'users/$uid/documents';
-    final url = await _cloudinary.uploadRawFile(filePath, folder: folder);
+    // 1) رفع الملف على Storage
+    final url = await _storage.uploadOwnerDocument(
+        file: File(filePath),
+        ownerId: uid,
+        documentType: type.name,
+    );
+    if (url == null) throw 'Upload failed';
 
     // 2) تحديد اسم الحقل في Firestore
     String fieldName;

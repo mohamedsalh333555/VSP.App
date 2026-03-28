@@ -8,6 +8,7 @@ import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/phone_utils.dart';
 import 'package:provider/provider.dart';
+import '../../../core/repositories/user_repository.dart';
 
 class AddPlayerSheet extends StatefulWidget {
   final Function(UserModel) onPlayerAdded;
@@ -40,7 +41,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     });
 
     final normalized = PhoneUtils.normalize(phone);
-    final user = await DatabaseService().getUserByPhone(normalized);
+    final user = await UserRepository().getUserByPhone(normalized);
 
     if (mounted) {
       if (user != null) {

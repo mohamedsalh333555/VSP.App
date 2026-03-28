@@ -99,6 +99,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         _uploadingStatus[key] = true;
       });
 
+      if (!mounted) return;
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final uid = authProvider.currentUser?.uid;
       if (uid == null) {
@@ -113,7 +114,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         uid: uid,
       );
       
-      if (!context.mounted) return;
+      if (!mounted) return;
       setState(() {
         _uploadedDocUrls[key] = url;
         _uploadingStatus[key] = false;
@@ -315,7 +316,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   }
 
   Widget _buildStep1BusinessDocs() {
-     return SingleChildScrollView(
+     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -353,7 +354,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   }
 
   Widget _buildStep2PersonalID() {
-     return SingleChildScrollView(
+     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,14 +1,16 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/providers/auth_provider.dart' as app_auth;
-import '../../core/services/database_service.dart';
 import '../../core/services/sharing_service.dart';
 import '../../core/utils/vsp_feedback.dart';
 import 'primary_button.dart';
 import '../../data/models.dart';
 import '../../core/models/user_model.dart';
 import '../../core/repositories/tournament_repository.dart';
+import '../../core/repositories/match_repository.dart';
+import '../../core/repositories/user_repository.dart';
 
 class PublicMatchCard extends StatefulWidget {
   final Booking booking;
@@ -26,34 +28,6 @@ class PublicMatchCard extends StatefulWidget {
 
 class _PublicMatchCardState extends State<PublicMatchCard> {
   bool _isLoading = false;
-  String? _hostName;
-  Team? _hostTeam;
-
-  @override
-  void initState() {
-    super.initState();
-    _fetchDetails();
-  }
-
-  Future<void> _fetchDetails() async {
-    final users = await DatabaseService().getUsersByIds([
-      widget.booking.createdByUserId,
-    ]);
-    if (users.isNotEmpty && mounted) {
-      if (users.first.name != null && users.first.name!.isNotEmpty) {
-        setState(() => _hostName = users.first.name);
-      }
-    }
-
-    if (widget.booking.playerTeamId != null) {
-      final teams = await TournamentRepository().getTeamsByIds([
-        widget.booking.playerTeamId!,
-      ]);
-      if (teams.isNotEmpty && mounted) {
-        setState(() => _hostTeam = teams.first);
-      }
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +46,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     final entryFee = (booking.totalPrice / totalFieldCapacity).toStringAsFixed(0);
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
       decoration: BoxDecoration(
         color: VSPColors.surface, 
         borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -90,16 +64,16 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
             children: [
               _buildTypeBadge(booking.bookingType.name.toUpperCase()),
               if (isHost)
-                _buildStatusBadge('MY MATCH', VSPColors.accent)
+                _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
               else if (hasJoined)
-                _buildStatusBadge('JOINED', Colors.blue)
+                _buildStatusBadge(AppLocalizations.of(context)!.joined, Colors.blue)
               else if (booking.currentPlayers >= totalFieldCapacity)
-                _buildStatusBadge('FULL', VSPColors.textSecondary)
+                _buildStatusBadge(AppLocalizations.of(context)!.full, VSPColors.textSecondary)
               else
-                _buildStatusBadge('OPEN', Colors.green),
+                _buildStatusBadge(AppLocalizations.of(context)!.open, Colors.green),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -111,9 +85,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   border: Border.all(color: VSPColors.divider, width: 1),
                 ),
                 child: ClipOval(
-                  child: (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
-                      ? Image.network(booking.playerTeamLogoUrl!, fit: BoxFit.cover)
-                      : const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                  child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
+                      ? Image.network(booking.hostAvatarUrl!, fit: BoxFit.cover)
+                      : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
+                          ? Image.network(booking.playerTeamLogoUrl!, fit: BoxFit.cover)
+                          : const Icon(Icons.person, color: VSPColors.accent, size: 24),
                 ),
               ),
               const SizedBox(width: 12),
@@ -122,7 +98,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     Text(
-                      _hostName ?? booking.playerTeamName ?? "Host",
+                      booking.hostName ?? booking.playerTeamName ?? AppLocalizations.of(context)!.host,
                       style: const TextStyle(
                         color: Colors.white,
                         fontWeight: FontWeight.w900,
@@ -152,7 +128,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(
@@ -166,11 +142,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 _buildDivider(),
                 _buildCompactInfo(Icons.schedule, _formatTimeShort(booking.formattedTimeRange)),
                 _buildDivider(),
-                _buildCompactInfo(Icons.payments_outlined, "$entryFee EGP"),
+                _buildCompactInfo(Icons.payments_outlined, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"),
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -207,9 +183,9 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
               ),
             ),
             const SizedBox(width: 4),
-            const Text(
-              "SPOTS LEFT",
-              style: TextStyle(
+            Text(
+              AppLocalizations.of(context)!.spotsLeft.toUpperCase(),
+              style: const TextStyle(
                 color: VSPColors.textSecondary,
                 fontWeight: FontWeight.bold,
                 fontSize: 10,
@@ -218,7 +194,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           ],
         ),
         Text(
-          "$current/$total PLAYERS JOINED",
+          AppLocalizations.of(context)!.playersJoined(current, total),
           style: TextStyle(
             color: VSPColors.textSecondary.withValues(alpha: 0.6),
             fontSize: 10,
@@ -322,7 +298,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
     if (isHost) {
       return _buildRawButton(
-        label: "MANAGE",
+        label: AppLocalizations.of(context)!.manage,
         color: VSPColors.accent,
         onTap: () => _manageParticipants(context),
         isOutlined: false,
@@ -331,7 +307,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
     if (hasJoined) {
       return _buildRawButton(
-        label: "LEAVE",
+        label: AppLocalizations.of(context)!.leave,
         color: Colors.redAccent,
         onTap: () => _handleLeave(context, currentUser?.uid),
         isOutlined: true,
@@ -340,14 +316,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
     if (isFull) {
       return _buildRawButton(
-        label: "FULL",
+        label: AppLocalizations.of(context)!.full,
         color: VSPColors.textSecondary,
         onTap: null,
       );
     }
 
     return _buildRawButton(
-      label: "JOIN",
+      label: AppLocalizations.of(context)!.joinMatch,
       color: VSPColors.accent,
       onTap: () => _handleJoin(context, currentUser?.uid),
     );
@@ -394,7 +370,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   void _handleShare(Booking booking) {
     SharingService.shareMatch(
       bookingId: booking.id,
-      teamName: booking.playerTeamName ?? _hostName ?? "VSP Team",
+      teamName: booking.playerTeamName ?? booking.hostName ?? AppLocalizations.of(context)!.vspTeam,
       stadiumName: booking.stadiumName,
       date: '${booking.formattedDate} at ${booking.formattedTimeRange}',
     );
@@ -402,35 +378,35 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
   void _handleJoin(BuildContext context, String? userId) async {
     if (userId == null) {
-      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('Please login first')));
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.loginFirst)));
       return;
     }
     setState(() => _isLoading = true);
-    final success = await DatabaseService().joinPublicMatch(
+    final success = await MatchRepository().joinPublicMatch(
       widget.booking.id,
       userId,
     );
     if (!context.mounted) return;
     setState(() => _isLoading = false);
     if (success) {
-      VSPFeedback.showSuccess(context, "Joined Match Successfully!");
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.joinSuccess);
     } else {
-      VSPFeedback.showError(context, "Failed to join match.");
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
     }
   }
 
   void _handleLeave(BuildContext context, String userId) async {
     setState(() => _isLoading = true);
-    final success = await DatabaseService().leavePublicMatch(
+    final success = await MatchRepository().leavePublicMatch(
       widget.booking.id,
       userId,
     );
     if (!context.mounted) return;
     setState(() => _isLoading = false);
     if (success) {
-      VSPFeedback.showSuccess(context, "Left Match Successfully.");
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
     } else {
-      VSPFeedback.showError(context, "Failed to leave match.");
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
     }
   }
 
@@ -477,7 +453,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   }
 
   Future<void> _fetchUsers() async {
-    final users = await DatabaseService().getUsersByIds(widget.booking.joinedUserIds);
+    final users = await UserRepository().getUsersByIds(widget.booking.joinedUserIds);
     if (mounted) {
       setState(() {
         _participants = users;
@@ -487,7 +463,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   }
 
   void _removeUser(String userId) async {
-    final success = await DatabaseService().removeParticipantFromPublicMatch(
+    final success = await MatchRepository().removeParticipantFromPublicMatch(
       widget.booking.id,
       userId,
     );
@@ -495,7 +471,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
       setState(() {
         _participants.removeWhere((u) => u.uid == userId);
       });
-      VSPFeedback.showSuccess(context, "Participant removed.");
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.participantRemoved);
     }
   }
 
@@ -506,12 +482,12 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
     final max = widget.booking.maxPlayers > 0 ? widget.booking.maxPlayers : 5;
     final totalFieldCapacity = max * 2;
     if (newCount + widget.booking.joinedUserIds.length > totalFieldCapacity) {
-      VSPFeedback.showError(context, "Maximum stadium capacity reached.");
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.maxCapacityReached);
       return;
     }
 
     setState(() => _isUpdatingCount = true);
-    final success = await DatabaseService().updatePublicMatchHostSpots(
+    final success = await MatchRepository().updatePublicMatchHostSpots(
       widget.booking.id,
       newCount,
     );
@@ -522,7 +498,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
         if (success) {
           _hostBasePlayers = newCount;
         } else {
-          VSPFeedback.showError(context, "Failed to update spots.");
+          VSPFeedback.showError(context, AppLocalizations.of(context)!.updateFailed);
         }
       });
     }
@@ -556,7 +532,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Text("Manage Match", style: Theme.of(context).textTheme.displaySmall),
+                Text(AppLocalizations.of(context)!.manageMatch, style: Theme.of(context).textTheme.displaySmall),
                 IconButton(
                   icon: const Icon(Icons.close, color: VSPColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
@@ -579,8 +555,8 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                   Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      const Text("Players you are bringing", style: TextStyle(fontWeight: FontWeight.bold)),
-                      Text("Manage your reserved spots", style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                      Text(AppLocalizations.of(context)!.bringingPlayers, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      Text(AppLocalizations.of(context)!.manageSpots, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
                     ],
                   ),
                   Row(
@@ -612,14 +588,14 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
             padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
             child: Align(
               alignment: Alignment.centerLeft,
-              child: Text("Joined from App", style: TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
+              child: Text(AppLocalizations.of(context)!.joinedFromApp, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)),
             ),
           ),
           Expanded(
             child: _isLoading
                 ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
                 : _participants.isEmpty
-                ? const Center(child: Text("No players joined yet", style: TextStyle(color: VSPColors.textSecondary)))
+                ? Center(child: Text(AppLocalizations.of(context)!.noPlayersYet, style: const TextStyle(color: VSPColors.textSecondary)))
                 : ListView.separated(
                     padding: const EdgeInsets.all(20),
                     itemCount: _participants.length,
@@ -649,17 +625,17 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                 children: [
                                   Row(
                                     children: [
-                                      Text(user.name ?? "Player", style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                      Text(user.name ?? AppLocalizations.of(context)!.player, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
                                       if (isHost) ...[
                                         const SizedBox(width: 8),
                                         Container(
                                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                           decoration: BoxDecoration(
-                                            color: VSPColors.accent.withOpacity(0.1),
+                                            color: VSPColors.accent.withValues(alpha: 0.1),
                                             borderRadius: BorderRadius.circular(4),
                                             border: Border.all(color: VSPColors.accent, width: 0.5),
                                           ),
-                                          child: const Text("HOST", style: TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold)),
+                                          child: Text(AppLocalizations.of(context)!.host.toUpperCase(), style: const TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold)),
                                         ),
                                       ],
                                     ],

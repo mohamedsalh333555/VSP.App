@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -27,7 +28,8 @@ class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTabIndex = 0;
-  String _selectedRankingType = 'Teams';
+  String? _selectedRankingType;
+
 
   // Filter states
   String _selectedLocation = 'Cairo'; 
@@ -74,7 +76,7 @@ class ChampionScreenState extends State<ChampionScreen>
         centerTitle: true,
         automaticallyImplyLeading: false, // Maintain no back button
         title: Text(
-          'Champion',
+          AppLocalizations.of(context)!.champion,
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -124,7 +126,7 @@ class ChampionScreenState extends State<ChampionScreen>
                         behavior: HitTestBehavior.opaque,
                         child: Center(
                           child: Text(
-                            'Ranking',
+                            AppLocalizations.of(context)!.ranking,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: _selectedTabIndex == 0
                                   ? Colors.black
@@ -142,7 +144,7 @@ class ChampionScreenState extends State<ChampionScreen>
                         behavior: HitTestBehavior.opaque,
                         child: Center(
                           child: Text(
-                            'Championships',
+                            AppLocalizations.of(context)!.championships,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: _selectedTabIndex == 1
                                   ? Colors.black
@@ -188,8 +190,8 @@ class ChampionScreenState extends State<ChampionScreen>
                 // Dropdown 3: Ranking Type
                 Expanded(
                   child: _buildFunctionalDropdown(
-                    value: _selectedRankingType,
-                    items: const ['Teams', '1v1 Players'],
+                    value: _selectedRankingType ?? AppLocalizations.of(context)!.teams,
+                    items: [AppLocalizations.of(context)!.teams, AppLocalizations.of(context)!.oneVsOnePlayers],
                     onChanged: (val) => setState(() => _selectedRankingType = val!),
                   ),
                 ),
@@ -257,7 +259,7 @@ class ChampionScreenState extends State<ChampionScreen>
       children: [
         // Conditional Rendering based on Dropdown selection
         Expanded(
-          child: _selectedRankingType == '1v1 Players' 
+          child: (_selectedRankingType == AppLocalizations.of(context)!.oneVsOnePlayers) 
               ? _build1v1PlayersRanking() 
               : _buildTeamsRankingStream(),
         ),
@@ -271,7 +273,7 @@ class ChampionScreenState extends State<ChampionScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         final players = snapshot.data ?? [];
-        if (players.isEmpty) return const Center(child: Text("No 1v1 players ranked yet", style: TextStyle(color: VSPColors.textSecondary)));
+        if (players.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noOneVsOneRanked, style: const TextStyle(color: VSPColors.textSecondary)));
 
         return ListView.builder(
           padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 110),
@@ -309,13 +311,13 @@ class ChampionScreenState extends State<ChampionScreen>
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(player.name.toUpperCase(), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                        Text('SKILL: ${player.skillPoints} | G: ${player.goals}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
+                        Text(AppLocalizations.of(context)!.skillPointsLabel(player.skillPoints, player.goals), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
                       ],
                     ),
                   ),
                   Text('${player.totalPoints}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.w900)),
                   const SizedBox(width: 4),
-                  const Text('PTS', style: TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
+                  Text(AppLocalizations.of(context)!.pts, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
                 ],
               ),
             );
@@ -338,7 +340,7 @@ class ChampionScreenState extends State<ChampionScreen>
         if (teams.isEmpty) {
           return Center(
           child: Text(
-            "No teams in $_selectedLocation yet", 
+            AppLocalizations.of(context)!.noTeamsInLoc(_selectedLocation), 
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           );
@@ -366,7 +368,7 @@ class ChampionScreenState extends State<ChampionScreen>
           );
         }
 
-        return SingleChildScrollView(
+        return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
           padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 110),
           physics: const BouncingScrollPhysics(),
           child: Column(
@@ -408,7 +410,7 @@ class ChampionScreenState extends State<ChampionScreen>
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              'VSP 1V1 OFFICIAL LEAGUE',
+                              AppLocalizations.of(context)!.vspOfficialLeague,
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                     fontWeight: FontWeight.w900,
                                     letterSpacing: 1.0,
@@ -416,7 +418,7 @@ class ChampionScreenState extends State<ChampionScreen>
                             ),
                             const SizedBox(height: 4),
                             Text(
-                              'Watch highlights & follow the ultimate street ranking!',
+                              AppLocalizations.of(context)!.watchHighlights,
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                             ),
                           ],
@@ -695,7 +697,7 @@ class ChampionScreenState extends State<ChampionScreen>
                   ),
                 ),
                 Text(
-                  'MP: ${team.matchesPlayed} | W: ${team.wins} | D: ${team.draws} | L: ${team.losses}',
+                  AppLocalizations.of(context)!.teamStats(team.matchesPlayed, team.wins, team.draws, team.losses),
                   style: Theme.of(context).textTheme.labelMedium?.copyWith(
                     color: VSPColors.textSecondary.withValues(alpha: 0.7),
                   ),
@@ -721,7 +723,7 @@ class ChampionScreenState extends State<ChampionScreen>
                     ),
                   ),
                   Text(
-                    '${team.points} pts',
+                    AppLocalizations.of(context)!.pointsCount(team.points),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                   ),
               ],
@@ -754,7 +756,7 @@ class ChampionScreenState extends State<ChampionScreen>
                 Icon(Icons.emoji_events_outlined, color: Colors.white.withValues(alpha: 0.1), size: 64),
                 const SizedBox(height: 16),
                 Text(
-                  "No championships in $_selectedLocation yet",
+                  AppLocalizations.of(context)!.noChampionshipsInLoc(_selectedLocation),
                   style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                 ),
               ],

@@ -4,6 +4,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
@@ -84,7 +85,7 @@ class WelcomeScreen extends StatelessWidget {
                     child: Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                       decoration: BoxDecoration(
-                        color: VSPColors.surface.withOpacity(0.8),
+                        color: VSPColors.surface.withValues(alpha: 0.8),
                         borderRadius: BorderRadius.circular(20),
                         border: Border.all(color: VSPColors.divider),
                       ),
@@ -93,7 +94,7 @@ class WelcomeScreen extends StatelessWidget {
                           const Icon(Icons.language, size: 16, color: VSPColors.accent),
                           const SizedBox(width: 8),
                           Text(
-                            langProvider.isArabic ? 'English' : 'عربي',
+                            langProvider.isArabic ? AppLocalizations.of(context)!.english : AppLocalizations.of(context)!.arabic,
                             style: const TextStyle(
                               color: Colors.white,
                               fontWeight: FontWeight.bold,
@@ -140,7 +141,7 @@ class WelcomeScreen extends StatelessWidget {
 
                     // Slogan / Primary Title
                     Text(
-                      'UNLEASH YOUR\nINNER CHAMPION',
+                      AppLocalizations.of(context)!.unleashChampion,
                       style: Theme.of(context).textTheme.displayLarge?.copyWith(
                         fontSize: 48,
                         height: 0.9,
@@ -152,7 +153,7 @@ class WelcomeScreen extends StatelessWidget {
                     const SizedBox(height: 16),
 
                     Text(
-                        'THE PREMIER PLATFORM FOR MODERN ATHLETES',
+                        AppLocalizations.of(context)!.premierPlatform,
                         style: Theme.of(context).textTheme.labelMedium?.copyWith(
                           color: VSPColors.accent,
                           letterSpacing: 2.0,
@@ -175,7 +176,7 @@ class WelcomeScreen extends StatelessWidget {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            'READY TO JOIN?',
+                            AppLocalizations.of(context)!.readyToJoin,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: VSPColors.textSecondary,
                               fontWeight: FontWeight.bold,
@@ -184,7 +185,7 @@ class WelcomeScreen extends StatelessWidget {
                           ),
                           const SizedBox(height: 20),
                           VSPAnimatedButton(
-                            text: 'I AM A PLAYER',
+                            text: AppLocalizations.of(context)!.iAmPlayer,
                             onPressed: () {
                               authProvider.setUserType('player');
                               Navigator.push(
@@ -216,7 +217,7 @@ class WelcomeScreen extends StatelessWidget {
                                 ),
                               ),
                               child: Text(
-                                'I AM STADIUM OWNER',
+                                AppLocalizations.of(context)!.iAmOwner,
                                 style: Theme.of(context).textTheme.labelLarge?.copyWith(
                                   fontWeight: FontWeight.bold,
                                   color: VSPColors.textPrimary,
@@ -230,7 +231,7 @@ class WelcomeScreen extends StatelessWidget {
 
                 const SizedBox(height: VSPSpacing.xl),
 
-                // Footer - English
+                // Footer
                 Column(
                   children: [
                     Row(
@@ -238,7 +239,7 @@ class WelcomeScreen extends StatelessWidget {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         Text(
-                          'Already have an account?',
+                          AppLocalizations.of(context)!.alreadyHaveAccount,
                           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                             color: VSPColors.textSecondary,
                           ),
@@ -254,7 +255,7 @@ class WelcomeScreen extends StatelessWidget {
                             );
                           },
                           child: Text(
-                            'Login',
+                            AppLocalizations.of(context)!.login,
                             style: Theme.of(context).textTheme.labelLarge?.copyWith(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.bold,
@@ -278,7 +279,7 @@ class WelcomeScreen extends StatelessWidget {
                                 }
                               },
                               child: Text(
-                                'Sign out of current account',
+                                AppLocalizations.of(context)!.signOutCurrentAccount,
                                 style: Theme.of(context).textTheme.labelMedium?.copyWith(
                                   color: VSPColors.textSecondary.withValues(alpha: 0.38),
                                 ),

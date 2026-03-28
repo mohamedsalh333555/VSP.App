@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -9,7 +10,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/user_repository.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -55,7 +56,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   Future<void> _onJoin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
-      VSPFeedback.showError(context, 'Please login to join matches');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
       return;
     }
 
@@ -66,7 +67,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
     if (mounted) {
       setState(() => _isJoining = false);
       if (success) {
-        VSPFeedback.showSuccess(context, 'Successfully joined the match!');
+        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
         _fetchMatchDetails(); // Refresh
       }
     }
@@ -75,34 +76,40 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   void _onReport() {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
-      VSPFeedback.showError(context, 'Please login to report');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
       return;
     }
 
     String selectedReason = 'Spam';
-    final List<String> reasons = ['Spam', 'Inappropriate Content', 'Harassment', 'Fake Match', 'Other'];
+    final Map<String, String> reasons = {
+      'Spam': AppLocalizations.of(context)!.reportReasonSpam,
+      'Inappropriate Content': AppLocalizations.of(context)!.reportReasonInappropriate,
+      'Harassment': AppLocalizations.of(context)!.reportReasonHarassment,
+      'Fake Match': AppLocalizations.of(context)!.reportReasonFake,
+      'Other': AppLocalizations.of(context)!.reportReasonOther,
+    };
 
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
         builder: (context, setDialogState) => AlertDialog(
           backgroundColor: VSPColors.surface,
-          title: const Text('Report Match', style: TextStyle(color: Colors.white)),
+          title: Text(AppLocalizations.of(context)!.reportMatch, style: const TextStyle(color: Colors.white)),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              const Text(
-                'Help us maintain a safe community. Why are you reporting this match?',
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+              Text(
+                AppLocalizations.of(context)!.reportSubtitle,
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
               ),
               const SizedBox(height: 16),
               DropdownButton<String>(
                 value: selectedReason,
                 dropdownColor: VSPColors.surface,
                 isExpanded: true,
-                items: reasons.map((r) => DropdownMenuItem(
-                  value: r,
-                  child: Text(r, style: const TextStyle(color: Colors.white)),
+                items: reasons.entries.map((entry) => DropdownMenuItem(
+                  value: entry.key,
+                  child: Text(entry.value, style: const TextStyle(color: Colors.white)),
                 )).toList(),
                 onChanged: (val) {
                   if (val != null) setDialogState(() => selectedReason = val);
@@ -116,7 +123,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Cancel',
+                    text: AppLocalizations.of(context)!.cancel,
                     height: 48,
                     color: VSPColors.surfaceAlt,
                     textColor: VSPColors.textPrimary,
@@ -126,24 +133,23 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 const SizedBox(width: VSPSpacing.md),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Report',
+                    text: AppLocalizations.of(context)!.report,
                     height: 48,
                     color: VSPColors.error,
                     textColor: Colors.white,
                     onPressed: () async {
-                      final success = await DatabaseService().reportEntity(
+                      final success = await UserRepository().reportEntity(
                         reporterId: auth.currentUser!.uid,
                         targetId: widget.bookingId,
                         targetType: 'match',
                         reason: selectedReason,
                       );
-                      if (mounted) {
-                        Navigator.pop(context);
-                        if (success) {
-                          VSPFeedback.showSuccess(context, 'Report submitted for review.');
-                        } else {
-                          VSPFeedback.showError(context, 'Failed to submit report.');
-                        }
+                      if (!context.mounted) return;
+                      Navigator.pop(context);
+                      if (success) {
+                        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.reportSubmitted);
+                      } else {
+                        VSPFeedback.showError(context, AppLocalizations.of(context)!.reportFailed);
                       }
                     },
                   ),
@@ -173,12 +179,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline, color: VSPColors.error, size: 48),
+              Icon(Icons.error_outline, color: VSPColors.error, size: 48),
               const SizedBox(height: 16),
-              const Text('Match not found', style: TextStyle(color: Colors.white)),
+              Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
               TextButton(
                 onPressed: () => Navigator.pop(context),
-                child: const Text('Go back', style: TextStyle(color: VSPColors.accent)),
+                child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
               )
             ],
           ),
@@ -240,7 +246,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                     children: [
                       Expanded(
                         child: Text(
-                          'Public Match at ${_stadium?.name ?? "Stadium"}',
+                          AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium"),
                           style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                             fontWeight: FontWeight.bold,
                             color: VSPColors.textPrimary,
@@ -254,7 +260,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                           borderRadius: BorderRadius.circular(VSPRadius.xl),
                         ),
                         child: Text(
-                          '${(_booking!.maxPlayers ~/ 2)} VS ${(_booking!.maxPlayers ~/ 2)}',
+                          AppLocalizations.of(context)!.vsMatchFormat('${(_booking!.maxPlayers ~/ 2)}', '${(_booking!.maxPlayers ~/ 2)}'),
                           style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
                         ),
                       ),
@@ -262,14 +268,14 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   
-                  _buildDetailRow(Icons.calendar_today, 'Date', _booking!.formattedDate),
-                  _buildDetailRow(Icons.access_time, 'Time', _booking!.formattedTimeRange),
-                  _buildDetailRow(Icons.location_on, 'Location', _stadium?.location ?? 'Unknown'),
+                  _buildDetailRow(Icons.calendar_today, AppLocalizations.of(context)!.date, _booking!.formattedDate),
+                  _buildDetailRow(Icons.access_time, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
+                  _buildDetailRow(Icons.location_on, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
                   
                   const Divider(color: VSPColors.divider, height: 40),
                   
                   Text(
-                    'Players (${_booking!.joinedUserIds.length}/${_booking!.maxPlayers})',
+                    AppLocalizations.of(context)!.playersCount(_booking!.joinedUserIds.length, _booking!.maxPlayers),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -285,8 +291,8 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                           backgroundColor: VSPColors.surface,
                           child: Icon(Icons.person, color: VSPColors.textSecondary),
                         ),
-                        title: Text('Player ${index + 1}', style: const TextStyle(color: Colors.white)),
-                        trailing: index == 0 ? const Text('Host', style: TextStyle(color: VSPColors.accent)) : null,
+                        title: Text(AppLocalizations.of(context)!.playerLabel(index + 1), style: const TextStyle(color: Colors.white)),
+                        trailing: index == 0 ? Text(AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.accent)) : null,
                       );
                     },
                   ),
@@ -302,7 +308,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         padding: const EdgeInsets.all(VSPSpacing.lg),
         color: VSPColors.background,
         child: PrimaryButton(
-          text: alreadyJoined ? 'Joined' : (isFull ? 'Match Full' : 'Join Match'),
+          text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.joinMatch),
           onPressed: (alreadyJoined || isFull || isHost) ? null : _onJoin,
           isLoading: _isJoining,
         ),

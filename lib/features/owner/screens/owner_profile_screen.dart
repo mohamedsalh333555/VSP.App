@@ -32,7 +32,7 @@ class OwnerProfileScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
-      body: SingleChildScrollView(
+      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         physics: const BouncingScrollPhysics(),
         padding: const EdgeInsets.symmetric(
             horizontal: VSPSpacing.md, vertical: VSPSpacing.md),

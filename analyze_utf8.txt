@@ -1,0 +1,293 @@
+﻿
+   info - lib\features\owner\s
+creens\account_screen.dart:183
+:49 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\owner\s
+creens\add_stadium_wizard.dart
+:178:33 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\add_stadium_wizard.dart
+:184:31 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\id_verification_screen.
+dart:43:54 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\id_verification_screen.
+dart:182:25 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\owner\s
+creens\id_verification_screen.
+dart:187:45 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\owner\s
+creens\owner_account_managemen
+t_screen.dart:179:56 - Don't 
+use 'BuildContext's across 
+async gaps, guarded by an 
+unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\owner\s
+creens\owner_booked_screen.dar
+t:651:62 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\owner_booked_screen.dar
+t:793:48 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\owner_documentation_wiz
+ard.dart:102:54 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\owner_documentation_wiz
+ard.dart:106:31 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\owner\s
+creens\owner_documentation_wiz
+ard.dart:122:31 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\owner\s
+creens\owner_info_screen.dart:
+177:49 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\player\
+screens\booking_type_screen.da
+rt:142:33 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\player\
+screens\booking_type_screen.da
+rt:174:29 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\player\
+screens\booking_type_screen.da
+rt:190:9 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\player\
+screens\booking_type_screen.da
+rt:200:9 - Don't use 
+'BuildContext's across async 
+gaps. Try rewriting the code 
+to not use the 
+'BuildContext', or guard the 
+use with a 'mounted' check. - 
+use_build_context_synchronousl
+y
+   info - lib\features\player\
+screens\match_details_screen.d
+art:141:39 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\player\
+screens\match_details_screen.d
+art:143:51 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\player\
+screens\match_details_screen.d
+art:145:49 - Don't use 
+'BuildContext's across async 
+gaps, guarded by an unrelated 
+'mounted' check. Guard a 
+'State.context' use with a 
+'mounted' check on the State, 
+and other BuildContext use 
+with a 'mounted' check on the 
+BuildContext. - use_build_cont
+ext_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:388:52 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:396:53 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:460:62 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:471:62 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:768:46 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+   info - lib\features\player\
+screens\profile_subscreens\my_
+team_screen.dart:771:39 - 
+Don't use 'BuildContext's 
+across async gaps, guarded by 
+an unrelated 'mounted' check. 
+Guard a 'State.context' use 
+with a 'mounted' check on the 
+State, and other BuildContext 
+use with a 'mounted' check on 
+the BuildContext. - use_build_
+context_synchronously
+
+

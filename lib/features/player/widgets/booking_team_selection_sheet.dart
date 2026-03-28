@@ -9,6 +9,7 @@ import '../../../data/models.dart';
 import '../screens/challenge_select_team_screen.dart';
 import '../screens/booking_confirmation_screen.dart';
 import 'create_team_sheet.dart';
+import '../../../core/repositories/team_repository.dart';
 
 class BookingTeamSelectionSheet extends StatefulWidget {
   final Stadium stadium;
@@ -34,7 +35,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final phone = auth.userModel?.phone;
     if (phone != null) {
-      final team = await DatabaseService().getTeamByCaptainPhone(phone);
+      final team = await TeamRepository().getTeamByCaptainPhone(phone);
       if (mounted) {
         setState(() {
           _myTeam = team;

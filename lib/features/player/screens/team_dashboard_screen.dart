@@ -1,3 +1,4 @@
+import 'package:flutter_gen/gen_l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/core/models/user_model.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
@@ -5,7 +6,8 @@ import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/team_repository.dart';
+import '../../../core/repositories/match_repository.dart';
 import '../../../data/models.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/sharing_service.dart';
@@ -43,7 +45,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Future<void> _fetchUserTeam() async {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     if (auth.isAuthenticated) {
-      final team = await DatabaseService().getUserTeam(auth.currentUser!.uid);
+      final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
       if (mounted) setState(() => _userTeam = team);
     }
   }
@@ -58,7 +60,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          'Matches',
+          AppLocalizations.of(context)!.matchesTitle,
           style: Theme.of(context).textTheme.displayMedium,
         ),
         actions: [
@@ -78,7 +80,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         top: true,
         bottom: false,
         child: StreamBuilder<List<Booking>>(
-          stream: DatabaseService().getPublicMatches(),
+          stream: MatchRepository().getPublicMatches(),
           builder: (context, snapshot) {
             if (snapshot.connectionState == ConnectionState.waiting) {
               return ListView.builder(
@@ -102,11 +104,11 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                     ),
                     const SizedBox(height: VSPSpacing.md),
                     Text(
-                      'No public matches available right now.',
+                      AppLocalizations.of(context)!.noMatchesAvailable,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
                     Text(
-                      'Be the first to host one!',
+                      AppLocalizations.of(context)!.hostOne,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                         color: VSPColors.accent,
                         fontWeight: FontWeight.bold,
@@ -162,7 +164,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 ElevatedButton.icon(
                   onPressed: () => Navigator.pop(context),
                   icon: const Icon(Icons.close),
-                  label: const Text('Close'),
+                  label: Text(AppLocalizations.of(context)!.close),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.surfaceAlt,
                     foregroundColor: VSPColors.textPrimary,
@@ -172,11 +174,11 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                 ElevatedButton.icon(
                   onPressed: () {
                     SharingService().shareText(
-                      'Check out my team ${team.name} on VSP! We are ranked ${team.rankTitle}. ⚽🏆',
+                      AppLocalizations.of(context)!.shareTeamText(team.name, team.rankTitle),
                     );
                   },
                   icon: const Icon(Icons.share),
-                  label: const Text('Share Link'),
+                  label: Text(AppLocalizations.of(context)!.shareLink),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,
                     foregroundColor: VSPColors.background,

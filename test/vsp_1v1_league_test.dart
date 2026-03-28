@@ -1,11 +1,14 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
+import 'package:vsp_application/core/repositories/match_repository.dart';
+import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:vsp_application/core/repositories/tournament_repository.dart';
 
 void main() {
   group('VSP 1v1 Official League - Core Logic & Data Tests', () {
     
     test('1. Model Parsing: Tackles and Titles must be parsed correctly', () {
-      print('🔹 Testing VSP1v1Player Model...');
+      // // print('🔹 Testing VSP1v1Player Model...');
       final mockData = {
         'name': 'Ahmed VIP',
         'totalPoints': 150,
@@ -21,11 +24,11 @@ void main() {
       expect(player.name, 'Ahmed VIP');
       expect(player.tackles, 5, reason: "Tackles must be parsed");
       expect(player.titles, 2, reason: "Titles must be parsed");
-      print('✅ Model parsing is solid.');
+      // // print('✅ Model parsing is solid.');
     });
 
     test('2. Podium Split Logic (Safe Array Handling)', () {
-      print('🔹 Testing Podium Splitting Logic...');
+      // // print('🔹 Testing Podium Splitting Logic...');
       final players = VSP1v1Player.getMockStandings(); // Returns 5 mock players
       
       // Simulating the UI logic
@@ -44,7 +47,7 @@ void main() {
       expect(top3Small.length, 2, reason: "Must not crash if less than 3 players exist");
       expect(restSmall.length, 0, reason: "Rest list should be empty without crashing");
       
-      print('✅ Podium split logic is crash-proof.');
+      // // print('✅ Podium split logic is crash-proof.');
     });
   });
 }

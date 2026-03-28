@@ -396,6 +396,17 @@ class AuthService {
         }
       }
 
+      // 1.5 Delete Stadiums if Owner
+      final stadiumsSnap = await _firestore.collection('stadiums').where('ownerId', isEqualTo: uid).get();
+      for (var doc in stadiumsSnap.docs) {
+        // لا نحذف الملعب لتجنب تعطل الحجوزات السابقة، بل نجعله غير مرئي وغير موثق
+        batch.update(doc.reference, {
+          'isVerified': false, 
+          'isBlocked': true, 
+          'deletedAt': FieldValue.serverTimestamp()
+        });
+      }
+
       // 2. Delete User Profile
       batch.delete(_firestore.collection('users').doc(uid));
       
