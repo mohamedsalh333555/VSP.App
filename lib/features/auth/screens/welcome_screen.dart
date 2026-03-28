@@ -4,7 +4,7 @@ import 'package:flutter/foundation.dart' show kDebugMode;
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../core/utils/data_migration.dart';
 import 'create_account_screen.dart';
@@ -119,14 +119,8 @@ class WelcomeScreen extends StatelessWidget {
                     // Brand Identity
                     GestureDetector(
                       // 🔒 DEV ONLY: Long-press to seed database.
-                      // Completely disabled in production (kDebugMode = false in release builds).
-                      onLongPress: kDebugMode ? () async {
-                        VSPFeedback.showSuccess(context, 'Starting Data Migration...');
-                        await DataMigration().seedDatabase();
-                        if (context.mounted) {
-                          VSPFeedback.showSuccess(context, 'Data Migration Completed!');
-                        }
-                      } : null,
+                      // Completely disabled in production (AppConfig.demoMode = false).
+                      onLongPress: null,
                       child: Hero(
                         tag: 'app_logo',
                         child: Image.asset(

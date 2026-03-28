@@ -1,4 +1,4 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
 import '../../../core/providers/language_provider.dart';
@@ -279,7 +279,7 @@ class _BookingCard extends StatelessWidget {
                 _buildStatusBadge(AppLocalizations.of(context)!.confirmed, VSPColors.accent),
               ] else ...[
                 if (booking.bookingType == BookingType.challenge)
-                  _buildChallengeStatusBadge()
+                  _buildChallengeStatusBadge(context)
                 else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
                   _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning)
                 else
@@ -465,7 +465,7 @@ class _BookingCard extends StatelessWidget {
     );
   }
 
-  Widget _buildChallengeStatusBadge() {
+  Widget _buildChallengeStatusBadge(BuildContext context) {
     final currentTeamId = myTeamId ?? booking.playerTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 

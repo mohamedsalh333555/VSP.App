@@ -999,7 +999,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get cashPaymentDesc =>
-      'You will pay in cash when you arrive at the stadium.';
+      'Booking Confirmed - Please pay cash at the stadium';
 
   @override
   String get sessionExpiredError => 'Session expired. Please sign in again.';
@@ -1226,4 +1226,119 @@ class AppLocalizationsEn extends AppLocalizations {
   String shareTeamText(Object name, Object rank) {
     return 'Check out my team $name on VSP! We are ranked $rank. ⚽🏆';
   }
+
+  @override
+  String get addStadium => 'Add Stadium';
+
+  @override
+  String get autoFetch => 'Auto Fetch';
+
+  @override
+  String get chooseManually => 'Choose Manually';
+
+  @override
+  String get workingHours => 'Working Hours';
+
+  @override
+  String get setDailyBreak => 'Set Daily Break Time';
+
+  @override
+  String get length => 'Length';
+
+  @override
+  String get width => 'Width';
+
+  @override
+  String get bathrooms => 'Bathrooms';
+
+  @override
+  String get cafeteria => 'Cafeteria';
+
+  @override
+  String get garage => 'Garage';
+
+  @override
+  String get changingRoom => 'Changing Room';
+
+  @override
+  String get seatCount => 'Seat Count';
+
+  @override
+  String get amenities => 'Amenities';
+
+  @override
+  String get stadiumGallery => 'Stadium Gallery';
+
+  @override
+  String get submitStadium => 'Submit Stadium';
+
+  @override
+  String get stadiumPhotosHint =>
+      'High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.';
+
+  @override
+  String get basicInfoError => 'Please fill basic info';
+
+  @override
+  String get selectFeaturesError => 'Please select features';
+
+  @override
+  String get ballPriceMinError => 'Ball rental price must be at least 5 EGP';
+
+  @override
+  String get uploadPhotoError => 'Please upload at least one stadium image';
+
+  @override
+  String get stadiumSubmitSuccess => 'Stadium Submitted for Review!';
+
+  @override
+  String get stadiumSaveFailed => 'Failed to save stadium';
+
+  @override
+  String get start => 'Start';
+
+  @override
+  String get end => 'End';
+
+  @override
+  String get breakStart => 'Break Start';
+
+  @override
+  String get breakEnd => 'Break End';
+
+  @override
+  String get tapToFetch => 'Tap to Fetch';
+
+  @override
+  String get ballAvailableLabel => 'Ball Available';
+
+  @override
+  String get playersTeam => 'Players per Team';
+
+  @override
+  String get selectSport => 'Select Sport';
+
+  @override
+  String get errorLabel => 'Error';
+
+  @override
+  String get ok => 'OK';
+
+  @override
+  String get join => 'Join';
+
+  @override
+  String get report => 'Report';
+
+  @override
+  String get none => 'None';
+
+  @override
+  String get wins => 'Wins';
+
+  @override
+  String get delete => 'Delete';
+
+  @override
+  String get close => 'Close';
 }

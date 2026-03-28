@@ -56,21 +56,7 @@ class OwnerEntryScreen extends StatelessWidget {
                 GestureDetector(
                   // 🔒 DEV ONLY: Double-tap to skip owner onboarding.
                   // Disabled in production (kDebugMode = false in release builds).
-                  onDoubleTap: kDebugMode ? () {
-                    ScaffoldMessenger.of(context).showSnackBar(
-                      const SnackBar(
-                        content: Text('Dev Mode: Navigating to Owner Dashboard'),
-                        backgroundColor: VSPColors.accent,
-                        duration: Duration(seconds: 1),
-                      ),
-                    );
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const OwnerStadiumsScreen(isDevMode: true),
-                      ),
-                    );
-                  } : null,
+                  onDoubleTap: null,
                   child: Text(
                     languageProvider.getText(CreateAccountStrings.hiPitch), 
                     style: Theme.of(context).textTheme.displayLarge?.copyWith(

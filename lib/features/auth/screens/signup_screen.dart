@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
@@ -276,11 +276,17 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: '********',
                     obscureText: _obscurePassword,
                     prefixIcon: Icons.lock_outline,
+                    onChanged: (val) => setState(() {}),
                     suffixIcon: IconButton(
                       icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
+                  
+                  if (_passwordController.text.isNotEmpty) ...[
+                    const SizedBox(height: 8),
+                    _buildPasswordStrengthBar(),
+                  ],
                   
                   const SizedBox(height: 16),
                   _buildLabel(AppLocalizations.of(context)!.confirmPassword),
@@ -366,6 +372,43 @@ class _SignupScreenState extends State<SignupScreen> {
               );
             }).toList(),
           ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPasswordStrengthBar() {
+    final password = _passwordController.text;
+    double strength = 0;
+    
+    if (password.length >= 6) strength += 0.2;
+    if (password.length >= 8) strength += 0.2;
+    if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
+    if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
+    if (RegExp(r'[!@#\$&*~]').hasMatch(password)) strength += 0.2;
+
+    Color color = Colors.red;
+    String text = 'Weak';
+    if (strength > 0.4) { color = Colors.orange; text = 'Medium'; }
+    if (strength >= 0.8) { color = VSPColors.accent; text = 'Strong'; }
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text('${(strength * 100).toInt()}%', style: TextStyle(color: color, fontSize: 10)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: strength,
+          backgroundColor: VSPColors.surfaceAlt,
+          valueColor: AlwaysStoppedAnimation<Color>(color),
+          borderRadius: BorderRadius.circular(VSPRadius.xs),
+          minHeight: 4,
         ),
       ],
     );

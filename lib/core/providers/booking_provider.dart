@@ -278,7 +278,7 @@ class BookingProvider with ChangeNotifier {
       final stream = DatabaseService().getPublicMatches();
       final matches = await stream.first;
 
-      _publicMatches = matches;
+      _publicMatches = List<Booking>.from(matches);
       _hasMoreMatches =
           false; // Disable pagination as we fetch all valid upcoming
     } catch (e) {

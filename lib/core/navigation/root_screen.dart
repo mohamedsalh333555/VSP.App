@@ -47,7 +47,7 @@ class _RootScreenState extends State<RootScreen> {
       // 🛡️ Safety Net: If user is authenticated but userModel never loads within
       // 3 seconds (e.g. Firestore offline), show a Connection Error screen.
       if (auth.isAuthenticated && auth.userModel == null) {
-        _loadingTimeout = Timer(const Duration(seconds: 10), () {
+        _loadingTimeout = Timer(const Duration(seconds: 5), () {
           if (mounted && auth.userModel == null) {
             setState(() => _loadingTimedOut = true);
           }
@@ -184,7 +184,7 @@ class _RootScreenState extends State<RootScreen> {
 
     // 3. Authenticated but waiting for User Data → Splash (Loading)
     if (auth.isAuthenticated && auth.userModel == null) {
-      // 🛡️ Timeout Safety Net: after 10s show a connection error with sign-out option
+      // 🛡️ Timeout Safety Net: after 5s show a connection error with sign-out option
       if (_loadingTimedOut) {
         return Scaffold(
           backgroundColor: VSPColors.background,

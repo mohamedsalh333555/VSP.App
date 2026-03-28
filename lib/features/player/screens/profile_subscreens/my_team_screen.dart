@@ -1,4 +1,4 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
@@ -314,7 +314,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   if (_myTeam != null)
                     _buildAchievementSection(_myTeam!)
                   else
-                    const Center(
+                    Center(
                       child: Padding(
                         padding: EdgeInsets.all(20),
                         child: Text(
@@ -523,7 +523,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     );
   }
 
-  TextStyle paramTextStyle({required double fontSize}) => TextStyle(color: VSPColors.textSecondary, fontSize: fontSize);
+  TextStyle paramTextStyle({required double fontSize}) => TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.9), fontSize: fontSize);
 
   Widget _buildTextField(TextEditingController controller, {String? hint, bool readOnly = false}) {
     return Container(

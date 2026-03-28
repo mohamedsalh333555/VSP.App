@@ -1,3 +1,4 @@
+import 'package:vsp_application/l10n/app_localizations.dart';
 // Legacy / inactive screen - kept for reference
 // Replaced by OwnerDashboardScreen 
 import 'package:flutter/material.dart';

@@ -18,7 +18,7 @@ import 'core/utils/data_migration.dart';
 import 'features/auth/screens/splash_screen.dart';
 import 'features/auth/screens/welcome_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'core/navigation/root_screen.dart';
 import 'core/config/app_config.dart' as app_config;
 import 'core/services/logger_service.dart';

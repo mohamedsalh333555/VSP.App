@@ -1034,7 +1034,15 @@ class VSP1v1Player {
     };
   }
 
-
+  static List<VSP1v1Player> getMockStandings() {
+    return [
+      VSP1v1Player(id: '1', name: 'Ahmed', avatarUrl: '', totalPoints: 100, skillPoints: 50, goals: 20, tackles: 10, rank: 1),
+      VSP1v1Player(id: '2', name: 'Mohamed', avatarUrl: '', totalPoints: 80, skillPoints: 40, goals: 15, tackles: 8, rank: 2),
+      VSP1v1Player(id: '3', name: 'Ali', avatarUrl: '', totalPoints: 60, skillPoints: 30, goals: 10, tackles: 5, rank: 3),
+      VSP1v1Player(id: '4', name: 'Hassan', avatarUrl: '', totalPoints: 40, skillPoints: 20, goals: 5, tackles: 2, rank: 4),
+      VSP1v1Player(id: '5', name: 'Ibrahim', avatarUrl: '', totalPoints: 20, skillPoints: 10, goals: 2, tackles: 1, rank: 5),
+    ];
+  }
 }
 
 /// Championship data model

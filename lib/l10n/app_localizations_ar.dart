@@ -987,7 +987,8 @@ class AppLocalizationsAr extends AppLocalizations {
   String get cashPayment => 'الدفع النقدي';
 
   @override
-  String get cashPaymentDesc => 'سوف تقوم بالدفع نقداً عند وصولك إلى الملعب.';
+  String get cashPaymentDesc =>
+      'تم تأكيد الحجز - يرجى الدفع نقداً عند الوصول للملعب';
 
   @override
   String get sessionExpiredError => 'انتهت الجلسة. يرجى تسجيل الدخول مرة أخرى.';
@@ -1212,4 +1213,119 @@ class AppLocalizationsAr extends AppLocalizations {
   String shareTeamText(Object name, Object rank) {
     return 'شاهد فريقي $name على VSP! ترتيبنا هو $rank. ⚽🏆';
   }
+
+  @override
+  String get addStadium => 'إضافة ملعب';
+
+  @override
+  String get autoFetch => 'تحديد تلقائي';
+
+  @override
+  String get chooseManually => 'اختيار يدوي';
+
+  @override
+  String get workingHours => 'ساعات العمل';
+
+  @override
+  String get setDailyBreak => 'تحديد فترة راحة';
+
+  @override
+  String get length => 'الطول';
+
+  @override
+  String get width => 'العرض';
+
+  @override
+  String get bathrooms => 'حمامات';
+
+  @override
+  String get cafeteria => 'كافتيريا';
+
+  @override
+  String get garage => 'جراج';
+
+  @override
+  String get changingRoom => 'غرف تبديل';
+
+  @override
+  String get seatCount => 'عدد المقاعد';
+
+  @override
+  String get amenities => 'المرافق';
+
+  @override
+  String get stadiumGallery => 'معرض صور الملعب';
+
+  @override
+  String get submitStadium => 'إرسال الملعب';
+
+  @override
+  String get stadiumPhotosHint =>
+      'الصور عالية الجودة تزيد من نسبة الحجز. أضف 3 صور على الأقل للملعب والمرافق.';
+
+  @override
+  String get basicInfoError => 'يرجى ملء البيانات الأساسية';
+
+  @override
+  String get selectFeaturesError => 'يرجى اختيار المميزات';
+
+  @override
+  String get ballPriceMinError => 'يجب أن يكون سعر تأجير الكرة 5 ج.م على الأقل';
+
+  @override
+  String get uploadPhotoError => 'يرجى رفع صورة واحدة للملعب على الأقل';
+
+  @override
+  String get stadiumSubmitSuccess => 'تم إرسال الملعب للمراجعة!';
+
+  @override
+  String get stadiumSaveFailed => 'فشل حفظ بيانات الملعب';
+
+  @override
+  String get start => 'بداية';
+
+  @override
+  String get end => 'نهاية';
+
+  @override
+  String get breakStart => 'بداية الراحة';
+
+  @override
+  String get breakEnd => 'نهاية الراحة';
+
+  @override
+  String get tapToFetch => 'اضغط لتحديد الموقع';
+
+  @override
+  String get ballAvailableLabel => 'توافر الكرة';
+
+  @override
+  String get playersTeam => 'لاعبون لكل فريق';
+
+  @override
+  String get selectSport => 'اختر الرياضة';
+
+  @override
+  String get errorLabel => 'خطأ';
+
+  @override
+  String get ok => 'موافق';
+
+  @override
+  String get join => 'انضمام';
+
+  @override
+  String get report => 'إبلاغ';
+
+  @override
+  String get none => 'لا يوجد';
+
+  @override
+  String get wins => 'انتصارات';
+
+  @override
+  String get delete => 'حذف';
+
+  @override
+  String get close => 'إغلاق';
 }

@@ -1,3 +1,4 @@
+import 'package:vsp_application/l10n/app_localizations.dart';
 // LEGACY - not used in active orientation (using SignupScreen)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';

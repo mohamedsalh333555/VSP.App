@@ -82,7 +82,7 @@ class SupportService {
 
   Future<void> _launchSupportWhatsApp({required String category}) async {
     final message = Uri.encodeComponent('Hi VSP Support! I need help with: $category');
-    final url = 'https://wa.me/2010XXXXXXXX?text=$message'; // Replace with real VSP support number
+    final url = 'https://wa.me/201100229462?text=$message'; // Real VSP support number
     
     if (await canLaunchUrl(Uri.parse(url))) {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);

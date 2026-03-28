@@ -462,6 +462,18 @@ class AuthProvider with ChangeNotifier {
 
   /// Sign out - HARD RESET for Beta
   Future<void> signOut() async {
+    // SECURITY PATCH: Clear FCM token from Firestore before logout
+    if (_firebaseUser != null) {
+      try {
+        await FirebaseFirestore.instance.collection('users').doc(_firebaseUser!.uid).update({
+          'fcmToken': FieldValue.delete(),
+        });
+        VSPLogger.i('FCM Token cleared for logout');
+      } catch (e) {
+        VSPLogger.w('Silent failure clearing FCM token during logout');
+      }
+    }
+
     await _authService.signOut();
     _firebaseUser = null;
     _userModel = null;
@@ -553,11 +565,13 @@ class AuthProvider with ChangeNotifier {
 
      try {
        final uid = _firebaseUser!.uid;
+       final oldUrl = _userModel?.profileImageUrl;
 
-       // 1) Upload image to Firebase Storage
+       // 1) Upload image to Firebase Storage (and delete old one)
        final url = await _storageService.uploadProfilePicture(
          file: File(file.path),
          userId: uid,
+         oldImageUrl: oldUrl,
        );
        if (url == null) throw 'Upload returned null';
 
@@ -567,13 +581,8 @@ class AuthProvider with ChangeNotifier {
           notifyListeners();
         }
 
-        // 3) Update profile data in Firestore in background
-        updateProfile({'profileImageUrl': url}).then((success) {
-          if (!success) {
-              _errorMessage = 'Failed to update profile image record.';
-              notifyListeners();
-          }
-        });
+        // 3) Update profile data in Firestore
+        await updateProfile({'profileImageUrl': url});
      } catch (e) {
        _errorMessage = 'Failed to upload profile image: $e';
      } finally {
@@ -718,13 +727,23 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// 📍 Auto-update user location based on GPS
+  /// 📍 Auto-update user location based on GPS with Throttling
   Future<void> updateUserLocation() async {
-    // Only update if user is logged in
     if (_userModel == null) return;
 
     try {
-      // 1. Check & Request Permission
+      final prefs = await SharedPreferences.getInstance();
+      final lastUpdateStr = prefs.getString('last_location_update');
+      final lastLat = prefs.getDouble('last_lat') ?? 0.0;
+      final lastLng = prefs.getDouble('last_lng') ?? 0.0;
+
+      final now = DateTime.now();
+      
+      // 1. Check Time Threshold (Once every 24 hours)
+      bool timeThresholdMet = lastUpdateStr == null || 
+          now.difference(DateTime.parse(lastUpdateStr)).inHours >= 24;
+
+      // 2. Check Permission
       LocationPermission permission = await Geolocator.checkPermission();
       if (permission == LocationPermission.denied) {
         permission = await Geolocator.requestPermission();
@@ -732,36 +751,45 @@ class AuthProvider with ChangeNotifier {
       }
       if (permission == LocationPermission.deniedForever) return;
 
-      // 2. Get Current Position
-      // City-level accuracy is enough
+      // 3. Get Current Position
       final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(
-          accuracy: LocationAccuracy.low,
-        ),
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
       );
 
-      _currentPosition = position;
-      notifyListeners();
-
-      // 3. Reverse Geocode (Get Governorate Name)
-      final placemarks = await placemarkFromCoordinates(
-        position.latitude, 
-        position.longitude,
+      // 4. Check Distance Threshold (More than 5km)
+      double distanceInMeters = Geolocator.distanceBetween(
+        lastLat, lastLng, position.latitude, position.longitude
       );
 
-      if (placemarks.isNotEmpty) {
-        final rawName = placemarks.first.administrativeArea ?? placemarks.first.subAdministrativeArea ?? placemarks.first.locality;
-        final newGov = EgyptGovernorates.resolveGoogleName(rawName);
+      if (timeThresholdMet || distanceInMeters > 5000) {
+        VSPLogger.i("🌍 GPS Optimized: Threshold met. Updating location...");
+        
+        _currentPosition = position;
+        notifyListeners();
 
-        // 4. Update Profile ONLY if changed
-        if (_userModel!.governorate != newGov) {
-          debugPrint('📍 Auto-updating location: ${_userModel!.governorate} -> $newGov');
-          await updateProfile({'governorate': newGov});
+        final placemarks = await placemarkFromCoordinates(
+          position.latitude, 
+          position.longitude,
+        );
+
+        if (placemarks.isNotEmpty) {
+          final rawName = placemarks.first.administrativeArea ?? placemarks.first.subAdministrativeArea ?? placemarks.first.locality;
+          final newGov = EgyptGovernorates.resolveGoogleName(rawName);
+
+          if (_userModel!.governorate != newGov) {
+            await updateProfile({'governorate': newGov});
+          }
+          
+          // Persist update state to throttle subsequent calls
+          await prefs.setString('last_location_update', now.toIso8601String());
+          await prefs.setDouble('last_lat', position.latitude);
+          await prefs.setDouble('last_lng', position.longitude);
         }
+      } else {
+        VSPLogger.i("🌍 GPS Optimized: Using cached location (Throttled)");
       }
     } catch (e) {
-      VSPLogger.e('Error auto-updating location', e);
-      // Fail silently, don't disturb user
+      VSPLogger.w('Error auto-updating location (Silenced): $e');
     }
   }
 

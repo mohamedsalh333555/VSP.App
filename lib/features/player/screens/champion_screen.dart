@@ -1,4 +1,4 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -445,7 +445,7 @@ class ChampionScreenState extends State<ChampionScreen>
                          child: _buildTopRankItem(
                            rank: 2,
                            name: top3[1].name, 
-                           logo: top3[1].captainImageUrl,
+                           logo: top3[1].logoUrl.isNotEmpty ? top3[1].logoUrl : top3[1].captainImageUrl,
                            points: top3[1].points,
                            isCenter: false,
                            color: VSPColors.surface,
@@ -463,7 +463,7 @@ class ChampionScreenState extends State<ChampionScreen>
                          child: _buildTopRankItem(
                            rank: 1,
                            name: top3[0].name,
-                           logo: top3[0].captainImageUrl, 
+                           logo: top3[0].logoUrl.isNotEmpty ? top3[0].logoUrl : top3[0].captainImageUrl, 
                            points: top3[0].points,
                            isCenter: true,
                            color: VSPColors.accent,
@@ -481,7 +481,7 @@ class ChampionScreenState extends State<ChampionScreen>
                          child: _buildTopRankItem(
                            rank: 3,
                            name: top3[2].name, 
-                           logo: top3[2].captainImageUrl,
+                           logo: top3[2].logoUrl.isNotEmpty ? top3[2].logoUrl : top3[2].captainImageUrl,
                            points: top3[2].points,
                            isCenter: false,
                            color: VSPColors.surface,
@@ -678,7 +678,7 @@ class ChampionScreenState extends State<ChampionScreen>
             padding: const EdgeInsets.all(3),
             child: ClipOval(
               child: ShimmerImage(
-                imageUrl: team.captainImageUrl,
+                imageUrl: team.logoUrl.isNotEmpty ? team.logoUrl : team.captainImageUrl,
                 width: 34,
                 height: 34,
                 fit: BoxFit.contain,

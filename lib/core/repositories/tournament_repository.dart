@@ -181,44 +181,79 @@ class TournamentRepository {
       final champData = champDoc.data() as Map<String, dynamic>;
       final List<String> teamIds = List<String>.from(champData['joinedTeams'] ?? []);
 
-      int teamCount = teamIds.length;
-      if (![4, 8, 16, 32].contains(teamCount)) {
-        throw 'Number of teams must be 4, 8, 16, or 32 for a knockout bracket. Current: $teamCount';
+      int totalTeams = teamIds.length;
+      if (totalTeams < 2) throw 'At least 2 teams are required to start a tournament.';
+
+      // 1. Calculate next power of 2 below N (e.g. N=10 -> P=8)
+      int targetP2 = 1;
+      while (targetP2 * 2 <= totalTeams) {
+        targetP2 *= 2;
       }
+
+      // If N=10, P=8. Matches in R0 = 10 - 8 = 2. Teams in R0 = 4.
+      int numOpeningMatches = totalTeams - targetP2;
+      int numTeamsR0 = numOpeningMatches * 2;
+      int numByes = totalTeams - numTeamsR0;
 
       final teams = await getTeamsByIds(teamIds);
       final teamMap = {for (var t in teams) t.id: t.name};
-
       final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
-      int totalRounds = (log(teamCount) / log(2)).round();
-      int firstRoundIndex = totalRounds - 1;
 
       final batch = _firestore.batch();
       final matchesCollection = _firestore.collection('tournament_matches');
 
       String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
 
-      for (int r = 0; r <= firstRoundIndex; r++) {
-        int matchCount = pow(2, r).toInt();
+      // 2. Generate Opening Round (R0)
+      for (int m = 0; m < numOpeningMatches; m++) {
+        final docRef = matchesCollection.doc(getMatchId(0, m));
+        String homeId = shuffledIds[m * 2];
+        String awayId = shuffledIds[m * 2 + 1];
 
+        final matchData = TournamentMatch(
+          id: docRef.id,
+          championshipId: championshipId,
+          roundIndex: 0,
+          matchIndex: m,
+          nextMatchId: getMatchId(1, m ~/ 2), 
+          homeTeamId: homeId,
+          homeTeamName: teamMap[homeId],
+          awayTeamId: awayId,
+          awayTeamName: teamMap[awayId],
+        );
+        batch.set(docRef, matchData.toFirestore());
+      }
+
+      // 3. Generate main bracket rounds (R1...Final)
+      int totalBracketRounds = (log(targetP2) / log(2)).round();
+      for (int r = 1; r <= totalBracketRounds; r++) {
+        int matchCount = (targetP2 / pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
           final docRef = matchesCollection.doc(getMatchId(r, m));
-
-          String? nextMatchId;
-          if (r > 0) {
-            nextMatchId = getMatchId(r - 1, m ~/ 2);
-          }
+          String? nextMatchId = (matchCount > 1) ? getMatchId(r + 1, m ~/ 2) : null;
 
           String? homeId, homeName, awayId, awayName;
-          if (r == firstRoundIndex) {
-            int teamIndexBase = m * 2;
-            if (teamIndexBase < shuffledIds.length) {
-              homeId = shuffledIds[teamIndexBase];
-              homeName = teamMap[homeId];
+
+          // Filling Round 1 (Power of 2 round)
+          if (r == 1) {
+            // Home Slot
+            int slotH = m * 2;
+            if (slotH >= numOpeningMatches) {
+              // This slot is a BYE
+              int byeIndex = slotH - numOpeningMatches + numTeamsR0;
+              if (byeIndex < shuffledIds.length) {
+                homeId = shuffledIds[byeIndex];
+                homeName = teamMap[homeId];
+              }
             }
-            if (teamIndexBase + 1 < shuffledIds.length) {
-              awayId = shuffledIds[teamIndexBase + 1];
-              awayName = teamMap[awayId];
+            // Away Slot
+            int slotA = m * 2 + 1;
+            if (slotA >= numOpeningMatches) {
+              int byeIndex = slotA - numOpeningMatches + numTeamsR0;
+              if (byeIndex < shuffledIds.length) {
+                awayId = shuffledIds[byeIndex];
+                awayName = teamMap[awayId];
+              }
             }
           }
 
@@ -233,15 +268,13 @@ class TournamentRepository {
             awayTeamId: awayId,
             awayTeamName: awayName,
           );
-
           batch.set(docRef, matchData.toFirestore());
         }
       }
 
       batch.update(champDoc.reference, {'status': 'ongoing'});
-
       await batch.commit();
-      debugPrint('✅ Fixtures generated for $championshipId');
+      debugPrint('✅ Flexible Bracket Generated for $championshipId: $totalTeams teams');
     } catch (e) {
       debugPrint('Error generating fixtures: $e');
       rethrow;

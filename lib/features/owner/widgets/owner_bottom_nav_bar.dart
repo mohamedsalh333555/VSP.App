@@ -1,3 +1,4 @@
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
 

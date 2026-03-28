@@ -2,32 +2,94 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    function isAuthenticated() { return request.auth != null; }
-    function isOwner(userId) { return request.auth.uid == userId; }
+    // --- Helper Functions ---
+    function isAuthenticated() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+
+    function isAdmin() {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+    }
+
+    function isStadiumOwner(stadiumId) {
+      return isAuthenticated() && 
+        get(/databases/$(database)/documents/stadiums/$(stadiumId)).data.ownerId == request.auth.uid;
+    }
+
+    // --- Rules ---
 
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(userId);
-      // 🚨 الحماية القاتلة: منع المستخدم من تعديل رتبته، ديونه، أو رصيده
-      allow update: if isAuthenticated() && isOwner(userId)
-                    && !request.resource.data.diff(resource.data).affectedKeys()
-                        .hasAny(['role', 'commissionDebt', 'walletBalance', 'isSuspended', 'isBlocked', 'points']);
-      allow delete: if isAuthenticated() && isOwner(userId);
+      allow create: if isAuthenticated() && isOwner(userId) 
+                    && request.resource.data.role in ['player', 'owner']
+                    && request.resource.data.commissionDebt == 0
+                    && request.resource.data.walletBalance == 0
+                    && request.resource.data.isSuspended == false
+                    && request.resource.data.isBlocked == false;
+      
+      allow update: if isAdmin() || (
+        isAuthenticated() && isOwner(userId)
+        && !request.resource.data.diff(resource.data).affectedKeys()
+            .hasAny(['role', 'commissionDebt', 'walletBalance', 'isSuspended', 'isBlocked', 'points', 'uid', 'email'])
+      );
+      
+      allow delete: if isAdmin();
     }
 
     match /stadiums/{stadiumId} {
       allow read: if true;
-      allow create: if isAuthenticated();
-      // منع المالك من توثيق ملعبه بنفسه
-      allow update: if isAuthenticated() && resource.data.ownerId == request.auth.uid
-                    && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified']);
-      allow delete: if isAuthenticated() && resource.data.ownerId == request.auth.uid;
+      allow create: if isAuthenticated(); // Should probably check if user.role == 'owner'
+      
+      allow update: if isAdmin() || (
+        isAuthenticated() && resource.data.ownerId == request.auth.uid
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified', 'ownerId', 'rating', 'reviewsCount'])
+      );
+      
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
+
+      match /reviews/{reviewId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        // Prevent users from deleting/modifying reviews unless admin or author
+        allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      }
     }
 
     match /bookings/{bookingId} {
-      allow read: if isAuthenticated();
-      allow create, update: if isAuthenticated();
-      allow delete: if isAuthenticated() && resource.data.createdByUserId == request.auth.uid;
+      function isBookingParty() {
+        return resource.data.createdByUserId == request.auth.uid || 
+               resource.data.ownerId == request.auth.uid;
+      }
+
+      allow read: if isAuthenticated() && (isBookingParty() || isAdmin());
+      
+      allow create: if isAuthenticated(); 
+      
+      allow update: if isAdmin() || (
+        isAuthenticated() && isBookingParty()
+        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stadiumId', 'ownerId', 'createdByUserId', 'totalPrice'])
+      );
+      
+      allow delete: if isAdmin(); // Generally prevent users from deleting financial records
+    }
+
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+      allow update: if isAdmin() || (isAuthenticated() && resource.data.captainId == request.auth.uid);
+      allow delete: if isAdmin();
+    }
+
+    match /notifications/{notifId} {
+      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid);
+      allow create: if isAuthenticated(); // Internal logic usually sends these, but allow for now
+      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid);
+      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
     }
   }
 }

@@ -1,4 +1,5 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
@@ -86,9 +87,19 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 ),
                 child: ClipOval(
                   child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
-                      ? Image.network(booking.hostAvatarUrl!, fit: BoxFit.cover)
+                      ? CachedNetworkImage(
+                          imageUrl: booking.hostAvatarUrl!,
+                          fit: BoxFit.cover,
+                          errorWidget: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                          placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
+                        )
                       : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
-                          ? Image.network(booking.playerTeamLogoUrl!, fit: BoxFit.cover)
+                          ? CachedNetworkImage(
+                              imageUrl: booking.playerTeamLogoUrl!,
+                              fit: BoxFit.cover,
+                              errorWidget: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                              placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
+                            )
                           : const Icon(Icons.person, color: VSPColors.accent, size: 24),
                 ),
               ),
@@ -615,7 +626,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                             CircleAvatar(
                               radius: 20,
                               backgroundColor: VSPColors.surfaceAlt,
-                              backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ? NetworkImage(user.profileImageUrl!) : null,
+                              backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ? CachedNetworkImageProvider(user.profileImageUrl!) : null,
                               child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty) ? const Icon(Icons.person, color: VSPColors.accent, size: 20) : null,
                             ),
                             const SizedBox(width: 12),

@@ -59,7 +59,7 @@ class HelpCenterScreen extends StatelessWidget {
               subtitle: 'Emergency assistance for bookings',
               icon: Icons.phone_in_talk_outlined,
               color: VSPColors.accent,
-              onTap: () => launchUrl(Uri.parse('tel:+201000000000')),
+              onTap: () => launchUrl(Uri.parse('tel:+201100229462')),
             ),
 
             const SizedBox(height: VSPSpacing.xl),
@@ -128,7 +128,7 @@ class HelpCenterScreen extends StatelessWidget {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.userModel;
     final message = 'Support Request:\nUID: ${user?.uid}\nGov: ${user?.governorate}\nIssue: ';
-    final whatsappUrl = Uri.parse("whatsapp://send?phone=+201000000000&text=${Uri.encodeComponent(message)}");
+    final whatsappUrl = Uri.parse("whatsapp://send?phone=+201100229462&text=${Uri.encodeComponent(message)}");
     
     if (await canLaunchUrl(whatsappUrl)) {
       await launchUrl(whatsappUrl);

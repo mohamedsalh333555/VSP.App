@@ -3,7 +3,7 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -35,7 +35,26 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-    _startCountdown();
+    if (AppConfig.bypassOtp) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _handleBypassVerify();
+      });
+    } else {
+      _startCountdown();
+    }
+  }
+
+  Future<void> _handleBypassVerify() async {
+    setState(() => _isLoading = true);
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    await auth.updateProfile({'isRegistrationComplete': true});
+    if (!mounted) return;
+    
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (_) => const RootScreen()),
+      (route) => false,
+    );
   }
 
   @override

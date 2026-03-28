@@ -10,6 +10,10 @@ class MatchRepository {
   final FirebaseFirestore _firestore;
   final NotificationRepository _notificationRepo;
 
+  MatchRepository({FirebaseFirestore? firestore, NotificationRepository? notificationRepo})
+      : _firestore = firestore ?? FirebaseFirestore.instance,
+        _notificationRepo = notificationRepo ?? NotificationRepository();
+
   // Get all matches (Live stream)
   Stream<List<Map<String, dynamic>>> getMatches() {
     return _firestore
@@ -69,6 +73,7 @@ class MatchRepository {
 
   // --- PUBLIC MATCHES (Modern) ---
 
+  Stream<List<Booking>> getPublicMatches() {
     final now = DateTime.now();
     return _firestore
         .collection('bookings')
@@ -80,7 +85,12 @@ class MatchRepository {
         .map<List<Booking>>((snapshot) {
           return snapshot.docs
               .map((doc) => Booking.fromFirestore(doc.data(), doc.id))
-              .where((b) => b.currentPlayers < (b.maxPlayers > 0 ? b.maxPlayers * 2 : 10))
+              .where((b) {
+                final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
+                // Double capacity (5vs5 means 10 players)
+                final totalCapacity = max * 2;
+                return b.currentPlayers < totalCapacity;
+              })
               .toList();
         });
   }
@@ -277,10 +287,13 @@ class MatchRepository {
     DocumentSnapshot? startAfter,
   }) async {
     try {
+      final now = DateTime.now();
       Query query = _firestore
           .collection('bookings')
           .where('status', isEqualTo: BookingStatus.confirmed.name)
-          .orderBy('createdAt', descending: true)
+          .where('isPrivate', isEqualTo: false)
+          .where('startTime', isGreaterThan: Timestamp.fromDate(now))
+          .orderBy('startTime', descending: false)
           .limit(limit);
 
       if (startAfter != null) {
@@ -288,17 +301,14 @@ class MatchRepository {
       }
 
       final snapshot = await query.get();
-      final now = DateTime.now();
       
       final items = snapshot.docs
           .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
           .where((b) {
-            final isPublic = b.isPrivate == false; 
-            final isFuture = b.startTime.isAfter(now);
             final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
-            final hasSpace = b.currentPlayers < max;
+            final hasSpace = b.currentPlayers < (max * 2);
             final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
-            return isPublic && isFuture && hasSpace && isRightType;
+            return hasSpace && isRightType;
           }).toList();
       
       return {

@@ -20,7 +20,22 @@ class StorageService {
     }
   }
 
-  Future<String?> uploadProfilePicture({required File file, required String userId}) async {
+  Future<bool> deleteFile(String url) async {
+    try {
+      if (url.isEmpty || !url.startsWith('http')) return true;
+      final ref = _storage.refFromURL(url);
+      await ref.delete();
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting from Firebase Storage: $e');
+      return false;
+    }
+  }
+
+  Future<String?> uploadProfilePicture({required File file, required String userId, String? oldImageUrl}) async {
+    if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
+      await deleteFile(oldImageUrl);
+    }
     return await uploadFile(file: file, path: 'users/$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg');
   }
 

@@ -1,12 +1,12 @@
-import 'package:flutter_gen/gen_l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
+import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../../core/repositories/search_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
-import 'match_details_screen.dart';
 import 'stadium_details_screen.dart';
+import 'championship_details_screen.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   final String? initialQuery;

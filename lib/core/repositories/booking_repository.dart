@@ -8,6 +8,7 @@ import '../repositories/user_repository.dart';
 import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
+import '../services/database_service.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -85,32 +86,45 @@ class FirestoreBookingRepository implements BookingRepository {
       bookingData['createdAt'] = FieldValue.serverTimestamp(); 
       bookingData['updatedAt'] = FieldValue.serverTimestamp();
 
-      // Logic Fix: Prevent Double Booking (Race Condition) using Transaction
+      // Logic Fix: Prevent Double Booking (Race Condition) using atomic Slot Blocking
+      // We generate unique IDs for every 30-minute block within the booking duration.
+      final List<String> slotsToLock = [];
+      DateTime temp = draft.startTime;
+      while (temp.isBefore(draft.endTime)) {
+        final slotId = DateFormat('yyyyMMdd_HHmm').format(temp);
+        slotsToLock.add(slotId);
+        temp = temp.add(const Duration(minutes: 30));
+      }
+
       await _firestore.runTransaction((transaction) async {
-        // 1. Query the bookings collection for potential overlaps
-        // Note: We check by stadium and status first.
-        final snapshot = await _bookingsCollection
-            .where('stadiumId', isEqualTo: draft.stadiumId)
-            .get();
-
-        final overlappingBookings = snapshot.docs.where((doc) {
-          final data = doc.data() as Map<String, dynamic>;
-          // Skip cancelled bookings
-          if (data['status'] == BookingStatus.cancelled.name) return false;
-
-          final bStart = (data['startTime'] as Timestamp).toDate();
-          final bEnd = (data['endTime'] as Timestamp).toDate();
-
-          // Condition: (bStart < draft.endTime) AND (bEnd > draft.startTime)
-          return bStart.isBefore(draft.endTime) && bEnd.isAfter(draft.startTime);
-        });
-
-        // 2. If overlap exists, throw exception
-        if (overlappingBookings.isNotEmpty) {
-          throw Exception("This slot was just booked by someone else!");
+        final stadiumRef = _firestore.collection('stadiums').doc(draft.stadiumId);
+        
+        // 1. Check all required 30-min slots for availability
+        for (final slotId in slotsToLock) {
+          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
+          final slotSnap = await transaction.get(slotRef);
+          
+          if (slotSnap.exists) {
+            final data = slotSnap.data() as Map<String, dynamic>;
+            // If the slot is held by a confirmed or pending booking, it's unavailable
+            if (data['status'] != 'cancelled') {
+              throw Exception("One of the selected time blocks is already booked.");
+            }
+          }
         }
 
-        // 3. If no overlap, proceed to write the new booking document
+        // 2. Lock the slots
+        for (final slotId in slotsToLock) {
+          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
+          transaction.set(slotRef, {
+            'bookingId': docRef.id,
+            'userId': userId,
+            'status': 'confirmed',
+            'timestamp': FieldValue.serverTimestamp(),
+          });
+        }
+
+        // 3. Create the booking document
         transaction.set(docRef, bookingData);
       });
 
@@ -172,7 +186,6 @@ class FirestoreBookingRepository implements BookingRepository {
           body: 'You are playing against ${draft.playerTeamName ?? "another team"} at ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)}.',
           type: 'info',
           createdAt: DateTime.now(),
-          hasAction: false,
         ),
       );
       AnalyticsService.logChallengeSent(draft.playerTeamId ?? 'unknown', draft.opponentTeamId!);
@@ -250,9 +263,29 @@ class FirestoreBookingRepository implements BookingRepository {
         return false;
       }
 
-      await _bookingsCollection.doc(bookingId).update({
-        'status': BookingStatus.cancelled.name,
-        'updatedAt': FieldValue.serverTimestamp(),
+      await _firestore.runTransaction((transaction) async {
+        final bookingSnap = await transaction.get(_bookingsCollection.doc(bookingId));
+        if (!bookingSnap.exists) return;
+        
+        final data = bookingSnap.data() as Map<String, dynamic>;
+        final stadiumId = data['stadiumId'];
+        final startTime = (data['startTime'] as Timestamp).toDate();
+        final endTime = (data['endTime'] as Timestamp).toDate();
+
+        // Release slots
+        final stadiumRef = _firestore.collection('stadiums').doc(stadiumId);
+        DateTime temp = startTime;
+        while (temp.isBefore(endTime)) {
+          final slotId = DateFormat('yyyyMMdd_HHmm').format(temp);
+          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
+          transaction.update(slotRef, {'status': 'cancelled'});
+          temp = temp.add(const Duration(minutes: 30));
+        }
+
+        transaction.update(_bookingsCollection.doc(bookingId), {
+          'status': BookingStatus.cancelled.name,
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
       });
       return true;
     } catch (e) {

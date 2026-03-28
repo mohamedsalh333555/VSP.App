@@ -1,3 +1,4 @@
+import 'package:vsp_application/l10n/app_localizations.dart';
 // TODO: Future Implementation
 // This file is reserved as an alternate entry point for the Add Stadium flow.
 // The active implementation lives in: add_stadium_wizard.dart

@@ -1,3 +1,4 @@
+import '../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'package:flutter/services.dart';
@@ -276,25 +277,25 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   void _nextPage() {
     if (_currentStep == 0) {
       if (_nameController.text.isEmpty || _selectedSportType == null || _priceController.text.isEmpty || _startTime == null || _endTime == null) {
-        _showError('Please fill basic info');
+        _showError(AppLocalizations.of(context)!.basicInfoError);
         return;
       }
     } else if (_currentStep == 1) {
       if (_selectedBathOption == null || _cafeteria == null) {
-        _showError('Please select features');
+        _showError(AppLocalizations.of(context)!.selectFeaturesError);
         return;
       }
       if (_hasBall) {
         final ballPrice = double.tryParse(_ballPriceController.text) ?? 0.0;
         if (ballPrice < 5.0) {
-          _showError('Ball rental price must be at least 5 EGP');
+          _showError(AppLocalizations.of(context)!.ballPriceMinError);
           return;
         }
       }
     } else if (_currentStep == 2) {
       // Validate Images & Submit
       if (_images.isEmpty && (widget.stadiumId == null)) {
-        _showError('Please upload at least one stadium image');
+        _showError(AppLocalizations.of(context)!.uploadPhotoError);
         return;
       }
       _saveStadium(); // Submit immediately after images
@@ -391,11 +392,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
       
       if (mounted) {
-        VSPFeedback.showSuccess(context, 'Stadium Submitted for Review!');
+        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.stadiumSubmitSuccess);
         Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
       }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'Failed to save: $e');
+      if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);
     } finally {
       if (mounted) {
         setState(() => _isSaving = false);
@@ -422,7 +423,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         leading: IconButton(icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary), onPressed: _previousPage),
-        title: Text('Add Stadium', style: Theme.of(context).textTheme.displaySmall),
+        title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
         elevation: 0,
       ),
@@ -472,14 +473,14 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField('Location', 'Tap to fetch', controller: _locationController, readOnly: true),
+          _buildTextField(AppLocalizations.of(context)!.location, AppLocalizations.of(context)!.tapToFetch, controller: _locationController, readOnly: true),
           const SizedBox(height: 8),
           Row(
             children: [
               ElevatedButton.icon(
                 onPressed: _getCurrentLocation,
                 icon: _isLocationLoading ? const SizedBox(width:16, height:16, child: CircularProgressIndicator(strokeWidth:2, color: VSPColors.accent)) : const Icon(Icons.my_location),
-                label: const Text('Auto Fetch'),
+                label: Text(AppLocalizations.of(context)!.autoFetch),
                 style: ElevatedButton.styleFrom(backgroundColor: VSPColors.surface, foregroundColor: VSPColors.accent),
               ),
               const SizedBox(width: 12),
@@ -490,20 +491,20 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   setState(() => _governorate = "Cairo"); // Mocking manual pick
                 },
                 icon: const Icon(Icons.map_outlined),
-                label: const Text('Choose Manually'),
+                label: Text(AppLocalizations.of(context)!.chooseManually),
                 style: ElevatedButton.styleFrom(backgroundColor: VSPColors.surface, foregroundColor: VSPColors.textSecondary),
               ),
             ],
           ),
           const SizedBox(height: 16),
-          _buildTextField('Stadium Name', 'Ex: Anfield', controller: _nameController, maxLength: 50),
+          _buildTextField(AppLocalizations.of(context)!.stadiumName, 'Ex: Anfield', controller: _nameController, maxLength: 50),
           const SizedBox(height: 16),
           _buildGovernorateDropdown(),
           const SizedBox(height: 16),
           _buildSportDropdown(),
           const SizedBox(height: 16),
           _buildTextField(
-            'Price/Hour', 
+            AppLocalizations.of(context)!.pricePerHour, 
             '0.0', 
             controller: _priceController, 
             maxLength: 7,
@@ -512,7 +513,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           ),
           const SizedBox(height: 16),
           _buildTextField(
-            'Players/Team', 
+            AppLocalizations.of(context)!.playersTeam, 
             '5', 
             controller: _capacityController,
             maxLength: 2,
@@ -521,11 +522,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           ),
           const SizedBox(height: 16),
           
-          const Text('Working Hours', style: TextStyle(color: VSPColors.textSecondary)),
+          Text(AppLocalizations.of(context)!.workingHours, style: const TextStyle(color: VSPColors.textSecondary)),
           Row(children: [
-            Expanded(child: GestureDetector(onTap: () => _selectTime(context, true), child: _buildTimeBox(_formatTime(_startTime, 'Start'), isSelected: _startTime != null))),
+            Expanded(child: GestureDetector(onTap: () => _selectTime(context, true), child: _buildTimeBox(_formatTime(_startTime, AppLocalizations.of(context)!.start), isSelected: _startTime != null))),
             const SizedBox(width: 10),
-            Expanded(child: GestureDetector(onTap: () => _selectTime(context, false), child: _buildTimeBox(_formatTime(_endTime, 'End'), isSelected: _endTime != null))),
+            Expanded(child: GestureDetector(onTap: () => _selectTime(context, false), child: _buildTimeBox(_formatTime(_endTime, AppLocalizations.of(context)!.end), isSelected: _endTime != null))),
           ]),
           
           const SizedBox(height: 12),
@@ -533,11 +534,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text('Set Daily Break Time', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
+              Text(AppLocalizations.of(context)!.setDailyBreak, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
               Switch.adaptive(
                 value: _isSplitShift,
                 onChanged: (val) => setState(() => _isSplitShift = val),
-                activeColor: VSPColors.accent,
+                 activeColor: VSPColors.accent,
               ),
             ],
           ),
@@ -545,9 +546,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           if (_isSplitShift) ...[
             const SizedBox(height: 8),
             Row(children: [
-              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: true), child: _buildTimeBox(_formatTime(_breakStartTime, 'Break Start'), isSelected: _breakStartTime != null))),
+              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: true), child: _buildTimeBox(_formatTime(_breakStartTime, AppLocalizations.of(context)!.breakStart), isSelected: _breakStartTime != null))),
               const SizedBox(width: 10),
-              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: false), child: _buildTimeBox(_formatTime(_breakEndTime, 'Break End'), isSelected: _breakEndTime != null))),
+              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: false), child: _buildTimeBox(_formatTime(_breakEndTime, AppLocalizations.of(context)!.breakEnd), isSelected: _breakEndTime != null))),
             ]),
           ],
           
@@ -604,16 +605,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         children: [
-          _buildYesNoSection('Bathrooms', _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
+          _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
           const SizedBox(height: 20),
-          _buildYesNoSection('Cafeteria', _cafeteria, (val) => setState(() => _cafeteria = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.cafeteria, _cafeteria, (val) => setState(() => _cafeteria = val)),
           const SizedBox(height: 20),
-          _buildYesNoSection('Garage', _garage, (val) => setState(() => _garage = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.garage, _garage, (val) => setState(() => _garage = val)),
           const SizedBox(height: 20),
-          _buildYesNoSection('Changing Room', _changingRoom, (val) => setState(() => _changingRoom = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.changingRoom, _changingRoom, (val) => setState(() => _changingRoom = val)),
           const SizedBox(height: 20),
           _buildTextField(
-            'Seat Count', 
+            AppLocalizations.of(context)!.seatCount, 
             '0', 
             controller: _seatsController,
             maxLength: 5,
@@ -627,10 +628,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           
           Align(
             alignment: Alignment.centerLeft,
-            child: Text('Amenities', style: Theme.of(context).textTheme.titleMedium),
+            child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),
-          _buildYesNoSection('Ball Available', _hasBall, (val) => setState(() => _hasBall = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.ballAvailableLabel, _hasBall, (val) => setState(() => _hasBall = val)),
           
           if (_hasBall) ...[
             const SizedBox(height: 16),
@@ -657,12 +658,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       child: Column(
         children: [
           Text(
-            'Stadium Gallery',
+            AppLocalizations.of(context)!.stadiumGallery,
             style: Theme.of(context).textTheme.displaySmall,
           ),
           const SizedBox(height: VSPSpacing.xs),
           Text(
-            'High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.',
+            AppLocalizations.of(context)!.stadiumPhotosHint,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           const SizedBox(height: 24),
@@ -685,7 +686,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   fileUrl: img['url'],
                   isUploading: img['isUploading'] ?? false,
                   onTap: () {}, 
-                  onDelete: () => setState(() => _images.remove(img)),
+                  onDelete: () async {
+                    if (img['url'] != null) {
+                      await _storageService.deleteFile(img['url']!);
+                    }
+                    setState(() => _images.remove(img));
+                  },
                   thumbnail: img['url'] != null 
                     ? ClipRRect(
                         borderRadius: BorderRadius.circular(8),
@@ -755,7 +761,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: _selectedSportType,
-          hint: Text('Select Sport', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
+          hint: Text(AppLocalizations.of(context)!.selectSport, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
           dropdownColor: VSPColors.surface,
           isExpanded: true,
           items: VSPConstants.sports.map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
@@ -771,7 +777,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        Text("Governorate", style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
+        Text(AppLocalizations.of(context)!.governorate, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
         const SizedBox(height: VSPSpacing.xs),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),

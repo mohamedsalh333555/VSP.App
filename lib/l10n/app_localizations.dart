@@ -1937,7 +1937,7 @@ abstract class AppLocalizations {
   /// No description provided for @cashPaymentDesc.
   ///
   /// In en, this message translates to:
-  /// **'You will pay in cash when you arrive at the stadium.'**
+  /// **'Booking Confirmed - Please pay cash at the stadium'**
   String get cashPaymentDesc;
 
   /// No description provided for @sessionExpiredError.
@@ -2329,6 +2329,234 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Check out my team {name} on VSP! We are ranked {rank}. ⚽🏆'**
   String shareTeamText(Object name, Object rank);
+
+  /// No description provided for @addStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Stadium'**
+  String get addStadium;
+
+  /// No description provided for @autoFetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Auto Fetch'**
+  String get autoFetch;
+
+  /// No description provided for @chooseManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose Manually'**
+  String get chooseManually;
+
+  /// No description provided for @workingHours.
+  ///
+  /// In en, this message translates to:
+  /// **'Working Hours'**
+  String get workingHours;
+
+  /// No description provided for @setDailyBreak.
+  ///
+  /// In en, this message translates to:
+  /// **'Set Daily Break Time'**
+  String get setDailyBreak;
+
+  /// No description provided for @length.
+  ///
+  /// In en, this message translates to:
+  /// **'Length'**
+  String get length;
+
+  /// No description provided for @width.
+  ///
+  /// In en, this message translates to:
+  /// **'Width'**
+  String get width;
+
+  /// No description provided for @bathrooms.
+  ///
+  /// In en, this message translates to:
+  /// **'Bathrooms'**
+  String get bathrooms;
+
+  /// No description provided for @cafeteria.
+  ///
+  /// In en, this message translates to:
+  /// **'Cafeteria'**
+  String get cafeteria;
+
+  /// No description provided for @garage.
+  ///
+  /// In en, this message translates to:
+  /// **'Garage'**
+  String get garage;
+
+  /// No description provided for @changingRoom.
+  ///
+  /// In en, this message translates to:
+  /// **'Changing Room'**
+  String get changingRoom;
+
+  /// No description provided for @seatCount.
+  ///
+  /// In en, this message translates to:
+  /// **'Seat Count'**
+  String get seatCount;
+
+  /// No description provided for @amenities.
+  ///
+  /// In en, this message translates to:
+  /// **'Amenities'**
+  String get amenities;
+
+  /// No description provided for @stadiumGallery.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium Gallery'**
+  String get stadiumGallery;
+
+  /// No description provided for @submitStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Submit Stadium'**
+  String get submitStadium;
+
+  /// No description provided for @stadiumPhotosHint.
+  ///
+  /// In en, this message translates to:
+  /// **'High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.'**
+  String get stadiumPhotosHint;
+
+  /// No description provided for @basicInfoError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please fill basic info'**
+  String get basicInfoError;
+
+  /// No description provided for @selectFeaturesError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select features'**
+  String get selectFeaturesError;
+
+  /// No description provided for @ballPriceMinError.
+  ///
+  /// In en, this message translates to:
+  /// **'Ball rental price must be at least 5 EGP'**
+  String get ballPriceMinError;
+
+  /// No description provided for @uploadPhotoError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please upload at least one stadium image'**
+  String get uploadPhotoError;
+
+  /// No description provided for @stadiumSubmitSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Stadium Submitted for Review!'**
+  String get stadiumSubmitSuccess;
+
+  /// No description provided for @stadiumSaveFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to save stadium'**
+  String get stadiumSaveFailed;
+
+  /// No description provided for @start.
+  ///
+  /// In en, this message translates to:
+  /// **'Start'**
+  String get start;
+
+  /// No description provided for @end.
+  ///
+  /// In en, this message translates to:
+  /// **'End'**
+  String get end;
+
+  /// No description provided for @breakStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Break Start'**
+  String get breakStart;
+
+  /// No description provided for @breakEnd.
+  ///
+  /// In en, this message translates to:
+  /// **'Break End'**
+  String get breakEnd;
+
+  /// No description provided for @tapToFetch.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap to Fetch'**
+  String get tapToFetch;
+
+  /// No description provided for @ballAvailableLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Ball Available'**
+  String get ballAvailableLabel;
+
+  /// No description provided for @playersTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Players per Team'**
+  String get playersTeam;
+
+  /// No description provided for @selectSport.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Sport'**
+  String get selectSport;
+
+  /// No description provided for @errorLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Error'**
+  String get errorLabel;
+
+  /// No description provided for @ok.
+  ///
+  /// In en, this message translates to:
+  /// **'OK'**
+  String get ok;
+
+  /// No description provided for @join.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get join;
+
+  /// No description provided for @report.
+  ///
+  /// In en, this message translates to:
+  /// **'Report'**
+  String get report;
+
+  /// No description provided for @none.
+  ///
+  /// In en, this message translates to:
+  /// **'None'**
+  String get none;
+
+  /// No description provided for @wins.
+  ///
+  /// In en, this message translates to:
+  /// **'Wins'**
+  String get wins;
+
+  /// No description provided for @delete.
+  ///
+  /// In en, this message translates to:
+  /// **'Delete'**
+  String get delete;
+
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
 }
 
 class _AppLocalizationsDelegate
