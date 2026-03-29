@@ -62,9 +62,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           uid, 
           stadiumIds: stadiums.isNotEmpty ? stadiums : null
         );
-        
-        // ── Auto-Reconciliation Pivot ──
-        bookingProvider.autoReconcilePastBookings(uid);
       }
     });
   }

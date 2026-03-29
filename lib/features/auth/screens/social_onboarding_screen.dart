@@ -1,4 +1,5 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -80,10 +81,17 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Logic: RootScreen is listening to AuthProvider. 
-      // It will see that phone is now filled but isRegistrationComplete is still false, 
-      // thus it will automatically show VerifyEmailScreen (OTP). 
-      // No manual Navigator call needed here.
+      if (AppConfig.bypassOtp) {
+        // ⚡ SEAMLESS BYPASS: Manually verify and complete registration
+        await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
+        await authProvider.updateProfile({'isRegistrationComplete': true});
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const RootScreen()),
+          (route) => false,
+        );
+      }
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.errorMessage ?? 'Registration failed')),
@@ -215,7 +223,9 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
             width: double.infinity,
             height: 56,
             child: PrimaryButton(
-              text: isOwner ? 'Continue to Stadium Setup' : 'Complete Registration',
+              text: AppConfig.bypassOtp 
+                ? 'Complete & Verify (Bypass)' 
+                : (isOwner ? 'Continue to Stadium Setup' : 'Complete Registration'),
               isLoading: _isLoading,
               onPressed: _isFormValid ? _handleCompleteRegistration : null,
             ),

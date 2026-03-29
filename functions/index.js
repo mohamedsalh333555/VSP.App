@@ -107,3 +107,68 @@ exports.processTournamentWinner = functions.https.onCall(async (data, context) =
         return { success: true };
     });
 });
+
+/**
+ * [FINANCE] Hourly Automated Reconciliation
+ * Runs every hour to complete past bookings and calculate commission debt.
+ * This prevents owners from avoiding debt by never opening the app.
+ */
+exports.hourlyReconciliation = functions.pubsub
+    .schedule("every 1 hours")
+    .onRun(async (context) => {
+        const now = admin.firestore.Timestamp.now();
+        
+        // 1. Get all bookings that ended in the past and are not yet reconciled (not 'completed' or 'cancelled')
+        const bookingsQuery = await db.collection("bookings")
+            .where("endTime", "<", now)
+            .where("isPaid", "==", false)
+            .where("status", "==", "confirmed")
+            .get();
+
+        if (bookingsQuery.empty) {
+            console.log("No pending reconciliations found.");
+            return null;
+        }
+
+        const batch = db.batch();
+        const ownerDebtMap = new Map();
+
+        // 2. Process each booking
+        bookingsQuery.forEach(doc => {
+            const data = doc.data();
+            const commission = (data.totalPrice || 0) * 0.05;
+            const ownerId = data.ownerId;
+
+            // Update booking status
+            batch.update(doc.ref, { 
+                status: "completed",
+                isPaid: true, // Mark as processed for reconciliation
+                reconciledAt: admin.firestore.FieldValue.serverTimestamp()
+            });
+
+            // Accumulate debt per owner to process once
+            const currentOwnerDebt = ownerDebtMap.get(ownerId) || 0;
+            ownerDebtMap.set(ownerId, currentOwnerDebt + commission);
+        });
+
+        // 3. Update Owners Debt & Status
+        for (const [ownerId, totalNewCommission] of ownerDebtMap.entries()) {
+            const ownerRef = db.collection("users").doc(ownerId);
+            const ownerDoc = await ownerRef.get();
+            
+            if (ownerDoc.exists) {
+                const currentDebt = (ownerDoc.data().commissionDebt || 0) + totalNewCommission;
+                const isSuspended = currentDebt >= 500;
+                
+                batch.update(ownerRef, {
+                    commissionDebt: currentDebt,
+                    isSuspended: isSuspended,
+                    lastReconciliation: admin.firestore.FieldValue.serverTimestamp()
+                });
+            }
+        }
+
+        await batch.commit();
+        console.log(`Successfully reconciled ${bookingsQuery.size} bookings.`);
+        return null;
+    });

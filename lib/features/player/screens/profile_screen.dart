@@ -153,32 +153,22 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             ),
                           ),
                           const SizedBox(height: VSPSpacing.md),
-                          GestureDetector(
-                            onLongPress: () {
-                              // 🤫 SECRET GATE: Long press profile image for Admin Dashboard
-                              HapticFeedback.heavyImpact();
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(content: Text(AppLocalizations.of(context)!.adminModeActivated, style: const TextStyle(color: VSPColors.accent)))
-                              );
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
-                            },
-                            child: Container(
-                              width: 90,
-                              height: 90,
-                              decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                border: Border.all(color: VSPColors.textSecondary, width: 2),
-                                image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
-                                  ? DecorationImage(
-                                      image: CachedNetworkImageProvider(userProfileUrl),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                              ),
-                              child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                  ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 40)
-                                  : null,
+                          Container(
+                            width: 90,
+                            height: 90,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: VSPColors.textSecondary, width: 2),
+                              image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
+                                ? DecorationImage(
+                                    image: CachedNetworkImageProvider(userProfileUrl),
+                                    fit: BoxFit.cover,
+                                  )
+                                : null,
                             ),
+                            child: (userProfileUrl == null || userProfileUrl.isEmpty)
+                                ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 40)
+                                : null,
                           ),
                           const SizedBox(height: VSPSpacing.sm),
                           Text(

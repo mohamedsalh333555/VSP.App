@@ -280,6 +280,34 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _showError(AppLocalizations.of(context)!.basicInfoError);
         return;
       }
+
+      // ── Split-Shift (Break Time) Validation ──
+      if (_isSplitShift) {
+        if (_breakStartTime == null || _breakEndTime == null) {
+          _showError("Please set both break start and end times.");
+          return;
+        }
+
+        // Helper to convert TimeOfDay to absolute minutes from midnight
+        int t(TimeOfDay time) => time.hour * 60 + time.minute;
+        
+        final start = t(_startTime!);
+        final end = t(_endTime!);
+        final bStart = t(_breakStartTime!);
+        final bEnd = t(_breakEndTime!);
+
+        // Normalize closing time if it's 12 AM (0:00) to 24:00 to handle 8AM-12AM logic
+        int normEnd = (end <= start) ? end + (24 * 60) : end;
+        int normBStart = (bStart < start && end <= start) ? bStart + (24 * 60) : bStart;
+        int normBEnd = (bEnd < start && end <= start) ? bEnd + (24 * 60) : bEnd;
+
+        bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
+
+        if (!isBreakInHours) {
+          _showError("Break time must be within opening hours ($(_formatTime(_startTime, '')) - $(_formatTime(_endTime, ''))).");
+          return;
+        }
+      }
     } else if (_currentStep == 1) {
       if (_selectedBathOption == null || _cafeteria == null) {
         _showError(AppLocalizations.of(context)!.selectFeaturesError);

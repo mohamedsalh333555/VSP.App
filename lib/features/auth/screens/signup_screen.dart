@@ -11,6 +11,8 @@ import 'verify_email_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../core/config/app_config.dart';
+import '../../../core/navigation/root_screen.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -103,11 +105,23 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      // Navigate directly to OTP screen - no email verification needed
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => const VerifyEmailScreen()),
-      );
+      if (AppConfig.bypassOtp) {
+        // ⚡ SEAMLESS BYPASS: Fast-track to RootScreen
+        await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
+        await authProvider.updateProfile({'isRegistrationComplete': true});
+        if (!mounted) return;
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const RootScreen()),
+          (route) => false,
+        );
+      } else {
+        // Standard Flow: Navigate to OTP verification
+        Navigator.push(
+          context,
+          MaterialPageRoute(builder: (context) => const VerifyEmailScreen()),
+        );
+      }
     } else {
       // Failed to sign up
       if (mounted) {
@@ -303,7 +317,9 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   const SizedBox(height: 32),
                   PrimaryButton(
-                    text: AppLocalizations.of(context)!.createAccount,
+                    text: AppConfig.bypassOtp 
+                      ? 'Sign Up & Verify (Bypass)' 
+                      : AppLocalizations.of(context)!.createAccount,
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _handleSignup,
                   ),

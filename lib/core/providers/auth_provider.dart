@@ -864,4 +864,20 @@ class AuthProvider with ChangeNotifier {
       return false;
     }
   }
+
+  /// [DEVELOPER BYPASS] Manually verify email status in Firestore
+  Future<bool> verifyEmailManual(String uid) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    final success = await _authService.verifyEmailManual(uid);
+    
+    if (success && _userModel != null) {
+      _userModel = _userModel!.copyWith(isEmailVerified: true);
+    }
+    
+    _isLoading = false;
+    notifyListeners();
+    return success;
+  }
 }

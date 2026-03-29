@@ -33,9 +33,6 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         bookingProvider.loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-        
-        // ── Auto-Reconciliation Pivot ──
-        bookingProvider.autoReconcilePastBookings(uid);
       }
     });
   }

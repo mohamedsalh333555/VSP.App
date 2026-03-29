@@ -432,4 +432,19 @@ class AuthService {
         .get();
     return snapshot.docs.isNotEmpty;
   }
+
+  /// [DEVELOPER ONLY] Manual bypass for email verification
+  Future<bool> verifyEmailManual(String uid) async {
+    try {
+      // Direct Firestore update since this is a bypass mechanism
+      await _firestore.collection('users').doc(uid).update({
+        'isEmailVerified': true,
+        'updatedAt': FieldValue.serverTimestamp(),
+      });
+      return true;
+    } catch (e) {
+      _logSecurityEvent('MANUAL_VERIFICATION_BYPASS_FAILED', e);
+      return false;
+    }
+  }
 }

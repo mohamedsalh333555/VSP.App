@@ -46,11 +46,27 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
       return;
     }
 
-    setState(() => _isSubmitting = true);
-
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final uid = auth.currentUser?.uid;
+
+      // 🚨 CRITICAL NULL CHECK: Abort if session is lost to prevent storage path crash
+      if (uid == null) {
+        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        return;
+      }
+
+      setState(() => _isSubmitting = true);
+
+      // UX WARNING: Allow creation but warn about 5-player rule for challenges
+      if (_teamMembers.isEmpty) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Note: Team created, but you need 4 more friends for challenge matches.'),
+            duration: Duration(seconds: 4),
+          ),
+        );
+      }
 
       // 1. Upload Logo if selected
       if (_selectedLogo != null) {

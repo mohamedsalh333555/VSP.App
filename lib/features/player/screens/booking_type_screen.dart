@@ -327,18 +327,19 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         context,
         id: 'Create Team to Compete',
         title: AppLocalizations.of(context)!.createTeamToCompete,
-        subtitle: AppLocalizations.of(context)!.createTeamSubtitle,
+        subtitle: 'Create a team with at least 5 players to unlock Ranked Challenges.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.lock_outline,
       );
     }
     
     if (_teamPlayersCount < 5) {
+      final missing = 5 - _teamPlayersCount;
       return _buildBookingOption(
         context,
         id: 'Team Incomplete',
         title: AppLocalizations.of(context)!.teamIncomplete,
-        subtitle: AppLocalizations.of(context)!.teamIncompleteSubtitle,
+        subtitle: 'Missing $missing more player${missing > 1 ? 's' : ''} to unlock Ranked Challenges.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.warning_amber_rounded,
       );
