@@ -237,7 +237,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get matchesNav => 'المباريات';
 
   @override
-  String get championNav => 'البطل';
+  String get championNav => 'الأبطال';
 
   @override
   String get bookedNav => 'حجوزاتي';
@@ -667,7 +667,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get bronze => 'البرونزي';
 
   @override
-  String get champion => 'البطل';
+  String get champion => 'الأبطال';
 
   @override
   String get ranking => 'التصنيف';

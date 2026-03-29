@@ -98,7 +98,9 @@ class ChampionScreenState extends State<ChampionScreen>
                 AnimatedAlign(
                   duration: const Duration(milliseconds: 250),
                   curve: Curves.easeInOut,
-                  alignment: _selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight,
+                  alignment: Directionality.of(context) == TextDirection.rtl 
+                      ? (_selectedTabIndex == 0 ? Alignment.centerRight : Alignment.centerLeft) 
+                      : (_selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight),
                   child: FractionallySizedBox(
                     widthFactor: 0.5,
                     child: Container(
@@ -129,9 +131,9 @@ class ChampionScreenState extends State<ChampionScreen>
                             AppLocalizations.of(context)!.ranking,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: _selectedTabIndex == 0
-                                  ? Colors.black
-                                  : VSPColors.textSecondary,
-                              fontWeight: FontWeight.bold,
+                                  ? Colors.black // Pure black on accent green background
+                                  : Colors.white, // Pure white for better contrast on dark
+                              fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
@@ -147,9 +149,9 @@ class ChampionScreenState extends State<ChampionScreen>
                             AppLocalizations.of(context)!.championships,
                             style: Theme.of(context).textTheme.bodyLarge?.copyWith(
                               color: _selectedTabIndex == 1
-                                  ? Colors.black
-                                  : VSPColors.textSecondary,
-                              fontWeight: FontWeight.bold,
+                                  ? Colors.black // Pure black on accent green background
+                                  : Colors.white, // Pure white for better contrast on dark
+                              fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.bold,
                               fontSize: 14,
                             ),
                           ),
@@ -217,6 +219,46 @@ class ChampionScreenState extends State<ChampionScreen>
     );
   }
 
+  String _translateItem(String item) {
+    if (AppLocalizations.of(context)!.localeName != 'ar') return item;
+    
+    final translations = {
+      // Sports
+      'Football': 'كرة القدم',
+      'Basketball': 'كرة السلة',
+      'Padel': 'بادل',
+      'Tennis': 'تنس',
+      // Cities
+      'Cairo': 'القاهرة',
+      'Giza': 'الجيزة',
+      'Alexandria': 'الإسكندرية',
+      'Aswan': 'أسوان',
+      'Luxor': 'الأقصر',
+      'Red Sea': 'البحر الأحمر',
+      'Dakahlia': 'الدقهلية',
+      'Sharqia': 'الشرقية',
+      'Gharbia': 'الغربية',
+      'Monufia': 'المنوفية',
+      'Beheira': 'البحيرة',
+      'Suez': 'السويس',
+      'Port Said': 'بورسعيد',
+      'Ismailia': 'الإسماعيلية',
+      'Damietta': 'دمياط',
+      'Faiyum': 'الفيوم',
+      'Beni Suef': 'بني سويف',
+      'Minya': 'المنيا',
+      'Asyut': 'أسيوط',
+      'Sohag': 'سوهاج',
+      'Qena': 'قنا',
+      'South Sinai': 'جنوب سيناء',
+      'North Sinai': 'شمال سيناء',
+      'Matrouh': 'مطروح',
+      'New Valley': 'الوادي الجديد',
+    };
+    
+    return translations[item] ?? item;
+  }
+
   Widget _buildFunctionalDropdown({
     required String value,
     required List<String> items,
@@ -241,12 +283,13 @@ class ChampionScreenState extends State<ChampionScreen>
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,
+            fontSize: 10, // Small text for 3-column layout
           ),
           onChanged: onChanged,
           items: items.map<DropdownMenuItem<String>>((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item),
+              child: Text(_translateItem(item), overflow: TextOverflow.ellipsis),
             );
           }).toList(),
         ),

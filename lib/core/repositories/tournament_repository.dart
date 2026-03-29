@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'dart:math';
+import '../repositories/notification_repository.dart';
 import '../../data/models.dart';
 import '../models/user_model.dart';
-import 'dart:math';
 
 class TournamentRepository {
   final FirebaseFirestore _firestore;
@@ -131,7 +132,6 @@ class TournamentRepository {
     }
   }
 
-  // TOURNAMENT Logic: Finalize tournament and increment winning team's trophies
   Future<void> crownChampion(String championshipId, String winningTeamId, String winningTeamName) async {
     try {
       final batch = _firestore.batch();
@@ -143,16 +143,43 @@ class TournamentRepository {
         'championTeamName': winningTeamName,
       });
 
-      // 2. Increment team's trophies and add badge
-      batch.update(_firestore.collection('teams').doc(winningTeamId), {
+      // 2. Increment team's trophies and add badge (Prestige, NO ELO POINTS)
+      final teamRef = _firestore.collection('teams').doc(winningTeamId);
+      batch.update(teamRef, {
         'championshipsWon': FieldValue.increment(1),
         'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
       });
 
       await batch.commit();
+
+      // 3. ── Celebration Notifications ──
+      _sendCelebrationNotifications(winningTeamId);
     } catch (e) {
       debugPrint('Error crowning champion: $e');
       throw 'Failed to crown champion';
+    }
+  }
+
+  Future<void> _sendCelebrationNotifications(String teamId) async {
+    try {
+      final teamDoc = await _firestore.collection('teams').doc(teamId).get();
+      if (!teamDoc.exists) return;
+
+      final List memberUids = List.from(teamDoc.data()?['memberUids'] ?? []);
+      for (final uid in memberUids) {
+        await NotificationRepository().sendNotification(
+          uid.toString(),
+          AppNotification(
+            id: '',
+            title: "🏆 CHAMPIONS!",
+            body: "Your team has won the championship! A new trophy has been added to your team profile.",
+            type: "info",
+            createdAt: DateTime.now(),
+          ),
+        );
+      }
+    } catch (e) {
+      debugPrint('Error sending celebration notifications: $e');
     }
   }
 
@@ -314,7 +341,8 @@ class TournamentRepository {
             '${slotField}TeamId': winnerId,
             '${slotField}TeamName': winnerName,
           });
-        } else if (matchData['roundIndex'] == 0) {
+        } else {
+          // ── Final Match: Crown the Champion ──
           final champRef = _firestore.collection('championships').doc(matchData['championshipId']);
           final teamRef = _firestore.collection('teams').doc(winnerId);
 
@@ -328,6 +356,9 @@ class TournamentRepository {
             'championshipsWon': FieldValue.increment(1),
             'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
           });
+
+          // ── Celebration Notifications (Final Match) ──
+          _sendCelebrationNotifications(winnerId);
         }
       });
     } catch (e) {

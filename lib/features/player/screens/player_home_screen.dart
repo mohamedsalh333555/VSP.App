@@ -48,6 +48,28 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   final _searchController = TextEditingController();
 
   @override
+  void initState() {
+    super.initState();
+    _fetchInitialData();
+  }
+
+  void _fetchInitialData() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+      
+      // Phase 4: Initializing data based on user profile
+      if (auth.isAuthenticated && !auth.isOwner) {
+        String? gov = auth.userModel?.governorate;
+        stadiumProvider.applyGovernorateFilter(gov);
+      } else {
+        stadiumProvider.fetchStadiums(isRefresh: true);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _searchController.dispose();
     super.dispose();
@@ -167,7 +189,7 @@ class ChampionshipCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             children: [
               Container(
@@ -195,7 +217,7 @@ class ChampionshipCard extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
             decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
@@ -210,46 +232,71 @@ class ChampionshipCard extends StatelessWidget {
               ],
             ),
           ),
-          const SizedBox(height: 16),
+          const SizedBox(height: 12),
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    crossAxisAlignment: CrossAxisAlignment.baseline,
-                    textBaseline: TextBaseline.alphabetic,
-                    children: [
-                      Text(
-                        "$remainingTeams",
-                        style: const TextStyle(
-                          color: VSPColors.accent,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 20,
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      crossAxisAlignment: CrossAxisAlignment.baseline,
+                      textBaseline: TextBaseline.alphabetic,
+                      children: [
+                        Text(
+                          "$remainingTeams",
+                          style: const TextStyle(
+                            color: VSPColors.accent,
+                            fontWeight: FontWeight.w900,
+                            fontSize: 20,
+                          ),
                         ),
-                      ),
-                      const SizedBox(width: 4),
-                      Text(
-                        AppLocalizations.of(context)!.spotsLeft,
-                        style: const TextStyle(
-                          color: VSPColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: 10,
+                        const SizedBox(width: 4),
+                        Text(
+                          AppLocalizations.of(context)!.spotsLeft,
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: const TextStyle(
+                            color: VSPColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 10,
+                          ),
                         ),
+                      ],
+                    ),
+                    Text(
+                      AppLocalizations.of(context)!.teamsJoined(championship.joinedTeams.length, championship.maxTeams),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                      style: TextStyle(
+                        color: VSPColors.textSecondary.withValues(alpha: 0.6),
+                        fontSize: 10,
+                        fontWeight: FontWeight.w500,
                       ),
-                    ],
-                  ),
-                  Text(AppLocalizations.of(context)!.teamsJoined(championship.joinedTeams.length, championship.maxTeams), style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500)),
-                ],
+                    ),
+                  ],
+                ),
               ),
+              const SizedBox(width: 12),
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChampionshipDetailsScreen(championship: championship))),
                 child: Container(
-                  height: 44.0, padding: const EdgeInsets.symmetric(horizontal: 32),
+                  height: 44.0, 
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
                   decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(12)),
-                  child: Center(child: Text(AppLocalizations.of(context)!.joinMatch, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.0))),
+                  child: Center(
+                    child: Text(
+                      AppLocalizations.of(context)!.joinMatch,
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 14,
+                        letterSpacing: 1.0,
+                      ),
+                    ),
+                  ),
                 ),
               ),
             ],
@@ -454,7 +501,7 @@ class _HomeContent extends StatelessWidget {
         _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums, onSeeAll: () {}),
         const SizedBox(height: 16),
         SizedBox(
-          height: 210,
+          height: 240,
           child: provider.isLoading && provider.stadiums.isEmpty
               ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
               : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: provider.stadiums.length, itemBuilder: (context, i) => Container(width: 300, margin: const EdgeInsets.only(right: 12), child: StadiumCard(stadium: provider.stadiums[i], onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StadiumDetailsScreen(stadium: provider.stadiums[i])))))),
@@ -473,7 +520,7 @@ class _HomeContent extends StatelessWidget {
             _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => onNavigate(1)),
             const SizedBox(height: 16),
             SizedBox(
-              height: 220,
+              height: 240,
               child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
                   ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
                   : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: matches.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: PublicMatchCard(booking: matches[i])))),
@@ -494,7 +541,7 @@ class _HomeContent extends StatelessWidget {
             _SectionHeader(title: AppLocalizations.of(context)!.joinChampionships, onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1})),
             const SizedBox(height: 16),
             SizedBox(
-              height: 220,
+              height: 250,
               child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
                   ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
                   : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: championships.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: ChampionshipCard(championship: championships[i])))),

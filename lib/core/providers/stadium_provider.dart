@@ -69,13 +69,23 @@ class StadiumProvider with ChangeNotifier {
       final List<Stadium> newStadiums = result['items'];
       _lastDocument = result['lastDoc'];
 
-      if (isRefresh) {
-        _stadiums = newStadiums;
+      // Phase 4: Fallback Logic - If city search is empty during initial refresh, show all stadiums
+      if (newStadiums.isEmpty && _selectedGovernorate != null && isRefresh) {
+        final fallbackResult = await _databaseService.getStadiumsPaginated(
+          limit: 10,
+          governorate: null, // Clear filter to show everything
+        );
+        _stadiums = fallbackResult['items'];
+        _lastDocument = fallbackResult['lastDoc'];
       } else {
-        _stadiums.addAll(newStadiums);
+        if (isRefresh) {
+          _stadiums = newStadiums;
+        } else {
+          _stadiums.addAll(newStadiums);
+        }
       }
 
-      if (newStadiums.length < 10) {
+      if (_stadiums.length < 10) {
         _hasMore = false;
       }
       

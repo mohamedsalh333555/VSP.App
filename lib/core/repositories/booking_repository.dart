@@ -50,6 +50,9 @@ abstract class BookingRepository {
 
   /// Get bookings for a specific stadium and date
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date);
+
+  /// Auto-reconcile past bookings (Pivot Logic)
+  Future<void> autoReconcilePastBookings(String ownerId);
 }
 
 /// Firestore implementation of BookingRepository
@@ -336,6 +339,14 @@ class FirestoreBookingRepository implements BookingRepository {
         if (!doc.exists) return false;
 
         final data = doc.data() as Map<String, dynamic>;
+        
+        // ── Elo Fraud Prevention: Time-Lock Result Submission ──
+        final endTime = (data['endTime'] as Timestamp).toDate();
+        if (DateTime.now().isBefore(endTime)) {
+          VSPLogger.w('⚠️ Result submission blocked: Match has not ended yet for booking $bookingId');
+          throw Exception("Cannot submit results before the match officially ends.");
+        }
+
         final currentMatchStatus = data['matchResultStatus'] ?? 'noResult';
         final submittedBy = data['resultSubmittedByTeamId'];
         final stadiumId = data['stadiumId'];
@@ -454,6 +465,71 @@ class FirestoreBookingRepository implements BookingRepository {
       } catch (e) {
         debugPrint('❌ Error updating payment status: $e');
         return false;
+      }
+    }
+
+    @override
+    Future<void> autoReconcilePastBookings(String ownerId) async {
+      try {
+        final now = DateTime.now();
+        // Query for unpaid bookings for this owner
+        final snapshot = await _bookingsCollection
+            .where('ownerId', isEqualTo: ownerId)
+            .where('isPaid', isEqualTo: false)
+            .where('endTime', isLessThan: Timestamp.fromDate(now))
+            .get();
+
+        if (snapshot.docs.isEmpty) return;
+
+        final batch = _firestore.batch();
+        double totalCommission = 0;
+        int reconciledCount = 0;
+
+        for (var doc in snapshot.docs) {
+          final data = doc.data() as Map<String, dynamic>;
+          
+          // Skip if cancelled
+          if (data['status'] == BookingStatus.cancelled.name) continue;
+
+          final totalPrice = (data['totalPrice'] ?? 0).toDouble();
+          final commission = totalPrice * 0.05;
+          totalCommission += commission;
+          reconciledCount++;
+
+          batch.update(doc.reference, {
+            'isPaid': true,
+            'paymentStatus': 'paid',
+            'status': BookingStatus.completed.name,
+            'commission': commission,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+        }
+
+        if (reconciledCount == 0) return;
+
+        // Update owner debt
+        final ownerRef = _firestore.collection('users').doc(ownerId);
+        batch.update(ownerRef, {
+          'commissionDebt': FieldValue.increment(totalCommission),
+          'updatedAt': FieldValue.serverTimestamp(),
+        });
+
+        await batch.commit();
+        VSPLogger.i('✅ Auto-reconciled $reconciledCount bookings for owner: $ownerId');
+
+        // Kill Switch Check: Fetch updated document to check debt limit
+        final ownerDoc = await ownerRef.get();
+        final debt = (ownerDoc.data()?['commissionDebt'] ?? 0).toDouble();
+        
+        if (debt >= 500.0) {
+          await ownerRef.update({
+            'isSuspended': true,
+            'updatedAt': FieldValue.serverTimestamp(),
+          });
+          VSPLogger.w('🛑 Owner $ownerId suspended due to debt: $debt');
+        }
+      } catch (e) {
+        VSPLogger.e('❌ Error in autoReconcilePastBookings', e);
       }
     }
   }
@@ -627,6 +703,12 @@ class MockBookingRepository implements BookingRepository {
       _update();
     }
     return true;
+  }
+
+  @override
+  Future<void> autoReconcilePastBookings(String ownerId) async {
+    // Mock implementation not strictly necessary for this task but good for consistency
+    return;
   }
 
   /// Add mock bookings for testing

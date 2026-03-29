@@ -385,6 +385,13 @@ class BookingProvider with ChangeNotifier {
     return success;
   }
 
+  /// Auto-reconcile past bookings (Pivot Logic)
+  Future<void> autoReconcilePastBookings(String ownerId) async {
+    await _repository.autoReconcilePastBookings(ownerId);
+    // Note: No manual notifyListeners needed as the active loadOwnerBookings 
+    // stream will automatically push the updated models to the UI.
+  }
+
   /// Get bookings for a specific stadium and date (Stream)
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
     return _repository.getBookingsForStadium(stadiumId, date);

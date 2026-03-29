@@ -1,3 +1,8 @@
+import 'dart:ui' as ui;
+import 'package:flutter/rendering.dart';
+import 'package:share_plus/share_plus.dart';
+import '../../../shared/widgets/team_card_hero.dart';
+import '../../../core/repositories/team_repository.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
@@ -23,12 +28,43 @@ import '../../../core/services/stats_service.dart';
 import '../../../core/widgets/radar_chart.dart';
 import 'dart:ui';
 import 'dart:io';
+import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
 import 'package:flutter/services.dart';
 import '../../../core/services/database_service.dart';
-class ProfileScreen extends StatelessWidget {
+class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
+
+  @override
+  State<ProfileScreen> createState() => _ProfileScreenState();
+}
+
+class _ProfileScreenState extends State<ProfileScreen> {
+  final GlobalKey _teamCardKey = GlobalKey();
+  bool _isSharing = false;
+
+  Future<void> _shareTeamCard(String teamName) async {
+    setState(() => _isSharing = true);
+    try {
+      RenderRepaintBoundary boundary = _teamCardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0); // High resolution
+      var byteData = await image.toByteData(format: ui.ImageByteFormat.png);
+      var pngBytes = byteData!.buffer.asUint8List();
+
+      final xFile = XFile.fromData(pngBytes, mimeType: 'image/png', name: 'vsp_team_card.png');
+      
+      await Share.shareXFiles(
+        [xFile], 
+        text: 'Check out my ultimate team "$teamName" on the VSP App! ⚽🏆',
+      );
+    } catch (e) {
+      VSPFeedback.showError(context, 'Failed to share team card.');
+    } finally {
+      if(mounted) setState(() => _isSharing = false);
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -55,174 +91,45 @@ class ProfileScreen extends StatelessWidget {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Premium Player Card - REDESIGNED
-            FutureBuilder<Map<String, dynamic>>(
-              future: StatsService().getPlayerStats(auth.currentUser!.uid),
-              builder: (context, statsSnapshot) {
-                return FutureBuilder<Team?>(
-                  future: DatabaseService().getUserTeam(auth.currentUser!.uid),
-                  builder: (context, teamSnapshot) {
-                    final team = teamSnapshot.data;
-                    final stats = statsSnapshot.data ?? {};
-                    final elo = team?.points ?? 1200;
-                    final rankKey = EloCalculator.getRankTitle(elo);
-                    
-                    String localizedRank = "";
-                    switch(rankKey) {
-                      case 'legendary': localizedRank = AppLocalizations.of(context)!.legendary; break;
-                      case 'diamond': localizedRank = AppLocalizations.of(context)!.diamond; break;
-                      case 'platinum': localizedRank = AppLocalizations.of(context)!.platinum; break;
-                      case 'gold': localizedRank = AppLocalizations.of(context)!.gold; break;
-                      case 'silver': localizedRank = AppLocalizations.of(context)!.silver; break;
-                      default: localizedRank = AppLocalizations.of(context)!.bronze;
-                    }
+            // Ultimate Team Card / Free Agent Section - VIRAL GROWTH FEATURE
+            FutureBuilder<Team?>(
+              future: TeamRepository().getUserTeam(auth.currentUser!.uid),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return Container(
+                    height: 480,
+                    width: double.infinity,
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    ),
+                    child: const Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                  );
+                }
 
-                    final skillMetrics = StatsService().getSkillMetrics(auth.userModel?.position, elo);
-
-                    return Container(
-                      width: double.infinity,
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(VSPRadius.lg),
-                        border: Border.all(color: VSPColors.white12),
-                        gradient: LinearGradient(
-                          begin: Alignment.topLeft,
-                          end: Alignment.bottomRight,
-                          colors: [
-                            VSPColors.textPrimary.withValues(alpha: 0.15),
-                            VSPColors.textPrimary.withValues(alpha: 0.05),
-                          ],
-                        ),
+                final team = snapshot.data;
+                if (team != null) {
+                  return Column(
+                    children: [
+                      RepaintBoundary(
+                        key: _teamCardKey,
+                        child: TeamCardHero(team: team),
                       ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(VSPRadius.lg),
-                        child: BackdropFilter(
-                          filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
-                          child: Padding(
-                            padding: const EdgeInsets.all(VSPSpacing.lg),
-                            child: Column(
-                              children: [
-                                // Header: Rank & Profile
-                                Row(
-                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                                  children: [
-                                    Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: VSPColors.accent.withValues(alpha: 0.2),
-                                            borderRadius: BorderRadius.circular(VSPRadius.xs),
-                                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
-                                          ),
-                                          child: Text(
-                                            localizedRank.toUpperCase(),
-                                            style: const TextStyle(
-                                              color: VSPColors.accent,
-                                              fontSize: 12,
-                                              fontWeight: FontWeight.w900,
-                                              letterSpacing: 1.2,
-                                            ),
-                                          ),
-                                        ),
-                                        const SizedBox(height: 8),
-                                        Text(
-                                          auth.userModel?.name ?? AppLocalizations.of(context)!.player,
-                                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
-                                        ),
-                                        Text(
-                                          AppLocalizations.of(context)!.positionLabel(auth.userModel?.position ?? "ST"),
-                                          style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-                                        ),
-                                      ],
-                                    ),
-                                    GestureDetector(
-                                      onLongPress: () {
-                                        // 🔐 SECRET GATE: Long press profile image for Admin Dashboard
-                                        HapticFeedback.heavyImpact();
-                                        ScaffoldMessenger.of(context).showSnackBar(
-                                          SnackBar(content: Text(AppLocalizations.of(context)!.adminModeActivated, style: const TextStyle(color: VSPColors.accent)))
-                                        );
-                                        Navigator.push(context, MaterialPageRoute(builder: (_) => const AdminDashboard()));
-                                      },
-                                      child: Container(
-                                        width: 80,
-                                        height: 80,
-                                        decoration: BoxDecoration(
-                                          shape: BoxShape.circle,
-                                          border: Border.all(color: VSPColors.accent, width: 2),
-                                          image: (userProfileUrl != null && userProfileUrl.isNotEmpty) 
-                                            ? DecorationImage(
-                                                image: CachedNetworkImageProvider(userProfileUrl),
-                                                fit: BoxFit.cover,
-                                              )
-                                            : null,
-                                        ),
-                                        child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                            ? const Icon(Icons.person, color: VSPColors.accent, size: 40)
-                                            : null,
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                
-                                const Divider(color: VSPColors.divider, height: 40),
-
-                                // Skill Chart & Main Stats
-                                Row(
-                                  children: [
-                                    Expanded(
-                                      flex: 3,
-                                      child: VSPRadarChart(
-                                        values: skillMetrics,
-                                        size: 140,
-                                      ),
-                                    ),
-                                    Expanded(
-                                      flex: 2,
-                                      child: Column(
-                                        crossAxisAlignment: CrossAxisAlignment.end,
-                                        children: [
-                                            _buildCardStat(context, AppLocalizations.of(context)!.winRate, '${stats['winRate'] ?? "0"}%', VSPColors.accent),
-                                            const SizedBox(height: 16),
-                                            _buildCardStat(context, AppLocalizations.of(context)!.goals, '${stats['totalGoals'] ?? "0"}', VSPColors.textPrimary),
-                                            const SizedBox(height: 16),
-                                            _buildCardStat(context, AppLocalizations.of(context)!.matches, '${stats['matchesPlayed'] ?? "0"}', VSPColors.textPrimary),
-                                        ],
-                                      ),
-                                    ),
-                                  ],
-                                ),
-                                
-                                const SizedBox(height: 16),
-                                // Favorite Stadium Footer
-                                Container(
-                                  width: double.infinity,
-                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                                  decoration: BoxDecoration(
-                                    color: VSPColors.background.withValues(alpha: 0.5),
-                                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                                  ),
-                                  child: Row(
-                                    mainAxisAlignment: MainAxisAlignment.center,
-                                    children: [
-                                      const Icon(Icons.star, color: VSPColors.warning, size: 14),
-                                      const SizedBox(width: 8),
-                                      Text(
-                                        AppLocalizations.of(context)!.favoriteStadiumLabel(stats['favoriteStadium'] ?? AppLocalizations.of(context)!.none),
-                                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
-                                      ),
-                                    ],
-                                  ),
-                                ),
-                              ],
-                            ),
+                      const SizedBox(height: VSPSpacing.md),
+                      _isSharing 
+                        ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+                        : PrimaryButton(
+                            text: "SHARE TEAM CARD",
+                            onPressed: () => _shareTeamCard(team.name),
+                            color: VSPColors.accent,
+                            textColor: Colors.black,
                           ),
-                        ),
-                      ),
-                    );
-                  },
-                );
+                    ],
+                  );
+                }
+
+                // If no team, show Free Agent Card
+                return _buildFreeAgentCard(context, auth);
               },
             ),
 
@@ -250,6 +157,15 @@ class ProfileScreen extends StatelessWidget {
             // Account Section - REFINED HEADER
             VSPSectionTitle(AppLocalizations.of(context)!.account),
             const SizedBox(height: VSPSpacing.sm),
+            VSPFadeInItem(
+              index: 5,
+              child: VSPMenuItem(
+                icon: Icons.edit_outlined,
+                title: AppLocalizations.of(context)!.editProfile,
+                subtitle: "Update your personal information and photo",
+                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
+              ),
+            ),
             VSPMenuItem(
               icon: Icons.groups_outlined,
               title: AppLocalizations.of(context)!.myTeam,
@@ -313,6 +229,58 @@ class ProfileScreen extends StatelessWidget {
               onTap: () => _showFeedbackDialog(context),
             ),
             const SizedBox(height: VSPSpacing.md),
+            VSPMenuItem(
+              icon: Icons.person_remove_outlined,
+              title: "Delete Account",
+              subtitle: "Permanently delete your data",
+              isLogout: true,
+              onTap: () {
+                showDialog(
+                  context: context,
+                  builder: (context) => AlertDialog(
+                    backgroundColor: VSPColors.surface,
+                    title: const Text("Delete Account?", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                    content: const Text(
+                      "Are you sure? This action cannot be undone. You will lose all your data, teams, and match history.",
+                      style: TextStyle(color: VSPColors.textSecondary),
+                    ),
+                    actions: [
+                      TextButton(
+                        onPressed: () => Navigator.pop(context),
+                        child: Text(AppLocalizations.of(context)!.cancel, style: const TextStyle(color: VSPColors.textSecondary)),
+                      ),
+                      TextButton(
+                        onPressed: () async {
+                          // Show loading state
+                          showDialog(
+                            context: context,
+                            barrierDismissible: false,
+                            builder: (context) => const Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                          );
+                          
+                          final success = await Provider.of<AuthProvider>(context, listen: false).deleteAccount();
+                          
+                          if (context.mounted) {
+                            Navigator.pop(context); // Pop loading
+                            if (success) {
+                              Navigator.of(context).pushAndRemoveUntil(
+                                MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                                (route) => false,
+                              );
+                            } else {
+                              VSPFeedback.showError(context, "Failed to delete account");
+                            }
+                          }
+                        },
+                        child: const Text("Delete", style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
+                );
+              },
+            ),
+
+            const SizedBox(height: VSPSpacing.md),
 
             // Logout Button
             VSPMenuItem(
@@ -341,6 +309,59 @@ class ProfileScreen extends StatelessWidget {
   }
 
 
+
+    );
+  }
+
+  Widget _buildFreeAgentCard(BuildContext context, AuthProvider auth) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(VSPSpacing.xl),
+      decoration: BoxDecoration(
+        color: const Color(0xFF0D0D0D),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1.5),
+      ),
+      child: Column(
+        children: [
+          Container(
+            width: 100,
+            height: 100,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              border: Border.all(color: VSPColors.accent, width: 2),
+              image: (auth.userModel?.profileImageUrl != null && auth.userModel!.profileImageUrl.isNotEmpty)
+                  ? DecorationImage(image: CachedNetworkImageProvider(auth.userModel!.profileImageUrl), fit: BoxFit.cover)
+                  : null,
+            ),
+            child: (auth.userModel?.profileImageUrl == null || auth.userModel!.profileImageUrl.isEmpty)
+                ? const Icon(Icons.person, color: VSPColors.accent, size: 50)
+                : null,
+          ),
+          const SizedBox(height: VSPSpacing.md),
+          Text(
+            auth.userModel?.name ?? "FREE AGENT",
+            style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
+          ),
+          Text(
+            auth.userModel?.position ?? "ST",
+            style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: VSPSpacing.lg),
+          const Text(
+            "You are currently a Free Agent. Join or create a team to unlock your Ultimate Team Card and start competing!",
+            textAlign: TextAlign.center,
+            style: TextStyle(color: VSPColors.textSecondary),
+          ),
+          const SizedBox(height: VSPSpacing.lg),
+          PrimaryButton(
+            text: "BUILD YOUR SQUAD",
+            onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildCardStat(BuildContext context, String label, String value, Color valueColor) {
     return Column(

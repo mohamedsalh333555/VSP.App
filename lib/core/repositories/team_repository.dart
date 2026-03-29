@@ -1,6 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
+import '../repositories/notification_repository.dart';
 
 class TeamRepository {
   final FirebaseFirestore _firestore;
@@ -141,6 +142,16 @@ class TeamRepository {
       'beatenOpponents': [],
       'championshipsWon': 0,
     });
+    
+    // ── Anti-Silent Kidnapping Notification ──
+    final List memberUids = List.from(data['memberUids'] ?? []);
+    if (memberUids.length > 1) {
+      // Loop through all members except the first one (Captain)
+      for (int i = 1; i < memberUids.length; i++) {
+        _sendJoinNotification(memberUids[i].toString());
+      }
+    }
+
     return docRef.id;
   }
 
@@ -199,6 +210,9 @@ class TeamRepository {
       'playerImages': FieldValue.arrayUnion([imageUrl]),
       'playersCount': FieldValue.increment(1),
     });
+
+    // ── Anti-Silent Kidnapping Notification ──
+    _sendJoinNotification(userId);
   }
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
@@ -224,6 +238,23 @@ class TeamRepository {
       return true;
     } catch (e) {
       return false;
+    }
+  }
+
+  Future<void> _sendJoinNotification(String userId) async {
+    try {
+      await NotificationRepository().sendNotification(
+        userId,
+        AppNotification(
+          id: '',
+          title: "⚽ New Team Transfer!",
+          body: "You have been drafted to join a new team. Get ready for the next match!",
+          type: "info",
+          createdAt: DateTime.now(),
+        ),
+      );
+    } catch (e) {
+      debugPrint('Error sending join notification: $e');
     }
   }
 }

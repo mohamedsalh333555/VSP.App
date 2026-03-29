@@ -30,8 +30,12 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated) {
         final uid = auth.firebaseUser!.uid;
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        bookingProvider.loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+        
+        // ── Auto-Reconciliation Pivot ──
+        bookingProvider.autoReconcilePastBookings(uid);
       }
     });
   }
@@ -454,7 +458,8 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     // Booked State
     final booking = slot['booking'] as Booking?;
     bool isManual = slot['isManual'] ?? false;
-    bool isPaid = booking?.isPaid ?? false;
+    final now = DateTime.now();
+    final bool isCompleted = booking != null && booking.endTime.isBefore(now);
 
     return Container(
       height: 70,
@@ -520,13 +525,13 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                       decoration: BoxDecoration(
-                        color: isPaid ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.error.withValues(alpha: 0.1),
+                        color: isCompleted ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.warning.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(4),
                       ),
                       child: Text(
-                        isPaid ? 'PAID' : 'UNPAID',
+                        isCompleted ? 'COLLECTED' : 'PENDING',
                         style: TextStyle(
-                          color: isPaid ? VSPColors.success : VSPColors.error,
+                          color: isCompleted ? VSPColors.success : VSPColors.warning,
                           fontSize: 9,
                           fontWeight: FontWeight.bold,
                         ),
@@ -542,17 +547,6 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
         ],
       ),
     );
-  }
-
-  Widget _buildMiniAvatar(int index, Color color) {
-     return Positioned(
-       left: index * 15.0,
-       child: CircleAvatar(
-         radius: 10,
-         backgroundColor: color,
-         child: const Icon(Icons.person, size: 10, color: Colors.white), // Placeholder for stacked players
-       ),
-     );
   }
 
   Future<void> _selectDate(BuildContext context) async {
@@ -597,12 +591,14 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
     final nameController = TextEditingController(text: isEdit ? (slot['name'] ?? '') : '');
     final phoneController = TextEditingController(text: isEdit ? (booking?.playerPhone ?? '') : '');
     final noteController = TextEditingController(text: isEdit ? (booking?.notes ?? '') : '');
-    bool isPaid = booking?.isPaid ?? false;
     bool isSaving = false;
     bool isDeleting = false;
 
     return StatefulBuilder(
       builder: (context, setModalState) {
+        bool isPaid = booking?.isPaid ?? false;
+        final bool isCompleted = booking != null && booking.endTime.isBefore(DateTime.now());
+
         return Container(
           height: MediaQuery.of(context).size.height * 0.85,
           padding: const EdgeInsets.all(VSPSpacing.md),
@@ -681,7 +677,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                       _buildPillTextField(controller: noteController, hint: 'e.g. Paid deposit, special request...'),
                       const SizedBox(height: 20),
 
-                      // Payment Toggle
+                      // Payment Indicator (Read-only)
                       Container(
                         padding: const EdgeInsets.all(VSPSpacing.md),
                         decoration: BoxDecoration(
@@ -698,14 +694,24 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
                                   const Text('Payment Status', style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                  Text(isPaid ? 'Fully Paid' : 'Pending Payment', style: TextStyle(color: isPaid ? VSPColors.success : VSPColors.error, fontSize: 11)),
+                                  Text(isCompleted ? 'COLLECTED (Automated)' : 'PENDING (Automated)', style: TextStyle(color: isCompleted ? VSPColors.success : VSPColors.warning, fontSize: 11)),
                                 ],
                               ),
                             ),
-                            Switch(
-                              value: isPaid,
-                              activeColor: VSPColors.success,
-                              onChanged: (val) => setModalState(() => isPaid = val),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              decoration: BoxDecoration(
+                                color: isCompleted ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.warning.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                              ),
+                              child: Text(
+                                isCompleted ? 'COLLECTED' : 'PENDING',
+                                style: TextStyle(
+                                  color: isCompleted ? VSPColors.success : VSPColors.warning,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
                             ),
                           ],
                         ),
@@ -757,13 +763,10 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                           
                           if (isEdit) {
                             // Update existing (Manual or Real)
-                            // Note: we use updateProfile logic style but for bookings
                             await FirebaseFirestore.instance.collection('bookings').doc(booking!.id).update({
                               'playerTeamName': nameController.text.trim(),
                               'playerPhone': phoneController.text.trim(),
                               'notes': noteController.text.trim(),
-                              'isPaid': isPaid,
-                              'paymentStatus': isPaid ? 'paid' : 'pending',
                               'updatedAt': FieldValue.serverTimestamp(),
                             });
                           } else {
@@ -784,7 +787,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                               playerPhone: phoneController.text, notes: noteController.text,
                               isPrivate: true, rentBall: false,
                               totalPrice: stadium.pricePerHour.toDouble(),
-                              isPaid: isPaid,
+                              isPaid: false, // Default to false, reconciled later
                               paymentMethod: 'cash', paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
                             );
 

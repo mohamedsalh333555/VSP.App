@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../ui/tokens/vsp_tokens.dart';
 
 /// نظام التصميم الموحد لتطبيق VSP
@@ -21,75 +22,70 @@ class AppTheme {
   static const Color accentSoft = Color(0x269FDF02);
 
   static ThemeData get darkTheme {
+    final baseTheme = ThemeData.dark();
+    final tajawalTheme = GoogleFonts.tajawalTextTheme(baseTheme.textTheme);
+
     return ThemeData(
       brightness: Brightness.dark,
-      scaffoldBackgroundColor: AppTheme.background, // Using the new local definition
-      fontFamily: 'Inter',
-
+      scaffoldBackgroundColor: AppTheme.background, 
+      
       colorScheme: const ColorScheme.dark(
         primary: VSPColors.accent,
         secondary: VSPColors.accent,
         surface: VSPColors.surface,
       ),
 
-      textTheme: const TextTheme(
-        displayLarge: TextStyle(
-          fontFamily: 'AgencyFB',
+      textTheme: tajawalTheme.copyWith(
+        displayLarge: GoogleFonts.tajawal(
           fontSize: 40,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
           letterSpacing: 1.0,
         ),
-        displayMedium: TextStyle(
-          fontFamily: 'AgencyFB',
+        displayMedium: GoogleFonts.tajawal(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
           letterSpacing: 0.5,
         ),
-        displaySmall: TextStyle(
-          fontFamily: 'AgencyFB',
+        displaySmall: GoogleFonts.tajawal(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
         ),
-        titleLarge: TextStyle(
-          fontFamily: 'AgencyFB',
+        titleLarge: GoogleFonts.tajawal(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
         ),
-        bodyLarge: TextStyle(
-          fontFamily: 'Inter',
+        bodyLarge: GoogleFonts.tajawal(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: VSPColors.textPrimary,
         ),
-        bodyMedium: TextStyle(
-          fontFamily: 'Inter',
+        bodyMedium: GoogleFonts.tajawal(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: VSPColors.textSecondary,
         ),
-        labelMedium: TextStyle(
-          fontFamily: 'Inter',
+        labelMedium: GoogleFonts.tajawal(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: VSPColors.textSecondary,
         ),
       ),
 
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        iconTheme: IconThemeData(color: VSPColors.textPrimary),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        iconTheme: const IconThemeData(color: VSPColors.textPrimary),
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           systemNavigationBarColor: VSPColors.background,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: TextStyle(
+        titleTextStyle: GoogleFonts.tajawal(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: VSPColors.textPrimary,
@@ -112,8 +108,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
-        textStyle: const TextStyle(
-            fontFamily: 'Inter',
+          textStyle: GoogleFonts.tajawal(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -123,7 +118,7 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: VSPColors.inputFill,
-        hintStyle: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
+        hintStyle: GoogleFonts.tajawal(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(VSPRadius.md),

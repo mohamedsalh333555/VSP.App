@@ -26,6 +26,8 @@ class _PromoSliderState extends State<PromoSlider> {
 
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 5), (timer) {
+      if (!mounted || !_pageController.hasClients) return;
+
       if (_currentPage < widget.promotions.length - 1) {
         _currentPage++;
       } else {

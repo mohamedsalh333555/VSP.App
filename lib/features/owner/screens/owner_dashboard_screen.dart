@@ -44,7 +44,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       if (auth.isAuthenticated) {
         final uid = auth.firebaseUser!.uid;
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-        Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        bookingProvider.loadOwnerBookings(uid);
+        
+        // ── Auto-Reconciliation Pivot ──
+        bookingProvider.autoReconcilePastBookings(uid);
       }
     });
   }
@@ -344,12 +348,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       return matchesStadium && matchesDate && matchesDebtFilter;
     }).toList();
 
-    double revenue = 0;
-    double debts = 0; // ✅ Debt calculation logic
+    double revenue = 0; // Collected
+    double debts = 0;   // Pending
     int totalMinutes = 0;
+    final now = DateTime.now();
     
     for (var b in filteredBookings) {
-      if (b.isPaid) {
+      if (b.endTime.isBefore(now)) {
         revenue += b.totalPrice;
       } else {
         debts += b.totalPrice;
@@ -410,7 +415,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Revenue', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
+                    Text('Collected Revenue', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
                     const Icon(Icons.account_balance_wallet_outlined, color: Colors.black, size: 24),
                   ],
                 ),
@@ -481,12 +486,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       child: const Icon(Icons.money_off_rounded, color: VSPColors.error, size: 20),
                     ),
                     const SizedBox(width: 12),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text('Unpaid Debts', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                        Text('${debtStr} EGP', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
-                      ],
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Pending Revenue', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                          Text('${debtStr} EGP', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                        ],
+                      ),
                     ),
                     const Spacer(),
                     if (_filterPendingOnly)
@@ -634,11 +641,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               Container(
                                 padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                                 decoration: BoxDecoration(
-                                  color: booking.isPaid ? VSPColors.success.withValues(alpha: 0.2) : VSPColors.error.withValues(alpha: 0.2),
+                                  color: booking.endTime.isBefore(now) ? VSPColors.success.withValues(alpha: 0.2) : VSPColors.warning.withValues(alpha: 0.2),
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  booking.isPaid ? 'PAID' : 'DEBT',
+                                  booking.endTime.isBefore(now) ? 'COLLECTED' : 'PENDING',
                                   style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                                 ),
                               ),

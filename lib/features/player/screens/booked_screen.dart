@@ -278,7 +278,10 @@ class _BookingCard extends StatelessWidget {
               if (!isHistory) ...[
                 _buildStatusBadge(AppLocalizations.of(context)!.confirmed, VSPColors.accent),
               ] else ...[
-                if (booking.bookingType == BookingType.challenge)
+                // History entries: can be past matches OR active matches that just moved to history (due to provider filter)
+                if (booking.endTime.isAfter(DateTime.now()))
+                  _buildStatusBadge('IN PROGRESS', VSPColors.accent)
+                else if (booking.bookingType == BookingType.challenge)
                   _buildChallengeStatusBadge(context)
                 else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
                   _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning)
@@ -374,8 +377,9 @@ class _BookingCard extends StatelessWidget {
           ],
 
           // Result button/status for history (challenge type ONLY and valid opponent)
+          // ── Elo Fraud Prevention: Ensure button only appears after match ends ──
           if (isHistory && booking.bookingType == BookingType.challenge && booking.opponentTeamId != null &&
-             (booking.status == BookingStatus.completed || booking.endTime.isBefore(DateTime.now()))) ...[
+             booking.endTime.isBefore(DateTime.now())) ...[
             const SizedBox(height: VSPSpacing.md),
             _buildChallengeResultAction(context),
           ],
@@ -488,6 +492,9 @@ class _BookingCard extends StatelessWidget {
       }
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
       return _buildStatusBadge(AppLocalizations.of(context)!.disputed, VSPColors.warning);
+    } else if (booking.endTime.isBefore(DateTime.now())) {
+      // Results not yet confirmed but match is over
+      return _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning);
     }
     
     return const SizedBox.shrink();
