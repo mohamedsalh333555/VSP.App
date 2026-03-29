@@ -492,12 +492,9 @@ class FirestoreBookingRepository implements BookingRepository {
     @override
     Future<void> autoReconcilePastBookings(String ownerId) async {
       try {
-        final now = DateTime.now();
-        // Query for unpaid bookings for this owner
         final snapshot = await _bookingsCollection
             .where('ownerId', isEqualTo: ownerId)
             .where('isPaid', isEqualTo: false)
-            .where('endTime', isLessThan: Timestamp.fromDate(now))
             .get();
 
         if (snapshot.docs.isEmpty) return;
@@ -505,9 +502,14 @@ class FirestoreBookingRepository implements BookingRepository {
         final batch = _firestore.batch();
         double totalCommission = 0;
         int reconciledCount = 0;
+        final now = DateTime.now();
 
         for (var doc in snapshot.docs) {
           final data = doc.data() as Map<String, dynamic>;
+          
+          // Filter by endTime client-side to avoid index requirement
+          final endTime = (data['endTime'] as Timestamp?)?.toDate();
+          if (endTime == null || endTime.isAfter(now)) continue;
           
           // Skip if cancelled
           if (data['status'] == BookingStatus.cancelled.name) continue;

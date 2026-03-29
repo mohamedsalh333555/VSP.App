@@ -50,6 +50,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         
         // Wait briefly for stadium data to populate
         await Future.delayed(const Duration(milliseconds: 500));
+        if (!mounted) return;
         
         final stadiums = stadiumProvider.stadiums
             .where((s) => s.ownerId == uid)
@@ -404,17 +405,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }).toList();
 
     double revenue = 0; // Collected
-    double debts = 0;   // Pending
+    double pendingRevenue = 0;   // Future/Pending
     int totalMinutes = 0;
     final now = DateTime.now();
     
     for (var b in filteredBookings) {
       if (b.endTime.isBefore(now)) {
         revenue += b.totalPrice;
+        totalMinutes += b.endTime.difference(b.startTime).inMinutes;
       } else {
-        debts += b.totalPrice;
+        pendingRevenue += b.totalPrice;
       }
-      totalMinutes += b.endTime.difference(b.startTime).inMinutes;
     }
 
     final int bookingsCount = filteredBookings.length;
@@ -423,6 +424,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     // Format numeric values
     String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
+    String pendingStr = pendingRevenue >= 1000 ? '${(pendingRevenue/1000).toStringAsFixed(1)}K' : pendingRevenue.toStringAsFixed(0);
     String netStr = netRevenue >= 1000 ? '${(netRevenue/1000).toStringAsFixed(1)}K' : netRevenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
     
@@ -442,7 +444,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       }
     }
     
-    String debtStr = debts >= 1000 ? '${(debts/1000).toStringAsFixed(1)}K' : debts.toStringAsFixed(0);
     String commissionStr = commission >= 1000 ? '${(commission/1000).toStringAsFixed(1)}K' : commission.toStringAsFixed(0);
 
     return Column(
@@ -487,10 +488,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     children: [
                       _buildFinanceMetric('NET PROFIT', '${netStr} EGP', Icons.trending_up, Colors.green),
                       Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                      _buildFinanceMetric('VSP FEES (5%)', '${commissionStr} EGP', Icons.account_balance, VSPColors.warning),
+                      _buildFinanceMetric('PENDING REV', '${pendingStr} EGP', Icons.timer_outlined, VSPColors.warning),
                     ],
                   ),
                 ),
+                if (commission > 0)
+                 Padding(
+                   padding: const EdgeInsets.only(top: 8.0, left: 4),
+                   child: Text('Includes ${commissionStr} EGP platform fee', style: const TextStyle(color: Colors.white60, fontSize: 10)),
+                 ),
               ],
             ),
           ),

@@ -503,7 +503,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 Text(
-                  slot['name'],
+                  slot['name'] ?? '',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold, 
                     fontSize: 14,
@@ -515,7 +515,7 @@ class _OwnerBookedScreenState extends State<OwnerBookedScreen> {
                 Row(
                   children: [
                     Text(
-                      slot['subtitle'],
+                      slot['subtitle'] ?? '',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
                         color: VSPColors.textSecondary,
                         fontSize: 11

@@ -87,10 +87,8 @@ class AuthProvider with ChangeNotifier {
       
       // Avoid redundant triggers if user is the same
       if (user?.uid == _firebaseUser?.uid && _userModel != null) {
-         if (isFirstTime) {
-           _isInitializing = false;
-           notifyListeners();
-         }
+         _isInitializing = false;
+         notifyListeners();
          return;
       }
       
@@ -100,11 +98,22 @@ class AuthProvider with ChangeNotifier {
       if (user != null) {
         await _fetchUserData(user);
       } else {
+        // GRACE PERIOD: On startup, give Firebase a moment to restore persistence
+        if (isFirstTime) {
+          await Future.delayed(const Duration(milliseconds: 1500));
+          final currentUser = FirebaseAuth.instance.currentUser;
+          if (currentUser != null) {
+            _firebaseUser = currentUser;
+            await _fetchUserData(currentUser);
+            return;
+          }
+        }
+        
         _userModel = null;
         _isGhostUser = false;
         _userType = null; 
         _isLoading = false;
-        _isInitializing = false; // 🔥 End initialization even for guest users
+        _isInitializing = false;
         notifyListeners();
       }
     });

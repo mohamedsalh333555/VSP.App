@@ -1321,7 +1321,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get none => 'لا يوجد';
 
   @override
-  String get wins => 'Wins';
+  String get wins => 'فوز';
 
   @override
   String get close => 'إغلاق';

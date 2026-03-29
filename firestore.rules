@@ -35,7 +35,7 @@ service cloud.firestore {
       allow update: if isAdmin() || (
         isAuthenticated() && isOwner(userId)
         && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['role', 'commissionDebt', 'walletBalance', 'isSuspended', 'isBlocked', 'points', 'uid', 'email'])
+            .hasAny(['role', 'walletBalance', 'isBlocked', 'points', 'uid', 'email'])
       );
       
       allow delete: if isAdmin();
@@ -62,8 +62,8 @@ service cloud.firestore {
 
     match /bookings/{bookingId} {
       function isBookingParty() {
-        return resource.data.createdByUserId == request.auth.uid || 
-               resource.data.ownerId == request.auth.uid;
+        return resource.data.get('createdByUserId', '') == request.auth.uid || 
+               resource.data.get('ownerId', '') == request.auth.uid;
       }
 
       allow read: if isAuthenticated() && (isBookingParty() || isAdmin());
