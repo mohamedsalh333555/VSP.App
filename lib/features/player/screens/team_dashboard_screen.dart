@@ -82,6 +82,15 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         child: StreamBuilder<List<Booking>>(
           stream: MatchRepository().getPublicMatches(),
           builder: (context, snapshot) {
+            if (snapshot.hasError) {
+              return Center(
+                child: Text(
+                  'Error: ${snapshot.error}',
+                  style: const TextStyle(color: VSPColors.error),
+                ),
+              );
+            }
+
             if (snapshot.connectionState == ConnectionState.waiting) {
               return ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: VSPSpacing.md),

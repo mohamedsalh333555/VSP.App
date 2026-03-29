@@ -273,7 +273,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
       child: InkWell(
         onTap: !enabled ? () {
           ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Please create a team first to use this option.')),
+            SnackBar(content: Text(AppLocalizations.of(context)!.createTeamFirstError)),
           );
         } : () {
           setState(() {

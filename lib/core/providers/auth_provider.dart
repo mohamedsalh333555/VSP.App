@@ -39,6 +39,7 @@ class AuthProvider with ChangeNotifier {
   
   // Loading and error states
   bool _isLoading = false;
+  bool _isInitializing = true; // 🔥 Added for session stability
   String? _errorMessage;
 
   // Getters
@@ -66,60 +67,75 @@ class AuthProvider with ChangeNotifier {
   bool _isGhostUser = false;
   bool get isGhostUser => _isGhostUser;
 
+  bool get isInitializing => _isInitializing; // 🔥 Exposed for RootScreen gating
+
+  bool _initialStateCaptured = false; // 🔥 To ensure we capture the FIRST auth state
+
   AuthProvider() {
     _loadOnboardingStatus();
-    // Listen to auth state changes
+    
+    // ⚡ INITIALIZATION FIX: Start with isInitializing = true
+    _firebaseUser = _authService.currentUser;
+    if (_firebaseUser != null) {
+      _fetchUserData(_firebaseUser!);
+    }
+
+    // Listen to subsequent auth state changes
     _authService.authStateChanges.listen((User? user) async {
+      final isFirstTime = !_initialStateCaptured;
+      _initialStateCaptured = true;
+      
+      // Avoid redundant triggers if user is the same
+      if (user?.uid == _firebaseUser?.uid && _userModel != null) {
+         if (isFirstTime) {
+           _isInitializing = false;
+           notifyListeners();
+         }
+         return;
+      }
+      
       _firebaseUser = user;
       _errorMessage = null; 
-      _dataFetchError = false;
       
       if (user != null) {
-        _isLoading = true;
-        notifyListeners();
-        
-        try {
-          // Fetch User Data from Firestore
-          final userData = await _authService.getUserData(user.uid);
-          if (userData != null) {
-            _userModel = UserModel.fromFirestore(userData);
-            _isGhostUser = false;
-            _updateFcmToken(user.uid); // Silent update
-            _dataFetchError = false;
-
-            // ── DEBT CHECKER (Phase 4 Automation) ──
-            // Audit unpaid bookings and send alerts/execute blocks
-            NotificationHandler.checkAndSendDebtAlerts(user.uid);
-            
-            if (_userModel?.isBlocked ?? false) {
-              VSPLogger.w("🚫 User ${user.uid} is BLOCKED due to debt.");
-            }
-          } else {
-            // 🚨 GHOST SESSION DETECTION: Auth exists but Firestore doc is missing.
-            VSPLogger.w("⚠️ Ghost user detected (UID: ${user.uid}). Auth exists, Firestore missing.");
-            _isGhostUser = true;
-            _userModel = null;
-          }
-        } catch (e) {
-          VSPLogger.e("❌ AuthProvider: Firestore fetch exception", e);
-          _dataFetchError = true;
-          _isGhostUser = false;
-        } finally {
-          _isLoading = false;
-          notifyListeners();
-        }
+        await _fetchUserData(user);
       } else {
         _userModel = null;
         _isGhostUser = false;
         _userType = null; 
-        _dataFetchError = false;
         _isLoading = false;
+        _isInitializing = false; // 🔥 End initialization even for guest users
         notifyListeners();
       }
-      
-      _isLoading = false; 
-      notifyListeners();
     });
+  }
+
+  /// Internal helper to fetch data without redundant notifyListeners
+  Future<void> _fetchUserData(User user) async {
+    _isLoading = true;
+    notifyListeners();
+    
+    try {
+      final userData = await _authService.getUserData(user.uid);
+      if (userData != null) {
+        _userModel = UserModel.fromFirestore(userData);
+        _isGhostUser = false;
+        _updateFcmToken(user.uid);
+        _dataFetchError = false;
+        NotificationHandler.checkAndSendDebtAlerts(user.uid);
+      } else {
+        VSPLogger.w("⚠️ Ghost user detected (UID: ${user.uid})");
+        _isGhostUser = true;
+        _userModel = null;
+      }
+    } catch (e) {
+      VSPLogger.e("❌ AuthProvider: Firestore fetch exception", e);
+      _dataFetchError = true;
+    } finally {
+      _isLoading = false;
+      _isInitializing = false; // ✅ Initial load finished
+      notifyListeners();
+    }
   }
 
   /// Manual retry for when data fetching fails but auth is valid

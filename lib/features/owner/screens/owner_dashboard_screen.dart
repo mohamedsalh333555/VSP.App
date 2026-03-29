@@ -25,10 +25,12 @@ class OwnerDashboardScreen extends StatefulWidget {
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   // --- State Variables ---
   String _selectedStadium = 'All Stadium';
-  DateTimeRange _selectedDateRange = DateTimeRange(
+  DateTimeRange? _selectedDateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
   );
+  
+  bool _isAllTime = false; // ✅ Added All-Time toggle
   
   bool _filterPendingOnly = false; // ✅ Added debt filter state
   
@@ -39,13 +41,26 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   void initState() {
     super.initState();
     // Fetch live data for owner
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated) {
         final uid = auth.firebaseUser!.uid;
-        Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
+        final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+        stadiumProvider.listenToOwnerStadiums(uid);
+        
+        // Wait briefly for stadium data to populate
+        await Future.delayed(const Duration(milliseconds: 500));
+        
+        final stadiums = stadiumProvider.stadiums
+            .where((s) => s.ownerId == uid)
+            .map((s) => s.id)
+            .toList();
+
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        bookingProvider.loadOwnerBookings(uid);
+        bookingProvider.loadOwnerBookings(
+          uid, 
+          stadiumIds: stadiums.isNotEmpty ? stadiums : null
+        );
         
         // ── Auto-Reconciliation Pivot ──
         bookingProvider.autoReconcilePastBookings(uid);
@@ -62,9 +77,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     if (picked != null) {
       setState(() {
         _selectedDateRange = picked;
+        _isAllTime = false;
       });
-      // Stream will auto-update based on state change if parameters passed
     }
+  }
+
+  void _toggleAllTime() {
+    setState(() {
+      _isAllTime = !_isAllTime;
+      if (_isAllTime) {
+        _selectedDateRange = null; // Signal all time
+      } else {
+        _selectedDateRange = DateTimeRange(
+          start: DateTime.now().subtract(const Duration(days: 30)),
+          end: DateTime.now(),
+        );
+      }
+    });
   }
 
   @override
@@ -256,10 +285,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       _selectedStadium = 'All Stadium';
     }
 
-    String dateDisplayText = _selectedDateRange.start.day == DateTime.now().subtract(const Duration(days: 30)).day && 
-                          _selectedDateRange.end.day == DateTime.now().day 
-                          ? 'Last 30 days' 
-                          : '${DateFormat('MMM dd').format(_selectedDateRange.start)} - ${DateFormat('MMM dd').format(_selectedDateRange.end)}';
+    String dateDisplayText = _isAllTime 
+                          ? 'All Time 🌍' 
+                          : '${DateFormat('MMM dd').format(_selectedDateRange!.start)} - ${DateFormat('MMM dd').format(_selectedDateRange!.end)}';
 
     return Row(
       children: [
@@ -300,25 +328,51 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         const SizedBox(width: 12),
         // Date Picker Trigger
         Expanded(
-          child: InkWell(
-            onTap: _pickDateRange,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            child: Container(
-              height: 44, 
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
+          child: Row(
+            children: [
+              Expanded(
+                child: InkWell(
+                  onTap: _pickDateRange,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  child: Container(
+                    height: 44, 
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                         Expanded(child: Text(dateDisplayText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 11), overflow: TextOverflow.ellipsis)),
+                         const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 16),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              // All-time toggle button
+              InkWell(
+                onTap: _toggleAllTime,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
+                child: Container(
+                  height: 44,
+                  width: 44,
+                  decoration: BoxDecoration(
+                    color: _isAllTime ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: _isAllTime ? VSPColors.accent : VSPColors.divider, width: 0.5),
+                  ),
+                  child: Icon(
+                    Icons.public, 
+                    color: _isAllTime ? VSPColors.accent : VSPColors.textSecondary, 
+                    size: 20
+                  ),
+                ),
               ),
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                   Text(dateDisplayText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 13)),
-                   const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
-                ],
-              ),
-            ),
+            ],
           ),
         ),
       ],
@@ -340,10 +394,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         matchesStadium = stadium.name == _selectedStadium;
       }
       
-      bool matchesDate = booking.startTime.isAfter(_selectedDateRange.start) && 
-                         booking.startTime.isBefore(_selectedDateRange.end.add(const Duration(days: 1)));
+      bool matchesDate = _isAllTime || 
+                         (booking.startTime.isAfter(_selectedDateRange!.start) && 
+                          booking.startTime.isBefore(_selectedDateRange!.end.add(const Duration(days: 1))));
       
-      bool matchesDebtFilter = !_filterPendingOnly || !booking.isPaid; // ✅ Debt filter filter logic
+      bool matchesDebtFilter = !_filterPendingOnly || !booking.isPaid;
       
       return matchesStadium && matchesDate && matchesDebtFilter;
     }).toList();
@@ -400,13 +455,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             padding: const EdgeInsets.all(VSPSpacing.lg),
             decoration: BoxDecoration(
               gradient: LinearGradient(
-                colors: [VSPColors.accent, VSPColors.accent.withValues(alpha: 0.8)],
+                colors: [VSPColors.accent, VSPColors.cardDarkGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               boxShadow: [
-                BoxShadow(color: VSPColors.accent.withValues(alpha: 0.2), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
               ],
             ),
             child: Column(
@@ -415,23 +470,69 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Collected Revenue', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black, fontWeight: FontWeight.bold)),
-                    const Icon(Icons.account_balance_wallet_outlined, color: Colors.black, size: 24),
+                    Text('Total Collected (Gross)', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                    _buildMiniBadge('5% Platform Cut Applied', Colors.white.withValues(alpha: 0.15)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.black, letterSpacing: -1)),
-                const SizedBox(height: 12),
-                Row(
-                  children: [
-                    _buildMiniBadge('Net: ${netStr} EGP', Colors.black.withValues(alpha: 0.1)),
-                    const SizedBox(width: 8),
-                    _buildMiniBadge('Fees: ${commissionStr}', Colors.black.withValues(alpha: 0.1)),
-                  ],
+                Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 16),
+                Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                  child: Row(
+                    children: [
+                      _buildFinanceMetric('NET PROFIT', '${netStr} EGP', Icons.trending_up, Colors.green),
+                      Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
+                      _buildFinanceMetric('VSP FEES (5%)', '${commissionStr} EGP', Icons.account_balance, VSPColors.warning),
+                    ],
+                  ),
                 ),
               ],
             ),
           ),
+        ),
+        
+        const SizedBox(height: 16),
+
+        // 🔥 Platform Debt Highlight (From UserModel)
+        Consumer<AuthProvider>(
+          builder: (context, auth, _) {
+            final debt = auth.userModel?.commissionDebt ?? 0.0;
+            if (debt <= 0) return const SizedBox.shrink();
+            
+            return VSPFadeInItem(
+              index: 0,
+              child: Container(
+                margin: const EdgeInsets.only(bottom: 16),
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: VSPColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 24),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text('Platform Commission Debt', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                          Text('You currently owe ${debt.toStringAsFixed(0)} EGP to VSP Platform', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
+                        ],
+                      ),
+                    ),
+                    Icon(Icons.chevron_right, color: VSPColors.error.withValues(alpha: 0.5)),
+                  ],
+                ),
+              ),
+            );
+          },
         ),
         
         const SizedBox(height: 20),
@@ -459,52 +560,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ],
           ),
         ),
-        const SizedBox(height: VSPSpacing.md),
-        
-        // 3. Debt Row
-        VSPFadeInItem(
-          index: 2,
-          child: Material(
-            color: Colors.transparent,
-            child: InkWell(
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              onTap: () {
-                setState(() => _filterPendingOnly = !_filterPendingOnly);
-              },
-              child: Container(
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                decoration: BoxDecoration(
-                  color: _filterPendingOnly ? VSPColors.error.withValues(alpha: 0.1) : VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: _filterPendingOnly ? VSPColors.error.withValues(alpha: 0.5) : VSPColors.divider, width: 1),
-                ),
-                child: Row(
-                  children: [
-                    Container(
-                      padding: const EdgeInsets.all(8),
-                      decoration: BoxDecoration(color: VSPColors.error.withValues(alpha: 0.1), shape: BoxShape.circle),
-                      child: const Icon(Icons.money_off_rounded, color: VSPColors.error, size: 20),
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text('Pending Revenue', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                          Text('${debtStr} EGP', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
-                        ],
-                      ),
-                    ),
-                    const Spacer(),
-                    if (_filterPendingOnly)
-                       const Text('FILTERING...', style: TextStyle(color: VSPColors.error, fontSize: 10, fontWeight: FontWeight.bold)),
-                    Icon(Icons.chevron_right, color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-                  ],
-                ),
-              ),
-            ),
-          ),
-        ),
       ],
     );
   }
@@ -513,7 +568,26 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(VSPRadius.sm)),
-      child: Text(text, style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.w600)),
+      child: Text(text, style: TextStyle(color: text.contains('VSP') || text.contains('5%') ? Colors.white : Colors.black, fontSize: 11, fontWeight: FontWeight.w600)),
+    );
+  }
+
+  Widget _buildFinanceMetric(String label, String value, IconData icon, Color color) {
+    return Expanded(
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(icon, size: 12, color: color),
+              const SizedBox(width: 4),
+              Text(label, style: const TextStyle(color: Colors.white60, fontSize: 9, fontWeight: FontWeight.bold)),
+            ],
+          ),
+          const SizedBox(height: 4),
+          Text(value, style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold)),
+        ],
+      ),
     );
   }
 

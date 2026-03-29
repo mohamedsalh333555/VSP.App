@@ -308,7 +308,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         padding: const EdgeInsets.all(VSPSpacing.lg),
         color: VSPColors.background,
         child: PrimaryButton(
-          text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.joinMatch),
+          text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.join),
           onPressed: (alreadyJoined || isFull || isHost) ? null : _onJoin,
           isLoading: _isJoining,
         ),

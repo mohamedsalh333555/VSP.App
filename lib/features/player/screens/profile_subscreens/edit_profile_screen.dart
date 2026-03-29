@@ -10,6 +10,7 @@ import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
 import '../../../../core/utils/phone_utils.dart';
+import '../../../auth/screens/welcome_screen.dart';
 
 class EditProfileScreen extends StatefulWidget {
   const EditProfileScreen({super.key});
@@ -25,6 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final List<String> _positions = ['GK', 'DF', 'MF', 'FW'];
   
   bool _isLoading = false;
+  bool _isDeleting = false;
   XFile? _newProfileImage;
 
   @override
@@ -240,11 +242,89 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               PrimaryButton(
                 text: AppLocalizations.of(context)!.saveChanges,
                 isLoading: _isLoading,
-                onPressed: _saveChanges,
+                onPressed: _isLoading ? null : _saveChanges,
+              ),
+
+              const SizedBox(height: VSPSpacing.lg),
+
+              // --- Delete Account Button ---
+              TextButton(
+                onPressed: () => _showDeleteAccountDialog(context),
+                child: const Text(
+                  'Delete Account',
+                  style: TextStyle(
+                    color: VSPColors.error,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ],
           ),
         ),
+      ),
+    );
+  }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+            title: const Text('Delete Account?', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+            content: const Text(
+              'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
+              style: TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            ),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Cancel',
+                      height: 48,
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                      onPressed: _isDeleting ? null : () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Delete',
+                      height: 48,
+                      color: VSPColors.error,
+                      textColor: VSPColors.background,
+                      isLoading: _isDeleting,
+                      onPressed: _isDeleting ? null : () async {
+                        setDialogState(() => _isDeleting = true);
+                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                        final success = await authProvider.deleteAccount();
+                        
+                        if (!context.mounted) return;
+                        
+                        if (success) {
+                          Navigator.of(context).pushAndRemoveUntil(
+                            MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                            (route) => false,
+                          );
+                        } else {
+                          setDialogState(() => _isDeleting = false);
+                          VSPFeedback.showError(context, authProvider.errorMessage ?? "Failed to delete account");
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
       ),
     );
   }

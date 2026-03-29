@@ -82,10 +82,17 @@ class SupportService {
 
   Future<void> _launchSupportWhatsApp({required String category}) async {
     final message = Uri.encodeComponent('Hi VSP Support! I need help with: $category');
-    final url = 'https://wa.me/201100229462?text=$message'; // Real VSP support number
+    final url = 'https://wa.me/201100229462?text=$message';
     
-    if (await canLaunchUrl(Uri.parse(url))) {
-      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    // Direct launch without canLaunchUrl check, which often fails on Android 11+
+    // externalApplication mode will try to open WhatsApp or the browser as fallback.
+    try {
+      await launchUrl(
+        Uri.parse(url), 
+        mode: LaunchMode.externalApplication
+      );
+    } catch (e) {
+      debugPrint('Could not launch WhatsApp support: $e');
     }
   }
 }

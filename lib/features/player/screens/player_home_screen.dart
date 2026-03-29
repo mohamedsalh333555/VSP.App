@@ -288,7 +288,7 @@ class ChampionshipCard extends StatelessWidget {
                   decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(12)),
                   child: Center(
                     child: Text(
-                      AppLocalizations.of(context)!.joinMatch,
+                      AppLocalizations.of(context)!.join,
                       style: const TextStyle(
                         color: Colors.black,
                         fontWeight: FontWeight.w900,
@@ -397,41 +397,40 @@ class _HomeContent extends StatelessWidget {
           child: GestureDetector(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GlobalSearchScreen())),
             child: Container(
-              height: 50,
-              padding: const EdgeInsets.only(left: 6, right: 16),
+              height: 54,
+              padding: const EdgeInsets.only(left: 20, right: 6),
               decoration: BoxDecoration(
-                color: VSPColors.surfaceAlt,
+                color: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.2),
+                    blurRadius: 10,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
               child: Row(
                 children: [
-                  Container(
-                    width: 38,
-                    height: 38,
-                    decoration: BoxDecoration(
-                      color: VSPColors.background.withValues(alpha: 0.5),
-                      shape: BoxShape.circle,
+                  Expanded(
+                    child: Text(
+                      AppLocalizations.of(context)!.searchStadiums,
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
-                    child: const Icon(Icons.search, color: VSPColors.accent, size: 20),
                   ),
                   const SizedBox(width: 12),
-                  Expanded(
-                    child: TextField(
-                      enabled: false,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      textAlignVertical: TextAlignVertical.center,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.searchStadiums,
-                        hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
-                        border: InputBorder.none,
-                        focusedBorder: InputBorder.none,
-                        enabledBorder: InputBorder.none,
-                        disabledBorder: InputBorder.none,
-                        contentPadding: EdgeInsets.zero,
-                        isDense: true,
-                      ),
+                  Container(
+                    width: 42,
+                    height: 42,
+                    decoration: BoxDecoration(
+                      color: Colors.black.withValues(alpha: 0.6),
+                      shape: BoxShape.circle,
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2), width: 1),
                     ),
+                    child: const Icon(Icons.search, color: VSPColors.accent, size: 22),
                   ),
                 ],
               ),
@@ -514,7 +513,18 @@ class _HomeContent extends StatelessWidget {
     return StreamBuilder<List<Booking>>(
       stream: MatchRepository().getPublicMatches(), 
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint('❌ Matches Stream Error: ${snapshot.error}');
+          return const SizedBox.shrink(); // Hide silently or show error
+        }
+
         final matches = snapshot.data ?? [];
+        
+        // Hide entire section if no matches to match premium UX
+        if (matches.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
         return Column(
           children: [
             _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => onNavigate(1)),
@@ -522,8 +532,25 @@ class _HomeContent extends StatelessWidget {
             SizedBox(
               height: 240,
               child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
-                  ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
-                  : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: matches.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: PublicMatchCard(booking: matches[i])))),
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal, 
+                      padding: const EdgeInsets.symmetric(horizontal: 16), 
+                      itemCount: 3, 
+                      itemBuilder: (_, __) => const CardSkeleton(),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal, 
+                      padding: const EdgeInsets.symmetric(horizontal: 16), 
+                      itemCount: matches.length, 
+                      itemBuilder: (context, i) => Align(
+                        alignment: Alignment.topCenter, 
+                        child: Container(
+                          width: 320, 
+                          margin: const EdgeInsets.only(right: 12), 
+                          child: PublicMatchCard(booking: matches[i]),
+                        ),
+                      ),
+                    ),
             ),
           ],
         );

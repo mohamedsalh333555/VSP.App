@@ -290,9 +290,6 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get joinMatch => 'انضم للمباراة';
-
-  @override
   String get information => 'معلومات';
 
   @override
@@ -1077,6 +1074,9 @@ class AppLocalizationsAr extends AppLocalizations {
   String get matchFull => 'المباراة مكتملة';
 
   @override
+  String get joinMatch => 'انضمام';
+
+  @override
   String get captainRequiredError => 'للانضمام للبطولة، يجب أن تكون قائد فريق.';
 
   @override
@@ -1321,11 +1321,136 @@ class AppLocalizationsAr extends AppLocalizations {
   String get none => 'لا يوجد';
 
   @override
-  String get wins => 'انتصارات';
+  String get wins => 'Wins';
+
+  @override
+  String get close => 'إغلاق';
+
+  @override
+  String get shareTeamCard => 'مشاركة بطاقة الفريق';
+
+  @override
+  String get freeAgent => 'لاعب حُر';
+
+  @override
+  String get freeAgentDescription =>
+      'أنت حالياً لاعب حر. انضم أو أنشئ فريقاً لتفعيل بطاقتك الخاصة والبدء في المنافسة!';
+
+  @override
+  String get buildYourSquad => 'ابنِ فريقك';
+
+  @override
+  String get editProfileSubtitle => 'تغيير اسمك، هاتف، مركزك، وصورتك';
+
+  @override
+  String shareTeamMessage(Object teamName) {
+    return 'شاهد بطاقة فريقي الأسطورية \"$teamName\" على تطبيق VSP! حمل التطبيق وتحدانا!';
+  }
+
+  @override
+  String get shareFailedError => 'فشل في مشاركة بطاقة الفريق';
+
+  @override
+  String get ovrLabel => 'التقييم';
+
+  @override
+  String get gldLabel => 'ذهب';
+
+  @override
+  String get winRateLabel => 'فوز %';
+
+  @override
+  String get winsLabel => 'انتصارات';
+
+  @override
+  String get strkLabel => 'سلسلة';
 
   @override
   String get delete => 'حذف';
 
   @override
-  String get close => 'إغلاق';
+  String get whatsAppNotInstalled => 'واتساب غير مثبت';
+
+  @override
+  String get createTeamFirstError =>
+      'يرجى إنشاء فريق أولاً لاستخدام هذا الخيار';
+
+  @override
+  String get enterValidEmail => 'يرجى إدخال بريد إلكتروني صحيح';
+
+  @override
+  String get nameRequired => 'الاسم الكامل مطلوب (الاسم الأول والأخير)';
+
+  @override
+  String get phoneRequired => 'رقم الهاتف مطلوب وصحيح';
+
+  @override
+  String get faq1_q => 'كيف يعمل نظام تصنيف المهارة (Elo)؟';
+
+  @override
+  String get faq1_a =>
+      'يرتفع تصنيفك عند الفوز على فرق ذات مستوى مشابه أو أعلى. الخسارة أمام فرق أقل تصنيفاً تؤدي لانخفاضه بشكل أكبر.';
+
+  @override
+  String get faq2_q => 'كيف يمكنني الانضمام لمباراة؟';
+
+  @override
+  String get faq2_a =>
+      'من تبويب \'المباريات\'، ابحث عن مباراة عامة تناسب وقتك واضغط على \'انضمام\'. يمكنك الانضمام بمفردك أو مع فريقك.';
+
+  @override
+  String get faq3_q => 'هل يمكنني إلغاء الحجز؟';
+
+  @override
+  String get faq3_a =>
+      'نعم، يمكنك الإلغاء قبل موعد المباراة بـ ساعتين على الأقل، وسيعود المبلغ كاملاً لمحفظتك في التطبيق.';
+
+  @override
+  String get faq4_q => 'كيف أقوم بإنشاء فريق؟';
+
+  @override
+  String get faq4_a =>
+      'من تبويب \'حسابي\' اختر \'فريقي\'، هناك يمكنك اختيار الاسم والشعار ودعوة أصدقائك عبر أرقام هواتفهم.';
+
+  @override
+  String get faq5_q => 'ماذا يحدث في حال الاختلاف على النتيجة؟';
+
+  @override
+  String get faq5_a =>
+      'يتم تحويل المباراة لحالة \'نزاع\'، ويقوم فريق VSP بمراجعة تقرير الطرفين والبت في النتيجة النهائية.';
+
+  @override
+  String get faq6_q => 'كيف يتم احتساب تقييمات الملاعب؟';
+
+  @override
+  String get faq6_a =>
+      'التقييمات هي متوسط آراء اللاعبين الذين خاضوا مباريات فعلياً في الملعب لضمان مصداقية التقييم.';
+
+  @override
+  String get faq7_q => 'كيف أقوم بتعديل بياناتي الشخصية؟';
+
+  @override
+  String get faq7_a =>
+      'من تبويب \'حسابي\' اختر \'تعديل الملف الشخصي\'. هناك يمكنك تغيير اسمك، صورتك، مركزك المفضل، ورقم هاتفك.';
+
+  @override
+  String get faq8_q => 'لماذا لا تظهر مباراتي في القائمة العامة؟';
+
+  @override
+  String get faq8_a =>
+      'المباريات الخاصة لا تظهر للعامة. تأكد من اختيار \'مباراة عامة\' عند الحجز ليتعرف عليها الآخرون وينضموا إليك.';
+
+  @override
+  String get faq9_q => 'كيف أسترد أموالي؟';
+
+  @override
+  String get faq9_a =>
+      'في حال الإلغاء الصحيح، يعود المبلغ لرصيدك في التطبيق لاستخدامه في حجوزات أخرى لاحقاً.';
+
+  @override
+  String get faq10_q => 'كيف أتواصل مع الدعم الفني؟';
+
+  @override
+  String get faq10_a =>
+      'يمكنك الضغط على زر \'الدردشة مع الدعم\' في هذه الشاشة ليتم تحويلك مباشرة لمحادثة واتساب مع فريقنا.';
 }

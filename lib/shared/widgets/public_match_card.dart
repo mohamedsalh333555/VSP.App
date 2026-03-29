@@ -334,7 +334,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     }
 
     return _buildRawButton(
-      label: AppLocalizations.of(context)!.joinMatch,
+      label: AppLocalizations.of(context)!.join,
       color: VSPColors.accent,
       onTap: () => _handleJoin(context, currentUser?.uid),
     );

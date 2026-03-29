@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../data/models.dart';
 
@@ -65,8 +66,8 @@ class TeamCardHero extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    _buildTopStat('OVR', team.points.toString()),
-                    _buildTopStat('GLD', team.championshipsWon.toString(), isGold: true),
+                    _buildTopStat(AppLocalizations.of(context)!.ovrLabel, team.points.toString()),
+                    _buildTopStat(AppLocalizations.of(context)!.gldLabel, team.championshipsWon.toString(), isGold: true),
                   ],
                 ),
                 
@@ -132,9 +133,9 @@ class TeamCardHero extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: [
-                    _buildGridStat('WIN%', winRate),
-                    _buildGridStat('WINS', team.wins.toString()),
-                    _buildGridStat('STRK', team.currentWinningStreak.toString()),
+                    _buildGridStat(AppLocalizations.of(context)!.winRateLabel, winRate),
+                    _buildGridStat(AppLocalizations.of(context)!.winsLabel.toUpperCase(), team.wins.toString()),
+                    _buildGridStat(AppLocalizations.of(context)!.strkLabel.toUpperCase(), team.currentWinningStreak.toString()),
                   ],
                 ),
                 

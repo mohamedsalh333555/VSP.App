@@ -293,9 +293,6 @@ class AppLocalizationsEn extends AppLocalizations {
   }
 
   @override
-  String get joinMatch => 'Join Match';
-
-  @override
   String get information => 'Information';
 
   @override
@@ -1088,6 +1085,9 @@ class AppLocalizationsEn extends AppLocalizations {
   String get matchFull => 'Match Full';
 
   @override
+  String get joinMatch => 'Join';
+
+  @override
   String get captainRequiredError =>
       'To join the tournament, you must be a team captain.';
 
@@ -1337,8 +1337,134 @@ class AppLocalizationsEn extends AppLocalizations {
   String get wins => 'Wins';
 
   @override
+  String get close => 'Close';
+
+  @override
+  String get shareTeamCard => 'Share Team Card';
+
+  @override
+  String get freeAgent => 'FREE AGENT';
+
+  @override
+  String get freeAgentDescription =>
+      'You are currently a Free Agent.\nJoin or create a team to unlock your Ultimate Team Card and start competing!';
+
+  @override
+  String get buildYourSquad => 'Build Your Squad';
+
+  @override
+  String get editProfileSubtitle =>
+      'Change your name, phone, position, and picture';
+
+  @override
+  String shareTeamMessage(Object teamName) {
+    return 'Check out my ultimate team \"$teamName\" on the VSP App! ⚽🏆\nDownload the app to challenge us!';
+  }
+
+  @override
+  String get shareFailedError => 'Failed to share team card.';
+
+  @override
+  String get ovrLabel => 'OVR';
+
+  @override
+  String get gldLabel => 'GLD';
+
+  @override
+  String get winRateLabel => 'WIN%';
+
+  @override
+  String get winsLabel => 'WINS';
+
+  @override
+  String get strkLabel => 'STRK';
+
+  @override
   String get delete => 'Delete';
 
   @override
-  String get close => 'Close';
+  String get whatsAppNotInstalled => 'WhatsApp not installed';
+
+  @override
+  String get createTeamFirstError =>
+      'Please create a team first to use this option.';
+
+  @override
+  String get enterValidEmail => 'Please enter a valid email';
+
+  @override
+  String get nameRequired => 'Full name required (First and Last name)';
+
+  @override
+  String get phoneRequired => 'Valid phone number required';
+
+  @override
+  String get faq1_q => 'How does Elo ranking work?';
+
+  @override
+  String get faq1_a =>
+      'Your Elo increases when you win matches against opponents with similar or higher ranking. Losing to lower-ranked teams will decrease it more significantly.';
+
+  @override
+  String get faq2_q => 'How do I join a match?';
+
+  @override
+  String get faq2_a =>
+      'Go to the Matches tab, find a public match that fits your schedule, and tap \"Join\". You can join as an individual or with your team.';
+
+  @override
+  String get faq3_q => 'Can I cancel a booking?';
+
+  @override
+  String get faq3_a =>
+      'Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.';
+
+  @override
+  String get faq4_q => 'How do I create a team?';
+
+  @override
+  String get faq4_a =>
+      'In the Profile tab, select \"My Team\". From there, you can choose a name, logo, and invite your friends using their VSP ID.';
+
+  @override
+  String get faq5_q => 'What happens if a match is disputed?';
+
+  @override
+  String get faq5_a =>
+      'If teams disagree on the result, a VSP moderator will review the match history and evidence to determine the final outcome.';
+
+  @override
+  String get faq6_q => 'How are stadium ratings calculated?';
+
+  @override
+  String get faq6_a =>
+      'Ratings are an average of verified reviews left by players after their matches. Only players who actually played at the stadium can leave a review.';
+
+  @override
+  String get faq7_q => 'How do I edit my personal profile?';
+
+  @override
+  String get faq7_a =>
+      'In the Profile tab, select \'Edit Profile\'. From there, you can update your name, picture, preferred position, and phone number.';
+
+  @override
+  String get faq8_q => 'Why is my match not appearing in the public list?';
+
+  @override
+  String get faq8_a =>
+      'Private matches are hidden. Ensure you select \'Public Match\' during booking if you want others to find and join you.';
+
+  @override
+  String get faq9_q => 'How do I get a refund?';
+
+  @override
+  String get faq9_a =>
+      'Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.';
+
+  @override
+  String get faq10_q => 'How do I contact support?';
+
+  @override
+  String get faq10_a =>
+      'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.';
 }

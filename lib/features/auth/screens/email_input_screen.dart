@@ -46,7 +46,7 @@ class _EmailInputScreenState extends State<EmailInputScreen> {
     if (email.isEmpty || !email.contains('@')) {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-          content: Text('Please enter a valid email'),
+          content: Text(AppLocalizations.of(context)!.enterValidEmail),
           backgroundColor: VSPColors.error,
         ),
       );

@@ -650,12 +650,6 @@ abstract class AppLocalizations {
   /// **'{joinedCount}/{maxCount} TEAMS JOINED'**
   String teamsJoined(int joinedCount, int maxCount);
 
-  /// No description provided for @joinMatch.
-  ///
-  /// In en, this message translates to:
-  /// **'Join Match'**
-  String get joinMatch;
-
   /// No description provided for @information.
   ///
   /// In en, this message translates to:
@@ -2090,6 +2084,12 @@ abstract class AppLocalizations {
   /// **'Match Full'**
   String get matchFull;
 
+  /// No description provided for @joinMatch.
+  ///
+  /// In en, this message translates to:
+  /// **'Join'**
+  String get joinMatch;
+
   /// No description provided for @captainRequiredError.
   ///
   /// In en, this message translates to:
@@ -2546,17 +2546,239 @@ abstract class AppLocalizations {
   /// **'Wins'**
   String get wins;
 
+  /// No description provided for @close.
+  ///
+  /// In en, this message translates to:
+  /// **'Close'**
+  String get close;
+
+  /// No description provided for @shareTeamCard.
+  ///
+  /// In en, this message translates to:
+  /// **'Share Team Card'**
+  String get shareTeamCard;
+
+  /// No description provided for @freeAgent.
+  ///
+  /// In en, this message translates to:
+  /// **'FREE AGENT'**
+  String get freeAgent;
+
+  /// No description provided for @freeAgentDescription.
+  ///
+  /// In en, this message translates to:
+  /// **'You are currently a Free Agent.\nJoin or create a team to unlock your Ultimate Team Card and start competing!'**
+  String get freeAgentDescription;
+
+  /// No description provided for @buildYourSquad.
+  ///
+  /// In en, this message translates to:
+  /// **'Build Your Squad'**
+  String get buildYourSquad;
+
+  /// No description provided for @editProfileSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Change your name, phone, position, and picture'**
+  String get editProfileSubtitle;
+
+  /// No description provided for @shareTeamMessage.
+  ///
+  /// In en, this message translates to:
+  /// **'Check out my ultimate team \"{teamName}\" on the VSP App! ⚽🏆\nDownload the app to challenge us!'**
+  String shareTeamMessage(Object teamName);
+
+  /// No description provided for @shareFailedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Failed to share team card.'**
+  String get shareFailedError;
+
+  /// No description provided for @ovrLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'OVR'**
+  String get ovrLabel;
+
+  /// No description provided for @gldLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'GLD'**
+  String get gldLabel;
+
+  /// No description provided for @winRateLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'WIN%'**
+  String get winRateLabel;
+
+  /// No description provided for @winsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'WINS'**
+  String get winsLabel;
+
+  /// No description provided for @strkLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'STRK'**
+  String get strkLabel;
+
   /// No description provided for @delete.
   ///
   /// In en, this message translates to:
   /// **'Delete'**
   String get delete;
 
-  /// No description provided for @close.
+  /// No description provided for @whatsAppNotInstalled.
   ///
   /// In en, this message translates to:
-  /// **'Close'**
-  String get close;
+  /// **'WhatsApp not installed'**
+  String get whatsAppNotInstalled;
+
+  /// No description provided for @createTeamFirstError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please create a team first to use this option.'**
+  String get createTeamFirstError;
+
+  /// No description provided for @enterValidEmail.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter a valid email'**
+  String get enterValidEmail;
+
+  /// No description provided for @nameRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Full name required (First and Last name)'**
+  String get nameRequired;
+
+  /// No description provided for @phoneRequired.
+  ///
+  /// In en, this message translates to:
+  /// **'Valid phone number required'**
+  String get phoneRequired;
+
+  /// No description provided for @faq1_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How does Elo ranking work?'**
+  String get faq1_q;
+
+  /// No description provided for @faq1_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Your Elo increases when you win matches against opponents with similar or higher ranking. Losing to lower-ranked teams will decrease it more significantly.'**
+  String get faq1_a;
+
+  /// No description provided for @faq2_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I join a match?'**
+  String get faq2_q;
+
+  /// No description provided for @faq2_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Go to the Matches tab, find a public match that fits your schedule, and tap \"Join\". You can join as an individual or with your team.'**
+  String get faq2_a;
+
+  /// No description provided for @faq3_q.
+  ///
+  /// In en, this message translates to:
+  /// **'Can I cancel a booking?'**
+  String get faq3_q;
+
+  /// No description provided for @faq3_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.'**
+  String get faq3_a;
+
+  /// No description provided for @faq4_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I create a team?'**
+  String get faq4_q;
+
+  /// No description provided for @faq4_a.
+  ///
+  /// In en, this message translates to:
+  /// **'In the Profile tab, select \"My Team\". From there, you can choose a name, logo, and invite your friends using their VSP ID.'**
+  String get faq4_a;
+
+  /// No description provided for @faq5_q.
+  ///
+  /// In en, this message translates to:
+  /// **'What happens if a match is disputed?'**
+  String get faq5_q;
+
+  /// No description provided for @faq5_a.
+  ///
+  /// In en, this message translates to:
+  /// **'If teams disagree on the result, a VSP moderator will review the match history and evidence to determine the final outcome.'**
+  String get faq5_a;
+
+  /// No description provided for @faq6_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How are stadium ratings calculated?'**
+  String get faq6_q;
+
+  /// No description provided for @faq6_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Ratings are an average of verified reviews left by players after their matches. Only players who actually played at the stadium can leave a review.'**
+  String get faq6_a;
+
+  /// No description provided for @faq7_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I edit my personal profile?'**
+  String get faq7_q;
+
+  /// No description provided for @faq7_a.
+  ///
+  /// In en, this message translates to:
+  /// **'In the Profile tab, select \'Edit Profile\'. From there, you can update your name, picture, preferred position, and phone number.'**
+  String get faq7_a;
+
+  /// No description provided for @faq8_q.
+  ///
+  /// In en, this message translates to:
+  /// **'Why is my match not appearing in the public list?'**
+  String get faq8_q;
+
+  /// No description provided for @faq8_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Private matches are hidden. Ensure you select \'Public Match\' during booking if you want others to find and join you.'**
+  String get faq8_a;
+
+  /// No description provided for @faq9_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I get a refund?'**
+  String get faq9_q;
+
+  /// No description provided for @faq9_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.'**
+  String get faq9_a;
+
+  /// No description provided for @faq10_q.
+  ///
+  /// In en, this message translates to:
+  /// **'How do I contact support?'**
+  String get faq10_q;
+
+  /// No description provided for @faq10_a.
+  ///
+  /// In en, this message translates to:
+  /// **'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.'**
+  String get faq10_a;
 }
 
 class _AppLocalizationsDelegate

@@ -19,7 +19,7 @@ abstract class BookingRepository {
   Stream<List<Booking>> getUserBookings(String userId);
 
   /// Get all bookings for a stadium owner
-  Stream<List<Booking>> getOwnerBookings(String ownerId);
+  Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds});
 
   /// Get a single booking by ID
   Future<Booking?> getBookingById(String bookingId);
@@ -199,26 +199,47 @@ class FirestoreBookingRepository implements BookingRepository {
 
   @override
   Stream<List<Booking>> getUserBookings(String userId) {
+    // Broad query to fetch bookings where user is either creator or participant
+    // Removed orderBy to bypass index requirements; sorting happens client-side in Provider
     return _bookingsCollection
-        .where('createdByUserId', isEqualTo: userId)
-        .orderBy('startTime', descending: true)
+        .where('joinedUserIds', arrayContains: userId)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(
-                doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+        .map((snapshot) {
+          final bookings = snapshot.docs
+              .map((doc) => Booking.fromFirestore(
+                  doc.data() as Map<String, dynamic>, doc.id))
+              .toList();
+          
+          // Sort by start time descending (newest first) client-side
+          bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return bookings;
+        });
   }
 
   @override
-  Stream<List<Booking>> getOwnerBookings(String ownerId) {
-    return _bookingsCollection
-        .where('ownerId', isEqualTo: ownerId)
-        .orderBy('startTime', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(
-                doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+  Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
+    // 🛡️ LEGACY FIX: If stadiumIds are provided, we query by stadiumId to capture 
+    // old bookings that might be missing the top-level 'ownerId' field.
+    
+    Query query = _bookingsCollection;
+    
+    if (stadiumIds != null && stadiumIds.isNotEmpty) {
+      // Note: limited to 10 stadiums by Firestore 'whereIn'
+      query = query.where('stadiumId', whereIn: stadiumIds.take(10).toList());
+    } else {
+      query = query.where('ownerId', isEqualTo: ownerId);
+    }
+
+    return query.snapshots().map((snapshot) {
+      final bookings = snapshot.docs
+          .map((doc) => Booking.fromFirestore(
+              doc.data() as Map<String, dynamic>, doc.id))
+          .toList();
+      
+      // Sort client-side
+      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+      return bookings;
+    });
   }
 
   @override
@@ -572,7 +593,7 @@ class MockBookingRepository implements BookingRepository {
   }
 
   @override
-  Stream<List<Booking>> getOwnerBookings(String ownerId) async* {
+  Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) async* {
     yield _bookings.where((b) => b.ownerId == ownerId).toList();
     yield* _controller.stream.map(
       (bookings) => bookings.where((b) => b.ownerId == ownerId).toList(),

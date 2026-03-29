@@ -9,6 +9,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../auth/screens/welcome_screen.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
   const OwnerAccountManagementScreen({super.key});
@@ -24,6 +25,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   late TextEditingController _socialController;
   
   bool _isLoading = false;
+  bool _isDeleting = false;
   bool _isLocating = false;
   List<Stadium> _stadiums = [];
 
@@ -215,6 +217,23 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    
                    _buildInputLabel('Commercial register'),
                    _buildDocumentCard('commercial register', '200 KB'),
+
+                   const SizedBox(height: 40),
+
+                   // --- Delete Account Button ---
+                   Center(
+                      child: TextButton(
+                        onPressed: () => _showDeleteAccountDialog(context),
+                        child: const Text(
+                          'Delete Account',
+                          style: TextStyle(
+                            color: VSPColors.error,
+                            fontWeight: FontWeight.bold,
+                            decoration: TextDecoration.underline,
+                          ),
+                        ),
+                      ),
+                    ),
                 ],
               ),
             ),
@@ -350,29 +369,6 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
             ),
           ),
           
-          /*
-          // Top Right: Edit Icon - Future Enhancement
-          Positioned(
-            top: 12,
-            right: 12,
-            child: InkWell(
-              onTap: () {
-                 // Navigate to Edit Stadium
-              },
-              child: Container(
-                width: 32,
-                height: 32,
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.6),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: VSPColors.accent),
-                ),
-                child: const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 18),
-              ),
-            ),
-          ),
-          */
-
           // Bottom Info
           Positioned(
             bottom: 0,
@@ -421,6 +417,67 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       ),
     );
   }
+
+  void _showDeleteAccountDialog(BuildContext context) {
+    showDialog(
+      context: context,
+      builder: (context) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+            title: const Text('Delete Account?', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+            content: const Text(
+              'Are you sure? This action cannot be undone. You will lose all your data, stadiums, and match history permanently.',
+              style: TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            ),
+            actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+            actions: [
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Cancel',
+                      height: 48,
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                      onPressed: _isDeleting ? null : () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: 'Delete',
+                      height: 48,
+                      color: VSPColors.error,
+                      textColor: VSPColors.background,
+                      isLoading: _isDeleting,
+                      onPressed: _isDeleting ? null : () async {
+                        setDialogState(() => _isDeleting = true);
+                        final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                        final success = await authProvider.deleteAccount();
+                        
+                        if (!context.mounted) return;
+                        
+                        if (success) {
+                           Navigator.of(context).pushAndRemoveUntil(
+                             MaterialPageRoute(builder: (_) => const WelcomeScreen()),
+                             (route) => false,
+                           );
+                        } else {
+                          setDialogState(() => _isDeleting = false);
+                          VSPFeedback.showError(context, authProvider.errorMessage ?? "Failed to delete account");
+                          Navigator.pop(context);
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          );
+        }
+      ),
+    );
+  }
 }
-
-

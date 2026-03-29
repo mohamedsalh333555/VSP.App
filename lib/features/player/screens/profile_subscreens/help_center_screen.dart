@@ -1,3 +1,4 @@
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -68,9 +69,16 @@ class HelpCenterScreen extends StatelessWidget {
               style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
             ),
             const SizedBox(height: VSPSpacing.md),
-            _buildFAQTile('How does Elo ranking work?', 'Your Elo increases when you win matches against opponents with similar or higher ranking.'),
-            _buildFAQTile('How do I join a match?', 'Go to the Matches tab, find a public match, and tap Join.'),
-            _buildFAQTile('Can I cancel a booking?', 'Yes, cancellations are allowed up to 2 hours before the match starts.'),
+            _buildFAQTile(AppLocalizations.of(context)!.faq1_q, AppLocalizations.of(context)!.faq1_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq2_q, AppLocalizations.of(context)!.faq2_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq3_q, AppLocalizations.of(context)!.faq3_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq4_q, AppLocalizations.of(context)!.faq4_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq5_q, AppLocalizations.of(context)!.faq5_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq6_q, AppLocalizations.of(context)!.faq6_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq7_q, AppLocalizations.of(context)!.faq7_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq8_q, AppLocalizations.of(context)!.faq8_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq9_q, AppLocalizations.of(context)!.faq9_a),
+            _buildFAQTile(AppLocalizations.of(context)!.faq10_q, AppLocalizations.of(context)!.faq10_a),
           ],
         ),
       ),
@@ -127,14 +135,29 @@ class HelpCenterScreen extends StatelessWidget {
   void _launchWhatsApp(BuildContext context) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.userModel;
-    final message = 'Support Request:\nUID: ${user?.uid}\nGov: ${user?.governorate}\nIssue: ';
-    final whatsappUrl = Uri.parse("whatsapp://send?phone=+201100229462&text=${Uri.encodeComponent(message)}");
     
-    if (await canLaunchUrl(whatsappUrl)) {
-      await launchUrl(whatsappUrl);
-    } else {
+    final message = 'Support Request:\nUID: ${user?.uid}\nGov: ${user?.governorate}\nIssue: ';
+    final phone = '+201100229462'.replaceAll('+', ''); // wa.me needs phone without +
+    
+    // Universal WhatsApp Link - More reliable on modern Android/iOS
+    final whatsappUrl = Uri.parse("https://wa.me/$phone?text=${Uri.encodeComponent(message)}");
+    
+    try {
+      final success = await launchUrl(
+        whatsappUrl,
+        mode: LaunchMode.externalApplication,
+      );
+      
+      if (!success && context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text(AppLocalizations.of(context)!.whatsAppNotInstalled))
+        );
+      }
+    } catch (e) {
       if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('WhatsApp not installed')));
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Could not launch WhatsApp. Please try again.'))
+        );
       }
     }
   }

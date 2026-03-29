@@ -172,6 +172,11 @@ class _RootScreenState extends State<RootScreen> {
       return const MaintenanceScreen();
     }
 
+    // 0.1 Initializing Session Stability 
+    if (auth.isInitializing) {
+      return const SplashScreen(navigate: false);
+    }
+
     // 1. Not Authenticated → Welcome
     if (!auth.isAuthenticated) {
       return const WelcomeScreen();

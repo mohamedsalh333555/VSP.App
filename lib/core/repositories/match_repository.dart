@@ -75,21 +75,26 @@ class MatchRepository {
 
   Stream<List<Booking>> getPublicMatches() {
     final now = DateTime.now();
+    // Simplified to bypass index requirements entirely while maintaining performance
     return _firestore
         .collection('bookings')
-        .where('status', isEqualTo: BookingStatus.confirmed.name)
-        .where('isPrivate', isEqualTo: false)
         .where('startTime', isGreaterThan: Timestamp.fromDate(now))
         .orderBy('startTime', descending: false)
         .snapshots()
         .map<List<Booking>>((snapshot) {
           return snapshot.docs
-              .map((doc) => Booking.fromFirestore(doc.data(), doc.id))
+              .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
               .where((b) {
+                // Client-side filtering for everything to ensure zero index crashes
+                final isConfirmed = b.status == BookingStatus.confirmed || 
+                                   b.status == BookingStatus.upcoming;
+                final isPublic = b.isPrivate == false;
+                
                 final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
-                // Double capacity (5vs5 means 10 players)
                 final totalCapacity = max * 2;
-                return b.currentPlayers < totalCapacity;
+                final hasSpace = b.currentPlayers < totalCapacity;
+                
+                return isConfirmed && isPublic && hasSpace;
               })
               .toList();
         });
@@ -290,8 +295,6 @@ class MatchRepository {
       final now = DateTime.now();
       Query query = _firestore
           .collection('bookings')
-          .where('status', isEqualTo: BookingStatus.confirmed.name)
-          .where('isPrivate', isEqualTo: false)
           .where('startTime', isGreaterThan: Timestamp.fromDate(now))
           .orderBy('startTime', descending: false)
           .limit(limit);
@@ -305,10 +308,13 @@ class MatchRepository {
       final items = snapshot.docs
           .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
           .where((b) {
+            final isConfirmed = b.status == BookingStatus.confirmed || 
+                               b.status == BookingStatus.upcoming;
+            final isPublic = b.isPrivate == false;
             final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
             final hasSpace = b.currentPlayers < (max * 2);
             final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
-            return hasSpace && isRightType;
+            return isConfirmed && isPublic && hasSpace && isRightType;
           }).toList();
       
       return {

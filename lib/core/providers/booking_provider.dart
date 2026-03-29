@@ -184,10 +184,10 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load owner's bookings (for stadium owners)
-  void loadOwnerBookings(String ownerId) {
+  void loadOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
-        .getOwnerBookings(ownerId)
+        .getOwnerBookings(ownerId, stadiumIds: stadiumIds)
         .listen(
           (bookings) {
             _userBookings = bookings;
