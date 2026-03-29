@@ -304,7 +304,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
 
         if (!isBreakInHours) {
-          _showError("Break time must be within opening hours ($(_formatTime(_startTime, '')) - $(_formatTime(_endTime, ''))).");
+          _showError("Break time must be within opening hours (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')}).");
           return;
         }
       }
