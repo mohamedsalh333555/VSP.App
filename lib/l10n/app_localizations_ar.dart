@@ -1453,4 +1453,64 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get faq10_a =>
       'يمكنك الضغط على زر \'الدردشة مع الدعم\' في هذه الشاشة ليتم تحويلك مباشرة لمحادثة واتساب مع فريقنا.';
+
+  @override
+  String get totalCollectedGross => 'إجمالي التحصيلات (كلّي)';
+
+  @override
+  String get netProfit => 'صافي الربح';
+
+  @override
+  String get pendingRev => 'أرباح معلقة';
+
+  @override
+  String get platformCommission => 'عمولة المنصة';
+
+  @override
+  String debtCollectionNotice(String amount) {
+    return 'المديونية $amount جنيه. يتم التحصيل دورياً كل شهرين.';
+  }
+
+  @override
+  String get hoursBookedLabel => 'ساعات الحجز';
+
+  @override
+  String get activeBookingsLabel => 'حجوزات نشطة';
+
+  @override
+  String get bookedTodayLabel => 'حجوزات اليوم';
+
+  @override
+  String get liveBookingsForToday => 'الحجوزات المباشرة لليوم';
+
+  @override
+  String includesPlatformFee(String amount) {
+    return 'يتضمن $amount جنيه عمولة المنصة';
+  }
+
+  @override
+  String get showMoreBtn => 'عرض المزيد';
+
+  @override
+  String get allStadiumsFilter => 'كل الملاعب';
+
+  @override
+  String get allTimeFilter => 'كل الأوقات 🌍';
+
+  @override
+  String get noBookingsForTodayLabel => 'لا توجد حجوزات لليوم';
+
+  @override
+  String get collectedSticker => 'تم الإستلام';
+
+  @override
+  String get pendingSticker => 'معلق';
+
+  @override
+  String get platformCutApplied => 'مخصوم 5% للمنصة';
+
+  @override
+  String youHaveStadiums(int count) {
+    return 'لديك $count ملعب';
+  }
 }

@@ -459,19 +459,55 @@ class FirestoreBookingRepository implements BookingRepository {
 
     @override
     Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
-      final startOfDay = DateTime(date.year, date.month, date.day);
-      final endOfDay = startOfDay.add(const Duration(days: 1));
-
-      return _bookingsCollection
-          .where('stadiumId', isEqualTo: stadiumId)
-          .where('startTime', isGreaterThanOrEqualTo: Timestamp.fromDate(startOfDay))
-          .where('startTime', isLessThan: Timestamp.fromDate(endOfDay))
+      final dateStr = DateFormat('yyyyMMdd').format(date);
+      
+      // Query booked_slots subcollection for privacy and efficiency
+      return _firestore.collection('stadiums').doc(stadiumId)
+          .collection('booked_slots')
+          .where(FieldPath.documentId, isGreaterThanOrEqualTo: dateStr)
+          .where(FieldPath.documentId, isLessThan: dateStr + 'z') // All slots for this day
           .snapshots()
-          .map((snapshot) => snapshot.docs
-              .map((doc) => Booking.fromFirestore(
-                  doc.data() as Map<String, dynamic>, doc.id))
-              .where((b) => b.status != BookingStatus.cancelled)
-              .toList());
+          .map((snapshot) {
+            final List<Booking> syntheticBookings = [];
+            
+            for (var doc in snapshot.docs) {
+              final data = doc.data();
+              if (data['status'] == 'cancelled') continue;
+              
+              // Parse slot time from ID (yyyyMMdd_HHmm)
+              final slotId = doc.id;
+              try {
+                final year = int.parse(slotId.substring(0, 4));
+                final month = int.parse(slotId.substring(4, 6));
+                final day = int.parse(slotId.substring(6, 8));
+                final hour = int.parse(slotId.substring(9, 11));
+                final minute = int.parse(slotId.substring(11, 13));
+                
+                final startTime = DateTime(year, month, day, hour, minute);
+                
+                // Add a 30-min synthetic booking for availability checking
+                syntheticBookings.add(Booking(
+                  id: data['bookingId'] ?? slotId,
+                  stadiumId: stadiumId,
+                  stadiumName: '',
+                  ownerId: '',
+                  startTime: startTime,
+                  endTime: startTime.add(const Duration(minutes: 30)),
+                  bookingType: BookingType.personal,
+                  isPrivate: true,
+                  rentBall: false,
+                  totalPrice: 0,
+                  paymentMethod: 'cash',
+                  status: BookingStatus.confirmed,
+                  createdByUserId: data['userId'] ?? '',
+                  createdAt: DateTime.now(),
+                ));
+              } catch (e) {
+                debugPrint('Error parsing slot ID $slotId: $e');
+              }
+            }
+            return syntheticBookings;
+          });
     }
 
     @override

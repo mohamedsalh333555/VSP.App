@@ -1467,4 +1467,64 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get faq10_a =>
       'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.';
+
+  @override
+  String get totalCollectedGross => 'Total Collected (Gross)';
+
+  @override
+  String get netProfit => 'NET PROFIT';
+
+  @override
+  String get pendingRev => 'PENDING REV';
+
+  @override
+  String get platformCommission => 'Platform Commission';
+
+  @override
+  String debtCollectionNotice(String amount) {
+    return 'You owe $amount EGP. Collection occurs every 2 months.';
+  }
+
+  @override
+  String get hoursBookedLabel => 'Hours Booked';
+
+  @override
+  String get activeBookingsLabel => 'Active Bookings';
+
+  @override
+  String get bookedTodayLabel => 'Booked Today';
+
+  @override
+  String get liveBookingsForToday => 'Live bookings for today';
+
+  @override
+  String includesPlatformFee(String amount) {
+    return 'Includes $amount EGP platform fee';
+  }
+
+  @override
+  String get showMoreBtn => 'Show more';
+
+  @override
+  String get allStadiumsFilter => 'All Stadiums';
+
+  @override
+  String get allTimeFilter => 'All Time 🌍';
+
+  @override
+  String get noBookingsForTodayLabel => 'No bookings for today';
+
+  @override
+  String get collectedSticker => 'COLLECTED';
+
+  @override
+  String get pendingSticker => 'PENDING';
+
+  @override
+  String get platformCutApplied => '5% Platform Cut Applied';
+
+  @override
+  String youHaveStadiums(int count) {
+    return 'You have $count stadium(s)';
+  }
 }

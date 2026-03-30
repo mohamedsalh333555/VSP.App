@@ -74,29 +74,30 @@ class MatchRepository {
   // --- PUBLIC MATCHES (Modern) ---
 
   Stream<List<Booking>> getPublicMatches() {
-    final now = DateTime.now();
-    // Simplified to bypass index requirements entirely while maintaining performance
     return _firestore
         .collection('bookings')
-        .where('startTime', isGreaterThan: Timestamp.fromDate(now))
-        .orderBy('startTime', descending: false)
+        .where('isPrivate', isEqualTo: false)
         .snapshots()
         .map<List<Booking>>((snapshot) {
-          return snapshot.docs
+          final now = DateTime.now();
+          final matches = snapshot.docs
               .map((doc) => Booking.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
               .where((b) {
                 // Client-side filtering for everything to ensure zero index crashes
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
-                final isPublic = b.isPrivate == false;
+                final isFuture = b.startTime.isAfter(now);
                 
                 final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
                 final totalCapacity = max * 2;
                 final hasSpace = b.currentPlayers < totalCapacity;
                 
-                return isConfirmed && isPublic && hasSpace;
+                return isConfirmed && isFuture && hasSpace;
               })
               .toList();
+              
+          matches.sort((a, b) => a.startTime.compareTo(b.startTime));
+          return matches;
         });
   }
 
@@ -295,9 +296,8 @@ class MatchRepository {
       final now = DateTime.now();
       Query query = _firestore
           .collection('bookings')
-          .where('startTime', isGreaterThan: Timestamp.fromDate(now))
-          .orderBy('startTime', descending: false)
-          .limit(limit);
+          .where('isPrivate', isEqualTo: false)
+          .limit(limit * 3); // Over-fetch to ensure we have enough after client local filtering
 
       if (startAfter != null) {
         query = query.startAfterDocument(startAfter);
@@ -310,15 +310,19 @@ class MatchRepository {
           .where((b) {
             final isConfirmed = b.status == BookingStatus.confirmed || 
                                b.status == BookingStatus.upcoming;
-            final isPublic = b.isPrivate == false;
+            final isFuture = b.startTime.isAfter(now);
             final max = b.maxPlayers > 0 ? b.maxPlayers : 10;
             final hasSpace = b.currentPlayers < (max * 2);
             final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
-            return isConfirmed && isPublic && hasSpace && isRightType;
+            return isConfirmed && isFuture && hasSpace && isRightType;
           }).toList();
+          
+      items.sort((a, b) => a.startTime.compareTo(b.startTime));
+      
+      final limitedItems = items.take(limit).toList();
       
       return {
-        'items': items,
+        'items': limitedItems,
         'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
       };
     } catch (e) {

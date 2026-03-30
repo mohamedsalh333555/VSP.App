@@ -39,34 +39,55 @@ service cloud.firestore {
       );
       
       allow delete: if isAdmin();
+
+      // Notifications subcollection
+      match /notifications/{notifId} {
+        allow read: if isAuthenticated() && isOwner(userId);
+        allow create: if isAuthenticated(); // Allow others to send notifications to this user
+        allow update, delete: if isAuthenticated() && isOwner(userId);
+      }
     }
 
     match /stadiums/{stadiumId} {
       allow read: if true;
-      allow create: if isAuthenticated(); // Should probably check if user.role == 'owner'
+      allow create: if isAuthenticated(); 
       
       allow update: if isAdmin() || (
-        isAuthenticated() && resource.data.ownerId == request.auth.uid
+        isAuthenticated() && resource.data.get('ownerId', '') == request.auth.uid
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified', 'ownerId', 'rating', 'reviewsCount'])
+      ) || (
+        // Allow updating rating/reviewsCount during match result submission
+        isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviewsCount'])
       );
       
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
+      allow delete: if isAdmin() || (isAuthenticated() && resource.data.get('ownerId', '') == request.auth.uid);
 
       match /reviews/{reviewId} {
         allow read: if true;
         allow create: if isAuthenticated();
-        // Prevent users from deleting/modifying reviews unless admin or author
         allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+      }
+
+      // Booked Slots subcollection
+      match /booked_slots/{slotId} {
+        allow read: if true;
+        allow create: if isAuthenticated();
+        allow update: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isStadiumOwner(stadiumId));
+        allow delete: if isAdmin() || isStadiumOwner(stadiumId);
       }
     }
 
     match /bookings/{bookingId} {
       function isBookingParty() {
         return resource.data.get('createdByUserId', '') == request.auth.uid || 
-               resource.data.get('ownerId', '') == request.auth.uid;
+               resource.data.get('userId', '') == request.auth.uid ||
+               resource.data.get('ownerId', '') == request.auth.uid ||
+               resource.data.get('playerTeamId', '') == request.auth.uid ||
+               resource.data.get('opponentTeamId', '') == request.auth.uid ||
+               resource.data.get('joinedUserIds', []).hasAny([request.auth.uid]);
       }
 
-      allow read: if isAuthenticated() && (isBookingParty() || isAdmin());
+      allow read: if isAuthenticated() && (resource.data.get('isPrivate', true) == false || isBookingParty() || isAdmin());
       
       allow create: if isAuthenticated(); 
       
@@ -75,7 +96,7 @@ service cloud.firestore {
         && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stadiumId', 'ownerId', 'createdByUserId', 'totalPrice'])
       );
       
-      allow delete: if isAdmin(); // Generally prevent users from deleting financial records
+      allow delete: if isAdmin(); 
     }
 
     match /teams/{teamId} {
@@ -85,9 +106,29 @@ service cloud.firestore {
       allow delete: if isAdmin();
     }
 
+    match /championships/{champId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /promotions/{promoId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /config/{configId} {
+      allow read: if true;
+      allow write: if isAdmin();
+    }
+
+    match /reports/{reportId} {
+      allow read: if isAdmin();
+      allow create: if isAuthenticated();
+    }
+
     match /notifications/{notifId} {
       allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated(); // Internal logic usually sends these, but allow for now
+      allow create: if isAuthenticated(); 
       allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid);
       allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
     }

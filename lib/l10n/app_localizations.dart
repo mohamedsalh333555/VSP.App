@@ -2779,6 +2779,114 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tap \'Chat with Support\' on this screen to start a WhatsApp conversation with our team directly.'**
   String get faq10_a;
+
+  /// No description provided for @totalCollectedGross.
+  ///
+  /// In en, this message translates to:
+  /// **'Total Collected (Gross)'**
+  String get totalCollectedGross;
+
+  /// No description provided for @netProfit.
+  ///
+  /// In en, this message translates to:
+  /// **'NET PROFIT'**
+  String get netProfit;
+
+  /// No description provided for @pendingRev.
+  ///
+  /// In en, this message translates to:
+  /// **'PENDING REV'**
+  String get pendingRev;
+
+  /// No description provided for @platformCommission.
+  ///
+  /// In en, this message translates to:
+  /// **'Platform Commission'**
+  String get platformCommission;
+
+  /// No description provided for @debtCollectionNotice.
+  ///
+  /// In en, this message translates to:
+  /// **'You owe {amount} EGP. Collection occurs every 2 months.'**
+  String debtCollectionNotice(String amount);
+
+  /// No description provided for @hoursBookedLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Hours Booked'**
+  String get hoursBookedLabel;
+
+  /// No description provided for @activeBookingsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Active Bookings'**
+  String get activeBookingsLabel;
+
+  /// No description provided for @bookedTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked Today'**
+  String get bookedTodayLabel;
+
+  /// No description provided for @liveBookingsForToday.
+  ///
+  /// In en, this message translates to:
+  /// **'Live bookings for today'**
+  String get liveBookingsForToday;
+
+  /// No description provided for @includesPlatformFee.
+  ///
+  /// In en, this message translates to:
+  /// **'Includes {amount} EGP platform fee'**
+  String includesPlatformFee(String amount);
+
+  /// No description provided for @showMoreBtn.
+  ///
+  /// In en, this message translates to:
+  /// **'Show more'**
+  String get showMoreBtn;
+
+  /// No description provided for @allStadiumsFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All Stadiums'**
+  String get allStadiumsFilter;
+
+  /// No description provided for @allTimeFilter.
+  ///
+  /// In en, this message translates to:
+  /// **'All Time 🌍'**
+  String get allTimeFilter;
+
+  /// No description provided for @noBookingsForTodayLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'No bookings for today'**
+  String get noBookingsForTodayLabel;
+
+  /// No description provided for @collectedSticker.
+  ///
+  /// In en, this message translates to:
+  /// **'COLLECTED'**
+  String get collectedSticker;
+
+  /// No description provided for @pendingSticker.
+  ///
+  /// In en, this message translates to:
+  /// **'PENDING'**
+  String get pendingSticker;
+
+  /// No description provided for @platformCutApplied.
+  ///
+  /// In en, this message translates to:
+  /// **'5% Platform Cut Applied'**
+  String get platformCutApplied;
+
+  /// No description provided for @youHaveStadiums.
+  ///
+  /// In en, this message translates to:
+  /// **'You have {count} stadium(s)'**
+  String youHaveStadiums(int count);
 }
 
 class _AppLocalizationsDelegate

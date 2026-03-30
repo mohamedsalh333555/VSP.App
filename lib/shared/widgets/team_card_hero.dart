@@ -145,7 +145,7 @@ class TeamCardHero extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Image.asset('assets/images/vsp_logo_small.png', height: 20, errorBuilder: (_, __, ___) => const SizedBox()),
+                    Image.asset('assets/images/logo.png', height: 20, errorBuilder: (_, __, ___) => const SizedBox()),
                     const SizedBox(width: 8),
                     const Text(
                       'VSP CHAMPIONSHIP',

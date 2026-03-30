@@ -731,5 +731,38 @@
   "faq9_q": "How do I get a refund?",
   "faq9_a": "Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.",
   "faq10_q": "How do I contact support?",
-  "faq10_a": "Tap 'Chat with Support' on this screen to start a WhatsApp conversation with our team directly."
+  "faq10_a": "Tap 'Chat with Support' on this screen to start a WhatsApp conversation with our team directly.",
+  "totalCollectedGross": "Total Collected (Gross)",
+  "netProfit": "NET PROFIT",
+  "pendingRev": "PENDING REV",
+  "platformCommission": "Platform Commission",
+  "debtCollectionNotice": "You owe {amount} EGP. Collection occurs every 2 months.",
+  "@debtCollectionNotice": {
+    "placeholders": {
+      "amount": { "type": "String" }
+    }
+  },
+  "hoursBookedLabel": "Hours Booked",
+  "activeBookingsLabel": "Active Bookings",
+  "bookedTodayLabel": "Booked Today",
+  "liveBookingsForToday": "Live bookings for today",
+  "includesPlatformFee": "Includes {amount} EGP platform fee",
+  "@includesPlatformFee": {
+    "placeholders": {
+       "amount": { "type": "String" }
+    }
+  },
+  "showMoreBtn": "Show more",
+  "allStadiumsFilter": "All Stadiums",
+  "allTimeFilter": "All Time 🌍",
+  "noBookingsForTodayLabel": "No bookings for today",
+  "collectedSticker": "COLLECTED",
+  "pendingSticker": "PENDING",
+  "platformCutApplied": "5% Platform Cut Applied",
+  "youHaveStadiums": "You have {count} stadium(s)",
+  "@youHaveStadiums": {
+    "placeholders": {
+       "count": { "type": "int" }
+    }
+  }
 }
