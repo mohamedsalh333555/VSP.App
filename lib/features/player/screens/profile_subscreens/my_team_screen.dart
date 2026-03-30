@@ -222,15 +222,24 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   // Team Logo & Upload
                   Row(
                     children: [
-                      ShimmerImage(
-                        imageUrl:
-                            _newLogoUrl ?? _myTeam?.logoUrl ?? '',
-                        width: 50,
-                        height: 50,
-                        borderRadius: 25,
-                        errorWidget: const Icon(Icons.person,
-                            color: VSPColors.textSecondary),
-                      ),
+                      if (_selectedLogo != null)
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(25),
+                          child: Image.file(
+                            File(_selectedLogo!.path),
+                            width: 50,
+                            height: 50,
+                            fit: BoxFit.cover,
+                          ),
+                        )
+                      else
+                        ShimmerImage(
+                          imageUrl: _newLogoUrl ?? _myTeam?.logoUrl ?? '',
+                          width: 50,
+                          height: 50,
+                          borderRadius: 25,
+                          errorWidget: const Icon(Icons.person, color: VSPColors.textSecondary),
+                        ),
                       const SizedBox(width: VSPSpacing.md),
                       // ✅ Use VSPPrimaryButton or styled ElevatedButton
                       Expanded(

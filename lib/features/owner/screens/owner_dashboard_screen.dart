@@ -218,7 +218,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'Hi ${(auth.userModel?.name ?? "Owner").split(' ').first}',
+              '${AppLocalizations.of(context)!.hiPrefix} ${(auth.userModel?.name ?? AppLocalizations.of(context)!.ownerGuestFallback).split(' ').first}',
               style: Theme.of(context).textTheme.displayMedium,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
@@ -708,7 +708,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  booking.playerTeamName ?? 'Individual Player', 
+                                  booking.playerTeamName ?? AppLocalizations.of(context)!.individualPlayerLabel, 
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -716,8 +716,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   booking.bookingType == BookingType.challenge 
-                                      ? 'Challenge Match' 
-                                      : (booking.bookingType == BookingType.team ? 'Team Match' : 'Player'), 
+                                      ? AppLocalizations.of(context)!.challengeMatch 
+                                      : (booking.bookingType == BookingType.team ? AppLocalizations.of(context)!.teamMatchLabel : AppLocalizations.of(context)!.playerTypeLabel), 
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                 ),
                               ],

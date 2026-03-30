@@ -1,136 +1,306 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
-    // --- Helper Functions ---
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🛡️ HELPER FUNCTIONS
+    // ══════════════════════════════════════════════════════════════════
+
     function isAuthenticated() {
       return request.auth != null;
     }
-    
+
     function isOwner(userId) {
       return request.auth.uid == userId;
     }
 
+    function getUserData() {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data;
+    }
+
     function isAdmin() {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == 'admin';
+      return isAuthenticated() && getUserData().role == 'admin';
     }
 
-    function isStadiumOwner(stadiumId) {
-      return isAuthenticated() && 
-        get(/databases/$(database)/documents/stadiums/$(stadiumId)).data.ownerId == request.auth.uid;
+    function isStadiumOwnerRole() {
+      return isAuthenticated() && getUserData().role == 'owner';
     }
 
-    // --- Rules ---
+    // Checks if a set of protected fields are NOT being touched
+    function isNotModifying(fields) {
+      return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
+    }
 
+    // Only the fields listed are being changed (nothing else)
+    function isOnlyModifying(fields) {
+      return request.resource.data.diff(resource.data).affectedKeys().hasOnly(fields);
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // 👥 USERS COLLECTION
+    // ══════════════════════════════════════════════════════════════════
     match /users/{userId} {
+      // Any authenticated user can read basic profiles.
+      // Sensitive fields are kept server-side; Cloud Functions are used to expose them carefully.
       allow read: if isAuthenticated();
-      allow create: if isAuthenticated() && isOwner(userId) 
+
+      // Account creation: the doc id must match the auth uid, and
+      // several sensitive fields must start at safe default values.
+      allow create: if isAuthenticated()
+                    && isOwner(userId)
                     && request.resource.data.role in ['player', 'owner']
                     && request.resource.data.commissionDebt == 0
                     && request.resource.data.walletBalance == 0
                     && request.resource.data.isSuspended == false
                     && request.resource.data.isBlocked == false;
-      
+
+      // CRITICAL: Users CAN update their own profile, but CANNOT elevate their
+      // role, inflate their wallet, bypass suspension, or manipulate stats.
+      // Admin can update anything (e.g., via admin panel/Cloud Functions).
       allow update: if isAdmin() || (
-        isAuthenticated() && isOwner(userId)
-        && !request.resource.data.diff(resource.data).affectedKeys()
-            .hasAny(['role', 'walletBalance', 'isBlocked', 'points', 'uid', 'email'])
+        isAuthenticated()
+        && isOwner(userId)
+        && isNotModifying([
+          'role',
+          'walletBalance',
+          'commissionDebt',
+          'isBlocked',
+          'isSuspended',
+          'isIdentityVerified',
+          'points',
+          'uid',
+          'email',
+          'verificationDocuments',
+          'championshipsWon'
+        ])
       );
-      
+
       allow delete: if isAdmin();
 
-      // Notifications subcollection
+      // ── Notifications (private user sub-collection) ──
       match /notifications/{notifId} {
-        allow read: if isAuthenticated() && isOwner(userId);
-        allow create: if isAuthenticated(); // Allow others to send notifications to this user
+        allow read:          if isAuthenticated() && isOwner(userId);
+        allow create:        if isAuthenticated(); // Any user can push a notif to another user
         allow update, delete: if isAuthenticated() && isOwner(userId);
       }
     }
 
-    match /stadiums/{stadiumId} {
-      allow read: if true;
-      allow create: if isAuthenticated(); 
-      
-      allow update: if isAdmin() || (
-        isAuthenticated() && resource.data.get('ownerId', '') == request.auth.uid
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['isVerified', 'ownerId', 'rating', 'reviewsCount'])
-      ) || (
-        // Allow updating rating/reviewsCount during match result submission
-        isAuthenticated() && request.resource.data.diff(resource.data).affectedKeys().hasOnly(['rating', 'reviewsCount'])
-      );
-      
-      allow delete: if isAdmin() || (isAuthenticated() && resource.data.get('ownerId', '') == request.auth.uid);
 
+    // ══════════════════════════════════════════════════════════════════
+    // 🏟️ STADIUMS COLLECTION
+    // ══════════════════════════════════════════════════════════════════
+    match /stadiums/{stadiumId} {
+      // Public read for browsing; Owners can always see their own (even unverified).
+      allow read: if true;
+
+      // CRITICAL: Only users with role == 'owner' can list a new stadium.
+      allow create: if isStadiumOwnerRole()
+                    && request.resource.data.ownerId == request.auth.uid;
+
+      // CRITICAL: Owners can update their stadium details, but they CANNOT
+      // verify themselves, change ownership, or manipulate ratings.
+      allow update: if isAdmin() || (
+        isAuthenticated()
+        && resource.data.get('ownerId', '') == request.auth.uid
+        && isNotModifying(['isVerified', 'isBlocked', 'ownerId', 'rating', 'reviewsCount'])
+      ) || (
+        // Server-side result flow: only these two stat fields allowed from client
+        isAuthenticated()
+        && isOnlyModifying(['rating', 'reviewsCount'])
+      );
+
+      allow delete: if isAdmin()
+                    || (isAuthenticated() && resource.data.get('ownerId', '') == request.auth.uid);
+
+      // ── Reviews sub-collection ──
       match /reviews/{reviewId} {
         allow read: if true;
         allow create: if isAuthenticated();
-        allow update, delete: if isAdmin() || (isAuthenticated() && resource.data.userId == request.auth.uid);
+        allow update, delete: if isAdmin()
+                              || (isAuthenticated() && resource.data.userId == request.auth.uid);
       }
 
-      // Booked Slots subcollection
+      // ── Booked Slots sub-collection ──
       match /booked_slots/{slotId} {
         allow read: if true;
         allow create: if isAuthenticated();
-        allow update: if isAuthenticated() && (resource.data.get('userId', '') == request.auth.uid || isStadiumOwner(stadiumId));
-        allow delete: if isAdmin() || isStadiumOwner(stadiumId);
+        allow update: if isAuthenticated()
+                      && (resource.data.get('userId', '') == request.auth.uid
+                          || (isStadiumOwnerRole()
+                              && get(/databases/$(database)/documents/stadiums/$(stadiumId))
+                                 .data.ownerId == request.auth.uid));
+        allow delete: if isAdmin()
+                      || (isStadiumOwnerRole()
+                          && get(/databases/$(database)/documents/stadiums/$(stadiumId))
+                             .data.ownerId == request.auth.uid);
       }
     }
 
+
+    // ══════════════════════════════════════════════════════════════════
+    // 📅 BOOKINGS COLLECTION
+    // ══════════════════════════════════════════════════════════════════
     match /bookings/{bookingId} {
+
+      // Parties involved in this booking
       function isBookingParty() {
-        return resource.data.get('createdByUserId', '') == request.auth.uid || 
-               resource.data.get('userId', '') == request.auth.uid ||
-               resource.data.get('ownerId', '') == request.auth.uid ||
-               resource.data.get('playerTeamId', '') == request.auth.uid ||
-               resource.data.get('opponentTeamId', '') == request.auth.uid ||
-               resource.data.get('joinedUserIds', []).hasAny([request.auth.uid]);
+        return resource.data.get('createdByUserId', '') == request.auth.uid
+            || resource.data.get('userId', '')          == request.auth.uid
+            || resource.data.get('ownerId', '')         == request.auth.uid
+            || resource.data.get('playerTeamId', '')    == request.auth.uid
+            || resource.data.get('opponentTeamId', '')  == request.auth.uid
+            || resource.data.get('joinedUserIds', []).hasAny([request.auth.uid]);
       }
 
-      allow read: if isAuthenticated() && (resource.data.get('isPrivate', true) == false || isBookingParty() || isAdmin());
-      
-      allow create: if isAuthenticated(); 
-      
-      allow update: if isAdmin() || (
-        isAuthenticated() && isBookingParty()
-        && !request.resource.data.diff(resource.data).affectedKeys().hasAny(['stadiumId', 'ownerId', 'createdByUserId', 'totalPrice'])
-      );
-      
-      allow delete: if isAdmin(); 
-    }
+      function isStadiumOwnerForBooking() {
+        return resource.data.get('ownerId', '') == request.auth.uid;
+      }
 
-    match /teams/{teamId} {
-      allow read: if true;
+      // Public matches readable by all authenticated users; private ones only by parties.
+      allow read: if isAuthenticated()
+                  && (resource.data.get('isPrivate', true) == false
+                      || isBookingParty()
+                      || isAdmin());
+
       allow create: if isAuthenticated();
-      allow update: if isAdmin() || (isAuthenticated() && resource.data.captainId == request.auth.uid);
+
+      // Layered update permissions:
+      allow update: if isAdmin()
+
+        // 1️⃣ Owners can update payment fields & status — but NOT price or structure
+        || (isAuthenticated()
+            && isStadiumOwnerForBooking()
+            && isNotModifying(['stadiumId', 'createdByUserId', 'totalPrice', 'startTime', 'endTime']))
+
+        // 2️⃣ Booking creator/players can join or cancel — but CANNOT touch money fields
+        || (isAuthenticated()
+            && isBookingParty()
+            && isNotModifying([
+                'stadiumId', 'ownerId', 'createdByUserId',
+                'totalPrice', 'isPaid', 'paymentStatus'  // 🔒 anti-cheat on payment
+            ]))
+
+        // 3️⃣ Match captains can update outcome/result only
+        || (isAuthenticated()
+            && (resource.data.get('hostCaptainId', '')  == request.auth.uid
+               || resource.data.get('guestCaptainId', '') == request.auth.uid)
+            && isOnlyModifying(['matchResultStatus', 'pendingOutcome', 'resultConfirmation']));
+
       allow delete: if isAdmin();
     }
 
+
+    // ══════════════════════════════════════════════════════════════════
+    // ⚽ TEAMS COLLECTION
+    // ══════════════════════════════════════════════════════════════════
+    match /teams/{teamId} {
+      allow read: if true;
+      allow create: if isAuthenticated();
+
+      // CRITICAL: Only the captain can edit team info, but they CANNOT
+      // manually bump stats (these come from Cloud Functions after match result).
+      allow update: if isAdmin()
+                    || (isAuthenticated()
+                        && resource.data.captainId == request.auth.uid
+                        && isNotModifying([
+                            'points',
+                            'wins',
+                            'draws',
+                            'losses',
+                            'matchesPlayed',
+                            'championshipsWon',
+                            'elo'
+                          ]));
+
+      allow delete: if isAdmin()
+                    || (isAuthenticated() && resource.data.captainId == request.auth.uid);
+    }
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🏆 CHAMPIONSHIPS COLLECTION
+    // ══════════════════════════════════════════════════════════════════
     match /championships/{champId} {
       allow read: if true;
-      allow write: if isAdmin();
+
+      // Only stadium owners can create championships
+      allow create: if isStadiumOwnerRole()
+                    && request.resource.data.ownerId == request.auth.uid;
+
+      // Layered update permissions:
+      allow update: if isAdmin()
+
+        // 1️⃣ The championship Owner has full edit rights
+        || (isAuthenticated()
+            && resource.data.ownerId == request.auth.uid)
+
+        // 2️⃣ Team captains can only add their team to joinedTeams
+        // CRITICAL: They CANNOT touch paidTeams, status, or any other field
+        || (isAuthenticated()
+            && isOnlyModifying(['joinedTeams']));
+
+      allow delete: if isAdmin()
+                    || (isAuthenticated() && resource.data.ownerId == request.auth.uid);
     }
 
-    match /promotions/{promoId} {
-      allow read: if true;
-      allow write: if isAdmin();
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🎯 TOURNAMENT MATCHES COLLECTION
+    // ══════════════════════════════════════════════════════════════════
+    match /tournament_matches/{matchId} {
+      allow read: if isAuthenticated();
+
+      // Only the championship's owner or admin can write tournament matches
+      allow create, delete: if isAdmin();
+
+      allow update: if isAdmin()
+                    || (isAuthenticated()
+                        && exists(/databases/$(database)/documents/championships/$(resource.data.championshipId))
+                        && get(/databases/$(database)/documents/championships/$(resource.data.championshipId))
+                             .data.ownerId == request.auth.uid);
     }
 
-    match /config/{configId} {
-      allow read: if true;
-      allow write: if isAdmin();
-    }
 
-    match /reports/{reportId} {
-      allow read: if isAdmin();
-      allow create: if isAuthenticated();
-    }
-
+    // ══════════════════════════════════════════════════════════════════
+    // 🌐 GLOBAL NOTIFICATIONS COLLECTION (Root level)
+    // ══════════════════════════════════════════════════════════════════
     match /notifications/{notifId} {
-      allow read: if isAuthenticated() && (resource.data.userId == request.auth.uid);
-      allow create: if isAuthenticated(); 
-      allow update: if isAuthenticated() && (resource.data.userId == request.auth.uid);
-      allow delete: if isAuthenticated() && (resource.data.userId == request.auth.uid);
+      allow read:   if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow create: if isAuthenticated();
+      allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
+      allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }
+
+
+    // ══════════════════════════════════════════════════════════════════
+    // 🔒 ADMIN-ONLY COLLECTIONS
+    // ══════════════════════════════════════════════════════════════════
+
+    // 1v1 League leaderboard — read-only for users; written by Cloud Functions via Admin SDK
+    match /vsp_1VS1_players/{docId} {
+      allow read:  if isAuthenticated();
+      allow write: if isAdmin();
+    }
+
+    // Marketing promotions
+    match /promotions/{promoId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // App-wide config (e.g., feature flags, min app version)
+    match /config/{configId} {
+      allow read:  if true;
+      allow write: if isAdmin();
+    }
+
+    // Moderation reports (users report matches/content)
+    match /reports/{reportId} {
+      allow read:   if isAdmin();
+      allow create: if isAuthenticated();
+      allow update, delete: if isAdmin();
+    }
+
   }
 }

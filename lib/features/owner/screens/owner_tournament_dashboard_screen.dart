@@ -1,6 +1,7 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -40,11 +41,9 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           backgroundColor: VSPColors.surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Text('Force Start Tournament?', style: Theme.of(context).textTheme.titleLarge),
+          title: Text(AppLocalizations.of(context)!.forceStartTournament, style: Theme.of(context).textTheme.titleLarge),
           content: Text(
-            'Tournament is not full ($teamCount / ${_currentChampionship.maxTeams} teams). '
-            'Are you sure you want to force start?\n\n'
-            'Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.',
+            AppLocalizations.of(context)!.forceStartWarning(teamCount, _currentChampionship.maxTeams),
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
@@ -53,7 +52,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Cancel',
+                    text: AppLocalizations.of(context)!.cancel,
                     height: 44,
                     color: VSPColors.surfaceAlt,
                     textColor: VSPColors.textPrimary,
@@ -63,7 +62,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 const SizedBox(width: VSPSpacing.md),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Force Start',
+                    text: AppLocalizations.of(context)!.forceStart,
                     height: 44,
                     color: VSPColors.warning,
                     textColor: Colors.black,
@@ -90,7 +89,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       });
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Draw Generated & Tournament Started!'), backgroundColor: VSPColors.accent),
+          SnackBar(content: Text(AppLocalizations.of(context)!.drawGeneratedSuccess), backgroundColor: VSPColors.accent),
         );
       }
     } catch (e) {
@@ -115,9 +114,9 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           backgroundColor: VSPColors.surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Text('Select Tournament Winner', style: Theme.of(context).textTheme.titleLarge),
+          title: Text(AppLocalizations.of(context)!.selectTournamentWinner, style: Theme.of(context).textTheme.titleLarge),
           content: teams.isEmpty 
-            ? Text('No teams joined yet.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary))
+            ? Text(AppLocalizations.of(context)!.noTeamsFound(''), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary))
             : SizedBox(
                 width: double.maxFinite,
                 child: ListView.builder(
@@ -146,7 +145,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Cancel',
+                    text: AppLocalizations.of(context)!.cancel,
                     height: 48,
                     color: VSPColors.surfaceAlt,
                     textColor: VSPColors.textPrimary,
@@ -156,7 +155,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 const SizedBox(width: VSPSpacing.md),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Confirm',
+                    text: AppLocalizations.of(context)!.confirmSelections,
                     height: 48,
                     onPressed: selectedTeamId == null ? null : () {
                       Navigator.pop(context);
@@ -169,7 +168,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ],
         ),
       ),
-    );
+    );    );
   }
 
   Future<void> _crownChampion(String teamId, String teamName) async {
@@ -192,12 +191,12 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text('Add Team Manually', style: Theme.of(context).textTheme.titleLarge),
+        title: Text(AppLocalizations.of(context)!.addTeamManually, style: Theme.of(context).textTheme.titleLarge),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             Text(
-              'Register a team that signed up via phone or in-person.',
+              AppLocalizations.of(context)!.manualRegistrationSub,
               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -205,7 +204,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               controller: nameCtrl,
               style: Theme.of(context).textTheme.bodyMedium,
               decoration: InputDecoration(
-                hintText: 'Team name',
+                hintText: AppLocalizations.of(context)!.teamName,
                 hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                 filled: true,
                 fillColor: VSPColors.background,
@@ -223,7 +222,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             children: [
               Expanded(
                 child: PrimaryButton(
-                  text: 'Cancel',
+                  text: AppLocalizations.of(context)!.cancel,
                   height: 44,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
@@ -233,7 +232,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: PrimaryButton(
-                  text: 'Add',
+                  text: AppLocalizations.of(context)!.addMember.split(' ').first,
                   height: 44,
                   onPressed: () async {
                     final teamName = nameCtrl.text.trim();
@@ -246,7 +245,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                       final teamId = await DatabaseService().createTeam({
                         'name': teamName,
                         'captainId': 'manual_entry',
-                        'captainName': 'Manual Registration',
+                        'captainName': AppLocalizations.of(context)!.manualRegistration,
                         'captainImage': '',
                         'sport': _currentChampionship.sportType,
                         'members': [],
@@ -271,7 +270,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         if (mounted) {
                           ScaffoldMessenger.of(context).showSnackBar(
                             SnackBar(
-                              content: Text('Team "$teamName" added!'),
+                              content: Text(AppLocalizations.of(context)!.teamCreatedSuccess),
                               backgroundColor: VSPColors.success,
                             ),
                           );
@@ -294,6 +293,34 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         ],
       ),
     );
+  }
+
+  // ── Toggle Paid Status ──
+  Future<void> _togglePaymentStatus(String teamId) async {
+    final isPaid = _currentChampionship.paidTeams.contains(teamId);
+    try {
+      await TournamentRepository().toggleTeamPayment(
+        championshipId: _currentChampionship.id,
+        teamId: teamId,
+        isPaid: !isPaid, // Toggle
+      );
+      // Update local state
+      setState(() {
+        final updatedList = List<String>.from(_currentChampionship.paidTeams);
+        if (isPaid) {
+          updatedList.remove(teamId);
+        } else {
+          updatedList.add(teamId);
+        }
+        _currentChampionship = _currentChampionship.copyWith(paidTeams: updatedList);
+      });
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+        );
+      }
+    }
   }
 
   @override
@@ -325,17 +352,17 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildInfoItem('STATUS', _currentChampionship.status.toUpperCase(), 
+                        _buildInfoItem(AppLocalizations.of(context)!.statusLabel, _currentChampionship.status.toUpperCase(), 
                           color: _currentChampionship.status == 'completed' ? VSPColors.error : VSPColors.accent),
-                        _buildInfoItem('CATEGORY', _currentChampionship.type),
+                        _buildInfoItem(AppLocalizations.of(context)!.categoryLabel, _currentChampionship.type),
                       ],
                     ),
                     const Divider(color: VSPColors.divider, height: 32),
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildInfoItem('DATES', '${DateFormat('MMM d').format(_currentChampionship.startDate)} - ${DateFormat('MMM d').format(_currentChampionship.endDate)}'),
-                        _buildInfoItem('TEAMS', '${_currentChampionship.joinedTeams.length} / ${_currentChampionship.maxTeams}'),
+                        _buildInfoItem(AppLocalizations.of(context)!.datesLabel, '${DateFormat('MMM d').format(_currentChampionship.startDate)} - ${DateFormat('MMM d').format(_currentChampionship.endDate)}'),
+                        _buildInfoItem(AppLocalizations.of(context)!.teamsLabel, '${_currentChampionship.joinedTeams.length} / ${_currentChampionship.maxTeams}'),
                       ],
                     ),
                   ],
@@ -348,7 +375,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                   children: [
                     const Icon(Icons.groups, color: VSPColors.textSecondary, size: 18),
                     const SizedBox(width: 8),
-                    Text('Joined Teams', style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                    Text(AppLocalizations.of(context)!.joinedTeamsLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: VSPColors.textSecondary, 
                       fontWeight: FontWeight.bold
                     )),
@@ -368,7 +395,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             children: [
                               const Icon(Icons.person_add_alt_1, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
-                              Text('Add Team', style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              Text(AppLocalizations.of(context)!.addTeam, style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.accent,
                                 fontWeight: FontWeight.bold,
                                 fontSize: 10,
@@ -387,6 +414,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         itemCount: teams.length,
                         itemBuilder: (context, index) {
                           final team = teams[index];
+                          final isPaid = _currentChampionship.paidTeams.contains(team.id);
+                          
                           return Container(
                             margin: const EdgeInsets.only(bottom: 12),
                             padding: const EdgeInsets.all(VSPSpacing.sm),
@@ -399,7 +428,13 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                               children: [
                                 CircleAvatar(
                                   radius: 20,
-                                  backgroundImage: NetworkImage(team.captainImageUrl),
+                                  backgroundImage: team.captainImageUrl.isNotEmpty
+                                      ? NetworkImage(team.captainImageUrl)
+                                      : null,
+                                  backgroundColor: VSPColors.surfaceAlt,
+                                  child: team.captainImageUrl.isEmpty
+                                      ? const Icon(Icons.group, color: VSPColors.textSecondary, size: 20)
+                                      : null,
                                 ),
                                 const SizedBox(width: 12),
                                 Expanded(
@@ -409,6 +444,44 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                       Text(team.name, style: Theme.of(context).textTheme.titleSmall),
                                       Text(team.captainName, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                                     ],
+                                  ),
+                                ),
+                                // ── Entry Fee Payment Badge ──
+                                GestureDetector(
+                                  onTap: () => _togglePaymentStatus(team.id),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 250),
+                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                    decoration: BoxDecoration(
+                                      color: isPaid
+                                          ? VSPColors.success.withValues(alpha: 0.15)
+                                          : VSPColors.warning.withValues(alpha: 0.15),
+                                      borderRadius: BorderRadius.circular(VSPRadius.full),
+                                      border: Border.all(
+                                        color: isPaid
+                                            ? VSPColors.success.withValues(alpha: 0.5)
+                                            : VSPColors.warning.withValues(alpha: 0.5),
+                                      ),
+                                    ),
+                                    child: Row(
+                                      mainAxisSize: MainAxisSize.min,
+                                      children: [
+                                        Icon(
+                                          isPaid ? Icons.check_circle : Icons.pending,
+                                          size: 14,
+                                          color: isPaid ? VSPColors.success : VSPColors.warning,
+                                        ),
+                                        const SizedBox(width: 4),
+                                        Text(
+                                          isPaid ? AppLocalizations.of(context)!.paid : AppLocalizations.of(context)!.pending,
+                                          style: TextStyle(
+                                            color: isPaid ? VSPColors.success : VSPColors.warning,
+                                            fontSize: 11,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
                                   ),
                                 ),
                               ],
@@ -429,14 +502,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                   children: [
                     if (_currentChampionship.status == 'open')
                       PrimaryButton(
-                        text: 'GENERATE DRAW & START',
+                        text: AppLocalizations.of(context)!.generateDrawStart,
                         isLoading: _isLoading,
                         onPressed: _handleStartTournament,
                       ),
                     
                     if (_currentChampionship.status != 'open')
                       PrimaryButton(
-                        text: 'VIEW BRACKETS',
+                        text: AppLocalizations.of(context)!.viewBrackets.toUpperCase(),
                         color: VSPColors.accent.withValues(alpha: 0.1),
                         textColor: VSPColors.accent,
                         onPressed: () {
@@ -455,7 +528,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     if (_currentChampionship.status == 'ongoing') ...[
                       const SizedBox(height: 12),
                       PrimaryButton(
-                        text: 'MANUAL CROWN CHAMPION',
+                        text: AppLocalizations.of(context)!.manualCrownChampion,
                         color: VSPColors.surfaceAlt,
                         textColor: VSPColors.textSecondary,
                         onPressed: () => _showWinnerSelectionDialog(teams),

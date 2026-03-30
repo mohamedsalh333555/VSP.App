@@ -1080,6 +1080,9 @@ class Championship {
   final String? championTeamId;
   final String? championTeamName;
 
+  // Entry Fee Tracking
+  final List<String> paidTeams;
+
   Championship({
     required this.id,
     required this.name,
@@ -1109,6 +1112,7 @@ class Championship {
     this.status = 'open',
     this.championTeamId,
     this.championTeamName,
+    this.paidTeams = const [],
   });
 
   // SECURITY PATCH: Robust type parsing with crash prevention for malicious or corrupted data payloads.
@@ -1149,6 +1153,7 @@ class Championship {
         status: data['status']?.toString() ?? 'open',
         championTeamId: data['championTeamId']?.toString(),
         championTeamName: data['championTeamName']?.toString(),
+        paidTeams: List<String>.from(data['paidTeams'] ?? []),
       );
     } catch (e) {
       // Fallback object to prevent app crash if schema is completely broken
@@ -1199,6 +1204,7 @@ class Championship {
     String? status,
     String? championTeamId,
     String? championTeamName,
+    List<String>? paidTeams,
   }) {
     return Championship(
       id: id ?? this.id,
@@ -1229,6 +1235,7 @@ class Championship {
       status: status ?? this.status,
       championTeamId: championTeamId ?? this.championTeamId,
       championTeamName: championTeamName ?? this.championTeamName,
+      paidTeams: paidTeams ?? this.paidTeams,
     );
   }
 
@@ -1264,6 +1271,7 @@ class Championship {
       'status': status,
       'championTeamId': championTeamId,
       'championTeamName': championTeamName,
+      'paidTeams': paidTeams,
       'createdAt': FieldValue.serverTimestamp(),
     };
   }

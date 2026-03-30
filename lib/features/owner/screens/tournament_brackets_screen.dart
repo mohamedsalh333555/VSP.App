@@ -1,5 +1,6 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
@@ -24,7 +25,7 @@ class TournamentBracketsScreen extends StatelessWidget {
         centerTitle: true,
         leading: const BackButton(color: VSPColors.textPrimary),
         title: Text(
-          'Tournament Brackets',
+          AppLocalizations.of(context)!.tournamentBrackets,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -40,7 +41,7 @@ class TournamentBracketsScreen extends StatelessWidget {
           if (matches.isEmpty) {
             return Center(
               child: Text(
-                'Brackets not generated yet.',
+                AppLocalizations.of(context)!.noBracketsYet,
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
               ),
             );
@@ -72,13 +73,13 @@ class TournamentBracketsScreen extends StatelessWidget {
   Widget _buildRoundColumn(BuildContext context, int roundIndex, List<TournamentMatch> matches) {
     matches.sort((a, b) => a.matchIndex.compareTo(b.matchIndex));
     
-    String roundName = 'Round of ${matches.length * 2}';
+    String roundName = AppLocalizations.of(context)!.roundOf(matches.length * 2);
     if (roundIndex == 0) {
-      roundName = 'Final';
+      roundName = AppLocalizations.of(context)!.finalRound;
     } else if (roundIndex == 1) {
-      roundName = 'Semi Final';
+      roundName = AppLocalizations.of(context)!.semiFinalRound;
     } else if (roundIndex == 2) {
-      roundName = 'Quarter Final';
+      roundName = AppLocalizations.of(context)!.quarterFinalRound;
     }
 
     return Container(
@@ -105,6 +106,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                   match: matches[index],
                   isOwner: isOwner,
                   onTap: isOwner ? () => _showScoreDialog(context, matches[index]) : null,
+                  onScheduleTap: isOwner ? () => _showScheduleDialog(context, matches[index]) : null,
                 );
               },
             ),
@@ -114,11 +116,93 @@ class TournamentBracketsScreen extends StatelessWidget {
     );
   }
 
+  // ── Schedule Date/Time Dialog ──
+  void _showScheduleDialog(BuildContext context, TournamentMatch match) async {
+    // 1. Pick Date
+    final pickedDate = await showDatePicker(
+      context: context,
+      initialDate: match.scheduledTime ?? DateTime.now().add(const Duration(days: 1)),
+      firstDate: DateTime.now(),
+      lastDate: DateTime.now().add(const Duration(days: 365)),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: VSPColors.accent,
+              onPrimary: Colors.black,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
+            ),
+            dialogBackgroundColor: VSPColors.background,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedDate == null || !context.mounted) return;
+
+    // 2. Pick Time
+    final pickedTime = await showTimePicker(
+      context: context,
+      initialTime: match.scheduledTime != null
+          ? TimeOfDay.fromDateTime(match.scheduledTime!)
+          : const TimeOfDay(hour: 20, minute: 0),
+      builder: (context, child) {
+        return Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: VSPColors.accent,
+              onPrimary: Colors.black,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
+            ),
+            dialogBackgroundColor: VSPColors.background,
+          ),
+          child: child!,
+        );
+      },
+    );
+
+    if (pickedTime == null || !context.mounted) return;
+
+    // 3. Combine Date + Time
+    final scheduledDateTime = DateTime(
+      pickedDate.year,
+      pickedDate.month,
+      pickedDate.day,
+      pickedTime.hour,
+      pickedTime.minute,
+    );
+
+    // 4. Save to Firestore
+    try {
+      await TournamentRepository().updateMatchScheduledTime(
+        matchId: match.id,
+        scheduledTime: scheduledDateTime,
+      );
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(AppLocalizations.of(context)!.matchScheduledFor(DateFormat('MMM d, hh:mm a').format(scheduledDateTime))),
+            backgroundColor: VSPColors.accent,
+          ),
+        );
+      }
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+        );
+      }
+    }
+  }
+
   void _showScoreDialog(BuildContext context, TournamentMatch match) {
     // Prevent editing if not fully populated
     if (match.homeTeamId == null || match.awayTeamId == null) {
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(content: Text('Waiting for previous round winners...')),
+        SnackBar(content: Text(AppLocalizations.of(context)!.waitingPreviousWinners)),
       );
       return;
     }
@@ -132,19 +216,19 @@ class TournamentBracketsScreen extends StatelessWidget {
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text('Update Score', style: Theme.of(context).textTheme.titleLarge),
+        title: Text(AppLocalizations.of(context)!.updateScore, style: Theme.of(context).textTheme.titleLarge),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            _buildScoreInput(context, match.homeTeamName ?? 'Home', homeController),
+            _buildScoreInput(context, match.homeTeamName ?? AppLocalizations.of(context)!.home, homeController),
             const SizedBox(height: VSPSpacing.md),
-            _buildScoreInput(context, match.awayTeamName ?? 'Away', awayController),
+            _buildScoreInput(context, match.awayTeamName ?? AppLocalizations.of(context)!.na, awayController),
           ],
         ),
         actions: [
           TextButton(
             onPressed: () => Navigator.pop(context),
-            child: Text('Cancel', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
+            child: Text(AppLocalizations.of(context)!.cancel, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.textSecondary)),
           ),
           TextButton(
             onPressed: () async {
@@ -153,7 +237,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               
               if (h == a) {
                 ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(content: Text('Draws not allowed in knockout!')),
+                  SnackBar(content: Text(AppLocalizations.of(context)!.drawNotAllowed)),
                 );
                 return;
               }
@@ -171,7 +255,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                 winnerName: winnerName,
               );
             },
-            child: Text('Save', style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent)),
+            child: Text(AppLocalizations.of(context)!.saveLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent)),
           ),
         ],
       ),
@@ -206,8 +290,9 @@ class _MatchNode extends StatelessWidget {
   final TournamentMatch match;
   final bool isOwner;
   final VoidCallback? onTap;
+  final VoidCallback? onScheduleTap;
 
-  const _MatchNode({required this.match, required this.isOwner, this.onTap});
+  const _MatchNode({required this.match, required this.isOwner, this.onTap, this.onScheduleTap});
 
   @override
   Widget build(BuildContext context) {
@@ -224,6 +309,8 @@ class _MatchNode extends StatelessWidget {
         ),
         child: Column(
           children: [
+            // ── Scheduled Time Display ──
+            _buildScheduleBar(context),
             _buildTeamRow(context, match.homeTeamName, match.homeScore, 
                 isWinner: match.winnerId != null && match.winnerId == match.homeTeamId),
             const Divider(height: 1, color: VSPColors.divider),
@@ -231,6 +318,63 @@ class _MatchNode extends StatelessWidget {
                 isWinner: match.winnerId != null && match.winnerId == match.awayTeamId),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildScheduleBar(BuildContext context) {
+    final hasSchedule = match.scheduledTime != null;
+    final formattedTime = hasSchedule
+        ? DateFormat('MMM d, hh:mm a').format(match.scheduledTime!)
+        : null;
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+      decoration: BoxDecoration(
+        color: hasSchedule
+            ? VSPColors.accent.withValues(alpha: 0.08)
+            : VSPColors.surfaceAlt.withValues(alpha: 0.3),
+        borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.md)),
+      ),
+      child: Row(
+        children: [
+          Icon(
+            hasSchedule ? Icons.event_available : Icons.schedule,
+            size: 13,
+            color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
+          ),
+          const SizedBox(width: 6),
+          Expanded(
+            child: Text(
+              formattedTime ?? AppLocalizations.of(context)!.notScheduled,
+              style: TextStyle(
+                color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
+                fontSize: 11,
+                fontWeight: hasSchedule ? FontWeight.w600 : FontWeight.normal,
+              ),
+            ),
+          ),
+          if (isOwner)
+            GestureDetector(
+              onTap: onScheduleTap,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                ),
+                child: Text(
+                  hasSchedule ? AppLocalizations.of(context)!.editLabel : AppLocalizations.of(context)!.apply,
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 10,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
       ),
     );
   }
@@ -246,7 +390,7 @@ class _MatchNode extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Text(
-            name ?? 'TBD',
+            name ?? AppLocalizations.of(context)!.na,
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                   color: name == null
                       ? VSPColors.textSecondary.withValues(alpha: 0.5)

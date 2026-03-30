@@ -367,6 +367,39 @@ class TournamentRepository {
     }
   }
 
+  /// Update the scheduled time for a tournament match
+  Future<void> updateMatchScheduledTime({
+    required String matchId,
+    required DateTime scheduledTime,
+  }) async {
+    try {
+      await _firestore.collection('tournament_matches').doc(matchId).update({
+        'scheduledTime': Timestamp.fromDate(scheduledTime),
+      });
+    } catch (e) {
+      debugPrint('Error updating match scheduled time: $e');
+      rethrow;
+    }
+  }
+
+  /// Toggle a team's paid status in a championship
+  Future<void> toggleTeamPayment({
+    required String championshipId,
+    required String teamId,
+    required bool isPaid,
+  }) async {
+    try {
+      await _firestore.collection('championships').doc(championshipId).update({
+        'paidTeams': isPaid
+            ? FieldValue.arrayUnion([teamId])
+            : FieldValue.arrayRemove([teamId]),
+      });
+    } catch (e) {
+      debugPrint('Error toggling team payment: $e');
+      rethrow;
+    }
+  }
+
   Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) {
     return _firestore
         .collection('tournament_matches')

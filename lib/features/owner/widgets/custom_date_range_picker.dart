@@ -89,12 +89,12 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
             // 2. Date Inputs Display
             Row(
               children: [
-                Expanded(child: _buildDateInput(_startDate, 'Start Date')),
+                Expanded(child: _buildDateInput(_startDate, AppLocalizations.of(context)!.startDate)),
                 const Padding(
                   padding: EdgeInsets.symmetric(horizontal: 8),
                   child: Text('-', style: TextStyle(color: VSPColors.textSecondary)),
                 ),
-                Expanded(child: _buildDateInput(_endDate, 'End Date')),
+                Expanded(child: _buildDateInput(_endDate, AppLocalizations.of(context)!.endDate)),
               ],
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -113,7 +113,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Reset',
+                    text: AppLocalizations.of(context)!.resetLabel,
                     height: 48,
                     color: VSPColors.surfaceAlt,
                     textColor: VSPColors.textPrimary,
@@ -128,7 +128,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                 const SizedBox(width: VSPSpacing.md),
                 Expanded(
                   child: PrimaryButton(
-                    text: 'Apply',
+                    text: AppLocalizations.of(context)!.apply,
                     height: 48,
                     onPressed: (_startDate != null && _endDate != null)
                         ? () {
