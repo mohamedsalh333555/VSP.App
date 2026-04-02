@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -113,7 +113,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -256,13 +256,28 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 text: AppLocalizations.of(context)!.continueButton,
                 onPressed: _selectedTeam == null
                     ? null
-                    : () {
-                        // Save opponent to draft
-                        context.read<BookingProvider>().updateDraft(
-                          opponentTeamId: _selectedTeam!.id,
-                          opponentTeamName: _selectedTeam!.name,
-                        );
+                    : () async {
+                        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                        final uid = auth.currentUser?.uid;
+                        if (uid != null) {
+                          final team = await DatabaseService().getUserTeam(uid);
+                          if (team != null && context.mounted) {
+                            // Save opponent and player team to draft
+                            context.read<BookingProvider>().updateDraft(
+                              opponentTeamId: _selectedTeam!.id,
+                              opponentTeamName: _selectedTeam!.name,
+                              playerTeamId: team.id,
+                              playerTeamName: team.name, // specifically fetch team.name so it doesn't default to player name
+                            );
+                          }
+                        } else if (context.mounted) {
+                           context.read<BookingProvider>().updateDraft(
+                            opponentTeamId: _selectedTeam!.id,
+                            opponentTeamName: _selectedTeam!.name,
+                          );
+                        }
 
+                        if (!context.mounted) return;
                         Navigator.push(
                           context,
                           MaterialPageRoute(
@@ -461,3 +476,4 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     );
   }
 }
+

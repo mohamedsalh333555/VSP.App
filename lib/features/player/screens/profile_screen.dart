@@ -38,13 +38,13 @@ class ProfileScreen extends StatefulWidget {
 class _ProfileScreenState extends State<ProfileScreen> {
   final GlobalKey _teamCardKey = GlobalKey();
   bool _isSharing = false;
-  bool _isDeleting = false;
 
   Future<void> _shareTeamCard(String teamName) async {
     setState(() => _isSharing = true);
+    final l10n = AppLocalizations.of(context)!;
     try {
       RenderRepaintBoundary boundary = _teamCardKey.currentContext!.findRenderObject() as RenderRepaintBoundary;
-      ui.Image image = await boundary.toImage(pixelRatio: 3.0); // High resolution
+      ui.Image image = await boundary.toImage(pixelRatio: 3.0); 
       ByteData? byteData = await image.toByteData(format: ui.ImageByteFormat.png);
       Uint8List pngBytes = byteData!.buffer.asUint8List();
 
@@ -52,10 +52,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
       
       await Share.shareXFiles(
         [xFile], 
-        text: AppLocalizations.of(context)!.shareTeamMessage(teamName),
+        text: l10n.shareTeamMessage(teamName),
       );
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.shareFailedError);
+      if (mounted) VSPFeedback.showError(context, l10n.shareFailedError);
     } finally {
       if (mounted) setState(() => _isSharing = false);
     }
@@ -63,10 +63,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final auth = context.watch<AuthProvider>();
-    // Null Safety Fix
     final String? userProfileUrl = auth.userModel?.profileImageUrl;
-    final String userName = auth.userModel?.name ?? AppLocalizations.of(context)!.player;
+    final String userName = auth.userModel?.name ?? l10n.player;
     final String userPosition = auth.userModel?.position ?? "ST";
 
     return Scaffold(
@@ -77,7 +77,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
         centerTitle: true,
         automaticallyImplyLeading: false,
         title: Text(
-          AppLocalizations.of(context)!.profile,
+          l10n.profile,
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -86,11 +86,12 @@ class _ProfileScreenState extends State<ProfileScreen> {
         bottom: false,
         child: SingleChildScrollView(
           keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+          physics: const BouncingScrollPhysics(),
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Team Card Section (Viral Feature)
+              // 1. Team Card Section
               FutureBuilder<Team?>(
                 future: TeamRepository().getUserTeam(auth.currentUser!.uid),
                 builder: (context, teamSnapshot) {
@@ -106,7 +107,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   final team = teamSnapshot.data;
 
                   if (team != null) {
-                    // HAS TEAM -> Show Shareable Card
                     return Column(
                       children: [
                         RepaintBoundary(
@@ -115,7 +115,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         ),
                         const SizedBox(height: VSPSpacing.md),
                         PrimaryButton(
-                          text: AppLocalizations.of(context)!.shareTeamCard,
+                          text: l10n.shareTeamCard,
                           icon: Icons.share_rounded,
                           color: VSPColors.accent.withValues(alpha: 0.15),
                           textColor: VSPColors.accent,
@@ -125,7 +125,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       ],
                     );
                   } else {
-                    // NO TEAM -> Show Free Agent Card
                     return Container(
                       width: double.infinity,
                       decoration: BoxDecoration(
@@ -143,7 +142,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                               borderRadius: BorderRadius.circular(VSPRadius.sm),
                             ),
                             child: Text(
-                              AppLocalizations.of(context)!.freeAgent,
+                              l10n.freeAgent,
                               style: const TextStyle(
                                 color: VSPColors.textSecondary,
                                 fontWeight: FontWeight.w900,
@@ -176,18 +175,18 @@ class _ProfileScreenState extends State<ProfileScreen> {
                             style: Theme.of(context).textTheme.headlineSmall?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           Text(
-                            AppLocalizations.of(context)!.positionLabel(userPosition),
+                            l10n.positionLabel(userPosition),
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.accent),
                           ),
                           const SizedBox(height: VSPSpacing.lg),
                           Text(
-                            AppLocalizations.of(context)!.freeAgentDescription,
+                            l10n.freeAgentDescription,
                             textAlign: TextAlign.center,
                             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
                           ),
                           const SizedBox(height: VSPSpacing.lg),
                           PrimaryButton(
-                            text: AppLocalizations.of(context)!.buildYourSquad,
+                            text: l10n.buildYourSquad,
                             height: 48,
                             onPressed: () {
                               Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
@@ -203,14 +202,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: VSPSpacing.xl),
 
               // 2. Account Section
-              VSPSectionTitle(AppLocalizations.of(context)!.account),
+              VSPSectionTitle(l10n.account),
               const SizedBox(height: VSPSpacing.sm),
               VSPFadeInItem(
                 index: 0,
                 child: VSPMenuItem(
                   icon: Icons.edit_outlined,
-                  title: AppLocalizations.of(context)!.editProfile,
-                  subtitle: AppLocalizations.of(context)!.editProfileSubtitle,
+                  title: l10n.editProfile,
+                  subtitle: l10n.editProfileSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
                 ),
               ),
@@ -218,8 +217,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 index: 1,
                 child: VSPMenuItem(
                   icon: Icons.groups_outlined,
-                  title: AppLocalizations.of(context)!.myTeam,
-                  subtitle: AppLocalizations.of(context)!.manageTeamInfo,
+                  title: l10n.myTeam,
+                  subtitle: l10n.manageTeamInfo,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
                 ),
               ),
@@ -227,8 +226,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 index: 2,
                 child: VSPMenuItem(
                   icon: Icons.favorite_border,
-                  title: AppLocalizations.of(context)!.favoriteStadiums,
-                  subtitle: AppLocalizations.of(context)!.viewLikedFacilities,
+                  title: l10n.favoriteStadiums,
+                  subtitle: l10n.viewLikedFacilities,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
                 ),
               ),
@@ -237,8 +236,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   index: 3,
                   child: VSPMenuItem(
                     icon: Icons.payment_outlined,
-                    title: AppLocalizations.of(context)!.paymentMethods,
-                    subtitle: AppLocalizations.of(context)!.managePaymentMethods,
+                    title: l10n.paymentMethods,
+                    subtitle: l10n.managePaymentMethods,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
                   ),
                 ),
@@ -247,14 +246,14 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: VSPSpacing.lg),
 
               // 3. Preferences Section
-              VSPSectionTitle(AppLocalizations.of(context)!.preferences),
+              VSPSectionTitle(l10n.preferences),
               const SizedBox(height: VSPSpacing.sm),
               VSPFadeInItem(
                 index: 4,
                 child: VSPMenuItem(
                   icon: Icons.notifications_none_outlined,
-                  title: AppLocalizations.of(context)!.notifications,
-                  subtitle: AppLocalizations.of(context)!.manageNotificationSettings,
+                  title: l10n.notifications,
+                  subtitle: l10n.manageNotificationSettings,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
                 ),
               ),
@@ -262,8 +261,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 index: 5,
                 child: VSPMenuItem(
                   icon: Icons.shield_outlined,
-                  title: AppLocalizations.of(context)!.privacy,
-                  subtitle: AppLocalizations.of(context)!.privacyPolicy,
+                  title: l10n.privacy,
+                  subtitle: l10n.privacyPolicy,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
                 ),
               ),
@@ -271,8 +270,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 index: 6,
                 child: VSPMenuItem(
                   icon: Icons.translate,
-                  title: AppLocalizations.of(context)!.language,
-                  subtitle: AppLocalizations.of(context)!.manageLanguagePreferences,
+                  title: l10n.language,
+                  subtitle: l10n.manageLanguagePreferences,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
                 ),
               ),
@@ -280,21 +279,21 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 index: 7,
                 child: VSPMenuItem(
                   icon: Icons.help_outline,
-                  title: AppLocalizations.of(context)!.helpCenter,
-                  subtitle: AppLocalizations.of(context)!.getHelpSupport,
+                  title: l10n.helpCenter,
+                  subtitle: l10n.getHelpSupport,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
                 ),
               ),
 
               const SizedBox(height: VSPSpacing.xl),
 
-              // 4. Danger Zone (Logout & Delete Account)
+              // 4. Danger Zone
               VSPFadeInItem(
                 index: 8,
                 child: VSPMenuItem(
                   icon: Icons.logout,
-                  title: AppLocalizations.of(context)!.logout,
-                  subtitle: AppLocalizations.of(context)!.signOutAccount,
+                  title: l10n.logout,
+                  subtitle: l10n.signOutAccount,
                   isLogout: true,
                   onTap: () async {
                     await Provider.of<AuthProvider>(context, listen: false).signOut();
@@ -308,7 +307,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               
-              // Bottom Padding to prevent nav bar overlap
               SizedBox(height: MediaQuery.of(context).padding.bottom + 110),
             ],
           ),

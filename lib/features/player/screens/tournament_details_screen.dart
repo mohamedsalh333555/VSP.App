@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/theme/app_theme.dart';
@@ -22,7 +22,7 @@ class TournamentDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -274,7 +274,7 @@ class TournamentDetailsScreen extends StatelessWidget {
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: VSPSpacing.md),
-            _buildBulletPoint(context, 'Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.'),
+            _buildBulletPoint(context, 'Each Player Must Wear Designated Sports Shoes (Kochi)â€”Barefoot Play Is Not Permitted.'),
             _buildBulletPoint(context, 'Players Must Bring Their Own Sports Clothing And Equipment.'),
             _buildBulletPoint(context, 'Please Keep The Field Clean And Follow The Organizers\' Instructions.'),
             _buildBulletPoint(context, 'Respect The Referees, Organizers, And Other Participants.'),
@@ -329,7 +329,7 @@ class TournamentDetailsScreen extends StatelessWidget {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           const Text(
-            '•',
+            'â€¢',
             style: TextStyle(
               color: VSPColors.textPrimary,
               fontSize: 14,
@@ -350,3 +350,4 @@ class TournamentDetailsScreen extends StatelessWidget {
     );
   }
 }
+

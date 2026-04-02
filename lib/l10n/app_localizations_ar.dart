@@ -1642,4 +1642,495 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get editLabel => 'تعديل';
+
+  @override
+  String get quickTemplates => 'نماذج سريعة';
+
+  @override
+  String get choosePresetSubtitle => 'اختر نموذجاً جاهزاً أو املأ البيانات أدناه';
+
+  @override
+  String get tournamentNameLabel => 'اسم البطولة';
+
+  @override
+  String get sportTypeLabel => 'نوع الرياضة';
+
+  @override
+  String get entryFeeLabel => 'رسوم الاشتراك (ج.م)';
+
+  @override
+  String get tournamentSystemLabel => 'نظام البطولة';
+
+  @override
+  String get maxTeamsLabel => 'أقصى عدد للفرق';
+
+  @override
+  String get startDateLabel => 'تاريخ البدء';
+
+  @override
+  String get endDateLabel => 'تاريخ الانتهاء';
+
+  @override
+  String get matchDurationLabel => 'مدة المباراة (دقيقة)';
+
+  @override
+  String get grandPrizeLabel => 'الجائزة الكبرى (ج.م)';
+
+  @override
+  String get createTournamentTitle => 'إنشاء بطولة';
+
+  @override
+  String get editTournamentTitle => 'تعديل البطولة';
+
+  @override
+  String get basicsStep => 'الأساسيات';
+
+  @override
+  String get systemStep => 'النظام';
+
+  @override
+  String get schedulingStep => 'الجدول';
+
+  @override
+  String get backButton => 'رجوع';
+
+  @override
+  String get nextButton => 'التالي';
+
+  @override
+  String get updateChanges => 'تحديث التغييرات';
+
+  @override
+  String get pendingVerificationBanner => 'في انتظار توثيق المستندات';
+
+  @override
+  String get verifyNowBtn => 'وثق الآن';
+
+  @override
+  String get createTeamTitle => 'إنشاء فريق';
+
+  @override
+  String get teamNameLabel => 'اسم الفريق';
+
+  @override
+  String get teamDescriptionLabel => 'وصف الفريق';
+
+  @override
+  String get addTeamMembers => 'إضافة أعضاء الفريق';
+
+  @override
+  String get createTeamBtn => 'إنشاء الفريق';
+
+  @override
+  String get allStadiumsLabel => 'كل الملاعب';
+
+  @override
+  String get totalRevenue => 'إجمالي الإيرادات';
+
+  @override
+  String get bookedHours => 'ساعات الحجز';
+
+  @override
+  String get myStadiumsStatus => 'حالة ملاعبي';
+
+  @override
+  String get identityPendingVerification => 'حسابك في انتظار توثيق المستندات. اضغط للرفع.';
+
+  @override
+  String get uploadPhoto => 'رفع صورة';
+
+  @override
+  String get teamMembers => 'أعضاء الفريق';
+
+  @override
+  String get stadiumsEmptyTitle => 'لا توجد ملاعب مضافة';
+
+  @override
+  String get stadiumsEmptySubtitle => 'أضف ملعبك الأول للبدء في استقبال الحجوزات';
+
+  @override
+  String get bookingsEmptyTitle => 'لا توجد حجوزات بعد';
+
+  @override
+  String get bookingsEmptySubtitle => 'ستظهر حجوزاتك هنا بمجرد أن يبدأ العملاء في الحجز';
+
+  @override
+  String get confirmBtn => 'تأكيد';
+
+  @override
+  String get cancelBtn => 'إلغاء';
+
+  @override
+  String get actualLabel => 'الفعلي';
+
+  @override
+  String get platformCommissionLabel => 'عمولة المنصة';
+
+  @override
+  String get uploadLogo => 'رفع الشعار';
+
+  @override
+  String get changeLogo => 'تغيير الشعار';
+
+  @override
+  String get enterTeamName => 'يرجى إدخال اسم الفريق';
+
+  @override
+  String get teamCreatedSuccess => 'تم إنشاء الفريق بنجاح!';
+
+  @override
+  String get friendsRequiredNote => 'ملاحظة: تم إنشاء الفريق، لكنك تحتاج إلى 4 أصدقاء آخرين لمباريات التحدي.';
+
+  @override
+  String get addMemberBtn => 'إضافة عضو';
+
+  @override
+  String get noMembersAddedYet => 'لم يتم إضافة أعضاء بعد';
+
+  @override
+  String get createTeamSubtitle => 'أنشئ فريقك ليتمكن أصدقاؤك المفضلون من الانضمام إليك.';
+
+  @override
+  String get totalCollectedGross => 'إجمالي المحصل (الإجمالي)';
+
+  @override
+  String get platformCutApplied => 'تم تطبيق خصم 5% عمولة المنصة';
+
+  @override
+  String get bookedTitle => 'الحجوزات';
+
+  @override
+  String get individualPlayerLabel => 'لاعب فردي';
+
+  @override
+  String get collectedSticker => 'تم التحصيل';
+
+  @override
+  String get pendingSticker => 'قيد الانتظار';
+
+  @override
+  String get profileAccountLabel => 'الحساب';
+
+  @override
+  String get profileAccountSubtitle => 'إدارة معلومات حسابك';
+
+  @override
+  String get profilePreferencesLabel => 'التفضيلات';
+
+  @override
+  String get profileNotificationsLabel => 'التنبيهات';
+
+  @override
+  String get profileNotificationsSubtitle => 'إدارة إعدادات التنبيهات';
+
+  @override
+  String get profilePrivacyLabel => 'الخصوصية';
+
+  @override
+  String get profilePrivacySubtitle => 'سياسة الخصوصية';
+
+  @override
+  String get profileLanguageLabel => 'اللغة';
+
+  @override
+  String get profileLanguageSubtitle => 'إدارة تفضيلات اللغة';
+
+  @override
+  String get profileSupportLabel => 'الدعم';
+
+  @override
+  String get profileHelpCenterLabel => 'مركز المساعدة';
+
+  @override
+  String get profileHelpCenterSubtitle => 'تحدث مع الدعم';
+
+  @override
+  String get profileLogoutLabel => 'تسجيل الخروج';
+
+  @override
+  String get profileLogoutSubtitle => 'تسجيل الخروج من حسابك';
+
+  @override
+  String get inProgress => 'قيد اللعب';
+
+  @override
+  String get filters => 'الفلاتر';
+
+  @override
+  String get reset => 'إعادة ضبط';
+
+  @override
+  String get apply => 'تطبيق';
+
+  @override
+  String get sports => 'الرياضات';
+
+  @override
+  String get priceRange => 'نطاق السعر';
+
+  @override
+  String get ratings => 'التقييمات';
+
+  @override
+  String get services => 'الخدمات';
+
+  @override
+  String get selectSports => 'اختر الرياضات';
+
+  @override
+  String get minRating => 'أدنى تقييم';
+
+  @override
+  String get anyRating => 'أي تقييم';
+
+  @override
+  String get stars => 'نجوم';
+
+  @override
+  String get stadiumServices => 'خدمات الملعب';
+
+  @override
+  String get stadiumApprovedTitle => 'تمت الموافقة على الملعب!';
+
+  @override
+  String stadiumApprovedSubtitle(Object name) => 'مبروك! "$name" متاح الآن للحجز.';
+
+  @override
+  String get dismissBtn => 'حسناً';
+
+  @override
+  String get createTournament => 'إنشاء بطولة';
+
+  @override
+  String get tournamentsTitle => 'البطولات';
+
+  @override
+  String get coming => 'القادمة';
+
+  @override
+  String get ongoing => 'الحالية';
+
+  @override
+  String get finished => 'المنتهية';
+
+  @override
+  String get noTournamentsTitle => 'لا توجد بطولات بعد';
+
+  @override
+  String get noTournamentsSubtitle => 'ابدأ تنظيم أول بطولة لك واجذب المزيد من اللاعبين!';
+
+  @override
+  String get createYourFirst => 'أنشئ أول بطولة';
+
+  @override
+  String shareTournamentText(Object name, Object startDate, Object endDate, Object prize, Object fee) => 'انضم إلى بطولتي "$name"! 🏆\n📅 التاريخ: $startDate - $endDate\n💰 الجائزة: $prize جنيه\n⚽ الاشتراك: $fee جنيه\nسجل الآن عبر تطبيق VSP!';
+
+  @override
+  String get entryFeeLabel => 'رسوم الاشتراك';
+
+  @override
+  String get grandPrizeLabel => 'الجائزة الكبرى';
+
+  @override
+  String teamsJoinedCount(Object count, Object max) => 'الفرق: $count / $max';
+
+  @override
+  String get stadiumsEmptyTitle => 'لم يتم العثور على ملاعب';
+
+  @override
+  String get stadiumsEmptySubtitle => 'لم تضف أي ملاعب بعد. أضف ملعبك الأول لبدء استقبال الحجوزات.';
+
+  @override
+  String get noWorkingHoursTitle => 'لا توجد ساعات عمل';
+
+  @override
+  String get noWorkingHoursSubtitle => 'يرجى ضبط ساعات عمل الملعب أولاً.';
+
+  @override
+  String get addManualBooking => 'إضافة حجز يدوي';
+
+  @override
+  String get breakTime => 'وقت استراحة';
+
+  @override
+  String get closedBadge => 'مغلق';
+
+  @override
+  String get openBadge => 'متاح';
+
+  @override
+  String get bookedManually => 'محجوز يدوياً';
+
+  @override
+  String get bookingDetailsTitle => 'تفاصيل الحجز';
+
+  @override
+  String get manualBookingTitle => 'حجز يدوي';
+
+  @override
+  String get cancelBooking => 'إلغاء الحجز؟';
+
+  @override
+  String get cancelBookingConfirm => 'هل أنت متأكد أنك تريد حذف هذا الحجز؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get timeAndStadium => 'الوقت والملعب';
+
+  @override
+  String get customerName => 'اسم العميل';
+
+  @override
+  String get enterNameHint => 'أدخل الاسم';
+
+  @override
+  String get phoneOptionalHint => '٠١xxxxxxxxx (اختياري)';
+
+  @override
+  String get internalNotes => 'ملاحظات داخلية';
+
+  @override
+  String get internalNotesHint => 'مثال: تم دفع العربون، طلب خاص...';
+
+  @override
+  String get paymentStatus => 'حالة الدفع';
+
+  @override
+  String get collectedStatusAuto => 'تم التحصيل (تلقائياً)';
+
+  @override
+  String get pendingStatusAuto => 'قيد الانتظار (تلقائياً)';
+
+  @override
+  String get update => 'تحديث';
+
+  @override
+  String get enterCustomerNameError => 'يرجى إدخال اسم العميل';
+
+  @override
+  String get informationStadium => 'معلومات الملعب';
+
+  @override
+  String get noDescription => 'لا يوجد وصف متاح.';
+
+  @override
+  String get ownerNotes => 'ملاحظات المالك';
+
+  @override
+  String get noOwnerNotes => 'لا توجد ملاحظات خاصة من المالك.';
+
+  @override
+  String get punctuality => 'الدقة في المواعيد';
+
+  @override
+  String get punctualityPolicy => 'يرجى الوصول قبل 15 دقيقة من موعد الحجز الخاص بك.';
+
+  @override
+  String get reservationDuration => 'مدة الحجز';
+
+  @override
+  String get reservationDurationPolicy => 'يجب إخلاء الملعب فور انتهاء وقت الحجز.';
+
+  @override
+  String get liability => 'المسؤولية';
+
+  @override
+  String get liabilityPolicy => 'الملعب غير مسؤول عن المفقودات أو الإصابات.';
+
+  @override
+  String get noReviews => 'لا توجد تقييمات لهذا الملعب بعد.';
+
+  @override
+  String get recently => 'مؤخراً';
+
+  @override
+  String get buildYourSquad => 'ابني فريقك';
+
+  @override
+  String get points => 'النقاط';
+
+  @override
+  String get members => 'الأعضاء';
+
+  @override
+  String get trophies => 'البطولات';
+
+  @override
+  String get wins => 'الانتصارات';
+
+  @override
+  String get teamName => 'اسم الفريق';
+
+  @override
+  String get enterTeamName => 'أدخل اسم الفريق';
+
+  @override
+  String teamMembersHeader(Object current, Object max) {
+    return 'أعضاء الفريق ($current/$max)';
+  }
+
+  @override
+  String get addMember => 'إضافة عضو';
+
+  @override
+  String get addMembersHint => 'ابحث عن أعضاء وأضفهم لفريقك';
+
+  @override
+  String get teamAchievements => 'إنجازات الفريق';
+
+  @override
+  String get registerTeamPrompt => 'أنشئ فريقك الآن وابدأ في حصد البطولات!';
+
+  @override
+  String get deleteTeam => 'حذف الفريق';
+
+  @override
+  String get deleteTeamConfirm => 'هل أنت متأكد من حذف هذا الفريق؟ لا يمكن التراجع عن هذا الإجراء.';
+
+  @override
+  String get saveChanges => 'حفظ التغييرات';
+
+  @override
+  String get badgeUnlockedStatus => 'الحالة: تم الفتح! واصل التقدم.';
+
+  @override
+  String get badgeLockedStatus => 'الحالة: مغلق. أكمل المتطلبات للحصول على هذا الوسام.';
+
+  @override
+  String get gotItBtn => 'حسناً';
+
+  @override
+  String get selectDate => 'اختر التاريخ';
+
+  @override
+  String get selectTime => 'اختر الوقت';
+
+  @override
+  String get expiredStatus => 'منتهي';
+
+  @override
+  String get currentPlayersWithYou => 'اللاعبون الحاليون معك';
+
+  @override
+  String get playersInGroupSubtitle => 'بما في ذلك أنت';
+
+  @override
+  String get totalPriceLabel => 'السعر الإجمالي';
+
+  @override
+  String get confirmSelections => 'تأكيد الاختيارات';
+
+  @override
+  String get bookingSummary => 'ملخص الحجز';
+
+  @override
+  String get cashPayAtStadium => 'نقداً (الدفع في الملعب)';
+
+  @override
+  String get cashPayment => 'الدفع نقداً';
+
+  @override
+  String get cashPaymentDesc => 'يرجى تحضير المبلغ المطلوب لدفعه في استقبال الملعب قبل البدء.';
+
+  @override
+  String get subtotalAmount => 'المبلغ الإجمالي';
 }

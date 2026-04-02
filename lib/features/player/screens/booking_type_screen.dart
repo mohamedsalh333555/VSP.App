@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -71,7 +71,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -355,3 +355,4 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     );
   }
 }
+

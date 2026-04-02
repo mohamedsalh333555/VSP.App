@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -24,7 +24,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios_new, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -67,7 +67,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'SEASON 1 • ROUND 2',
+                        'SEASON 1 â€¢ ROUND 2',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.bold,
@@ -579,3 +579,4 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
     );
   }
 }
+

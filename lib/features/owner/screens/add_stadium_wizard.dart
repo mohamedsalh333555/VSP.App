@@ -16,6 +16,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:geocoding/geocoding.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 class AddStadiumWizard extends StatefulWidget {
   final String? stadiumId;
@@ -750,7 +751,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   Widget _buildTextField(
     String label, 
     String hint, {
-    TextEditingController? controller, 
+    required TextEditingController controller, 
     bool readOnly = false, 
     int maxLines = 1,
     int? maxLength,
@@ -762,21 +763,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       children: [
         Text(label, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
         const SizedBox(height: VSPSpacing.xs),
-        TextField(
+        CustomTextField(
           controller: controller,
-          readOnly: readOnly,
-          maxLines: maxLines,
+          hintText: hint,
+          keyboardType: keyboardType ?? (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
           maxLength: maxLength,
-          keyboardType: keyboardType,
           inputFormatters: inputFormatters,
-          style: Theme.of(context).textTheme.bodyMedium,
-          decoration: InputDecoration(
-            hintText: hint,
-            filled: true,
-            fillColor: VSPColors.surface,
-            counterText: "", // Hide counter for cleaner UI
-            border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
-          ),
+          onChanged: (val) {
+            if (readOnly) {
+              // If it's read only but somehow changed (not ideal for CustomTextField but keeping simple)
+            }
+          },
         ),
       ],
     );

@@ -35,27 +35,10 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
   @override
   void initState() {
     super.initState();
-    if (AppConfig.bypassOtp) {
-      WidgetsBinding.instance.addPostFrameCallback((_) {
-        _handleBypassVerify();
-      });
-    } else {
-      _startCountdown();
-    }
+    _startCountdown();
   }
 
-  Future<void> _handleBypassVerify() async {
-    setState(() => _isLoading = true);
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    await auth.updateProfile({'isRegistrationComplete': true});
-    if (!mounted) return;
-    
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (_) => const RootScreen()),
-      (route) => false,
-    );
-  }
+
 
   @override
   void dispose() {

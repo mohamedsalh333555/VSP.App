@@ -1,17 +1,36 @@
-import 'dart:io';
-import 'package:firebase_storage/firebase_storage.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter_image_compress/flutter_image_compress.dart';
+import 'package:path_provider/path_provider.dart';
+import 'package:path/path.dart' as p;
 
 class StorageService {
   final FirebaseStorage _storage = FirebaseStorage.instance;
 
   Future<String?> uploadFile({required File file, required String path}) async {
     try {
-      // ضغط الصورة تلقائياً يتم عن طريق حزمة flutter_image_compress قبل الإرسال (يفضل إضافتها)
+      // 🚀 Image Compression Optimization
+      File finalFile = file;
+      final extension = p.extension(file.path).toLowerCase();
+      
+      if (['.jpg', '.jpeg', '.png', '.heic'].contains(extension)) {
+        final tempDir = await getTemporaryDirectory();
+        final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}$extension");
+        
+        final compressedXFile = await FlutterImageCompress.compressAndGetFile(
+          file.absolute.path,
+          targetPath,
+          quality: 70, // Significant savings with minimal loss
+        );
+        
+        if (compressedXFile != null) {
+          finalFile = File(compressedXFile.path);
+        }
+      }
+
       final ref = _storage.ref().child(path);
       final uploadTask = await ref.putFile(
-        file,
-        SettableMetadata(contentType: 'image/jpeg'), // تحديد النوع
+        finalFile,
+        SettableMetadata(contentType: 'image/jpeg'), 
       );
       return await uploadTask.ref.getDownloadURL();
     } catch (e) {

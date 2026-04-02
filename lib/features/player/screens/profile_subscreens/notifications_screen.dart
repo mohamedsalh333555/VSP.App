@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -48,11 +48,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          languageProvider.isArabic ? 'الإشعارات' : 'Notifications',
+          languageProvider.isArabic ? 'Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª' : 'Notifications',
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -64,8 +64,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 children: [
                   _buildSwitchTile(
-                    languageProvider.isArabic ? 'إشعارات عامة' : 'General Notifications',
-                    languageProvider.isArabic ? 'استلام التحديثات والإعلانات الهامة' : 'Receive Important Updates And Announcements',
+                    languageProvider.isArabic ? 'Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø¹Ø§Ù…Ø©' : 'General Notifications',
+                    languageProvider.isArabic ? 'Ø§Ø³ØªÙ„Ø§Ù… Ø§Ù„ØªØ­Ø¯ÙŠØ«Ø§Øª ÙˆØ§Ù„Ø¥Ø¹Ù„Ø§Ù†Ø§Øª Ø§Ù„Ù‡Ø§Ù…Ø©' : 'Receive Important Updates And Announcements',
                     _generalNotifications,
                     (v) {
                       setState(() => _generalNotifications = v);
@@ -74,8 +74,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   ),
                   const SizedBox(height: 24),
                   _buildSwitchTile(
-                    languageProvider.isArabic ? 'تنبيهات صوتية' : 'Sound Alerts',
-                    languageProvider.isArabic ? 'تفعيل التنبيهات الصوتية للإشعارات' : 'Enable Sound Alerts For Notifications',
+                    languageProvider.isArabic ? 'ØªÙ†Ø¨ÙŠÙ‡Ø§Øª ØµÙˆØªÙŠØ©' : 'Sound Alerts',
+                    languageProvider.isArabic ? 'ØªÙØ¹ÙŠÙ„ Ø§Ù„ØªÙ†Ø¨ÙŠÙ‡Ø§Øª Ø§Ù„ØµÙˆØªÙŠØ© Ù„Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª' : 'Enable Sound Alerts For Notifications',
                     _soundAlerts,
                     (v) {
                       setState(() => _soundAlerts = v);
@@ -88,11 +88,11 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                   // The toggle is disabled and labeled explicitly to avoid misleading the user.
                   _buildSwitchTile(
                     languageProvider.isArabic
-                        ? 'إشعارات الدفع (قريبًا)'
+                        ? 'Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø§Ù„Ø¯ÙØ¹ (Ù‚Ø±ÙŠØ¨Ù‹Ø§)'
                         : 'Push Notifications (Coming Soon)',
                     languageProvider.isArabic
-                        ? 'هذا الإعداد غير مفعّل بعد على مستوى الجهاز'
-                        : 'Stored locally only — device-level push not yet connected',
+                        ? 'Ù‡Ø°Ø§ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯ ØºÙŠØ± Ù…ÙØ¹Ù‘Ù„ Ø¨Ø¹Ø¯ Ø¹Ù„Ù‰ Ù…Ø³ØªÙˆÙ‰ Ø§Ù„Ø¬Ù‡Ø§Ø²'
+                        : 'Stored locally only â€” device-level push not yet connected',
                     _pushNotifications,
                     null, // null disables the Switch interaction
                   ),
@@ -160,3 +160,4 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     );
   }
 }
+

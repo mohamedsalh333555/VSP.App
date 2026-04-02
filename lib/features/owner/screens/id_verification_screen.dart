@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:provider/provider.dart';
@@ -93,7 +93,7 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -199,3 +199,4 @@ class _IdVerificationScreenState extends State<IdVerificationScreen> {
     );
   }
 }
+

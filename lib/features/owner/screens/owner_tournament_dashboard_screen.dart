@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
@@ -8,7 +8,7 @@ import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
-import 'tournament_brackets_screen.dart'; // 🟢 IMPORT
+import 'tournament_brackets_screen.dart'; // ðŸŸ¢ IMPORT
 
 class OwnerTournamentDashboardScreen extends StatefulWidget {
   final Championship championship;
@@ -29,7 +29,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     _currentChampionship = widget.championship;
   }
 
-  // 🟢 UPDATED: Generate Fixtures Logic (with Force Start option)
+  // ðŸŸ¢ UPDATED: Generate Fixtures Logic (with Force Start option)
   Future<void> _handleStartTournament() async {
     final teamCount = _currentChampionship.joinedTeams.length;
 
@@ -295,7 +295,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     );
   }
 
-  // ── Toggle Paid Status ──
+  // â”€â”€ Toggle Paid Status â”€â”€
   Future<void> _togglePaymentStatus(String teamId) async {
     final isPaid = _currentChampionship.paidTeams.contains(teamId);
     try {
@@ -331,7 +331,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
@@ -446,7 +446,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                     ],
                                   ),
                                 ),
-                                // ── Entry Fee Payment Badge ──
+                                // â”€â”€ Entry Fee Payment Badge â”€â”€
                                 GestureDetector(
                                   onTap: () => _togglePaymentStatus(team.id),
                                   child: AnimatedContainer(
@@ -555,3 +555,4 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     );
   }
 }
+

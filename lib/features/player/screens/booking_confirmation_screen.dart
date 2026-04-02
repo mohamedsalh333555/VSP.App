@@ -9,14 +9,12 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-
 import '../../../core/services/database_service.dart';
-
 import 'payment_gateway_screen.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
-  final Stadium stadium; // Assuming we need stadium info later
-  final String bookingType; // 'Personal', 'Team', 'Challenge'
+  final Stadium stadium; 
+  final String bookingType; 
   final Team? opponentTeam;
 
   const BookingConfirmationScreen({
@@ -32,12 +30,13 @@ class BookingConfirmationScreen extends StatefulWidget {
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   DateTime _selectedDate = DateTime.now();
-  final List<String> _selectedTimeSlots = []; // Storing slot IDs or start times
+  final List<String> _selectedTimeSlots = []; 
   bool _isBallRented = false;
   bool _isPrivate = true;
   bool _isLoading = false;
   int _currentPlayers = 1;
   String? _userTeamId;
+  String? _userTeamName;
 
   @override
   void initState() {
@@ -51,8 +50,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     _fetchUserTeam();
   }
 
-  String? _userTeamName; // Fixed: track team name separately from user name
-
   Future<void> _fetchUserTeam() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.uid;
@@ -61,18 +58,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       if (mounted) {
         setState(() {
           _userTeamId = team?.id;
-          _userTeamName = team?.name; // Fix: use actual team name not user's display name
+          _userTeamName = team?.name; 
         });
       }
     }
   }
   
-  // Pricing Constants
-  // Pricing will be derived from stadium
   double get _slotPrice => widget.stadium.basePrice / 2;
   double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
 
-  // Dynamic Time Slots
   List<String> _timeSlots = [];
 
   void _generateDynamicTimeSlots() {
@@ -91,12 +85,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       int startMinutes = _parseTimeToMinutes(startStr);
       int endMinutes = _parseTimeToMinutes(endStr);
 
-      // Handle overnight operating hours (e.g., 2 PM to 2 AM)
       if (endMinutes < startMinutes) {
         endMinutes += 24 * 60;
       }
 
-      // Check for break time
       int? breakStart;
       int? breakEnd;
       if (features is Map && features['breakTime'] != null) {
@@ -106,15 +98,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
       final List<String> slots = [];
       for (int m = startMinutes; m <= endMinutes; m += 30) {
-        // Check if this slot overlaps with break time
         if (breakStart != null && breakEnd != null) {
-          // Check if m (start of slot) or m+30 (end of slot) is within break
-          // If break is during the slot, we skip it
           if ((m >= breakStart && m < breakEnd) || (m + 30 > breakStart && m + 30 <= breakEnd)) {
             continue;
           }
         }
-
         slots.add(_formatMinutesToTime(m % (24 * 60)));
       }
 
@@ -122,8 +110,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         _timeSlots = slots;
       });
     } catch (e) {
-      debugPrint('Error generating time slots: $e');
-      // Fallback
       setState(() {
         _timeSlots = ['02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'];
       });
@@ -135,19 +121,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     try {
       final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
       final match = timeRegex.firstMatch(timeStr);
-      
       if (match == null) return 0;
-      
       int hour = int.parse(match.group(1)!);
       int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
       String? period = match.group(3)?.toUpperCase();
-      
       if (period == 'PM' && hour != 12) hour += 12;
       if (period == 'AM' && hour == 12) hour = 0;
-      
       return hour * 60 + minute;
     } catch (e) {
-      debugPrint('Error parsing time: $e');
       return 0;
     }
   }
@@ -188,9 +169,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   bool _isSlotBooked(String slot, List<Booking> existingBookings) {
     final slotStartTime = _getSlotDateTime(slot);
     final slotEndTime = slotStartTime.add(const Duration(hours: 1));
-
     for (var booking in existingBookings) {
-      // Overlap logic: (StartA < EndB) && (EndA > StartB)
       if (slotStartTime.isBefore(booking.endTime) && slotEndTime.isAfter(booking.startTime)) {
         return true;
       }
@@ -199,16 +178,16 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   void _showCalendarModal() {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
-      barrierColor: VSPColors.background.withValues(alpha: 0.8), // Dimmed background
+      barrierColor: VSPColors.background.withValues(alpha: 0.8),
       builder: (context) {
-        DateTime tempSelectedDate = _selectedDate; // Local state for modal
-        DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month); // For page navigation
+        DateTime tempSelectedDate = _selectedDate;
+        DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
 
         return StatefulBuilder(
           builder: (context, setModalState) {
-            // Helper to build range inputs
             Widget buildDateInput(String label, String dateText) {
               return Expanded(
                 child: Container(
@@ -232,7 +211,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             }
 
             return Dialog(
-              backgroundColor: VSPColors.surface, // Dark grey card
+              backgroundColor: VSPColors.surface,
               insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
               child: Padding(
@@ -240,12 +219,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 child: Column(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    // Header: Month Navigation
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left, color: VSPColors.textSecondary),
+                          icon: const Icon(Icons.chevron_left, matchTextDirection: true, color: VSPColors.textSecondary),
                           onPressed: () {
                             setModalState(() {
                               currentMonth = DateTime(currentMonth.year, currentMonth.month - 1);
@@ -253,11 +231,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           },
                         ),
                         Text(
-                          DateFormat('MMMM yyyy').format(currentMonth),
+                          DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right, color: VSPColors.textSecondary),
+                          icon: const Icon(Icons.chevron_right, matchTextDirection: true, color: VSPColors.textSecondary),
                           onPressed: () {
                             setModalState(() {
                               currentMonth = DateTime(currentMonth.year, currentMonth.month + 1);
@@ -266,33 +244,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                       ],
                     ),
-                    
                     const SizedBox(height: VSPSpacing.md),
-                    
-                    // Date Inputs (Visual only based on screenshot)
                     Row(
                       children: [
-                        buildDateInput('Start', DateFormat('MMM d, yyyy').format(tempSelectedDate)),
+                        buildDateInput('Start', DateFormat('MMM d, yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)),
                         const SizedBox(width: 8),
                          const Text('-', style: TextStyle(color: VSPColors.textSecondary)),
                         const SizedBox(width: 8),
-                        buildDateInput('End', DateFormat('MMM d, yyyy').format(tempSelectedDate.add(const Duration(days: 7)))),
+                        buildDateInput('End', DateFormat('MMM d, yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate.add(const Duration(days: 7)))),
                       ],
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Days of Week Header
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceAround,
-                      children: const ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sat', 'Su']
-                          .map((d) => Text(d, style: TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold)))
-                          .toList(),
-                    ),
-                    
                     const SizedBox(height: 12),
-
-                    // Calendar Grid
                     SizedBox(
                       height: 240, 
                       child: GridView.builder(
@@ -302,22 +265,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           mainAxisSpacing: 8,
                           crossAxisSpacing: 8,
                         ),
-                        // Calculate days in month roughly + offset for alignment
                         itemCount: DateTime(currentMonth.year, currentMonth.month + 1, 0).day + 
                                    (DateTime(currentMonth.year, currentMonth.month, 1).weekday - 1),
                         itemBuilder: (context, index) {
-                          // Offset logic
                           final firstWeekday = DateTime(currentMonth.year, currentMonth.month, 1).weekday;
                           final dayOffset = index - (firstWeekday - 1);
-                          
                           if (dayOffset < 0) return const SizedBox();
-
                           final day = dayOffset + 1;
                           final date = DateTime(currentMonth.year, currentMonth.month, day);
                           final isSelected = date.year == tempSelectedDate.year &&
                                              date.month == tempSelectedDate.month &&
                                              date.day == tempSelectedDate.day;
-
                           return InkWell(
                             onTap: () {
                               setModalState(() {
@@ -342,15 +300,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         },
                       ),
                     ),
-
                     const SizedBox(height: 24),
-
-                    // Footer Buttons
                     Row(
                       children: [
                         Expanded(
                           child: PrimaryButton(
-                            text: AppLocalizations.of(context)!.cancel,
+                            text: l10n.cancel,
                             onPressed: () => Navigator.pop(context),
                             color: VSPColors.surfaceAlt,
                             textColor: VSPColors.textPrimary,
@@ -359,7 +314,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         const SizedBox(width: VSPSpacing.md),
                         Expanded(
                           child: PrimaryButton(
-                            text: AppLocalizations.of(context)!.apply,
+                            text: l10n.apply,
                             onPressed: () {
                               setState(() {
                                 _selectedDate = tempSelectedDate;
@@ -382,31 +337,30 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
-          AppLocalizations.of(context)!.bookNow,
+          l10n.bookNow,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
       body: Column(
         children: [
-          // sticky Header Section
           Container(
             color: VSPColors.background,
             padding: const EdgeInsets.only(bottom: VSPSpacing.md),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // Date Selector Header with Calendar Icon
                 Padding(
                   padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                   child: GestureDetector(
@@ -422,7 +376,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            DateFormat('MMMM, yyyy').format(_selectedDate),
+                            DateFormat('MMMM, yyyy', Localizations.localeOf(context).toString()).format(_selectedDate),
                             style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: VSPSpacing.xs),
@@ -432,17 +386,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     ),
                   ),
                 ),
-                
                 const SizedBox(height: VSPSpacing.md),
-                
-                // Horizontal Date List
                 Padding(
                   padding: const EdgeInsets.only(left: VSPSpacing.md),
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context)!.selectDate,
+                        l10n.selectDate,
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       ),
                       const SizedBox(height: VSPSpacing.sm),
@@ -450,11 +401,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         height: 70,
                         child: ListView.builder(
                           scrollDirection: Axis.horizontal,
-                          itemCount: 14, // Next 2 weeks
+                          itemCount: 14, 
                           itemBuilder: (context, index) {
                             final date = DateTime.now().add(Duration(days: index));
                             final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
-                            
                             return GestureDetector(
                               onTap: () {
                                 setState(() {
@@ -483,7 +433,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       ),
                                     ),
                                     Text(
-                                      DateFormat('E').format(date).toUpperCase(),
+                                      DateFormat('E', Localizations.localeOf(context).toString()).format(date).toUpperCase(),
                                       style: TextStyle(
                                         color: isSelected ? VSPColors.background : VSPColors.textSecondary,
                                         fontSize: 12,
@@ -504,7 +454,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             ),
           ),
 
-          // Scrollable Time Slots
           Expanded(
             child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               padding: const EdgeInsets.all(16),
@@ -512,7 +461,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context)!.selectTime,
+                    l10n.selectTime,
                     style: Theme.of(context).textTheme.displaySmall,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -522,23 +471,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         .getBookingsForStadium(widget.stadium.id, _selectedDate),
                     builder: (context, snapshot) {
                       final existingBookings = snapshot.data ?? [];
-                      
                       return Column(
                         children: List.generate(_timeSlots.isEmpty ? 0 : _timeSlots.length - 1, (index) {
                           final startTime = _timeSlots[index];
                           final endTime = _timeSlots[index + 1];
                           final slotLabel = '$startTime  -  $endTime';
-                          
                           final isBooked = _isSlotBooked(startTime, existingBookings);
                           final isSelected = _selectedTimeSlots.contains(startTime);
-
-                          // BETA READY: Prevent past bookings for today's date
                           final slotDateTime = _getSlotDateTime(startTime);
                           final isPast = _selectedDate.year == DateTime.now().year && 
                                          _selectedDate.month == DateTime.now().month && 
                                          _selectedDate.day == DateTime.now().day && 
                                          slotDateTime.isBefore(DateTime.now());
-
                           return GestureDetector(
                             onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, isBooked),
                             child: AnimatedContainer(
@@ -579,22 +523,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     if (isBooked) ...[
                                       const SizedBox(width: 12),
                                       Text(
-                                        AppLocalizations.of(context)!.bookedStatus,
-                                        style: const TextStyle(
-                                          color: VSPColors.error,
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        l10n.bookedStatus,
+                                        style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold),
                                       ),
                                     ] else if (isPast) ...[
                                       const SizedBox(width: 12),
                                       Text(
-                                        AppLocalizations.of(context)!.expiredStatus,
-                                        style: TextStyle(
-                                          color: VSPColors.textSecondary.withValues(alpha: 0.5),
-                                          fontSize: 12,
-                                          fontWeight: FontWeight.bold,
-                                        ),
+                                        l10n.expiredStatus,
+                                        style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold),
                                       ),
                                     ],
                                 ],
@@ -614,24 +550,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             padding: EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.lg, VSPSpacing.lg, MediaQuery.of(context).padding.bottom + VSPSpacing.lg),
             decoration: BoxDecoration(
               color: VSPColors.surfaceAlt,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(VSPRadius.xl),
-                topRight: Radius.circular(VSPRadius.xl),
-              ),
+              borderRadius: const BorderRadius.only(topLeft: Radius.circular(VSPRadius.xl), topRight: Radius.circular(VSPRadius.xl)),
               boxShadow: VSPShadow.subtle,
             ),
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                // Private Toggle (Hidden for Team Bookings to force Public)
                 if (widget.bookingType != 'Team') ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Text(
-                        AppLocalizations.of(context)!.privateLabel,
-                        style: Theme.of(context).textTheme.titleLarge,
-                      ),
+                      Text(l10n.privateLabel, style: Theme.of(context).textTheme.titleLarge),
                       Switch(
                         value: _isPrivate,
                         onChanged: (val) => setState(() => _isPrivate = val),
@@ -642,8 +571,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                   const SizedBox(height: VSPSpacing.sm),
                 ],
-
-                // Current Players Counter (ONLY for Public Matches)
                 if (widget.bookingType == 'Team') ...[
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -651,14 +578,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            AppLocalizations.of(context)!.currentPlayersWithYou,
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
-                          Text(
-                            AppLocalizations.of(context)!.playersInGroupSubtitle,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                          ),
+                          Text(l10n.currentPlayersWithYou, style: Theme.of(context).textTheme.titleMedium),
+                          Text(l10n.playersInGroupSubtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                         ],
                       ),
                       Row(
@@ -668,14 +589,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           }),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
-                            child: Text(
-                              '$_currentPlayers',
-                              style: const TextStyle(
-                                color: VSPColors.textPrimary,
-                                fontSize: 18,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                            child: Text('$_currentPlayers', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                           ),
                           _buildCounterButton(Icons.add, () {
                             final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10;
@@ -687,8 +601,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                   const SizedBox(height: 24),
                 ],
-                
-                // Rent Ball Toggle
                 GestureDetector(
                   onTap: () => setState(() => _isBallRented = !_isBallRented),
                   child: Row(
@@ -697,152 +609,72 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(
-                            AppLocalizations.of(context)!.rentBallLabel(_ballPrice.toInt(), AppLocalizations.of(context)!.egCurrency),
-                            style: Theme.of(context).textTheme.titleMedium,
-                          ),
+                          Text(l10n.rentBallLabel(_ballPrice.toInt(), l10n.egCurrency), style: Theme.of(context).textTheme.titleMedium),
                           const SizedBox(height: VSPSpacing.xs),
-                          Text(
-                            AppLocalizations.of(context)!.payPerBallSubtitle,
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                          ),
+                          Text(l10n.payPerBallSubtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                         ],
                       ),
                       AnimatedContainer(
                         duration: const Duration(milliseconds: 200),
-                        width: 24,
-                        height: 24,
+                        width: 24, height: 24,
                         decoration: BoxDecoration(
                           color: _isBallRented ? VSPColors.accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
-                          border: Border.all(
-                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
-                          ),
+                          border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4)),
                         ),
-                        child: _isBallRented
-                            ? const Icon(Icons.check, size: 16, color: VSPColors.background)
-                            : null,
+                        child: _isBallRented ? const Icon(Icons.check, size: 16, color: VSPColors.background) : null,
                       ),
                     ],
                   ),
                 ),
-                
-                const Padding(
-                  padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg),
-                  child: Divider(color: VSPColors.divider, thickness: 1),
-                ),
-
-                // Total Price & Button
+                const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg), child: Divider(color: VSPColors.divider, thickness: 1)),
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          AppLocalizations.of(context)!.totalPriceLabel,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                        ),
-                        Text(
-                          AppLocalizations.of(context)!.priceEgp(_totalPrice.toInt()),
-                          style: Theme.of(context).textTheme.displayLarge,
-                        ),
+                        Text(l10n.totalPriceLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                        Text(l10n.priceEgp(_totalPrice.toInt()), style: Theme.of(context).textTheme.displayLarge),
                       ],
                     ),
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
                       child: PrimaryButton(
-                        text: AppLocalizations.of(context)!.confirmSelections,
+                        text: l10n.confirmSelections,
                         isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
-                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                          final currentUserModel = authProvider.userModel;
-  
-                          // Build start and end times from selected slots
-                          final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
-                          final firstSlot = sortedSlots.first;
-                          final lastSlot = sortedSlots.last;
-                          
-                          // Parse times
-                          int parseHour(String time) {
-                            final parts = time.split(':');
-                            int hour = int.parse(parts[0]);
-                            if (time.toLowerCase().contains('pm') && hour != 12) hour += 12;
-                            return hour;
-                          }
-                          int parseMinute(String time) {
-                            final parts = time.split(':');
-                            return int.parse(parts[1].replaceAll(RegExp(r'[^0-9]'), '').substring(0, 2));
-                          }
-                          
-                          final startHour = parseHour(firstSlot);
-                          final startMinute = parseMinute(firstSlot);
-                          final endHour = parseHour(lastSlot);
-                          final endMinute = parseMinute(lastSlot) + 30;
-                          
-                          final startTime = DateTime(
-                            _selectedDate.year,
-                            _selectedDate.month,
-                            _selectedDate.day,
-                            startHour,
-                            startMinute,
-                          );
-                          
-                          // Handle duration based on number of 30-minute slots selected
-                          final int totalSlotCount = _selectedTimeSlots.length;
-                          final endTime = startTime.add(Duration(minutes: totalSlotCount * 30));
-  
-                          // Convert string bookingType to enum
-                          BookingType bookingTypeEnum;
-                          switch (widget.bookingType.toLowerCase()) {
-                            case 'team':
-                              bookingTypeEnum = BookingType.team;
-                              break;
-                            case 'challenge':
-                              bookingTypeEnum = BookingType.challenge;
-                              break;
-                            default:
-                              bookingTypeEnum = BookingType.personal;
-                          }
-  
-                          // stadium.seatsCapacity actually stores "Players per Team"
-                          final int trueMaxPlayers = (widget.stadium.seatsCapacity > 0) 
-                              ? widget.stadium.seatsCapacity 
-                              : 5; // Default to 5v5 (5 per side)
-  
-                          // Force it to false if the booking type is 'Team'
-                          final bool isActuallyPrivate = widget.bookingType.toLowerCase() == 'team' ? false : _isPrivate;
-  
-                          // Create BookingDraft
-                          final draft = BookingDraft(
-                            stadiumId: widget.stadium.id,
-                            stadiumName: widget.stadium.name,
-                            stadiumImageUrl: widget.stadium.imageUrl,
-                            ownerId: widget.stadium.ownerId,
-                            startTime: startTime,
-                            endTime: endTime,
-                            bookingType: bookingTypeEnum,
-                            opponentTeamId: widget.opponentTeam?.id,
-                            opponentTeamName: widget.opponentTeam?.name,
-                            playerTeamId: _userTeamId,
-                            playerTeamName: _userTeamName, // Fix: use team name, not user display name
-                            hostName: currentUserModel?.name,
-                            hostAvatarUrl: currentUserModel?.profileImageUrl,
-                            isPrivate: isActuallyPrivate,
-                            rentBall: _isBallRented,
-                            totalPrice: _totalPrice,
-                            currency: 'EGP',
-                            currentPlayers: _currentPlayers,
-                            maxPlayers: trueMaxPlayers,
-                          );
-  
-                          // Navigate to Payment Gateway
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => PaymentGatewayScreen(bookingDraft: draft),
-                            ),
-                          );
+                           final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                           final currentUserModel = authProvider.userModel;
+                           final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                           final firstSlot = sortedSlots.first;
+                           int parseHr(String t) {
+                             int h = int.parse(t.split(':')[0]);
+                             if (t.toLowerCase().contains('pm') && h != 12) h += 12;
+                             return h;
+                           }
+                           int parseMin(String t) => int.parse(t.split(':')[1].substring(0, 2));
+                           final startTime = DateTime(_selectedDate.year, _selectedDate.month, _selectedDate.day, parseHr(firstSlot), parseMin(firstSlot));
+                           final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
+
+                           BookingType bType;
+                           switch (widget.bookingType.toLowerCase()) {
+                             case 'team': bType = BookingType.team; break;
+                             case 'challenge': bType = BookingType.challenge; break;
+                             default: bType = BookingType.personal;
+                           }
+
+                           final draft = BookingDraft(
+                             stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
+                             ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
+                             playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
+                             playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel?.name,
+                             opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
+                             totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
+                             currentPlayers: _currentPlayers, maxPlayers: widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity : 10,
+                           );
+
+                           Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft)));
                         },
                       ),
                     ),
@@ -860,14 +692,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        width: 36,
-        height: 36,
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(color: VSPColors.divider),
-        ),
-        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
+        width: 32, height: 32,
+        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.divider)),
+        child: Icon(icon, color: VSPColors.textPrimary, size: 16),
       ),
     );
   }

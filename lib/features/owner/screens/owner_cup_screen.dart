@@ -27,15 +27,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false, // Root tab, no back button
+        automaticallyImplyLeading: false, 
         centerTitle: true,
         title: Text(
-          'Tournaments',
+          l10n.tournamentsTitle,
           style: Theme.of(context).textTheme.displayLarge,
         ),
       ),
@@ -51,7 +53,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               ),
               child: Stack(
                 children: [
-                  // Animated background pill
                   AnimatedAlign(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
@@ -79,9 +80,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   ),
                   Row(
                     children: [
-                      _buildTabButton('Coming', 0),
-                      _buildTabButton('Ongoing', 1),
-                      _buildTabButton('Finished', 2),
+                      _buildTabButton(l10n.coming, 0),
+                      _buildTabButton(l10n.ongoing, 1),
+                      _buildTabButton(l10n.finished, 2),
                     ],
                   ),
                 ],
@@ -89,11 +90,10 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             ),
           ),
 
-          // 2. Filters
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             child: Row(
-              mainAxisAlignment: MainAxisAlignment.end, // Align to right if constrained, but Expanded fills width
+              mainAxisAlignment: MainAxisAlignment.end,
               children: [
                 Expanded(
                   child: _buildFilterDropdown(
@@ -116,7 +116,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
            const SizedBox(height: 20),
 
-          // 3. List of Tournaments - Wired to Firestore
           Expanded(
             child: StreamBuilder<List<Championship>>(
               stream: TournamentRepository().getChampionshipsStream(
@@ -129,12 +128,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 
                 final championships = snapshot.data ?? [];
                 
-                // Filter by category locally and status
                 final filtered = championships.where((c) {
                   final isRightCategory = c.type.toLowerCase() == _selectedCategory.toLowerCase();
                   
-                  // Simple status filter (mock status since it might not be in DB yet, 
-                  // or derived from dates)
                   final now = DateTime.now();
                   bool isRightStatus = false;
                   if (_selectedTab == 0) isRightStatus = c.startDate.isAfter(now);
@@ -144,7 +140,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   return isRightCategory && isRightStatus;
                 }).toList();
 
-                // 🚀 Sync FAB visibility with parent
                 WidgetsBinding.instance.addPostFrameCallback((_) {
                   widget.onTournamentListChanged?.call(filtered.isEmpty);
                 });
@@ -152,9 +147,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 if (filtered.isEmpty) {
                   return VSPEmptyState(
                     icon: Icons.emoji_events_outlined,
-                    title: 'No Tournaments Yet',
-                    subtitle: 'Start organizing your first tournament and attract more players!',
-                    buttonText: 'Create Your First',
+                    title: l10n.noTournamentsTitle,
+                    subtitle: l10n.noTournamentsSubtitle,
+                    buttonText: l10n.createYourFirst,
                     onButtonPressed: () {
                       Navigator.push(
                         context,
@@ -238,6 +233,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
   }
 
   Widget _buildTournamentCard(Championship tournament) {
+    final l10n = AppLocalizations.of(context)!;
     final dateRange = '${DateFormat('MMM d').format(tournament.startDate)} - ${DateFormat('MMM d').format(tournament.endDate)}';
     
     return InkWell(
@@ -256,10 +252,8 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Header: Logo, Title, Actions
           Row(
             children: [
-              // Logo
               Container(
                 width: 45,
                 height: 45,
@@ -276,7 +270,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   : null,
               ),
               const SizedBox(width: 12),
-              // Title & Subtitle
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -293,10 +286,8 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   ],
                 ),
               ),
-              // Owner Actions
               Row(
                 children: [
-                   // Edit Button
                    InkWell(
                      onTap: () {
                        Navigator.push(
@@ -319,14 +310,15 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     ),
                    ),
                    const SizedBox(width: 8),
-                   // Share Button
                    InkWell(
                      onTap: () {
-                       final String shareText = 'Join my tournament "${tournament.name}"! 🏆\n'
-                                                '📅 Date: ${DateFormat('MMM d').format(tournament.startDate)} - ${DateFormat('MMM d').format(tournament.endDate)}\n'
-                                                '💰 Prize: ${tournament.grandPrize.toInt()} EGP\n'
-                                                '⚽ Entry: ${tournament.entryFee.toInt()} EGP\n'
-                                                'Register now on VSP Application!';
+                       final String shareText = l10n.shareTournamentText(
+                         tournament.name,
+                         DateFormat('MMM d').format(tournament.startDate),
+                         DateFormat('MMM d').format(tournament.endDate),
+                         tournament.grandPrize.toInt(),
+                         tournament.entryFee.toInt(),
+                       );
                        Share.share(shareText);
                      },
                      borderRadius: BorderRadius.circular(20),
@@ -348,19 +340,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           
           const SizedBox(height: 20),
           
-          // Info Grid (Date, Entry Fee, Grand Prize)
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildInfoColumn('Date', dateRange),
-              _buildInfoColumn('Entry Fee', '${tournament.entryFee.toInt()} eg'),
-              _buildInfoColumn('Grand Prize', '${tournament.grandPrize.toInt()} eg'),
+              _buildInfoColumn(l10n.date, dateRange),
+              _buildInfoColumn(l10n.entryFeeLabel, '${tournament.entryFee.toInt()} ${l10n.currency}'),
+              _buildInfoColumn(l10n.grandPrizeLabel, '${tournament.grandPrize.toInt()} ${l10n.currency}'),
             ],
           ),
           
           const SizedBox(height: 20),
            
-           // Footer: Teams Joined
            Row(
              children: [
                if (tournament.joinedTeams.isNotEmpty) 
@@ -369,13 +359,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                    height: 30,
                    child: Stack(
                      children: List.generate(tournament.joinedTeams.length.clamp(0, 5), (i) {
-                       return _buildAvatar(i, 'https://cdn-icons-png.flaticon.com/512/166/166165.png'); // Placeholder
+                       return _buildAvatar(i, 'https://cdn-icons-png.flaticon.com/512/166/166165.png'); 
                      }),
                    ),
                  ),
                if (tournament.joinedTeams.isNotEmpty) const SizedBox(width: 8),
                 Text(
-                  'Teams: ${tournament.joinedTeams.length} / ${tournament.maxTeams}',
+                  l10n.teamsJoinedCount(tournament.joinedTeams.length, tournament.maxTeams),
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                      color: VSPColors.textSecondary,
                      fontWeight: FontWeight.w500,
@@ -391,13 +381,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
   
   Widget _buildAvatar(int index, String url) {
     return Positioned(
-      left: index * 22.0, // Slight overlap
+      left: index * 22.0, 
       child: Container(
         width: 30,
         height: 30,
         decoration: BoxDecoration(
           shape: BoxShape.circle,
-          border: Border.all(color: VSPColors.surface, width: 2), // Ring effect to separate
+          border: Border.all(color: VSPColors.surface, width: 2), 
           image: DecorationImage(
             image: NetworkImage(url),
             fit: BoxFit.cover,
@@ -412,7 +402,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          label, 
+          label.toUpperCase(), 
           style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10),
         ),
         const SizedBox(height: 4),
@@ -424,4 +414,3 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     );
   }
 }
-

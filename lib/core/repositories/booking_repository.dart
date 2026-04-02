@@ -377,6 +377,17 @@ class FirestoreBookingRepository implements BookingRepository {
           if (rating != null && rating > 0 && stadiumId != null) {
             final stadiumRef = _firestore.collection('stadiums').doc(stadiumId);
             
+            // 🚀 Duplicate Mitigation: Check if review already exists for this bookingId AND userId
+            final existingReviews = await stadiumRef.collection('reviews')
+                .where('bookingId', isEqualTo: bookingId)
+                .where('userId', isEqualTo: teamId)
+                .get();
+
+            if (existingReviews.docs.isNotEmpty) {
+              VSPLogger.i('⚠️ Skipping duplicate review submission for booking $bookingId');
+              return;
+            }
+
             // Add review document
             await stadiumRef.collection('reviews').add({
               'bookingId': bookingId,

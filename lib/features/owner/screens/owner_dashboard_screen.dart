@@ -11,9 +11,11 @@ import '../../../core/providers/booking_provider.dart';
 import '../widgets/custom_date_range_picker.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../core/services/database_service.dart';
 import '../../../features/player/screens/notifications_center_screen.dart';
 import 'owner_booked_screen.dart';
+import 'owner_documentation_wizard.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -24,23 +26,18 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   // --- State Variables ---
-  String _selectedStadium = 'All Stadium';
+  String _selectedStadium = 'All Stadiums';
   DateTimeRange? _selectedDateRange = DateTimeRange(
     start: DateTime.now().subtract(const Duration(days: 30)),
     end: DateTime.now(),
   );
   
-  bool _isAllTime = false; // ✅ Added All-Time toggle
-  
-  bool _filterPendingOnly = false; // ✅ Added debt filter state
-  
-  // Stats Values
-  // Removed hardcoded _rating = 4.8
+  bool _isAllTime = false; 
+  bool _filterPendingOnly = false; 
 
   @override
   void initState() {
     super.initState();
-    // Fetch live data for owner
     WidgetsBinding.instance.addPostFrameCallback((_) async {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.isAuthenticated) {
@@ -48,7 +45,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
         stadiumProvider.listenToOwnerStadiums(uid);
         
-        // Wait briefly for stadium data to populate
         await Future.delayed(const Duration(milliseconds: 500));
         if (!mounted) return;
         
@@ -84,7 +80,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     setState(() {
       _isAllTime = !_isAllTime;
       if (_isAllTime) {
-        _selectedDateRange = null; // Signal all time
+        _selectedDateRange = null; 
       } else {
         _selectedDateRange = DateTimeRange(
           start: DateTime.now().subtract(const Duration(days: 30)),
@@ -96,6 +92,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final auth = Provider.of<AuthProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
@@ -106,19 +105,51 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // 1. Header & Notification
               _buildHeader(),
               const SizedBox(height: VSPSpacing.md),
 
-              // 2. Functional Filters
               _buildFunctionalFilters(),
               const SizedBox(height: VSPSpacing.md),
 
-              // 3. Stats Grid (Calculated)
+              if (auth.userModel?.isIdentityVerified == false)
+                VSPFadeInItem(
+                  index: 0,
+                  child: GestureDetector(
+                    onTap: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(builder: (context) => const OwnerDocumentationWizard()),
+                      );
+                    },
+                    child: Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.1),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Icons.info_outline, color: VSPColors.warning),
+                          const SizedBox(width: VSPSpacing.sm),
+                          Expanded(
+                            child: Text(
+                              l10n.identityPendingVerification,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.warning, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                          const Icon(Icons.arrow_forward_ios, size: 14, color: VSPColors.warning, matchTextDirection: true),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
               _buildStatsGrid(),
               const SizedBox(height: VSPSpacing.xl),
 
-              // 4. Booked Today Section
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 crossAxisAlignment: CrossAxisAlignment.end,
@@ -127,7 +158,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(
-                        AppLocalizations.of(context)!.bookedTodayLabel,
+                        l10n.bookedTodayLabel,
                         style: Theme.of(context).textTheme.displaySmall,
                       ),
                       const SizedBox(height: 2),
@@ -143,7 +174,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                           ),
                           const SizedBox(width: 6),
                           Text(
-                            AppLocalizations.of(context)!.liveBookingsForToday,
+                            l10n.liveBookingsForToday,
                             style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                   color: VSPColors.textSecondary,
                                   fontSize: 10,
@@ -158,7 +189,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: VSPSpacing.md),
               _buildBookedTodayList(),
               
-              // Show More Button — only visible when > 3 bookings
               Builder(
                 builder: (context) {
                   final bookingProvider = Provider.of<BookingProvider>(context);
@@ -185,7 +215,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Text(
-                              AppLocalizations.of(context)!.showMoreBtn,
+                              l10n.showMoreBtn,
                               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
                             ),
                             const SizedBox(width: 4),
@@ -197,8 +227,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   );
                 },
               ),
-              
-              // Removed fixed SizedBox as we use padding instead.
             ],
           ),
         ),
@@ -210,6 +238,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final auth = Provider.of<AuthProvider>(context);
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final stadiumsCount = stadiumProvider.stadiums.length;
+    final l10n = AppLocalizations.of(context)!;
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -218,14 +247,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              '${AppLocalizations.of(context)!.hiPrefix} ${(auth.userModel?.name ?? AppLocalizations.of(context)!.ownerGuestFallback).split(' ').first}',
+              '${l10n.hiPrefix} ${(auth.userModel?.name ?? l10n.ownerGuestFallback).split(' ').first}',
               style: Theme.of(context).textTheme.displayMedium,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
             ),
             const SizedBox(height: 4),
             Text(
-              AppLocalizations.of(context)!.youHaveStadiums(stadiumsCount),
+              l10n.youHaveStadiums(stadiumsCount),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
             ),
           ],
@@ -248,7 +277,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               builder: (context, snap) {
                 final count = snap.data ?? 0;
                 return Stack(
-                  children: [
+                    children: [
                     const Icon(Icons.notifications_outlined, color: VSPColors.textPrimary, size: 24),
                     if (count > 0)
                       Positioned(
@@ -276,21 +305,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _buildFunctionalFilters() {
     final stadiumProvider = Provider.of<StadiumProvider>(context);
-    final String allStadiumsText = AppLocalizations.of(context)!.allStadiumsFilter;
+    final l10n = AppLocalizations.of(context)!;
+    final String allStadiumsText = l10n.allStadiumsFilter;
     final List<String> stadiumNames = [allStadiumsText, ...stadiumProvider.stadiums.map((s) => s.name)];
     
-    // Ensure selected stadium still exists in the list (fallback to 'All Stadium')
     if (!stadiumNames.contains(_selectedStadium)) {
       _selectedStadium = allStadiumsText;
     }
 
     String dateDisplayText = _isAllTime 
-                          ? AppLocalizations.of(context)!.allTimeFilter 
+                          ? l10n.allTimeFilter 
                           : '${DateFormat('MMM dd').format(_selectedDateRange!.start)} - ${DateFormat('MMM dd').format(_selectedDateRange!.end)}';
 
     return Row(
       children: [
-        // Dropdown Filter (Stadiums)
         Expanded(
           child: Container(
             height: 44, 
@@ -325,7 +353,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
         ),
         const SizedBox(width: 12),
-        // Date Picker Trigger
         Expanded(
           child: Row(
             children: [
@@ -352,7 +379,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
               ),
               const SizedBox(width: 8),
-              // All-time toggle button
               InkWell(
                 onTap: _toggleAllTime,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -381,12 +407,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   Widget _buildStatsGrid() {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
     
-    // Filter bookings based on selected stadium and date range
     final filteredBookings = bookingProvider.userBookings.where((booking) {
-      final String allStadiumsKey = AppLocalizations.of(context)!.allStadiumsFilter;
+      final String allStadiumsKey = l10n.allStadiumsFilter;
       bool matchesStadium = true;
-      if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadium') {
+      if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadiums') {
         final stadium = stadiumProvider.stadiums.firstWhere(
           (s) => s.id == booking.stadiumId, 
           orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
@@ -398,13 +424,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                          (booking.startTime.isAfter(_selectedDateRange!.start) && 
                           booking.startTime.isBefore(_selectedDateRange!.end.add(const Duration(days: 1))));
       
-      bool matchesDebtFilter = !_filterPendingOnly || !booking.isPaid;
-      
-      return matchesStadium && matchesDate && matchesDebtFilter;
+      return matchesStadium && matchesDate;
     }).toList();
 
-    double revenue = 0; // Collected
-    double pendingRevenue = 0;   // Future/Pending
+    double revenue = 0; 
+    double pendingRevenue = 0;   
     int totalMinutes = 0;
     final now = DateTime.now();
     
@@ -421,13 +445,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final double commission = revenue * 0.05;
     double netRevenue = revenue - commission;
 
-    // Format numeric values
     String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
     String pendingStr = pendingRevenue >= 1000 ? '${(pendingRevenue/1000).toStringAsFixed(1)}K' : pendingRevenue.toStringAsFixed(0);
     String netStr = netRevenue >= 1000 ? '${(netRevenue/1000).toStringAsFixed(1)}K' : netRevenue.toStringAsFixed(0); 
     String bookedStr = bookingsCount.toString();
     
-    // Minute-accurate time formatting
     String timeStr;
     if (totalMinutes == 0) {
       timeStr = '0m';
@@ -447,7 +469,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     return Column(
       children: [
-        // 1. Revenue Card (Premium Design)
         VSPFadeInItem(
           index: 0,
           child: Container(
@@ -470,12 +491,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(AppLocalizations.of(context)!.totalCollectedGross, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                    _buildMiniBadge(AppLocalizations.of(context)!.platformCutApplied, Colors.white.withValues(alpha: 0.15)),
+                    Text(l10n.totalCollectedGross, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                    _buildMiniBadge(l10n.platformCutApplied, Colors.white.withValues(alpha: 0.15)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('${revenueStr} EGP', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
+                Text('$revenueStr ${l10n.currency}', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -485,16 +506,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      _buildFinanceMetric(AppLocalizations.of(context)!.netProfit, '${netStr} ${AppLocalizations.of(context)!.egCurrency}', Icons.trending_up, Colors.green),
+                      _buildFinanceMetric(l10n.actualLabel, '$netStr ${l10n.currency}', Icons.trending_up, Colors.green),
                       Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                      _buildFinanceMetric(AppLocalizations.of(context)!.pendingRev, '${pendingStr} ${AppLocalizations.of(context)!.egCurrency}', Icons.timer_outlined, VSPColors.warning),
+                      _buildFinanceMetric(l10n.pendingRev, '$pendingStr ${l10n.currency}', Icons.timer_outlined, VSPColors.warning),
                     ],
                   ),
                 ),
                 if (commission > 0)
                  Padding(
                    padding: const EdgeInsets.only(top: 8.0, left: 4),
-                   child: Text(AppLocalizations.of(context)!.includesPlatformFee(commissionStr), style: const TextStyle(color: Colors.white60, fontSize: 10)),
+                   child: Text(l10n.includesPlatformFee(commissionStr), style: const TextStyle(color: Colors.white60, fontSize: 10)),
                  ),
               ],
             ),
@@ -503,7 +524,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         
         const SizedBox(height: 16),
 
-        // 🔥 Platform Debt Highlight (From UserModel)
         Consumer<AuthProvider>(
           builder: (context, auth, _) {
             final debt = auth.userModel?.commissionDebt ?? 0.0;
@@ -527,12 +547,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Text(AppLocalizations.of(context)!.platformCommission, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
-                          Text(AppLocalizations.of(context)!.debtCollectionNotice(debt.toStringAsFixed(0)), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
+                          Text(l10n.platformCommissionLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                          Text(l10n.debtCollectionNotice(debt.toStringAsFixed(0)), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
                         ],
                       ),
                     ),
-                    Icon(Icons.chevron_right, color: VSPColors.error.withValues(alpha: 0.5)),
+                    Icon(Icons.chevron_right, matchTextDirection: true, color: VSPColors.error.withValues(alpha: 0.5)),
                   ],
                 ),
               ),
@@ -542,14 +562,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         
         const SizedBox(height: 20),
 
-        // 2. Main Stats Row
         VSPFadeInItem(
           index: 1,
           child: Row(
             children: [
               Expanded(
                 child: VSPStatCard(
-                  label: AppLocalizations.of(context)!.hoursBookedLabel,
+                  label: l10n.bookedHours,
                   value: timeStr,
                   icon: Icons.history_toggle_off_rounded,
                 ),
@@ -557,7 +576,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: VSPStatCard(
-                  label: AppLocalizations.of(context)!.activeBookingsLabel,
+                  label: l10n.activeBookingsLabel,
                   value: bookedStr,
                   icon: Icons.confirmation_number_outlined,
                 ),
@@ -573,7 +592,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
       decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(VSPRadius.sm)),
-      child: Text(text, style: TextStyle(color: text.contains('VSP') || text.contains('%') || text.contains('منصة') ? Colors.white : Colors.black, fontSize: 11, fontWeight: FontWeight.w600)),
+      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 
@@ -596,43 +615,33 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _buildRateCard() {
-    return const SizedBox.shrink(); // Integrated into grid or removed for layout logic via StatCard replacements above
-  }
-
   Widget _buildBookedTodayList() {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final now = DateTime.now();
     final todayStart = DateTime(now.year, now.month, now.day);
     final todayEnd = todayStart.add(const Duration(days: 1));
-
     final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final l10n = AppLocalizations.of(context)!;
 
-    // Filter for today's bookings + Stadium Filter
     final todayBookings = bookingProvider.userBookings.where((b) {
       final isToday = b.startTime.isAfter(todayStart) && b.startTime.isBefore(todayEnd);
-      
-      final String allStadiumsKey = AppLocalizations.of(context)!.allStadiumsFilter;
+      final String allStadiumsKey = l10n.allStadiumsFilter;
       bool matchesStadium = true;
-      if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadium') {
+      if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadiums') {
         final stadium = stadiumProvider.stadiums.firstWhere(
           (s) => s.id == b.stadiumId, 
           orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
         );
         matchesStadium = stadium.name == _selectedStadium;
       }
-      
       return isToday && matchesStadium;
     }).toList();
 
     if (todayBookings.isEmpty) {
-      return Container(
-        padding: const EdgeInsets.symmetric(vertical: 40),
-        alignment: Alignment.center,
-        child: Text(
-          AppLocalizations.of(context)!.noBookingsForTodayLabel,
-          style: Theme.of(context).textTheme.bodyLarge?.copyWith(color: VSPColors.textSecondary),
-        ),
+      return VSPEmptyState(
+        icon: Icons.calendar_today_outlined,
+        title: l10n.noBookingsForTodayLabel,
+        subtitle: l10n.liveBookingsForToday,
       );
     }
 
@@ -708,7 +717,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  booking.playerTeamName ?? AppLocalizations.of(context)!.individualPlayerLabel, 
+                                  booking.playerTeamName ?? l10n.individualPlayerLabel, 
                                   style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
                                   maxLines: 1,
                                   overflow: TextOverflow.ellipsis,
@@ -716,8 +725,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                 const SizedBox(height: 2),
                                 Text(
                                   booking.bookingType == BookingType.challenge 
-                                      ? AppLocalizations.of(context)!.challengeMatch 
-                                      : (booking.bookingType == BookingType.team ? AppLocalizations.of(context)!.teamMatchLabel : AppLocalizations.of(context)!.playerTypeLabel), 
+                                      ? l10n.challengeMatch 
+                                      : (booking.bookingType == BookingType.team ? l10n.teamMatchLabel : l10n.playerTypeLabel), 
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                 ),
                               ],
@@ -733,7 +742,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                   borderRadius: BorderRadius.circular(4),
                                 ),
                                 child: Text(
-                                  booking.endTime.isBefore(now) ? AppLocalizations.of(context)!.collectedSticker : AppLocalizations.of(context)!.pendingSticker,
+                                  booking.endTime.isBefore(now) ? l10n.collectedSticker : l10n.pendingSticker,
                                   style: const TextStyle(color: Colors.white, fontSize: 8, fontWeight: FontWeight.bold),
                                 ),
                               ),

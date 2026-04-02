@@ -41,6 +41,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
       body: Column(
@@ -98,6 +100,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       children: [
                         _buildCircularIcon(
                           icon: Icons.arrow_back_ios_new,
+                          matchTextDirection: true,
                           onTap: () => Navigator.pop(context),
                         ),
                         Row(
@@ -106,7 +109,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               icon: Icons.share_outlined,
                               onTap: () {
                                 Share.share(
-                                  AppLocalizations.of(context)!.shareStadiumText(widget.stadium.name, widget.stadium.location),
+                                  l10n.shareStadiumText(widget.stadium.name, widget.stadium.location),
                                 );
                               },
                             ),
@@ -160,9 +163,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 builder: (context, child) {
                   return Row(
                     children: [
-                      _buildTabItem(0, AppLocalizations.of(context)!.information),
-                      _buildTabItem(1, AppLocalizations.of(context)!.pitchConditions),
-                      _buildTabItem(2, AppLocalizations.of(context)!.ratings),
+                      _buildTabItem(0, l10n.information),
+                      _buildTabItem(1, l10n.pitchConditions),
+                      _buildTabItem(2, l10n.ratings),
                     ],
                   );
                 },
@@ -202,7 +205,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
-                    AppLocalizations.of(context)!.pricePerHour,
+                    l10n.pricePerHour,
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                   ),
                   RichText(
@@ -213,7 +216,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         TextSpan(
-                          text: AppLocalizations.of(context)!.egCurrency,
+                          text: l10n.egCurrency,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -224,7 +227,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               const SizedBox(width: VSPSpacing.lg),
               Expanded(
                 child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.bookNow,
+                  text: l10n.bookNow,
                   onPressed: () {
                     Navigator.push(
                       context,
@@ -273,6 +276,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     required IconData icon,
     required VoidCallback onTap,
     Color color = VSPColors.textPrimary,
+    bool matchTextDirection = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -283,7 +287,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           color: VSPColors.background.withValues(alpha: 0.6),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 20),
+        child: Icon(icon, color: color, size: 20, matchTextDirection: matchTextDirection),
       ),
     );
   }
@@ -322,6 +326,7 @@ class _InformationTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
@@ -351,7 +356,7 @@ class _InformationTab extends StatelessWidget {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    AppLocalizations.of(context)!.reviews(stadium.reviewsCount),
+                    l10n.reviews(stadium.reviewsCount),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -366,7 +371,7 @@ class _InformationTab extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  stadium.address.isNotEmpty ? stadium.address : AppLocalizations.of(context)!.na,
+                  stadium.address.isNotEmpty ? stadium.address : l10n.na,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
@@ -392,7 +397,7 @@ class _InformationTab extends StatelessWidget {
                       const Icon(Icons.location_on_outlined, color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        stadium.location.isNotEmpty ? stadium.location : AppLocalizations.of(context)!.na,
+                        stadium.location.isNotEmpty ? stadium.location : l10n.na,
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: VSPColors.background,
                           fontWeight: FontWeight.bold,
@@ -409,14 +414,14 @@ class _InformationTab extends StatelessWidget {
           
           // Information Stadium
           Text(
-            AppLocalizations.of(context)!.informationStadium,
+            l10n.informationStadium,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.sm),
           Text(
             stadium.description.isNotEmpty 
               ? stadium.description 
-              : AppLocalizations.of(context)!.noDescription,
+              : l10n.noDescription,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
           ),
           
@@ -424,7 +429,7 @@ class _InformationTab extends StatelessWidget {
           
           // Features
           Text(
-            AppLocalizations.of(context)!.features,
+            l10n.features,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.md),
@@ -449,7 +454,7 @@ class _InformationTab extends StatelessWidget {
           
           // Features For Money
           Text(
-            AppLocalizations.of(context)!.featuresForMoney,
+            l10n.featuresForMoney,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.md),
@@ -467,7 +472,7 @@ class _InformationTab extends StatelessWidget {
                   const Icon(Icons.sports_soccer, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(
-                    AppLocalizations.of(context)!.ballAvailable(stadium.ballPrice.toStringAsFixed(0), AppLocalizations.of(context)!.egCurrency),
+                    l10n.ballAvailable(stadium.ballPrice.toStringAsFixed(0), l10n.egCurrency),
                     style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold),
                   ),
                 ],
@@ -488,6 +493,7 @@ class _PitchConditionsTab extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
 
     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
@@ -511,7 +517,7 @@ class _PitchConditionsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  AppLocalizations.of(context)!.ownerNotes,
+                  l10n.ownerNotes,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: VSPColors.accent,
                     fontWeight: FontWeight.bold,
@@ -521,7 +527,7 @@ class _PitchConditionsTab extends StatelessWidget {
                 Text(
                   hasOwnerNotes
                       ? stadium.notes
-                      : AppLocalizations.of(context)!.noOwnerNotes,
+                      : l10n.noOwnerNotes,
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
                 ),
               ],
@@ -542,26 +548,26 @@ class _PitchConditionsTab extends StatelessWidget {
               children: [
                 _buildPolicySection(
                   context,
-                  AppLocalizations.of(context)!.punctuality,
-                  AppLocalizations.of(context)!.punctualityPolicy,
+                  l10n.punctuality,
+                  l10n.punctualityPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  AppLocalizations.of(context)!.reservationDuration,
-                  AppLocalizations.of(context)!.reservationDurationPolicy,
+                  l10n.reservationDuration,
+                  l10n.reservationDurationPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  AppLocalizations.of(context)!.cancellationPolicyTitle,
-                  AppLocalizations.of(context)!.cancellationPolicy,
+                  l10n.cancellationPolicyTitle,
+                  l10n.cancellationPolicy,
                 ),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
                   context,
-                  AppLocalizations.of(context)!.liability,
-                  AppLocalizations.of(context)!.liabilityPolicy,
+                  l10n.liability,
+                  l10n.liabilityPolicy,
                 ),
               ],
             ),
@@ -598,6 +604,7 @@ class _RatingsTab extends StatelessWidget {
 
    @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       children: [
         // Summary Card
@@ -629,7 +636,7 @@ class _RatingsTab extends StatelessWidget {
                       ),
                       const SizedBox(height: VSPSpacing.xs),
                       Text(
-                        AppLocalizations.of(context)!.reviews(stadium.reviewsCount),
+                        l10n.reviews(stadium.reviewsCount),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
@@ -659,7 +666,7 @@ class _RatingsTab extends StatelessWidget {
                   child: Padding(
                     padding: const EdgeInsets.all(40.0),
                     child: Text(
-                      AppLocalizations.of(context)!.noReviews,
+                      l10n.noReviews,
                       textAlign: TextAlign.center,
                       style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
                     ),
@@ -680,10 +687,10 @@ class _RatingsTab extends StatelessWidget {
                   
                   return _buildReviewItem(
                     context,
-                    name: AppLocalizations.of(context)!.player,
+                    name: l10n.player,
                     imageUrl: '',   
                     rating: rating,
-                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : AppLocalizations.of(context)!.recently,
+                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : l10n.recently,
                     comment: text,
                   );
                 },

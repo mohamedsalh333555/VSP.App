@@ -1,9 +1,8 @@
 import 'package:flutter/material.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-
 import '../../../shared/widgets/primary_button.dart';
 
-/// Filter Bottom Sheet Modal
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({super.key});
 
@@ -14,7 +13,6 @@ class FilterBottomSheet extends StatefulWidget {
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   String _selectedCategory = 'Sports';
   
-  // Filter states
   final Map<String, bool> _sportsFilters = {
     for (var sport in VSPConstants.sports) sport: sport == 'Football',
   };
@@ -29,143 +27,162 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      height: MediaQuery.of(context).size.height * 0.7,
-      decoration: const BoxDecoration(
-        color: VSPColors.background,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(VSPRadius.xl),
-          topRight: Radius.circular(VSPRadius.xl),
+    final l10n = AppLocalizations.of(context)!;
+    
+    // Initialize or Update Category Titles based on Localization
+    final sportsTitle = l10n.sports;
+    final priceTitle = l10n.priceRange;
+    final ratingsTitle = l10n.ratings;
+    final servicesTitle = l10n.services;
+
+    // Mapping internal keys to localized titles for UI
+    final Map<String, String> categoryTitles = {
+      'Sports': sportsTitle,
+      'Price Range': priceTitle,
+      'Ratings': ratingsTitle,
+      'Services': servicesTitle,
+    };
+
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        height: MediaQuery.of(context).size.height * 0.7,
+        decoration: const BoxDecoration(
+          color: VSPColors.background,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(VSPRadius.xl),
+            topRight: Radius.circular(VSPRadius.xl),
+          ),
         ),
-      ),
-      child: Column(
-        children: [
-          // Header
-          Container(
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                bottom: BorderSide(
-                  color: VSPColors.divider,
-                  width: 1,
-                ),
-              ),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Text(
-                  'Filters',
-                  style: Theme.of(context).textTheme.displaySmall,
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: const Icon(
-                    Icons.close,
-                    color: VSPColors.textSecondary,
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            // Header
+            Container(
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              decoration: const BoxDecoration(
+                border: Border(
+                  bottom: BorderSide(
+                    color: VSPColors.divider,
+                    width: 1,
                   ),
                 ),
-              ],
-            ),
-          ),
-
-          // Content - Split View
-          Expanded(
-            child: Row(
-              children: [
-                // Left Sidebar - Categories
-                Container(
-                  width: 110,
-                  decoration: const BoxDecoration(
-                    color: VSPColors.surface,
-                    border: Border(
-                      right: BorderSide(
-                        color: VSPColors.divider,
-                        width: 1,
-                      ),
+              ),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text(
+                    l10n.filters,
+                    style: Theme.of(context).textTheme.displaySmall,
+                  ),
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: const Icon(
+                      Icons.close,
+                      color: VSPColors.textSecondary,
                     ),
                   ),
-                  child: ListView(
-                    padding: EdgeInsets.zero,
-                    children: [
-                      _buildCategoryItem('Sports', Icons.sports_soccer),
-                      _buildCategoryItem('Price Range', Icons.attach_money),
-                      // _buildCategoryItem('Time', Icons.access_time), // Time hidden for now as per instructions focus
-                      _buildCategoryItem('Ratings', Icons.star_outline),
-                      _buildCategoryItem('Services', Icons.room_service),
-                    ],
-                  ),
-                ),
-
-                // Right Content Area
-                Expanded(
-                  child: Container(
-                     padding: const EdgeInsets.all(VSPSpacing.md),
-                    child: _buildContentForCategory(),
-                  ),
-                ),
-              ],
-            ),
-          ),
-
-          // Footer Buttons
-          Container(
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: const BoxDecoration(
-              border: Border(
-                top: BorderSide(
-                  color: VSPColors.divider,
-                  width: 1,
-                ),
+                ],
               ),
             ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Reset',
-                    onPressed: () {
-                      setState(() {
-                        _sportsFilters.updateAll((key, value) => false);
-                        _priceRange = const RangeValues(0, 3000);
-                        _selectedRating = 0;
-                        _servicesFilters.updateAll((key, value) => false);
-                      });
-                    },
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.textPrimary,
+
+            // Content - Split View
+            Expanded(
+              child: Row(
+                children: [
+                  // Left Sidebar - Categories
+                  Container(
+                    width: 110,
+                    decoration: const BoxDecoration(
+                      color: VSPColors.surface,
+                      border: Border(
+                        right: BorderSide(
+                          color: VSPColors.divider,
+                          width: 1,
+                        ),
+                      ),
+                    ),
+                    child: ListView(
+                      padding: EdgeInsets.zero,
+                      children: [
+                        _buildCategoryItem('Sports', categoryTitles['Sports']!, Icons.sports_soccer),
+                        _buildCategoryItem('Price Range', categoryTitles['Price Range']!, Icons.attach_money),
+                        _buildCategoryItem('Ratings', categoryTitles['Ratings']!, Icons.star_outline),
+                        _buildCategoryItem('Services', categoryTitles['Services']!, Icons.room_service),
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(width: VSPSpacing.md),
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Apply',
-                    onPressed: () {
-                      final filters = {
-                        'sports': _sportsFilters,
-                        'minPrice': _priceRange.start,
-                        'maxPrice': _priceRange.end,
-                        'minRating': _selectedRating,
-                        'selectedServices': _servicesFilters,
-                      };
-                      Navigator.pop(context, filters);
-                    },
+
+                  // Right Content Area
+                  Expanded(
+                    child: Container(
+                       padding: const EdgeInsets.all(VSPSpacing.md),
+                      child: _buildContentForCategory(l10n),
+                    ),
                   ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
-        ],
+
+            // Footer Buttons
+            Container(
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              decoration: const BoxDecoration(
+                border: Border(
+                  top: BorderSide(
+                    color: VSPColors.divider,
+                    width: 1,
+                  ),
+                ),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      text: l10n.reset,
+                      onPressed: () {
+                        setState(() {
+                          _sportsFilters.updateAll((key, value) => false);
+                          _priceRange = const RangeValues(0, 3000);
+                          _selectedRating = 0;
+                          _servicesFilters.updateAll((key, value) => false);
+                        });
+                      },
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: l10n.apply,
+                      onPressed: () {
+                        final filters = {
+                          'sports': _sportsFilters,
+                          'minPrice': _priceRange.start,
+                          'maxPrice': _priceRange.end,
+                          'minRating': _selectedRating,
+                          'selectedServices': _servicesFilters,
+                        };
+                        Navigator.pop(context, filters);
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  Widget _buildCategoryItem(String title, IconData icon) {
-    final isSelected = _selectedCategory == title;
+  Widget _buildCategoryItem(String key, String title, IconData icon) {
+    final isSelected = _selectedCategory == key;
     return InkWell(
       onTap: () {
         setState(() {
-          _selectedCategory = title;
+          _selectedCategory = key;
         });
       },
       child: Container(
@@ -203,33 +220,33 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildContentForCategory() {
+  Widget _buildContentForCategory(AppLocalizations l10n) {
     switch (_selectedCategory) {
       case 'Sports':
-        return _buildSportsContent();
+        return _buildSportsContent(l10n);
       case 'Price Range':
-        return _buildPriceRangeContent();
+        return _buildPriceRangeContent(l10n);
       case 'Ratings':
-        return _buildRatingsContent();
+        return _buildRatingsContent(l10n);
       case 'Services':
-        return _buildServicesContent();
+        return _buildServicesContent(l10n);
       default:
         return const SizedBox();
     }
   }
 
-  Widget _buildSportsContent() {
+  Widget _buildSportsContent(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Select Sports',
+          l10n.selectSports,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: VSPSpacing.md),
         ..._sportsFilters.entries.map((entry) {
           return Padding(
-                  padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+            padding: const EdgeInsets.only(bottom: VSPSpacing.md),
             child: InkWell(
               onTap: () {
                 setState(() {
@@ -271,20 +288,20 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildPriceRangeContent() {
+  Widget _buildPriceRangeContent(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Price Range (EGP)',
+          '${l10n.priceRange} (${l10n.egCurrency})',
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: VSPSpacing.lg),
         Row(
           mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
-            Text('${_priceRange.start.round()} EGP', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-            Text('${_priceRange.end.round()} EGP', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+            Text('${_priceRange.start.round()} ${l10n.egCurrency}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+            Text('${_priceRange.end.round()} ${l10n.egCurrency}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
           ],
         ),
         RangeSlider(
@@ -308,12 +325,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildRatingsContent() {
+  Widget _buildRatingsContent(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Minimum Rating',
+          l10n.minRating,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: VSPSpacing.md),
@@ -338,7 +355,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         const SizedBox(height: VSPSpacing.sm),
         Center(
           child: Text(
-            _selectedRating == 0 ? 'Any Rating' : '$_selectedRating+ Stars',
+            _selectedRating == 0 ? l10n.anyRating : '$_selectedRating+ ${l10n.stars}',
             style: const TextStyle(color: VSPColors.textSecondary),
           ),
         ),
@@ -346,12 +363,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildServicesContent() {
+  Widget _buildServicesContent(AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Stadium Services',
+          l10n.stadiumServices,
           style: Theme.of(context).textTheme.titleMedium,
         ),
         const SizedBox(height: VSPSpacing.md),

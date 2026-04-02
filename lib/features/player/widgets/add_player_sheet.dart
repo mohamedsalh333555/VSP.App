@@ -72,23 +72,26 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
   @override
   Widget build(BuildContext context) {
-    return Container(
-      padding: EdgeInsets.only(
-        top: VSPSpacing.lg,
-        left: VSPSpacing.md,
-        right: VSPSpacing.md,
-        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
-      ),
-      decoration: const BoxDecoration(
-        color: VSPColors.background,
-        borderRadius: BorderRadius.only(
-          topLeft: Radius.circular(VSPRadius.xl),
-          topRight: Radius.circular(VSPRadius.xl),
+    return Padding(
+      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+      child: Container(
+        padding: const EdgeInsets.only(
+          top: VSPSpacing.lg,
+          left: VSPSpacing.md,
+          right: VSPSpacing.md,
+          bottom: VSPSpacing.lg,
         ),
-      ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
+        decoration: const BoxDecoration(
+          color: VSPColors.background,
+          borderRadius: BorderRadius.only(
+            topLeft: Radius.circular(VSPRadius.xl),
+            topRight: Radius.circular(VSPRadius.xl),
+          ),
+        ),
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -153,6 +156,8 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             _buildInviteCard(),
           const SizedBox(height: 16),
         ],
+          ),
+        ),
       ),
     );
   }

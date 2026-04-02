@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
@@ -19,7 +19,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -105,3 +105,4 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
     );
   }
 }
+

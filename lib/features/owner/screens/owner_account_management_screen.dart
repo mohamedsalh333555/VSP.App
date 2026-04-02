@@ -10,6 +10,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../auth/screens/welcome_screen.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
   const OwnerAccountManagementScreen({super.key});
@@ -132,15 +133,15 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    _buildInputLabel('Owner Name'),
-                   _buildTextField(_nameController),
+                   CustomTextField(controller: _nameController, hintText: 'Enter your name'),
                    const SizedBox(height: 16),
                    
                    _buildInputLabel('Number'),
-                   _buildTextField(_phoneController),
+                   CustomTextField(controller: _phoneController, hintText: 'Enter your number', keyboardType: TextInputType.phone),
                    const SizedBox(height: 16),
                    
                    _buildInputLabel('Email'),
-                   _buildTextField(_emailController, enabled: false), // Email usually not editable here
+                   CustomTextField(controller: _emailController, hintText: 'Enter your email', suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
                    const SizedBox(height: 16),
                    
                    _buildInputLabel('Location'),
@@ -190,7 +191,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    
                    const SizedBox(height: 16),
                    _buildInputLabel('Social media'),
-                   _buildTextField(_socialController),
+                   CustomTextField(controller: _socialController, hintText: 'Enter social media link'),
                 ],
               ),
             ),
@@ -262,27 +263,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 
-  Widget _buildTextField(TextEditingController controller, {bool enabled = true}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(VSPRadius.md), 
-        border: Border.all(color: VSPColors.divider, width: 0.5),
-      ),
-      child: TextField(
-        controller: controller,
-        enabled: enabled,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
-        ),
-        decoration: const InputDecoration(
-          border: InputBorder.none,
-          contentPadding: EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-          isDense: true,
-        ),
-      ),
-    );
-  }
+
 
   Widget _buildDocumentCard(String title, String size) {
     return VSPCard(

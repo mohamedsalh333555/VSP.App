@@ -50,7 +50,6 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         final String stadiumName = doc['name'] ?? 'Your stadium';
         final bool isVerified = doc['isVerified'] ?? false;
 
-        // Check if status changed from false (or unknown) to true
         if (_lastVerifiedStatus.containsKey(stadiumId)) {
           final bool wasVerified = _lastVerifiedStatus[stadiumId]!;
           if (!wasVerified && isVerified) {
@@ -58,7 +57,6 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
           }
         }
         
-        // Update local state for next comparison
         _lastVerifiedStatus[stadiumId] = isVerified;
       }
     });
@@ -66,6 +64,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
   void _showApprovalNotification(String name) {
     if (!mounted) return;
+    final l10n = AppLocalizations.of(context)!;
     
     ScaffoldMessenger.of(context).clearSnackBars();
     ScaffoldMessenger.of(context).showSnackBar(
@@ -80,11 +79,11 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                    Text(
-                    'Stadium Approved!',
+                    l10n.stadiumApprovedTitle,
                     style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
                   ),
                   Text(
-                    'Congratulations! "$name" is now live.',
+                    l10n.stadiumApprovedSubtitle(name),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black.withValues(alpha: 0.8)),
                   ),
                 ],
@@ -98,7 +97,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         margin: const EdgeInsets.fromLTRB(VSPSpacing.md, 0, VSPSpacing.md, VSPSpacing.xl),
         duration: const Duration(seconds: 5),
         action: SnackBarAction(
-          label: 'DISMISS',
+          label: l10n.dismissBtn,
           textColor: Colors.black.withValues(alpha: 0.5),
           onPressed: () {},
         ),
@@ -116,6 +115,8 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       extendBody: true,
       backgroundColor: VSPColors.background,
@@ -151,7 +152,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                     backgroundColor: VSPColors.accent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
                     label: Text(
-                      'Create Tournament',
+                      l10n.createTournament,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
                     ),
                     icon: const Icon(Icons.add, color: Colors.black),

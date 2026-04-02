@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/chat_model.dart';
@@ -26,7 +26,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
-    // 💡 CLEAR UNREAD: Mark messages as read when entering the screen
+    // ðŸ’¡ CLEAR UNREAD: Mark messages as read when entering the screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       if (auth.currentUser != null) {
@@ -79,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -104,12 +104,12 @@ class _ChatScreenState extends State<ChatScreen> {
                         Icon(Icons.chat_bubble_outline, size: 64, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
                         Text(
-                          lang.isArabic ? 'لا توجد رسائل بعد' : 'No messages yet',
+                          lang.isArabic ? 'Ù„Ø§ ØªÙˆØ¬Ø¯ Ø±Ø³Ø§Ø¦Ù„ Ø¨Ø¹Ø¯' : 'No messages yet',
                           style: TextStyle(color: VSPColors.textSecondary),
                         ),
                         const SizedBox(height: 8),
                         Text(
-                          lang.isArabic ? 'ابدأ المحادثة مع زملائك!' : 'Say hello to your teammates!',
+                          lang.isArabic ? 'Ø§Ø¨Ø¯Ø£ Ø§Ù„Ù…Ø­Ø§Ø¯Ø«Ø© Ù…Ø¹ Ø²Ù…Ù„Ø§Ø¦Ùƒ!' : 'Say hello to your teammates!',
                           style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                         ),
                       ],
@@ -251,3 +251,4 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 }
+

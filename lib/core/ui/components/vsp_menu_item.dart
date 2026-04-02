@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPMenuItem extends StatelessWidget {
@@ -73,8 +73,7 @@ class VSPMenuItem extends StatelessWidget {
             
             // Chevron
             if (!isLogout)
-              const Icon(
-                Icons.chevron_right,
+              const Icon(Icons.chevron_right, matchTextDirection: true,
                 color: VSPColors.textSecondary,
                 size: 22,
               ),
@@ -84,3 +83,4 @@ class VSPMenuItem extends StatelessWidget {
     );
   }
 }
+

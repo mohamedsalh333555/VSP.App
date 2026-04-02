@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -11,6 +11,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../data/models.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -99,7 +100,7 @@ class _AccountScreenState extends State<AccountScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -131,15 +132,15 @@ class _AccountScreenState extends State<AccountScreen> {
 
             // Owner Info Form
             _buildLabel(context, 'Owner Name'),
-            _buildTextField(context, controller: _nameController, hint: 'Enter your name'),
+            CustomTextField(controller: _nameController, hintText: 'Enter your name'),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Number'),
-            _buildTextField(context, controller: _phoneController, hint: 'Enter your phone', keyboardType: TextInputType.phone),
+            CustomTextField(controller: _phoneController, hintText: 'Enter your phone', keyboardType: TextInputType.phone),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Email'),
-            _buildTextField(context, controller: _emailController, hint: 'Enter your email', enabled: false),
+            CustomTextField(controller: _emailController, hintText: 'Enter your email', enabled: false, suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)),
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Location'),
@@ -192,7 +193,7 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 16),
 
             _buildLabel(context, 'Social media'),
-            _buildTextField(context, controller: _socialController, hint: 'Enter social media link'),
+            CustomTextField(controller: _socialController, hintText: 'Enter social media link'),
             const SizedBox(height: 24),
 
             // Documents
@@ -332,29 +333,6 @@ class _AccountScreenState extends State<AccountScreen> {
      );
   }
 
-  Widget _buildTextField(BuildContext context, {required TextEditingController controller, required String hint, bool enabled = true, TextInputType? keyboardType}) {
-    return Container(
-      decoration: BoxDecoration(
-        color: enabled ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1), width: 0.5),
-      ),
-      child: TextField(
-        controller: controller,
-        enabled: enabled,
-        keyboardType: keyboardType,
-        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
-        ),
-        decoration: InputDecoration(
-          hintText: hint,
-          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-          border: InputBorder.none,
-          contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-        ),
-      ),
-    );
-  }
 
   Widget _buildDocCard(BuildContext context, String name) {
     return VSPCard(
@@ -378,4 +356,5 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 }
+
 

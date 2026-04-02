@@ -243,6 +243,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   @override
   Widget build(BuildContext context) {
     bool isEditing = widget.tournament != null;
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -254,7 +256,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         ),
         centerTitle: true,
         title: Text(
-          isEditing ? 'Edit Tournament' : 'Create Tournament',
+          isEditing ? l10n.editTournamentTitle : l10n.createTournamentTitle,
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -297,7 +299,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                       side: const BorderSide(color: VSPColors.divider),
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                     ),
-                    child: const Text('Back'),
+                    child: Text(l10n.backButton),
                   ),
                 ),
               ),
@@ -308,7 +310,9 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
               child: SizedBox(
                 height: 56,
                 child: PrimaryButton(
-                  text: _currentStep == 2 ? (isEditing ? 'Update Changes' : 'Create Tournament') : 'Next',
+                  text: _currentStep == 2 
+                      ? (isEditing ? l10n.updateChanges : l10n.createTournamentTitle) 
+                      : l10n.nextButton,
                   isLoading: _isLoading,
                   onPressed: _isLoading ? () {} : _nextStep,
                 ),
@@ -321,7 +325,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   Widget _buildStepIndicator() {
-    final labels = ['Basics', 'System', 'Scheduling'];
+    final l10n = AppLocalizations.of(context)!;
+    final labels = [
+      l10n.basicsStep,
+      l10n.systemStep,
+      l10n.schedulingStep,
+    ];
     return Padding(
       padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
       child: Row(
@@ -385,13 +394,14 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   // ── STEP 1: Basics ──────────────────────────────
   Widget _buildStep1() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       key: const ValueKey('step1'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Quick Templates
-        Text('Quick Templates', style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-        Text('Choose a preset or fill details below', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
+        Text(l10n.quickTemplates, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
+        Text(l10n.choosePresetSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
           height: 80,
@@ -432,7 +442,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${t.teams} teams • ${t.fee.toStringAsFixed(0)} EGP',
+                        '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${l10n.currency}',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: isSelected ? VSPColors.accent.withValues(alpha: 0.7) : VSPColors.textSecondary, 
                           fontSize: 9,
@@ -447,15 +457,15 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         ),
         const SizedBox(height: VSPSpacing.xl),
 
-        _buildLabel('Tournament Name'),
+        _buildLabel(l10n.tournamentNameLabel),
         _buildTextField(_nameController, hint: 'e.g. Star Cup', autofocus: widget.tournament == null),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel('Sport Type'),
+        _buildLabel(l10n.sportTypeLabel),
         _buildDropdown(VSPConstants.sports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel('Entry Fee (EGP)'),
+        _buildLabel(l10n.entryFeeLabel),
         _buildTextField(_feeController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
         const SizedBox(height: 80),
       ],
@@ -464,22 +474,23 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   // ── STEP 2: Tournament System ───────────────────
   Widget _buildStep2() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       key: const ValueKey('step2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Tournament System'),
+        _buildLabel(l10n.tournamentSystemLabel),
         const SizedBox(height: VSPSpacing.sm),
         Row(
           children: [
-            _buildSystemOption('Cup', 'Knockout', Icons.emoji_events_outlined),
+            _buildSystemOption('Cup', l10n.knockoutType, Icons.emoji_events_outlined),
             const SizedBox(width: VSPSpacing.md),
-            _buildSystemOption('League', 'League', Icons.leaderboard_outlined),
+            _buildSystemOption('League', l10n.leagueType, Icons.leaderboard_outlined),
           ],
         ),
         const SizedBox(height: VSPSpacing.xl),
 
-        _buildLabel('Max Teams'),
+        _buildLabel(l10n.maxTeamsLabel),
         _buildDropdown(['4', '8', '16', '32'], _selectedTeams, (v) => setState(() => _selectedTeams = v!)),
         const SizedBox(height: 80),
       ],
@@ -522,29 +533,30 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   // ── STEP 3: Scheduling ─────────────────────────
   Widget _buildStep3() {
+    final l10n = AppLocalizations.of(context)!;
     return Column(
       key: const ValueKey('step3'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel('Start Date'),
+        _buildLabel(l10n.startDateLabel),
         GestureDetector(
           onTap: () => _selectDate(true),
           child: _buildDateChip(_startDate),
         ),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel('End Date'),
+        _buildLabel(l10n.endDateLabel),
         GestureDetector(
           onTap: () => _selectDate(false),
           child: _buildDateChip(_endDate),
         ),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel('Match Duration (min)'),
+        _buildLabel(l10n.matchDurationLabel),
         _buildTextField(_durationController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel('Grand Prize (EGP)'),
+        _buildLabel(l10n.grandPrizeLabel),
         _buildTextField(_prizeController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
         const SizedBox(height: 80),
       ],

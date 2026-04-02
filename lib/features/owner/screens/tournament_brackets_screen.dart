@@ -56,14 +56,21 @@ class TournamentBracketsScreen extends StatelessWidget {
           // Sort rounds (High index = Early rounds, Low index = Final)
           final sortedRoundIndices = rounds.keys.toList()..sort((a, b) => b.compareTo(a));
 
-          return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-            scrollDirection: Axis.horizontal,
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: sortedRoundIndices.map((roundIndex) {
-                return _buildRoundColumn(context, roundIndex, rounds[roundIndex]!);
-              }).toList(),
-            ),
+          return LayoutBuilder(
+            builder: (context, constraints) {
+              return SingleChildScrollView(
+                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+                scrollDirection: Axis.horizontal,
+                child: IntrinsicHeight(
+                  child: Row(
+                    crossAxisAlignment: CrossAxisAlignment.stretch,
+                    children: sortedRoundIndices.map((roundIndex) {
+                      return _buildRoundColumn(context, roundIndex, rounds[roundIndex]!);
+                    }).toList(),
+                  ),
+                ),
+              );
+            }
           );
         },
       ),
@@ -97,19 +104,19 @@ class TournamentBracketsScreen extends StatelessWidget {
                   ),
             ),
           ),
-          Expanded(
-            child: ListView.separated(
-              itemCount: matches.length,
-              separatorBuilder: (_, __) => const SizedBox(height: 20), // Spacing between matches
-              itemBuilder: (context, index) {
-                return _MatchNode(
-                  match: matches[index],
-                  isOwner: isOwner,
-                  onTap: isOwner ? () => _showScoreDialog(context, matches[index]) : null,
-                  onScheduleTap: isOwner ? () => _showScheduleDialog(context, matches[index]) : null,
-                );
-              },
-            ),
+          ListView.separated(
+            shrinkWrap: true,
+            physics: const NeverScrollableScrollPhysics(),
+            itemCount: matches.length,
+            separatorBuilder: (_, __) => const SizedBox(height: 20), // Spacing between matches
+            itemBuilder: (context, index) {
+              return _MatchNode(
+                match: matches[index],
+                isOwner: isOwner,
+                onTap: isOwner ? () => _showScoreDialog(context, matches[index]) : null,
+                onScheduleTap: isOwner ? () => _showScheduleDialog(context, matches[index]) : null,
+              );
+            },
           ),
         ],
       ),
@@ -389,14 +396,18 @@ class _MatchNode extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text(
-            name ?? AppLocalizations.of(context)!.na,
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: name == null
-                      ? VSPColors.textSecondary.withValues(alpha: 0.5)
-                      : (isWinner ? VSPColors.accent : VSPColors.textPrimary),
-                  fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
-                ),
+          Expanded(
+            child: Text(
+              name ?? AppLocalizations.of(context)!.na,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: name == null
+                        ? VSPColors.textSecondary.withValues(alpha: 0.5)
+                        : (isWinner ? VSPColors.accent : VSPColors.textPrimary),
+                    fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+                  ),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
           ),
           if (score != null)
             Text(

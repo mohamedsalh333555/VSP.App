@@ -1,17 +1,15 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/stadium_card.dart';
+import '../../../shared/widgets/vsp_empty_state.dart';
 import 'add_stadium_wizard.dart';
 import 'owner_documentation_wizard.dart';
 
-/// شاشة ملاعبي - تظهر بعد تسجيل حساب المالك
-/// حالتين: فارغة (أول مرة) أو ملاعب مسجلة
 class MyStadiumsScreen extends StatefulWidget {
   const MyStadiumsScreen({super.key});
 
@@ -25,30 +23,22 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
+      appBar: AppBar(
+        backgroundColor: VSPColors.background,
+        elevation: 0,
+        centerTitle: true,
+        title: Text(
+          l10n.myStadiumsTab,
+          style: Theme.of(context).textTheme.displaySmall,
+        ),
+      ),
       body: SafeArea(
         child: Column(
           children: [
-            // Header
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-              child: Row(
-                children: [
-                  // Back button logic if needed (e.g. if pushed from somewhere else)
-                  // For now, it's a main screen after auth, so maybe no back button or logout
-                  const Spacer(),
-                  Text(
-                    'Stadiums',
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                  const Spacer(),
-                  // Hidden icon for balance
-                  const SizedBox(width: 48), 
-                ],
-              ),
-            ),
-
             // Content
             Expanded(
               child: _ownerId == null
@@ -60,7 +50,6 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
                           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
                         }
                         
-                        // We check if data exists and is not empty
                         final stadiums = snapshot.data ?? [];
                         
                         if (stadiums.isEmpty) {
@@ -80,84 +69,47 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
     );
   }
 
-  // ===================== EMPTY STATE =====================
   Widget _buildEmptyState() {
-    return Column(
-      children: [
-        const SizedBox(height: VSPSpacing.xl),
-
-        Text(
-          'All your stadiums will appear here.',
-          style: Theme.of(context).textTheme.displaySmall,
-          textAlign: TextAlign.center,
-        ),
-
-        const SizedBox(height: VSPSpacing.sm),
-
-        Text(
-          'Add your stadium now',
-          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-          textAlign: TextAlign.center,
-        ),
-
-        // Stadium 3D Illustration
-        Expanded(
-          child: Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 40),
-              child: CachedNetworkImage(
-                imageUrl: '', // Removed fake 3D illustration placeholder
-                fit: BoxFit.contain,
-                placeholder: (context, url) => const Center(
-                  child: CircularProgressIndicator(
-                    valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
-                  ),
-                ),
-                errorWidget: (context, url, error) => Icon(
-                  Icons.stadium,
-                  size: 120,
-                  color: VSPColors.textSecondary.withValues(alpha: 0.3),
-                ),
-              ),
-            ),
-          ),
-        ),
-      ],
+    final l10n = AppLocalizations.of(context)!;
+    return VSPEmptyState(
+      icon: Icons.stadium_outlined,
+      title: l10n.stadiumsEmptyTitle,
+      subtitle: l10n.stadiumsEmptySubtitle,
     );
   }
 
-  // ===================== STADIUMS LIST =====================
   Widget _buildStadiumsList(List<Stadium> stadiums) {
     return ListView.builder(
       padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+      physics: const BouncingScrollPhysics(),
       itemCount: stadiums.length,
       itemBuilder: (context, index) {
         return Padding(
           padding: const EdgeInsets.only(bottom: VSPSpacing.md),
           child: StadiumCard(
             stadium: stadiums[index],
-              onTap: () async {
-                await Navigator.push(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => AddStadiumWizard(stadiumId: stadiums[index].id),
-                  ),
-                );
-              },
+            onTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddStadiumWizard(stadiumId: stadiums[index].id),
+                ),
+              );
+            },
           ),
         );
       },
     );
   }
 
-  // ===================== BOTTOM BUTTONS =====================
   Widget _buildBottomButtons() {
+    final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: const EdgeInsets.all(VSPSpacing.md),
+      padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 100),
       child: Column(
         children: [
           PrimaryButton(
-            text: 'Add stadium',
+            text: l10n.addStadiumLabel,
             color: VSPColors.accent.withValues(alpha: 0.1),
             textColor: VSPColors.accent,
             onPressed: () async {
@@ -169,7 +121,7 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
           ),
           const SizedBox(height: VSPSpacing.md),
           PrimaryButton(
-            text: 'Complete your info',
+            text: l10n.identityPendingVerification,
             onPressed: () {
               Navigator.push(
                 context,
@@ -177,7 +129,6 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
               );
             },
           ),
-          const SizedBox(height: VSPSpacing.md),
         ],
       ),
     );

@@ -1,7 +1,6 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
-import '../../../core/providers/language_provider.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -26,7 +25,6 @@ class _BookedScreenState extends State<BookedScreen> {
   @override
   void initState() {
     super.initState();
-    // Load bookings when screen initializes
     _loadData();
   }
 
@@ -48,6 +46,8 @@ class _BookedScreenState extends State<BookedScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -56,12 +56,12 @@ class _BookedScreenState extends State<BookedScreen> {
         centerTitle: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+                icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
         title: Text(
-          AppLocalizations.of(context)!.bookedTitle,
+          l10n.bookedTitle,
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -88,12 +88,13 @@ class _BookedScreenState extends State<BookedScreen> {
                   final userId = authProvider.currentUser?.uid;
                   if (userId != null) {
                     Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                    await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
+                    await Future.delayed(const Duration(seconds: 1));
                   }
                 },
                 color: VSPColors.accent,
                 backgroundColor: VSPColors.surface,
-                child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+                child: SingleChildScrollView(
+                  keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
                   physics: const AlwaysScrollableScrollPhysics(),
                   child: Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -112,19 +113,18 @@ class _BookedScreenState extends State<BookedScreen> {
                 final userId = authProvider.currentUser?.uid;
                 if (userId != null) {
                   Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
-                  await Future.delayed(const Duration(seconds: 1)); // Give stream time to emit
+                  await Future.delayed(const Duration(seconds: 1));
                 }
               },
               color: VSPColors.accent,
               backgroundColor: VSPColors.surface,
               child: ListView(
-                physics: const AlwaysScrollableScrollPhysics(), // Ensures scrolling even if empty
+                physics: const AlwaysScrollableScrollPhysics(),
                 padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 110),
                 children: [
-                // Upcoming Section
                 if (data.upcoming.isNotEmpty) ...[
                   Text(
-                    AppLocalizations.of(context)!.upcoming,
+                    l10n.upcoming,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -146,10 +146,9 @@ class _BookedScreenState extends State<BookedScreen> {
                   const SizedBox(height: VSPSpacing.lg),
                 ],
 
-                // History Section
                 if (data.history.isNotEmpty) ...[
                   Text(
-                    AppLocalizations.of(context)!.history,
+                    l10n.history,
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -179,11 +178,12 @@ class _BookedScreenState extends State<BookedScreen> {
   }
 
   Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
     return VSPEmptyState(
       icon: Icons.calendar_today_outlined,
-      title: AppLocalizations.of(context)!.noBookings,
-      subtitle: AppLocalizations.of(context)!.noBookingsSubtitle,
-      buttonText: AppLocalizations.of(context)!.exploreStadiums,
+      title: l10n.noBookings,
+      subtitle: l10n.noBookingsSubtitle,
+      buttonText: l10n.exploreStadiums,
       onButtonPressed: () {
         Navigator.of(context).popUntil((route) => route.isFirst);
       },
@@ -204,23 +204,22 @@ class _BookingCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
         color: isHistory 
             ? VSPColors.surface 
-            : const Color(0xFF2D4B15), // Deep Forest Green
+            : const Color(0xFF2D4B15),
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         boxShadow: VSPShadow.subtle,
       ),
       child: Column(
         children: [
-          // Header: Stadium Image + Info + Actions
           Row(
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              // Stadium Image
               Container(
                 width: 56,
                 height: 56,
@@ -245,7 +244,6 @@ class _BookingCard extends StatelessWidget {
               ),
               const SizedBox(width: VSPSpacing.sm),
               
-              // Text Content
               Expanded(
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -263,10 +261,10 @@ class _BookingCard extends StatelessWidget {
                     const SizedBox(height: VSPSpacing.xs),
                     Row(
                       children: [
-                        _buildTag(booking.bookingType.name.toUpperCase()),
+                        _buildTag(_getLocalizedBookingType(context, booking.bookingType)),
                         if (booking.isPrivate) ...[
                           const SizedBox(width: VSPSpacing.sm),
-                          _buildTag(AppLocalizations.of(context)!.private, color: VSPColors.warning),
+                          _buildTag(l10n.private, color: VSPColors.warning),
                         ],
                       ],
                     ),
@@ -274,26 +272,23 @@ class _BookingCard extends StatelessWidget {
                 ),
               ),
 
-              // Status or Actions
               if (!isHistory) ...[
-                _buildStatusBadge(AppLocalizations.of(context)!.confirmed, VSPColors.accent),
+                _buildStatusBadge(l10n.confirmed, VSPColors.accent),
               ] else ...[
-                // History entries: can be past matches OR active matches that just moved to history (due to provider filter)
                 if (booking.endTime.isAfter(DateTime.now()))
-                  _buildStatusBadge('IN PROGRESS', VSPColors.accent)
+                  _buildStatusBadge(l10n.inProgress, VSPColors.accent)
                 else if (booking.bookingType == BookingType.challenge)
                   _buildChallengeStatusBadge(context)
                 else if (booking.status == BookingStatus.completed && (booking.matchResultStatus == MatchResultStatus.noResult || booking.matchResultStatus == MatchResultStatus.waitingOpponent))
-                  _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning)
+                  _buildStatusBadge(l10n.submitResult, VSPColors.warning)
                 else
-                  _buildStatusBadge(AppLocalizations.of(context)!.completed, VSPColors.textSecondary),
+                  _buildStatusBadge(l10n.completed, VSPColors.textSecondary),
               ],
             ],
           ),
 
           const SizedBox(height: VSPSpacing.md),
           
-          // Info Grid
           Container(
             padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.md),
             decoration: BoxDecoration(
@@ -303,16 +298,15 @@ class _BookingCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoColumn(context, AppLocalizations.of(context)!.date, booking.formattedDate),
+                _buildInfoColumn(context, l10n.date, booking.formattedDate),
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, AppLocalizations.of(context)!.time, _formatTimeShort(booking.formattedTimeRange)),
+                _buildInfoColumn(context, l10n.time, _formatTimeShort(booking.formattedTimeRange)),
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, AppLocalizations.of(context)!.price, '${booking.totalPrice.toInt()} ${AppLocalizations.of(context)!.egCurrency}'),
+                _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
               ],
             ),
           ),
 
-          // Challenge Info (if applicable)
           if (booking.bookingType == BookingType.challenge && booking.opponentTeamName != null) ...[
             const SizedBox(height: VSPSpacing.sm),
             Container(
@@ -327,7 +321,7 @@ class _BookingCard extends StatelessWidget {
                   const Icon(Icons.sports_soccer, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
-                    AppLocalizations.of(context)!.vsOpponent(booking.opponentTeamName ?? ""),
+                    l10n.vsOpponent(booking.opponentTeamName ?? ""),
                     style: const TextStyle(
                       color: VSPColors.warning,
                       fontWeight: FontWeight.bold,
@@ -338,7 +332,6 @@ class _BookingCard extends StatelessWidget {
             ),
           ],
 
-          // Actions for upcoming bookings
           if (!isHistory) ...[
             const SizedBox(height: VSPSpacing.md),
             Row(
@@ -348,12 +341,10 @@ class _BookingCard extends StatelessWidget {
                     builder: (context) {
                       final bool canCancel = DateTime.now().isBefore(booking.startTime);
                       return VSPAnimatedButton(
-                        text: AppLocalizations.of(context)!.cancel,
+                        text: l10n.cancel,
                         color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
                         textColor: canCancel ? VSPColors.error : VSPColors.textSecondary,
-                        onPressed: canCancel ? () {
-                          _showCancelDialog(context);
-                        } : null,
+                        onPressed: canCancel ? () => _showCancelDialog(context) : null,
                       );
                     }
                   ),
@@ -361,7 +352,7 @@ class _BookingCard extends StatelessWidget {
                 const SizedBox(width: VSPSpacing.sm),
                 Expanded(
                   child: VSPAnimatedButton(
-                    text: AppLocalizations.of(context)!.chat,
+                    text: l10n.chat,
                     onPressed: () {
                       Navigator.push(
                         context,
@@ -376,8 +367,6 @@ class _BookingCard extends StatelessWidget {
             ),
           ],
 
-          // Result button/status for history (challenge type ONLY and valid opponent)
-          // ── Elo Fraud Prevention: Ensure button only appears after match ends ──
           if (isHistory && booking.bookingType == BookingType.challenge && booking.opponentTeamId != null &&
              booking.endTime.isBefore(DateTime.now())) ...[
             const SizedBox(height: VSPSpacing.md),
@@ -388,13 +377,27 @@ class _BookingCard extends StatelessWidget {
     );
   }
 
+  String _getLocalizedBookingType(BuildContext context, BookingType type) {
+    final l10n = AppLocalizations.of(context)!;
+    switch (type) {
+      case BookingType.personal:
+        return l10n.personalType.toUpperCase();
+      case BookingType.team:
+        return l10n.teamType.toUpperCase();
+      case BookingType.challenge:
+        return l10n.challengeType.toUpperCase();
+      default:
+        return type.name.toUpperCase();
+    }
+  }
+
   Widget _buildChallengeResultAction(BuildContext context) {
-    // Determine current user's team ID safely.
+    final l10n = AppLocalizations.of(context)!;
     final currentTeamId = myTeamId ?? booking.playerTeamId; 
     if (currentTeamId == null) return const SizedBox.shrink();
     
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
-      return _buildAddResultButton(context, currentTeamId);
+      return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
     } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       if (booking.resultSubmittedByTeamId == currentTeamId) {
         return Container(
@@ -406,7 +409,7 @@ class _BookingCard extends StatelessWidget {
             border: Border.all(color: Colors.white12),
           ),
           child: Text(
-            AppLocalizations.of(context)!.waitingOpponent,
+            l10n.waitingOpponent,
             textAlign: TextAlign.center,
             style: Theme.of(context).textTheme.bodySmall?.copyWith(
               color: VSPColors.textSecondary,
@@ -415,18 +418,19 @@ class _BookingCard extends StatelessWidget {
           ),
         );
       } else {
-        return _buildAddResultButton(context, currentTeamId);
+        return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
       }
-    } else if (booking.matchResultStatus == MatchResultStatus.confirmed) {
-      return const SizedBox.shrink(); // Badge already shown in header or skipped for confirmed
     }
     
     return const SizedBox.shrink();
   }
 
-  Widget _buildAddResultButton(BuildContext context, String currentTeamId) {
+  Widget _buildAddResultButton(BuildContext context, String currentTeamId, {bool isPrimaryPopping = false}) {
+    final l10n = AppLocalizations.of(context)!;
     return VSPAnimatedButton(
-      text: AppLocalizations.of(context)!.addResult,
+      text: l10n.addResult,
+      color: isPrimaryPopping ? VSPColors.warning : VSPColors.accent,
+      textColor: isPrimaryPopping ? Colors.black : VSPColors.textPrimary,
       onPressed: () {
         showDialog(
           context: context,
@@ -450,14 +454,14 @@ class _BookingCard extends StatelessWidget {
                 Navigator.pop(context);
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(AppLocalizations.of(context)!.resultSuccess),
+                    content: Text(l10n.resultSuccess),
                     backgroundColor: VSPColors.accent,
                   ),
                 );
               } else {
                 ScaffoldMessenger.of(context).showSnackBar(
                   SnackBar(
-                    content: Text(provider.errorMessage ?? AppLocalizations.of(context)!.resultFailed),
+                    content: Text(provider.errorMessage ?? l10n.resultFailed),
                     backgroundColor: Colors.red,
                   ),
                 );
@@ -470,31 +474,30 @@ class _BookingCard extends StatelessWidget {
   }
 
   Widget _buildChallengeStatusBadge(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     final currentTeamId = myTeamId ?? booking.playerTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
     final isHome = currentTeamId == booking.playerTeamId;
     final isAway = currentTeamId == booking.opponentTeamId;
     
-    // If user isn't in either team (shouldn't happen for booked screen entries), show generic Completed
     if (!isHome && !isAway) return const SizedBox.shrink();
 
     if (booking.matchResultStatus == MatchResultStatus.confirmed) {
       final outcome = booking.finalOutcome;
       if (outcome == MatchOutcome.draw) {
-        return _buildStatusBadge(AppLocalizations.of(context)!.draw, Colors.blue);
+        return _buildStatusBadge(l10n.draw, Colors.blue);
       } else if (outcome == MatchOutcome.homeWin) {
         final isWon = isHome;
-        return _buildStatusBadge(isWon ? AppLocalizations.of(context)!.win : AppLocalizations.of(context)!.loss, isWon ? Colors.amber : Colors.red);
+        return _buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? Colors.amber : Colors.red);
       } else if (outcome == MatchOutcome.awayWin) {
         final isWon = isAway;
-        return _buildStatusBadge(isWon ? AppLocalizations.of(context)!.win : AppLocalizations.of(context)!.loss, isWon ? Colors.amber : Colors.red);
+        return _buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? Colors.amber : Colors.red);
       }
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
-      return _buildStatusBadge(AppLocalizations.of(context)!.disputed, VSPColors.warning);
+      return _buildStatusBadge(l10n.disputed, VSPColors.warning);
     } else if (booking.endTime.isBefore(DateTime.now())) {
-      // Results not yet confirmed but match is over
-      return _buildStatusBadge(AppLocalizations.of(context)!.submitResult, VSPColors.warning);
+      return _buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
     
     return const SizedBox.shrink();
@@ -562,7 +565,6 @@ class _BookingCard extends StatelessWidget {
   }
 
   String _formatTimeShort(String timeRange) {
-    // Shorten time range for display
     final parts = timeRange.split(' - ');
     if (parts.length == 2) {
       final start = parts[0].replaceAll(':00', '');
@@ -573,16 +575,17 @@ class _BookingCard extends StatelessWidget {
   }
 
   void _showCancelDialog(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
         title: Text(
-          AppLocalizations.of(context)!.cancelBooking,
+          l10n.cancelBooking,
           style: Theme.of(context).textTheme.titleLarge,
         ),
         content: Text(
-          AppLocalizations.of(context)!.cancelBookingConfirm,
+          l10n.cancelBookingConfirm,
           style: Theme.of(context).textTheme.bodyMedium,
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
@@ -591,7 +594,7 @@ class _BookingCard extends StatelessWidget {
             children: [
               Expanded(
                 child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.keepBooking,
+                  text: l10n.keepBooking,
                   height: 48,
                   color: VSPColors.surfaceAlt,
                   textColor: VSPColors.textPrimary,
@@ -601,39 +604,32 @@ class _BookingCard extends StatelessWidget {
               const SizedBox(width: VSPSpacing.md),
               Expanded(
                 child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.cancel,
+                  text: l10n.cancel,
                   height: 48,
                   color: VSPColors.error,
                   textColor: VSPColors.background,
                   onPressed: () async {
-                    // Cancel booking
                     final provider = Provider.of<BookingProvider>(context, listen: false);
-                    
-                    // Show quick loading snackbar
                     ScaffoldMessenger.of(context).showSnackBar(
                       SnackBar(
-                        content: Text(AppLocalizations.of(context)!.cancelling),
+                        content: Text(l10n.cancelling),
                         duration: const Duration(seconds: 1),
                       ),
                     );
-                    
-                    Navigator.pop(context); // Close dialog
-
+                    Navigator.pop(context);
                     final success = await provider.cancelBooking(booking.id);
-                    
                     if (!context.mounted) return;
-                    
                     if (success) {
                       ScaffoldMessenger.of(context).showSnackBar(
                         SnackBar(
-                          content: Text(AppLocalizations.of(context)!.cancelSuccess),
+                          content: Text(l10n.cancelSuccess),
                           backgroundColor: VSPColors.warning,
                         ),
                       );
                     } else {
                       ScaffoldMessenger.of(context).showSnackBar(
                          SnackBar(
-                          content: Text(provider.errorMessage ?? AppLocalizations.of(context)!.cancelFailed),
+                          content: Text(provider.errorMessage ?? l10n.cancelFailed),
                           backgroundColor: VSPColors.error,
                         ),
                       );
