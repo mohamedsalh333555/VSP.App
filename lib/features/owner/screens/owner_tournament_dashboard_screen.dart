@@ -168,7 +168,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ],
         ),
       ),
-    );    );
+    );
   }
 
   Future<void> _crownChampion(String teamId, String teamName) async {

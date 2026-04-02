@@ -251,8 +251,13 @@ service cloud.firestore {
     match /tournament_matches/{matchId} {
       allow read: if isAuthenticated();
 
-      // Only the championship's owner or admin can write tournament matches
-      allow create, delete: if isAdmin();
+      allow create: if isAdmin()
+                    || (isAuthenticated()
+                        && exists(/databases/$(database)/documents/championships/$(request.resource.data.championshipId))
+                        && get(/databases/$(database)/documents/championships/$(request.resource.data.championshipId))
+                             .data.ownerId == request.auth.uid);
+
+      allow delete: if isAdmin();
 
       allow update: if isAdmin()
                     || (isAuthenticated()

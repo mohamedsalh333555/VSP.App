@@ -764,5 +764,62 @@
     "placeholders": {
        "count": { "type": "int" }
     }
-  }
+  },
+  "tournamentsTab": "Tournaments",
+  "bookedTab": "Booked",
+  "profileTab": "Profile",
+  "hiPrefix": "Hi",
+  "ownerGuestFallback": "Owner",
+  "individualPlayerLabel": "Individual Player",
+  "teamMatchLabel": "Team Match",
+  "playerTypeLabel": "Player",
+  "endDate": "End Date",
+  "resetLabel": "Reset",
+  "forceStartTournament": "Force Start Tournament?",
+  "forceStartWarning": "Tournament is not full ({count} / {max} teams). Are you sure you want to force start? Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.",
+  "@forceStartWarning": {
+    "placeholders": {
+       "count": { "type": "int" },
+       "max": { "type": "int" }
+    }
+  },
+  "forceStart": "Force Start",
+  "drawGeneratedSuccess": "Draw Generated & Tournament Started!",
+  "selectTournamentWinner": "Select Tournament Winner",
+  "addTeamManually": "Add Team Manually",
+  "manualRegistrationSub": "Register a team that signed up via phone or in-person.",
+  "manualRegistration": "Manual Registration",
+  "statusLabel": "STATUS",
+  "categoryLabel": "CATEGORY",
+  "datesLabel": "DATES",
+  "teamsLabel": "TEAMS",
+  "joinedTeamsLabel": "Joined Teams",
+  "addTeam": "Add Team",
+  "paid": "Paid",
+  "pending": "Pending",
+  "generateDrawStart": "GENERATE DRAW & START",
+  "manualCrownChampion": "MANUAL CROWN CHAMPION",
+  "tournamentBrackets": "Tournament Brackets",
+  "noBracketsYet": "Brackets not generated yet.",
+  "roundOf": "Round of {count}",
+  "@roundOf": {
+    "placeholders": {
+       "count": { "type": "int" }
+    }
+  },
+  "finalRound": "Final",
+  "semiFinalRound": "Semi Final",
+  "quarterFinalRound": "Quarter Final",
+  "matchScheduledFor": "Match scheduled for {time}",
+  "@matchScheduledFor": {
+    "placeholders": {
+       "time": { "type": "String" }
+    }
+  },
+  "waitingPreviousWinners": "Waiting for previous round winners...",
+  "updateScore": "Update Score",
+  "saveLabel": "Save",
+  "drawNotAllowed": "Draws not allowed in knockout!",
+  "notScheduled": "Not Scheduled",
+  "editLabel": "Edit"
 }

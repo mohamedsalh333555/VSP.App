@@ -1527,4 +1527,134 @@ class AppLocalizationsEn extends AppLocalizations {
   String youHaveStadiums(int count) {
     return 'You have $count stadium(s)';
   }
+
+  @override
+  String get tournamentsTab => 'Tournaments';
+
+  @override
+  String get bookedTab => 'Booked';
+
+  @override
+  String get profileTab => 'Profile';
+
+  @override
+  String get hiPrefix => 'Hi';
+
+  @override
+  String get ownerGuestFallback => 'Owner';
+
+  @override
+  String get individualPlayerLabel => 'Individual Player';
+
+  @override
+  String get teamMatchLabel => 'Team Match';
+
+  @override
+  String get playerTypeLabel => 'Player';
+
+  @override
+  String get endDate => 'End Date';
+
+  @override
+  String get resetLabel => 'Reset';
+
+  @override
+  String get forceStartTournament => 'Force Start Tournament?';
+
+  @override
+  String forceStartWarning(int count, int max) {
+    return 'Tournament is not full ($count / $max teams). Are you sure you want to force start? Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.';
+  }
+
+  @override
+  String get forceStart => 'Force Start';
+
+  @override
+  String get drawGeneratedSuccess => 'Draw Generated & Tournament Started!';
+
+  @override
+  String get selectTournamentWinner => 'Select Tournament Winner';
+
+  @override
+  String get addTeamManually => 'Add Team Manually';
+
+  @override
+  String get manualRegistrationSub =>
+      'Register a team that signed up via phone or in-person.';
+
+  @override
+  String get manualRegistration => 'Manual Registration';
+
+  @override
+  String get statusLabel => 'STATUS';
+
+  @override
+  String get categoryLabel => 'CATEGORY';
+
+  @override
+  String get datesLabel => 'DATES';
+
+  @override
+  String get teamsLabel => 'TEAMS';
+
+  @override
+  String get joinedTeamsLabel => 'Joined Teams';
+
+  @override
+  String get addTeam => 'Add Team';
+
+  @override
+  String get paid => 'Paid';
+
+  @override
+  String get pending => 'Pending';
+
+  @override
+  String get generateDrawStart => 'GENERATE DRAW & START';
+
+  @override
+  String get manualCrownChampion => 'MANUAL CROWN CHAMPION';
+
+  @override
+  String get tournamentBrackets => 'Tournament Brackets';
+
+  @override
+  String get noBracketsYet => 'Brackets not generated yet.';
+
+  @override
+  String roundOf(int count) {
+    return 'Round of $count';
+  }
+
+  @override
+  String get finalRound => 'Final';
+
+  @override
+  String get semiFinalRound => 'Semi Final';
+
+  @override
+  String get quarterFinalRound => 'Quarter Final';
+
+  @override
+  String matchScheduledFor(String time) {
+    return 'Match scheduled for $time';
+  }
+
+  @override
+  String get waitingPreviousWinners => 'Waiting for previous round winners...';
+
+  @override
+  String get updateScore => 'Update Score';
+
+  @override
+  String get saveLabel => 'Save';
+
+  @override
+  String get drawNotAllowed => 'Draws not allowed in knockout!';
+
+  @override
+  String get notScheduled => 'Not Scheduled';
+
+  @override
+  String get editLabel => 'Edit';
 }

@@ -1513,4 +1513,133 @@ class AppLocalizationsAr extends AppLocalizations {
   String youHaveStadiums(int count) {
     return 'لديك $count ملعب';
   }
+
+  @override
+  String get tournamentsTab => 'البطولات';
+
+  @override
+  String get bookedTab => 'المحجوزة';
+
+  @override
+  String get profileTab => 'الملف الشخصي';
+
+  @override
+  String get hiPrefix => 'أهلاً';
+
+  @override
+  String get ownerGuestFallback => 'مالك';
+
+  @override
+  String get individualPlayerLabel => 'لاعب فردي';
+
+  @override
+  String get teamMatchLabel => 'مباراة فريق';
+
+  @override
+  String get playerTypeLabel => 'لاعب';
+
+  @override
+  String get endDate => 'تاريخ الانتهاء';
+
+  @override
+  String get resetLabel => 'إعادة تعيين';
+
+  @override
+  String get forceStartTournament => 'بدء البطولة قسراً؟';
+
+  @override
+  String forceStartWarning(int count, int max) {
+    return 'البطولة غير مكتملة ($count / $max فرق). هل أنت متأكد من البدء القسري؟ تأكد من وجود 4 أو 8 أو 16 أو 32 فريقاً ليعمل الجدول بشكل صحيح.';
+  }
+
+  @override
+  String get forceStart => 'بدء قسري';
+
+  @override
+  String get drawGeneratedSuccess => 'تم إنشاء القرعة وبدء البطولة بنجاح!';
+
+  @override
+  String get selectTournamentWinner => 'اختر الفائز بالبطولة';
+
+  @override
+  String get addTeamManually => 'إضافة فريق يدوياً';
+
+  @override
+  String get manualRegistrationSub => 'تسجيل فريق اشترك عبر الهاتف أو شخصياً.';
+
+  @override
+  String get manualRegistration => 'تسجيل يدوي';
+
+  @override
+  String get statusLabel => 'الحالة';
+
+  @override
+  String get categoryLabel => 'الفئة';
+
+  @override
+  String get datesLabel => 'التواريخ';
+
+  @override
+  String get teamsLabel => 'الفرق';
+
+  @override
+  String get joinedTeamsLabel => 'الفرق المشاركة';
+
+  @override
+  String get addTeam => 'إضافة فريق';
+
+  @override
+  String get paid => 'تم الدفع';
+
+  @override
+  String get pending => 'معلق';
+
+  @override
+  String get generateDrawStart => 'إنشاء القرعة والبدء';
+
+  @override
+  String get manualCrownChampion => 'تتويج البطل يدوياً';
+
+  @override
+  String get tournamentBrackets => 'جدول البطولة';
+
+  @override
+  String get noBracketsYet => 'لم يتم إنشاء الجدول بعد.';
+
+  @override
+  String roundOf(int count) {
+    return 'دور الـ $count';
+  }
+
+  @override
+  String get finalRound => 'النهائي';
+
+  @override
+  String get semiFinalRound => 'نصف النهائي';
+
+  @override
+  String get quarterFinalRound => 'ربع النهائي';
+
+  @override
+  String matchScheduledFor(String time) {
+    return 'المباراة مجدولة في $time';
+  }
+
+  @override
+  String get waitingPreviousWinners => 'في انتظار الفائزين من الدور السابق...';
+
+  @override
+  String get updateScore => 'تحديث النتيجة';
+
+  @override
+  String get saveLabel => 'حفظ';
+
+  @override
+  String get drawNotAllowed => 'لا يسمح بالتعادل في الأدوار الإقصائية!';
+
+  @override
+  String get notScheduled => 'غير مجدول';
+
+  @override
+  String get editLabel => 'تعديل';
 }

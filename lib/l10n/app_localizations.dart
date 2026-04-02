@@ -2887,6 +2887,252 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'You have {count} stadium(s)'**
   String youHaveStadiums(int count);
+
+  /// No description provided for @tournamentsTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Tournaments'**
+  String get tournamentsTab;
+
+  /// No description provided for @bookedTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Booked'**
+  String get bookedTab;
+
+  /// No description provided for @profileTab.
+  ///
+  /// In en, this message translates to:
+  /// **'Profile'**
+  String get profileTab;
+
+  /// No description provided for @hiPrefix.
+  ///
+  /// In en, this message translates to:
+  /// **'Hi'**
+  String get hiPrefix;
+
+  /// No description provided for @ownerGuestFallback.
+  ///
+  /// In en, this message translates to:
+  /// **'Owner'**
+  String get ownerGuestFallback;
+
+  /// No description provided for @individualPlayerLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Individual Player'**
+  String get individualPlayerLabel;
+
+  /// No description provided for @teamMatchLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Team Match'**
+  String get teamMatchLabel;
+
+  /// No description provided for @playerTypeLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Player'**
+  String get playerTypeLabel;
+
+  /// No description provided for @endDate.
+  ///
+  /// In en, this message translates to:
+  /// **'End Date'**
+  String get endDate;
+
+  /// No description provided for @resetLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get resetLabel;
+
+  /// No description provided for @forceStartTournament.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Start Tournament?'**
+  String get forceStartTournament;
+
+  /// No description provided for @forceStartWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Tournament is not full ({count} / {max} teams). Are you sure you want to force start? Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.'**
+  String forceStartWarning(int count, int max);
+
+  /// No description provided for @forceStart.
+  ///
+  /// In en, this message translates to:
+  /// **'Force Start'**
+  String get forceStart;
+
+  /// No description provided for @drawGeneratedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Draw Generated & Tournament Started!'**
+  String get drawGeneratedSuccess;
+
+  /// No description provided for @selectTournamentWinner.
+  ///
+  /// In en, this message translates to:
+  /// **'Select Tournament Winner'**
+  String get selectTournamentWinner;
+
+  /// No description provided for @addTeamManually.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Team Manually'**
+  String get addTeamManually;
+
+  /// No description provided for @manualRegistrationSub.
+  ///
+  /// In en, this message translates to:
+  /// **'Register a team that signed up via phone or in-person.'**
+  String get manualRegistrationSub;
+
+  /// No description provided for @manualRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Registration'**
+  String get manualRegistration;
+
+  /// No description provided for @statusLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'STATUS'**
+  String get statusLabel;
+
+  /// No description provided for @categoryLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'CATEGORY'**
+  String get categoryLabel;
+
+  /// No description provided for @datesLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'DATES'**
+  String get datesLabel;
+
+  /// No description provided for @teamsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'TEAMS'**
+  String get teamsLabel;
+
+  /// No description provided for @joinedTeamsLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Joined Teams'**
+  String get joinedTeamsLabel;
+
+  /// No description provided for @addTeam.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Team'**
+  String get addTeam;
+
+  /// No description provided for @paid.
+  ///
+  /// In en, this message translates to:
+  /// **'Paid'**
+  String get paid;
+
+  /// No description provided for @pending.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pending;
+
+  /// No description provided for @generateDrawStart.
+  ///
+  /// In en, this message translates to:
+  /// **'GENERATE DRAW & START'**
+  String get generateDrawStart;
+
+  /// No description provided for @manualCrownChampion.
+  ///
+  /// In en, this message translates to:
+  /// **'MANUAL CROWN CHAMPION'**
+  String get manualCrownChampion;
+
+  /// No description provided for @tournamentBrackets.
+  ///
+  /// In en, this message translates to:
+  /// **'Tournament Brackets'**
+  String get tournamentBrackets;
+
+  /// No description provided for @noBracketsYet.
+  ///
+  /// In en, this message translates to:
+  /// **'Brackets not generated yet.'**
+  String get noBracketsYet;
+
+  /// No description provided for @roundOf.
+  ///
+  /// In en, this message translates to:
+  /// **'Round of {count}'**
+  String roundOf(int count);
+
+  /// No description provided for @finalRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Final'**
+  String get finalRound;
+
+  /// No description provided for @semiFinalRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Semi Final'**
+  String get semiFinalRound;
+
+  /// No description provided for @quarterFinalRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Quarter Final'**
+  String get quarterFinalRound;
+
+  /// No description provided for @matchScheduledFor.
+  ///
+  /// In en, this message translates to:
+  /// **'Match scheduled for {time}'**
+  String matchScheduledFor(String time);
+
+  /// No description provided for @waitingPreviousWinners.
+  ///
+  /// In en, this message translates to:
+  /// **'Waiting for previous round winners...'**
+  String get waitingPreviousWinners;
+
+  /// No description provided for @updateScore.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Score'**
+  String get updateScore;
+
+  /// No description provided for @saveLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Save'**
+  String get saveLabel;
+
+  /// No description provided for @drawNotAllowed.
+  ///
+  /// In en, this message translates to:
+  /// **'Draws not allowed in knockout!'**
+  String get drawNotAllowed;
+
+  /// No description provided for @notScheduled.
+  ///
+  /// In en, this message translates to:
+  /// **'Not Scheduled'**
+  String get notScheduled;
+
+  /// No description provided for @editLabel.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit'**
+  String get editLabel;
 }
 
 class _AppLocalizationsDelegate

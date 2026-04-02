@@ -18,24 +18,24 @@ class OwnerBottomNavBar extends StatelessWidget {
       selectedIndex: currentIndex,
       onItemTapped: onTap,
       items: [
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.dashboard_outlined),
-          activeIcon: const Icon(Icons.dashboard),
+        VspNavItem(
+          activeIcon: Icons.dashboard,
+          inactiveIcon: Icons.dashboard_outlined,
           label: AppLocalizations.of(context)!.home,
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.emoji_events_outlined),
-          activeIcon: const Icon(Icons.emoji_events),
+        VspNavItem(
+          activeIcon: Icons.emoji_events,
+          inactiveIcon: Icons.emoji_events_outlined,
           label: AppLocalizations.of(context)!.tournamentsTab,
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.calendar_today_outlined),
-          activeIcon: const Icon(Icons.calendar_today),
+        VspNavItem(
+          activeIcon: Icons.calendar_today,
+          inactiveIcon: Icons.calendar_today_outlined,
           label: AppLocalizations.of(context)!.bookedTab,
         ),
-        BottomNavigationBarItem(
-          icon: const Icon(Icons.person_outline),
-          activeIcon: const Icon(Icons.person),
+        VspNavItem(
+          activeIcon: Icons.person,
+          inactiveIcon: Icons.person_outline,
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],
