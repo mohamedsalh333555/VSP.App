@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -151,7 +151,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
+              icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
@@ -348,7 +348,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       String? logoUrl;
       if (_selectedLogo != null) {
         logoUrl = await StorageService().uploadFile(
-          file: File(_selectedLogo!.path),
+          file: _selectedLogo!,
+          bucket: 'profile-pictures',
           path: 'teams/${user.uid}/logo/logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
       }
@@ -398,7 +399,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       String? logoUrl;
       if (_selectedLogo != null) {
         logoUrl = await StorageService().uploadFile(
-          file: File(_selectedLogo!.path),
+          file: _selectedLogo!,
+          bucket: 'profile-pictures',
           path: 'teams/${user?.uid ?? 'unknown'}/logo/logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
       }
@@ -494,9 +496,28 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               GestureDetector(
                 onTap: () async {
                   final userToRemove = user;
-                  setState(() => _teamMembers.removeWhere((m) => m.uid == userToRemove.uid));
                   if (team != null) {
-                    await DatabaseService().removeMemberFromTeam(team.id, userToRemove.uid, userToRemove.profileImageUrl ?? '');
+                    try {
+                      await DatabaseService().removeMemberFromTeam(team.id, userToRemove.uid, userToRemove.profileImageUrl ?? '');
+                      if (mounted) {
+                        setState(() => _teamMembers.removeWhere((m) => m.uid == userToRemove.uid));
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(AppLocalizations.of(context)!.memberRemovedSuccess), backgroundColor: VSPColors.accent),
+                        );
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        final errorMsg = e.toString().replaceAll('Exception:', '').trim();
+                        final displayMsg = errorMsg == 'active_match_or_tournament_error'
+                            ? AppLocalizations.of(context)!.teamMemberDeleteLockError
+                            : errorMsg;
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error),
+                        );
+                      }
+                    }
+                  } else {
+                    setState(() => _teamMembers.removeWhere((m) => m.uid == userToRemove.uid));
                   }
                 },
                 child: const Padding(padding: EdgeInsets.only(left: 6, right: 2), child: Icon(Icons.close, color: VSPColors.error, size: 14)),
@@ -615,3 +636,4 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     );
   }
 }
+

@@ -1,6 +1,7 @@
 import '../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
+import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:geolocator/geolocator.dart';
@@ -17,6 +18,10 @@ import '../../../core/services/logger_service.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:geocoding/geocoding.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import 'package:flutter_map/flutter_map.dart';
+import 'package:latlong2/latlong.dart';
+import 'package:http/http.dart' as http;
+import 'dart:convert';
 
 class AddStadiumWizard extends StatefulWidget {
   final String? stadiumId;
@@ -28,6 +33,7 @@ class AddStadiumWizard extends StatefulWidget {
 
 class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _ballPriceController = TextEditingController();
+  final _depositController = TextEditingController();
   final _pageController = PageController();
   int _currentStep = 0;
   bool _isLoadingData = false;
@@ -55,19 +61,46 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   TimeOfDay? _startTime;
   TimeOfDay? _endTime;
   bool _isSplitShift = false;
-  TimeOfDay? _breakStartTime;
-  TimeOfDay? _breakEndTime;
+  List<Map<String, TimeOfDay?>> _breakTimes = [];
 
   // Step 3: Stadium Images
   final List<Map<String, dynamic>> _images = [];
-  bool _isUploading = false;
+  final bool _isUploading = false;
   bool _isLocationLoading = false;
   bool _isSaving = false;
   String? _governorate; // ✅ Extracted via Geocoding for filtering
+  bool _requireDeposit = false;
 
   final ImagePicker _imagePicker = ImagePicker();
   final StorageService _storageService = StorageService();
   final StadiumRepository _databaseService = StadiumRepository();
+
+  bool get _isSplitShiftValid {
+    if (!_isSplitShift) return true;
+    if (_startTime == null || _endTime == null) return true;
+
+    int t(TimeOfDay time) => time.hour * 60 + time.minute;
+    final start = t(_startTime!);
+    final end = t(_endTime!);
+    int normEnd = (end <= start) ? end + (24 * 60) : end;
+
+    for (var breakEntry in _breakTimes) {
+      final bStart = breakEntry['start'];
+      final bEnd = breakEntry['end'];
+      if (bStart == null || bEnd == null) continue;
+
+      final btStart = t(bStart);
+      final btEnd = t(bEnd);
+
+      int normBStart = (btStart < start && end <= start) ? btStart + (24 * 60) : btStart;
+      int normBEnd = (btEnd < start && end <= start) ? btEnd + (24 * 60) : btEnd;
+
+      if (!(normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd)) {
+        return false;
+      }
+    }
+    return true;
+  }
 
   @override
   void initState() {
@@ -85,7 +118,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _nameController.text = data['name'] ?? '';
         _locationController.text = data['location'] ?? '';
         _priceController.text = (data['pricePerHour'] ?? 0).toString();
-        _capacityController.text = (data['seatsCapacity'] ?? 0).toString();
+        _capacityController.text = (data['seatsCapacity'] ?? data['players_per_team'] ?? 0).toString();
+        final depositVal = data['deposit_amount'] ?? 0.0;
+        _depositController.text = depositVal == 0.0 ? '' : depositVal.toString();
+        _requireDeposit = data['needs_deposit'] ?? data['needsDeposit'] ?? (depositVal > 0.0);
         
         final features = data['features'] as Map<String, dynamic>? ?? {};
         _selectedFloorType = features['floorType'];
@@ -107,10 +143,24 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         }
         
         _isSplitShift = features['isSplitShift'] ?? false;
-        if (_isSplitShift && features['breakTime'] != null) {
+        _breakTimes = [];
+        if (features['breakTimes'] != null) {
+          final list = features['breakTimes'] as List;
+          for (var item in list) {
+            if (item is Map) {
+              _breakTimes.add({
+                'start': _parseTime(item['start']?.toString()),
+                'end': _parseTime(item['end']?.toString()),
+              });
+            }
+          }
+        }
+        if (_breakTimes.isEmpty && features['breakTime'] != null) {
           final breakTime = features['breakTime'] as Map<String, dynamic>;
-          _breakStartTime = _parseTime(breakTime['start']);
-          _breakEndTime = _parseTime(breakTime['end']);
+          _breakTimes.add({
+            'start': _parseTime(breakTime['start']?.toString()),
+            'end': _parseTime(breakTime['end']?.toString()),
+          });
         }
 
         final allImages = List<String>.from(features['allImages'] ?? []);
@@ -160,6 +210,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     _notesController.dispose();
     _pageController.dispose();
     _ballPriceController.dispose();
+    _depositController.dispose();
     super.dispose();
   }
 
@@ -169,60 +220,384 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
      VSPFeedback.showError(context, message);
   }
 
-  Future<void> _getCurrentLocation() async {
-    setState(() => _isLocationLoading = true);
-    try {
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) {
-          setState(() => _isLocationLoading = false);
-          if (!context.mounted) return;
-          VSPFeedback.showError(context, 'Location permission denied');
-          return;
-        }
-      }
-      if (permission == LocationPermission.deniedForever) {
-        setState(() => _isLocationLoading = false);
-        if (!context.mounted) return;
-        VSPFeedback.showError(context, 'Location permission permanently denied. Please enable it in Settings.');
-        return;
-      }
 
-      final position = await Geolocator.getCurrentPosition();
-      if (!mounted) return;
-      setState(() {
-        _locationController.text = 'Lat: ${position.latitude.toStringAsFixed(4)}, Long: ${position.longitude.toStringAsFixed(4)}';
-      });
-      // 📍 Silicon Valley Strategy: Reverse Geocoding to extract Governorate
-      await _reverseGeocode(position.latitude, position.longitude);
-    } catch (e) {
-      if(mounted) {
-        if (!context.mounted) return;
-        _showError('Could not fetch location');
-      }
-    } finally {
-      if (mounted) setState(() => _isLocationLoading = false);
-    }
-  }
 
-  Future<void> _reverseGeocode(double lat, double lng) async {
+  Future<void> _resolveLocationAndAddress(double lat, double lng) async {
     try {
-      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng);
+      List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng).timeout(const Duration(seconds: 5));
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
+        final street = place.street ?? '';
+        final subLocality = place.subLocality ?? '';
+        final locality = place.locality ?? '';
+        final administrativeArea = place.administrativeArea ?? '';
+
+        final addressParts = [
+          if (street.isNotEmpty && street != place.name) street,
+          if (subLocality.isNotEmpty) subLocality,
+          if (locality.isNotEmpty) locality,
+          if (administrativeArea.isNotEmpty) administrativeArea,
+        ];
+
+        final readableAddress = addressParts.isNotEmpty ? addressParts.join(', ') : 'Lat: $lat, Long: $lng';
+
         setState(() {
+          _locationController.text = readableAddress;
           final rawName = place.administrativeArea ?? place.subAdministrativeArea ?? place.locality;
-          _governorate = EgyptGovernorates.resolveGoogleName(rawName);
-          VSPLogger.i('📍 Governorate resolved to: $_governorate');
+          final resolved = EgyptGovernorates.resolveGoogleName(rawName);
+          if (resolved != null) {
+            _governorate = resolved;
+          } else {
+            _governorate = 'Cairo'; // Fallback
+          }
+          VSPLogger.i('📍 Address resolved to: $readableAddress, Governorate: $_governorate');
+        });
+      } else {
+        setState(() {
+          _locationController.text = 'Lat: $lat, Long: $lng';
+          _governorate = 'Cairo'; // Fallback
         });
       }
     } catch (e) {
       VSPLogger.e('❌ Geocoding error', e);
+      setState(() {
+        _locationController.text = 'Lat: $lat, Long: $lng';
+        _governorate = 'Cairo'; // Fallback
+      });
     }
   }
 
-  Future<void> _selectTime(BuildContext context, bool isMainStart, {bool isBreak = false, bool isStartBreak = true}) async {
+  Future<List<Map<String, dynamic>>> _searchLocation(String query, String langCode) async {
+    if (query.trim().isEmpty) return [];
+    try {
+      final url = Uri.parse(
+        'https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(query)}&countrycodes=eg&accept-language=$langCode&limit=5'
+      );
+      final response = await http.get(url, headers: {
+        'User-Agent': 'VSP_Application/1.0',
+      });
+      if (response.statusCode == 200) {
+        final List data = json.decode(response.body);
+        return data.map((item) => {
+          'display_name': item['display_name'] ?? '',
+          'lat': double.tryParse(item['lat']?.toString() ?? '') ?? 0.0,
+          'lon': double.tryParse(item['lon']?.toString() ?? '') ?? 0.0,
+        }).toList().cast<Map<String, dynamic>>();
+      }
+    } catch (e) {
+      VSPLogger.e('Error searching location', e);
+    }
+    return [];
+  }
+
+  Future<void> _openMapPicker() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
+    setState(() => _isLocationLoading = true);
+    
+    LatLng initialLocation = const LatLng(30.0444, 31.2357); // Cairo fallback
+    
+    try {
+      if (await Geolocator.isLocationServiceEnabled()) {
+        LocationPermission permission = await Geolocator.checkPermission();
+        if (permission == LocationPermission.denied) {
+          permission = await Geolocator.requestPermission();
+        }
+        if (permission == LocationPermission.always || permission == LocationPermission.whileInUse) {
+          Position position = await Geolocator.getCurrentPosition(
+            desiredAccuracy: LocationAccuracy.high,
+            timeLimit: const Duration(seconds: 5),
+          );
+          initialLocation = LatLng(position.latitude, position.longitude);
+        }
+      }
+    } catch (e) {
+      VSPLogger.w('Could not fetch location for map start: $e');
+    } finally {
+      setState(() => _isLocationLoading = false);
+    }
+
+    if (!mounted) return;
+
+    LatLng selectedCoords = initialLocation;
+    final MapController mapController = MapController();
+    final TextEditingController searchController = TextEditingController();
+    List<Map<String, dynamic>> searchResults = [];
+    bool isSearching = false;
+
+    Future<void> performSearch(String query, StateSetter setSheetState) async {
+      if (query.trim().isEmpty) return;
+      setSheetState(() {
+        isSearching = true;
+      });
+      final results = await _searchLocation(query, isArabic ? 'ar' : 'en');
+      setSheetState(() {
+        searchResults = results;
+        isSearching = false;
+      });
+    }
+
+    await showModalBottomSheet<void>(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return StatefulBuilder(
+          builder: (BuildContext builderContext, StateSetter setSheetState) {
+            return Container(
+              height: MediaQuery.of(builderContext).size.height * 0.85,
+              decoration: const BoxDecoration(
+                color: VSPColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+              ),
+              child: ClipRRect(
+                borderRadius: const BorderRadius.vertical(top: Radius.circular(20)),
+                child: Stack(
+                  children: [
+                    FlutterMap(
+                      mapController: mapController,
+                      options: MapOptions(
+                        initialCenter: initialLocation,
+                        initialZoom: 15.0,
+                        interactionOptions: const InteractionOptions(
+                          flags: InteractiveFlag.all,
+                        ),
+                        onPositionChanged: (position, hasGesture) {
+                          selectedCoords = position.center;
+                                                },
+                      ),
+                      children: [
+                        TileLayer(
+                          urlTemplate: 'https://tile.openstreetmap.org/{z}/{x}/{y}.png',
+                          userAgentPackageName: 'com.vsp.app',
+                        ),
+                      ],
+                    ),
+                    Align(
+                      alignment: Alignment.center,
+                      child: Container(
+                        transform: Matrix4.translationValues(0, -20, 0),
+                        child: const Icon(
+                          Icons.location_on,
+                          color: VSPColors.accent,
+                          size: 48,
+                          shadows: [
+                            Shadow(
+                              color: Colors.black45,
+                              offset: Offset(0, 4),
+                              blurRadius: 6,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    
+                    // Floating Search Overlay
+                    Positioned(
+                      top: 16,
+                      left: 16,
+                      right: 16,
+                      child: Column(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12),
+                            decoration: BoxDecoration(
+                              color: VSPColors.surface.withValues(alpha: 0.95),
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: VSPColors.divider),
+                              boxShadow: const [
+                                BoxShadow(
+                                  color: Colors.black26,
+                                  blurRadius: 10,
+                                  offset: Offset(0, 4),
+                                ),
+                              ],
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.search, color: VSPColors.accent, size: 22),
+                                const SizedBox(width: 8),
+                                Expanded(
+                                  child: TextField(
+                                    controller: searchController,
+                                    textInputAction: TextInputAction.search,
+                                    style: const TextStyle(color: Colors.white, fontSize: 14),
+                                    decoration: InputDecoration(
+                                      border: InputBorder.none,
+                                      hintText: isArabic 
+                                          ? 'ابحث عن منطقة، شارع أو مدينة في مصر...' 
+                                          : 'Search area, street or city in Egypt...',
+                                      hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                                    ),
+                                    onSubmitted: (val) => performSearch(val, setSheetState),
+                                  ),
+                                ),
+                                if (isSearching)
+                                  const SizedBox(
+                                    width: 18,
+                                    height: 18,
+                                    child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                                  )
+                                else if (searchController.text.isNotEmpty)
+                                  IconButton(
+                                    icon: const Icon(Icons.clear, color: VSPColors.textSecondary, size: 18),
+                                    onPressed: () {
+                                      searchController.clear();
+                                      setSheetState(() {
+                                        searchResults = [];
+                                      });
+                                    },
+                                  ),
+                              ],
+                            ),
+                          ),
+                          if (searchResults.isNotEmpty) ...[
+                            const SizedBox(height: 6),
+                            Container(
+                              constraints: const BoxConstraints(maxHeight: 200),
+                              decoration: BoxDecoration(
+                                color: VSPColors.surface.withValues(alpha: 0.95),
+                                borderRadius: BorderRadius.circular(VSPRadius.md),
+                                border: Border.all(color: VSPColors.divider),
+                              ),
+                              child: ListView.separated(
+                                shrinkWrap: true,
+                                padding: EdgeInsets.zero,
+                                itemCount: searchResults.length,
+                                separatorBuilder: (context, index) => const Divider(color: VSPColors.divider, height: 1),
+                                itemBuilder: (context, index) {
+                                  final result = searchResults[index];
+                                  return ListTile(
+                                    dense: true,
+                                    leading: const Icon(Icons.pin_drop, color: VSPColors.accent, size: 18),
+                                    title: Text(
+                                      result['display_name'],
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                                    ),
+                                    onTap: () {
+                                      final target = LatLng(result['lat'], result['lon']);
+                                      selectedCoords = target;
+                                      mapController.move(target, 16.0);
+                                      setSheetState(() {
+                                        searchResults = [];
+                                      });
+                                    },
+                                  );
+                                },
+                              ),
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+                    
+                    Positioned(
+                      top: 16,
+                      right: 16,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          shape: BoxShape.circle,
+                          border: Border.all(color: VSPColors.divider),
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ),
+                    ),
+                    
+                    // Floating GPS button
+                    Positioned(
+                      bottom: MediaQuery.of(builderContext).padding.bottom + 85,
+                      right: 16,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface.withValues(alpha: 0.95),
+                          shape: BoxShape.circle,
+                          border: Border.all(color: VSPColors.divider),
+                          boxShadow: const [
+                            BoxShadow(
+                              color: Colors.black26,
+                              blurRadius: 6,
+                              offset: Offset(0, 3),
+                            ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: const Icon(Icons.gps_fixed, color: VSPColors.accent, size: 24),
+                          onPressed: () async {
+                            setSheetState(() {
+                              isSearching = true;
+                            });
+                            try {
+                              Position position = await Geolocator.getCurrentPosition(
+                                desiredAccuracy: LocationAccuracy.high,
+                                timeLimit: const Duration(seconds: 5),
+                              );
+                              final target = LatLng(position.latitude, position.longitude);
+                              selectedCoords = target;
+                              mapController.move(target, 16.0);
+                            } catch (e) {
+                              if (mounted) {
+                                VSPFeedback.showError(context, 'Could not fetch current GPS location');
+                              }
+                            } finally {
+                              setSheetState(() {
+                                isSearching = false;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    ),
+                    
+                    Positioned(
+                      bottom: MediaQuery.of(builderContext).padding.bottom + 16,
+                      left: 16,
+                      right: 16,
+                      child: ElevatedButton(
+                        onPressed: () async {
+                          Navigator.pop(sheetContext);
+                          setState(() => _isLocationLoading = true);
+                          await _resolveLocationAndAddress(selectedCoords.latitude, selectedCoords.longitude);
+                          setState(() => _isLocationLoading = false);
+                          if (mounted) {
+                            VSPFeedback.showSuccess(
+                              context,
+                              isArabic ? 'تم تحديد موقع الملعب بنجاح! 📍' : 'Stadium location selected successfully! 📍',
+                            );
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 16),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                          ),
+                          elevation: 8,
+                        ),
+                        child: Text(
+                          isArabic ? 'تأكيد الموقع' : 'Confirm Location',
+                          style: const TextStyle(fontSize: 16, fontWeight: FontWeight.bold),
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Future<void> _selectTime(BuildContext context, bool isMainStart) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
@@ -236,6 +611,21 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               surface: VSPColors.surface,
               onSurface: VSPColors.textPrimary,
             ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: VSPColors.surface,
+              dialBackgroundColor: VSPColors.surfaceAlt,
+              dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? VSPColors.accent
+                      : VSPColors.surfaceAlt),
+              dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? Colors.black
+                      : VSPColors.textSecondary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
+              ),
+            ),
           ),
           child: child!,
         ),
@@ -243,33 +633,116 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     );
     if (picked != null && mounted) {
       setState(() {
-        if (!isBreak) {
-          if (isMainStart) _startTime = picked; else _endTime = picked;
+        if (isMainStart) {
+          _startTime = picked;
         } else {
-          if (isStartBreak) _breakStartTime = picked; else _breakEndTime = picked;
+          _endTime = picked;
+        }
+      });
+    }
+  }
+
+  Future<void> _selectTimeForBreak(BuildContext context, int index, bool isStart) async {
+    final TimeOfDay? picked = await showTimePicker(
+      context: context,
+      initialTime: TimeOfDay.now(),
+      builder: (context, child) => MediaQuery(
+        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+        child: Theme(
+          data: Theme.of(context).copyWith(
+            colorScheme: const ColorScheme.dark(
+              primary: VSPColors.accent,
+              onPrimary: Colors.black,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
+            ),
+            timePickerTheme: TimePickerThemeData(
+              backgroundColor: VSPColors.surface,
+              dialBackgroundColor: VSPColors.surfaceAlt,
+              dayPeriodColor: WidgetStateColor.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? VSPColors.accent
+                      : VSPColors.surfaceAlt),
+              dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
+                  states.contains(WidgetState.selected)
+                      ? Colors.black
+                      : VSPColors.textSecondary),
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
+              ),
+            ),
+          ),
+          child: child!,
+        ),
+      ),
+    );
+    if (picked != null && mounted) {
+      setState(() {
+        if (isStart) {
+          _breakTimes[index]['start'] = picked;
+        } else {
+          _breakTimes[index]['end'] = picked;
         }
       });
     }
   }
 
   Future<void> _pickImage() async {
+    Timer? progressTimer;
+    final XFile? pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 80);
+    if (pickedFile == null) return;
+
+    final imageFile = File(pickedFile.path);
+    final imageEntry = {'file': imageFile, 'url': null, 'isUploading': true, 'progress': 0};
+    setState(() => _images.add(imageEntry));
+    
     try {
-      final XFile? pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-      if (pickedFile != null) {
-        final imageFile = File(pickedFile.path);
-        final imageEntry = {'file': imageFile, 'url': null, 'isUploading': true};
-        setState(() => _images.add(imageEntry));
-        
-        // Upload
-        final url = await _storageService.uploadFile(file: imageFile, path: 'stadiums/images/std_${DateTime.now().millisecondsSinceEpoch}.jpg');
-        if (!mounted) return;
+      // Start simulated progress ticking
+      progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+        if (!mounted || imageEntry['isUploading'] != true) {
+          timer.cancel();
+          return;
+        }
         setState(() {
-          imageEntry['url'] = url;
+          int current = imageEntry['progress'] as int? ?? 0;
+          if (current < 95) {
+            imageEntry['progress'] = current + 5;
+          }
+        });
+      });
+
+      // Upload
+      final url = await _storageService.uploadFile(
+        file: XFile(imageFile.path),
+        bucket: 'stadium-images',
+        path: 'stadiums/images/std_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      progressTimer.cancel();
+      if (!mounted) return;
+      if (url == null) {
+        setState(() {
+          _images.remove(imageEntry);
+        });
+        if (mounted) {
+          VSPFeedback.showError(context, 'Failed to upload photo. Please check storage bucket.');
+        }
+        return;
+      }
+      setState(() {
+        imageEntry['url'] = url;
+        imageEntry['progress'] = 100;
+        imageEntry['isUploading'] = false;
+      });
+    } catch (e) {
+      progressTimer?.cancel();
+      if (mounted) {
+        setState(() {
           imageEntry['isUploading'] = false;
+          _images.remove(imageEntry);
+          VSPFeedback.showError(context, 'Upload failed');
         });
       }
-    } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'Upload failed');
     }
   }
 
@@ -284,29 +757,35 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
       // ── Split-Shift (Break Time) Validation ──
       if (_isSplitShift) {
-        if (_breakStartTime == null || _breakEndTime == null) {
-          _showError("Please set both break start and end times.");
+        if (_breakTimes.isEmpty) {
+          _showError("Please add at least one break time.");
           return;
         }
 
-        // Helper to convert TimeOfDay to absolute minutes from midnight
-        int t(TimeOfDay time) => time.hour * 60 + time.minute;
-        
-        final start = t(_startTime!);
-        final end = t(_endTime!);
-        final bStart = t(_breakStartTime!);
-        final bEnd = t(_breakEndTime!);
+        for (var i = 0; i < _breakTimes.length; i++) {
+          final bStart = _breakTimes[i]['start'];
+          final bEnd = _breakTimes[i]['end'];
+          if (bStart == null || bEnd == null) {
+            _showError("Please set start and end times for Break ${i + 1}.");
+            return;
+          }
 
-        // Normalize closing time if it's 12 AM (0:00) to 24:00 to handle 8AM-12AM logic
-        int normEnd = (end <= start) ? end + (24 * 60) : end;
-        int normBStart = (bStart < start && end <= start) ? bStart + (24 * 60) : bStart;
-        int normBEnd = (bEnd < start && end <= start) ? bEnd + (24 * 60) : bEnd;
+          int t(TimeOfDay time) => time.hour * 60 + time.minute;
+          final start = t(_startTime!);
+          final end = t(_endTime!);
+          final bStartMin = t(bStart);
+          final bEndMin = t(bEnd);
 
-        bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
+          int normEnd = (end <= start) ? end + (24 * 60) : end;
+          int normBStart = (bStartMin < start && end <= start) ? bStartMin + (24 * 60) : bStartMin;
+          int normBEnd = (bEndMin < start && end <= start) ? bEndMin + (24 * 60) : bEndMin;
 
-        if (!isBreakInHours) {
-          _showError("Break time must be within opening hours (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')}).");
-          return;
+          bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
+
+          if (!isBreakInHours) {
+            _showError("Break ${i + 1} must be within opening hours (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')}).");
+            return;
+          }
         }
       }
     } else if (_currentStep == 1) {
@@ -318,6 +797,18 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         final ballPrice = double.tryParse(_ballPriceController.text) ?? 0.0;
         if (ballPrice < 5.0) {
           _showError(AppLocalizations.of(context)!.ballPriceMinError);
+          return;
+        }
+      }
+      if (_requireDeposit) {
+        final deposit = double.tryParse(_depositController.text.trim()) ?? 0.0;
+        final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
+        if (deposit <= 0) {
+          _showError("Please set a valid deposit amount.");
+          return;
+        }
+        if (deposit > (price * 0.5)) {
+          _showError("Deposit amount cannot exceed 50% of the hourly price (${price * 0.5} EGP).");
           return;
         }
       }
@@ -347,12 +838,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Future<void> _saveStadium() async {
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    if (auth.userModel?.isBlocked == true) {
+      VSPFeedback.showError(context, "Your account is blocked. You cannot save or submit stadium details.");
+      return;
+    }
+
     setState(() => _isSaving = true);
     try {
       final uploadedUrls = _images.where((img) => img['url'] != null).map((img) => img['url'] as String).toList();
       
       // Get user from Provider for more stable reference
-      final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
       final user = auth.firebaseUser;
       
       if (user == null) {
@@ -377,10 +873,18 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           'end': _formatTime(_endTime, '12:00 AM'),
         },
         'isSplitShift': _isSplitShift,
-        'breakTime': _isSplitShift ? {
-          'start': _formatTime(_breakStartTime, ''),
-          'end': _formatTime(_breakEndTime, ''),
-        } : null,
+        'breakTimes': _isSplitShift 
+            ? _breakTimes.map((bt) => {
+                'start': _formatTime(bt['start'], ''),
+                'end': _formatTime(bt['end'], ''),
+              }).toList()
+            : [],
+        'breakTime': (_isSplitShift && _breakTimes.isNotEmpty) 
+            ? {
+                'start': _formatTime(_breakTimes.first['start'], ''),
+                'end': _formatTime(_breakTimes.first['end'], ''),
+              } 
+            : null,
         'allImages': uploadedUrls,
       };
 
@@ -391,7 +895,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'location': _locationController.text.trim(),
             'governorate': _governorate, // ✅ Added for filtering
             'pricePerHour': double.parse(_priceController.text.trim()),
-            'seatsCapacity': int.parse(_capacityController.text.trim()),
+            'players_per_team': int.tryParse(_capacityController.text.trim()) ?? 5,
+            'total_field_capacity': (int.tryParse(_capacityController.text.trim()) ?? 5) * 2,
+            'deposit_amount': _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
+            'needs_deposit': _requireDeposit,
             'imageUrl': uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
             'notes': _notesController.text.trim(),
             'features': stadiumFeatures,
@@ -403,7 +910,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             location: _locationController.text.trim(),
             governorate: _governorate, // ✅ Added for filtering
             pricePerHour: double.parse(_priceController.text.trim()),
-            seatsCapacity: int.parse(_capacityController.text.trim()),
+            seatsCapacity: int.tryParse(_capacityController.text.trim()) ?? 5,
+            depositAmount: _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
+            needsDeposit: _requireDeposit,
             imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
             ownerId: user.uid,
             notes: _notesController.text.trim().isEmpty 
@@ -497,34 +1006,45 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   // --- Steps ---
 
   Widget _buildStep1Details() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-      padding: const EdgeInsets.all(VSPSpacing.md),
+      padding: EdgeInsets.only(
+        left: VSPSpacing.md,
+        right: VSPSpacing.md,
+        top: VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
+      ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           _buildTextField(AppLocalizations.of(context)!.location, AppLocalizations.of(context)!.tapToFetch, controller: _locationController, readOnly: true),
           const SizedBox(height: 8),
-          Row(
-            children: [
-              ElevatedButton.icon(
-                onPressed: _getCurrentLocation,
-                icon: _isLocationLoading ? const SizedBox(width:16, height:16, child: CircularProgressIndicator(strokeWidth:2, color: VSPColors.accent)) : const Icon(Icons.my_location),
-                label: Text(AppLocalizations.of(context)!.autoFetch),
-                style: ElevatedButton.styleFrom(backgroundColor: VSPColors.surface, foregroundColor: VSPColors.accent),
-              ),
-              const SizedBox(width: 12),
-              ElevatedButton.icon(
-                onPressed: () {
-                  // Concept: Manual Pin Drop (Simplified for MVP)
-                  _locationController.text = "Coordinate picked manually";
-                  setState(() => _governorate = "Cairo"); // Mocking manual pick
-                },
-                icon: const Icon(Icons.map_outlined),
-                label: Text(AppLocalizations.of(context)!.chooseManually),
-                style: ElevatedButton.styleFrom(backgroundColor: VSPColors.surface, foregroundColor: VSPColors.textSecondary),
-              ),
-            ],
-          ),
+          _isLocationLoading
+              ? const Center(
+                  child: Padding(
+                    padding: EdgeInsets.symmetric(vertical: 12),
+                    child: CircularProgressIndicator(color: VSPColors.accent),
+                  ),
+                )
+              : SizedBox(
+                  width: double.infinity,
+                  child: ElevatedButton.icon(
+                    onPressed: _openMapPicker,
+                    icon: const Icon(Icons.map, color: Colors.black),
+                    label: Text(
+                      isArabic ? 'تحديد موقع الملعب على الخريطة 🗺️' : 'Select Stadium Location on Map 🗺️',
+                      style: const TextStyle(fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: Colors.black,
+                      padding: const EdgeInsets.symmetric(vertical: 14),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                      ),
+                    ),
+                  ),
+                ),
           const SizedBox(height: 16),
           _buildTextField(AppLocalizations.of(context)!.stadiumName, 'Ex: Anfield', controller: _nameController, maxLength: 50),
           const SizedBox(height: 16),
@@ -557,6 +1077,36 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             const SizedBox(width: 10),
             Expanded(child: GestureDetector(onTap: () => _selectTime(context, false), child: _buildTimeBox(_formatTime(_endTime, AppLocalizations.of(context)!.end), isSelected: _endTime != null))),
           ]),
+          if (_endTime != null) ...[
+            const SizedBox(height: 8),
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                const Icon(Icons.info_outline, color: VSPColors.accent, size: 14),
+                const SizedBox(width: 6),
+                Expanded(
+                  child: Builder(
+                    builder: (context) {
+                      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                      final closingTime = TimeOfDay(
+                        hour: (_endTime!.hour + 1) % 24, 
+                        minute: _endTime!.minute,
+                      );
+                      final selectedEndStr = _formatTime(_endTime, '');
+                      final realCloseStr = _formatTime(closingTime, '');
+                      
+                      return Text(
+                        isArabic 
+                            ? "ملاحظة: اختيار وقت الانتهاء ($selectedEndStr) يعني أن آخر حجز سيبدأ في هذا الوقت، وسيغلق الملعب فعلياً الساعة ($realCloseStr)."
+                            : "Note: Selecting ($selectedEndStr) means the last booking starts at this time. The pitch will actually close at ($realCloseStr).",
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
+                      );
+                    }
+                  ),
+                ),
+              ],
+            ),
+          ],
           
           const SizedBox(height: 12),
           // Break Time Switch
@@ -566,19 +1116,96 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               Text(AppLocalizations.of(context)!.setDailyBreak, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
               Switch.adaptive(
                 value: _isSplitShift,
-                onChanged: (val) => setState(() => _isSplitShift = val),
-                 activeColor: VSPColors.accent,
+                onChanged: (val) {
+                  setState(() {
+                    _isSplitShift = val;
+                    if (_isSplitShift && _breakTimes.isEmpty) {
+                      _breakTimes.add({'start': null, 'end': null});
+                    }
+                  });
+                },
+                activeColor: VSPColors.accent,
               ),
             ],
           ),
           
           if (_isSplitShift) ...[
             const SizedBox(height: 8),
-            Row(children: [
-              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: true), child: _buildTimeBox(_formatTime(_breakStartTime, AppLocalizations.of(context)!.breakStart), isSelected: _breakStartTime != null))),
-              const SizedBox(width: 10),
-              Expanded(child: GestureDetector(onTap: () => _selectTime(context, false, isBreak: true, isStartBreak: false), child: _buildTimeBox(_formatTime(_breakEndTime, AppLocalizations.of(context)!.breakEnd), isSelected: _breakEndTime != null))),
-            ]),
+            ..._breakTimes.asMap().entries.map((entry) {
+              final index = entry.key;
+              final bt = entry.value;
+              final bStart = bt['start'];
+              final bEnd = bt['end'];
+              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  if (index > 0) const SizedBox(height: 12),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isArabic ? 'فترة راحة ${index + 1}' : 'Break ${index + 1}',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                      ),
+                      if (_breakTimes.length > 1)
+                        IconButton(
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          icon: const Icon(Icons.delete_outline, color: VSPColors.error, size: 20),
+                          onPressed: () {
+                            setState(() {
+                              _breakTimes.removeAt(index);
+                            });
+                          },
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Row(children: [
+                    Expanded(child: GestureDetector(onTap: () => _selectTimeForBreak(context, index, true), child: _buildTimeBox(_formatTime(bStart, AppLocalizations.of(context)!.breakStart), isSelected: bStart != null))),
+                    const SizedBox(width: 10),
+                    Expanded(child: GestureDetector(onTap: () => _selectTimeForBreak(context, index, false), child: _buildTimeBox(_formatTime(bEnd, AppLocalizations.of(context)!.breakEnd), isSelected: bEnd != null))),
+                  ]),
+                ],
+              );
+            }),
+            const SizedBox(height: 12),
+            Align(
+              alignment: Alignment.centerLeft,
+              child: TextButton.icon(
+                onPressed: () {
+                  setState(() {
+                    _breakTimes.add({'start': null, 'end': null});
+                  });
+                },
+                icon: const Icon(Icons.add, color: VSPColors.accent, size: 18),
+                label: const Text('+ Add Another Break', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
+              ),
+            ),
+            if (!_isSplitShiftValid) ...[
+              const SizedBox(height: 8),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                decoration: BoxDecoration(
+                  color: VSPColors.error.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(VSPRadius.sm),
+                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
+                ),
+                child: const Row(
+                  children: [
+                    Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 16),
+                    SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        'Break hours must fall strictly inside the opening and closing hours!',
+                        style: TextStyle(color: VSPColors.error, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
           ],
           
           const SizedBox(height: 16),
@@ -631,7 +1258,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildStep2Features() {
     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-      padding: const EdgeInsets.all(VSPSpacing.md),
+      padding: EdgeInsets.only(
+        left: VSPSpacing.md,
+        right: VSPSpacing.md,
+        top: VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
+      ),
       child: Column(
         children: [
           _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
@@ -673,6 +1305,58 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
              ),
           ],
+          const SizedBox(height: 20),
+          const Divider(color: VSPColors.divider),
+          const SizedBox(height: 20),
+          // ── Deposit (العربون) ──
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Icons.lock_outline, color: VSPColors.accent, size: 18),
+                      const SizedBox(width: 8),
+                      Text(
+                        'Require Booking Deposit (العربون)',
+                        style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                    ],
+                  ),
+                  Switch.adaptive(
+                    value: _requireDeposit,
+                    onChanged: (val) {
+                      setState(() {
+                        _requireDeposit = val;
+                        if (!val) {
+                          _depositController.clear();
+                        }
+                      });
+                    },
+                    activeColor: VSPColors.accent,
+                  ),
+                ],
+              ),
+              const SizedBox(height: 4),
+              Text(
+                'Require upfront deposit that cannot exceed 50% of the hourly stadium price.',
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+              ),
+              if (_requireDeposit) ...[
+                const SizedBox(height: 12),
+                _buildTextField(
+                  'Deposit Amount (EGP)',
+                  '0',
+                  controller: _depositController,
+                  maxLength: 7,
+                  keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                  inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                ),
+              ],
+            ],
+          ),
           const SizedBox(height: 40),
           _buildPrimaryButton('Continue', _nextPage),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
@@ -683,7 +1367,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildStep3Images() {
     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-      padding: const EdgeInsets.all(VSPSpacing.md),
+      padding: EdgeInsets.only(
+        left: VSPSpacing.md,
+        right: VSPSpacing.md,
+        top: VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
+      ),
       child: Column(
         children: [
           Text(
@@ -714,6 +1403,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   title: 'Stadium Photo ${index + 1}',
                   fileUrl: img['url'],
                   isUploading: img['isUploading'] ?? false,
+                  progress: img['progress'] ?? 0,
                   onTap: () {}, 
                   onDelete: () async {
                     if (img['url'] != null) {
@@ -780,25 +1470,51 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildSportDropdown() {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
-      child: DropdownButtonHideUnderline(
-        child: DropdownButton<String>(
-          value: _selectedSportType,
-          hint: Text(AppLocalizations.of(context)!.selectSport, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
-          dropdownColor: VSPColors.surface,
-          isExpanded: true,
-          items: VSPConstants.sports.map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
-          onChanged: (val) => setState(() => _selectedSportType = val),
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          AppLocalizations.of(context)!.sportTypeLabel,
+          style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                color: VSPColors.textSecondary,
+              ),
         ),
-      ),
+        const SizedBox(height: VSPSpacing.xs),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedSportType,
+              hint: Text(
+                AppLocalizations.of(context)!.selectSport,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      color: VSPColors.textSecondary,
+                    ),
+              ),
+              dropdownColor: VSPColors.surface,
+              isExpanded: true,
+              items: VSPConstants.sports
+                  .map((e) => DropdownMenuItem(
+                        value: e,
+                        child: Text(e, style: Theme.of(context).textTheme.bodyMedium),
+                      ))
+                  .toList(),
+              onChanged: (val) => setState(() => _selectedSportType = val),
+            ),
+          ),
+        ),
+      ],
     );
   }
 
   Widget _buildGovernorateDropdown() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final List<String> govs = EgyptGovernorates.allGovernorates;
-    final currentVal = govs.contains(_governorate) ? _governorate : 'Cairo';
+    final currentVal = govs.contains(_governorate) ? _governorate : null;
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -810,6 +1526,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
               value: currentVal,
+              hint: Text(
+                isArabic ? 'اختر محافظتك' : 'Select your governorate',
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: VSPColors.textSecondary.withValues(alpha: 0.5),
+                ),
+              ),
               dropdownColor: VSPColors.surface,
               isExpanded: true,
               items: govs.map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
@@ -825,7 +1547,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     return Container(
       padding: const EdgeInsets.symmetric(vertical: 14),
       decoration: BoxDecoration(
-        color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surface,
+        color: isSelected ? VSPColors.accentSoft : VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: isSelected ? VSPColors.accent : Colors.transparent),
       ),
@@ -834,15 +1556,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildYesNoSection(String label, bool? value, ValueChanged<bool> onChanged) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Text(label, style: const TextStyle(color: Colors.white)),
         Row(
           children: [
-            _optionBtn('Yes', value == true, () => onChanged(true)),
+            _optionBtn(isArabic ? 'نعم' : 'Yes', value == true, () => onChanged(true)),
             const SizedBox(width: 10),
-            _optionBtn('No', value == false, () => onChanged(false)),
+            _optionBtn(isArabic ? 'لا' : 'No', value != null && value == false, () => onChanged(false)),
           ],
         )
       ],
@@ -879,10 +1602,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     required String title,
     required String? fileUrl,
     required bool isUploading,
+    required int progress,
     required VoidCallback onTap,
     required VoidCallback onDelete,
     Widget? thumbnail,
   }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return InkWell(
       onTap: fileUrl == null ? onTap : null,
       child: VSPCard(
@@ -909,22 +1634,21 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   ),
                   const SizedBox(height: 4),
                   if (isUploading)
-                    const Text("Uploading...", style: TextStyle(color: Colors.orange, fontSize: 12))
+                    Text(isArabic ? "جاري الرفع... $progress%" : "Uploading... $progress%", style: const TextStyle(color: Colors.orange, fontSize: 12))
                   else if (fileUrl != null)
-                    const Text("Uploaded successfully", style: TextStyle(color: Colors.green, fontSize: 12))
+                    Text(isArabic ? "تم الرفع بنجاح" : "Uploaded successfully", style: const TextStyle(color: Colors.green, fontSize: 12))
                   else
-                    const Text(
-                      "Tap to upload (JPG, PNG <10MB)",
-                      style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    Text(
+                      isArabic ? "اضغط للرفع" : "Tap to upload (JPG, PNG <10MB)",
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     ),
                 ],
               ),
             ),
-            if (fileUrl != null)
-              IconButton(
-                icon: const Icon(Icons.delete_outline, color: Colors.red),
-                onPressed: onDelete,
-              ),
+            IconButton(
+              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              onPressed: onDelete,
+            ),
           ],
         ),
       ),

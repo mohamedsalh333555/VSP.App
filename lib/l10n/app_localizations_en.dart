@@ -140,10 +140,11 @@ class AppLocalizationsEn extends AppLocalizations {
   String get password => 'Password';
 
   @override
-  String get unleashChampion => 'UNLEASH YOUR\nINNER CHAMPION';
+  String get unleashChampion => 'BE THE CHAMPION';
 
   @override
-  String get premierPlatform => 'THE PREMIER PLATFORM FOR MODERN ATHLETES';
+  String get premierPlatform =>
+      'Book your pitch in seconds, compete with teams, and earn champions ranking';
 
   @override
   String get readyToJoin => 'READY TO JOIN?';
@@ -1489,7 +1490,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get hoursBookedLabel => 'Hours Booked';
 
   @override
-  String get activeBookingsLabel => 'Active Bookings';
+  String get activeBookingsLabel => 'Completed Bookings';
 
   @override
   String get bookedTodayLabel => 'Booked Today';
@@ -1659,10 +1660,38 @@ class AppLocalizationsEn extends AppLocalizations {
   String get editLabel => 'Edit';
 
   @override
+  String get editTournamentTitle => 'Edit Tournament';
+
+  @override
+  String get createTournamentTitle => 'Create Tournament';
+
+  @override
+  String get backButton => 'Back';
+
+  @override
+  String get updateChanges => 'Update Changes';
+
+  @override
+  String get nextButton => 'Next';
+
+  @override
+  String get basicsStep => 'Basics';
+
+  @override
+  String get systemStep => 'System';
+
+  @override
+  String get schedulingStep => 'Scheduling';
+
+  @override
   String get quickTemplates => 'Quick Templates';
 
   @override
-  String get choosePresetSubtitle => 'Choose a preset or fill details below';
+  String get choosePresetSubtitle =>
+      'Choose a preset template to quickly configure rules';
+
+  @override
+  String get currency => 'Currency';
 
   @override
   String get tournamentNameLabel => 'Tournament Name';
@@ -1671,10 +1700,16 @@ class AppLocalizationsEn extends AppLocalizations {
   String get sportTypeLabel => 'Sport Type';
 
   @override
-  String get entryFeeLabel => 'Entry Fee (EGP)';
+  String get entryFeeLabel => 'Entry Fee';
 
   @override
   String get tournamentSystemLabel => 'Tournament System';
+
+  @override
+  String get knockoutType => 'Knockout';
+
+  @override
+  String get leagueType => 'League';
 
   @override
   String get maxTeamsLabel => 'Max Teams';
@@ -1689,37 +1724,61 @@ class AppLocalizationsEn extends AppLocalizations {
   String get matchDurationLabel => 'Match Duration (min)';
 
   @override
-  String get grandPrizeLabel => 'Grand Prize (EGP)';
+  String get grandPrizeLabel => 'Grand Prize';
 
   @override
-  String get createTournamentTitle => 'Create Tournament';
+  String get myStadiumsTab => 'My Stadiums';
 
   @override
-  String get editTournamentTitle => 'Edit Tournament';
+  String get stadiumsEmptyTitle => 'No stadiums found';
 
   @override
-  String get basicsStep => 'Basics';
+  String get stadiumsEmptySubtitle =>
+      'Tap add stadium to list your first facility';
 
   @override
-  String get systemStep => 'System';
+  String get addStadiumLabel => 'Add Stadium';
 
   @override
-  String get schedulingStep => 'Scheduling';
+  String get identityPendingVerification => 'Identity Verification';
 
   @override
-  String get backButton => 'Back';
+  String get bookedManually => 'Booked Manually';
 
   @override
-  String get nextButton => 'Next';
+  String get noWorkingHoursTitle => 'No working hours set';
 
   @override
-  String get updateChanges => 'Update Changes';
+  String get noWorkingHoursSubtitle =>
+      'Please configure stadium opening hours first';
 
   @override
-  String get pendingVerificationBanner => 'Pending Document Verification';
+  String get breakTime => 'Break Time';
 
   @override
-  String get verifyNowBtn => 'Verify Now';
+  String get addManualBooking => 'Add Manual Booking';
+
+  @override
+  String get closedBadge => 'Closed';
+
+  @override
+  String get openBadge => 'Open';
+
+  @override
+  String get collectedStatusAuto => 'Collected';
+
+  @override
+  String get pendingStatusAuto => 'Pending';
+
+  @override
+  String get enterCustomerNameError => 'Please enter customer name';
+
+  @override
+  String get update => 'Update';
+
+  @override
+  String get friendsRequiredNote =>
+      'Note: You need at least 6 members to create a team';
 
   @override
   String get createTeamTitle => 'Create Team';
@@ -1728,154 +1787,25 @@ class AppLocalizationsEn extends AppLocalizations {
   String get teamNameLabel => 'Team Name';
 
   @override
-  String get teamDescriptionLabel => 'Team Description';
-
-  @override
-  String get addTeamMembers => 'Add Team Members';
-
-  @override
-  String get createTeamBtn => 'Create Team';
-
-  @override
-  String get allStadiumsLabel => 'All Stadiums';
-
-  @override
-  String get totalRevenue => 'Total Revenue';
-
-  @override
-  String get bookedHours => 'Booked Hours';
-
-  @override
-  String get myStadiumsStatus => 'My Stadiums Status';
-
-  @override
-  String get identityPendingVerification => 'Your account is pending document verification. Tap to upload.';
-
-  @override
-  String get uploadPhoto => 'Upload Photo';
-
-  @override
-  String get teamMembers => 'Team Members';
-
-  @override
-  String get stadiumsEmptyTitle => 'No Stadiums Added';
-
-  @override
-  String get stadiumsEmptySubtitle => 'Add your first stadium to start receiving bookings';
-
-  @override
-  String get bookingsEmptyTitle => 'No Bookings Yet';
-
-  @override
-  String get bookingsEmptySubtitle => 'Your bookings will appear here once customers start booking';
-
-  @override
-  String get confirmBtn => 'Confirm';
-
-  @override
-  String get cancelBtn => 'Cancel';
-
-  @override
-  String get actualLabel => 'Actual';
-
-  @override
-  String get platformCommissionLabel => 'Platform Commission';
-
-  @override
   String get uploadLogo => 'Upload Logo';
 
   @override
   String get changeLogo => 'Change Logo';
 
   @override
-  String get enterTeamName => 'Please enter a team name';
-
-  @override
-  String get teamCreatedSuccess => 'Team created successfully!';
-
-  @override
-  String get friendsRequiredNote => 'Note: Team created, but you need 4 more friends for challenge matches.';
+  String get teamMembers => 'Team Members';
 
   @override
   String get addMemberBtn => 'Add Member';
 
   @override
-  String get noMembersAddedYet => 'No members added yet';
+  String get noMembersAddedYet => 'No members added yet.';
 
   @override
-  String get createTeamSubtitle => 'Create Your Team To Have Your Favorite Friends Join You.';
+  String get cancelBtn => 'Cancel';
 
   @override
-  String get totalCollectedGross => 'Total Collected (Gross)';
-
-  @override
-  String get platformCutApplied => '5% Platform Cut Applied';
-
-  @override
-  String get bookedTitle => 'Booked';
-
-  @override
-  String get individualPlayerLabel => 'Individual Player';
-
-  @override
-  String get collectedSticker => 'COLLECTED';
-
-  @override
-  String get pendingSticker => 'PENDING';
-
-  @override
-  String get profileAccountLabel => 'Account';
-
-  @override
-  String get profileAccountSubtitle => 'Manage Your Account Information';
-
-  @override
-  String get profilePreferencesLabel => 'Preferences';
-
-  @override
-  String get profileNotificationsLabel => 'Notifications';
-
-  @override
-  String get profileNotificationsSubtitle => 'Manage Your Notification Settings';
-
-  @override
-  String get profilePrivacyLabel => 'Privacy';
-
-  @override
-  String get profilePrivacySubtitle => 'Privacy Policy';
-
-  @override
-  String get profileLanguageLabel => 'Language';
-
-  @override
-  String get profileLanguageSubtitle => 'Manage Your Language Preferences';
-
-  @override
-  String get profileSupportLabel => 'Support';
-
-  @override
-  String get profileHelpCenterLabel => 'Help Center';
-
-  @override
-  String get profileHelpCenterSubtitle => 'Chat With Support';
-
-  @override
-  String get profileLogoutLabel => 'Logout';
-
-  @override
-  String get profileLogoutSubtitle => 'Sign out of your account';
-
-  @override
-  String get inProgress => 'IN PROGRESS';
-
-  @override
-  String get filters => 'Filters';
-
-  @override
-  String get reset => 'Reset';
-
-  @override
-  String get apply => 'Apply';
+  String get confirmBtn => 'Confirm';
 
   @override
   String get sports => 'Sports';
@@ -1884,10 +1814,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get priceRange => 'Price Range';
 
   @override
-  String get ratings => 'Ratings';
+  String get services => 'Services';
 
   @override
-  String get services => 'Services';
+  String get filters => 'Filters';
+
+  @override
+  String get reset => 'Reset';
 
   @override
   String get selectSports => 'Select Sports';
@@ -1905,16 +1838,40 @@ class AppLocalizationsEn extends AppLocalizations {
   String get stadiumServices => 'Stadium Services';
 
   @override
-  String get stadiumApprovedTitle => 'Stadium Approved!';
+  String get badgeUnlockedStatus => 'Badge Unlocked!';
 
   @override
-  String stadiumApprovedSubtitle(Object name) => 'Congratulations! "$name" is now live.';
+  String get badgeLockedStatus => 'Badge Locked';
 
   @override
-  String get dismissBtn => 'DISMISS';
+  String get gotItBtn => 'Got It';
 
   @override
-  String get createTournament => 'Create Tournament';
+  String get bookingDetailsTitle => 'Booking Details';
+
+  @override
+  String get manualBookingTitle => 'Manual Booking';
+
+  @override
+  String get timeAndStadium => 'Time & Stadium';
+
+  @override
+  String get customerName => 'Customer Name';
+
+  @override
+  String get enterNameHint => 'Enter name';
+
+  @override
+  String get phoneOptionalHint => 'Phone (Optional)';
+
+  @override
+  String get internalNotes => 'Internal Notes';
+
+  @override
+  String get internalNotesHint => 'Internal Notes Hint';
+
+  @override
+  String get paymentStatus => 'Payment Status';
 
   @override
   String get tournamentsTitle => 'Tournaments';
@@ -1929,223 +1886,282 @@ class AppLocalizationsEn extends AppLocalizations {
   String get finished => 'Finished';
 
   @override
-  String get noTournamentsTitle => 'No Tournaments Yet';
+  String get noTournamentsTitle => 'No Tournaments';
 
   @override
-  String get noTournamentsSubtitle => 'Start organizing your first tournament and attract more players!';
+  String get noTournamentsSubtitle => 'Create a tournament to see it here';
 
   @override
   String get createYourFirst => 'Create Your First';
 
   @override
-  String shareTournamentText(Object name, Object startDate, Object endDate, Object prize, Object fee) => 'Join my tournament "$name"! 🏆\n📅 Date: $startDate - $endDate\n💰 Prize: $prize EGP\n⚽ Entry: $fee EGP\nRegister now on VSP Application!';
-
-  @override
-  String get entryFeeLabel => 'Entry Fee';
-
-  @override
-  String get grandPrizeLabel => 'Grand Prize';
-
-  @override
-  String teamsJoinedCount(Object count, Object max) => 'Teams: $count / $max';
-
-  @override
-  String get stadiumsEmptyTitle => 'No Stadiums Found';
-
-  @override
-  String get stadiumsEmptySubtitle => 'You haven\'t added any stadiums yet. Add your first stadium to start receiving bookings.';
-
-  @override
-  String get noWorkingHoursTitle => 'No Working Hours';
-
-  @override
-  String get noWorkingHoursSubtitle => 'Please set stadium working hours first.';
-
-  @override
-  String get addManualBooking => 'Add Manual Booking';
-
-  @override
-  String get breakTime => 'Break Time';
-
-  @override
-  String get closedBadge => 'CLOSED';
-
-  @override
-  String get openBadge => 'OPEN';
-
-  @override
-  String get bookedManually => 'BOOKED MANUALLY';
-
-  @override
-  String get bookingDetailsTitle => 'Booking Details';
-
-  @override
-  String get manualBookingTitle => 'Manual Booking';
-
-  @override
-  String get cancelBooking => 'Cancel Booking?';
-
-  @override
-  String get cancelBookingConfirm => 'Are you sure you want to remove this booking? This action cannot be undone.';
-
-  @override
-  String get timeAndStadium => 'Time & Stadium';
-
-  @override
-  String get customerName => 'Customer Name';
-
-  @override
-  String get enterNameHint => 'Enter name';
-
-  @override
-  String get phoneOptionalHint => '01xxxxxxxxx (Optional)';
-
-  @override
-  String get internalNotes => 'Internal Notes';
-
-  @override
-  String get internalNotesHint => 'e.g. Paid deposit, special request...';
-
-  @override
-  String get paymentStatus => 'Payment Status';
-
-  @override
-  String get collectedStatusAuto => 'COLLECTED (Automated)';
-
-  @override
-  String get pendingStatusAuto => 'PENDING (Automated)';
-
-  @override
-  String get update => 'Update';
-
-  @override
-  String get enterCustomerNameError => 'Please enter customer name';
-
-  @override
-  String get informationStadium => 'Information Stadium';
-
-  @override
-  String get noDescription => 'No description provided.';
-
-  @override
-  String get ownerNotes => 'Owner Notes';
-
-  @override
-  String get noOwnerNotes => 'No special notes from the owner.';
-
-  @override
-  String get punctuality => 'Punctuality';
-
-  @override
-  String get punctualityPolicy => 'Please arrive 15 minutes before your time slot.';
-
-  @override
-  String get reservationDuration => 'Reservation Duration';
-
-  @override
-  String get reservationDurationPolicy => 'The pitch must be vacated immediately when the session ends.';
-
-  @override
-  String get liability => 'Liability';
-
-  @override
-  String get liabilityPolicy => 'The stadium is not responsible for lost items or injuries.';
-
-  @override
-  String get noReviews => 'No reviews yet for this stadium.';
-
-  @override
-  String get recently => 'Recently';
-
-  @override
-  String get buildYourSquad => 'Build Your Squad';
-
-  @override
-  String get points => 'Points';
-
-  @override
-  String get members => 'Members';
-
-  @override
-  String get trophies => 'Trophies';
-
-  @override
-  String get wins => 'Wins';
-
-  @override
-  String get teamName => 'Team Name';
-
-  @override
-  String get enterTeamName => 'Enter team name';
-
-  @override
-  String teamMembersHeader(Object current, Object max) {
-    return 'Team Members ($current/$max)';
+  String shareTournamentText(
+    String name,
+    String startDate,
+    String endDate,
+    int prize,
+    int fee,
+  ) {
+    return 'Check out $name starting from $startDate to $endDate! Grand Prize: $prize EGP, Entry Fee: $fee EGP.';
   }
 
   @override
-  String get addMember => 'Add Member';
+  String teamsJoinedCount(int current, int max) {
+    return '$current/$max Teams';
+  }
 
   @override
-  String get addMembersHint => 'Search and add members to your team';
+  String get actualLabel => 'Actual';
 
   @override
-  String get teamAchievements => 'Team Achievements';
+  String get platformCommissionLabel => 'Platform Commission';
 
   @override
-  String get registerTeamPrompt => 'Create your team to start winning trophies!';
+  String get bookedHours => 'Booked Hours';
 
   @override
-  String get deleteTeam => 'Delete Team';
+  String get stadiumApprovedTitle => 'Stadium Approved';
 
   @override
-  String get deleteTeamConfirm => 'Are you sure you want to delete this team? This cannot be undone.';
+  String stadiumApprovedSubtitle(String name) {
+    return '$name has been approved!';
+  }
 
   @override
-  String get saveChanges => 'Save Changes';
+  String get dismissBtn => 'Dismiss';
 
   @override
-  String get badgeUnlockedStatus => 'Status: Unlocked! Keep it up.';
+  String get createTournament => 'Create Tournament';
 
   @override
-  String get badgeLockedStatus => 'Status: Locked. Complete the requirement to earn this badge.';
+  String get profileSettings => 'Profile Settings';
 
   @override
-  String get gotItBtn => 'Got it';
+  String get profileAccountLabel => 'Account';
 
   @override
-  String get selectDate => 'Select Date';
+  String get profileAccountSubtitle => 'Manage your account';
 
   @override
-  String get selectTime => 'Select Time';
+  String get profilePreferencesLabel => 'Preferences';
 
   @override
-  String get expiredStatus => 'EXPIRED';
+  String get profileNotificationsLabel => 'Notifications';
 
   @override
-  String get currentPlayersWithYou => 'Current Players with You';
+  String get profileNotificationsSubtitle => 'Manage notifications';
 
   @override
-  String get playersInGroupSubtitle => 'Including yourself';
+  String get profilePrivacyLabel => 'Privacy';
 
   @override
-  String get totalPriceLabel => 'Total Price';
+  String get profilePrivacySubtitle => 'Manage privacy settings';
 
   @override
-  String get confirmSelections => 'Confirm Selections';
+  String get profileLanguageLabel => 'Language';
 
   @override
-  String get bookingSummary => 'Booking Summary';
+  String get profileLanguageSubtitle => 'Change application language';
 
   @override
-  String get cashPayAtStadium => 'Cash (Pay at Stadium)';
+  String get profileSupportLabel => 'Support';
 
   @override
-  String get cashPayment => 'Cash Payment';
+  String get profileHelpCenterLabel => 'Help Center';
 
   @override
-  String get cashPaymentDesc => 'Please prepare the exact amount to pay at the stadium reception before starting.';
+  String get profileHelpCenterSubtitle => 'Get support and help';
 
   @override
-  String get subtotalAmount => 'Subtotal Amount';
+  String get profileLogoutLabel => 'Logout';
+
+  @override
+  String get profileLogoutSubtitle => 'Sign out of your account';
+
+  @override
+  String get inProgress => 'In Progress';
+
+  @override
+  String get personalType => 'Personal';
+
+  @override
+  String get teamType => 'Team';
+
+  @override
+  String get challengeType => 'Challenge';
+
+  @override
+  String get forgotPasswordSubtitle =>
+      'Enter your email address and we will send you a link to reset your password.';
+
+  @override
+  String get resetPasswordSuccess =>
+      'Password reset email sent! Check your inbox.';
+
+  @override
+  String get resetPasswordError =>
+      'Failed to send reset email. Please check the address and try again.';
+
+  @override
+  String get invalidEmail => 'Please enter a valid email address.';
+
+  @override
+  String get selectImageSource => 'Select Image Source';
+
+  @override
+  String get camera => 'Camera';
+
+  @override
+  String get gallery => 'Gallery';
+
+  @override
+  String get docUploadedSuccess => 'Document uploaded successfully!';
+
+  @override
+  String uploadFailed(String error) {
+    return 'Upload failed: $error';
+  }
+
+  @override
+  String get uploadCommRegisterRequired =>
+      'Please upload your Commercial Register before continuing.';
+
+  @override
+  String get uploadIdFrontRequired =>
+      'Please upload the front side of your National ID.';
+
+  @override
+  String get uploadIdBackRequired =>
+      'Please upload the back side of your National ID.';
+
+  @override
+  String get regCompleteTitle => 'Registration Complete! 🎉';
+
+  @override
+  String get regCompleteBody =>
+      'Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.';
+
+  @override
+  String get goToDashboard => 'Go to Dashboard';
+
+  @override
+  String get saveInfoFailed =>
+      'Failed to save your information. Please check your connection and try again.';
+
+  @override
+  String get verificationPending => 'Verification Pending';
+
+  @override
+  String get reviewingDocs => 'We are reviewing your submitted documents.';
+
+  @override
+  String get submissionStatus => 'Submission Status';
+
+  @override
+  String get nationalIdFront => 'National ID Front';
+
+  @override
+  String get nationalIdBack => 'National ID Back';
+
+  @override
+  String get reviewDurationText =>
+      'The review process typically takes up to 24 hours. We will notify you once your account has been verified and activated.';
+
+  @override
+  String get refreshStatus => 'Refresh Status';
+
+  @override
+  String get verifiedSuccess => 'Account verified successfully!';
+
+  @override
+  String get stillUnderReview => 'Documents are still under review.';
+
+  @override
+  String refreshStatusFailed(String error) {
+    return 'Failed to refresh status: $error';
+  }
+
+  @override
+  String get submitted => 'Submitted';
+
+  @override
+  String get ownerInformationTitle => 'Owner information';
+
+  @override
+  String get clickToUploadRegister => 'Click to upload commercial register';
+
+  @override
+  String get uploadedSuccessfully => 'Uploaded Successfully';
+
+  @override
+  String get saving => 'Saving...';
+
+  @override
+  String get saveAndContinue => 'Save & Continue';
+
+  @override
+  String get uploadNationalIdTitle => 'Upload national ID';
+
+  @override
+  String get submitDocuments => 'Submit Documents';
+
+  @override
+  String get facilityOnboardingSubtitle =>
+      'Add your stadium and verify your account to start receiving bookings.';
+
+  @override
+  String addedStadiumsCount(int count) {
+    return 'Your Stadiums ($count)';
+  }
+
+  @override
+  String get noStadiumsAddedYet => 'No stadiums added yet';
+
+  @override
+  String get addStadiumButtonSubtitle => 'Register your new stadium details';
+
+  @override
+  String get confirmContinueBtn => 'Confirm & Continue';
+
+  @override
+  String get confirmContinueSubtitle => 'Upload legal documents and ID';
+
+  @override
+  String get addStadiumFirstError => 'Please add a stadium first';
+
+  @override
+  String get blockedBannerTitle => 'Account Restricted ⚠️';
+
+  @override
+  String get blockedBannerSubtitle =>
+      'Your account has been restricted. Action capability is limited.';
+
+  @override
+  String get geographicFallbackBanner =>
+      'No stadiums registered in your area yet 🟢.. here are the closest available stadiums in other areas.';
+
+  @override
+  String get teamMemberDeleteLockError =>
+      'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ⚠️';
+
+  @override
+  String get memberRemovedSuccess =>
+      'Team member has been removed successfully.';
+
+  @override
+  String get preliminaryRound => 'Preliminary Round';
+
+  @override
+  String get byeBadge => '[ Auto Qualified - BYE ]';
+
+  @override
+  String get warning => 'Warning';
+
+  @override
+  String unpaidTeamsWarning(String teams) {
+    return 'Warning: The following teams have not paid the subscription fee: $teams. Do you want to proceed anyway?';
+  }
+
+  @override
+  String get proceedAnyway => 'Proceed anyway';
 }

@@ -4,16 +4,16 @@ import 'package:vsp_application/core/models/user_model.dart';
 // ─────────────────────────────────────────────────────────────────────────────
 // Owner Flow Gating Tests
 //
-// These tests validate the RootScreen gating logic by testing the UserModel
-// flag combinations that drive each owner routing decision.
+// These tests validate the AppRouter gating logic by testing the UserModel
+// flag combinations that drive each routing decision.
 //
 // Covers:
 //  A. Owner with no stadium → FacilityOnboardingScreen path
 //  B. Owner with stadium but not verified → OwnerDocumentationWizard path
-//  C. Suspended owner → SuspendedAccountScreen path
+//  C. Blocked owner → OwnerMainScreen path (allowed access but de-activated)
 //  D. Fully completed owner → OwnerMainScreen path
 //  E. Owner role is preserved through signup and flag transitions
-//  F. isIdentityVerified write now unblocked (regression guard for auth_service fix)
+//  F. isIdentityVerified write now unblocked
 // ─────────────────────────────────────────────────────────────────────────────
 
 void main() {
@@ -22,7 +22,7 @@ void main() {
     bool hasStadium = false,
     bool isIdentityVerified = false,
     bool isRegistrationComplete = false,
-    bool isSuspended = false,
+    bool isBlocked = false,
     String? phone = '+20 100 000 0000',
   }) {
     return UserModel(
@@ -34,7 +34,7 @@ void main() {
       hasStadium: hasStadium,
       isIdentityVerified: isIdentityVerified,
       isRegistrationComplete: isRegistrationComplete,
-      isSuspended: isSuspended,
+      isBlocked: isBlocked,
     );
   }
 
@@ -45,7 +45,7 @@ void main() {
         isRegistrationComplete: true,
         hasStadium: false,
         isIdentityVerified: false,
-        isSuspended: false,
+        isBlocked: false,
       );
 
       expect(owner.role, 'owner');
@@ -70,7 +70,7 @@ void main() {
         isRegistrationComplete: true,
         hasStadium: true,
         isIdentityVerified: false,
-        isSuspended: false,
+        isBlocked: false,
       );
 
       expect(owner.hasStadium, isTrue);
@@ -88,28 +88,31 @@ void main() {
     });
   });
 
-  // ─── C. Suspended owner ───────────────────────────────────────────────────
-  group('C. Suspended owner', () {
-    test('should route to SuspendedAccountScreen regardless of other flags', () {
-      final suspended = makeOwner(
+  // ─── C. Blocked owner ───────────────────────────────────────────────────
+  group('C. Blocked owner', () {
+    test('should still route to OwnerMainScreen but with blocked status', () {
+      final blocked = makeOwner(
         isRegistrationComplete: true,
         hasStadium: true,
         isIdentityVerified: true,
-        isSuspended: true,
+        isBlocked: true,
       );
 
-      expect(suspended.isSuspended, isTrue,
-          reason: 'Suspended owner must be blocked even if all other flags complete');
+      expect(blocked.isBlocked, isTrue,
+          reason: 'Blocked owner is allowed to proceed to OwnerMainScreen where dashboard disables actions');
     });
 
-    test('suspension with partial setup is still blocked', () {
-      final suspended = makeOwner(
-        isRegistrationComplete: false,
-        hasStadium: false,
-        isIdentityVerified: false,
-        isSuspended: true,
+    test('blocked player should route to SuspendedAccountScreen', () {
+      final blockedPlayer = UserModel(
+        uid: 'test-player-uid',
+        email: 'player@test.com',
+        role: 'player',
+        isRegistrationComplete: true,
+        isBlocked: true,
+        phone: '+20 100 000 0000',
       );
-      expect(suspended.isSuspended, isTrue);
+      expect(blockedPlayer.isBlocked, isTrue);
+      expect(blockedPlayer.role, 'player');
     });
   });
 
@@ -120,28 +123,27 @@ void main() {
         isRegistrationComplete: true,
         hasStadium: true,
         isIdentityVerified: true,
-        isSuspended: false,
+        isBlocked: false,
       );
 
       expect(owner.isRegistrationComplete, isTrue);
       expect(owner.hasStadium, isTrue);
       expect(owner.isIdentityVerified, isTrue);
-      expect(owner.isSuspended, isFalse,
+      expect(owner.isBlocked, isFalse,
           reason: 'All flags complete → OwnerMainScreen');
     });
 
-    test('RootScreen gating logic expressed as pure flag evaluation', () {
+    test('Router gating logic expressed as pure flag evaluation', () {
       final owner = makeOwner(
         isRegistrationComplete: true,
         hasStadium: true,
         isIdentityVerified: true,
-        isSuspended: false,
+        isBlocked: false,
         phone: '+20 100 000 0001',
       );
 
-      // Replicate RootScreen decision tree as a pure function
+      // Replicate new router decision tree as a pure function
       String resolveOwnerRoute(UserModel u) {
-        if (u.isSuspended) return 'SuspendedAccountScreen';
         if (!u.hasStadium) return 'FacilityOnboardingScreen';
         if (!u.isIdentityVerified) return 'OwnerDocumentationWizard';
         return 'OwnerMainScreen';
@@ -182,10 +184,6 @@ void main() {
 
   // ─── F. isIdentityVerified write regression guard ──────────────────────────
   group('F. isIdentityVerified flag write regression', () {
-    // Before the auth_service.dart fix, isIdentityVerified was stripped by
-    // updateUserProfile(), causing the owner to loop through verification
-    // indefinitely. These tests guard against that regression by verifying
-    // the model transitions the flag correctly.
     test('copyWith sets isIdentityVerified from false to true', () {
       final pre = makeOwner(isIdentityVerified: false);
       final post = pre.copyWith(isIdentityVerified: true);
@@ -200,8 +198,7 @@ void main() {
         'hasStadium': true,
         'isIdentityVerified': true,
         'isRegistrationComplete': true,
-        'isSuspended': false,
-        'commissionDebt': 0,
+        'isBlocked': false,
       };
       final user = UserModel.fromFirestore(data);
       expect(user.isIdentityVerified, isTrue,
@@ -228,7 +225,6 @@ void main() {
         isIdentityVerified: true,
         phone: null,
       );
-      // phone null → SocialOnboardingScreen (before owner checks)
       final hasMissingPhone =
           owner.phone == null || (owner.phone?.isEmpty ?? true);
       expect(hasMissingPhone, isTrue);

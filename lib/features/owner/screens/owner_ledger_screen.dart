@@ -1,10 +1,8 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
-
 
 class OwnerLedgerScreen extends StatelessWidget {
   const OwnerLedgerScreen({super.key});
@@ -39,41 +37,20 @@ class OwnerLedgerScreen extends StatelessWidget {
               totalCash += (data['amount'] ?? 0).toDouble();
             }
           }
-          final double commission = totalCash * 0.05;
 
           return Column(
             children: [
               // ── Financial Summary Header ──
+              // Unified design system card showing only total revenue cleanly
               VSPCard(
                 margin: const EdgeInsets.all(VSPSpacing.md),
                 padding: const EdgeInsets.all(VSPSpacing.lg),
-                child: Column(
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('Total Cash Collected', style: Theme.of(context).textTheme.bodyMedium),
-                        Text('${totalCash.toStringAsFixed(0)} EGP', 
-                          style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent)
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-                    const Divider(color: VSPColors.divider),
-                    const SizedBox(height: 12),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text('App Commission Pending (5%)', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
-                        Text('${commission.toStringAsFixed(0)} EGP', 
-                          style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.warning)
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Text(
-                      'This amount is payable to VSP at the end of the month.',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontStyle: FontStyle.italic),
+                    Text('Total Cash Collected', style: Theme.of(context).textTheme.bodyMedium),
+                    Text('${totalCash.toStringAsFixed(0)} EGP', 
+                      style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent)
                     ),
                   ],
                 ),

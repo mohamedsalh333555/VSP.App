@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:provider/provider.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -59,7 +60,7 @@ class OnboardingScreen extends StatelessWidget {
       onDone: () async {
         await auth.completeOnboarding();
         if (context.mounted) {
-          Navigator.of(context).pushReplacementNamed('/root');
+          context.go('/');
         }
       },
       showSkipButton: true,

@@ -1,40 +1,89 @@
+import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:flutter_image_compress/flutter_image_compress.dart';
 import 'package:path_provider/path_provider.dart';
 import 'package:path/path.dart' as p;
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class StorageService {
-  final FirebaseStorage _storage = FirebaseStorage.instance;
+  final SupabaseStorageClient _storage = Supabase.instance.client.storage;
 
-  Future<String?> uploadFile({required File file, required String path}) async {
+  String _getMimeType(String filePath) {
+    final ext = p.extension(filePath).toLowerCase();
+    switch (ext) {
+      case '.pdf':
+        return 'application/pdf';
+      case '.png':
+        return 'image/png';
+      case '.jpg':
+      case '.jpeg':
+        return 'image/jpeg';
+      case '.heic':
+        return 'image/heic';
+      case '.gif':
+        return 'image/gif';
+      case '.webp':
+        return 'image/webp';
+      default:
+        return 'application/octet-stream';
+    }
+  }
+
+  Future<String?> uploadFile({required XFile file, required String bucket, required String path}) async {
     try {
-      // 🚀 Image Compression Optimization
-      File finalFile = file;
-      final extension = p.extension(file.path).toLowerCase();
+      String uploadPath = path;
+      final mimeType = _getMimeType(file.name);
       
-      if (['.jpg', '.jpeg', '.png', '.heic'].contains(extension)) {
-        final tempDir = await getTemporaryDirectory();
-        final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}$extension");
-        
-        final compressedXFile = await FlutterImageCompress.compressAndGetFile(
-          file.absolute.path,
-          targetPath,
-          quality: 70, // Significant savings with minimal loss
+      if (kIsWeb) {
+        // Web flow: upload via bytes to bypass dart:io File
+        final bytes = await file.readAsBytes();
+        await _storage.from(bucket).uploadBinary(
+          uploadPath,
+          bytes,
+          fileOptions: FileOptions(
+            contentType: mimeType,
+            upsert: true,
+          ),
         );
+      } else {
+        // Mobile/Desktop flow: compress and upload via File
+        File finalFile = File(file.path);
+        final extension = p.extension(file.path).toLowerCase();
         
-        if (compressedXFile != null) {
-          finalFile = File(compressedXFile.path);
+        if (['.jpg', '.jpeg', '.png', '.heic'].contains(extension)) {
+          final tempDir = await getTemporaryDirectory();
+          final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.jpg");
+          
+          if (uploadPath.toLowerCase().endsWith('.heic') || uploadPath.toLowerCase().endsWith('.png')) {
+            uploadPath = uploadPath.replaceAll(RegExp(r'\.(heic|png)$', caseSensitive: false), '.jpg');
+          }
+
+          final compressedXFile = await FlutterImageCompress.compressAndGetFile(
+            finalFile.absolute.path,
+            targetPath,
+            format: CompressFormat.jpeg,
+            quality: 70, // Significant savings with minimal loss
+          );
+          
+          if (compressedXFile != null) {
+            finalFile = File(compressedXFile.path);
+          }
         }
+
+        await _storage.from(bucket).upload(
+          uploadPath,
+          finalFile,
+          fileOptions: FileOptions(
+            contentType: mimeType,
+            upsert: true,
+          ),
+        );
       }
 
-      final ref = _storage.ref().child(path);
-      final uploadTask = await ref.putFile(
-        finalFile,
-        SettableMetadata(contentType: 'image/jpeg'), 
-      );
-      return await uploadTask.ref.getDownloadURL();
+      final publicUrl = _storage.from(bucket).getPublicUrl(uploadPath);
+      return publicUrl;
     } catch (e) {
-      debugPrint('Error uploading to Firebase Storage: $e');
+      debugPrint('Error uploading to Supabase Storage: $e');
       return null;
     }
   }
@@ -42,23 +91,42 @@ class StorageService {
   Future<bool> deleteFile(String url) async {
     try {
       if (url.isEmpty || !url.startsWith('http')) return true;
-      final ref = _storage.refFromURL(url);
-      await ref.delete();
+
+      final storagePathMarker = '/storage/v1/object/public/';
+      if (url.contains(storagePathMarker)) {
+        final pathSegment = url.split(storagePathMarker).last;
+        final parts = pathSegment.split('/');
+        if (parts.length > 1) {
+          final bucket = parts.first;
+          final path = parts.sublist(1).join('/');
+          await _storage.from(bucket).remove([path]);
+          return true;
+        }
+      }
       return true;
     } catch (e) {
-      debugPrint('Error deleting from Firebase Storage: $e');
+      debugPrint('Error deleting from Supabase Storage: $e');
       return false;
     }
   }
 
-  Future<String?> uploadProfilePicture({required File file, required String userId, String? oldImageUrl}) async {
+  Future<String?> uploadProfilePicture({required XFile file, required String userId, String? oldImageUrl}) async {
     if (oldImageUrl != null && oldImageUrl.isNotEmpty) {
       await deleteFile(oldImageUrl);
     }
-    return await uploadFile(file: file, path: 'users/$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg');
+    return await uploadFile(
+      file: file, 
+      bucket: 'profile-pictures', 
+      path: '$userId/profile_${DateTime.now().millisecondsSinceEpoch}.jpg'
+    );
   }
 
-  Future<String?> uploadOwnerDocument({required File file, required String ownerId, required String documentType}) async {
-    return await uploadFile(file: file, path: 'owners/$ownerId/documents/$documentType.jpg');
+  Future<String?> uploadOwnerDocument({required XFile file, required String ownerId, required String documentType}) async {
+    final ext = p.extension(file.name).toLowerCase();
+    return await uploadFile(
+      file: file, 
+      bucket: 'verification-documents', 
+      path: '$ownerId/documents/$documentType$ext'
+    );
   }
 }

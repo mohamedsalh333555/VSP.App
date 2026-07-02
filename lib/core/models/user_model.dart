@@ -16,11 +16,11 @@ class UserModel {
   final bool isRegistrationComplete;
   final String? governorate;
   final List<String> favoriteStadiums;
+  final String? verificationStatus; // 'pending', 'approved', 'rejected' or null
 
   // 🔴 Kill Switch & Debt Flags
-  final bool isSuspended;
   final bool isBlocked; // ✅ Administrative user block
-  final double commissionDebt;
+  final int noShowCount; // ✅ No-show count for spam protection
 
   UserModel({
     required this.uid,
@@ -37,33 +37,37 @@ class UserModel {
     this.isIdentityVerified = false,
     this.isRegistrationComplete = false,
     this.governorate,
-    this.isSuspended = false,
     this.isBlocked = false,
-    this.commissionDebt = 0.0,
     this.favoriteStadiums = const [],
+    this.verificationStatus,
+    this.noShowCount = 0,
   });
 
   // Create UserModel from Firestore document
   factory UserModel.fromFirestore(Map<String, dynamic> data) {
     return UserModel(
-      uid: data['uid'] ?? '',
+      uid: data['id'] ?? data['uid'] ?? '',
       email: data['email'] ?? '',
       role: data['role'] ?? 'player',
       name: data['name'],
       phone: data['phone'],
-      profileImageUrl: data['profileImageUrl'],
+      profileImageUrl: data['profile_image_url'] ?? data['profileImageUrl'],
       position: data['position'],
-      additionalData: data['additionalData'],
-      createdAt: data['createdAt']?.toDate(),
-      isEmailVerified: data['isEmailVerified'] ?? false,
-      hasStadium: data['hasStadium'] ?? false,
-      isIdentityVerified: data['isIdentityVerified'] ?? false,
-      isRegistrationComplete: data['isRegistrationComplete'] ?? false,
+      additionalData: data['additionalData'] ?? data['additional_data'],
+      createdAt: (data['created_at'] ?? data['createdAt']) != null
+          ? ((data['created_at'] ?? data['createdAt']) is String
+              ? DateTime.tryParse(data['created_at'] ?? data['createdAt'])
+              : ((data['created_at'] ?? data['createdAt']) as dynamic).toDate())
+          : null,
+      isEmailVerified: data['is_email_verified'] ?? data['isEmailVerified'] ?? false,
+      hasStadium: data['has_stadium'] ?? data['hasStadium'] ?? false,
+      isIdentityVerified: data['is_identity_verified'] ?? data['isIdentityVerified'] ?? false,
+      isRegistrationComplete: data['is_registration_complete'] ?? data['isRegistrationComplete'] ?? false,
       governorate: data['governorate'],
-      isSuspended: data['isSuspended'] ?? false,
-      isBlocked: data['isBlocked'] ?? false,
-      commissionDebt: (data['commissionDebt'] ?? 0).toDouble(),
-      favoriteStadiums: List<String>.from(data['favoriteStadiums'] ?? []),
+      isBlocked: data['is_blocked'] ?? data['isBlocked'] ?? false,
+      favoriteStadiums: List<String>.from(data['favorite_stadiums'] ?? data['favoriteStadiums'] ?? []),
+      verificationStatus: data['verification_status'] ?? data['verificationStatus'],
+      noShowCount: data['no_show_count'] ?? data['noShowCount'] ?? 0,
     );
   }
 
@@ -75,18 +79,18 @@ class UserModel {
       'role': role,
       'name': name,
       'phone': phone,
-      'profileImageUrl': profileImageUrl,
+      'profile_image_url': profileImageUrl,
       'position': position,
-      'additionalData': additionalData,
-      'isEmailVerified': isEmailVerified,
-      'hasStadium': hasStadium,
-      'isIdentityVerified': isIdentityVerified,
-      'isRegistrationComplete': isRegistrationComplete,
+      'additional_data': additionalData,
+      'is_email_verified': isEmailVerified,
+      'has_stadium': hasStadium,
+      'is_identity_verified': isIdentityVerified,
+      'is_registration_complete': isRegistrationComplete,
       'governorate': governorate,
-      'isSuspended': isSuspended,
-      'isBlocked': isBlocked,
-      'commissionDebt': commissionDebt,
-      'favoriteStadiums': favoriteStadiums,
+      'is_blocked': isBlocked,
+      'favorite_stadiums': favoriteStadiums,
+      'verification_status': verificationStatus,
+      'no_show_count': noShowCount,
     };
   }
 
@@ -106,10 +110,10 @@ class UserModel {
     bool? isIdentityVerified,
     bool? isRegistrationComplete,
     String? governorate,
-    bool? isSuspended,
     bool? isBlocked,
-    double? commissionDebt,
     List<String>? favoriteStadiums,
+    String? verificationStatus,
+    int? noShowCount,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -126,10 +130,10 @@ class UserModel {
       isIdentityVerified: isIdentityVerified ?? this.isIdentityVerified,
       isRegistrationComplete: isRegistrationComplete ?? this.isRegistrationComplete,
       governorate: governorate ?? this.governorate,
-      isSuspended: isSuspended ?? this.isSuspended,
       isBlocked: isBlocked ?? this.isBlocked,
-      commissionDebt: commissionDebt ?? this.commissionDebt,
       favoriteStadiums: favoriteStadiums ?? this.favoriteStadiums,
+      verificationStatus: verificationStatus ?? this.verificationStatus,
+      noShowCount: noShowCount ?? this.noShowCount,
     );
   }
 }

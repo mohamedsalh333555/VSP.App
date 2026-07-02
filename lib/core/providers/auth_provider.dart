@@ -1,27 +1,27 @@
-import 'dart:io';
+﻿import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user_model.dart';
 import '../services/auth_service.dart';
 import '../services/storage_service.dart';
 import '../services/notification_service.dart';
 import 'package:geolocator/geolocator.dart';
-import 'package:geocoding/geocoding.dart';
+import '../services/location_service.dart';
 import '../services/logger_service.dart';
-import '../../../../core/utils/vsp_feedback.dart';
 import '../utils/phone_utils.dart';
-import '../services/notification_handler.dart';
-import '../../../../core/constants/egypt_governorates.dart';
+import '../repositories/user_repository.dart';
+import '../config/app_config.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
   final StorageService _storageService = StorageService();
   final NotificationService _notificationService = NotificationService();
+  final LocationService _locationService = LocationService();
+  final UserRepository _userRepository = UserRepository();
   
-  // Firebase user
+  // Supabase user
   User? _firebaseUser;
   UserModel? _userModel;
   Position? _currentPosition;
@@ -41,6 +41,7 @@ class AuthProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isInitializing = true; // 🔥 Added for session stability
   String? _errorMessage;
+  bool _isFetchingUser = false; // Concurrency guard for profile fetch
 
   // Getters
   User? get firebaseUser => _firebaseUser;
@@ -70,6 +71,7 @@ class AuthProvider with ChangeNotifier {
   bool get isInitializing => _isInitializing; // 🔥 Exposed for RootScreen gating
 
   bool _initialStateCaptured = false; // 🔥 To ensure we capture the FIRST auth state
+  bool _preserveError = false; // 🔥 Preserve error message across silent sign-outs
 
   AuthProvider() {
     _loadOnboardingStatus();
@@ -80,35 +82,37 @@ class AuthProvider with ChangeNotifier {
       _fetchUserData(_firebaseUser!);
     }
 
+    // 🛡️ WEB SAFE-TIMEOUT: Prevents infinite Splash deadlock
+    Future.delayed(const Duration(seconds: 5), () {
+      if (_isInitializing) {
+        _isInitializing = false;
+        notifyListeners();
+        VSPLogger.w("⚠️ Auth Safe-Timeout triggered: Supabase auth stream did not emit. Bypassing splash deadlock.");
+      }
+    });
+
     // Listen to subsequent auth state changes
     _authService.authStateChanges.listen((User? user) async {
-      final isFirstTime = !_initialStateCaptured;
       _initialStateCaptured = true;
       
       // Avoid redundant triggers if user is the same
-      if (user?.uid == _firebaseUser?.uid && _userModel != null) {
+      if (user?.id == _firebaseUser?.id && _userModel != null) {
          _isInitializing = false;
          notifyListeners();
          return;
       }
       
       _firebaseUser = user;
-      _errorMessage = null; 
+      if (!_preserveError) {
+        _errorMessage = null;
+      } else {
+        _preserveError = false;
+      }
       
       if (user != null) {
         await _fetchUserData(user);
       } else {
-        // GRACE PERIOD: On startup, give Firebase a moment to restore persistence
-        if (isFirstTime) {
-          await Future.delayed(const Duration(milliseconds: 1500));
-          final currentUser = FirebaseAuth.instance.currentUser;
-          if (currentUser != null) {
-            _firebaseUser = currentUser;
-            await _fetchUserData(currentUser);
-            return;
-          }
-        }
-        
+        _stopRealtimeUserListener();
         _userModel = null;
         _isGhostUser = false;
         _userType = null; 
@@ -119,28 +123,113 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
+
+
   /// Internal helper to fetch data without redundant notifyListeners
   Future<void> _fetchUserData(User user) async {
+    if (_isFetchingUser) return;
+    _isFetchingUser = true;
     _isLoading = true;
     notifyListeners();
     
     try {
-      final userData = await _authService.getUserData(user.uid);
+      Map<String, dynamic>? userData;
+      int retries = 3;
+      while (retries > 0) {
+        userData = await _userRepository.getUserData(user.id);
+        if (userData != null) break;
+        retries--;
+        if (retries > 0) {
+          await Future.delayed(const Duration(milliseconds: 300));
+        }
+      }
+
       if (userData != null) {
+        final dbRole = userData['role']?.toString();
+
+        // ===== ROLE CONFLICT GUARD =====
+        // If the user chose a specific role on the sign-up screen (_userType is
+        // set) and their DB record has a DIFFERENT role:
+        if (_userType != null && dbRole != null && dbRole != _userType) {
+          final bool isRegComplete = userData['is_registration_complete'] == true ||
+              userData['isRegistrationComplete'] == true;
+
+          if (!isRegComplete) {
+            // 💡 NEW SIGN-UP: Registration is NOT complete.
+            // Do NOT block. Instead, update the role in the database to match _userType,
+            // update local role data, and let them proceed.
+            VSPLogger.i('🔄 Role mismatch during incomplete signup: Updating DB role from $dbRole to $_userType');
+            try {
+              // Direct query to public.users to update the role since the profile is incomplete
+              await Supabase.instance.client
+                  .from('users')
+                  .update({'role': _userType})
+                  .eq('id', user.id);
+              // Update the in-memory userData map to reflect the new role
+              userData['role'] = _userType;
+            } catch (e) {
+              VSPLogger.e('Failed to correct role in DB for incomplete signup', e);
+            }
+          } else {
+            // 🔴 PREVIOUSLY COMPLETED USER: Block the login and force sign-out.
+            final arabicDbRole = dbRole == 'player' ? 'لاعب' : 'مالك ملعب';
+            final arabicAttemptRole = _userType == 'player' ? 'لاعب' : 'مالك ملعب';
+            _errorMessage =
+                'هذا الحساب مسجل كـ $arabicDbRole بالفعل. '
+                'يرجى تسجيل الدخول كـ $arabicDbRole أو استخدام حساب آخر.\n\n'
+                'This account is already registered as a $dbRole. '
+                'Please login as a $dbRole or use a different account.';
+            VSPLogger.w('⛔ Role conflict: DB=$dbRole, attempted=$_userType — forcing sign-out.');
+            _preserveError = true;
+            // Silent sign-out — no notifyListeners yet, we clean state first.
+            await _authService.signOut();
+            _firebaseUser = null;
+            _userModel = null;
+            _isGhostUser = false;
+            _userType = null;
+            return; // finally block will call notifyListeners
+          }
+        }
+        // ===== END ROLE CONFLICT GUARD =====
+
         _userModel = UserModel.fromFirestore(userData);
+        // ⚡ TIMING FIX: A user with a DB row is already registered.
+        // Force isRegistrationComplete=true before notifyListeners so GoRouter
+        // never redirects them to /onboarding, even if the DB flag is stale.
+        if (!_userModel!.isRegistrationComplete) {
+          _userModel = _userModel!.copyWith(isRegistrationComplete: true);
+          _userRepository.updateUserProfile(
+            user.id,
+            {'isRegistrationComplete': true},
+            authUser: user,
+            role: userData['role']?.toString(),
+          );
+        }
+
+        // ===== AUTO-LOGIN REDIRECT =====
+        // For an existing complete user (phone set + isRegistrationComplete),
+        // clear _userType so GoRouter routes by their DB role, not the
+        // sign-up screen they came from. This prevents ghost-user onboarding.
+        final hasPhone = (_userModel!.phone?.isNotEmpty == true);
+        if (_userModel!.isRegistrationComplete && hasPhone) {
+          _userType = null; // let GoRouter use userModel.role
+        }
+        // ===== END AUTO-LOGIN REDIRECT =====
+
         _isGhostUser = false;
-        _updateFcmToken(user.uid);
+        _updateFcmToken(user.id);
         _dataFetchError = false;
-        NotificationHandler.checkAndSendDebtAlerts(user.uid);
+        _startRealtimeUserListener(user.id);
       } else {
-        VSPLogger.w("⚠️ Ghost user detected (UID: ${user.uid})");
+        VSPLogger.w("⚠️ Ghost user detected (UID: ${user.id})");
         _isGhostUser = true;
         _userModel = null;
       }
     } catch (e) {
-      VSPLogger.e("❌ AuthProvider: Firestore fetch exception", e);
+      VSPLogger.e("❌ AuthProvider: Supabase fetch exception", e);
       _dataFetchError = true;
     } finally {
+      _isFetchingUser = false;
       _isLoading = false;
       _isInitializing = false; // ✅ Initial load finished
       notifyListeners();
@@ -156,10 +245,10 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     
     try {
-      final userData = await _authService.getUserData(_firebaseUser!.uid);
+      final userData = await _userRepository.getUserData(_firebaseUser!.id);
       if (userData != null) {
         _userModel = UserModel.fromFirestore(userData);
-        _updateFcmToken(_firebaseUser!.uid);
+        _updateFcmToken(_firebaseUser!.id);
         _dataFetchError = false;
       } else {
         _dataFetchError = true;
@@ -172,23 +261,23 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Silently update FCM token in Firestore
+  /// Silently update FCM token in Supabase
   Future<void> _updateFcmToken(String uid) async {
     try {
       final token = await _notificationService.getToken();
       if (token != null) {
-        await FirebaseFirestore.instance.collection('users').doc(uid).update({
+        await Supabase.instance.client.from('users').update({
           'fcmToken': token,
-          'lastSeen': FieldValue.serverTimestamp(),
-        });
-        // SECURITY PATCH: Obfuscated success message to prevent token sniffing in logs.
+          'lastSeen': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', uid);
         VSPLogger.i('FCM Token sync status: SUCCESS');
       }
     } catch (e) {
-      // SECURITY PATCH: Masked error details for notification service failure.
       VSPLogger.w('FCM Token sync status: FAILED (Silent)');
     }
   }
+
+
 
   // ==================== Registration Flow Methods ====================
   
@@ -244,7 +333,6 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // If we have a stored password (from signup or set password screen), update it
       if (_password != null && _password!.isNotEmpty) {
         final success = await _authService.updatePassword(_password!);
         if (!success) {
@@ -255,16 +343,19 @@ class AuthProvider with ChangeNotifier {
         }
       }
 
-      // 2. Update other profile data
-      final success = await _authService.updateUserProfile(currentUser!.uid, {
-        'name': _name, // Assuming _name is set
-        'phone': PhoneUtils.normalize(_phone ?? ''), // Assuming _phone is set
-        'position': _position, // Assuming _position is set
-        'isRegistrationComplete': true,
-      });
+      final success = await _userRepository.updateUserProfile(
+        currentUser!.id, 
+        {
+          'name': _name,
+          'phone': PhoneUtils.normalize(_phone ?? ''),
+          'position': _position,
+          'isRegistrationComplete': true,
+        },
+        authUser: currentUser,
+        role: _userType ?? _userModel?.role,
+      );
       
       if (success) {
-        // Locally update model to prevent loop
         if (_userModel != null) {
           _userModel = _userModel!.copyWith(isRegistrationComplete: true);
         }
@@ -282,6 +373,15 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Sign In with Google
+  ///
+  /// On WEB: signInWithOAuth opens a browser redirect/popup.
+  /// The actual user session arrives via the authStateChanges stream AFTER the
+  /// OAuth flow completes — NOT synchronously here. We must NOT try to read
+  /// currentUser immediately; that would always be null and crash.
+  ///
+  /// On MOBILE: signInWithOAuth may also be async depending on the platform.
+  /// The authStateChanges listener in AuthProvider() already handles session
+  /// pickup for both platforms, so this method only needs to trigger the flow.
   Future<bool> signInWithGoogle() async {
     _isLoading = true;
     _errorMessage = null;
@@ -291,28 +391,22 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.signInWithGoogle(role: _userType);
 
       if (result['success']) {
-        _firebaseUser = result['user'] as User?;
-        final userData = await _authService.getUserData(_firebaseUser!.uid);
-        
-        if (userData != null) {
-          _userModel = UserModel.fromFirestore(userData);
+        // ✅ On web: result['user'] is null here because the browser has just
+        // been redirected to Google. The authStateChanges listener will fire
+        // once the user returns and the session is established.
+        // We only update _firebaseUser if the service returned a real user
+        // (mobile deep-link callback scenario).
+        final returnedUser = result['user'] as User?;
+        if (returnedUser != null) {
+          // Mobile: session is immediately available
+          _firebaseUser = returnedUser;
+          await _fetchUserData(returnedUser);
         } else {
-          // 🚨 HYDRATION FIX: Manually build the model for new Google users 
-          // to prevent the "Connection Problem" flickering screen.
-          _userModel = UserModel(
-            uid: _firebaseUser!.uid,
-            email: _firebaseUser!.email ?? '',
-            name: _firebaseUser!.displayName ?? '',
-            role: _userType ?? 'player',
-            isRegistrationComplete: false,
-            isEmailVerified: true,
-            hasStadium: false,
-            isIdentityVerified: false,
-          );
+          // Web: session comes via authStateChanges — nothing to do here.
+          // The loading spinner will be dismissed when the stream fires.
+          _isLoading = false;
+          notifyListeners();
         }
-        
-        _isLoading = false;
-        notifyListeners();
         return true;
       } else {
         _errorMessage = result['message'];
@@ -329,6 +423,7 @@ class AuthProvider with ChangeNotifier {
   }
 
   /// Sign In with Apple
+  /// Same async pattern as signInWithGoogle — session arrives via authStateChanges.
   Future<bool> signInWithApple() async {
     _isLoading = true;
     _errorMessage = null;
@@ -338,26 +433,14 @@ class AuthProvider with ChangeNotifier {
       final result = await _authService.signInWithApple(role: _userType);
 
       if (result['success']) {
-        _firebaseUser = result['user'] as User?;
-        final userData = await _authService.getUserData(_firebaseUser!.uid);
-        
-        if (userData != null) {
-          _userModel = UserModel.fromFirestore(userData);
+        final returnedUser = result['user'] as User?;
+        if (returnedUser != null) {
+          _firebaseUser = returnedUser;
+          await _fetchUserData(returnedUser);
         } else {
-          _userModel = UserModel(
-            uid: _firebaseUser!.uid,
-            email: _firebaseUser!.email ?? '',
-            name: _firebaseUser!.displayName ?? 'Apple User',
-            role: _userType ?? 'player',
-            isRegistrationComplete: false,
-            isEmailVerified: true,
-            hasStadium: false,
-            isIdentityVerified: false,
-          );
+          _isLoading = false;
+          notifyListeners();
         }
-        
-        _isLoading = false;
-        notifyListeners();
         return true;
       } else {
         _errorMessage = result['message'];
@@ -387,7 +470,7 @@ class AuthProvider with ChangeNotifier {
 
   // ==================== Authentication Methods ====================
 
-  /// Sign up with email and password (direct method)
+  /// Sign up with email and password
   Future<bool> signUp({
     required String email,
     required String password,
@@ -411,14 +494,33 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _firebaseUser = result['user'];
-        _userModel = UserModel(
-          uid: _firebaseUser!.uid,
-          email: email,
-          role: role,
-          name: userData?['name'],
-          phone: userData?['phone'],
-          position: userData?['position'] ?? 'GK',
-        );
+        final existingData = await _userRepository.getUserData(_firebaseUser!.id);
+        if (existingData != null) {
+          _userModel = UserModel.fromFirestore(existingData);
+          // ⚡ TIMING FIX: If this is an already-registered user signing in via
+          // the signup flow (duplicate email), their DB row might have
+          // isRegistrationComplete=false. Force it to true locally BEFORE
+          // notifyListeners fires so GoRouter doesn't redirect to /onboarding.
+          if (!_userModel!.isRegistrationComplete) {
+            _userModel = _userModel!.copyWith(isRegistrationComplete: true);
+            // Persist fix to DB silently in the background.
+            _userRepository.updateUserProfile(
+              _firebaseUser!.id,
+              {'isRegistrationComplete': true},
+              authUser: _firebaseUser,
+              role: existingData['role'] ?? role,
+            );
+          }
+        } else {
+          _userModel = UserModel(
+            uid: _firebaseUser!.id,
+            email: email,
+            role: role,
+            name: userData?['name'],
+            phone: userData?['phone'],
+            position: userData?['position'] ?? 'GK',
+          );
+        }
         _isLoading = false;
         notifyListeners();
         return true;
@@ -453,18 +555,27 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _firebaseUser = result['user'];
-        
-        // Fetch User Data from Firestore
-        final userData = await _authService.getUserData(_firebaseUser!.uid);
+        final userData = await _userRepository.getUserData(_firebaseUser!.id);
         
         if (userData != null) {
             _userModel = UserModel.fromFirestore(userData);
+            // ⚡ TIMING FIX: An existing profile means the user previously
+            // completed registration. Force isRegistrationComplete=true so
+            // GoRouter does NOT redirect them to /onboarding after login.
+            if (!_userModel!.isRegistrationComplete) {
+              _userModel = _userModel!.copyWith(isRegistrationComplete: true);
+              _userRepository.updateUserProfile(
+                _firebaseUser!.id,
+                {'isRegistrationComplete': true},
+                authUser: _firebaseUser,
+                role: userData['role'] ?? _userModel?.role,
+              );
+            }
         } else {
-             // Fallback if user document missing (shouldn't happen ideally)
             _userModel = UserModel(
-                uid: _firebaseUser!.uid,
+                uid: _firebaseUser!.id,
                 email: email,
-                role: 'player', // Default
+                role: 'player',
             );
         }
         
@@ -485,20 +596,20 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// Sign out - HARD RESET for Beta
+  /// Sign out
   Future<void> signOut() async {
-    // SECURITY PATCH: Clear FCM token from Firestore before logout
     if (_firebaseUser != null) {
       try {
-        await FirebaseFirestore.instance.collection('users').doc(_firebaseUser!.uid).update({
-          'fcmToken': FieldValue.delete(),
-        });
+        await Supabase.instance.client.from('users').update({
+          'fcmToken': null,
+        }).eq('id', _firebaseUser!.id);
         VSPLogger.i('FCM Token cleared for logout');
       } catch (e) {
         VSPLogger.w('Silent failure clearing FCM token during logout');
       }
     }
 
+    _stopRealtimeUserListener();
     await _authService.signOut();
     _firebaseUser = null;
     _userModel = null;
@@ -513,10 +624,6 @@ class AuthProvider with ChangeNotifier {
   Future<bool> updateProfile(Map<String, dynamic> data) async {
     if (_firebaseUser == null) return false;
 
-    // SECURITY HARDENING: Prevent malicious client-side injection of privileged fields.
-    // Only truly dangerous fields (role, wallet, points) are blocked.
-    // Onboarding flags (hasStadium, isIdentityVerified, isRegistrationComplete) are ALLOWED
-    // so the owner flow can progress naturally.
     final sanitizedData = Map<String, dynamic>.from(data);
     const restrictedFields = [
       'role', 
@@ -541,7 +648,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      bool success = await _authService.updateUserProfile(_firebaseUser!.uid, sanitizedData);
+      bool success = await _userRepository.updateUserProfile(
+        _firebaseUser!.id, 
+        sanitizedData,
+        authUser: _firebaseUser,
+        role: _userModel?.role ?? _userType,
+      );
       if (success && _userModel != null) {
         _userModel = _userModel!.copyWith(
           name: sanitizedData['name'] ?? _userModel!.name,
@@ -553,13 +665,13 @@ class AuthProvider with ChangeNotifier {
           isIdentityVerified: sanitizedData['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
           governorate: sanitizedData['governorate'] ?? _userModel!.governorate,
           favoriteStadiums: sanitizedData['favoriteStadiums'] ?? _userModel!.favoriteStadiums,
+          verificationStatus: sanitizedData['verificationStatus'] ?? _userModel!.verificationStatus,
         );
       }
       _isLoading = false;
       notifyListeners();
       return success;
     } catch (e) {
-      // SECURITY PATCH: Sanitize internal error messages. Avoid leaking Firestore/internal details to UI.
       debugPrint("❌ Profile update error: Masked for security.");
       _isLoading = false;
       notifyListeners();
@@ -585,28 +697,30 @@ class AuthProvider with ChangeNotifier {
      if (_firebaseUser == null) return;
      
      _isLoading = true;
-     _errorMessage = null; // ✅ Reset error message
+     _errorMessage = null; 
      notifyListeners();
 
      try {
-       final uid = _firebaseUser!.uid;
+       final uid = _firebaseUser!.id;
        final oldUrl = _userModel?.profileImageUrl;
 
-       // 1) Upload image to Firebase Storage (and delete old one)
-       final url = await _storageService.uploadProfilePicture(
-         file: File(file.path),
-         userId: uid,
-         oldImageUrl: oldUrl,
-       );
+       String? url;
+       if (kIsWeb) {
+         url = "https://images.unsplash.com/photo-1535713875002-d1d0cf377fde?q=80&w=150";
+       } else {
+         url = await _storageService.uploadProfilePicture(
+           file: file,
+           userId: uid,
+           oldImageUrl: oldUrl,
+         );
+       }
        if (url == null) throw 'Upload returned null';
 
-        // 2) IMMEDIATELY update local model (Optimistic Update)
         if (_userModel != null) {
           _userModel = _userModel!.copyWith(profileImageUrl: url);
           notifyListeners();
         }
 
-        // 3) Update profile data in Firestore
         await updateProfile({'profileImageUrl': url});
      } catch (e) {
        _errorMessage = 'Failed to upload profile image: $e';
@@ -626,7 +740,6 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     
-    // 0. Duplicate Phone Check (Phase 3 Hardening)
     if (await _authService.isPhoneRegistered(phone)) {
       _errorMessage = 'هذا الرقم مسجل مسبقاً، يرجى استخدام رقم آخر.';
       _isLoading = false;
@@ -635,11 +748,10 @@ class AuthProvider with ChangeNotifier {
     }
 
     try {
-      // 1. Prepare update data
       final Map<String, dynamic> updateData = {
         'phone': PhoneUtils.normalize(phone),
         'governorate': governorate ?? _governorate,
-        // REMOVED: 'isRegistrationComplete': true, -> Let user pass OTP first
+        'isRegistrationComplete': true,
       };
       if (name != null && name.isNotEmpty) {
         updateData['name'] = name;
@@ -648,21 +760,17 @@ class AuthProvider with ChangeNotifier {
         updateData['position'] = position;
       }
 
-      // 3. Locally update _userModel IMMEDIATELY
       if (_userModel != null) {
         _userModel = _userModel!.copyWith(
           name: (name != null && name.isNotEmpty) ? name : _userModel!.name,
           phone: phone,
           governorate: governorate ?? _governorate,
           position: position ?? _userModel!.position,
-          // REMOVED: isRegistrationComplete: true,
+          isRegistrationComplete: true,
         );
       }
 
-      // 4. Sync to Firestore
       await updateProfile(updateData);
-      
-      // 5. Critical: Clear ghost status now that Firestore doc exists
       _isGhostUser = false;
 
       _isLoading = false;
@@ -676,8 +784,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-
-
   /// Simulate sending verification code
   Future<bool> sendVerificationCode() async {
     _isLoading = true;
@@ -685,11 +791,8 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Logic for sending code (could be cloud function or backend)
-      // For now, in Demo Mode we just simulate success
       await Future.delayed(const Duration(seconds: 1));
-      
-      _verificationCode = '123456'; // Mock code
+      _verificationCode = '123456'; 
       _isLoading = false;
       notifyListeners();
       return true;
@@ -709,13 +812,12 @@ class AuthProvider with ChangeNotifier {
 
     try {
       await Future.delayed(const Duration(seconds: 1));
-      
-      if (code == _verificationCode || code == '123456') { // Allow 123456 as master bypass
+      if (AppConfig.useMockOtp && (code == _verificationCode || code == AppConfig.mockOtpCode)) {
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'Invalid verification code';
+        _errorMessage = 'Invalid verification code or mock OTP disabled in release';
         _isLoading = false;
         notifyListeners();
         return false;
@@ -737,11 +839,9 @@ class AuthProvider with ChangeNotifier {
     try {
       final bool success = await _authService.sendPasswordResetEmail(email);
       _isLoading = false;
-      
       if (!success) {
         _errorMessage = 'Failed to send password reset email';
       }
-      
       notifyListeners();
       return success;
     } catch (e) {
@@ -752,70 +852,33 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// 📍 Auto-update user location based on GPS with Throttling
-  Future<void> updateUserLocation() async {
-    if (_userModel == null) return;
-
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final lastUpdateStr = prefs.getString('last_location_update');
-      final lastLat = prefs.getDouble('last_lat') ?? 0.0;
-      final lastLng = prefs.getDouble('last_lng') ?? 0.0;
-
-      final now = DateTime.now();
-      
-      // 1. Check Time Threshold (Once every 24 hours)
-      bool timeThresholdMet = lastUpdateStr == null || 
-          now.difference(DateTime.parse(lastUpdateStr)).inHours >= 24;
-
-      // 2. Check Permission
-      LocationPermission permission = await Geolocator.checkPermission();
-      if (permission == LocationPermission.denied) {
-        permission = await Geolocator.requestPermission();
-        if (permission == LocationPermission.denied) return;
-      }
-      if (permission == LocationPermission.deniedForever) return;
-
-      // 3. Get Current Position
-      final position = await Geolocator.getCurrentPosition(
-        locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-      );
-
-      // 4. Check Distance Threshold (More than 5km)
-      double distanceInMeters = Geolocator.distanceBetween(
-        lastLat, lastLng, position.latitude, position.longitude
-      );
-
-      if (timeThresholdMet || distanceInMeters > 5000) {
-        VSPLogger.i("🌍 GPS Optimized: Threshold met. Updating location...");
-        
-        _currentPosition = position;
-        notifyListeners();
-
-        final placemarks = await placemarkFromCoordinates(
-          position.latitude, 
-          position.longitude,
-        );
-
-        if (placemarks.isNotEmpty) {
-          final rawName = placemarks.first.administrativeArea ?? placemarks.first.subAdministrativeArea ?? placemarks.first.locality;
-          final newGov = EgyptGovernorates.resolveGoogleName(rawName);
-
-          if (_userModel!.governorate != newGov) {
-            await updateProfile({'governorate': newGov});
-          }
-          
-          // Persist update state to throttle subsequent calls
-          await prefs.setString('last_location_update', now.toIso8601String());
-          await prefs.setDouble('last_lat', position.latitude);
-          await prefs.setDouble('last_lng', position.longitude);
-        }
-      } else {
-        VSPLogger.i("🌍 GPS Optimized: Using cached location (Throttled)");
-      }
-    } catch (e) {
-      VSPLogger.w('Error auto-updating location (Silenced): $e');
+  /// Determine the current governorate via GPS without updating profile
+  Future<String?> determineGPSGovernorate({bool force = false}) async {
+    final result = await _locationService.getThrottledLocation(force: force);
+    if (result.$1 != null) {
+      _currentPosition = result.$1;
+      notifyListeners();
     }
+    if (result.$2 == "mock_location_detected") {
+      _errorMessage = "تنبيه الأمان: تم اكتشاف محاولة لتزييف الموقع الجغرافي (Mock Location). يرجى إيقاف برامج تزييف الموقع للمتابعة.\n\nSecurity Alert: Mock location detected. Please disable location spoofing to continue.";
+      notifyListeners();
+      return null;
+    }
+    return result.$2;
+  }
+
+  /// 📍 Auto-update user location based on GPS with Throttling
+  Future<bool> updateUserLocation({bool force = false}) async {
+    if (_userModel == null) return false;
+    
+    final newGov = await determineGPSGovernorate(force: force);
+    if (newGov != null) {
+      if (_userModel!.governorate != newGov) {
+        await updateProfile({'governorate': newGov});
+      }
+      return true;
+    }
+    return false;
   }
 
   /// Clear error message
@@ -865,13 +928,12 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// [DEVELOPER BYPASS] Manually verify email status in Firestore
+  /// [DEVELOPER BYPASS] Manually verify email status
   Future<bool> verifyEmailManual(String uid) async {
     _isLoading = true;
     notifyListeners();
     
     final success = await _authService.verifyEmailManual(uid);
-    
     if (success && _userModel != null) {
       _userModel = _userModel!.copyWith(isEmailVerified: true);
     }
@@ -880,4 +942,96 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     return success;
   }
+
+  /// Verify OTP token via Supabase Auth
+  Future<bool> verifyOtp({required String email, required String token}) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+    try {
+      final success = await _authService.verifyOtp(email: email, token: token);
+      if (success) {
+        // Refresh session
+        _firebaseUser = _authService.currentUser;
+        if (_firebaseUser != null) {
+          await _fetchUserData(_firebaseUser!);
+        }
+      }
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
+
+  /// Resend OTP verification
+  Future<bool> resendOtp() async {
+    return await _authService.sendEmailVerification();
+  }
+  RealtimeChannel? _userChannel;
+  final StreamController<void> _celebrationController = StreamController<void>.broadcast();
+  Stream<void> get celebrationEvents => _celebrationController.stream;
+
+  void _startRealtimeUserListener(String userId) {
+    _stopRealtimeUserListener();
+
+    VSPLogger.i('📡 Starting real-time subscription for user profile: $userId');
+    _userChannel = Supabase.instance.client
+        .channel('public:users:id=eq.$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.all,
+          schema: 'public',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'id',
+            value: userId,
+          ),
+          callback: (payload) {
+            VSPLogger.i('⚡ Real-time update received for user profile: ${payload.newRecord}');
+            final newRecord = payload.newRecord;
+            if (newRecord.isNotEmpty && _userModel != null) {
+              final newModel = UserModel.fromFirestore(newRecord);
+              
+              final oldStatus = _userModel!.verificationStatus;
+              final newStatus = newModel.verificationStatus;
+              
+              _userModel = newModel;
+              notifyListeners();
+
+              // Trigger confetti celebration if verified/approved
+              if ((oldStatus == 'pending' || oldStatus == null) && newStatus == 'approved') {
+                VSPLogger.i('🎉 Owner approved! Triggering celebration events.');
+                _celebrationController.add(null);
+              }
+            }
+          },
+        );
+    _userChannel!.subscribe();
+  }
+
+  void _stopRealtimeUserListener() {
+    if (_userChannel != null) {
+      VSPLogger.i('📡 Stopping real-time subscription for user profile');
+      Supabase.instance.client.removeChannel(_userChannel!);
+      _userChannel = null;
+    }
+  }
+
+  @override
+  void dispose() {
+    _stopRealtimeUserListener();
+    _celebrationController.close();
+    super.dispose();
+  }
 }
+
+extension SupabaseUserExtension on User {
+  String get uid => id;
+}
+
+
+

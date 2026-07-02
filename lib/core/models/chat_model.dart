@@ -1,5 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-
 class ChatMessage {
   final String id;
   final String senderId;
@@ -15,49 +13,26 @@ class ChatMessage {
     required this.timestamp,
   });
 
-  factory ChatMessage.fromFirestore(Map<String, dynamic> data, String id) {
+  factory ChatMessage.fromJson(Map<String, dynamic> json, String id) {
     return ChatMessage(
       id: id,
-      senderId: data['senderId'] ?? '',
-      senderName: data['senderName'] ?? '',
-      text: data['text'] ?? '',
-      timestamp: (data['timestamp'] as Timestamp?)?.toDate() ?? DateTime.now(),
+      senderId: json['sender_id'] ?? json['senderId'] ?? '',
+      senderName: json['sender_name'] ?? json['senderName'] ?? '',
+      text: json['text'] ?? '',
+      timestamp: json['created_at'] != null 
+          ? DateTime.parse(json['created_at'].toString()).toLocal()
+          : (json['timestamp'] != null 
+              ? DateTime.parse(json['timestamp'].toString()).toLocal()
+              : DateTime.now()),
     );
   }
 
-  Map<String, dynamic> toFirestore() {
+  Map<String, dynamic> toJson() {
     return {
-      'senderId': senderId,
-      'senderName': senderName,
+      'sender_id': senderId,
+      'sender_name': senderName,
       'text': text,
-      'timestamp': FieldValue.serverTimestamp(),
+      'created_at': timestamp.toUtc().toIso8601String(),
     };
-  }
-}
-
-
-class ChatRoom {
-  final String id; // This will be the bookingId
-  final List<String> participants;
-  final String lastMessage;
-  final DateTime lastMessageTime;
-  final Map<String, int> unreadCounts; // uid: count
-
-  ChatRoom({
-    required this.id,
-    required this.participants,
-    required this.lastMessage,
-    required this.lastMessageTime,
-    this.unreadCounts = const {},
-  });
-
-  factory ChatRoom.fromFirestore(Map<String, dynamic> data, String id) {
-    return ChatRoom(
-      id: id,
-      participants: List<String>.from(data['participants'] ?? []),
-      lastMessage: data['lastMessage'] ?? '',
-      lastMessageTime: (data['lastMessageTime'] as Timestamp?)?.toDate() ?? DateTime.now(),
-      unreadCounts: Map<String, int>.from(data['unreadCounts'] ?? {}),
-    );
   }
 }

@@ -1,4 +1,3 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -93,6 +92,7 @@ class _AccountScreenState extends State<AccountScreen> {
   Widget build(BuildContext context) {
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final stadiums = stadiumProvider.stadiums;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -100,11 +100,11 @@ class _AccountScreenState extends State<AccountScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Account',
+          isArabic ? 'الحساب' : 'Account',
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -118,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
             SizedBox(
               height: 200,
               child: stadiums.isEmpty
-                ? const Center(child: Text('No stadiums added yet'))
+                ? Center(child: Text(isArabic ? 'لم يتم إضافة ملاعب بعد' : 'No stadiums added yet'))
                 : ListView.builder(
                     scrollDirection: Axis.horizontal,
                     itemCount: stadiums.length,
@@ -131,19 +131,19 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 24),
 
             // Owner Info Form
-            _buildLabel(context, 'Owner Name'),
-            CustomTextField(controller: _nameController, hintText: 'Enter your name'),
+            _buildLabel(context, isArabic ? 'اسم المالك' : 'Owner Name'),
+            CustomTextField(controller: _nameController, hintText: isArabic ? 'أدخل اسمك' : 'Enter your name'),
             const SizedBox(height: 16),
 
-            _buildLabel(context, 'Number'),
-            CustomTextField(controller: _phoneController, hintText: 'Enter your phone', keyboardType: TextInputType.phone),
+            _buildLabel(context, isArabic ? 'رقم الهاتف' : 'Phone Number'),
+            CustomTextField(controller: _phoneController, hintText: isArabic ? 'أدخل رقم هاتفك' : 'Enter your phone', keyboardType: TextInputType.phone),
             const SizedBox(height: 16),
 
-            _buildLabel(context, 'Email'),
-            CustomTextField(controller: _emailController, hintText: 'Enter your email', enabled: false, suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)),
+            _buildLabel(context, isArabic ? 'البريد الإلكتروني' : 'Email Address'),
+            CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', enabled: false, suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)),
             const SizedBox(height: 16),
 
-            _buildLabel(context, 'Location'),
+            _buildLabel(context, isArabic ? 'الموقع' : 'Location'),
             Container(
               padding: const EdgeInsets.all(VSPSpacing.md),
               decoration: BoxDecoration(
@@ -160,11 +160,11 @@ class _AccountScreenState extends State<AccountScreen> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Current Governorate',
+                          isArabic ? 'المحافظة الحالية' : 'Current Governorate',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         ),
                         Text(
-                          _addressController.text.isEmpty ? 'Not set' : _addressController.text,
+                          _addressController.text.isEmpty ? (isArabic ? 'غير محدد' : 'Not set') : _addressController.text,
                           style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
@@ -183,7 +183,7 @@ class _AccountScreenState extends State<AccountScreen> {
                           _addressController.text = Provider.of<AuthProvider>(context, listen: false).governorate;
                           _isLocating = false;
                         });
-                        VSPFeedback.showSuccess(context, 'Location updated!');
+                        VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث الموقع!' : 'Location updated!');
                       }
                     },
                   ),
@@ -192,29 +192,29 @@ class _AccountScreenState extends State<AccountScreen> {
             ),
             const SizedBox(height: 16),
 
-            _buildLabel(context, 'Social media'),
-            CustomTextField(controller: _socialController, hintText: 'Enter social media link'),
+            _buildLabel(context, isArabic ? 'روابط التواصل الاجتماعي' : 'Social media'),
+            CustomTextField(controller: _socialController, hintText: isArabic ? 'أدخل رابط التواصل الاجتماعي' : 'Enter social media link'),
             const SizedBox(height: 24),
 
             // Documents
-            _buildLabel(context, 'National ID front'),
-            _buildDocCard(context, 'National ID front'),
+            _buildLabel(context, isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front'),
+            _buildDocCard(context, isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front'),
             const SizedBox(height: 12),
 
-            _buildLabel(context, 'National ID back'),
-            _buildDocCard(context, 'National ID Back'),
+            _buildLabel(context, isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back'),
+            _buildDocCard(context, isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back'),
             const SizedBox(height: 12),
 
-            _buildLabel(context, 'Tax card'),
-            _buildDocCard(context, 'Tax card'),
+            _buildLabel(context, isArabic ? 'البطاقة الضريبية' : 'Tax Card'),
+            _buildDocCard(context, isArabic ? 'البطاقة الضريبية' : 'Tax Card'),
             const SizedBox(height: 12),
 
-             _buildLabel(context, 'Commercial register'),
-            _buildDocCard(context, 'commercial register'),
+             _buildLabel(context, isArabic ? 'السجل التجاري' : 'Commercial Register'),
+            _buildDocCard(context, isArabic ? 'السجل التجاري' : 'Commercial Register'),
             const SizedBox(height: 40),
 
             PrimaryButton(
-              text: 'Confirm',
+              text: isArabic ? 'تأكيد' : 'Confirm',
               isLoading: _isLoading,
               onPressed: _isLoading ? null : _saveData,
             ),
@@ -335,22 +335,26 @@ class _AccountScreenState extends State<AccountScreen> {
 
 
   Widget _buildDocCard(BuildContext context, String name) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return VSPCard(
       padding: const EdgeInsets.all(VSPSpacing.md),
       color: VSPColors.accent.withValues(alpha: 0.05),
       border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       child: Row(
         children: [
-           const Icon(Icons.image_outlined, color: VSPColors.textPrimary),
-           const SizedBox(width: VSPSpacing.md),
-           Column(
-             crossAxisAlignment: CrossAxisAlignment.start,
-             children: [
-               Text(name, style: Theme.of(context).textTheme.titleSmall),
-               Text('200 KB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-               Text('Click to view', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, decoration: TextDecoration.underline)),
-             ],
-           )
+          const Icon(Icons.image_outlined, color: VSPColors.textPrimary),
+          const SizedBox(width: VSPSpacing.md),
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(name, style: Theme.of(context).textTheme.titleSmall),
+              Text('200 KB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+              Text(
+                isArabic ? 'اضغط للعرض' : 'Click to view', 
+                style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, decoration: TextDecoration.underline),
+              ),
+            ],
+          )
         ],
       ),
     );

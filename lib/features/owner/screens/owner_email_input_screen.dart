@@ -1,4 +1,3 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
 // LEGACY - not used in active orientation (using SignupScreen)
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,7 +8,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/custom_text_field.dart';
-import '../../auth/screens/owner_verify_email_screen.dart';
+
 
 /// Owner Email Input Screen - Step 1/3
 class OwnerEmailInputScreen extends StatefulWidget {
@@ -78,7 +77,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
         Navigator.push(
           context,
           MaterialPageRoute(
-            builder: (context) => OwnerVerifyEmailScreen(email: email),
+            builder: (context) => const Scaffold(body: Center(child: Text('Bypassed'))),
           ),
         );
       }
@@ -102,7 +101,7 @@ class _OwnerEmailInputScreenState extends State<OwnerEmailInputScreen> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => OwnerVerifyEmailScreen(email: email),
+        builder: (context) => const Scaffold(body: Center(child: Text('Bypassed'))),
       ),
     );
   }

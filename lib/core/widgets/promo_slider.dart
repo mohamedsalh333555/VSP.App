@@ -65,7 +65,7 @@ class _PromoSliderState extends State<PromoSlider> {
             itemBuilder: (context, index) {
               final promo = widget.promotions[index];
               return Container(
-                margin: const EdgeInsets.symmetric(horizontal: 16),
+                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                 decoration: BoxDecoration(
                   borderRadius: BorderRadius.circular(VSPRadius.lg),
                   image: DecorationImage(
@@ -76,12 +76,12 @@ class _PromoSliderState extends State<PromoSlider> {
                 child: Container(
                   decoration: BoxDecoration(
                     borderRadius: BorderRadius.circular(VSPRadius.lg),
-                    gradient: LinearGradient(
+                    gradient: const LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
                       colors: [
                         Colors.transparent,
-                        Colors.black.withValues(alpha: 0.8),
+                        VSPColors.black80,
                       ],
                     ),
                   ),
@@ -91,7 +91,7 @@ class _PromoSliderState extends State<PromoSlider> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 2),
                         decoration: BoxDecoration(
                           color: VSPColors.accent,
                           borderRadius: BorderRadius.circular(VSPRadius.xs),
@@ -105,7 +105,7 @@ class _PromoSliderState extends State<PromoSlider> {
                           ),
                         ),
                       ),
-                      const SizedBox(height: 4),
+                      const SizedBox(height: VSPSpacing.xs),
                       Text(
                         promo.title,
                         style: const TextStyle(
@@ -121,7 +121,7 @@ class _PromoSliderState extends State<PromoSlider> {
             },
           ),
         ),
-        const SizedBox(height: 8),
+        const SizedBox(height: VSPSpacing.sm),
         Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: List.generate(
@@ -129,10 +129,10 @@ class _PromoSliderState extends State<PromoSlider> {
             (index) => Container(
               width: 8,
               height: 8,
-              margin: const EdgeInsets.symmetric(horizontal: 4),
+              margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.xs),
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                color: _currentPage == index ? VSPColors.accent : Colors.white24,
+                color: _currentPage == index ? VSPColors.accent : VSPColors.white24,
               ),
             ),
           ),

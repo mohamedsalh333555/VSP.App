@@ -29,6 +29,14 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
+            <!-- Deep Linking for Supabase Google OAuth Redirect -->
+            <intent-filter>
+                <action android:name="android.intent.action.VIEW" />
+                <category android:name="android.intent.category.DEFAULT" />
+                <category android:name="android.intent.category.BROWSABLE" />
+                <data android:scheme="io.supabase.fluttervsp" android:host="login-callback" />
+            </intent-filter>
+
             <!-- 
                 DEEP LINKING (App Links): 
                 Structural intent-filter placeholder for future domain-based deep linking.
@@ -56,6 +64,11 @@
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:value="#9FDF02" />
+            
+        <!-- Google Mobile Ads App ID (Test ID) -->
+        <meta-data
+            android:name="com.google.android.gms.ads.APPLICATION_ID"
+            android:value="ca-app-pub-3940256099942544~3347511713"/>
     </application>
     <!-- Required to query activities that can process text, see:
          https://developer.android.com/training/package-visibility and

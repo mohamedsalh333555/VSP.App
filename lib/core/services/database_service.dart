@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/team_repository.dart';
+import '../repositories/report_repository.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/league_repository.dart';
 import '../repositories/match_repository.dart';
@@ -20,6 +21,7 @@ class DatabaseService {
   // Repository Singletons/Instances
   late final UserRepository user;
   late final TeamRepository team;
+  late final ReportRepository report;
   late final NotificationRepository notification;
   late final LeagueRepository league;
   late final MatchRepository match;
@@ -31,16 +33,17 @@ class DatabaseService {
 
   DatabaseService({FirebaseFirestore? firestore}) 
       : _firestore = firestore ?? FirebaseFirestore.instance {
-    user = UserRepository(firestore: _firestore);
-    team = TeamRepository(firestore: _firestore);
+    user = UserRepository();
+    team = TeamRepository();
+    report = ReportRepository(firestore: _firestore);
     notification = NotificationRepository(firestore: _firestore);
     league = LeagueRepository(firestore: _firestore);
     match = MatchRepository(firestore: _firestore);
-    stadium = StadiumRepository(firestore: _firestore);
-    booking = FirestoreBookingRepository(); // Note: Internal implementation
-    search = SearchRepository(firestore: _firestore);
+    stadium = StadiumRepository();
+    booking = SupabaseBookingRepository(); // Note: Internal implementation
+    search = SearchRepository();
     owner = OwnerRepository(firestore: _firestore);
-    tournament = TournamentRepository(firestore: _firestore);
+    tournament = TournamentRepository();
   }
 
   // --- Redirection methods for backward compatibility ---
@@ -64,7 +67,7 @@ class DatabaseService {
     required String targetId,
     required String targetType,
     required String reason,
-  }) => user.reportEntity(
+  }) => report.reportEntity(
     reporterId: reporterId, 
     targetId: targetId, 
     targetType: targetType, 
@@ -120,10 +123,10 @@ class DatabaseService {
   );
 
   @deprecated
-  Stream<List<Map<String, dynamic>>> getReportsStream() => user.getReportsStream();
+  Stream<List<Map<String, dynamic>>> getReportsStream() => report.getReportsStream();
 
   @deprecated
-  Future<void> updateUserModerationStatus(String userId, {required bool isSuspended, String? warningMessage}) => user.updateUserModerationStatus(userId, isSuspended: isSuspended, warningMessage: warningMessage);
+  Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) => user.updateUserModerationStatus(userId, isBlocked: isBlocked, warningMessage: warningMessage);
 
   @deprecated
   Future<double> calculateOwnerRevenue(String id) => owner.calculateOwnerRevenue(id);

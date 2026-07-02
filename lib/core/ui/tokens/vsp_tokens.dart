@@ -1,12 +1,12 @@
 import 'package:flutter/material.dart';
 
 class VSPColors {
-  static const background = Color(0xFF000000); 
-  static const surface = Color(0xFF121212);    
-  static const surfaceAlt = Color(0xFF1C1C1E); 
+  static const background = Color(0xFF121212); 
+  static const surface = Color(0xFF1E1E1E);    
+  static const surfaceAlt = Color(0xFF262626); 
   static const accent = Color(0xFF9FDF02);     
-  static const accentSoft = Color(0x269FDF02);
-  static const textPrimary = Color(0xFFFFFFFF);
+  static const accentSoft = Color(0x1F9FDF02);
+  static const textPrimary = Color(0xFFE4E4E7);
   static const textSecondary = Color(0xFFA1A1AA);
   static const divider = Color(0xFF262626);
   static const inputFill = Color(0xFF232A23);
@@ -18,6 +18,13 @@ class VSPColors {
   static const white12 = Color(0x1FFFFFFF);
   static const white38 = Color(0x61FFFFFF);
   static const white = Color(0xFFFFFFFF);
+  
+  static const Color accentGlow = Color(0x0D9FDF02); // 5% opacity
+  static const Color borderLight = Color(0x1A262626); // 10% opacity divider
+  static const Color borderMedium = Color(0x33262626); // 20% opacity divider
+  static const Color glassSurface = Color(0x66121212); // 40% opacity surface
+  static const Color black80 = Color(0xCC000000); // 80% opacity black
+  static const Color white24 = Color(0x3DFFFFFF); // 24% opacity white
 }
 
 class VSPRadius {

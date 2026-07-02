@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
@@ -122,7 +122,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             // Selection Options
             _buildSelectionOption(0, 'We Won', Icons.emoji_events_outlined, VSPColors.warning),
             const SizedBox(height: 12),
-            _buildSelectionOption(1, 'Draw', Icons.sync_alt, Colors.blue), // Blue is used for Draw specifically, could use a custom token if available
+            _buildSelectionOption(1, 'Draw', Icons.sync_alt, const Color(0xFF3B82F6)), // Blue is used for Draw specifically, could use a custom token if available
             const SizedBox(height: 12),
             _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, VSPColors.error),
 
@@ -318,3 +318,5 @@ class _MatchResultModalState extends State<MatchResultModal> {
     );
   }
 }
+
+

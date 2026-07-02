@@ -10,7 +10,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
-import '../../../core/repositories/user_repository.dart';
+import '../../../core/repositories/report_repository.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
   final String bookingId;
@@ -39,15 +39,13 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
 
-      // Fetch booking
       final booking = await bookingProvider.getBookingById(widget.bookingId);
       if (booking != null) {
         _booking = booking;
-        // Fetch stadium
         _stadium = await stadiumProvider.getStadiumById(booking.stadiumId);
       }
     } catch (e) {
-      debugPrint('Error fetching match details: $e');
+      debugPrint('Error fetching match details: ');
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -68,7 +66,21 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       setState(() => _isJoining = false);
       if (success) {
         VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
-        _fetchMatchDetails(); // Refresh
+        _fetchMatchDetails();
+      } else {
+        final errorMsg = bookingProvider.errorMessage ?? '';
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        if (errorMsg == 'time_conflict') {
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'لديك حجز متداخل أو مباراة أخرى في نفس هذا الوقت! ⚠️' : 'You have a conflicting booking or match at this time! ⚠️',
+          );
+        } else {
+          VSPFeedback.showError(
+            context,
+            errorMsg.isNotEmpty ? errorMsg : (isArabic ? 'فشل الانضمام للمباراة' : 'Failed to join match'),
+          );
+        }
       }
     }
   }
@@ -138,7 +150,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                     color: VSPColors.error,
                     textColor: Colors.white,
                     onPressed: () async {
-                      final success = await UserRepository().reportEntity(
+                      final success = await ReportRepository().reportEntity(
                         reporterId: auth.currentUser!.uid,
                         targetId: widget.bookingId,
                         targetType: 'match',
@@ -158,6 +170,30 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  Widget _buildHostSettingsCard(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Icons.star, color: VSPColors.accent),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Text(
+              isArabic ? 'أنت مستضيف هذه المباراة. يمكنك إدارة اللاعبين من القائمة بالأسفل.' : 'You are the host of this match. You can manage players from the list below.',
+              style: const TextStyle(color: VSPColors.accent, fontSize: 13, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -200,7 +236,6 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       backgroundColor: VSPColors.background,
       body: CustomScrollView(
         slivers: [
-          // Header Widget with Stadium Image
           SliverAppBar(
             expandedHeight: 250,
             pinned: true,
@@ -214,7 +249,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                       bookingId: widget.bookingId,
                       teamName: 'VSP Public Match',
                       stadiumName: _stadium?.name ?? 'Stadium',
-                      date: '${_booking!.formattedDate} at ${_booking!.formattedTimeRange}',
+                      date: ' at ',
                     );
                   }
                 },
@@ -234,7 +269,6 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                   : Container(color: VSPColors.surface),
             ),
           ),
-          
           SliverToBoxAdapter(
             child: Padding(
               padding: const EdgeInsets.all(VSPSpacing.lg),
@@ -260,27 +294,26 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                           borderRadius: BorderRadius.circular(VSPRadius.xl),
                         ),
                         child: Text(
-                          AppLocalizations.of(context)!.vsMatchFormat('${(_booking!.maxPlayers ~/ 2)}', '${(_booking!.maxPlayers ~/ 2)}'),
+                          AppLocalizations.of(context)!.vsMatchFormat('', ''),
                           style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
                         ),
                       ),
                     ],
                   ),
                   const SizedBox(height: VSPSpacing.md),
-                  
                   _buildDetailRow(Icons.calendar_today, AppLocalizations.of(context)!.date, _booking!.formattedDate),
                   _buildDetailRow(Icons.access_time, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
                   _buildDetailRow(Icons.location_on, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
-                  
+                  if (isHost) ...[
+                    const SizedBox(height: 16),
+                    _buildHostSettingsCard(context),
+                  ],
                   const Divider(color: VSPColors.divider, height: 40),
-                  
                   Text(
                     AppLocalizations.of(context)!.playersCount(_booking!.joinedUserIds.length, _booking!.maxPlayers),
                     style: Theme.of(context).textTheme.titleLarge,
                   ),
                   const SizedBox(height: VSPSpacing.md),
-                  
-                  // Players List
                   ListView.builder(
                     shrinkWrap: true,
                     physics: const NeverScrollableScrollPhysics(),
@@ -296,8 +329,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                       );
                     },
                   ),
-                  
-                  const SizedBox(height: 100), // Space for bottom button
+                  const SizedBox(height: 100),
                 ],
               ),
             ),
@@ -317,21 +349,18 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8),
-      child: Row(
-        children: [
-          Icon(icon, color: VSPColors.accent, size: 20),
-          const SizedBox(width: 12),
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
-              Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            ],
-          ),
-        ],
-      ),
+    return Row(
+      children: [
+        Icon(icon, color: VSPColors.accent, size: 20),
+        const SizedBox(width: 12),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+            Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+          ],
+        ),
+      ],
     );
   }
 }

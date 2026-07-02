@@ -1,12 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
-import 'package:firebase_analytics/firebase_analytics.dart';
 import 'firebase_options.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/ui/tokens/vsp_tokens.dart';
 import 'core/theme/app_theme.dart';
 import 'core/providers/language_provider.dart';
@@ -15,18 +16,49 @@ import 'core/providers/stadium_provider.dart';
 import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
 import 'core/utils/data_migration.dart';
-import 'features/auth/screens/splash_screen.dart';
-import 'features/auth/screens/welcome_screen.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'core/navigation/root_screen.dart';
 import 'core/config/app_config.dart' as app_config;
 import 'core/services/logger_service.dart';
+import 'package:go_router/go_router.dart';
+import 'package:app_links/app_links.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:google_mobile_ads/google_mobile_ads.dart';
+import 'core/navigation/app_router.dart';
+import 'dart:async';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  
+  // GOOGLE MOBILE ADS INITIALIZATION
+  try {
+    await MobileAds.instance.initialize();
+    VSPLogger.i("✅ Google Mobile Ads SDK initialized successfully");
+  } catch (e) {
+    VSPLogger.e("❌ ADS SDK INIT FAILED", e);
+  }
+  
+  // SUPABASE INITIALIZATION
+  try {
+    const supabaseUrl = String.fromEnvironment(
+      'SUPABASE_URL', 
+      defaultValue: 'https://mktqkddbcddrxjxabdua.supabase.co'
+    );
+    const supabaseAnonKey = String.fromEnvironment(
+      'SUPABASE_ANON_KEY', 
+      defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE'
+    );
+    
+    await Supabase.initialize(
+      url: supabaseUrl,
+      anonKey: supabaseAnonKey,
+    );
+    VSPLogger.i("✅ Supabase initialized successfully");
+  } catch (e) {
+    VSPLogger.e("❌ SUPABASE INIT FAILED", e);
+  }
   
   // FIREBASE INITIALIZATION
   try {
@@ -39,38 +71,34 @@ void main() async {
       persistenceEnabled: true,
     );
 
-    // CRASHLYTICS INITIALIZATION
-    FlutterError.onError = (errorDetails) {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-    };
-    // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-    PlatformDispatcher.instance.onError = (error, stack) {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      return true;
-    };
-    
-    VSPLogger.i("✅ Firebase initialized with Crashlytics");
+    // CRASHLYTICS INITIALIZATION (Disabled in debug/emulator mode to prevent main thread blocking/ANR on startup)
+    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
+    if (!kDebugMode) {
+      FlutterError.onError = (errorDetails) {
+        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
+      };
+      // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
+      PlatformDispatcher.instance.onError = (error, stack) {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+        return true;
+      };
+      VSPLogger.i("✅ Firebase initialized with Crashlytics (Enabled)");
+    } else {
+      VSPLogger.i("✅ Firebase initialized (Crashlytics disabled in debug mode)");
+    }
     
     // DATA MIGRATIONS & REPAIR
-    // We always run repair to ensure stadium visibility for legacy data.
-    // seedDatabase handles the full initial demo set if demoMode is active.
     if (app_config.AppConfig.demoMode) {
       await DataMigration().seedDatabase(); 
-    } else {
-      // ⚠️ DISABLED FOR PRODUCTION LAUNCH: Heavy DB scan on every startup.
-      // Run this ONCE via a Cloud Function or admin panel instead.
-      // await DataMigration().repairStadiumsData();
     }
   } catch (e) {
     VSPLogger.e("❌ FIREBASE INIT FAILED", e);
   }
   
-  // Initialize Notifications
-  try {
-    await NotificationService().initialize(navigatorKey);
-  } catch (e) {
-    VSPLogger.w("⚠️ Warning: Notification service failed: $e");
-  }
+  // Initialize Notifications (Asynchronously to prevent blocking web startup)
+  NotificationService().initialize(navigatorKey).catchError((e) {
+    VSPLogger.w("⚠️ Warning: Notification service failed to initialize: $e");
+  });
   
   // System UI Style
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -109,7 +137,12 @@ void main() async {
               ),
               const SizedBox(height: VSPSpacing.xl),
               ElevatedButton(
-                onPressed: () => navigatorKey.currentState?.pushReplacementNamed('/root'),
+                onPressed: () {
+                  final ctx = navigatorKey.currentContext;
+                  if (ctx != null) {
+                    ctx.go('/');
+                  }
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
                   foregroundColor: Colors.black,
@@ -139,33 +172,100 @@ class VSPApplication extends StatelessWidget {
         ChangeNotifierProvider(create: (_) => StadiumProvider()),
         ChangeNotifierProvider(create: (_) => BookingProvider()),
       ],
-      child: Consumer<LanguageProvider>(
-        builder: (context, languageProvider, child) {
-          return MaterialApp(
-            navigatorKey: navigatorKey,
-            title: 'VSP',
-            debugShowCheckedModeBanner: false,
-            theme: AppTheme.darkTheme,
-            localizationsDelegates: [
-              AppLocalizations.delegate,
-              GlobalMaterialLocalizations.delegate,
-              GlobalWidgetsLocalizations.delegate,
-              GlobalCupertinoLocalizations.delegate,
-            ],
-            supportedLocales: const [
-              Locale('en'),
-              Locale('ar'),
-            ],
-            locale: languageProvider.currentLocale,
-            home: const RootScreen(), // RootScreen manages splash/auth/home gating
-            routes: {
-              '/splash': (context) => const SplashScreen(),
-              '/welcome': (context) => const WelcomeScreen(),
-              '/root': (context) => const RootScreen(),
-            },
-          );
-        },
-      ),
+      child: const _MaterialAppWithRouter(),
+    );
+  }
+}
+
+class _MaterialAppWithRouter extends StatefulWidget {
+  const _MaterialAppWithRouter();
+
+  @override
+  State<_MaterialAppWithRouter> createState() => _MaterialAppWithRouterState();
+}
+
+class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
+  late final GoRouter _router;
+  late final AppLinks _appLinks;
+  StreamSubscription<Uri>? _linkSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    _router = AppRouter.createRouter(authProvider, navigatorKey);
+    _initDeepLinks();
+
+    // Listen to Supabase Auth State changes for Password Recovery
+    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+      if (data.event == AuthChangeEvent.passwordRecovery) {
+        debugPrint('🔑 Password recovery event triggered! Routing to /set-new-password');
+        _router.go('/set-new-password');
+      }
+    });
+  }
+
+  void _initDeepLinks() {
+    _appLinks = AppLinks();
+
+    // Check for initial link when app starts
+    _appLinks.getInitialLink().then((uri) {
+      if (uri != null) _handleDeepLink(uri);
+    });
+
+    // Listen to incoming links while app is running
+    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+      _handleDeepLink(uri);
+    });
+  }
+
+  void _handleDeepLink(Uri uri) {
+    debugPrint('🔗 Handling deep link: $uri');
+    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+    
+    // 🛡️ AUTH GUARD: If not fully authenticated/onboarded, save for later
+    if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
+      debugPrint('💾 Saving pending deep link for after login: $uri');
+      SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
+      return;
+    }
+
+    // Pattern: https://vsp.app/match/BOOKING_ID
+    if (uri.pathSegments.length >= 2) {
+      final type = uri.pathSegments[0]; // match
+      final id = uri.pathSegments[1];
+
+      if (type == 'match') {
+        _router.push('/match/$id');
+      }
+    }
+  }
+
+  @override
+  void dispose() {
+    _linkSubscription?.cancel();
+    super.dispose();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final languageProvider = Provider.of<LanguageProvider>(context);
+    return MaterialApp.router(
+      routerConfig: _router,
+      title: 'VSP',
+      debugShowCheckedModeBanner: false,
+      theme: AppTheme.darkTheme,
+      localizationsDelegates: [
+        AppLocalizations.delegate,
+        GlobalMaterialLocalizations.delegate,
+        GlobalWidgetsLocalizations.delegate,
+        GlobalCupertinoLocalizations.delegate,
+      ],
+      supportedLocales: const [
+        Locale('en'),
+        Locale('ar'),
+      ],
+      locale: languageProvider.currentLocale,
     );
   }
 }

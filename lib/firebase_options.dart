@@ -6,8 +6,7 @@ import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, Tar
 class DefaultFirebaseOptions {
   static FirebaseOptions get currentPlatform {
     if (kIsWeb) {
-      // Placeholder for Web - Not configured yet
-      return android;
+      return web;
     }
     switch (defaultTargetPlatform) {
       case TargetPlatform.android:
@@ -32,6 +31,18 @@ class DefaultFirebaseOptions {
         );
     }
   }
+
+  // ✅ Web configuration - uses the same Firebase project
+  // To get the real web appId: Firebase Console → Project Settings → Your apps → Web app
+  // The apiKey for web is the same as Android for single-project setups
+  static const FirebaseOptions web = FirebaseOptions(
+    apiKey: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM',
+    appId: '1:860837572098:web:5a9d7594b32d94b1e5c11b',
+    messagingSenderId: '860837572098',
+    projectId: 'vsp-app-103b1',
+    storageBucket: 'vsp-app-103b1.firebasestorage.app',
+    authDomain: 'vsp-app-103b1.firebaseapp.com',
+  );
 
   static const FirebaseOptions android = FirebaseOptions(
     apiKey: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM',

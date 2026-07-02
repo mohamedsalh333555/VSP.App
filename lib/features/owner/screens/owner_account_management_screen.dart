@@ -1,4 +1,3 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -86,6 +85,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context);
     final userModel = authProvider.userModel;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -98,7 +98,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         ),
         centerTitle: true,
         title: Text(
-          'Account',
+          isArabic ? 'الحساب' : 'Account',
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -109,9 +109,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           children: [
             // 1. Stadium Selector
             SizedBox(
-              height: 220,
+              height: 200,
               child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
                 scrollDirection: Axis.horizontal,
                 itemCount: _stadiums.length,
                 itemBuilder: (context, index) {
@@ -132,19 +132,19 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildInputLabel('Owner Name'),
-                   CustomTextField(controller: _nameController, hintText: 'Enter your name'),
+                   _buildInputLabel(isArabic ? 'اسم المالك' : 'Owner Name'),
+                   CustomTextField(controller: _nameController, hintText: isArabic ? 'أدخل اسمك' : 'Enter your name'),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Number'),
-                   CustomTextField(controller: _phoneController, hintText: 'Enter your number', keyboardType: TextInputType.phone),
+                   _buildInputLabel(isArabic ? 'رقم الهاتف' : 'Phone Number'),
+                   CustomTextField(controller: _phoneController, hintText: isArabic ? 'أدخل رقم هاتفك' : 'Enter your phone', keyboardType: TextInputType.phone),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Email'),
-                   CustomTextField(controller: _emailController, hintText: 'Enter your email', suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
+                   _buildInputLabel(isArabic ? 'البريد الإلكتروني' : 'Email Address'),
+                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Location'),
+                   _buildInputLabel(isArabic ? 'الموقع' : 'Location'),
                    Container(
                      padding: const EdgeInsets.all(VSPSpacing.md),
                      decoration: BoxDecoration(
@@ -161,11 +161,11 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                              crossAxisAlignment: CrossAxisAlignment.start,
                              children: [
                                Text(
-                                 'Current Governorate',
+                                 isArabic ? 'المحافظة الحالية' : 'Current Governorate',
                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                ),
                                Text(
-                                 userModel?.governorate ?? 'Not set',
+                                 userModel?.governorate ?? (isArabic ? 'غير محدد' : 'Not set'),
                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
                                ),
                              ],
@@ -181,7 +181,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                              if (mounted) {
                                if (!context.mounted) return;
                                setState(() => _isLocating = false);
-                               VSPFeedback.showSuccess(context, 'Location updated!');
+                               VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث الموقع!' : 'Location updated!');
                              }
                            },
                          ),
@@ -190,8 +190,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    ),
                    
                    const SizedBox(height: 16),
-                   _buildInputLabel('Social media'),
-                   CustomTextField(controller: _socialController, hintText: 'Enter social media link'),
+                   _buildInputLabel(isArabic ? 'روابط التواصل الاجتماعي' : 'Social media'),
+                   CustomTextField(controller: _socialController, hintText: isArabic ? 'أدخل رابط التواصل الاجتماعي' : 'Enter social media link'),
                 ],
               ),
             ),
@@ -204,20 +204,20 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                   _buildInputLabel('National ID front'),
-                   _buildDocumentCard('National ID front', '500 KB'),
+                   _buildInputLabel(isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front'),
+                   _buildDocumentCard(isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front', '500 KB'),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('National ID back'),
-                   _buildDocumentCard('National ID Back', '500 KB'),
+                   _buildInputLabel(isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back'),
+                   _buildDocumentCard(isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back', '500 KB'),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Tax card'),
-                   _buildDocumentCard('Tax card', '300 KB'),
+                   _buildInputLabel(isArabic ? 'البطاقة الضريبية' : 'Tax Card'),
+                   _buildDocumentCard(isArabic ? 'البطاقة الضريبية' : 'Tax Card', '300 KB'),
                    const SizedBox(height: 16),
                    
-                   _buildInputLabel('Commercial register'),
-                   _buildDocumentCard('commercial register', '200 KB'),
+                   _buildInputLabel(isArabic ? 'السجل التجاري' : 'Commercial Register'),
+                   _buildDocumentCard(isArabic ? 'السجل التجاري' : 'Commercial Register', '200 KB'),
 
                    const SizedBox(height: 40),
 
@@ -225,9 +225,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    Center(
                       child: TextButton(
                         onPressed: () => _showDeleteAccountDialog(context),
-                        child: const Text(
-                          'Delete Account',
-                          style: TextStyle(
+                        child: Text(
+                          isArabic ? 'حذف الحساب' : 'Delete Account',
+                          style: const TextStyle(
                             color: VSPColors.error,
                             fontWeight: FontWeight.bold,
                             decoration: TextDecoration.underline,
@@ -245,7 +245,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + VSPSpacing.md),
         color: VSPColors.background,
         child: PrimaryButton(
-          text: 'Confirm',
+          text: isArabic ? 'تأكيد' : 'Confirm',
           isLoading: _isLoading,
           onPressed: _isLoading ? null : _updateUserData,
         ),
@@ -266,6 +266,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
 
 
   Widget _buildDocumentCard(String title, String size) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return VSPCard(
       padding: const EdgeInsets.all(VSPSpacing.md),
       margin: EdgeInsets.zero,
@@ -287,7 +288,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      // View logic
                    },
                    child: Text(
-                     'Click to view',
+                     isArabic ? 'اضغط للعرض' : 'Click to view',
                      style: Theme.of(context).textTheme.labelMedium?.copyWith(
                        color: VSPColors.accent,
                        fontWeight: FontWeight.bold,

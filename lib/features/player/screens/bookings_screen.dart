@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
 import '../../../core/widgets/shimmer_image.dart';
@@ -12,16 +12,16 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../data/models.dart';
 import '../widgets/match_result_modal.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/team_repository.dart';
 
-class BookedScreen extends StatefulWidget {
-  const BookedScreen({super.key});
+class BookingsScreen extends StatefulWidget {
+  const BookingsScreen({super.key});
 
   @override
-  State<BookedScreen> createState() => _BookedScreenState();
+  State<BookingsScreen> createState() => _BookingsScreenState();
 }
 
-class _BookedScreenState extends State<BookedScreen> {
+class _BookingsScreenState extends State<BookingsScreen> {
   @override
   void initState() {
     super.initState();
@@ -37,7 +37,7 @@ class _BookedScreenState extends State<BookedScreen> {
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
       bookingProvider.loadUserBookings(userId);
-      final team = await DatabaseService().getUserTeam(userId);
+      final team = await TeamRepository().getUserTeam(userId);
       if (mounted) {
         setState(() => _myTeamId = team?.id);
       }
@@ -56,7 +56,7 @@ class _BookedScreenState extends State<BookedScreen> {
         centerTitle: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
+                icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -339,12 +339,22 @@ class _BookingCard extends StatelessWidget {
                 Expanded(
                   child: Builder(
                     builder: (context) {
-                      final bool canCancel = DateTime.now().isBefore(booking.startTime);
-                      return VSPAnimatedButton(
-                        text: l10n.cancel,
-                        color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.5),
-                        textColor: canCancel ? VSPColors.error : VSPColors.textSecondary,
-                        onPressed: canCancel ? () => _showCancelDialog(context) : null,
+                      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                      final deadline = booking.startTime.subtract(const Duration(hours: 2));
+                      final bool canCancel = DateTime.now().isBefore(deadline);
+                      final bool bookingStarted = DateTime.now().isAfter(booking.startTime);
+                      // Determine tooltip/label for locked state
+                      final String lockedLabel = bookingStarted
+                          ? (isArabic ? 'بدأ الحجز' : 'Booking started')
+                          : (isArabic ? 'لا يمكن الإلغاء (أقل من ساعتين)' : 'Cannot cancel (< 2 hrs left)');
+                      return Tooltip(
+                        message: canCancel ? '' : lockedLabel,
+                        child: VSPAnimatedButton(
+                          text: l10n.cancel,
+                          color: canCancel ? VSPColors.surface : VSPColors.surface.withValues(alpha: 0.4),
+                          textColor: canCancel ? VSPColors.error : VSPColors.textSecondary.withValues(alpha: 0.5),
+                          onPressed: canCancel ? () => _showCancelDialog(context) : null,
+                        ),
                       );
                     }
                   ),
@@ -386,17 +396,46 @@ class _BookingCard extends StatelessWidget {
         return l10n.teamType.toUpperCase();
       case BookingType.challenge:
         return l10n.challengeType.toUpperCase();
-      default:
-        return type.name.toUpperCase();
     }
   }
 
   Widget _buildChallengeResultAction(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final currentTeamId = myTeamId ?? booking.playerTeamId; 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final currentTeamId = myTeamId ?? booking.playerTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
-    
+
+    // ── 30-day deadline: hide result input if match ended > 30 days ago ──
+    final bool resultExpired = DateTime.now()
+        .isAfter(booking.endTime.add(const Duration(days: 30)));
+
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
+      if (resultExpired) {
+        return Container(
+          width: double.infinity,
+          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          decoration: BoxDecoration(
+            color: VSPColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(8),
+            border: Border.all(color: VSPColors.divider),
+          ),
+          child: Row(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              const Icon(Icons.timer_off_outlined, color: VSPColors.textSecondary, size: 16),
+              const SizedBox(width: 8),
+              Text(
+                isArabic ? 'انتهت مهلة إدخال النتيجة (30 يوم)' : 'Result submission period expired (30 days)',
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                  color: VSPColors.textSecondary,
+                  fontStyle: FontStyle.italic,
+                ),
+              ),
+            ],
+          ),
+        );
+      }
       return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
     } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
       if (booking.resultSubmittedByTeamId == currentTeamId) {
@@ -418,10 +457,37 @@ class _BookingCard extends StatelessWidget {
           ),
         );
       } else {
+        // Opponent hasn't responded — check deadline too
+        if (resultExpired) {
+          return Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(8),
+              border: Border.all(color: VSPColors.divider),
+            ),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.timer_off_outlined, color: VSPColors.textSecondary, size: 16),
+                const SizedBox(width: 8),
+                Text(
+                  isArabic ? 'انتهت مهلة الرد على النتيجة' : 'Opponent response period expired',
+                  textAlign: TextAlign.center,
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontStyle: FontStyle.italic,
+                  ),
+                ),
+              ],
+            ),
+          );
+        }
         return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
       }
     }
-    
+
     return const SizedBox.shrink();
   }
 
@@ -494,8 +560,11 @@ class _BookingCard extends StatelessWidget {
         final isWon = isAway;
         return _buildStatusBadge(isWon ? l10n.win : l10n.loss, isWon ? Colors.amber : Colors.red);
       }
+      return _buildStatusBadge(l10n.completed, VSPColors.textSecondary);
     } else if (booking.matchResultStatus == MatchResultStatus.disputed) {
       return _buildStatusBadge(l10n.disputed, VSPColors.warning);
+    } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
+      return _buildStatusBadge(l10n.waitingOpponent, VSPColors.warning);
     } else if (booking.endTime.isBefore(DateTime.now())) {
       return _buildStatusBadge(l10n.submitResult, VSPColors.warning);
     }
@@ -576,17 +645,59 @@ class _BookingCard extends StatelessWidget {
 
   void _showCancelDialog(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final bool hasDeposit = booking.isDepositPaid && booking.depositPaid > 0;
+
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
         backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
         title: Text(
           l10n.cancelBooking,
           style: Theme.of(context).textTheme.titleLarge,
         ),
-        content: Text(
-          l10n.cancelBookingConfirm,
-          style: Theme.of(context).textTheme.bodyMedium,
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              l10n.cancelBookingConfirm,
+              style: Theme.of(context).textTheme.bodyMedium,
+            ),
+            // ── Deposit non-refundable warning ──
+            if (hasDeposit) ...[
+              const SizedBox(height: VSPSpacing.md),
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: VSPColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'تنبيه: العربون المدفوع (${booking.depositPaid.toInt()} ج) غير قابل للاسترداد عند الإلغاء.'
+                            : 'Warning: The paid deposit (${booking.depositPaid.toInt()} EGP) is non-refundable upon cancellation.',
+                        style: const TextStyle(
+                          color: VSPColors.error,
+                          fontSize: 12,
+                          height: 1.4,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ],
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
@@ -610,7 +721,8 @@ class _BookingCard extends StatelessWidget {
                   textColor: VSPColors.background,
                   onPressed: () async {
                     final provider = Provider.of<BookingProvider>(context, listen: false);
-                    ScaffoldMessenger.of(context).showSnackBar(
+                    final messenger = ScaffoldMessenger.of(context);
+                    messenger.showSnackBar(
                       SnackBar(
                         content: Text(l10n.cancelling),
                         duration: const Duration(seconds: 1),
@@ -618,17 +730,16 @@ class _BookingCard extends StatelessWidget {
                     );
                     Navigator.pop(context);
                     final success = await provider.cancelBooking(booking.id);
-                    if (!context.mounted) return;
                     if (success) {
-                      ScaffoldMessenger.of(context).showSnackBar(
+                      messenger.showSnackBar(
                         SnackBar(
                           content: Text(l10n.cancelSuccess),
                           backgroundColor: VSPColors.warning,
                         ),
                       );
                     } else {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                         SnackBar(
+                      messenger.showSnackBar(
+                        SnackBar(
                           content: Text(provider.errorMessage ?? l10n.cancelFailed),
                           backgroundColor: VSPColors.error,
                         ),
@@ -644,3 +755,6 @@ class _BookingCard extends StatelessWidget {
     );
   }
 }
+
+
+

@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/providers/auth_provider.dart';

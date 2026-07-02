@@ -1,16 +1,16 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
-import 'booking_success_screen.dart';
-import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/team_repository.dart';
 import 'payment_gateway_screen.dart';
+import '../../../core/repositories/user_repository.dart';
+import 'package:url_launcher/url_launcher.dart';
 
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; 
@@ -37,6 +37,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   int _currentPlayers = 1;
   String? _userTeamId;
   String? _userTeamName;
+  String? _ownerPhone;
+  bool _isLoadingPhone = true;
 
   @override
   void initState() {
@@ -48,13 +50,35 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
     _generateDynamicTimeSlots();
     _fetchUserTeam();
+    _fetchOwnerPhone();
+  }
+
+  Future<void> _fetchOwnerPhone() async {
+    try {
+      final ownerId = widget.stadium.ownerId;
+      if (ownerId.isNotEmpty) {
+        final userData = await UserRepository().getUserData(ownerId);
+        if (userData != null && mounted) {
+          setState(() {
+            _ownerPhone = userData['phone']?.toString();
+            _isLoadingPhone = false;
+          });
+          return;
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching owner phone in confirmation: $e');
+    }
+    if (mounted) {
+      setState(() => _isLoadingPhone = false);
+    }
   }
 
   Future<void> _fetchUserTeam() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
-      final team = await DatabaseService().getUserTeam(userId);
+      final team = await TeamRepository().getUserTeam(userId);
       if (mounted) {
         setState(() {
           _userTeamId = team?.id;
@@ -150,16 +174,57 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return total;
   }
 
-  void _onTimeSlotTap(String slot, bool isBooked) {
-    if (isBooked) return;
+  void _onTimeSlotTap(String slot, List<Booking> existingBookings) {
     setState(() {
-      if (_selectedTimeSlots.contains(slot)) {
-        _selectedTimeSlots.remove(slot);
+      if (_selectedTimeSlots.isEmpty) {
+        _selectedTimeSlots.add(slot);
+      } else if (_selectedTimeSlots.length == 1) {
+        final first = _selectedTimeSlots.first;
+        if (first == slot) {
+          _selectedTimeSlots.clear();
+        } else {
+          final idxFirst = _timeSlots.indexOf(first);
+          final idxTapped = _timeSlots.indexOf(slot);
+          
+          final startIdx = idxFirst < idxTapped ? idxFirst : idxTapped;
+          final endIdx = idxFirst > idxTapped ? idxFirst : idxTapped;
+          
+          // Check if any slot in the range is booked or past
+          bool hasInvalidSlot = false;
+          final List<String> tempRange = [];
+          for (int i = startIdx; i <= endIdx; i++) {
+            final checkSlot = _timeSlots[i];
+            final checkDateTime = _getSlotDateTime(checkSlot);
+            final isPast = _selectedDate.year == DateTime.now().year && 
+                           _selectedDate.month == DateTime.now().month && 
+                           _selectedDate.day == DateTime.now().day && 
+                           checkDateTime.isBefore(DateTime.now());
+            final isBooked = _isSlotBooked(checkSlot, existingBookings);
+            
+            if (isPast || isBooked) {
+              hasInvalidSlot = true;
+              break;
+            }
+            tempRange.add(checkSlot);
+          }
+          
+          if (hasInvalidSlot) {
+            // Cannot select range — select only the tapped slot
+            _selectedTimeSlots.clear();
+            _selectedTimeSlots.add(slot);
+          } else {
+            _selectedTimeSlots.clear();
+            _selectedTimeSlots.addAll(tempRange);
+          }
+        }
       } else {
+        // If already multiple slots selected, clear and start new single selection
+        _selectedTimeSlots.clear();
         _selectedTimeSlots.add(slot);
       }
     });
   }
+
 
   DateTime _getSlotDateTime(String slot) {
     final startMin = _parseTimeToMinutes(slot);
@@ -185,6 +250,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       builder: (context) {
         DateTime tempSelectedDate = _selectedDate;
         DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
+        final DateTime todayMonth = DateTime(DateTime.now().year, DateTime.now().month);
+        final DateTime maxMonth = DateTime(DateTime.now().year, DateTime.now().month + 3);
 
         return StatefulBuilder(
           builder: (context, setModalState) {
@@ -223,24 +290,38 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: const Icon(Icons.chevron_left, matchTextDirection: true, color: VSPColors.textSecondary),
-                          onPressed: () {
-                            setModalState(() {
-                              currentMonth = DateTime(currentMonth.year, currentMonth.month - 1);
-                            });
-                          },
+                          icon: Icon(
+                            Icons.chevron_left,
+                            color: currentMonth.isAfter(todayMonth)
+                                ? VSPColors.textSecondary
+                                : VSPColors.textSecondary.withValues(alpha: 0.25),
+                          ),
+                          onPressed: currentMonth.isAfter(todayMonth)
+                              ? () {
+                                  setModalState(() {
+                                    currentMonth = DateTime(currentMonth.year, currentMonth.month - 1);
+                                  });
+                                }
+                              : null,
                         ),
                         Text(
                           DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth),
                           style: Theme.of(context).textTheme.titleLarge,
                         ),
                         IconButton(
-                          icon: const Icon(Icons.chevron_right, matchTextDirection: true, color: VSPColors.textSecondary),
-                          onPressed: () {
-                            setModalState(() {
-                              currentMonth = DateTime(currentMonth.year, currentMonth.month + 1);
-                            });
-                          },
+                          icon: Icon(
+                            Icons.chevron_right,
+                            color: currentMonth.isBefore(maxMonth)
+                                ? VSPColors.textSecondary
+                                : VSPColors.textSecondary.withValues(alpha: 0.25),
+                          ),
+                          onPressed: currentMonth.isBefore(maxMonth)
+                              ? () {
+                                  setModalState(() {
+                                    currentMonth = DateTime(currentMonth.year, currentMonth.month + 1);
+                                  });
+                                }
+                              : null,
                         ),
                       ],
                     ),
@@ -276,8 +357,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           final isSelected = date.year == tempSelectedDate.year &&
                                              date.month == tempSelectedDate.month &&
                                              date.day == tempSelectedDate.day;
+                          final isPastDate = date.isBefore(DateTime.now().copyWith(hour: 0, minute: 0, second: 0, millisecond: 0, microsecond: 0));
+
                           return InkWell(
-                            onTap: () {
+                            onTap: isPastDate ? null : () {
                               setModalState(() {
                                 tempSelectedDate = date;
                               });
@@ -285,13 +368,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             child: Container(
                               alignment: Alignment.center,
                               decoration: BoxDecoration(
-                                color: isSelected ? VSPColors.accent : Colors.transparent,
+                                color: isSelected
+                                    ? VSPColors.accent
+                                    : isPastDate
+                                        ? VSPColors.surfaceAlt // Different color for past dates
+                                        : Colors.transparent,
                                 shape: BoxShape.circle,
                               ),
                               child: Text(
                                 '$day',
                                 style: TextStyle(
-                                  color: isSelected ? VSPColors.background : VSPColors.textSecondary,
+                                  color: isSelected
+                                      ? VSPColors.background
+                                      : isPastDate
+                                          ? VSPColors.textSecondary.withOpacity(0.5) // Faded text for past dates
+                                          : VSPColors.textSecondary,
                                   fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                 ),
                               ),
@@ -344,7 +435,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -484,7 +575,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                          _selectedDate.day == DateTime.now().day && 
                                          slotDateTime.isBefore(DateTime.now());
                           return GestureDetector(
-                            onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, isBooked),
+                            onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, existingBookings),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               alignment: Alignment.center,
@@ -492,8 +583,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
                                 color: (isBooked || isPast)
-                                    ? VSPColors.surface.withValues(alpha: 0.3)
-                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.1) : Colors.transparent),
+                                    ? VSPColors.surface.withOpacity(0.3)
+                                    : (isSelected ? VSPColors.accentSoft : Colors.transparent),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(
                                   color: (isBooked || isPast)
@@ -565,7 +656,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         value: _isPrivate,
                         onChanged: (val) => setState(() => _isPrivate = val),
                         activeColor: VSPColors.accent,
-                        activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
+                        activeTrackColor: VSPColors.accentSoft,
                       ),
                     ],
                   ),
@@ -620,7 +711,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         decoration: BoxDecoration(
                           color: _isBallRented ? VSPColors.accent : Colors.transparent,
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
-                          border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4)),
+                          border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.borderMedium),
                         ),
                         child: _isBallRented ? const Icon(Icons.check, size: 16, color: VSPColors.background) : null,
                       ),
@@ -628,22 +719,90 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                 ),
                 const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg), child: Divider(color: VSPColors.divider, thickness: 1)),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Column(
+                // ── Price Breakdown ──
+                Builder(builder: (context) {
+                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                  final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                  final deposit = widget.stadium.depositAmount;
+
+                  if (isCashLocked) {
+                    return Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(l10n.totalPriceLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                        Text(l10n.priceEgp(_totalPrice.toInt()), style: Theme.of(context).textTheme.displayLarge),
+                        _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: true),
+                        const SizedBox(height: 12),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: VSPColors.error.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                            border: Border.all(color: VSPColors.error.withValues(alpha: 0.5)),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isArabic ? "تقييد الحساب" : "Account Restricted",
+                                    style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 6),
+                              Text(
+                                isArabic
+                                    ? "تم تقييد حسابك مؤقتاً من الحجوزات النقدية بسبب تكرار عدم الحضور. للحجز، يجب دفع 100٪ من قيمة الحجز عبر الإنترنت باستخدام المحافظ الرقمية."
+                                    : "Your account is temporarily restricted from Cash bookings due to multiple missed bookings. To book, you must pay 100% of the booking amount online via digital wallets.",
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
+                              ),
+                            ],
+                          ),
+                        ),
+                        const SizedBox(height: VSPSpacing.lg),
                       ],
-                    ),
-                    const SizedBox(width: VSPSpacing.md),
+                    );
+                  }
+
+                  if (deposit > 0 && widget.stadium.needsDeposit) {
+                    return Column(
+                      children: [
+                        _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: false),
+                        const SizedBox(height: 8),
+                        _buildPriceRow('العربون المطلوب', '${deposit.toInt()} ${l10n.egCurrency}',
+                            icon: Icons.lock_outline, highlight: false, color: VSPColors.accent),
+                        const SizedBox(height: 8),
+                        _buildPriceRow('المتبقي عند الملعب', '${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}',
+                            icon: Icons.payments_outlined, highlight: false, color: VSPColors.textSecondary),
+                        const SizedBox(height: VSPSpacing.lg),
+                      ],
+                    );
+                  }
+                  return Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.totalPriceLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                      Text(l10n.priceEgp(_totalPrice.toInt()), style: Theme.of(context).textTheme.displayLarge),
+                      const SizedBox(height: VSPSpacing.lg),
+                    ],
+                  );
+                }),
+                if (!_isLoadingPhone && _ownerPhone != null && _ownerPhone!.isNotEmpty) ...[
+                  _buildContactPitchButton(context, _ownerPhone!),
+                  const SizedBox(height: 12),
+                ],
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.end,
+                  children: [
                     Expanded(
                       child: PrimaryButton(
                         text: l10n.confirmSelections,
                         isLoading: _isLoading,
                         onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+                           setState(() => _isLoading = true);
                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
                            final currentUserModel = authProvider.userModel;
                            final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
@@ -664,6 +823,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                              default: bType = BookingType.personal;
                            }
 
+                           final depositAmount = widget.stadium.depositAmount;
+                           final fieldCapacity = widget.stadium.totalFieldCapacity > 0
+                               ? widget.stadium.totalFieldCapacity
+                               : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
+
                            final draft = BookingDraft(
                              stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
                              ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
@@ -671,10 +835,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                              playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel?.name,
                              opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
                              totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
-                             currentPlayers: _currentPlayers, maxPlayers: widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity : 10,
+                             currentPlayers: _currentPlayers,
+                             totalFieldCapacity: fieldCapacity,
+                             depositPaid: widget.stadium.needsDeposit ? depositAmount : 0.0,
+                             isDepositPaid: false,
+                             needsDeposit: widget.stadium.needsDeposit,
                            );
 
-                           Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft)));
+                           await Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft)));
+                           if (mounted) {
+                             setState(() => _isLoading = false);
+                           }
                         },
                       ),
                     ),
@@ -684,6 +855,59 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildContactPitchButton(BuildContext context, String phone) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      width: double.infinity,
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+      ),
+      child: Material(
+        color: Colors.transparent,
+        child: InkWell(
+          onTap: () async {
+            final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
+            final path = cleanPhone.startsWith('0') && cleanPhone.length == 11
+                ? '+2$cleanPhone'
+                : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
+            final Uri launchUri = Uri(
+              scheme: 'tel',
+              path: path,
+            );
+            try {
+              if (await canLaunchUrl(launchUri)) {
+                await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+              }
+            } catch (e) {
+              debugPrint('Error launching dialer: $e');
+            }
+          },
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+            child: Row(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Icons.phone_in_talk, color: VSPColors.accent, size: 18),
+                const SizedBox(width: 8),
+                Text(
+                  isArabic ? 'اتصل بالملعب للاستفسار المباشر' : 'Call Stadium directly to inquire',
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 13,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ),
       ),
     );
   }
@@ -698,4 +922,35 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       ),
     );
   }
+
+  Widget _buildPriceRow(String label, String value, {
+    bool highlight = false,
+    IconData? icon,
+    Color? color,
+  }) {
+    final effectiveColor = color ?? (highlight ? VSPColors.accent : VSPColors.textPrimary);
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          children: [
+            if (icon != null) ...[
+              Icon(icon, color: effectiveColor, size: 14),
+              const SizedBox(width: 6),
+            ],
+            Text(label, style: TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+          ],
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: effectiveColor,
+            fontSize: highlight ? 18 : 14,
+            fontWeight: highlight ? FontWeight.bold : FontWeight.w600,
+          ),
+        ),
+      ],
+    );
+  }
 }
+

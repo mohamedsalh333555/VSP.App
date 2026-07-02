@@ -1,15 +1,16 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/booking_success_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
-import '../../features/player/screens/booked_screen.dart';
+import '../../features/player/screens/bookings_screen.dart';
 import '../repositories/booking_repository.dart';
 import '../services/logger_service.dart';
 
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/database_service.dart';
 
@@ -23,28 +24,39 @@ class NotificationService {
   final FlutterLocalNotificationsPlugin _localNotifications = FlutterLocalNotificationsPlugin();
 
   Future<String?> getToken() async {
-    // Request Permission (Required for iOS)
-    NotificationSettings settings = await _firebaseMessaging.requestPermission(
-      alert: true,
-      badge: true,
-      sound: true,
-    );
+    if (kIsWeb) return null;
+    try {
+      // Request Permission (Required for iOS)
+      NotificationSettings settings = await _firebaseMessaging.requestPermission(
+        alert: true,
+        badge: true,
+        sound: true,
+      );
 
-    if (settings.authorizationStatus == AuthorizationStatus.authorized) {
-      return await _firebaseMessaging.getToken();
+      if (settings.authorizationStatus == AuthorizationStatus.authorized) {
+        return await _firebaseMessaging.getToken();
+      }
+      
+      VSPLogger.w('Notification permission declined');
+      return null;
+    } catch (e) {
+      VSPLogger.w('Failed to get notifications token: $e');
+      return null;
     }
-    
-    VSPLogger.w('Notification permission declined');
-    return null;
   }
 
   GlobalKey<NavigatorState>? _navigatorKey;
 
   Future<void> initialize(GlobalKey<NavigatorState> navKey) async {
     _navigatorKey = navKey;
+    if (kIsWeb) return;
 
     // 1. Get & store token
-    getToken();
+    try {
+      await getToken();
+    } catch (e) {
+      VSPLogger.w('Failed to initialize token: $e');
+    }
 
     // 2. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
@@ -64,35 +76,37 @@ class NotificationService {
       _handleNotificationClick(initialMessage.data);
     }
 
-    // 5. Initialize Local Notifications
-    const AndroidInitializationSettings initializationSettingsAndroid =
-        AndroidInitializationSettings('ic_notification');
-    
-    const DarwinInitializationSettings initializationSettingsDarwin =
-        DarwinInitializationSettings(
-      requestAlertPermission: true,
-      requestBadgePermission: true,
-      requestSoundPermission: true,
-    );
+    // 5. Initialize Local Notifications (Mobile Only)
+    if (!kIsWeb) {
+      const AndroidInitializationSettings initializationSettingsAndroid =
+          AndroidInitializationSettings('ic_notification');
+      
+      const DarwinInitializationSettings initializationSettingsDarwin =
+          DarwinInitializationSettings(
+        requestAlertPermission: true,
+        requestBadgePermission: true,
+        requestSoundPermission: true,
+      );
 
-    const InitializationSettings initializationSettings = InitializationSettings(
-      android: initializationSettingsAndroid,
-      iOS: initializationSettingsDarwin,
-    );
-    
-    await _localNotifications.initialize(
-      initializationSettings,
-      onDidReceiveNotificationResponse: (NotificationResponse response) {
-        if (response.payload != null) {
-          try {
-            final Map<String, dynamic> data = jsonDecode(response.payload!);
-            _handleNotificationClick(data);
-          } catch (e) {
-            VSPLogger.e('Error parsing notification payload', e);
+      const InitializationSettings initializationSettings = InitializationSettings(
+        android: initializationSettingsAndroid,
+        iOS: initializationSettingsDarwin,
+      );
+      
+      await _localNotifications.initialize(
+        initializationSettings,
+        onDidReceiveNotificationResponse: (NotificationResponse response) {
+          if (response.payload != null) {
+            try {
+              final Map<String, dynamic> data = jsonDecode(response.payload!);
+              _handleNotificationClick(data);
+            } catch (e) {
+              VSPLogger.e('Error parsing notification payload', e);
+            }
           }
-        }
-      },
-    );
+        },
+      );
+    }
   }
 
   Future<void> scheduleMatchReminder({
@@ -100,6 +114,7 @@ class NotificationService {
     required String stadiumName,
     required DateTime matchTime,
   }) async {
+    if (kIsWeb) return; // Local scheduling not supported on Web
     final reminderTime = matchTime.subtract(const Duration(hours: 2));
     if (reminderTime.isBefore(DateTime.now())) return;
 
@@ -157,7 +172,7 @@ class NotificationService {
       } else {
         Navigator.push(
           context,
-          MaterialPageRoute(builder: (_) => const BookedScreen()),
+          MaterialPageRoute(builder: (_) => const BookingsScreen()),
         );
       }
       return;
@@ -172,7 +187,7 @@ class NotificationService {
 
   Future<void> _navigateToChat(BuildContext context, String bookingId) async {
     try {
-      final booking = await FirestoreBookingRepository().getBookingById(bookingId);
+      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
       if (booking != null && context.mounted) {
         Navigator.push(
           context,
@@ -186,7 +201,7 @@ class NotificationService {
 
   Future<void> _navigateToBooking(BuildContext context, String bookingId) async {
     try {
-      final booking = await FirestoreBookingRepository().getBookingById(bookingId);
+      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
       if (booking != null && context.mounted) {
         Navigator.push(
           context,
@@ -228,7 +243,7 @@ class NotificationService {
       payload: jsonEncode(message.data),
     );
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = Supabase.instance.client.auth.currentUser?.id;
     if (uid != null && message.notification?.title != null) {
       final appNotif = AppNotification(
         id: '',
@@ -252,6 +267,7 @@ class NotificationService {
     required DateTime bookingDate,
     required String timeSlot,
   }) async {
+    if (kIsWeb) return; // Local notifications not supported on Web
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'booking_channel',
@@ -283,7 +299,7 @@ class NotificationService {
       platformChannelSpecifics,
     );
 
-    final uid = FirebaseAuth.instance.currentUser?.uid;
+    final uid = Supabase.instance.client.auth.currentUser?.id;
     if (uid != null) {
       final appNotif = AppNotification(
         id: '',

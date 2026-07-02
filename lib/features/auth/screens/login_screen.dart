@@ -5,14 +5,13 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import '../../../core/constants/app_strings.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
-import '../../../core/navigation/root_screen.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -32,6 +31,108 @@ class _LoginScreenState extends State<LoginScreen> {
     _emailController.dispose();
     _passwordController.dispose();
     super.dispose();
+  }
+
+  void _showForgotPasswordDialog(BuildContext context) {
+    final resetEmailController = TextEditingController();
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        bool isLoading = false;
+        return StatefulBuilder(
+          builder: (context, setDialogState) {
+            return AlertDialog(
+              backgroundColor: VSPColors.surface,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
+              ),
+              title: Text(
+                AppLocalizations.of(context)!.forgotPassword,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+              content: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    AppLocalizations.of(context)!.forgotPasswordSubtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: VSPColors.textSecondary,
+                      height: 1.5,
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  TextField(
+                    controller: resetEmailController,
+                    keyboardType: TextInputType.emailAddress,
+                    style: const TextStyle(color: Colors.white),
+                    decoration: InputDecoration(
+                      hintText: AppLocalizations.of(context)!.emailAddress,
+                      hintStyle: const TextStyle(color: VSPColors.textSecondary),
+                      prefixIcon: const Icon(Icons.email_outlined, color: VSPColors.textSecondary, size: 20),
+                      filled: true,
+                      fillColor: VSPColors.surfaceAlt,
+                      border: OutlineInputBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        borderSide: BorderSide.none,
+                      ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+                    ),
+                  ),
+                ],
+              ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: TextButton(
+                        onPressed: () => Navigator.pop(dialogContext),
+                        child: Text(
+                          AppLocalizations.of(context)!.cancel,
+                          style: const TextStyle(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: isLoading ? null : () async {
+                          final email = resetEmailController.text.trim();
+                          if (email.isEmpty || !email.contains('@')) {
+                            VSPFeedback.showError(context, AppLocalizations.of(context)!.invalidEmail);
+                            return;
+                          }
+                          setDialogState(() => isLoading = true);
+                          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                          final success = await authProvider.resetPassword(email);
+                          if (!dialogContext.mounted) return;
+                          Navigator.pop(dialogContext);
+                          if (success) {
+                            VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
+                          } else {
+                            VSPFeedback.showError(context, authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError);
+                          }
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                          ),
+                        ),
+                        child: isLoading
+                            ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+                            : Text(AppLocalizations.of(context)!.submit, style: const TextStyle(fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+      },
+    );
   }
 
   void _handleLogin() async {
@@ -58,11 +159,7 @@ class _LoginScreenState extends State<LoginScreen> {
         // - hasStadium, isIdentityVerified → Owner onboarding
         // - phone check → SocialOnboardingScreen
         if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context, 
-            MaterialPageRoute(builder: (_) => const RootScreen()), 
-            (r) => false
-          );
+          context.go('/');
         }
     } else {
         if (mounted) {
@@ -95,9 +192,9 @@ class _LoginScreenState extends State<LoginScreen> {
               child: Container(
                 width: 250,
                 height: 250,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: VSPColors.accent.withValues(alpha: 0.05),
+                  color: VSPColors.accentGlow,
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
@@ -200,7 +297,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     Align(
                       alignment: Alignment.centerRight,
                       child: TextButton(
-                        onPressed: () {},
+                        onPressed: () => _showForgotPasswordDialog(context),
                         child: Text(
                           AppLocalizations.of(context)!.forgotPassword,
                           style: Theme.of(context).textTheme.labelMedium?.copyWith(
@@ -227,114 +324,104 @@ class _LoginScreenState extends State<LoginScreen> {
               // ── Divider ──
               Row(
                 children: [
-                  Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.15), thickness: 1)),
+                  const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
                   Padding(
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       AppLocalizations.of(context)!.orContinueWith,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withOpacity(0.6)),
                     ),
                   ),
-                  Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.15), thickness: 1)),
+                  const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
                 ],
               ),
 
               const SizedBox(height: 20),
 
                     Row(
-                children: [
-                   if (!kIsWeb && Platform.isIOS) ...[
-                     Expanded(
-                       child: SizedBox(
-                         height: 52,
-                         child: OutlinedButton.icon(
-                           icon: const Icon(Icons.apple, color: Colors.white, size: 24),
-                           label: Text(
-                             AppLocalizations.of(context)!.apple,
-                             style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                               color: VSPColors.textPrimary,
-                               fontWeight: FontWeight.w500,
+                      children: [
+                         if (!kIsWeb && Platform.isIOS) ...[
+                           Expanded(
+                             child: _SocialButton(
+                               height: 56,
+                               icon: Icons.apple,
+                               onPressed: _isLoading ? null : () async {
+                                 setState(() => _isLoading = true);
+                                 final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                                 final success = await authProvider.signInWithApple();
+
+                                 if (!context.mounted) return;
+                                 setState(() => _isLoading = false);
+
+                                 if (success) {
+                                   context.go('/');
+                                 } else {
+                                   VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
+                                 }
+                               },
                              ),
                            ),
-                           style: OutlinedButton.styleFrom(
-                             side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
-                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                             backgroundColor: Colors.black, // Apple black background
+                           const SizedBox(width: 12),
+                         ],
+
+                         Expanded(
+                           child: _SocialButton(
+                             height: 56,
+                             iconWidget: Row(
+                               mainAxisSize: MainAxisSize.min,
+                               mainAxisAlignment: MainAxisAlignment.center,
+                               children: [
+                                 Container(
+                                   width: 24,
+                                   height: 24,
+                                   decoration: const BoxDecoration(
+                                     color: VSPColors.textPrimary,
+                                     shape: BoxShape.circle,
+                                   ),
+                                   child: const Center(
+                                     child: Text(
+                                       'G', 
+                                       style: TextStyle(
+                                         color: VSPColors.background, 
+                                         fontWeight: FontWeight.w900, 
+                                         fontSize: 14
+                                       )
+                                     )
+                                   ),
+                                 ),
+                                 const SizedBox(width: 12),
+                                 Text(
+                                   AppLocalizations.of(context)!.google,
+                                   style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                     fontWeight: FontWeight.bold,
+                                     color: VSPColors.textPrimary,
+                                   ),
+                                 ),
+                               ],
+                             ),
+                             onPressed: _isLoading ? null : () async {
+                               setState(() => _isLoading = true);
+                               final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                               final success = await authProvider.signInWithGoogle();
+
+                               if (!context.mounted) return;
+                               setState(() => _isLoading = false);
+
+                               if (success) {
+                                 context.go('/');
+                               } else {
+                                 VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+                               }
+                             },
                            ),
-                           onPressed: _isLoading ? null : () async {
-                             setState(() => _isLoading = true);
-                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                             final success = await authProvider.signInWithApple();
-
-                             if (!context.mounted) return;
-                             setState(() => _isLoading = false);
-
-                             if (success) {
-                               Navigator.of(context).pushAndRemoveUntil(
-                                 MaterialPageRoute(builder: (context) => const RootScreen()),
-                                 (route) => false,
-                               );
-                             } else {
-                               VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
-                             }
-                           },
                          ),
-                       ),
-                     ),
-                     const SizedBox(width: 12),
-                   ],
-
-                   Expanded(
-                     child: SizedBox(
-                       height: 52,
-                       child: OutlinedButton.icon(
-                         icon: const Text(
-                           'G',
-                           style: TextStyle(
-                             fontSize: 22,
-                             fontWeight: FontWeight.w900,
-                             color: Color(0xFF4285F4),
-                           ),
-                         ),
-                         label: Text(
-                           AppLocalizations.of(context)!.google,
-                           style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                             color: VSPColors.textPrimary,
-                             fontWeight: FontWeight.w500,
-                           ),
-                         ),
-                         style: OutlinedButton.styleFrom(
-                           side: BorderSide(color: VSPColors.divider.withValues(alpha: 0.15)),
-                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                           backgroundColor: VSPColors.surface,
-                         ),
-                         onPressed: _isLoading ? null : () async {
-                           setState(() => _isLoading = true);
-                           final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                           final success = await authProvider.signInWithGoogle();
-
-                           if (!context.mounted) return;
-                           setState(() => _isLoading = false);
-
-                           if (success) {
-                             Navigator.of(context).pushAndRemoveUntil(
-                               MaterialPageRoute(builder: (context) => const RootScreen()),
-                               (route) => false,
-                             );
-                           } else {
-                             VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
-                           }
-                         },
-                       ),
-                     ),
-                   ),
-                ],
-              ),
-              const SizedBox(height: 40),
-                ],
+                      ],
+                    ),
+                    const SizedBox(height: 40),
+                  ],
+                ),
               ),
             ),
-          ),
           ],
         ),
       ),
@@ -349,10 +436,55 @@ class _LoginScreenState extends State<LoginScreen> {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          border: Border.all(color: VSPColors.borderLight),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
     );
   }
 } // end _LoginScreenState
+
+/// زر تسجيل دخول اجتماعي موحد
+class _SocialButton extends StatelessWidget {
+  final IconData? icon;
+  final Widget? iconWidget;
+  final VoidCallback? onPressed;
+  final double? height;
+
+  const _SocialButton({
+    this.icon,
+    this.iconWidget,
+    required this.onPressed,
+    this.height,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    return GestureDetector(
+      onTap: onPressed,
+      child: Container(
+        width: double.infinity,
+        height: height ?? 56,
+        decoration: BoxDecoration(
+          color: VSPColors.background.withValues(alpha: 0),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: VSPColors.borderLight,
+            width: 1.5,
+          ),
+        ),
+        child: Center(
+          child: Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 16.0),
+            child: iconWidget ??
+                Icon(
+                  icon,
+                  color: VSPColors.textPrimary,
+                  size: 24,
+                ),
+          ),
+        ),
+      ),
+    );
+  }
+}

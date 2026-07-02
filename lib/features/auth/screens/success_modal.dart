@@ -1,11 +1,8 @@
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import 'dart:ui';
-import '../../../core/providers/auth_provider.dart';
 
 import '../../../core/navigation/root_screen.dart';
-import '../../owner/screens/my_stadiums_screen.dart';
 
 /// Show success modal dialog
 void showSuccessModal(BuildContext context, {bool isOwner = false}) {

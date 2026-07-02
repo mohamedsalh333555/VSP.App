@@ -73,7 +73,7 @@ class VSPMenuItem extends StatelessWidget {
             
             // Chevron
             if (!isLogout)
-              const Icon(Icons.chevron_right, matchTextDirection: true,
+              const Icon(Icons.chevron_right,
                 color: VSPColors.textSecondary,
                 size: 22,
               ),

@@ -506,8 +506,8 @@ class DataMigration {
         if (data.containsKey('governorate')) {
           final String? rawGov = data['governorate']?.toString();
           if (rawGov != null && rawGov.isNotEmpty) {
-            final String standardGov = EgyptGovernorates.resolveGoogleName(rawGov);
-            if (rawGov != standardGov) {
+            final String? standardGov = EgyptGovernorates.resolveGoogleName(rawGov);
+            if (standardGov != null && rawGov != standardGov) {
               updates['governorate'] = standardGov;
               needsUpdate = true;
             }
@@ -516,9 +516,11 @@ class DataMigration {
           // Robust fallback: Derive governorate from area or location
           final String source = (data['area'] ?? data['location'] ?? '').toString();
           if (source.isNotEmpty) {
-            final String derivedGov = EgyptGovernorates.resolveGoogleName(source);
-            updates['governorate'] = derivedGov;
-            needsUpdate = true;
+            final String? derivedGov = EgyptGovernorates.resolveGoogleName(source);
+            if (derivedGov != null) {
+              updates['governorate'] = derivedGov;
+              needsUpdate = true;
+            }
           }
         }
 

@@ -1,13 +1,19 @@
-import 'package:flutter/foundation.dart';
+import 'package:geolocator/geolocator.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/user_repository.dart';
+import '../repositories/booking_repository.dart';
 import 'logger_service.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
 class NotificationHandler {
-  static final _notificationRepo = NotificationRepository();
+  static NotificationRepository _notificationRepo = NotificationRepository();
   static final _userRepo = UserRepository();
+
+  static set notificationRepo(NotificationRepository repo) {
+    _notificationRepo = repo;
+  }
 
   // --------------------------------------------------------------------------
   // 1. BOOKING FLOW
@@ -282,7 +288,7 @@ class NotificationHandler {
   /// NO blocking logic — only reminders.
   static Future<void> checkAndSendDebtAlerts(String userId) async {
     try {
-      final unpaidBookings = await _userRepo.getUnpaidBookingsForUser(userId);
+      final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(userId);
 
       for (final booking in unpaidBookings) {
         // Send a gentle reminder for any unpaid booking
@@ -294,6 +300,75 @@ class NotificationHandler {
       }
     } catch (e) {
       VSPLogger.e('Error checking debt alerts', e);
+    }
+  }
+
+  /// Handle reported player absence (No-Show) with automatic GPS dispute check.
+  static Future<void> handleNoShowReport({
+    required String bookingId,
+    required String playerId,
+    required double stadiumLat,
+    required double stadiumLng,
+  }) async {
+    try {
+      Position? position;
+      try {
+        position = await Geolocator.getLastKnownPosition();
+        position ??= await Geolocator.getCurrentPosition(
+          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+          timeLimit: const Duration(seconds: 5),
+        );
+      } catch (e) {
+        VSPLogger.w('Failed to get current position for no-show dispute: $e');
+      }
+
+      if (position == null) {
+        await Supabase.instance.client.rpc('apply_no_show_penalty', params: {
+          'p_player_id': playerId
+        });
+        VSPLogger.w('No-show penalty applied: GPS location could not be verified.');
+        return;
+      }
+      
+      // 2. Calculate geographic distance between player and stadium in meters
+      final double distance = Geolocator.distanceBetween(
+        position.latitude, position.longitude, stadiumLat, stadiumLng
+      );
+
+      // 3. If within 150m, dispute automatically and hold for admin moderation
+      if (distance <= 150) {
+        await Supabase.instance.client.from('bookings').update({
+          'no_show_disputed': true,
+          'notes': 'Disputed: Player was within ${distance.toStringAsFixed(0)}m of stadium.'
+        }).eq('id', bookingId);
+        VSPLogger.i('No-show disputed: Player was close to stadium.');
+      } else {
+        // Otherwise apply penalty via DB function
+        await Supabase.instance.client.rpc('apply_no_show_penalty', params: {
+          'p_player_id': playerId
+        });
+        VSPLogger.i('No-show penalty applied: Player was far from stadium (${distance.toStringAsFixed(0)}m).');
+      }
+    } catch (e) {
+      VSPLogger.e('Error handling no show report with GPS check: $e');
+    }
+  }
+
+  /// Notify joined players that the host cancelled the match
+  static Future<void> notifyMatchCancelledByHost({
+    required List<String> playerIds,
+    required String stadiumName,
+    required String timeSlot,
+  }) async {
+    for (final uid in playerIds) {
+      final notif = AppNotification(
+        id: '',
+        title: 'Match Cancelled 🔴',
+        body: 'The match at $stadiumName ($timeSlot) has been cancelled by the host.',
+        type: 'booking_cancelled',
+        createdAt: DateTime.now(),
+      );
+      await _notificationRepo.sendNotification(uid, notif);
     }
   }
 }

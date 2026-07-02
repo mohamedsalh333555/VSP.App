@@ -7,12 +7,12 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
-import 'verify_email_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/config/app_config.dart';
-import '../../../core/navigation/root_screen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:go_router/go_router.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -105,25 +105,30 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (AppConfig.bypassOtp) {
-        // ⚡ SEAMLESS BYPASS: Fast-track to RootScreen
-        await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
-        await authProvider.updateProfile({'isRegistrationComplete': true});
-        if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const RootScreen()),
-          (route) => false,
-        );
-      } else {
-        // Standard Flow: Navigate to OTP verification
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const VerifyEmailScreen()),
-        );
+      final isAlreadyComplete = authProvider.userModel?.isRegistrationComplete == true &&
+          (authProvider.userModel?.phone?.isNotEmpty == true);
+
+      if (!isAlreadyComplete) {
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.setString('pending_verification_email', email);
+
+        if (AppConfig.bypassOtp) {
+          // New user — set registration flags so GoRouter routes them home.
+          if (authProvider.firebaseUser != null) {
+            await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
+          }
+          await authProvider.updateProfile({
+            'isRegistrationComplete': true,
+            'isEmailVerified': true,
+          });
+        } else {
+          // Go to verify email screen
+          if (mounted) {
+            context.push('/verify-email', extra: email);
+          }
+        }
       }
     } else {
-      // Failed to sign up
       if (mounted) {
         VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إنشاء الحساب');
       }
@@ -154,9 +159,9 @@ class _SignupScreenState extends State<SignupScreen> {
               child: Container(
                 width: 250,
                 height: 250,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: VSPColors.accent.withValues(alpha: 0.05),
+                  color: VSPColors.accentGlow,
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 40, sigmaY: 40),
@@ -170,10 +175,10 @@ class _SignupScreenState extends State<SignupScreen> {
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
                 padding: EdgeInsets.only(
-                  left: 24.0, 
-                  right: 24.0, 
+                  left: VSPSpacing.lg, 
+                  right: VSPSpacing.lg, 
                   top: 0, 
-                  bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 24,
+                  bottom: MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg,
                 ),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
@@ -342,7 +347,7 @@ class _SignupScreenState extends State<SignupScreen> {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
+          border: Border.all(color: VSPColors.borderLight),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
@@ -381,7 +386,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   shape: RoundedRectangleBorder(
                     borderRadius: BorderRadius.circular(VSPRadius.sm),
                     side: BorderSide(
-                      color: isSelected ? VSPColors.accent : VSPColors.divider.withValues(alpha: 0.05),
+                      color: isSelected ? VSPColors.accent : VSPColors.borderLight,
                     ),
                   ),
                 ),
@@ -449,7 +454,7 @@ class _SignupScreenState extends State<SignupScreen> {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.05)),
+        border: Border.all(color: VSPColors.borderLight),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(

@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import 'championship_details_screen.dart';
@@ -286,6 +285,23 @@ class ChampionScreenState extends State<ChampionScreen>
             fontSize: 10, // Small text for 3-column layout
           ),
           onChanged: onChanged,
+          selectedItemBuilder: (BuildContext context) {
+            return items.map<Widget>((String item) {
+              return Container(
+                alignment: AlignmentDirectional.centerStart,
+                child: FittedBox(
+                  fit: BoxFit.scaleDown,
+                  child: Text(
+                    _translateItem(item),
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                      fontWeight: FontWeight.w500,
+                      fontSize: 10,
+                    ),
+                  ),
+                ),
+              );
+            }).toList();
+          },
           items: items.map<DropdownMenuItem<String>>((String item) {
             return DropdownMenuItem<String>(
               value: item,
@@ -492,6 +508,7 @@ class ChampionScreenState extends State<ChampionScreen>
                            points: top3[1].points,
                            isCenter: false,
                            color: VSPColors.surface,
+                           playerImages: top3[1].playerImages,
                          ),
                        ),
                      ),
@@ -510,6 +527,7 @@ class ChampionScreenState extends State<ChampionScreen>
                            points: top3[0].points,
                            isCenter: true,
                            color: VSPColors.accent,
+                           playerImages: top3[0].playerImages,
                          ),
                        ),
                      ),
@@ -528,6 +546,7 @@ class ChampionScreenState extends State<ChampionScreen>
                            points: top3[2].points,
                            isCenter: false,
                            color: VSPColors.surface,
+                           playerImages: top3[2].playerImages,
                          ),
                        ),
                      ),
@@ -565,6 +584,7 @@ class ChampionScreenState extends State<ChampionScreen>
     required int points, 
     required bool isCenter,
     required Color color,
+    required List<String> playerImages,
   }) {
     // Widened/Taller Rank 1 Logic
     // Height adjustments to fix overflow: 
@@ -624,26 +644,29 @@ class ChampionScreenState extends State<ChampionScreen>
               height: 24, 
               child: Stack(
                 alignment: Alignment.center,
-                children: List.generate(3, (index) => Positioned(
-                     left: index * 12.0, 
-                     child: Container(
-                       width: 24,
-                       height: 24,
-                       decoration: BoxDecoration(
-                         border: Border.all(color: color, width: 1.5),
-                         shape: BoxShape.circle,
-                       ),
-                       child: ClipRRect(
-                         borderRadius: BorderRadius.circular(12),
-                         child: CachedNetworkImage(
-                           imageUrl: '', // Removed fake randomuser.me avatars
-                           fit: BoxFit.cover,
-                            placeholder: (context, url) => Container(color: VSPColors.surfaceAlt),
-                            errorWidget: (context, url, error) => const Icon(Icons.person, color: VSPColors.textSecondary, size: 16), 
-                         ),
-                       ),
-                     )
-                   ),)
+                children: List.generate(3, (index) {
+                  final String imgUrl = (playerImages.length > index) ? playerImages[index] : '';
+                  return Positioned(
+                    left: index * 12.0, 
+                    child: Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        border: Border.all(color: color, width: 1.5),
+                        shape: BoxShape.circle,
+                      ),
+                      child: ClipRRect(
+                        borderRadius: BorderRadius.circular(12),
+                        child: CachedNetworkImage(
+                          imageUrl: imgUrl, 
+                          fit: BoxFit.cover,
+                          placeholder: (context, url) => Container(color: VSPColors.surfaceAlt),
+                          errorWidget: (context, url, error) => const Icon(Icons.person, color: VSPColors.textSecondary, size: 16), 
+                        ),
+                      ),
+                    )
+                  );
+                }),
               ),
             ),
             
@@ -836,3 +859,5 @@ class ChampionScreenState extends State<ChampionScreen>
     );
   }
 }
+
+

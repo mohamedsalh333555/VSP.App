@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
 
@@ -27,6 +27,11 @@ class OwnerBottomNavBar extends StatelessWidget {
           activeIcon: Icons.emoji_events,
           inactiveIcon: Icons.emoji_events_outlined,
           label: AppLocalizations.of(context)!.tournamentsTab,
+        ),
+        VspNavItem(
+          activeIcon: Icons.chat_bubble,
+          inactiveIcon: Icons.chat_bubble_outline,
+          label: AppLocalizations.of(context)!.chat,
         ),
         VspNavItem(
           activeIcon: Icons.calendar_today,

@@ -3,12 +3,24 @@ import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:vsp_application/core/services/auth_service.dart';
 import 'package:vsp_application/data/models.dart';
-import 'package:vsp_application/core/repositories/match_repository.dart';
-import 'package:vsp_application/core/repositories/team_repository.dart';
-import 'package:vsp_application/core/repositories/tournament_repository.dart';
 // Note: We test the service logic directly to ensure Firestore operations are solid.
 // Testing the AuthProvider directly in CLI requires complex mocking of FirebaseAuth and UI contexts,
 // so we test the underlying AuthService which AuthProvider relies on.
+
+import 'package:supabase_flutter/supabase_flutter.dart';
+
+class MockGotrueAsyncStorage extends GotrueAsyncStorage {
+  final Map<String, String> _storage = {};
+
+  @override
+  Future<String?> getItem({required String key}) async => _storage[key];
+
+  @override
+  Future<void> removeItem({required String key}) async => _storage.remove(key);
+
+  @override
+  Future<void> setItem({required String key, required String value}) async => _storage[key] = value;
+}
 
 void main() {
   group('VSP Critical Flows Test', () {
@@ -16,15 +28,21 @@ void main() {
     late AuthService authService;
     late DatabaseService dbService;
 
-    setUp(() {
+    setUp(() async {
+      // Initialize Supabase with placeholders to prevent constructor crashes
+      try {
+        TestWidgetsFlutterBinding.ensureInitialized();
+        await Supabase.initialize(
+          url: 'https://placeholder.supabase.co',
+          anonKey: 'placeholder',
+          authOptions: FlutterAuthClientOptions(
+            localStorage: const EmptyLocalStorage(),
+            pkceAsyncStorage: MockGotrueAsyncStorage(),
+          ),
+        );
+      } catch (_) {}
+      
       fakeFirestore = FakeFirebaseFirestore();
-      
-      // Inject Fake Firestore into our services
-      // Note: This requires AuthService to accept a firestore instance for testing, 
-      // similar to what we did for DatabaseService. If your AuthService doesn't accept it, 
-      // we will simulate the exact logic it uses here.
-      // For this test, we simulate the exact Firestore logic of AuthService.updateUserProfile
-      
       dbService = DatabaseService(firestore: fakeFirestore);
     });
 

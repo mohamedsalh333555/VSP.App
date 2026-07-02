@@ -27,6 +27,22 @@ class ShimmerImage extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final double devicePixelRatio = MediaQuery.of(context).devicePixelRatio;
+    int? resolvedCacheWidth = memCacheWidth;
+    int? resolvedCacheHeight = memCacheHeight;
+
+    if (resolvedCacheWidth == null && width != null && width! > 0 && width!.isFinite) {
+      resolvedCacheWidth = (width! * devicePixelRatio).round();
+    }
+    if (resolvedCacheHeight == null && height != null && height! > 0 && height!.isFinite) {
+      resolvedCacheHeight = (height! * devicePixelRatio).round();
+    }
+
+    // Default fallbacks to prevent loading raw large images on list views (RAM safety guard)
+    if (resolvedCacheWidth == null && resolvedCacheHeight == null) {
+      resolvedCacheWidth = 400;
+    }
+
     return ClipRRect(
       borderRadius: BorderRadius.circular(borderRadius),
       child: CachedNetworkImage(
@@ -34,8 +50,8 @@ class ShimmerImage extends StatelessWidget {
         width: width,
         height: height,
         fit: fit,
-        memCacheWidth: memCacheWidth,
-        memCacheHeight: memCacheHeight,
+        memCacheWidth: resolvedCacheWidth,
+        memCacheHeight: resolvedCacheHeight,
         placeholder: (context, url) => Shimmer.fromColors(
           baseColor: VSPColors.surface,
           highlightColor: VSPColors.surfaceAlt,

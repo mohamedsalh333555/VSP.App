@@ -6,24 +6,25 @@ import '../ui/tokens/vsp_tokens.dart';
 /// نظام التصميم الموحد لتطبيق VSP
 class AppTheme {
   // الألوان والبيانات القديمة (سيتم حذفها تدريجياً لصالح Tokens)
-  static const Color darkBackground = Color(0xFF0A0C0A); // Deeper, green-black tone
-  static const Color neonGreen = Color(0xFF9FDF02);
-  static const Color cardBackground = Color(0xFF161A16);    // Dark forest grey-green
+  static const Color darkBackground = VSPColors.background; // Pitch black background
+  static const Color neonGreen = VSPColors.accent;
+  static const Color cardBackground = VSPColors.surface;    // Pitch dark surface
   static const Color textPrimary = VSPColors.textPrimary;
   static const Color textSecondary = VSPColors.textSecondary;
-  static const Color divider = Color(0xFF232A23);
+  static const Color divider = VSPColors.divider;
 
   // New color definitions based on the instruction's intent
-  static const Color background = Color(0xFF0A0C0A);
-  static const Color surface = Color(0xFF161A16);
-  static const Color surfaceAlt = Color(0xFF1F261F);
-  static const Color inputFill = Color(0xFF232A23);
-  static const Color accent = Color(0xFF9FDF02);
-  static const Color accentSoft = Color(0x269FDF02);
+  static const Color background = VSPColors.background;
+  static const Color surface = VSPColors.surface;
+  static const Color surfaceAlt = VSPColors.surfaceAlt;
+  static const Color inputFill = VSPColors.inputFill;
+  static const Color accent = VSPColors.accent;
+  static const Color accentSoft = VSPColors.accentSoft;
 
   static ThemeData get darkTheme {
-    final baseTheme = ThemeData.dark();
-    final tajawalTheme = GoogleFonts.tajawalTextTheme(baseTheme.textTheme);
+    final baseTextTheme = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
+    final poppinsFamily = GoogleFonts.poppins().fontFamily;
+    final tajawalFamily = GoogleFonts.tajawal().fontFamily;
 
     return ThemeData(
       brightness: Brightness.dark,
@@ -35,60 +36,71 @@ class AppTheme {
         surface: VSPColors.surface,
       ),
 
-      textTheme: tajawalTheme.copyWith(
-        displayLarge: GoogleFonts.tajawal(
+      fontFamily: poppinsFamily,
+      fontFamilyFallback: [tajawalFamily!, 'sans-serif'],
+
+      textTheme: baseTextTheme.copyWith(
+        displayLarge: baseTextTheme.displayLarge?.copyWith(
           fontSize: 40,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
           letterSpacing: 1.0,
+          height: 1.2,
         ),
-        displayMedium: GoogleFonts.tajawal(
+        displayMedium: baseTextTheme.displayMedium?.copyWith(
           fontSize: 32,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
           letterSpacing: 0.5,
+          height: 1.2,
         ),
-        displaySmall: GoogleFonts.tajawal(
+        displaySmall: baseTextTheme.displaySmall?.copyWith(
           fontSize: 24,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
+          height: 1.2,
         ),
-        titleLarge: GoogleFonts.tajawal(
+        titleLarge: baseTextTheme.titleLarge?.copyWith(
           fontSize: 20,
           fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
+          height: 1.2,
         ),
-        bodyLarge: GoogleFonts.tajawal(
+        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
           fontSize: 16,
           fontWeight: FontWeight.w400,
           color: VSPColors.textPrimary,
+          height: 1.3,
         ),
-        bodyMedium: GoogleFonts.tajawal(
+        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
           fontSize: 14,
           fontWeight: FontWeight.w400,
           color: VSPColors.textSecondary,
+          height: 1.3,
         ),
-        labelMedium: GoogleFonts.tajawal(
+        labelMedium: baseTextTheme.labelMedium?.copyWith(
           fontSize: 12,
           fontWeight: FontWeight.w600,
           color: VSPColors.textSecondary,
+          height: 1.2,
         ),
       ),
 
-      appBarTheme: AppBarTheme(
+      appBarTheme: const AppBarTheme(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        iconTheme: const IconThemeData(color: VSPColors.textPrimary),
-        systemOverlayStyle: const SystemUiOverlayStyle(
+        iconTheme: IconThemeData(color: VSPColors.textPrimary),
+        systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           systemNavigationBarColor: VSPColors.background,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
-        titleTextStyle: GoogleFonts.tajawal(
+        titleTextStyle: TextStyle(
           fontSize: 20,
           fontWeight: FontWeight.w600,
           color: VSPColors.textPrimary,
+          height: 1.2,
         ),
       ),
 
@@ -108,7 +120,7 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
-          textStyle: GoogleFonts.tajawal(
+          textStyle: const TextStyle(
             fontSize: 18,
             fontWeight: FontWeight.bold,
           ),
@@ -118,7 +130,9 @@ class AppTheme {
       inputDecorationTheme: InputDecorationTheme(
         filled: true,
         fillColor: VSPColors.inputFill,
-        hintStyle: GoogleFonts.tajawal(color: VSPColors.textSecondary.withValues(alpha: 0.4)),
+        hintStyle: TextStyle(
+          color: VSPColors.textSecondary.withValues(alpha: 0.7),
+        ),
         contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 16),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(VSPRadius.md),

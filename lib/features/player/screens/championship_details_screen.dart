@@ -1,11 +1,11 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'player_home_screen.dart'; 
@@ -25,7 +25,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
 
   Future<void> _handleJoin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
-    final db = DatabaseService();
+    
 
     if (!auth.isAuthenticated) {
       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(AppLocalizations.of(context)!.loginToJoinError)));
@@ -37,7 +37,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
     try {
       // 1. Fetch User's Team
       final userPhone = auth.userModel?.phone ?? '';
-      final team = await db.getTeamByCaptainPhone(userPhone);
+      final team = await TeamRepository().getTeamByCaptainPhone(userPhone);
 
       if (team == null) {
         if (mounted) {
@@ -477,3 +477,4 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
     );
   }
 }
+

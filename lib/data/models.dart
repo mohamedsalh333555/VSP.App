@@ -12,7 +12,8 @@ class Stadium {
   final String size; // 11 VS 11, 5 VS 5, etc.
   final int baths;
   final int cafeteria;
-  final int seatsCapacity;
+  final int playersPerTeam;
+  final int totalFieldCapacity;
   final double pricePerHour;
   final double basePrice; // Unified price source
   final String area; // Jeresh, etc.
@@ -20,7 +21,12 @@ class Stadium {
   final double? lat;
   final double? lng;
   final String? governorate; // ✅ Added for filtering
+  final double depositAmount; // ✅ Owner's determined deposit amount
+  final bool needsDeposit; // ✅ Owner's deposit requirement flag
   
+  // Backward compatibility getter
+  int get seatsCapacity => totalFieldCapacity;
+
   // Extended fields for details screen
   final String address;
   final double rating;
@@ -58,7 +64,8 @@ class Stadium {
     required this.size,
     required this.baths,
     required this.cafeteria,
-    required this.seatsCapacity,
+    required this.playersPerTeam,
+    required this.totalFieldCapacity,
     required this.pricePerHour,
     double? basePrice,
     required this.area,
@@ -89,6 +96,8 @@ class Stadium {
     this.lat,
     this.lng,
     this.governorate, // ✅ Added for filtering
+    this.depositAmount = 0.0,
+    this.needsDeposit = false,
   }) : basePrice = basePrice ?? pricePerHour;
 
   static List<String> parseFeatures(dynamic data) {
@@ -122,29 +131,40 @@ class Stadium {
     return result;
   }
 
-
   factory Stadium.fromFirestore(Map<String, dynamic> data, String id) {
+    int parsedPPT = 5;
+    final sizeStr = data['size']?.toString() ?? '5 VS 5';
+    final match = RegExp(r'(\d+)\s*[Vv][Ss]\s*(\d+)').firstMatch(sizeStr);
+    if (match != null) {
+      parsedPPT = int.tryParse(match.group(1) ?? '') ?? 5;
+    }
+    final int ppt = data['players_per_team'] ?? data['playersPerTeam'] ?? parsedPPT;
+    final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? (ppt * 2);
+
     return Stadium(
       id: id,
       name: data['name'] ?? '',
-      location: data['location'] ?? '',
+      location: data['location'] ?? data['address'] ?? '',
       governorate: data['governorate'], // ✅ Added for filtering
       type: data['type'] ?? 'Football',
       size: data['size'] ?? '5 VS 5',
-      imageUrl: data['imageUrl'] ?? '',
-      images: (data['features'] is Map && data['features']['allImages'] is List && (data['features']['allImages'] as List).isNotEmpty)
-          ? List<String>.from(data['features']['allImages'])
-          : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl']] : []),
+      imageUrl: data['imageUrl'] ?? data['image_url'] ?? '',
+      images: data['images'] != null 
+          ? List<String>.from(data['images'])
+          : (data['features'] is Map && data['features']['allImages'] is List && (data['features']['allImages'] as List).isNotEmpty)
+              ? List<String>.from(data['features']['allImages'])
+              : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl']] : []),
       baths: data['baths'] ?? 0,
       cafeteria: data['cafeteria'] ?? 0,
-      seatsCapacity: data['seatsCapacity'] ?? 0,
-      pricePerHour: (data['pricePerHour'] ?? 0).toDouble(),
-      basePrice: (data['basePrice'] ?? data['pricePerHour'] ?? 0).toDouble(),
-      area: data['area'] ?? data['governorate'] ?? '',
+      playersPerTeam: ppt,
+      totalFieldCapacity: tfc,
+      pricePerHour: (data['pricePerHour'] ?? data['price_per_hour'] ?? 0).toDouble(),
+      basePrice: (data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? 0).toDouble(),
+      area: data['area'] ?? data['city'] ?? data['governorate'] ?? '',
       isFavorite: data['isFavorite'] ?? false,
       address: data['address'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
-      reviewsCount: data['reviewsCount'] ?? 0,
+      reviewsCount: data['reviewsCount'] ?? data['reviews_count'] ?? 0,
       description: data['description'] ?? '',
       features: data['features'] ?? {},
       policies: (data['policies'] is List) ? List<String>.from(data['policies']) : [],
@@ -153,12 +173,12 @@ class Stadium {
       hasSeats: data['hasSeats'] ?? (data['features'] is Map ? data['features']['hasSeats'] ?? false : false),
       hasBall: data['hasBall'] ?? (data['features'] is Map ? data['features']['hasBall'] ?? false : false),
       ballPrice: (data['ballPrice'] ?? (data['features'] is Map ? data['features']['ballPrice'] ?? 0 : 0)).toDouble(),
-      notes: (data['notes'] as String?) ?? '', // ✅ Read notes from Firestore
-      contractUrl: data['contractUrl'],
-      ownerIdUrl: data['ownerIdUrl'],
-      isVerified: data['isVerified'] ?? false,
-      isFeatured: data['isFeatured'] ?? false,
-      ownerId: data['ownerId'] ?? '',
+      notes: (data['notes'] as String?) ?? '', // ✅ Read notes
+      contractUrl: data['contractUrl'] ?? data['contract_url'],
+      ownerIdUrl: data['ownerIdUrl'] ?? data['owner_id_url'],
+      isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
+      isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
+      ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
       openingTime: data['features']?['workingHours']?['start'] ?? '08:00 AM',
       closingTime: data['features']?['workingHours']?['end'] ?? '12:00 AM',
       isSplitShift: data['features']?['isSplitShift'] ?? false,
@@ -166,6 +186,8 @@ class Stadium {
       breakEndTime: data['features']?['breakTime']?['end'],
       lat: (data['lat'] as num?)?.toDouble(),
       lng: (data['lng'] as num?)?.toDouble(),
+      depositAmount: (data['deposit_amount'] ?? data['depositAmount'] ?? 0.0).toDouble(),
+      needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
     );
   }
 
@@ -181,7 +203,8 @@ class Stadium {
       'size': size,
       'baths': baths,
       'cafeteria': cafeteria,
-      'seatsCapacity': seatsCapacity,
+      'players_per_team': playersPerTeam,
+      'total_field_capacity': totalFieldCapacity,
       'pricePerHour': pricePerHour,
       'basePrice': basePrice,
       'area': area,
@@ -205,6 +228,8 @@ class Stadium {
       'ownerId': ownerId,
       'lat': lat,
       'lng': lng,
+      'deposit_amount': depositAmount,
+      'needs_deposit': needsDeposit,
     };
   }
 }
@@ -301,10 +326,18 @@ class BookingDraft {
   final String? paymentMethod;
   final String? paymentTransactionId;
   final int currentPlayers;
-  final int maxPlayers;
+  final int playersPerTeam;
+  final int totalFieldCapacity;
   final String? playerPhone;
   final String? notes;
   final bool isPaid;
+  final double depositPaid;
+  final bool isDepositPaid;
+  final String? paymentStatus;
+  final bool needsDeposit;
+
+  // Backward compatibility getter
+  int get maxPlayers => totalFieldCapacity;
 
   BookingDraft({
     required this.stadiumId,
@@ -329,10 +362,15 @@ class BookingDraft {
     this.paymentMethod,
     this.paymentTransactionId,
     this.currentPlayers = 1,
-    this.maxPlayers = 10,
+    this.playersPerTeam = 5,
+    this.totalFieldCapacity = 10,
     this.playerPhone,
     this.notes,
     this.isPaid = false,
+    this.depositPaid = 0.0,
+    this.isDepositPaid = false,
+    this.paymentStatus,
+    this.needsDeposit = false,
   });
 
   BookingDraft copyWith({
@@ -358,10 +396,15 @@ class BookingDraft {
     String? paymentMethod,
     String? paymentTransactionId,
     int? currentPlayers,
-    int? maxPlayers,
+    int? playersPerTeam,
+    int? totalFieldCapacity,
     String? playerPhone,
     String? notes,
     bool? isPaid,
+    double? depositPaid,
+    bool? isDepositPaid,
+    String? paymentStatus,
+    bool? needsDeposit,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -386,10 +429,15 @@ class BookingDraft {
       paymentMethod: paymentMethod ?? this.paymentMethod,
       paymentTransactionId: paymentTransactionId ?? this.paymentTransactionId,
       currentPlayers: currentPlayers ?? this.currentPlayers,
-      maxPlayers: maxPlayers ?? this.maxPlayers,
+      playersPerTeam: playersPerTeam ?? this.playersPerTeam,
+      totalFieldCapacity: totalFieldCapacity ?? this.totalFieldCapacity,
       playerPhone: playerPhone ?? this.playerPhone,
       notes: notes ?? this.notes,
       isPaid: isPaid ?? this.isPaid,
+      depositPaid: depositPaid ?? this.depositPaid,
+      isDepositPaid: isDepositPaid ?? this.isDepositPaid,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      needsDeposit: needsDeposit ?? this.needsDeposit,
     );
   }
 
@@ -417,9 +465,14 @@ class BookingDraft {
       'paymentMethod': paymentMethod,
       'paymentTransactionId': paymentTransactionId,
       'currentPlayers': currentPlayers,
-      'maxPlayers': maxPlayers,
+      'players_per_team': playersPerTeam,
+      'total_field_capacity': totalFieldCapacity,
+      'max_players': totalFieldCapacity, // backward compatibility key
       'playerPhone': playerPhone,
       'notes': notes,
+      'deposit_paid': depositPaid,
+      'is_deposit_paid': isDepositPaid,
+      'payment_status': paymentStatus,
     };
   }
 }
@@ -478,12 +531,18 @@ class Booking {
 
   // Public Match Fields
   final int currentPlayers;
-  final int maxPlayers;
+  final int playersPerTeam;
+  final int totalFieldCapacity;
   final List<String> joinedUserIds;
 
   // Financial Detail (Debt Management)
   final bool isPaid;
   final String paymentStatus; // 'pending', 'paid', 'refunded'
+  final double depositPaid;
+  final bool isDepositPaid;
+
+  // Backward compatibility getter
+  int get maxPlayers => totalFieldCapacity;
 
   Booking({
     required this.id,
@@ -520,94 +579,117 @@ class Booking {
     this.finalOutcome,
     this.requiresAdminIntervention = false,
     this.currentPlayers = 1,
-    this.maxPlayers = 10,
+    this.playersPerTeam = 5,
+    this.totalFieldCapacity = 10,
     this.joinedUserIds = const [],
     this.isPaid = false,
     this.paymentStatus = 'pending',
     this.playerPhone,
     this.notes,
+    this.depositPaid = 0.0,
+    this.isDepositPaid = false,
   });
 
-  /// Create Booking from Firestore document
+  /// Create Booking from Firestore/Supabase document
   factory Booking.fromFirestore(Map<String, dynamic> data, String id) {
+    final startTimeVal = data['startTime'] ?? data['start_time'];
+    final endTimeVal = data['endTime'] ?? data['end_time'];
+    final createdAtVal = data['createdAt'] ?? data['created_at'];
+    final updatedAtVal = data['updatedAt'] ?? data['updated_at'];
+    final bookingTypeVal = data['bookingType'] ?? data['booking_type'];
+    final statusVal = data['status'];
+    final matchResultStatusVal = data['matchResultStatus'] ?? data['match_result_status'];
+    final pendingOutcomeVal = data['pendingOutcome'] ?? data['pending_outcome'];
+    final finalOutcomeVal = data['finalOutcome'] ?? data['final_outcome'];
+
+    final int ppt = data['players_per_team'] ?? data['playersPerTeam'] ?? 5;
+    final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? data['maxPlayers'] ?? data['max_players'] ?? (ppt * 2);
+
     return Booking(
       id: id,
-      stadiumId: data['stadiumId'] ?? '',
-      stadiumName: data['stadiumName'] ?? '',
-      stadiumImageUrl: data['stadiumImageUrl'] ?? '',
-      ownerId: data['ownerId'] ?? '',
-      startTime: data['startTime'] != null 
-          ? (data['startTime'] is Timestamp 
-              ? (data['startTime'] as Timestamp).toDate()
-              : (data['startTime'] is DateTime 
-                  ? data['startTime'] 
-                  : DateTime.parse(data['startTime'])))
+      stadiumId: data['stadiumId'] ?? data['stadium_id'] ?? '',
+      stadiumName: data['stadiumName'] ?? data['stadium_name'] ?? '',
+      stadiumImageUrl: data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
+      ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
+      startTime: startTimeVal != null 
+          ? (startTimeVal is Timestamp 
+              ? startTimeVal.toDate()
+              : (startTimeVal is DateTime 
+                  ? startTimeVal 
+                  : DateTime.parse(startTimeVal.toString())))
           : DateTime.now(),
-      endTime: data['endTime'] != null 
-          ? (data['endTime'] is Timestamp 
-              ? (data['endTime'] as Timestamp).toDate()
-              : (data['endTime'] is DateTime 
-                  ? data['endTime'] 
-                  : DateTime.parse(data['endTime'])))
+      endTime: endTimeVal != null 
+          ? (endTimeVal is Timestamp 
+              ? endTimeVal.toDate()
+              : (endTimeVal is DateTime 
+                  ? endTimeVal 
+                  : DateTime.parse(endTimeVal.toString())))
           : DateTime.now(),
       bookingType: BookingType.values.firstWhere(
-        (e) => e.name == data['bookingType'],
+        (e) => e.name == bookingTypeVal,
         orElse: () => BookingType.personal,
       ),
-      playerTeamId: data['playerTeamId'],
-      playerTeamName: data['playerTeamName'],
-      playerTeamLogoUrl: data['playerTeamLogoUrl'],
-      hostName: data['hostName'],
-      hostAvatarUrl: data['hostAvatarUrl'],
-      opponentTeamId: data['bookingType'] == 'challenge' ? data['opponentTeamId'] : null,
-      opponentTeamName: data['bookingType'] == 'challenge' ? data['opponentTeamName'] : null,
-      opponentTeamLogoUrl: data['opponentTeamLogoUrl'],
-      isPrivate: data['isPrivate'] ?? false,
-      rentBall: data['rentBall'] ?? false,
-      totalPrice: (data['totalPrice'] ?? 0).toDouble(),
+      playerTeamId: data['playerTeamId'] ?? data['player_team_id'],
+      playerTeamName: data['playerTeamName'] ?? data['player_team_name'],
+      playerTeamLogoUrl: data['playerTeamLogoUrl'] ?? data['player_team_logo_url'],
+      hostName: data['hostName'] ?? data['host_name'],
+      hostAvatarUrl: data['hostAvatarUrl'] ?? data['host_avatar_url'],
+      opponentTeamId: (bookingTypeVal == 'challenge') ? (data['opponentTeamId'] ?? data['opponent_team_id']) : null,
+      opponentTeamName: (bookingTypeVal == 'challenge') ? (data['opponentTeamName'] ?? data['opponent_team_name']) : null,
+      opponentTeamLogoUrl: data['opponentTeamLogoUrl'] ?? data['opponent_team_logo_url'],
+      isPrivate: data['isPrivate'] ?? data['is_private'] ?? false,
+      rentBall: data['rentBall'] ?? data['rent_ball'] ?? false,
+      totalPrice: (data['totalPrice'] ?? data['total_price'] ?? 0).toDouble(),
       currency: data['currency'] ?? 'EGP',
-      paymentMethod: data['paymentMethod'] ?? 'card',
-      paymentTransactionId: data['paymentTransactionId'],
+      paymentMethod: data['paymentMethod'] ?? data['payment_method'] ?? 'card',
+      paymentTransactionId: data['paymentTransactionId'] ?? data['payment_transaction_id'],
       status: BookingStatus.values.firstWhere(
-        (e) => e.name == data['status'],
+        (e) => e.name == statusVal,
         orElse: () => BookingStatus.pending,
       ),
-      createdByUserId: data['createdByUserId'] ?? '',
-      createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] is Timestamp 
-              ? (data['createdAt'] as Timestamp).toDate()
-              : (data['createdAt'] is DateTime 
-                  ? data['createdAt'] 
-                  : DateTime.parse(data['createdAt'])))
+      createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? '',
+      createdAt: createdAtVal != null 
+          ? (createdAtVal is Timestamp 
+              ? createdAtVal.toDate()
+              : (createdAtVal is DateTime 
+                  ? createdAtVal 
+                  : DateTime.parse(createdAtVal.toString())))
           : DateTime.now(),
-      updatedAt: data['updatedAt'] != null 
-          ? (data['updatedAt'] is Timestamp 
-              ? (data['updatedAt'] as Timestamp).toDate()
-              : (data['updatedAt'] is DateTime 
-                  ? data['updatedAt'] 
-                  : DateTime.parse(data['updatedAt'])))
+      updatedAt: updatedAtVal != null 
+          ? (updatedAtVal is Timestamp 
+              ? updatedAtVal.toDate()
+              : (updatedAtVal is DateTime 
+                  ? updatedAtVal 
+                  : DateTime.parse(updatedAtVal.toString())))
           : null,
-      homeScore: data['homeScore'],
-      awayScore: data['awayScore'],
-      resultSubmittedByTeamId: data['resultSubmittedByTeamId'],
+      homeScore: data['homeScore'] ?? data['home_score'],
+      awayScore: data['awayScore'] ?? data['away_score'],
+      resultSubmittedByTeamId: data['resultSubmittedByTeamId'] ?? data['result_submitted_by_team_id'],
       matchResultStatus: MatchResultStatus.values.firstWhere(
-        (e) => e.name == data['matchResultStatus'],
+        (e) => e.name == matchResultStatusVal,
         orElse: () => MatchResultStatus.noResult,
       ),
-      pendingOutcome: data['pendingOutcome'] != null 
-          ? MatchOutcome.values.firstWhere((e) => e.name == data['pendingOutcome']) 
+      pendingOutcome: pendingOutcomeVal != null 
+          ? MatchOutcome.values.firstWhere((e) => e.name == pendingOutcomeVal) 
           : null,
-      finalOutcome: data['finalOutcome'] != null 
-          ? MatchOutcome.values.firstWhere((e) => e.name == data['finalOutcome']) 
+      finalOutcome: finalOutcomeVal != null 
+          ? MatchOutcome.values.firstWhere((e) => e.name == finalOutcomeVal) 
           : null,
-      requiresAdminIntervention: data['requiresAdminIntervention'] ?? false,
-      currentPlayers: data['currentPlayers'] ?? 1,
-      maxPlayers: data['maxPlayers'] ?? 10,
-      joinedUserIds: List<String>.from(data['joinedUserIds'] ?? []),
-      isPaid: data['isPaid'] ?? false,
-      paymentStatus: data['paymentStatus'] ?? (data['isPaid'] == true ? 'paid' : 'pending'),
-      playerPhone: data['playerPhone'],
+      requiresAdminIntervention: data['requiresAdminIntervention'] ?? data['requires_admin_intervention'] ?? false,
+      currentPlayers: data['currentPlayers'] ?? data['current_players'] ?? 1,
+      playersPerTeam: ppt,
+      totalFieldCapacity: tfc,
+      joinedUserIds: (data['joinedUserIds'] ?? data['joined_user_ids']) is List
+          ? ((data['joinedUserIds'] ?? data['joined_user_ids']) as List)
+              .map((e) => e.toString())
+              .toList()
+          : [],
+      isPaid: data['isPaid'] ?? data['is_paid'] ?? false,
+      paymentStatus: data['paymentStatus'] ?? data['payment_status'] ?? ((data['isPaid'] ?? data['is_paid']) == true ? 'paid' : 'pending'),
+      playerPhone: data['playerPhone'] ?? data['player_phone'],
       notes: data['notes'],
+      depositPaid: (data['deposit_paid'] ?? data['depositPaid'] ?? 0.0).toDouble(),
+      isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
     );
   }
 
@@ -646,13 +728,17 @@ class Booking {
       'pendingOutcome': pendingOutcome?.name,
       'finalOutcome': finalOutcome?.name,
       'requiresAdminIntervention': requiresAdminIntervention,
-      'currentPlayers': currentPlayers,
-      'maxPlayers': maxPlayers,
+      'current_players': currentPlayers,
+      'players_per_team': playersPerTeam,
+      'total_field_capacity': totalFieldCapacity,
+      'max_players': totalFieldCapacity, // backward compatibility
       'joinedUserIds': joinedUserIds,
       'isPaid': isPaid,
       'paymentStatus': paymentStatus,
       'playerPhone': playerPhone,
       'notes': notes,
+      'deposit_paid': depositPaid,
+      'is_deposit_paid': isDepositPaid,
     };
   }
 
@@ -690,11 +776,15 @@ class Booking {
       createdByUserId: userId,
       createdAt: DateTime.now(),
       currentPlayers: draft.currentPlayers,
-      maxPlayers: draft.maxPlayers,
+      playersPerTeam: draft.playersPerTeam,
+      totalFieldCapacity: draft.totalFieldCapacity,
       joinedUserIds: [userId],
       playerPhone: draft.playerPhone,
       notes: draft.notes,
       isPaid: draft.isPaid,
+      depositPaid: draft.depositPaid,
+      isDepositPaid: draft.isDepositPaid,
+      paymentStatus: draft.paymentStatus ?? (draft.isPaid ? 'paid' : (draft.isDepositPaid ? 'partially_paid' : 'pending')),
     );
   }
 
@@ -731,9 +821,13 @@ class Booking {
     MatchOutcome? finalOutcome,
     bool? requiresAdminIntervention,
     int? currentPlayers,
-    int? maxPlayers,
+    int? playersPerTeam,
+    int? totalFieldCapacity,
     List<String>? joinedUserIds,
     bool? isPaid,
+    String? paymentStatus,
+    double? depositPaid,
+    bool? isDepositPaid,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -768,9 +862,13 @@ class Booking {
       finalOutcome: finalOutcome ?? this.finalOutcome,
       requiresAdminIntervention: requiresAdminIntervention ?? this.requiresAdminIntervention,
       currentPlayers: currentPlayers ?? this.currentPlayers,
-      maxPlayers: maxPlayers ?? this.maxPlayers,
+      playersPerTeam: playersPerTeam ?? this.playersPerTeam,
+      totalFieldCapacity: totalFieldCapacity ?? this.totalFieldCapacity,
       joinedUserIds: joinedUserIds ?? this.joinedUserIds,
       isPaid: isPaid ?? this.isPaid,
+      paymentStatus: paymentStatus ?? this.paymentStatus,
+      depositPaid: depositPaid ?? this.depositPaid,
+      isDepositPaid: isDepositPaid ?? this.isDepositPaid,
     );
   }
 
@@ -834,6 +932,10 @@ class Team {
   final List<String> memberUids;
   final int championshipsWon; // TOURNAMENT Logic: Total trophies won
 
+  // ── Fair Play System ──
+  final int fairPlayScore;   // Season score (0–100), default 100
+  final int lastResetYear;   // Year of last annual reset, default 2026
+
   Team({
     required this.id,
     required this.name,
@@ -861,6 +963,8 @@ class Team {
     this.currentWinningStreak = 0,
     this.memberUids = const [],
     this.championshipsWon = 0,
+    this.fairPlayScore = 100,
+    this.lastResetYear = 2026,
   });
 
   String get rankTitle => EloCalculator.getRankTitle(points);
@@ -869,30 +973,32 @@ class Team {
     return Team(
       id: docId,
       name: data['name'] ?? '',
-      captainName: data['captainName'] ?? 'Captain',
-      captainImageUrl: data['captainImageUrl'] ?? data['logoUrl'] ?? '', 
-      logoUrl: data['logoUrl'] ?? data['captainImageUrl'] ?? '',
+      captainName: data['captainName'] ?? data['captain_name'] ?? 'Captain',
+      captainImageUrl: data['captainImageUrl'] ?? data['captain_image_url'] ?? data['logoUrl'] ?? data['logo_url'] ?? '', 
+      logoUrl: data['logoUrl'] ?? data['logo_url'] ?? data['captainImageUrl'] ?? data['captain_image_url'] ?? '',
       date: data['date'] ?? 'Upcoming',
       stadium: data['stadium'] ?? 'TBD',
-      pricePerPerson: (data['pricePerPerson'] ?? 50).toDouble(),
-      currentPlayers: data['playersCount'] ?? data['currentPlayers'] ?? 11,
-      maxPlayers: data['maxPlayers'] ?? 11,
-      playerImages: List<String>.from(data['playerImages'] ?? data['members'] ?? []),
+      pricePerPerson: (data['pricePerPerson'] ?? data['price_per_person'] ?? 50).toDouble(),
+      currentPlayers: data['playersCount'] ?? data['players_count'] ?? data['currentPlayers'] ?? data['current_players'] ?? 11,
+      maxPlayers: data['maxPlayers'] ?? data['max_players'] ?? 11,
+      playerImages: List<String>.from(data['playerImages'] ?? data['player_images'] ?? data['members'] ?? []),
       points: data['points'] ?? 0,
       trend: data['trend'] ?? 'stable',
-      captainPhone: data['captainPhone'],
-      sportType: data['sportType'] ?? 'Football',
+      captainPhone: data['captainPhone'] ?? data['captain_phone'],
+      sportType: data['sportType'] ?? data['sport_type'] ?? 'Football',
       governorate: data['governorate'] ?? 'Cairo',
-      matchesPlayed: data['matchesPlayed'] ?? 0,
+      matchesPlayed: data['matchesPlayed'] ?? data['matches_played'] ?? 0,
       wins: data['wins'] ?? 0,
       draws: data['draws'] ?? 0,
       losses: data['losses'] ?? 0,
-      playedOpponents: List<String>.from(data['playedOpponents'] ?? []),
-      beatenOpponents: List<String>.from(data['beatenOpponents'] ?? []),
-      unlockedBadges: List<String>.from(data['unlockedBadges'] ?? []),
-      currentWinningStreak: data['currentWinningStreak'] ?? 0,
-      memberUids: List<String>.from(data['memberUids'] ?? []),
-      championshipsWon: data['championshipsWon'] ?? 0,
+      playedOpponents: List<String>.from(data['playedOpponents'] ?? data['played_opponents'] ?? []),
+      beatenOpponents: List<String>.from(data['beatenOpponents'] ?? data['beaten_opponents'] ?? []),
+      unlockedBadges: List<String>.from(data['unlockedBadges'] ?? data['unlocked_badges'] ?? []),
+      currentWinningStreak: data['currentWinningStreak'] ?? data['current_winning_streak'] ?? 0,
+      memberUids: List<String>.from(data['memberUids'] ?? data['member_uids'] ?? []),
+      championshipsWon: data['championshipsWon'] ?? data['championships_won'] ?? 0,
+      fairPlayScore: data['fairPlayScore'] ?? data['fair_play_score'] ?? 100,
+      lastResetYear: data['lastResetYear'] ?? data['last_reset_year'] ?? 2026,
     );
   }
 
@@ -924,6 +1030,8 @@ class Team {
       'unlockedBadges': unlockedBadges,
       'currentWinningStreak': currentWinningStreak,
       'championshipsWon': championshipsWon,
+      'fairPlayScore': fairPlayScore,
+      'lastResetYear': lastResetYear,
     };
   }
 
@@ -950,6 +1058,8 @@ class Team {
     List<String>? beatenOpponents,
     int? championshipsWon,
     String? sportType,
+    int? fairPlayScore,
+    int? lastResetYear,
   }) {
     return Team(
       id: id ?? this.id,
@@ -974,6 +1084,8 @@ class Team {
       beatenOpponents: beatenOpponents ?? this.beatenOpponents,
       championshipsWon: championshipsWon ?? this.championshipsWon,
       sportType: sportType ?? this.sportType,
+      fairPlayScore: fairPlayScore ?? this.fairPlayScore,
+      lastResetYear: lastResetYear ?? this.lastResetYear,
     );
   }
 
@@ -1119,47 +1231,47 @@ class Championship {
   factory Championship.fromFirestore(Map<String, dynamic> data, String id) {
     try {
       final settings = data['settings'] as Map<String, dynamic>? ?? {};
-      
       return Championship(
         id: id,
         name: data['name']?.toString() ?? '',
         type: data['type']?.toString() ?? 'Cup',
-        sportType: data['sportType']?.toString() ?? 'Football',
-        logoUrl: (data['logoUrl'] ?? data['image'])?.toString() ?? '',
-        startDate: data['startDate'] != null 
-            ? (data['startDate'] is Timestamp ? (data['startDate'] as Timestamp).toDate() : DateTime.tryParse(data['startDate'].toString()) ?? DateTime.now())
-            : DateTime.now(),
-        endDate: data['endDate'] != null 
-            ? (data['endDate'] is Timestamp ? (data['endDate'] as Timestamp).toDate() : DateTime.tryParse(data['endDate'].toString()) ?? DateTime.now())
-            : DateTime.now(),
-        entryFee: double.tryParse((data['entryFee'] ?? data['fees'] ?? 0).toString()) ?? 0.0,
-        grandPrize: double.tryParse((data['grandPrize'] ?? data['prize'] ?? 0).toString()) ?? 0.0,
-        maxTeams: int.tryParse((data['maxTeams'] ?? data['teamsCount'] ?? 16).toString()) ?? 16,
-        joinedTeams: List<String>.from(data['joinedTeams'] ?? []),
-        ownerId: data['ownerId']?.toString() ?? '',
+        sportType: data['sport_type'] ?? data['sportType']?.toString() ?? 'Football',
+        logoUrl: (data['logo_url'] ?? data['logoUrl'] ?? '')?.toString() ?? '',
+        startDate: data['start_date'] != null 
+            ? DateTime.tryParse(data['start_date'].toString()) ?? DateTime.now()
+            : (data['startDate'] != null ? DateTime.tryParse(data['startDate'].toString()) ?? DateTime.now() : DateTime.now()),
+        endDate: data['end_date'] != null 
+            ? DateTime.tryParse(data['end_date'].toString()) ?? DateTime.now()
+            : (data['endDate'] != null ? DateTime.tryParse(data['endDate'].toString()) ?? DateTime.now() : DateTime.now()),
+        entryFee: double.tryParse((data['entry_fee'] ?? data['entryFee'] ?? 0).toString()) ?? 0.0,
+        grandPrize: double.tryParse((data['grand_prize'] ?? data['grandPrize'] ?? 0).toString()) ?? 0.0,
+        maxTeams: int.tryParse((data['max_teams'] ?? data['maxTeams'] ?? 16).toString()) ?? 16,
+        joinedTeams: List<String>.from(data['joined_teams'] ?? data['joinedTeams'] ?? []),
+        ownerId: data['owner_id'] ?? data['ownerId']?.toString() ?? '',
         governorate: data['governorate']?.toString() ?? 'Cairo',
         rules: data['rules']?.toString() ?? '',
-        paymentMethods: List<String>.from(data['paymentMethods'] ?? ['cash']),
-        maxPlayersPerTeam: int.tryParse(settings['maxPlayers']?.toString() ?? '11') ?? 11,
-        minPlayersPerTeam: int.tryParse(settings['minPlayers']?.toString() ?? '5') ?? 5,
-        winningPoints: int.tryParse(settings['winningPoints']?.toString() ?? '3') ?? 3,
-        drawPoints: int.tryParse(settings['drawPoints']?.toString() ?? '1') ?? 1,
-        lossPoints: int.tryParse(settings['lossPoints']?.toString() ?? '0') ?? 0,
-        matchDuration: int.tryParse(settings['matchDuration']?.toString() ?? '30') ?? 30,
-        isBackAndForth: settings['isBackAndForth'] == true,
-        trophyMedals: settings['trophyMedals'] != false,
-        redCardSuspension: settings['redCardSuspension'] != false,
-        fairPlayScoring: settings['fairPlayScoring'] == true,
+        paymentMethods: List<String>.from(data['payment_methods'] ?? data['paymentMethods'] ?? ['cash']),
+        // ⚡ قراءة الإعدادات من أعمدتها المسطحة مباشرة مع خيار السقوط الخلفي للـ settings
+        maxPlayersPerTeam: int.tryParse((data['max_players_per_team'] ?? settings['maxPlayers'] ?? settings['max_players'] ?? data['maxPlayersPerTeam'] ?? 11).toString()) ?? 11,
+        minPlayersPerTeam: int.tryParse((data['min_players_per_team'] ?? settings['minPlayers'] ?? settings['min_players'] ?? data['minPlayersPerTeam'] ?? 5).toString()) ?? 5,
+        winningPoints: int.tryParse((data['winning_points'] ?? settings['winningPoints'] ?? settings['winning_points'] ?? data['winningPoints'] ?? 3).toString()) ?? 3,
+        drawPoints: int.tryParse((data['draw_points'] ?? settings['drawPoints'] ?? settings['draw_points'] ?? data['drawPoints'] ?? 1).toString()) ?? 1,
+        lossPoints: int.tryParse((data['loss_points'] ?? settings['lossPoints'] ?? settings['loss_points'] ?? data['lossPoints'] ?? 0).toString()) ?? 0,
+        matchDuration: int.tryParse((data['match_duration'] ?? settings['matchDuration'] ?? settings['match_duration'] ?? data['matchDuration'] ?? 30).toString()) ?? 30,
+        isBackAndForth: data['is_back_and_forth'] == true || settings['isBackAndForth'] == true || settings['is_back_and_forth'] == true || data['isBackAndForth'] == true,
+        trophyMedals: data['trophy_medals'] != false && settings['trophyMedals'] != false && settings['trophy_medals'] != false && data['trophyMedals'] != false,
+        redCardSuspension: data['red_card_suspension'] != false && settings['redCardSuspension'] != false && settings['red_card_suspension'] != false && data['redCardSuspension'] != false,
+        fairPlayScoring: data['fair_play_scoring'] == true || settings['fairPlayScoring'] == true || settings['fair_play_scoring'] == true || data['fairPlayScoring'] == true,
         status: data['status']?.toString() ?? 'open',
-        championTeamId: data['championTeamId']?.toString(),
-        championTeamName: data['championTeamName']?.toString(),
-        paidTeams: List<String>.from(data['paidTeams'] ?? []),
+        championTeamId: data['champion_team_id'] ?? data['championTeamId']?.toString(),
+        championTeamName: data['champion_team_name'] ?? data['championTeamName']?.toString(),
+        paidTeams: List<String>.from(data['paid_teams'] ?? data['paidTeams'] ?? []),
       );
     } catch (e) {
-      // Fallback object to prevent app crash if schema is completely broken
+      // كود أمان احتياطي لمنع انهيار التطبيق في حال وجود بيانات تالفة
       return Championship(
         id: id,
-        name: 'Parsing Error',
+        name: 'Error Loading',
         type: 'Cup',
         sportType: 'Football',
         logoUrl: '',
@@ -1244,18 +1356,42 @@ class Championship {
       'name': name,
       'name_lowercase': name.toLowerCase(),
       'type': type,
+      'sport_type': sportType,
       'sportType': sportType,
+      'logo_url': logoUrl,
       'logoUrl': logoUrl,
+      'start_date': startDate.toIso8601String(),
       'startDate': startDate.toIso8601String(),
+      'end_date': endDate.toIso8601String(),
       'endDate': endDate.toIso8601String(),
+      'entry_fee': entryFee,
       'entryFee': entryFee,
+      'grand_prize': grandPrize,
       'grandPrize': grandPrize,
+      'max_teams': maxTeams,
       'maxTeams': maxTeams,
+      'joined_teams': joinedTeams,
       'joinedTeams': joinedTeams,
+      'owner_id': ownerId,
       'ownerId': ownerId,
       'governorate': governorate,
       'rules': rules,
+      'payment_methods': paymentMethods,
       'paymentMethods': paymentMethods,
+      
+      // Flat Columns for Supabase
+      'max_players_per_team': maxPlayersPerTeam,
+      'min_players_per_team': minPlayersPerTeam,
+      'winning_points': winningPoints,
+      'draw_points': drawPoints,
+      'loss_points': lossPoints,
+      'match_duration': matchDuration,
+      'is_back_and_forth': isBackAndForth,
+      'trophy_medals': trophyMedals,
+      'red_card_suspension': redCardSuspension,
+      'fair_play_scoring': fairPlayScoring,
+      
+      // Legacy settings field
       'settings': {
         'maxPlayers': maxPlayersPerTeam,
         'minPlayers': minPlayersPerTeam,
@@ -1269,10 +1405,13 @@ class Championship {
         'fairPlayScoring': fairPlayScoring,
       },
       'status': status,
+      'champion_team_id': championTeamId,
       'championTeamId': championTeamId,
+      'champion_team_name': championTeamName,
       'championTeamName': championTeamName,
+      'paid_teams': paidTeams,
       'paidTeams': paidTeams,
-      'createdAt': FieldValue.serverTimestamp(),
+      'created_at': DateTime.now().toUtc().toIso8601String(),
     };
   }
 
@@ -1383,21 +1522,24 @@ class TournamentMatch {
   }
 
   factory TournamentMatch.fromFirestore(Map<String, dynamic> data, String id) {
+    final scheduledTimeVal = data['scheduledTime'] ?? data['scheduled_time'];
     return TournamentMatch(
       id: id,
-      championshipId: data['championshipId'] ?? '',
-      roundIndex: data['roundIndex'] ?? 0,
-      matchIndex: data['matchIndex'] ?? 0,
-      homeTeamId: data['homeTeamId'],
-      homeTeamName: data['homeTeamName'],
-      awayTeamId: data['awayTeamId'],
-      awayTeamName: data['awayTeamName'],
-      homeScore: data['homeScore'],
-      awayScore: data['awayScore'],
-      winnerId: data['winnerId'],
-      nextMatchId: data['nextMatchId'],
-      scheduledTime: data['scheduledTime'] != null
-          ? (data['scheduledTime'] as Timestamp).toDate()
+      championshipId: data['championshipId'] ?? data['championship_id'] ?? '',
+      roundIndex: data['roundIndex'] ?? data['round_index'] ?? 0,
+      matchIndex: data['matchIndex'] ?? data['match_index'] ?? 0,
+      homeTeamId: data['homeTeamId'] ?? data['home_team_id'],
+      homeTeamName: data['homeTeamName'] ?? data['home_team_name'],
+      awayTeamId: data['awayTeamId'] ?? data['away_team_id'],
+      awayTeamName: data['awayTeamName'] ?? data['away_team_name'],
+      homeScore: data['homeScore'] ?? data['home_score'],
+      awayScore: data['awayScore'] ?? data['away_score'],
+      winnerId: data['winnerId'] ?? data['winner_id'],
+      nextMatchId: data['nextMatchId'] ?? data['next_match_id'],
+      scheduledTime: scheduledTimeVal != null
+          ? (scheduledTimeVal is Timestamp 
+              ? scheduledTimeVal.toDate() 
+              : DateTime.tryParse(scheduledTimeVal.toString()))
           : null,
     );
   }
@@ -1442,10 +1584,10 @@ class Promotion {
     return Promotion(
       id: id,
       title: data['title'] ?? '',
-      imageUrl: data['imageUrl'] ?? '',
-      deepLink: data['deepLink'],
+      imageUrl: data['imageUrl'] ?? data['image_url'] ?? '',
+      deepLink: data['deepLink'] ?? data['deep_link'],
       type: data['type'] ?? 'info',
-      isActive: data['isActive'] ?? true,
+      isActive: data['isActive'] ?? data['is_active'] ?? true,
     );
   }
 }

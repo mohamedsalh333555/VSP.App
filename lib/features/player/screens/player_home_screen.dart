@@ -3,19 +3,16 @@ import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
-import 'package:image_picker/image_picker.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
+import '../../../shared/widgets/vsp_native_ad.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
-import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/widgets/promo_slider.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../shared/widgets/public_match_card.dart';
@@ -26,12 +23,13 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'stadium_details_screen.dart';
 import 'team_dashboard_screen.dart';
-import 'booked_screen.dart';
+import 'bookings_screen.dart';
 import 'champion_screen.dart';
 import 'profile_screen.dart';
 import 'championship_details_screen.dart';
 import '../widgets/filter_bottom_sheet.dart';
 import 'global_search_screen.dart';
+import 'notifications_center_screen.dart';
 
 // المفتاح العالمي للتحكم في تبويبات صفحة البطل
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
@@ -54,7 +52,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
   }
 
   void _fetchInitialData() {
-    WidgetsBinding.instance.addPostFrameCallback((_) {
+    WidgetsBinding.instance.addPostFrameCallback((_) async {
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
@@ -62,11 +60,90 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
       // Phase 4: Initializing data based on user profile
       if (auth.isAuthenticated && !auth.isOwner) {
         String? gov = auth.userModel?.governorate;
-        stadiumProvider.applyGovernorateFilter(gov);
+        
+        // CUX View Issue A: Prompt manual selection when GPS / location info is not set
+        if (gov == null || gov.isEmpty) {
+          _showLocationPickerHelper(context, auth);
+        } else {
+          stadiumProvider.applyGovernorateFilter(gov);
+        }
+
+        // Silent GPS check on startup for travelers
+        try {
+          final gpsGov = await auth.determineGPSGovernorate();
+          if (gpsGov != null && gpsGov != gov) {
+            if (mounted) {
+              _showGovernorateChangeAlert(context, auth, gpsGov, stadiumProvider);
+            }
+          }
+        } catch (e) {
+          debugPrint('Silent startup GPS check failed: $e');
+        }
       } else {
         stadiumProvider.fetchStadiums(isRefresh: true);
       }
     });
+  }
+
+  void _showGovernorateChangeAlert(BuildContext context, AuthProvider auth, String newGov, StadiumProvider stadiumProvider) {
+    showDialog(
+      context: context,
+      barrierDismissible: true,
+      builder: (ctx) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        final title = isArabic ? 'تغيير المحافظة تلقائياً 📍' : 'Change Location 📍';
+        final content = isArabic 
+            ? 'مرحباً بك في $newGov! 📍 لاحظنا أنك انتقلت. هل تود تحديث موقعك لتظهر لك الملاعب والفرق في مكانك الجديد؟'
+            : 'Welcome to $newGov! 📍 We noticed you moved. Would you like to update your location to see nearby stadiums and teams?';
+        final yesBtn = isArabic ? 'تحديث الموقع' : 'Update Location';
+        final noBtn = isArabic ? 'لا، شكراً' : 'No, thanks';
+
+        return AlertDialog(
+          backgroundColor: VSPColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: Row(
+            children: [
+              const Icon(Icons.location_on_outlined, color: VSPColors.accent, size: 28),
+              const SizedBox(width: 8),
+              Text(
+                title,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            content,
+            style: const TextStyle(color: VSPColors.textSecondary, height: 1.5, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(
+                noBtn,
+                style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.8), fontWeight: FontWeight.bold),
+              ),
+            ),
+            ElevatedButton(
+              onPressed: () async {
+                Navigator.pop(ctx);
+                await auth.updateProfile({'governorate': newGov});
+                stadiumProvider.applyGovernorateFilter(newGov);
+                if (context.mounted) {
+                  VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث موقعك إلى $newGov! ⚡' : 'Location updated to $newGov! ⚡');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.accent,
+                foregroundColor: Colors.black,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+              ),
+              child: Text(yesBtn, style: const TextStyle(fontWeight: FontWeight.bold)),
+            ),
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -103,7 +180,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           ),
           const TeamDashboardScreen(),
           ChampionScreen(key: championScreenKey),
-          const BookedScreen(),
+          const BookingsScreen(),
           const ProfileScreen(),
         ],
       ),
@@ -162,7 +239,7 @@ class ChampionshipCard extends StatelessWidget {
     final int remainingTeams = (championship.maxTeams - championship.joinedTeams.length).clamp(0, championship.maxTeams);
 
     return Container(
-      width: width ?? 320,
+      width: width ?? (MediaQuery.sizeOf(context).width - 32).clamp(250.0, 320.0),
       padding: const EdgeInsets.all(16),
       margin: margin ?? EdgeInsets.zero,
       decoration: BoxDecoration(
@@ -356,7 +433,7 @@ class _HomeContent extends StatelessWidget {
       top: true,
       bottom: false,
       child: Padding(
-        padding: const EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 16),
+        padding: const EdgeInsets.only(left: 16, right: 16, bottom: 16),
         child: Column(
           children: [
             Row(
@@ -372,14 +449,52 @@ class _HomeContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${AppLocalizations.of(context)!.hi} ${auth.userModel?.name?.split(' ').first ?? AppLocalizations.of(context)!.playerDefaultName}', style: Theme.of(context).textTheme.titleLarge),
-                      GestureDetector(
-                        onTap: () => _handleLocationPicker(context, auth),
-                        child: Row(children: [const Icon(Icons.location_on, color: VSPColors.accent, size: 14), const SizedBox(width: 4), Text(auth.userModel?.governorate ?? AppLocalizations.of(context)!.selectLocation, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, decoration: TextDecoration.underline))]),
+                      Row(
+                        children: [
+                          GestureDetector(
+                            onTap: () => _showLocationPickerHelper(context, auth),
+                            child: Row(
+                              children: [
+                                const Icon(Icons.location_on, color: VSPColors.accent, size: 14), 
+                                const SizedBox(width: 4), 
+                                Text(
+                                  auth.userModel?.governorate ?? AppLocalizations.of(context)!.selectLocation, 
+                                  style: const TextStyle(
+                                    color: VSPColors.textSecondary, 
+                                    fontWeight: FontWeight.bold, 
+                                    decoration: TextDecoration.underline
+                                  )
+                                ),
+                              ],
+                            ),
+                          ),
+                          const SizedBox(width: 8),
+                          InkWell(
+                            onTap: () async {
+                              VSPFeedback.showSuccess(context, 'جاري تحديث الموقع من الـ GPS...');
+                              final success = await auth.updateUserLocation(force: true);
+                              if (!success && context.mounted) {
+                                VSPFeedback.showError(context, 'فشل تحديد الموقع تلقائياً. يرجى الاختيار يدوياً.');
+                                _showLocationPickerHelper(context, auth);
+                              }
+                            },
+                            child: const Padding(
+                              padding: EdgeInsets.all(4.0),
+                              child: Icon(Icons.my_location, color: VSPColors.accent, size: 14),
+                            ),
+                          ),
+                        ],
                       ),
                     ],
                   ),
                 ),
-                IconButton(icon: const Icon(Icons.notifications_none, color: Colors.white), onPressed: () {}),
+                IconButton(
+                  icon: const Icon(Icons.notifications_none, color: Colors.white),
+                  onPressed: () => Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                  ),
+                ),
               ],
             ),
             const SizedBox(height: 16),
@@ -497,13 +612,78 @@ class _HomeContent extends StatelessWidget {
 
     return Column(
       children: [
+        if (provider.isGeographicFallback) ...[
+          Container(
+            width: double.infinity,
+            margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(12),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                const Icon(Icons.info_outline, color: VSPColors.accent, size: 20),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    AppLocalizations.of(context)!.geographicFallbackBanner,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 8),
+        ],
         _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums, onSeeAll: () {}),
         const SizedBox(height: 16),
         SizedBox(
           height: 240,
           child: provider.isLoading && provider.stadiums.isEmpty
               ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
-              : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: provider.stadiums.length, itemBuilder: (context, i) => Container(width: 300, margin: const EdgeInsets.only(right: 12), child: StadiumCard(stadium: provider.stadiums[i], onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => StadiumDetailsScreen(stadium: provider.stadiums[i])))))),
+              : ListView.builder(
+                  scrollDirection: Axis.horizontal, 
+                  padding: const EdgeInsets.symmetric(horizontal: 16), 
+                  itemCount: provider.stadiums.length + (provider.stadiums.length ~/ 3), 
+                  itemBuilder: (context, index) {
+                    final isAd = (index + 1) % 4 == 0;
+                    if (isAd) {
+                      return Container(
+                        width: 300, 
+                        margin: const EdgeInsets.only(right: 12), 
+                        child: const VSPNativeAd(),
+                      );
+                    }
+                    
+                    final adOffset = (index + 1) ~/ 4;
+                    final stadiumIndex = index - adOffset;
+                    
+                    if (stadiumIndex >= provider.stadiums.length) {
+                      return const SizedBox.shrink();
+                    }
+                    
+                    final stadium = provider.stadiums[stadiumIndex];
+                    return Container(
+                      width: 300, 
+                      margin: const EdgeInsets.only(right: 12), 
+                      child: StadiumCard(
+                        stadium: stadium, 
+                        onTap: () => Navigator.push(
+                          context, 
+                          MaterialPageRoute(
+                            builder: (_) => StadiumDetailsScreen(stadium: stadium),
+                          ),
+                        ),
+                      ),
+                    );
+                  },
+                ),
         ),
       ],
     );
@@ -579,10 +759,58 @@ class _HomeContent extends StatelessWidget {
     );
   }
 
-  void _handleLocationPicker(BuildContext context, AuthProvider auth) {
-    showModalBottomSheet(context: context, backgroundColor: VSPColors.surface, shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))), builder: (context) {
+}
+
+void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
+  showModalBottomSheet(
+    context: context, 
+    backgroundColor: VSPColors.surface, 
+    shape: const RoundedRectangleBorder(
+      borderRadius: BorderRadius.vertical(top: Radius.circular(20))
+    ), 
+    builder: (context) {
       final governorates = EgyptGovernorates.allGovernorates;
-      return Container(padding: const EdgeInsets.all(16), child: Column(mainAxisSize: MainAxisSize.min, children: [Text(AppLocalizations.of(context)!.selectLocation, style: Theme.of(context).textTheme.titleLarge), const SizedBox(height: 16), Expanded(child: ListView.builder(itemCount: governorates.length, itemBuilder: (context, index) { final gov = governorates[index]; final isSelected = auth.userModel?.governorate == gov; return ListTile(leading: Icon(Icons.location_city, color: isSelected ? VSPColors.accent : VSPColors.textSecondary), title: Text(gov, style: TextStyle(color: isSelected ? VSPColors.accent : Colors.white, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)), trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null, onTap: () { auth.updateProfile({'governorate': gov}); context.read<StadiumProvider>().applyGovernorateFilter(gov); Navigator.pop(context); }); }))]));
-    });
-  }
+      return Container(
+        padding: const EdgeInsets.all(16), 
+        child: Column(
+          mainAxisSize: MainAxisSize.min, 
+          children: [
+            Text(
+              AppLocalizations.of(context)!.selectLocation, 
+              style: Theme.of(context).textTheme.titleLarge
+            ), 
+            const SizedBox(height: 16), 
+            Expanded(
+              child: ListView.builder(
+                itemCount: governorates.length, 
+                itemBuilder: (context, index) { 
+                  final gov = governorates[index]; 
+                  final isSelected = auth.userModel?.governorate == gov; 
+                  return ListTile(
+                    leading: Icon(
+                      Icons.location_city, 
+                      color: isSelected ? VSPColors.accent : VSPColors.textSecondary
+                    ), 
+                    title: Text(
+                      gov, 
+                      style: TextStyle(
+                        color: isSelected ? VSPColors.accent : Colors.white, 
+                        fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
+                      )
+                    ), 
+                    trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null, 
+                    onTap: () { 
+                      auth.updateProfile({'governorate': gov}); 
+                      context.read<StadiumProvider>().applyGovernorateFilter(gov); 
+                      Navigator.pop(context); 
+                    }
+                  ); 
+                }
+              )
+            )
+          ]
+        )
+      );
+    }
+  );
 }

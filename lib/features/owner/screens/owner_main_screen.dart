@@ -1,15 +1,17 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'dart:async';
+import 'package:provider/provider.dart';
+import 'package:confetti/confetti.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
 import 'create_tournament_wizard.dart';
-import 'owner_booked_screen.dart';
+import 'owner_bookings_screen.dart';
+import 'owner_inbox_screen.dart';
 
 class OwnerMainScreen extends StatefulWidget {
   const OwnerMainScreen({super.key});
@@ -20,87 +22,68 @@ class OwnerMainScreen extends StatefulWidget {
 
 class _OwnerMainScreenState extends State<OwnerMainScreen> {
   int _currentIndex = 0;
-  StreamSubscription? _stadiumListener;
-  final Map<String, bool> _lastVerifiedStatus = {};
   final ValueNotifier<bool> _showTournamentFAB = ValueNotifier<bool>(false);
+  late final ConfettiController _confettiController;
+  StreamSubscription? _celebrationSubscription;
 
   @override
   void initState() {
     super.initState();
-    _startVerificationListener();
+    _confettiController = ConfettiController(duration: const Duration(seconds: 5));
+    _startCelebrationListener();
   }
 
   @override
   void dispose() {
-    _stadiumListener?.cancel();
+    _confettiController.dispose();
+    _celebrationSubscription?.cancel();
     super.dispose();
   }
 
-  void _startVerificationListener() {
-    final user = FirebaseAuth.instance.currentUser;
-    if (user == null) return;
-
-    _stadiumListener = FirebaseFirestore.instance
-        .collection('stadiums')
-        .where('ownerId', isEqualTo: user.uid)
-        .snapshots()
-        .listen((snapshot) {
-      for (var doc in snapshot.docs) {
-        final String stadiumId = doc.id;
-        final String stadiumName = doc['name'] ?? 'Your stadium';
-        final bool isVerified = doc['isVerified'] ?? false;
-
-        if (_lastVerifiedStatus.containsKey(stadiumId)) {
-          final bool wasVerified = _lastVerifiedStatus[stadiumId]!;
-          if (!wasVerified && isVerified) {
-            _showApprovalNotification(stadiumName);
-          }
-        }
-        
-        _lastVerifiedStatus[stadiumId] = isVerified;
-      }
+  void _startCelebrationListener() {
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      _celebrationSubscription = authProvider.celebrationEvents.listen((_) {
+        _triggerCelebration();
+      });
     });
   }
 
-  void _showApprovalNotification(String name) {
+  void _triggerCelebration() {
     if (!mounted) return;
-    final l10n = AppLocalizations.of(context)!;
+    _confettiController.play();
     
-    ScaffoldMessenger.of(context).clearSnackBars();
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Row(
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        ),
+        title: const Row(
           children: [
-            const Icon(Icons.verified, color: Colors.black, size: 28),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   Text(
-                    l10n.stadiumApprovedTitle,
-                    style: Theme.of(context).textTheme.titleSmall?.copyWith(color: Colors.black, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    l10n.stadiumApprovedSubtitle(name),
-                    style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.black.withValues(alpha: 0.8)),
-                  ),
-                ],
-              ),
+            Icon(Icons.verified, color: VSPColors.accent, size: 28),
+            SizedBox(width: 12),
+            Text(
+              "Account Verified! 🎉",
+              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
             ),
           ],
         ),
-        backgroundColor: VSPColors.accent,
-        behavior: SnackBarBehavior.floating,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-        margin: const EdgeInsets.fromLTRB(VSPSpacing.md, 0, VSPSpacing.md, VSPSpacing.xl),
-        duration: const Duration(seconds: 5),
-        action: SnackBarAction(
-          label: l10n.dismissBtn,
-          textColor: Colors.black.withValues(alpha: 0.5),
-          onPressed: () {},
+        content: const Text(
+          "Your account has been verified! 🎉 Your stadiums are now live and visible to all players!",
+          style: TextStyle(color: VSPColors.textSecondary),
         ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              _confettiController.stop();
+              Navigator.of(ctx).pop();
+            },
+            child: const Text('Great!', style: TextStyle(color: VSPColors.accent)),
+          ),
+        ],
       ),
     );
   }
@@ -116,26 +99,48 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final auth = Provider.of<AuthProvider>(context);
+    final isBlocked = auth.userModel?.isBlocked ?? false;
     
     return Scaffold(
       extendBody: true,
       backgroundColor: VSPColors.background,
-      body: IndexedStack(
-        index: _currentIndex,
+      body: Stack(
+        alignment: Alignment.center,
         children: [
-          const OwnerDashboardScreen(),
-          OwnerCupScreen(onTournamentListChanged: (isEmpty) {
-            _showTournamentFAB.value = !isEmpty;
-          }),
-          const OwnerBookedScreen(),
-          const OwnerProfileScreen(),
+          IndexedStack(
+            index: _currentIndex,
+            children: [
+              const OwnerDashboardScreen(),
+              OwnerCupScreen(onTournamentListChanged: (isEmpty) {
+                _showTournamentFAB.value = !isEmpty;
+              }),
+              const OwnerInboxScreen(), // New Chat tab
+              const OwnerBookingsScreen(),
+              const OwnerProfileScreen(),
+            ],
+          ),
+          Align(
+            alignment: Alignment.topCenter,
+            child: ConfettiWidget(
+              confettiController: _confettiController,
+              blastDirectionality: BlastDirectionality.explosive,
+              shouldLoop: false,
+              colors: const [
+                VSPColors.accent,
+                Colors.yellow,
+                Colors.white,
+                Colors.blue,
+              ],
+            ),
+          ),
         ],
       ),
 
       floatingActionButton: ValueListenableBuilder<bool>(
         valueListenable: _showTournamentFAB,
         builder: (context, showTournamentFAB, child) {
-          final bool isVisible = _currentIndex == 1 && showTournamentFAB;
+          final bool isVisible = _currentIndex == 1 && showTournamentFAB && !isBlocked;
           
           return AnimatedScale(
             scale: isVisible ? 1.0 : 0.0,

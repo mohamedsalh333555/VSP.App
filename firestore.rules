@@ -26,6 +26,11 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().role == 'owner';
     }
 
+    function isUserActive() {
+      // DEPRECATED: isSuspended checks are deprecated under the 100% free model.
+      return isAuthenticated() && getUserData().get('isBlocked', false) == false;
+    }
+
     // Checks if a set of protected fields are NOT being touched
     function isNotModifying(fields) {
       return !request.resource.data.diff(resource.data).affectedKeys().hasAny(fields);
@@ -50,13 +55,11 @@ service cloud.firestore {
       allow create: if isAuthenticated()
                     && isOwner(userId)
                     && request.resource.data.role in ['player', 'owner']
-                    && request.resource.data.commissionDebt == 0
                     && request.resource.data.walletBalance == 0
-                    && request.resource.data.isSuspended == false
                     && request.resource.data.isBlocked == false;
 
       // CRITICAL: Users CAN update their own profile, but CANNOT elevate their
-      // role, inflate their wallet, bypass suspension, or manipulate stats.
+      // role, inflate their wallet, bypass block, or manipulate stats.
       // Admin can update anything (e.g., via admin panel/Cloud Functions).
       allow update: if isAdmin() || (
         isAuthenticated()
@@ -64,14 +67,11 @@ service cloud.firestore {
         && isNotModifying([
           'role',
           'walletBalance',
-          'commissionDebt',
           'isBlocked',
-          'isSuspended',
           'isIdentityVerified',
           'points',
           'uid',
           'email',
-          'verificationDocuments',
           'championshipsWon'
         ])
       );
@@ -81,7 +81,7 @@ service cloud.firestore {
       // ── Notifications (private user sub-collection) ──
       match /notifications/{notifId} {
         allow read:          if isAuthenticated() && isOwner(userId);
-        allow create:        if isAuthenticated(); // Any user can push a notif to another user
+        allow create:        if isAuthenticated() && request.resource.data.get('senderId', '') == request.auth.uid;
         allow update, delete: if isAuthenticated() && isOwner(userId);
       }
     }
@@ -96,12 +96,14 @@ service cloud.firestore {
 
       // CRITICAL: Only users with role == 'owner' can list a new stadium.
       allow create: if isStadiumOwnerRole()
+                    && isUserActive()
                     && request.resource.data.ownerId == request.auth.uid;
 
       // CRITICAL: Owners can update their stadium details, but they CANNOT
       // verify themselves, change ownership, or manipulate ratings.
       allow update: if isAdmin() || (
         isAuthenticated()
+        && isUserActive()
         && resource.data.get('ownerId', '') == request.auth.uid
         && isNotModifying(['isVerified', 'isBlocked', 'ownerId', 'rating', 'reviewsCount'])
       ) || (
@@ -121,15 +123,10 @@ service cloud.firestore {
                               || (isAuthenticated() && resource.data.userId == request.auth.uid);
       }
 
-      // ── Booked Slots sub-collection ──
-      match /booked_slots/{slotId} {
+      // ── Bookings By Day sub-collection ──
+      match /bookings_by_day/{dayId} {
         allow read: if true;
-        allow create: if isAuthenticated();
-        allow update: if isAuthenticated()
-                      && (resource.data.get('userId', '') == request.auth.uid
-                          || (isStadiumOwnerRole()
-                              && get(/databases/$(database)/documents/stadiums/$(stadiumId))
-                                 .data.ownerId == request.auth.uid));
+        allow create, update: if isAuthenticated();
         allow delete: if isAdmin()
                       || (isStadiumOwnerRole()
                           && get(/databases/$(database)/documents/stadiums/$(stadiumId))
@@ -226,6 +223,7 @@ service cloud.firestore {
 
       // Only stadium owners can create championships
       allow create: if isStadiumOwnerRole()
+                    && isUserActive()
                     && request.resource.data.ownerId == request.auth.uid;
 
       // Layered update permissions:
@@ -233,6 +231,7 @@ service cloud.firestore {
 
         // 1️⃣ The championship Owner has full edit rights
         || (isAuthenticated()
+            && isUserActive()
             && resource.data.ownerId == request.auth.uid)
 
         // 2️⃣ Team captains can only add their team to joinedTeams
@@ -253,6 +252,7 @@ service cloud.firestore {
 
       allow create: if isAdmin()
                     || (isAuthenticated()
+                        && isUserActive()
                         && exists(/databases/$(database)/documents/championships/$(request.resource.data.championshipId))
                         && get(/databases/$(database)/documents/championships/$(request.resource.data.championshipId))
                              .data.ownerId == request.auth.uid);
@@ -261,6 +261,7 @@ service cloud.firestore {
 
       allow update: if isAdmin()
                     || (isAuthenticated()
+                        && isUserActive()
                         && exists(/databases/$(database)/documents/championships/$(resource.data.championshipId))
                         && get(/databases/$(database)/documents/championships/$(resource.data.championshipId))
                              .data.ownerId == request.auth.uid);
@@ -272,7 +273,7 @@ service cloud.firestore {
     // ══════════════════════════════════════════════════════════════════
     match /notifications/{notifId} {
       allow read:   if isAuthenticated() && resource.data.userId == request.auth.uid;
-      allow create: if isAuthenticated();
+      allow create: if isAuthenticated() && request.resource.data.get('senderId', '') == request.auth.uid;
       allow update: if isAuthenticated() && resource.data.userId == request.auth.uid;
       allow delete: if isAuthenticated() && resource.data.userId == request.auth.uid;
     }

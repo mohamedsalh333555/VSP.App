@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import '../tokens/vsp_tokens.dart';
 
 class VSPSectionTitle extends StatelessWidget {
   final String text;

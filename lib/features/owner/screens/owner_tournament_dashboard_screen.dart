@@ -1,7 +1,7 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'dart:math';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -29,8 +29,323 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     _currentChampionship = widget.championship;
   }
 
-  // ðŸŸ¢ UPDATED: Generate Fixtures Logic (with Force Start option)
+  // 🟢 Fetch teams first and show bracket preview popup
   Future<void> _handleStartTournament() async {
+    if (_currentChampionship.joinedTeams.isEmpty) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(content: Text(AppLocalizations.of(context)!.noTeamsFound('')), backgroundColor: VSPColors.error),
+      );
+      return;
+    }
+
+    setState(() => _isLoading = true);
+    try {
+      final teams = await TournamentRepository().getTeamsByIds(_currentChampionship.joinedTeams);
+      setState(() => _isLoading = false);
+      if (!mounted) return;
+
+      // Audit payments
+      final unpaidTeams = teams.where((t) => !_currentChampionship.paidTeams.contains(t.id)).toList();
+      if (unpaidTeams.isNotEmpty) {
+        final unpaidNames = unpaidTeams.map((t) => t.name).join(', ');
+        final proceed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) {
+            final l10n = AppLocalizations.of(context)!;
+            return AlertDialog(
+              backgroundColor: VSPColors.surface,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+              title: Text(l10n.warning, style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold)),
+              content: Text(
+                l10n.unpaidTeamsWarning(unpaidNames),
+                style: const TextStyle(color: VSPColors.textSecondary),
+              ),
+              actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+              actions: [
+                Row(
+                  children: [
+                    Expanded(
+                      child: PrimaryButton(
+                        text: l10n.cancel,
+                        height: 44,
+                        color: VSPColors.surfaceAlt,
+                        textColor: VSPColors.textPrimary,
+                        onPressed: () => Navigator.pop(ctx, false),
+                      ),
+                    ),
+                    const SizedBox(width: VSPSpacing.md),
+                    Expanded(
+                      child: PrimaryButton(
+                        text: l10n.proceedAnyway,
+                        height: 44,
+                        color: VSPColors.warning,
+                        textColor: Colors.black,
+                        onPressed: () => Navigator.pop(ctx, true),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            );
+          },
+        );
+        if (proceed != true) return;
+      }
+
+      if (mounted) {
+        _showBracketPreviewDialog(context, teams);
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+        );
+      }
+    }
+  }
+
+  // 🟢 Show the Bracket Tree popup
+  void _showBracketPreviewDialog(BuildContext context, List<Team> teams) {
+    int totalTeams = teams.length;
+    if (totalTeams < 2) return;
+
+    // 1. Calculate power-of-2 details matching generateFixtures in TournamentRepository
+    int targetP2 = 1;
+    while (targetP2 * 2 <= totalTeams) {
+      targetP2 *= 2;
+    }
+    int totalBracketRounds = (log(targetP2) / log(2)).round();
+    int numOpeningMatches = totalTeams - targetP2;
+    int numTeamsR0 = numOpeningMatches * 2;
+
+    // Build the visual rounds list: each element is a list of matches (each match is a Map containing 'home' and 'away')
+    List<List<Map<String, String>>> rounds = [];
+
+    // Let's create an ordered copy of teams to pair sequentially (no need to shuffle for visual preview)
+    final previewTeams = List<Team>.from(teams);
+
+    // 2. Generate Opening Round (R0) if any
+    if (numOpeningMatches > 0) {
+      List<Map<String, String>> r0 = [];
+      for (int m = 0; m < numOpeningMatches; m++) {
+        String homeName = previewTeams[m * 2].name;
+        String awayName = previewTeams[m * 2 + 1].name;
+        r0.add({'home': homeName, 'away': awayName});
+      }
+      rounds.add(r0);
+    }
+
+    // 3. Generate main bracket rounds (R1...Final)
+    // Round 1 (Power of 2 round)
+    List<Map<String, String>> r1 = [];
+    int matchCountR1 = targetP2 ~/ 2;
+    for (int m = 0; m < matchCountR1; m++) {
+      String homeName = '';
+      String awayName = '';
+
+      // Home Slot
+      int slotH = m * 2;
+      if (slotH < numOpeningMatches) {
+        homeName = 'فائز مـ ${slotH + 1} (R0)';
+      } else {
+        int byeIndex = slotH - numOpeningMatches + numTeamsR0;
+        if (byeIndex < totalTeams) {
+          homeName = previewTeams[byeIndex].name;
+        } else {
+          homeName = 'BYE';
+        }
+      }
+
+      // Away Slot
+      int slotA = m * 2 + 1;
+      if (slotA < numOpeningMatches) {
+        awayName = 'فائز مـ ${slotA + 1} (R0)';
+      } else {
+        int byeIndex = slotA - numOpeningMatches + numTeamsR0;
+        if (byeIndex < totalTeams) {
+          awayName = previewTeams[byeIndex].name;
+        } else {
+          awayName = 'BYE';
+        }
+      }
+
+      r1.add({'home': homeName, 'away': awayName});
+    }
+    rounds.add(r1);
+
+    // Subsequent Rounds (Round 2 to Final)
+    for (int r = 2; r <= totalBracketRounds; r++) {
+      List<Map<String, String>> rx = [];
+      int matchCount = targetP2 ~/ pow(2, r);
+      for (int m = 0; m < matchCount; m++) {
+        rx.add({
+          'home': 'فائز مـ ${m * 2 + 1}',
+          'away': 'فائز مـ ${m * 2 + 2}',
+        });
+      }
+      rounds.add(rx);
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) {
+        final l10n = AppLocalizations.of(context)!;
+        return AlertDialog(
+          backgroundColor: VSPColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          insetPadding: const EdgeInsets.all(16),
+          title: Text(
+            l10n.tournamentBrackets,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: MediaQuery.of(context).size.width * 0.9,
+            height: 350,
+            child: SingleChildScrollView(
+              scrollDirection: Axis.horizontal,
+              physics: const BouncingScrollPhysics(),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  ...rounds.asMap().entries.map((entry) {
+                    int roundIdx = entry.key;
+                    List<Map<String, String>> roundMatches = entry.value;
+                    
+                    Widget roundColumn = SizedBox(
+                      width: 160,
+                      height: 350,
+                      child: Column(
+                        children: [
+                          Padding(
+                            padding: const EdgeInsets.symmetric(vertical: 4.0),
+                            child: Text(
+                              roundIdx == 0 && numOpeningMatches > 0
+                                  ? 'جولة تمهيدية'
+                                  : (roundIdx == rounds.length - 1 ? 'النهائي' : 'جولة ${numOpeningMatches > 0 ? roundIdx : roundIdx + 1}'),
+                              style: const TextStyle(
+                                color: VSPColors.accent,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 12,
+                              ),
+                            ),
+                          ),
+                          Expanded(
+                            child: SingleChildScrollView(
+                              physics: const BouncingScrollPhysics(),
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: roundMatches.map((m) {
+                                  return Container(
+                                    width: 160,
+                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: VSPColors.surfaceAlt,
+                                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                                      border: Border.all(color: VSPColors.divider),
+                                    ),
+                                    child: Column(
+                                      crossAxisAlignment: CrossAxisAlignment.start,
+                                      children: [
+                                        Text(m['home']!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                        const Divider(height: 10, color: Colors.white10),
+                                        Text(m['away']!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      ],
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                    );
+
+                    return Row(
+                      children: [
+                        roundColumn,
+                        const Icon(Icons.arrow_forward_ios_rounded, color: VSPColors.accent, size: 14),
+                      ],
+                    );
+                  }),
+
+                  // Column for Trophy
+                  SizedBox(
+                    width: 150,
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Container(
+                          width: 140,
+                          margin: const EdgeInsets.all(8),
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent.withValues(alpha: 0.1),
+                            borderRadius: BorderRadius.circular(VSPRadius.lg),
+                            border: Border.all(color: VSPColors.accent, width: 1.5),
+                          ),
+                          child: const Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(Icons.emoji_events, color: VSPColors.accent, size: 32),
+                              SizedBox(height: 8),
+                              Text(
+                                '🏆 البطل',
+                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VSPColors.accent),
+                              ),
+                              SizedBox(height: 6),
+                              Text(
+                                'الفائز بالنهائي',
+                                textAlign: TextAlign.center,
+                                style: TextStyle(fontSize: 10, color: Colors.white70),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+          actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+          actions: [
+            Row(
+              children: [
+                Expanded(
+                  child: PrimaryButton(
+                    text: l10n.cancel,
+                    height: 44,
+                    color: VSPColors.surfaceAlt,
+                    textColor: VSPColors.textPrimary,
+                    onPressed: () => Navigator.pop(ctx),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: PrimaryButton(
+                    text: l10n.generateDrawStart.split(' ').first,
+                    height: 44,
+                    onPressed: () {
+                      Navigator.pop(ctx);
+                      _executeStartTournament();
+                    },
+                  ),
+                ),
+              ],
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // 🟢 Run the actual start tournament and generate matches execution
+  Future<void> _executeStartTournament() async {
     final teamCount = _currentChampionship.joinedTeams.length;
 
     // If teams are less than maxTeams, show force start confirmation
@@ -331,7 +646,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),

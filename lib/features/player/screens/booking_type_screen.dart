@@ -5,7 +5,7 @@ import '../../../shared/widgets/primary_button.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
@@ -28,11 +28,11 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
   bool _isLoadingTeam = true;
   bool _hasTeam = false;
   int _teamPlayersCount = 0;
+  int _teamFairPlayScore = 100;
 
   @override
   void initState() {
     super.initState();
-    // Use Future.microtask to access Provider safely during init
     Future.microtask(() {
       if (mounted && context.mounted) {
         context.read<BookingProvider>().clearDraft();
@@ -46,11 +46,12 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     final uid = auth.currentUser?.uid;
     
     if (uid != null) {
-      final team = await DatabaseService().getUserTeam(uid);
+      final team = await TeamRepository().getUserTeam(uid);
       if (!context.mounted) return;
       setState(() {
         _hasTeam = team != null;
         _teamPlayersCount = team?.currentPlayers ?? 0;
+        _teamFairPlayScore = team?.fairPlayScore ?? 100;
         _isLoadingTeam = false;
       });
     } else {
@@ -60,6 +61,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -71,14 +73,14 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       body: Column(
         children: [
           Expanded(
-            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+            child: SingleChildScrollView(
               padding: const EdgeInsets.all(16.0),
               child: Column(
                 children: [
@@ -92,10 +94,15 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                   const SizedBox(height: VSPSpacing.md),
                   _buildBookingOption(
                     context,
-                    id: 'Find Players',
-                    title: AppLocalizations.of(context)!.findPlayers,
-                    subtitle: AppLocalizations.of(context)!.findPlayersSubtitle,
-                    imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0596c20?w=800&q=80',
+                    id: _hasTeam ? 'Find Players' : 'Create Team to Find Players',
+                    title: _hasTeam 
+                        ? AppLocalizations.of(context)!.findPlayers 
+                        : (isArabic ? 'أنشئ فريقاً لتجد لاعبين' : 'Create Team to Find Players'),
+                    subtitle: _hasTeam 
+                        ? AppLocalizations.of(context)!.findPlayersSubtitle 
+                        : (isArabic ? 'أنشئ فريقاً يضم 5 لاعبين على الأقل لتتمكن من اللعب العام.' : 'Create a team with 5+ players to unlock public matchmaking.'),
+                    imageUrl: 'https://images.unsplash.com/photo-1522778119026-d647f0565c60?w=800&q=80',
+                    isDisabled: !_hasTeam,
                   ),
                   const SizedBox(height: VSPSpacing.md),
                   _buildChallengeBookingOption(context),
@@ -103,7 +110,6 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
               ),
             ),
           ),
-          // Continue Button
           Container(
             padding: EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.lg, VSPSpacing.lg, MediaQuery.of(context).padding.bottom + 24),
             decoration: const BoxDecoration(
@@ -125,23 +131,20 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
 
   void _handleContinue() async {
     if (_selectedType == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // GUIDED FLOW: If they want to challenge but team is invalid, help them fix it
     if (_selectedType == 'Create Team to Compete' || _selectedType == 'Team Incomplete' || _selectedType == 'Challenge Match') {
       if (!_hasTeam || _teamPlayersCount < 5) {
-        // Navigation into team screen to fix it
         await Navigator.push(
           context,
           MaterialPageRoute(builder: (_) => const MyTeamScreen()),
         );
-        
-        // Re-check after return
+
         await _checkUserTeam();
-        
-        // If still invalid, stop here (they probably didn't finish)
+
         if (!_hasTeam || _teamPlayersCount < 5) {
           if (!mounted) return;
-           ScaffoldMessenger.of(context).showSnackBar(
+          ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(
               content: Text(AppLocalizations.of(context)!.teamIncompleteError),
               backgroundColor: VSPColors.warning,
@@ -149,16 +152,41 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
           );
           return;
         }
-        
-        // If NOW valid, update selection to Challenge and continue automatically!
+
         _selectedType = 'Challenge Match';
       }
     }
 
-    // Map selection ID to correct BookingType
-    // ... continues with the rest of the method below ...
+    if (_selectedType == 'Fair Play Banned') {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(isArabic 
+              ? 'نقاط اللعب النظيف لفريقك أقل من 40%. لا يمكن المشاركة في تحديات الترتيب.' 
+              : 'Your team Fair Play is below 40%. Cannot participate in ranked challenges.'),
+          backgroundColor: const Color(0xFFB71C1C),
+        ),
+      );
+      return;
+    }
 
-    // Map selection ID to correct BookingType
+    if (_selectedType == 'Find Players') {
+      if (!_hasTeam) {
+        if (!mounted) return;
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic 
+                ? 'يجب أن تمتلك فريقاً أولاً لتتمكن من فتح حجز تجميعي.' 
+                : 'You must have a team to open a group booking.'),
+            backgroundColor: VSPColors.warning,
+          ),
+        );
+        return;
+      }
+
+      final confirmed = await _showFindPlayersWarningDialog();
+      if (!confirmed || !mounted) return;
+    }
+
     BookingType type = BookingType.personal;
     String typeString = 'Personal';
 
@@ -170,9 +198,6 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       typeString = 'Challenge';
     }
 
-
-    // CRITICAL FIX: Use setDraft (not updateDraft) to create a new draft skeleton
-    // with all required stadium/owner fields. updateDraft() is a no-op when draft is null.
     if (!mounted) return;
     final bookingProvider = context.read<BookingProvider>();
     final authProvider = context.read<app_auth.AuthProvider>();
@@ -183,12 +208,13 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       ownerId: widget.stadium.ownerId,
       hostName: authProvider.userModel?.name,
       hostAvatarUrl: authProvider.userModel?.profileImageUrl,
-      startTime: DateTime.now(), // placeholder - overwritten in BookingConfirmationScreen
-      endTime: DateTime.now().add(const Duration(hours: 1)), // placeholder
+      startTime: DateTime.now(),
+      endTime: DateTime.now().add(const Duration(hours: 1)),
       bookingType: type,
-      isPrivate: _selectedType != 'Find Players', // public only for team/find-players
-      rentBall: false, // user sets this in confirmation
-      totalPrice: 0, // computed in confirmation
+      isPrivate: _selectedType != 'Find Players',
+      rentBall: false,
+      totalPrice: 0,
+      needsDeposit: widget.stadium.needsDeposit,
     ));
 
     if (type == BookingType.challenge) {
@@ -216,143 +242,213 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     }
   }
 
-  Widget _buildBookingOption(
-    BuildContext context, {
+  Future<bool> _showFindPlayersWarningDialog() async {
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Dialog(
+        backgroundColor: Colors.transparent,
+        child: Container(
+          decoration: BoxDecoration(
+            color: const Color(0xFF0D0D0D),
+            borderRadius: BorderRadius.circular(24),
+            border: Border.all(color: const Color(0xFFFF6B00)),
+          ),
+          child: Padding(
+            padding: const EdgeInsets.all(28),
+            child: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B00), size: 38),
+                const SizedBox(height: 20),
+                const Text(
+                  'تنبيه مهم قبل المتابعة',
+                  style: TextStyle(color: Color(0xFFFF6B00), fontSize: 20, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 20),
+                _warningBullet(
+                  icon: Icons.money_off_rounded,
+                  text: 'المنصة لا تضمن دفع حصص اللاعبين الغائبين (No-Show). المسؤولية المالية الكاملة تقع على عاتق صاحب الحجز.',
+                ),
+                const SizedBox(height: 28),
+                Row(
+                  children: [
+                    Expanded(
+                      child: OutlinedButton(
+                        onPressed: () => Navigator.of(ctx).pop(false),
+                        child: const Text('رجوع', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: ElevatedButton(
+                        onPressed: () => Navigator.of(ctx).pop(true),
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFFFF6B00)),
+                        child: const Text('موافق', style: TextStyle(color: Colors.white)),
+                      ),
+                    ),
+                  ],
+                ),
+              ],
+            ),
+          ),
+        ),
+      ),
+    );
+    return result ?? false;
+  }
+
+  Widget _warningBullet({required IconData icon, required String text}) {
+    return Row(
+      children: [
+        Icon(icon, color: const Color(0xFFFF6B00)),
+        const SizedBox(width: 12),
+        Expanded(child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 13))),
+      ],
+    );
+  }
+
+  Widget _buildBookingOption(BuildContext context, {
     required String id,
     required String title,
     required String subtitle,
     required String imageUrl,
     IconData? icon,
+    bool isDisabled = false,
   }) {
-    final bool isSelected = _selectedType == id;
+    final isSelected = _selectedType == id;
 
-    return GestureDetector(
-      onTap: () {
-        setState(() {
-          _selectedType = id;
-        });
-      },
-      child: Container(
-        width: double.infinity,
-        height: 180,
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(
-            color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.2),
-            width: isSelected ? 2 : 1.5,
+    return Opacity(
+      opacity: isDisabled ? 0.6 : 1.0,
+      child: GestureDetector(
+        onTap: isDisabled ? null : () => setState(() => _selectedType = id),
+        child: Container(
+          width: double.infinity,
+          height: 180,
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            border: Border.all(
+              color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.2),
+              width: isSelected ? 2 : 1.5,
+            ),
           ),
-        ),
-        child: ClipRRect(
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-          child: Stack(
-            children: [
-              Positioned.fill(
-                child: ColorFiltered(
-                  colorFilter: ColorFilter.mode(
-                    VSPColors.background.withValues(alpha: isSelected ? 0.4 : 0.6),
-                    BlendMode.darken,
-                  ),
-                  child: Image.network(
-                    imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(color: VSPColors.surface),
-                  ),
-                ),
-              ),
-              Positioned.fill(
-                child: Container(
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.bottomCenter,
-                      end: Alignment.topCenter,
-                      colors: [
-                        VSPColors.background.withValues(alpha: 0.9),
-                        VSPColors.background.withValues(alpha: 0),
-                      ],
+          child: ClipRRect(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            child: Stack(
+              children: [
+                Positioned.fill(
+                  child: ColorFiltered(
+                    colorFilter: ColorFilter.mode(
+                      VSPColors.background.withValues(alpha: isSelected ? 0.4 : 0.6),
+                      BlendMode.darken,
                     ),
+                    child: Image.network(imageUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => Container(color: VSPColors.surface)),
                   ),
                 ),
-              ),
-              Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.end,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Row(
-                          children: [
-                            if (icon != null) ...[
-                              Icon(icon, color: VSPColors.accent, size: 24),
-                              const SizedBox(width: VSPSpacing.sm),
+                Padding(
+                  padding: const EdgeInsets.all(20.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.end,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              if (icon != null) Icon(icon, color: VSPColors.accent),
+                              const SizedBox(width: 8),
+                              Text(title, style: Theme.of(context).textTheme.displaySmall),
                             ],
-                            Text(
-                              title,
-                              style: Theme.of(context).textTheme.displaySmall,
-                            ),
-                          ],
-                        ),
-                        if (isSelected)
-                          const CircleAvatar(
-                            radius: 12,
-                            backgroundColor: VSPColors.accent,
-                            child: Icon(Icons.check, size: 16, color: VSPColors.background),
                           ),
-                      ],
-                    ),
-                    const SizedBox(height: VSPSpacing.xs),
-                    Text(
-                      subtitle,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textPrimary.withValues(alpha: 0.7)),
-                    ),
-                  ],
+                          if (isSelected) const Icon(Icons.check_circle, color: VSPColors.accent),
+                        ],
+                      ),
+                      const SizedBox(height: 4),
+                      Text(subtitle, style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),
     );
   }
+
   Widget _buildChallengeBookingOption(BuildContext context) {
     if (_isLoadingTeam) {
-      return const Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2.5));
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
     }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     if (!_hasTeam) {
       return _buildBookingOption(
         context,
         id: 'Create Team to Compete',
         title: AppLocalizations.of(context)!.createTeamToCompete,
-        subtitle: 'Create a team with at least 5 players to unlock Ranked Challenges.',
+        subtitle: isArabic ? 'أنشئ فريقاً يضم 5 لاعبين على الأقل لتتمكن من اللعب التنافسي.' : 'Create a team with 5+ players to compete.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.lock_outline,
       );
     }
     
     if (_teamPlayersCount < 5) {
-      final missing = 5 - _teamPlayersCount;
       return _buildBookingOption(
         context,
         id: 'Team Incomplete',
         title: AppLocalizations.of(context)!.teamIncomplete,
-        subtitle: 'Missing $missing more player${missing > 1 ? 's' : ''} to unlock Ranked Challenges.',
+        subtitle: isArabic ? 'الفريق غير مكتمل، تحتاج لـ 5 لاعبين على الأقل.' : 'Team is incomplete, need 5+ players.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
         icon: Icons.warning_amber_rounded,
       );
     }
 
+    if (_teamFairPlayScore < 40) {
+      return _buildFairPlayBannedOption(context);
+    }
+
     return _buildBookingOption(
-        context,
-        id: 'Challenge Match',
-        title: AppLocalizations.of(context)!.challengeMatch,
-        subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle,
-        imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
-        icon: Icons.emoji_events_outlined,
+      context,
+      id: 'Challenge Match',
+      title: AppLocalizations.of(context)!.challengeMatch,
+      subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle,
+      imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
+      icon: Icons.emoji_events_outlined,
+    );
+  }
+
+  Widget _buildFairPlayBannedOption(BuildContext context) {
+    final bool isSelected = _selectedType == 'Fair Play Banned';
+    return GestureDetector(
+      onTap: () => setState(() => _selectedType = 'Fair Play Banned'),
+      child: Container(
+        width: double.infinity,
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: VSPColors.error.withValues(alpha: 0.08),
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(color: isSelected ? VSPColors.error : VSPColors.error.withValues(alpha: 0.4)),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Row(
+              children: [
+                Icon(Icons.gavel_rounded, color: VSPColors.error),
+                SizedBox(width: 10),
+                Text('محظور من التحديات المصنّفة', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+              ],
+            ),
+            const SizedBox(height: 10),
+            Text('نقاط اللعب النظيف لفريقك:  / 100', style: TextStyle(color: VSPColors.error.withValues(alpha: 0.8))),
+          ],
+        ),
+      ),
     );
   }
 }
+
 

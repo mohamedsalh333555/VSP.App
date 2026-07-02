@@ -8,7 +8,6 @@ import '../../player/screens/profile_subscreens/privacy_policy_screen.dart';
 import '../../player/screens/profile_subscreens/language_screen.dart';
 import '../../player/screens/profile_subscreens/help_center_screen.dart';
 import '../../player/screens/profile_subscreens/payment_methods_screen.dart';
-import '../../auth/screens/welcome_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'owner_account_management_screen.dart';
 import '../../../core/config/app_config.dart';
@@ -163,13 +162,6 @@ class OwnerProfileScreen extends StatelessWidget {
                 onTap: () async {
                   await Provider.of<AuthProvider>(context, listen: false)
                       .signOut();
-                  if (context.mounted) {
-                    Navigator.of(context).pushAndRemoveUntil(
-                      MaterialPageRoute(
-                          builder: (_) => const WelcomeScreen()),
-                      (route) => false,
-                    );
-                  }
                 },
               ),
             ),

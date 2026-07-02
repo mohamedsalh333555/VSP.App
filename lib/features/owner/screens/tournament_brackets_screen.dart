@@ -55,6 +55,8 @@ class TournamentBracketsScreen extends StatelessWidget {
           
           // Sort rounds (High index = Early rounds, Low index = Final)
           final sortedRoundIndices = rounds.keys.toList()..sort((a, b) => b.compareTo(a));
+          final maxRoundIdx = sortedRoundIndices.isNotEmpty ? sortedRoundIndices.first : -1;
+          final hasPrelim = matches.any((m) => m.roundIndex == maxRoundIdx && m.id.contains('_R0_'));
 
           return LayoutBuilder(
             builder: (context, constraints) {
@@ -65,7 +67,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                   child: Row(
                     crossAxisAlignment: CrossAxisAlignment.stretch,
                     children: sortedRoundIndices.map((roundIndex) {
-                      return _buildRoundColumn(context, roundIndex, rounds[roundIndex]!);
+                      return _buildRoundColumn(context, roundIndex, rounds[roundIndex]!, maxRoundIdx, hasPrelim);
                     }).toList(),
                   ),
                 ),
@@ -77,7 +79,7 @@ class TournamentBracketsScreen extends StatelessWidget {
     );
   }
 
-  Widget _buildRoundColumn(BuildContext context, int roundIndex, List<TournamentMatch> matches) {
+  Widget _buildRoundColumn(BuildContext context, int roundIndex, List<TournamentMatch> matches, int maxRoundIdx, bool hasPrelim) {
     matches.sort((a, b) => a.matchIndex.compareTo(b.matchIndex));
     
     String roundName = AppLocalizations.of(context)!.roundOf(matches.length * 2);
@@ -87,6 +89,10 @@ class TournamentBracketsScreen extends StatelessWidget {
       roundName = AppLocalizations.of(context)!.semiFinalRound;
     } else if (roundIndex == 2) {
       roundName = AppLocalizations.of(context)!.quarterFinalRound;
+    }
+
+    if (roundIndex == maxRoundIdx && hasPrelim) {
+      roundName = AppLocalizations.of(context)!.preliminaryRound;
     }
 
     return Container(
@@ -139,8 +145,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               onPrimary: Colors.black,
               surface: VSPColors.surface,
               onSurface: VSPColors.textPrimary,
-            ),
-            dialogBackgroundColor: VSPColors.background,
+            ), dialogTheme: DialogThemeData(backgroundColor: VSPColors.background),
           ),
           child: child!,
         );
@@ -163,8 +168,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               onPrimary: Colors.black,
               surface: VSPColors.surface,
               onSurface: VSPColors.textPrimary,
-            ),
-            dialogBackgroundColor: VSPColors.background,
+            ), dialogTheme: DialogThemeData(backgroundColor: VSPColors.background),
           ),
           child: child!,
         );
@@ -387,6 +391,7 @@ class _MatchNode extends StatelessWidget {
   }
 
   Widget _buildTeamRow(BuildContext context, String? name, int? score, {bool isWinner = false}) {
+    final bool isBye = name == 'BYE' || name == null;
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
       decoration: BoxDecoration(
@@ -397,19 +402,35 @@ class _MatchNode extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           Expanded(
-            child: Text(
-              name ?? AppLocalizations.of(context)!.na,
-              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                    color: name == null
-                        ? VSPColors.textSecondary.withValues(alpha: 0.5)
-                        : (isWinner ? VSPColors.accent : VSPColors.textPrimary),
-                    fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+            child: isBye 
+                ? Container(
+                    alignment: Alignment.centerRight,
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.5)),
+                    ),
+                    child: Text(
+                      AppLocalizations.of(context)!.byeBadge,
+                      style: const TextStyle(
+                        color: Colors.amber,
+                        fontSize: 11,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  )
+                : Text(
+                    name,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: isWinner ? VSPColors.accent : VSPColors.textPrimary,
+                          fontWeight: isWinner ? FontWeight.bold : FontWeight.normal,
+                        ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
                   ),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
-            ),
           ),
-          if (score != null)
+          if (score != null && !isBye)
             Text(
               score.toString(),
               style: Theme.of(context).textTheme.titleSmall?.copyWith(

@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
-import '../ui/tokens/vsp_tokens.dart';
+import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
+import '../ui/tokens/vsp_tokens.dart';
+import '../providers/auth_provider.dart';
 
 class SupportService {
   static final SupportService _instance = SupportService._internal();
@@ -9,8 +11,7 @@ class SupportService {
 
   /// Opens the support channel (Silicon Valley Strategy: Organized Support)
   Future<void> openSupport(BuildContext context, {String? category}) async {
-    // Show a beautiful bottom sheet first to categorize the issue
-    // This gives an impression of a large, organized organization.
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
@@ -24,7 +25,7 @@ class SupportService {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              'How can we help?',
+              isArabic ? 'كيف يمكننا مساعدتك؟' : 'How can we help?',
               style: Theme.of(context).textTheme.headlineSmall?.copyWith(
                 fontWeight: FontWeight.bold,
               ),
@@ -32,27 +33,27 @@ class SupportService {
             const SizedBox(height: VSPSpacing.md),
             _buildSupportOption(
               context,
-              Icons.account_balance_wallet_outlined,
-              'Billing & Commission',
-              'Issues with payments or stadium blocking.',
+              Icons.verified_user_outlined,
+              isArabic ? "التوثيق وتفعيل الحساب" : "Document Verification & Profile",
+              isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.",
             ),
             _buildSupportOption(
               context,
-              Icons.sports_soccer_outlined,
-              'Match & Tournament',
-              'Report an issue with a match or ranking.',
+              Icons.person_off_outlined,
+              isArabic ? "الإبلاغ عن غياب لاعب" : "Report Player No-Show",
+              isArabic ? "الإبلاغ عن عدم حضور اللاعبين في الوقت المحدد" : "Report players who did not show up on time.",
             ),
             _buildSupportOption(
               context,
               Icons.bug_report_outlined,
-              'Technical Issue',
-              'Report a bug or app crash.',
+              isArabic ? "مشكلة تقنية بالبطولات" : "Championships & Technical Issues",
+              isArabic ? "الإبلاغ عن أعطال تقنية أو في لوحة المتصدرين" : "Report bugs or leaderboard/brackets issues.",
             ),
             const SizedBox(height: VSPSpacing.xl),
             Center(
               child: Text(
-                'Available 24/7 for VSP Partners',
-                style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                isArabic ? 'متواجدون 24/7 لشركاء VSP' : 'Available 24/7 for VSP Partners',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
               ),
             ),
           ],
@@ -71,21 +72,33 @@ class SupportService {
         ),
         child: Icon(icon, color: VSPColors.accent),
       ),
-      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12)),
+      title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold, color: VSPColors.textPrimary)),
+      subtitle: Text(subtitle, style: const TextStyle(fontSize: 12, color: VSPColors.textSecondary)),
       onTap: () {
         Navigator.pop(context);
-        _launchSupportWhatsApp(category: title);
+        _launchSupportWhatsApp(context: context, category: title);
       },
     );
   }
 
-  Future<void> _launchSupportWhatsApp({required String category}) async {
-    final message = Uri.encodeComponent('Hi VSP Support! I need help with: $category');
-    final url = 'https://wa.me/201100229462?text=$message';
+  Future<void> _launchSupportWhatsApp({required BuildContext context, required String category}) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+
+    final name = user?.name ?? 'Guest';
+    final phone = user?.phone ?? 'N/A';
+    final uid = user?.uid ?? 'N/A';
+    final governorate = user?.governorate ?? 'N/A';
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final messageText = isArabic
+        ? "مرحباً دعم VSP، لدي مشكلة بخصوص $category. تفاصيل حسابي: الاسم: $name، الهاتف: $phone، الكود: $uid، المحافظة: $governorate."
+        : "Hi VSP Support, I need help with $category. Account Details: Name: $name, Phone: $phone, UID: $uid, Governorate: $governorate.";
+
+    final encodedMessage = Uri.encodeComponent(messageText);
+    final url = 'https://wa.me/201100229462?text=$encodedMessage';
     
-    // Direct launch without canLaunchUrl check, which often fails on Android 11+
-    // externalApplication mode will try to open WhatsApp or the browser as fallback.
     try {
       await launchUrl(
         Uri.parse(url), 

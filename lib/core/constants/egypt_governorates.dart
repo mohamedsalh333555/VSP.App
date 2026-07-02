@@ -65,6 +65,28 @@ class EgyptGovernorates {
     'as suways': 'Suez',
     'suez': 'Suez',
     
+    'beheira': 'Beheira',
+    'sharqia': 'Sharqia',
+    'dakahlia': 'Dakahlia',
+    'monufia': 'Monufia',
+    'alexandria': 'Alexandria',
+    'beni suef': 'Beni Suef',
+    'damietta': 'Damietta',
+    'faiyum': 'Faiyum',
+    'gharbia': 'Gharbia',
+    'ismailia': 'Ismailia',
+    'kafr el sheikh': 'Kafr El Sheikh',
+    'luxor': 'Luxor',
+    'matrouh': 'Matrouh',
+    'minya': 'Minya',
+    'new valley': 'New Valley',
+    'north Sinai': 'North Sinai',
+    'port said': 'Port Said',
+    'qalyubia': 'Qalyubia',
+    'qena': 'Qena',
+    'sohag': 'Sohag',
+    'south sinai': 'South Sinai',
+    
     // Arabic Mappings
     'القاهرة': 'Cairo',
     'الجيزة': 'Giza',
@@ -101,10 +123,10 @@ class EgyptGovernorates {
     'السويس': 'Suez',
   };
 
-  /// Takes a raw string from Google Maps Geocoding API and returns a standard Governorate
-  static String resolveGoogleName(String? rawGeocodeName) {
+  /// Takes a raw string from Google Maps Geocoding API and returns a standard Governorate, or null if unknown
+  static String? resolveGoogleName(String? rawGeocodeName) {
     if (rawGeocodeName == null || rawGeocodeName.isEmpty) {
-      return 'Cairo'; // Fallback
+      return null;
     }
 
     // 1. Convert to lowercase & clean leading/trailing spaces
@@ -130,7 +152,7 @@ class EgyptGovernorates {
       }
     }
 
-    // If completely unknown, return Cairo
-    return 'Cairo';
+    // If completely unknown, return null
+    return null;
   }
 }

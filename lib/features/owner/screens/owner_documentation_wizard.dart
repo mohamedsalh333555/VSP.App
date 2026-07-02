@@ -1,17 +1,19 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import 'package:file_picker/file_picker.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_upload_widgets.dart';
-import '../../../core/navigation/root_screen.dart';
 import '../../../core/services/owner_document_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import '../../../data/models.dart';
+
+import '../../../core/config/app_config.dart';
 
 class OwnerDocumentationWizard extends StatefulWidget {
   const OwnerDocumentationWizard({super.key});
@@ -60,13 +62,13 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           children: [
             const SizedBox(height: VSPSpacing.md),
             Text(
-              'Select Image Source',
+              AppLocalizations.of(context)!.selectImageSource,
               style: Theme.of(context).textTheme.displaySmall,
             ),
             const SizedBox(height: VSPSpacing.md),
             ListTile(
               leading: const Icon(Icons.camera_alt, color: VSPColors.accent),
-              title: const Text('Camera', style: TextStyle(color: VSPColors.textPrimary)),
+              title: Text(AppLocalizations.of(context)!.camera, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
                 _pickAndUpload(type, key, ImageSource.camera);
@@ -74,10 +76,18 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
             ListTile(
               leading: const Icon(Icons.photo_library, color: VSPColors.accent),
-              title: const Text('Gallery', style: TextStyle(color: VSPColors.textPrimary)),
+              title: Text(AppLocalizations.of(context)!.gallery, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
                 _pickAndUpload(type, key, ImageSource.gallery);
+              },
+            ),
+            ListTile(
+              leading: const Icon(Icons.description, color: VSPColors.accent),
+              title: const Text('الملفات (PDF / صور)', style: TextStyle(color: VSPColors.textPrimary)),
+              onTap: () {
+                Navigator.pop(context);
+                _pickAndUploadDocumentFile(type, key);
               },
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -85,6 +95,56 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         ),
       ),
     );
+  }
+
+  Future<void> _pickAndUploadDocumentFile(OwnerDocumentType type, String key) async {
+    try {
+      final result = await FilePicker.platform.pickFiles(type: FileType.custom, allowedExtensions: ['pdf', 'png', 'jpg', 'jpeg']);
+      if (result == null) return;
+      final file = result.files.single;
+      XFile xFile;
+      if (kIsWeb) {
+        if (file.bytes == null) return;
+        xFile = XFile.fromData(file.bytes!, name: file.name);
+      } else {
+        if (file.path == null) return;
+        xFile = XFile(file.path!);
+      }
+
+      setState(() {
+        _uploadingStatus[key] = true;
+      });
+
+      if (!mounted) return;
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final uid = authProvider.currentUser?.uid;
+      if (uid == null) {
+        setState(() => _uploadingStatus[key] = false);
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
+        return;
+      }
+
+      final url = await _documentService.uploadAndSave(
+        type: type,
+        file: xFile,
+        uid: uid,
+      );
+
+      if (!mounted) return;
+      setState(() {
+        _uploadedDocUrls[key] = url;
+        _uploadingStatus[key] = false;
+      });
+
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
+    } catch (e) {
+      if (mounted) {
+        setState(() {
+          _uploadingStatus[key] = false;
+        });
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
+      }
+    }
   }
 
   Future<void> _pickAndUpload(OwnerDocumentType type, String key, ImageSource source) async {
@@ -105,13 +165,13 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       final uid = authProvider.currentUser?.uid;
       if (uid == null) {
         setState(() => _uploadingStatus[key] = false);
-        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
         return;
       }
 
       final url = await _documentService.uploadAndSave(
         type: type,
-        filePath: pickedFile.path,
+        file: pickedFile,
         uid: uid,
       );
       
@@ -121,13 +181,13 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         _uploadingStatus[key] = false;
       });
       
-      VSPFeedback.showSuccess(context, 'Document uploaded successfully!');
+      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.docUploadedSuccess);
     } catch (e) {
       if (mounted && context.mounted) {
         setState(() {
           _uploadingStatus[key] = false;
         });
-        VSPFeedback.showError(context, 'Upload failed: $e');
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.uploadFailed(e.toString()));
       }
     }
   }
@@ -139,7 +199,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       if (_uploadedDocUrls['commercialRegister'] == null) {
         VSPFeedback.showError(
           context,
-          'Please upload your Commercial Register before continuing.',
+          AppLocalizations.of(context)!.uploadCommRegisterRequired,
         );
         return;
       }
@@ -153,14 +213,14 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       if (_uploadedDocUrls['idFront'] == null) {
         VSPFeedback.showError(
           context,
-          'Please upload the front side of your National ID.',
+          AppLocalizations.of(context)!.uploadIdFrontRequired,
         );
         return;
       }
       if (_uploadedDocUrls['idBack'] == null) {
         VSPFeedback.showError(
           context,
-          'Please upload the back side of your National ID.',
+          AppLocalizations.of(context)!.uploadIdBackRequired,
         );
         return;
       }
@@ -179,20 +239,25 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
       if (authProvider.firebaseUser == null) {
-        VSPFeedback.showError(context, 'Session expired. Please sign in again.');
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.sessionExpiredError);
         setState(() => _isSaving = false);
         return;
       }
 
-      // Write to Firestore — if this throws, we skip the success dialog entirely.
+      final bool autoApprove = AppConfig.autoApproveOwnerInDebug && kDebugMode;
+
+      // Write to Database — if this throws, we skip the success dialog entirely.
       await authProvider.updateProfile({
-        'isIdentityVerified': true,
+        'isIdentityVerified': autoApprove,
+        'verificationStatus': autoApprove ? 'approved' : 'pending',
         'isRegistrationComplete': true,
       });
 
       // Only reached when updateProfile succeeds without throwing.
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
+
+      final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
       await showDialog(
         context: context,
@@ -202,15 +267,31 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
+          icon: Icon(
+            autoApprove ? Icons.check_circle_rounded : Icons.access_time_rounded,
+            color: VSPColors.accent,
+            size: 48,
+          ),
           title: Text(
-            'Registration Complete! 🎉',
+            autoApprove
+                ? (isArabic ? '🎉 تم التسجيل بنجاح!' : '🎉 Registration Complete!')
+                : (isArabic ? '⏳ قيد المراجعة' : '⏳ Under Review'),
             style: Theme.of(ctx).textTheme.titleLarge,
+            textAlign: TextAlign.center,
           ),
           content: Text(
-            'Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.',
+            autoApprove
+                ? (isArabic
+                    ? AppLocalizations.of(context)!.regCompleteBody
+                    : AppLocalizations.of(context)!.regCompleteBody)
+                : (isArabic
+                    ? 'تم رفع وثائقك بنجاح وهي الآن قيد المراجعة من فريقنا.\n\nيمكنك الآن استكشاف لوحة التحكم وإعداد ملاعبك. ستكون ملاعبك مخفية عن اللاعبين حتى اكتمال التحقق.'
+                    : 'Your documents have been submitted and are now under review by our team.\n\nYou can explore the dashboard and set up your stadiums in the meantime. Stadiums will be hidden from players until your account is verified.'),
             style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
               color: VSPColors.textSecondary,
+              height: 1.6,
             ),
+            textAlign: TextAlign.center,
           ),
           actionsPadding: const EdgeInsets.symmetric(
             horizontal: VSPSpacing.md,
@@ -218,7 +299,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           ),
           actions: [
             PrimaryButton(
-              text: 'Go to Dashboard',
+              text: isArabic ? 'الذهاب إلى لوحة التحكم' : 'Go to Dashboard',
               height: 48,
               onPressed: () => Navigator.of(ctx).pop(),
             ),
@@ -228,11 +309,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       // Navigate only after the dialog is dismissed.
       if (mounted && context.mounted) {
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (_) => const RootScreen()),
-          (route) => false,
-        );
+        context.go('/owner');
       }
     } catch (e) {
       // updateProfile failed — show error, do NOT navigate, do NOT loop.
@@ -240,7 +317,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       setState(() => _isSaving = false);
       VSPFeedback.showError(
         context,
-        'Failed to save your information. Please check your connection and try again.',
+        AppLocalizations.of(context)!.saveInfoFailed,
       );
     }
   }
@@ -271,7 +348,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           onPressed: _previousPage,
         ),
         title: Text(
-          'Owner information',
+          AppLocalizations.of(context)!.ownerInformationTitle,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -322,11 +399,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const VSPSectionTitle('Upload documents'),
+          VSPSectionTitle(AppLocalizations.of(context)!.uploadDocuments),
           const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
-            title: 'Click to upload commercial register',
+            title: AppLocalizations.of(context)!.clickToUploadRegister,
             isLoading: _uploadingStatus['commercialRegister'] ?? false,
             onTap: () => _showImageSourceActionSheet(OwnerDocumentType.commercialRegister, 'commercialRegister'),
           ),
@@ -334,8 +411,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           if (_uploadedDocUrls['commercialRegister'] != null) ...[
             const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
-              title: 'Commercial Register',
-              subtitle: 'Uploaded Successfully',
+              title: AppLocalizations.of(context)!.commercialRegister,
+              subtitle: AppLocalizations.of(context)!.uploadedSuccessfully,
               thumbnailUrl: _uploadedDocUrls['commercialRegister'],
               onDelete: () => setState(() => _uploadedDocUrls['commercialRegister'] = null),
             ),
@@ -343,7 +420,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
           const SizedBox(height: VSPSpacing.xxl),
           PrimaryButton(
-            text: _isSaving ? 'Saving...' : 'Save & Continue',
+            text: _isSaving ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.saveAndContinue,
             onPressed: (_isSaving || (_uploadingStatus['commercialRegister'] ?? false))
                 ? null
                 : _nextPage,
@@ -360,11 +437,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const VSPSectionTitle('Upload national ID'),
+          VSPSectionTitle(AppLocalizations.of(context)!.uploadNationalIdTitle),
           const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
-            title: 'National ID Front',
+            title: AppLocalizations.of(context)!.nationalIdFront,
             isLoading: _uploadingStatus['idFront'] ?? false,
             onTap: () => _showImageSourceActionSheet(OwnerDocumentType.nationalIdFront, 'idFront'),
           ),
@@ -372,8 +449,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           if (_uploadedDocUrls['idFront'] != null) ...[
             const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
-              title: 'ID Front',
-              subtitle: 'Uploaded Successfully',
+              title: AppLocalizations.of(context)!.nationalIdFront,
+              subtitle: AppLocalizations.of(context)!.uploadedSuccessfully,
               thumbnailUrl: _uploadedDocUrls['idFront'],
               onDelete: () => setState(() => _uploadedDocUrls['idFront'] = null),
             ),
@@ -382,7 +459,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
-            title: 'National ID Back',
+            title: AppLocalizations.of(context)!.nationalIdBack,
             isLoading: _uploadingStatus['idBack'] ?? false,
             onTap: () => _showImageSourceActionSheet(OwnerDocumentType.nationalIdBack, 'idBack'),
           ),
@@ -390,8 +467,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           if (_uploadedDocUrls['idBack'] != null) ...[
             const SizedBox(height: VSPSpacing.md),
             VspUploadedItemRow(
-              title: 'ID Back',
-              subtitle: 'Uploaded Successfully',
+              title: AppLocalizations.of(context)!.nationalIdBack,
+              subtitle: AppLocalizations.of(context)!.uploadedSuccessfully,
               thumbnailUrl: _uploadedDocUrls['idBack'],
               onDelete: () => setState(() => _uploadedDocUrls['idBack'] = null),
             ),
@@ -399,7 +476,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
           const SizedBox(height: VSPSpacing.xl),
           PrimaryButton(
-            text: _isSaving ? 'Saving...' : 'Submit Documents',
+            text: _isSaving ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.submitDocuments,
             onPressed: (_isSaving ||
                     (_uploadingStatus['idFront'] ?? false) ||
                     (_uploadingStatus['idBack'] ?? false))

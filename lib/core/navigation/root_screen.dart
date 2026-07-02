@@ -10,7 +10,7 @@ import '../../features/player/screens/player_home_screen.dart';
 import '../../features/auth/screens/social_onboarding_screen.dart';
 import '../../features/owner/screens/facility_onboarding_screen.dart';
 import '../../features/owner/screens/owner_documentation_wizard.dart';
-import '../../features/auth/screens/verify_email_screen.dart';
+import 'suspended_account_screen.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import 'package:app_links/app_links.dart';
@@ -227,9 +227,19 @@ class _RootScreenState extends State<RootScreen> {
                         ),
                       ),
                       onPressed: () async {
+                        await auth.retryDataFetch();
+                      },
+                      child: const Text('Retry Connection', style: TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    child: TextButton(
+                      onPressed: () async {
                         await auth.signOut();
                       },
-                      child: const Text('Sign Out & Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
+                      child: const Text('Sign Out', style: TextStyle(color: VSPColors.textSecondary)),
                     ),
                   ),
                 ],
@@ -248,14 +258,8 @@ class _RootScreenState extends State<RootScreen> {
       return const SocialOnboardingScreen();
     }
 
-    // 4. Registration NOT complete → Verify Email/OTP
-    if (!user.isRegistrationComplete) {
-      return const VerifyEmailScreen();
-    }
-
-    // 5. Shared Moderation Check
-    if (user.isSuspended == true) {
-      return SuspendedAccountScreen(debt: user.commissionDebt);
+    if (user.isBlocked && !auth.isOwner) {
+      return const SuspendedAccountScreen();
     }
 
     // 6. Owner Flow
@@ -266,7 +270,7 @@ class _RootScreenState extends State<RootScreen> {
       }
 
       // 6.2. Identity Verification (Documents)
-      if (!user.isIdentityVerified) {
+      if (!user.isIdentityVerified && user.verificationStatus != 'pending') {
         return const OwnerDocumentationWizard();
       }
 
@@ -319,131 +323,4 @@ class MaintenanceScreen extends StatelessWidget {
   }
 }
 
-// ─────────────────────────────────────────────
-// 🛑 Suspended Account Screen
-// Shown when an owner's isSuspended == true in Firestore.
-// Admin can unblock by setting isSuspended: false remotely.
-// ─────────────────────────────────────────────
-class SuspendedAccountScreen extends StatelessWidget {
-  final double debt;
-  const SuspendedAccountScreen({super.key, required this.debt});
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      body: SafeArea(
-        child: Padding(
-          padding: const EdgeInsets.all(VSPSpacing.xl),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              // Icon
-              Container(
-                width: 100,
-                height: 100,
-                decoration: BoxDecoration(
-                  color: Colors.redAccent.withValues(alpha: 0.1),
-                  shape: BoxShape.circle,
-                  border: Border.all(color: Colors.redAccent, width: 2),
-                ),
-                child: const Icon(Icons.block_rounded,
-                    size: 50, color: Colors.redAccent),
-              ),
-              const SizedBox(height: VSPSpacing.xl),
-
-              // Title
-              Text(
-                'Account Suspended',
-                style: Theme.of(context)
-                    .textTheme
-                    .displaySmall
-                    ?.copyWith(color: Colors.redAccent),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: VSPSpacing.md),
-
-              // Subtitle
-              Text(
-                'Your account has been temporarily suspended due to outstanding commission payments.',
-                style: Theme.of(context)
-                    .textTheme
-                    .bodyMedium
-                    ?.copyWith(color: VSPColors.textSecondary),
-                textAlign: TextAlign.center,
-              ),
-              const SizedBox(height: VSPSpacing.xl),
-
-              // Debt Card
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(VSPSpacing.lg),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.lg),
-                  border: Border.all(color: Colors.redAccent.withValues(alpha: 0.5)),
-                ),
-                child: Column(
-                  children: [
-                    Text(
-                      'Outstanding Balance',
-                      style: Theme.of(context)
-                          .textTheme
-                          .labelSmall
-                          ?.copyWith(color: VSPColors.textSecondary),
-                    ),
-                    const SizedBox(height: VSPSpacing.sm),
-                    Text(
-                      '${debt.toStringAsFixed(0)} EGP',
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                            color: Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                          ),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: VSPSpacing.xl),
-
-              // Contact Support Button
-              SizedBox(
-                width: double.infinity,
-                height: 56,
-                child: ElevatedButton.icon(
-                  onPressed: () {
-                    // TODO: Launch WhatsApp or in-app support
-                  },
-                  style: ElevatedButton.styleFrom(
-                    backgroundColor: VSPColors.accent,
-                    foregroundColor: Colors.black,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                    ),
-                  ),
-                  icon: const Icon(Icons.support_agent),
-                  label: const Text(
-                    'Contact Support to Pay',
-                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
-                  ),
-                ),
-              ),
-              const SizedBox(height: VSPSpacing.md),
-
-              // Sign Out
-              TextButton(
-                onPressed: () => context.read<AuthProvider>().signOut(),
-                child: Text(
-                  'Sign Out',
-                  style: Theme.of(context)
-                      .textTheme
-                      .bodyMedium
-                      ?.copyWith(color: VSPColors.textSecondary),
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-}

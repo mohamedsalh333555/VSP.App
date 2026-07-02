@@ -1,6 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/material.dart';
 import 'dart:async';
 import '../../../core/repositories/search_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';

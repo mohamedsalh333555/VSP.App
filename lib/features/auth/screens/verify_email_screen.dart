@@ -1,48 +1,70 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
-import '../../../core/providers/auth_provider.dart';
 
-import '../../../core/navigation/root_screen.dart';
-import 'welcome_screen.dart';
-import '../../owner/screens/add_stadium_wizard.dart';
-import '../../../core/utils/vsp_feedback.dart';
-
-/// شاشة التحقق من OTP - تعمل بنظام Mock في DEV والحقيقي في Production
+/// Screen shown after email signup (when bypassOtp == false).
+/// Allows the user to enter their 6-digit OTP, resend it (with a 60-second
+/// cooldown), and automatically routes them to the dashboard on success.
 class VerifyEmailScreen extends StatefulWidget {
-  const VerifyEmailScreen({super.key});
+  final String? email;
+
+  const VerifyEmailScreen({super.key, this.email});
 
   @override
   State<VerifyEmailScreen> createState() => _VerifyEmailScreenState();
 }
 
-class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
-  // OTP Controllers (6 fields)
+class _VerifyEmailScreenState extends State<VerifyEmailScreen>
+    with SingleTickerProviderStateMixin {
+  // ── OTP controllers (one per digit) ───────────────────────────────────────
   final List<TextEditingController> _controllers =
       List.generate(6, (_) => TextEditingController());
   final List<FocusNode> _focusNodes = List.generate(6, (_) => FocusNode());
 
-  bool _isLoading = false;
-  bool _canResend = false;
-  int _countdown = AppConfig.otpCountdownSeconds;
+  // ── State ──────────────────────────────────────────────────────────────────
+  bool _isVerifying = false;
+  bool _isResending = false;
+  String? _errorMessage;
+  String? _resolvedEmail;
+
+  // ── Countdown for resend ───────────────────────────────────────────────────
+  int _countdown = 60;
   Timer? _timer;
+
+  // ── Animation ─────────────────────────────────────────────────────────────
+  late AnimationController _shakeController;
+  late Animation<double> _shakeAnim;
 
   @override
   void initState() {
     super.initState();
+    _resolvedEmail = widget.email;
+    if (_resolvedEmail == null || _resolvedEmail!.isEmpty) {
+      _loadEmailFromPrefs();
+    }
     _startCountdown();
+
+    _shakeController = AnimationController(
+      duration: const Duration(milliseconds: 400),
+      vsync: this,
+    );
+    _shakeAnim = TweenSequence<double>([
+      TweenSequenceItem(tween: Tween(begin: 0, end: -8), weight: 1),
+      TweenSequenceItem(tween: Tween(begin: -8, end: 8), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: 8, end: -8), weight: 2),
+      TweenSequenceItem(tween: Tween(begin: -8, end: 0), weight: 1),
+    ]).animate(_shakeController);
   }
-
-
 
   @override
   void dispose() {
     _timer?.cancel();
+    _shakeController.dispose();
     for (final c in _controllers) {
       c.dispose();
     }
@@ -52,354 +74,407 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen> {
     super.dispose();
   }
 
+  // ── Countdown ──────────────────────────────────────────────────────────────
+
   void _startCountdown() {
-    _canResend = false;
-    _countdown = AppConfig.otpCountdownSeconds;
+    _countdown = 60;
     _timer?.cancel();
-    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
-      if (_countdown == 0) {
-        timer.cancel();
-        if (mounted) setState(() => _canResend = true);
-      } else {
-        if (mounted) setState(() => _countdown--);
-      }
+    _timer = Timer.periodic(const Duration(seconds: 1), (t) {
+      if (!mounted) { t.cancel(); return; }
+      setState(() {
+        if (_countdown > 0) {
+          _countdown--;
+        } else {
+          t.cancel();
+        }
+      });
     });
   }
 
-  String _getCode() =>
-      _controllers.map((c) => c.text).join();
+  Future<void> _loadEmailFromPrefs() async {
+    final prefs = await SharedPreferences.getInstance();
+    final savedEmail = prefs.getString('pending_verification_email');
+    if (savedEmail != null && savedEmail.isNotEmpty) {
+      setState(() {
+        _resolvedEmail = savedEmail;
+      });
+    }
+  }
 
-  Future<void> _handleVerify() async {
-    final code = _getCode();
-    if (code.length < 6) {
-      VSPFeedback.showError(context, AppLocalizations.of(context)!.fillAllFields); // Or specific key if added
+  // ── Verify OTP ─────────────────────────────────────────────────────────────
+
+  String get _enteredCode =>
+      _controllers.map((c) => c.text.trim()).join();
+
+  Future<void> _verify() async {
+    final code = _enteredCode;
+    if (code.length < 6) return;
+
+    setState(() {
+      _isVerifying = true;
+      _errorMessage = null;
+    });
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await auth.verifyOtp(
+      email: _resolvedEmail ?? '',
+      token: code,
+    );
+
+    if (!mounted) return;
+
+    if (success) {
+      // Clear pending verification email from SharedPreferences
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.remove('pending_verification_email');
+      // GoRouter will redirect automatically via authStateChanges
+    } else {
+      _shakeController.forward(from: 0);
+      setState(() {
+        _errorMessage = auth.errorMessage ??
+            'Invalid or expired code. Please try again.';
+        _isVerifying = false;
+      });
+    }
+  }
+
+  // ── Resend OTP ─────────────────────────────────────────────────────────────
+
+  Future<void> _resend() async {
+    if (_countdown > 0 || _isResending) return;
+    setState(() {
+      _isResending = true;
+      _errorMessage = null;
+    });
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final success = await auth.resendOtp();
+
+    if (!mounted) return;
+    setState(() => _isResending = false);
+
+    if (success) {
+      _startCountdown();
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('✅ A new code has been sent to your email.'),
+          backgroundColor: VSPColors.accent,
+        ),
+      );
+    } else {
+      setState(() => _errorMessage = 'Failed to resend OTP. Try again.');
+    }
+  }
+
+  // ── OTP Input helper ───────────────────────────────────────────────────────
+
+  void _onDigitChanged(int index, String value) {
+    if (value.length > 1) {
+      // Handle paste: distribute digits across all boxes
+      final digits = value.replaceAll(RegExp(r'\D'), '').split('');
+      for (int i = 0; i < 6 && i < digits.length; i++) {
+        _controllers[i].text = digits[i];
+      }
+      _focusNodes[5].requestFocus();
+      setState(() {});
+      if (_enteredCode.length == 6) _verify();
       return;
     }
 
-    setState(() => _isLoading = true);
-
-    if (AppConfig.useMockOtp) {
-      // ✅ Mock OTP Verification
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
-      if (!mounted) return;
-
-      if (code == AppConfig.mockOtpCode) {
-        final auth = Provider.of<AuthProvider>(context, listen: false);
-
-        // Mark registration as complete in Firestore
-        await auth.updateProfile({'isRegistrationComplete': true});
-        if (!mounted) return;
-        
-        // Role-based redirection
-        if (auth.isOwner) {
-          // Redirect to RootScreen which will decide the correct onboarding step
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const RootScreen()),
-            (route) => false,
-          );
-        } else {
-          // Players go home (RootScreen handles final destination)
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (_) => const RootScreen()),
-            (route) => false,
-          );
-        }
-      } else {
-        setState(() => _isLoading = false);
-        VSPFeedback.showError(context, '${AppLocalizations.of(context)!.verify}: ${AppConfig.mockOtpCode}');
-      }
-    } else {
-      // NOTE: Real OTP is not activated for the current MVP release.
-      // The app must be compiled with useMockOtp = true or this path will fail.
-      await Future.delayed(const Duration(milliseconds: 800)); // Simulate network
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      VSPFeedback.showError(context, 'Real OTP not activated yet.');
-    }
-  }
-
-  // Removed _showError helper in favor of VSPFeedback
-
-  /// Aborts OTP — signs out the stale Firebase session and returns to Welcome.
-  /// Called by both the back button and hardware back gesture.
-  Future<void> _handleAbort(BuildContext ctx) async {
-    final auth = Provider.of<AuthProvider>(ctx, listen: false);
-    await auth.signOut();
-    if (!ctx.mounted) return;
-    Navigator.of(ctx).pushAndRemoveUntil(
-      MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-      (route) => false,
-    );
-  }
-
-  void _handleResend() {
-    if (!_canResend) return;
-    _startCountdown();
-    // TODO: In production, call auth.resendOtp()
-    VSPFeedback.showSuccess(
-      context, 
-      AppConfig.useMockOtp
-          ? 'رمز التحقق الوهمي: ${AppConfig.mockOtpCode}'
-          : 'تم إعادة إرسال رمز التحقق',
-    );
-  }
-
-  // When a digit is entered, move focus to next field automatically
-  void _onChanged(int index, String value) {
     if (value.isNotEmpty && index < 5) {
       _focusNodes[index + 1].requestFocus();
     }
-    if (value.isEmpty && index > 0) {
+    setState(() {});
+    if (_enteredCode.length == 6) _verify();
+  }
+
+  void _onKeyDown(int index, RawKeyEvent event) {
+    if (event is RawKeyDownEvent &&
+        event.logicalKey == LogicalKeyboardKey.backspace &&
+        _controllers[index].text.isEmpty &&
+        index > 0) {
       _focusNodes[index - 1].requestFocus();
     }
-    // Auto-submit when all 6 digits are entered
-    if (_getCode().length == 6) {
-      FocusScope.of(context).unfocus();
-      _handleVerify();
-    }
   }
+
+  // ── Build ──────────────────────────────────────────────────────────────────
 
   @override
   Widget build(BuildContext context) {
-    final auth = Provider.of<AuthProvider>(context);
+    final displayEmail = _resolvedEmail ?? '';
+    final maskedEmail = displayEmail.isNotEmpty ? _maskEmail(displayEmail) : '';
+    final canResend = _countdown == 0 && !_isResending;
 
     return PopScope(
-      // Intercept hardware back — sign out instead of popping into dead state
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) {
-        if (!didPop) _handleAbort(context);
-      },
-      child: AnnotatedRegion<SystemUiOverlayStyle>(
-        value: SystemUiOverlayStyle(
-          statusBarColor: Colors.transparent,
-          statusBarIconBrightness: Brightness.light,
-          systemNavigationBarColor: VSPColors.background,
-          systemNavigationBarIconBrightness: Brightness.light,
-          systemNavigationBarDividerColor: Colors.transparent,
-        ),
-        child: Scaffold(
+      child: Scaffold(
         backgroundColor: VSPColors.background,
-        body: Stack(
-          children: [
-            // 1. Background Glow
-            Positioned(
-              top: -100,
-              right: -50,
-              child: Container(
-                width: 300,
-                height: 300,
-                decoration: BoxDecoration(
-                  shape: BoxShape.circle,
-                  color: VSPColors.accent.withValues(alpha: 0.05),
+        body: SafeArea(
+          child: SingleChildScrollView(
+            padding: const EdgeInsets.all(VSPSpacing.xl),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                const SizedBox(height: 40),
+
+                // ── Icon ───────────────────────────────────────────────────
+                Container(
+                  width: 80,
+                  height: 80,
+                  decoration: BoxDecoration(
+                    color: VSPColors.accent.withValues(alpha: 0.1),
+                    shape: BoxShape.circle,
+                    border: Border.all(
+                        color: VSPColors.accent.withValues(alpha: 0.3)),
+                  ),
+                  child: const Icon(
+                    Icons.mark_email_read_outlined,
+                    color: VSPColors.accent,
+                    size: 36,
+                  ),
                 ),
-                child: BackdropFilter(
-                  filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                  child: Container(color: Colors.transparent),
+
+                const SizedBox(height: VSPSpacing.xl),
+
+                // ── Title ──────────────────────────────────────────────────
+                Text(
+                  'Verify Your Email',
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
-              ),
-            ),
-
-            SafeArea(
-              child: SingleChildScrollView(
-                keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    const SizedBox(height: 12),
-                    
-                    // Header Nav
-                    Row(
-                      children: [
-                        _buildNavCircle(
-                          context, 
-                          icon: Icons.arrow_back,
-                          onTap: () => _handleAbort(context),
-                        ),
-                        const Spacer(),
-                        Image.asset(
-                          'assets/images/logo.png',
-                          height: 24,
-                          fit: BoxFit.contain,
-                        ),
-                      ],
-                    ),
-
-                    const SizedBox(height: 60),
-
-                    // Verify Animation/Icon Header
-                    Container(
-                      width: 120,
-                      height: 120,
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent.withValues(alpha: 0.05),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
+                const SizedBox(height: VSPSpacing.sm),
+                Text(
+                  'We sent a 6-digit code to',
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodyMedium
+                      ?.copyWith(color: VSPColors.textSecondary),
+                ),
+                const SizedBox(height: 4),
+                Text(
+                  maskedEmail,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.bold,
                       ),
-                      child: const Center(
-                        child: Icon(
-                          Icons.verified_user_rounded,
-                          size: 56,
-                          color: VSPColors.accent,
-                        ),
-                      ),
-                    ),
+                ),
 
-                    const SizedBox(height: 40),
+                const SizedBox(height: VSPSpacing.xxl),
 
-                    Text(
-                      AppLocalizations.of(context)!.verifyAccount,
-                      style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                        fontSize: 42,
-                        height: 0.9,
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
+                // ── OTP boxes ─────────────────────────────────────────────
+                AnimatedBuilder(
+                  animation: _shakeAnim,
+                  builder: (context, child) => Transform.translate(
+                    offset: Offset(_shakeAnim.value, 0),
+                    child: child,
+                  ),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: List.generate(6, (i) => _OtpBox(
+                      controller: _controllers[i],
+                      focusNode: _focusNodes[i],
+                      hasError: _errorMessage != null,
+                      onChanged: (v) => _onDigitChanged(i, v),
+                      onKey: (e) => _onKeyDown(i, e),
+                    )),
+                  ),
+                ),
 
-                    const SizedBox(height: 16),
-
-                    Padding(
-                      padding: const EdgeInsets.symmetric(horizontal: 20),
-                      child: Text(
-                        auth.email.isNotEmpty
-                            ? '${AppLocalizations.of(context)!.otpSentTo} \n${auth.email}'
-                            : AppLocalizations.of(context)!.enterOtpPlaceholder,
-                        textAlign: TextAlign.center,
-                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          color: VSPColors.textSecondary,
-                          height: 1.5,
-                        ),
-                      ),
-                    ),
-
-                    const SizedBox(height: 60),
-
-                    // OTP Boxes Container
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: List.generate(6, (index) {
-                        return Container(
-                          width: 45,
-                          height: 60,
-                          decoration: BoxDecoration(
-                            color: VSPColors.surface,
-                            borderRadius: BorderRadius.circular(VSPRadius.lg),
-                            border: Border.all(
-                              color: _focusNodes[index].hasFocus
-                                  ? VSPColors.accent
-                                  : Colors.white.withValues(alpha: 0.05),
-                              width: 2,
-                            ),
-                          ),
-                          child: TextField(
-                            controller: _controllers[index],
-                            focusNode: _focusNodes[index],
+                // ── Error ─────────────────────────────────────────────────
+                AnimatedSize(
+                  duration: const Duration(milliseconds: 200),
+                  child: _errorMessage != null
+                      ? Padding(
+                          padding: const EdgeInsets.only(top: VSPSpacing.md),
+                          child: Text(
+                            _errorMessage!,
                             textAlign: TextAlign.center,
-                            keyboardType: TextInputType.number,
-                            autofillHints: const [AutofillHints.oneTimeCode],
-                            maxLength: 1,
-                            style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                              color: VSPColors.textPrimary,
+                            style: const TextStyle(
+                              color: VSPColors.error,
+                              fontSize: 13,
                             ),
-                            decoration: const InputDecoration(
-                              counterText: '',
-                              border: InputBorder.none,
-                              contentPadding: EdgeInsets.zero,
-                            ),
-                            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                            onChanged: (value) => _onChanged(index, value),
                           ),
-                        );
-                      }),
-                    ),
+                        )
+                      : const SizedBox.shrink(),
+                ),
 
-                    const SizedBox(height: 48),
+                const SizedBox(height: VSPSpacing.xl),
 
-                    // Verification Button
-                    SizedBox(
-                      width: double.infinity,
-                      height: 56,
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _handleVerify,
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.accent,
-                          foregroundColor: VSPColors.background,
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          ),
-                          elevation: 0,
-                        ),
-                        child: _isLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  color: VSPColors.background,
-                                  strokeWidth: 2.5,
-                                ),
-                              )
-                            : Text(
-                                AppLocalizations.of(context)!.continueButton,
-                                style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                  fontWeight: FontWeight.w900,
-                                  letterSpacing: 1.1,
-                                ),
-                              ),
+                // ── Verify Button ─────────────────────────────────────────
+                SizedBox(
+                  width: double.infinity,
+                  height: 56,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: Colors.black,
+                      disabledBackgroundColor:
+                          VSPColors.accent.withValues(alpha: 0.3),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
                       ),
+                      elevation: 0,
                     ),
-
-                    const SizedBox(height: 32),
-
-                    // Resend Action
-                    _canResend
-                        ? TextButton(
-                            onPressed: _handleResend,
-                            child: Text(
-                              AppLocalizations.of(context)!.resendCode,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: VSPColors.accent,
-                                fontWeight: FontWeight.bold,
-                                decoration: TextDecoration.underline,
-                                letterSpacing: 1.2,
-                              ),
+                    onPressed:
+                        (_enteredCode.length == 6 && !_isVerifying)
+                            ? _verify
+                            : null,
+                    child: _isVerifying
+                        ? const SizedBox(
+                            width: 22,
+                            height: 22,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2.5,
+                              color: Colors.black,
                             ),
                           )
-                        : Text(
-                            AppLocalizations.of(context)!.resendIn(_countdown),
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: VSPColors.textSecondary.withValues(alpha: 0.4),
+                        : const Text(
+                            'Verify Code',
+                            style: TextStyle(
                               fontWeight: FontWeight.bold,
-                              letterSpacing: 1.1,
+                              fontSize: 16,
                             ),
                           ),
-                    SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+                  ),
+                ),
+
+                const SizedBox(height: VSPSpacing.lg),
+
+                // ── Resend row ────────────────────────────────────────────
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Text(
+                      "Didn't receive it? ",
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                            color: VSPColors.textSecondary,
+                          ),
+                    ),
+                    GestureDetector(
+                      onTap: canResend ? _resend : null,
+                      child: AnimatedDefaultTextStyle(
+                        duration: const Duration(milliseconds: 200),
+                        style: TextStyle(
+                          color: canResend
+                              ? VSPColors.accent
+                              : VSPColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 13,
+                        ),
+                        child: Text(
+                          canResend
+                              ? 'Resend Code'
+                              : 'Resend in ${_countdown}s',
+                        ),
+                      ),
+                    ),
                   ],
                 ),
-              ),
+
+                // ── Dev bypass note ───────────────────────────────────────
+                if (AppConfig.bypassOtp) ...[
+                  const SizedBox(height: VSPSpacing.xl),
+                  Container(
+                    padding: const EdgeInsets.all(VSPSpacing.sm),
+                    decoration: BoxDecoration(
+                      color: Colors.orange.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      border: Border.all(
+                          color: Colors.orange.withValues(alpha: 0.3)),
+                    ),
+                    child: Text(
+                      '🛠️ Dev mode: OTP bypass active. Code: ${AppConfig.mockOtpCode}',
+                      textAlign: TextAlign.center,
+                      style: const TextStyle(
+                          color: Colors.orange, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ],
             ),
-          ],
+          ),
         ),
       ),
-    ),
     );
   }
 
-  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+  String _maskEmail(String email) {
+    final parts = email.split('@');
+    if (parts.length != 2) return email;
+    final local = parts[0];
+    final domain = parts[1];
+    if (local.length <= 2) return '${'*' * local.length}@$domain';
+    return '${local[0]}${'*' * (local.length - 2)}${local[local.length - 1]}@$domain';
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// Single OTP digit box
+// ─────────────────────────────────────────────────────────────────────────────
+class _OtpBox extends StatelessWidget {
+  final TextEditingController controller;
+  final FocusNode focusNode;
+  final bool hasError;
+  final ValueChanged<String> onChanged;
+  final void Function(RawKeyEvent) onKey;
+
+  const _OtpBox({
+    required this.controller,
+    required this.focusNode,
+    required this.hasError,
+    required this.onChanged,
+    required this.onKey,
+  });
+
+  @override
+  Widget build(BuildContext context) {
+    final isFilled = controller.text.isNotEmpty;
+    return Container(
+      width: 46,
+      height: 56,
+      margin: const EdgeInsets.symmetric(horizontal: 5),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: hasError
+              ? VSPColors.error
+              : (isFilled ? VSPColors.accent : VSPColors.divider),
+          width: isFilled || hasError ? 2 : 1,
         ),
-        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
+        boxShadow: isFilled
+            ? [
+                BoxShadow(
+                  color: VSPColors.accent.withValues(alpha: 0.15),
+                  blurRadius: 8,
+                )
+              ]
+            : [],
+      ),
+      child: RawKeyboardListener(
+        focusNode: FocusNode(),
+        onKey: onKey,
+        child: TextField(
+          controller: controller,
+          focusNode: focusNode,
+          textAlign: TextAlign.center,
+          keyboardType: TextInputType.number,
+          maxLength: 6, // allow paste of full code
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          style: const TextStyle(
+            fontSize: 22,
+            fontWeight: FontWeight.bold,
+            color: VSPColors.textPrimary,
+          ),
+          decoration: const InputDecoration(
+            border: InputBorder.none,
+            counterText: '',
+            contentPadding: EdgeInsets.zero,
+          ),
+          onChanged: onChanged,
+        ),
       ),
     );
   }
 }
-

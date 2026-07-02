@@ -1,9 +1,8 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/ui/components/vsp_stat_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
@@ -14,7 +13,7 @@ import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../core/services/database_service.dart';
 import '../../../features/player/screens/notifications_center_screen.dart';
-import 'owner_booked_screen.dart';
+import 'owner_bookings_screen.dart';
 import 'owner_documentation_wizard.dart';
 
 class OwnerDashboardScreen extends StatefulWidget {
@@ -33,7 +32,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   );
   
   bool _isAllTime = false; 
-  bool _filterPendingOnly = false; 
+  final bool _filterPendingOnly = false; 
 
   @override
   void initState() {
@@ -108,10 +107,146 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               _buildHeader(),
               const SizedBox(height: VSPSpacing.md),
 
+              if (auth.userModel?.verificationStatus == 'rejected') ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.red.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: Colors.red),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.gavel_rounded, color: Colors.red, size: 28),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            const Text(
+                              "Verification Rejected ⚠️",
+                              style: TextStyle(
+                                color: Colors.red,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            const Text(
+                              "Your documents were rejected during audit. Please click below to re-submit clear documents.",
+                              style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                            ),
+                            const SizedBox(height: 8),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(builder: (context) => const OwnerDocumentationWizard()),
+                                );
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: Colors.red,
+                                foregroundColor: Colors.white,
+                                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                                minimumSize: Size.zero,
+                                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                              ),
+                              child: const Text("Re-upload Documents", style: TextStyle(fontWeight: FontWeight.bold, fontSize: 12)),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: VSPSpacing.md),
+              ],
+
+              if (auth.userModel?.verificationStatus == 'pending') ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: Colors.orange.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: Colors.orange),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.hourglass_empty_rounded, color: Colors.orange, size: 28),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              "Under Review ⏳",
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: Colors.orange,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              "Your legal documents are currently under review. Your stadiums are hidden from public player search until verified.",
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: VSPColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: VSPSpacing.md),
+              ],
+
+              if (auth.userModel?.isBlocked == true) ...[
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(VSPSpacing.md),
+                  decoration: BoxDecoration(
+                    color: VSPColors.error.withValues(alpha: 0.15),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.error),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 28),
+                      const SizedBox(width: VSPSpacing.sm),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(
+                              l10n.blockedBannerTitle,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                color: VSPColors.error,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            const SizedBox(height: 2),
+                            Text(
+                              l10n.blockedBannerSubtitle,
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                color: VSPColors.textSecondary,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                const SizedBox(height: VSPSpacing.md),
+              ],
+
               _buildFunctionalFilters(),
               const SizedBox(height: VSPSpacing.md),
 
-              if (auth.userModel?.isIdentityVerified == false)
+              if (auth.userModel?.isIdentityVerified == false && auth.userModel?.verificationStatus != 'pending')
                 VSPFadeInItem(
                   index: 0,
                   child: GestureDetector(
@@ -140,7 +275,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.warning, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios, size: 14, color: VSPColors.warning, matchTextDirection: true),
+                          const Icon(Icons.arrow_forward_ios, size: 14, color: VSPColors.warning),
                         ],
                       ),
                     ),
@@ -208,7 +343,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         onPressed: () {
                           Navigator.push(
                             context,
-                            MaterialPageRoute(builder: (context) => const OwnerBookedScreen()),
+                            MaterialPageRoute(builder: (context) => const OwnerBookingsScreen()),
                           );
                         },
                         child: Row(
@@ -408,6 +543,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final bookingProvider = Provider.of<BookingProvider>(context);
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     final filteredBookings = bookingProvider.userBookings.where((booking) {
       final String allStadiumsKey = l10n.allStadiumsFilter;
@@ -415,7 +551,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadiums') {
         final stadium = stadiumProvider.stadiums.firstWhere(
           (s) => s.id == booking.stadiumId, 
-          orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
+          orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, playersPerTeam: 0, totalFieldCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
         );
         matchesStadium = stadium.name == _selectedStadium;
       }
@@ -427,27 +563,29 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       return matchesStadium && matchesDate;
     }).toList();
 
-    double revenue = 0; 
-    double pendingRevenue = 0;   
+    double cashRevenue = 0;
+    double digitalRevenue = 0;
     int totalMinutes = 0;
     final now = DateTime.now();
-    
+
     for (var b in filteredBookings) {
-      if (b.endTime.isBefore(now)) {
-        revenue += b.totalPrice;
-        totalMinutes += b.endTime.difference(b.startTime).inMinutes;
+      if (b.paymentMethod == 'cash') {
+        cashRevenue += b.totalPrice;
       } else {
-        pendingRevenue += b.totalPrice;
+        // card / wallet / online
+        digitalRevenue += b.totalPrice;
+      }
+      if (b.endTime.isBefore(now)) {
+        totalMinutes += b.endTime.difference(b.startTime).inMinutes;
       }
     }
 
-    final int bookingsCount = filteredBookings.length;
-    final double commission = revenue * 0.05;
-    double netRevenue = revenue - commission;
+    final double revenue = cashRevenue + digitalRevenue;
+    final int bookingsCount = filteredBookings.where((b) => b.isCompleted && b.status != BookingStatus.cancelled && b.status != BookingStatus.pending).length;
 
-    String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0); 
-    String pendingStr = pendingRevenue >= 1000 ? '${(pendingRevenue/1000).toStringAsFixed(1)}K' : pendingRevenue.toStringAsFixed(0);
-    String netStr = netRevenue >= 1000 ? '${(netRevenue/1000).toStringAsFixed(1)}K' : netRevenue.toStringAsFixed(0); 
+    String revenueStr = revenue >= 1000 ? '${(revenue/1000).toStringAsFixed(1)}K' : revenue.toStringAsFixed(0);
+    String cashStr    = cashRevenue >= 1000 ? '${(cashRevenue/1000).toStringAsFixed(1)}K' : cashRevenue.toStringAsFixed(0);
+    String digitalStr = digitalRevenue >= 1000 ? '${(digitalRevenue/1000).toStringAsFixed(1)}K' : digitalRevenue.toStringAsFixed(0);
     String bookedStr = bookingsCount.toString();
     
     String timeStr;
@@ -464,8 +602,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         timeStr = '${m}m';
       }
     }
-    
-    String commissionStr = commission >= 1000 ? '${(commission/1000).toStringAsFixed(1)}K' : commission.toStringAsFixed(0);
 
     return Column(
       children: [
@@ -475,7 +611,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             width: double.infinity,
             padding: const EdgeInsets.all(VSPSpacing.lg),
             decoration: BoxDecoration(
-              gradient: LinearGradient(
+              gradient: const LinearGradient(
                 colors: [VSPColors.accent, VSPColors.cardDarkGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -492,11 +628,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(l10n.totalCollectedGross, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
-                    _buildMiniBadge(l10n.platformCutApplied, Colors.white.withValues(alpha: 0.15)),
                   ],
                 ),
                 const SizedBox(height: 8),
-                Text('$revenueStr ${l10n.currency}', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
+                Text('$revenueStr ${l10n.egCurrency}', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
                 const SizedBox(height: 16),
                 Container(
                   padding: const EdgeInsets.all(12),
@@ -506,58 +641,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      _buildFinanceMetric(l10n.actualLabel, '$netStr ${l10n.currency}', Icons.trending_up, Colors.green),
+                      _buildFinanceMetric(isArabic ? 'كاش' : 'Cash', '$cashStr ${l10n.egCurrency}', Icons.payments_outlined, Colors.green),
                       Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                      _buildFinanceMetric(l10n.pendingRev, '$pendingStr ${l10n.currency}', Icons.timer_outlined, VSPColors.warning),
+                      _buildFinanceMetric(isArabic ? 'رقمي' : 'Digital', '$digitalStr ${l10n.egCurrency}', Icons.credit_card_outlined, Colors.lightBlueAccent),
                     ],
                   ),
                 ),
-                if (commission > 0)
-                 Padding(
-                   padding: const EdgeInsets.only(top: 8.0, left: 4),
-                   child: Text(l10n.includesPlatformFee(commissionStr), style: const TextStyle(color: Colors.white60, fontSize: 10)),
-                 ),
               ],
             ),
           ),
-        ),
-        
-        const SizedBox(height: 16),
-
-        Consumer<AuthProvider>(
-          builder: (context, auth, _) {
-            final debt = auth.userModel?.commissionDebt ?? 0.0;
-            if (debt <= 0) return const SizedBox.shrink();
-            
-            return VSPFadeInItem(
-              index: 0,
-              child: Container(
-                margin: const EdgeInsets.only(bottom: 16),
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VSPColors.error.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Icons.account_balance_wallet_rounded, color: VSPColors.error, size: 24),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(l10n.platformCommissionLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.error, fontWeight: FontWeight.bold)),
-                          Text(l10n.debtCollectionNotice(debt.toStringAsFixed(0)), style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
-                        ],
-                      ),
-                    ),
-                    Icon(Icons.chevron_right, matchTextDirection: true, color: VSPColors.error.withValues(alpha: 0.5)),
-                  ],
-                ),
-              ),
-            );
-          },
         ),
         
         const SizedBox(height: 20),
@@ -630,7 +722,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       if (_selectedStadium != allStadiumsKey && _selectedStadium != 'All Stadiums') {
         final stadium = stadiumProvider.stadiums.firstWhere(
           (s) => s.id == b.stadiumId, 
-          orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, seatsCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
+          orElse: () => Stadium(id: '', name: 'Unknown', location: '', imageUrl: '', type: '', size: '', baths: 0, cafeteria: 0, playersPerTeam: 0, totalFieldCapacity: 0, pricePerHour: 0, area: '', ownerId: '')
         );
         matchesStadium = stadium.name == _selectedStadium;
       }
@@ -758,8 +850,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
             ),
           );
-        }).toList(),
+        }),
       ],
     );
   }
 }
+

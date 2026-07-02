@@ -1,8 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:image_picker/image_picker.dart';
-
-import 'dart:io';
+import 'package:image_picker/image_picker.dart' show XFile;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'storage_service.dart';
 
 enum OwnerDocumentType {
@@ -13,24 +10,23 @@ enum OwnerDocumentType {
 }
 
 class OwnerDocumentService {
-  final _auth = FirebaseAuth.instance;
-  final _firestore = FirebaseFirestore.instance;
+  final _supabase = Supabase.instance.client;
   final StorageService _storage = StorageService();
 
   Future<String> uploadAndSave({
     required OwnerDocumentType type,
-    required String filePath,
+    required XFile file,
     required String uid,
   }) async {
     // 1) رفع الملف على Storage
     final url = await _storage.uploadOwnerDocument(
-        file: File(filePath),
+        file: file,
         ownerId: uid,
         documentType: type.name,
     );
     if (url == null) throw 'Upload failed';
 
-    // 2) تحديد اسم الحقل في Firestore
+    // 2) تحديد اسم الحقل
     String fieldName;
     switch (type) {
       case OwnerDocumentType.commercialRegister:
@@ -47,13 +43,24 @@ class OwnerDocumentService {
         break;
     }
 
-    // 3) حفظ الـ URL في users/{uid}.verificationDocuments
-    await _firestore.collection('users').doc(uid).set({
-      'verificationDocuments': {
-        fieldName: url,
-      },
+    // 3) جلب الـ additional_data الحالي لتعديل الـ verificationDocuments داخله
+    final response = await _supabase
+        .from('users')
+        .select('additional_data')
+        .eq('id', uid)
+        .maybeSingle();
+
+    final additionalData = Map<String, dynamic>.from(response?['additional_data'] ?? {});
+    final verificationDocuments = Map<String, dynamic>.from(additionalData['verificationDocuments'] ?? {});
+    verificationDocuments[fieldName] = url;
+    additionalData['verificationDocuments'] = verificationDocuments;
+
+    // 4) تحديث الحقل في جدول users
+    await _supabase.from('users').update({
+      'additional_data': additionalData,
       'verificationStatus': 'pending',
-    }, SetOptions(merge: true));
+      'verification_status': 'pending',
+    }).eq('id', uid);
 
     return url;
   }

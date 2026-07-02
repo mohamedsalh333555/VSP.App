@@ -359,13 +359,13 @@ abstract class AppLocalizations {
   /// No description provided for @unleashChampion.
   ///
   /// In en, this message translates to:
-  /// **'UNLEASH YOUR\nINNER CHAMPION'**
+  /// **'BE THE CHAMPION'**
   String get unleashChampion;
 
   /// No description provided for @premierPlatform.
   ///
   /// In en, this message translates to:
-  /// **'THE PREMIER PLATFORM FOR MODERN ATHLETES'**
+  /// **'Book your pitch in seconds, compete with teams, and earn champions ranking'**
   String get premierPlatform;
 
   /// No description provided for @readyToJoin.
@@ -2819,7 +2819,7 @@ abstract class AppLocalizations {
   /// No description provided for @activeBookingsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Active Bookings'**
+  /// **'Completed Bookings'**
   String get activeBookingsLabel;
 
   /// No description provided for @bookedTodayLabel.
@@ -3134,6 +3134,54 @@ abstract class AppLocalizations {
   /// **'Edit'**
   String get editLabel;
 
+  /// No description provided for @editTournamentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Edit Tournament'**
+  String get editTournamentTitle;
+
+  /// No description provided for @createTournamentTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Tournament'**
+  String get createTournamentTitle;
+
+  /// No description provided for @backButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Back'**
+  String get backButton;
+
+  /// No description provided for @updateChanges.
+  ///
+  /// In en, this message translates to:
+  /// **'Update Changes'**
+  String get updateChanges;
+
+  /// No description provided for @nextButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Next'**
+  String get nextButton;
+
+  /// No description provided for @basicsStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Basics'**
+  String get basicsStep;
+
+  /// No description provided for @systemStep.
+  ///
+  /// In en, this message translates to:
+  /// **'System'**
+  String get systemStep;
+
+  /// No description provided for @schedulingStep.
+  ///
+  /// In en, this message translates to:
+  /// **'Scheduling'**
+  String get schedulingStep;
+
   /// No description provided for @quickTemplates.
   ///
   /// In en, this message translates to:
@@ -3143,8 +3191,14 @@ abstract class AppLocalizations {
   /// No description provided for @choosePresetSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Choose a preset or fill details below'**
+  /// **'Choose a preset template to quickly configure rules'**
   String get choosePresetSubtitle;
+
+  /// No description provided for @currency.
+  ///
+  /// In en, this message translates to:
+  /// **'Currency'**
+  String get currency;
 
   /// No description provided for @tournamentNameLabel.
   ///
@@ -3161,7 +3215,7 @@ abstract class AppLocalizations {
   /// No description provided for @entryFeeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Entry Fee (EGP)'**
+  /// **'Entry Fee'**
   String get entryFeeLabel;
 
   /// No description provided for @tournamentSystemLabel.
@@ -3169,6 +3223,18 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Tournament System'**
   String get tournamentSystemLabel;
+
+  /// No description provided for @knockoutType.
+  ///
+  /// In en, this message translates to:
+  /// **'Knockout'**
+  String get knockoutType;
+
+  /// No description provided for @leagueType.
+  ///
+  /// In en, this message translates to:
+  /// **'League'**
+  String get leagueType;
 
   /// No description provided for @maxTeamsLabel.
   ///
@@ -3197,68 +3263,110 @@ abstract class AppLocalizations {
   /// No description provided for @grandPrizeLabel.
   ///
   /// In en, this message translates to:
-  /// **'Grand Prize (EGP)'**
+  /// **'Grand Prize'**
   String get grandPrizeLabel;
 
-  /// No description provided for @createTournamentTitle.
+  /// No description provided for @myStadiumsTab.
   ///
   /// In en, this message translates to:
-  /// **'Create Tournament'**
-  String get createTournamentTitle;
+  /// **'My Stadiums'**
+  String get myStadiumsTab;
 
-  /// No description provided for @editTournamentTitle.
+  /// No description provided for @stadiumsEmptyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Edit Tournament'**
-  String get editTournamentTitle;
+  /// **'No stadiums found'**
+  String get stadiumsEmptyTitle;
 
-  /// No description provided for @basicsStep.
+  /// No description provided for @stadiumsEmptySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Basics'**
-  String get basicsStep;
+  /// **'Tap add stadium to list your first facility'**
+  String get stadiumsEmptySubtitle;
 
-  /// No description provided for @systemStep.
+  /// No description provided for @addStadiumLabel.
   ///
   /// In en, this message translates to:
-  /// **'System'**
-  String get systemStep;
+  /// **'Add Stadium'**
+  String get addStadiumLabel;
 
-  /// No description provided for @schedulingStep.
+  /// No description provided for @identityPendingVerification.
   ///
   /// In en, this message translates to:
-  /// **'Scheduling'**
-  String get schedulingStep;
+  /// **'Identity Verification'**
+  String get identityPendingVerification;
 
-  /// No description provided for @backButton.
+  /// No description provided for @bookedManually.
   ///
   /// In en, this message translates to:
-  /// **'Back'**
-  String get backButton;
+  /// **'Booked Manually'**
+  String get bookedManually;
 
-  /// No description provided for @nextButton.
+  /// No description provided for @noWorkingHoursTitle.
   ///
   /// In en, this message translates to:
-  /// **'Next'**
-  String get nextButton;
+  /// **'No working hours set'**
+  String get noWorkingHoursTitle;
 
-  /// No description provided for @updateChanges.
+  /// No description provided for @noWorkingHoursSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Update Changes'**
-  String get updateChanges;
+  /// **'Please configure stadium opening hours first'**
+  String get noWorkingHoursSubtitle;
 
-  /// No description provided for @pendingVerificationBanner.
+  /// No description provided for @breakTime.
   ///
   /// In en, this message translates to:
-  /// **'Pending Document Verification'**
-  String get pendingVerificationBanner;
+  /// **'Break Time'**
+  String get breakTime;
 
-  /// No description provided for @verifyNowBtn.
+  /// No description provided for @addManualBooking.
   ///
   /// In en, this message translates to:
-  /// **'Verify Now'**
-  String get verifyNowBtn;
+  /// **'Add Manual Booking'**
+  String get addManualBooking;
+
+  /// No description provided for @closedBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Closed'**
+  String get closedBadge;
+
+  /// No description provided for @openBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'Open'**
+  String get openBadge;
+
+  /// No description provided for @collectedStatusAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Collected'**
+  String get collectedStatusAuto;
+
+  /// No description provided for @pendingStatusAuto.
+  ///
+  /// In en, this message translates to:
+  /// **'Pending'**
+  String get pendingStatusAuto;
+
+  /// No description provided for @enterCustomerNameError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter customer name'**
+  String get enterCustomerNameError;
+
+  /// No description provided for @update.
+  ///
+  /// In en, this message translates to:
+  /// **'Update'**
+  String get update;
+
+  /// No description provided for @friendsRequiredNote.
+  ///
+  /// In en, this message translates to:
+  /// **'Note: You need at least 6 members to create a team'**
+  String get friendsRequiredNote;
 
   /// No description provided for @createTeamTitle.
   ///
@@ -3272,114 +3380,6 @@ abstract class AppLocalizations {
   /// **'Team Name'**
   String get teamNameLabel;
 
-  /// No description provided for @teamDescriptionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Team Description'**
-  String get teamDescriptionLabel;
-
-  /// No description provided for @addTeamMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Add Team Members'**
-  String get addTeamMembers;
-
-  /// No description provided for @createTeamBtn.
-  ///
-  /// In en, this message translates to:
-  /// **'Create Team'**
-  String get createTeamBtn;
-
-  /// No description provided for @allStadiumsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'All Stadiums'**
-  String get allStadiumsLabel;
-
-  /// No description provided for @totalRevenue.
-  ///
-  /// In en, this message translates to:
-  /// **'Total Revenue'**
-  String get totalRevenue;
-
-  /// No description provided for @bookedHours.
-  ///
-  /// In en, this message translates to:
-  /// **'Booked Hours'**
-  String get bookedHours;
-
-  /// No description provided for @myStadiumsStatus.
-  ///
-  /// In en, this message translates to:
-  /// **'My Stadiums Status'**
-  String get myStadiumsStatus;
-
-  /// No description provided for @identityPendingVerification.
-  ///
-  /// In en, this message translates to:
-  /// **'Your account is pending document verification. Tap to upload.'**
-  String get identityPendingVerification;
-
-  /// No description provided for @uploadPhoto.
-  ///
-  /// In en, this message translates to:
-  /// **'Upload Photo'**
-  String get uploadPhoto;
-
-  /// No description provided for @teamMembers.
-  ///
-  /// In en, this message translates to:
-  /// **'Team Members'**
-  String get teamMembers;
-
-  /// No description provided for @stadiumsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No Stadiums Added'**
-  String get stadiumsEmptyTitle;
-
-  /// No description provided for @stadiumsEmptySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Add your first stadium to start receiving bookings'**
-  String get stadiumsEmptySubtitle;
-
-  /// No description provided for @bookingsEmptyTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'No Bookings Yet'**
-  String get bookingsEmptyTitle;
-
-  /// No description provided for @bookingsEmptySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Your bookings will appear here once customers start booking'**
-  String get bookingsEmptySubtitle;
-
-  /// No description provided for @confirmBtn.
-  ///
-  /// In en, this message translates to:
-  /// **'Confirm'**
-  String get confirmBtn;
-
-  /// No description provided for @cancelBtn.
-  ///
-  /// In en, this message translates to:
-  /// **'Cancel'**
-  String get cancelBtn;
-
-  /// No description provided for @actualLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Actual'**
-  String get actualLabel;
-
-  /// No description provided for @platformCommissionLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Platform Commission'**
-  String get platformCommissionLabel;
-
   /// No description provided for @uploadLogo.
   ///
   /// In en, this message translates to:
@@ -3392,23 +3392,11 @@ abstract class AppLocalizations {
   /// **'Change Logo'**
   String get changeLogo;
 
-  /// No description provided for @enterTeamName.
+  /// No description provided for @teamMembers.
   ///
   /// In en, this message translates to:
-  /// **'Please enter a team name'**
-  String get enterTeamName;
-
-  /// No description provided for @teamCreatedSuccess.
-  ///
-  /// In en, this message translates to:
-  /// **'Team created successfully!'**
-  String get teamCreatedSuccess;
-
-  /// No description provided for @friendsRequiredNote.
-  ///
-  /// In en, this message translates to:
-  /// **'Note: Team created, but you need 4 more friends for challenge matches.'**
-  String get friendsRequiredNote;
+  /// **'Team Members'**
+  String get teamMembers;
 
   /// No description provided for @addMemberBtn.
   ///
@@ -3419,158 +3407,20 @@ abstract class AppLocalizations {
   /// No description provided for @noMembersAddedYet.
   ///
   /// In en, this message translates to:
-  /// **'No members added yet'**
+  /// **'No members added yet.'**
   String get noMembersAddedYet;
 
-  /// No description provided for @createTeamSubtitle.
+  /// No description provided for @cancelBtn.
   ///
   /// In en, this message translates to:
-  /// **'Create Your Team To Have Your Favorite Friends Join You.'**
-  String get createTeamSubtitle;
+  /// **'Cancel'**
+  String get cancelBtn;
 
-  /// No description provided for @totalCollectedGross.
+  /// No description provided for @confirmBtn.
   ///
   /// In en, this message translates to:
-  /// **'Total Collected (Gross)'**
-  String get totalCollectedGross;
-
-  /// No description provided for @platformCutApplied.
-  ///
-  /// In en, this message translates to:
-  /// **'5% Platform Cut Applied'**
-  String get platformCutApplied;
-
-  /// No description provided for @bookedTitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Booked'**
-  String get bookedTitle;
-
-  /// No description provided for @individualPlayerLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Individual Player'**
-  String get individualPlayerLabel;
-
-  /// No description provided for @collectedSticker.
-  ///
-  /// In en, this message translates to:
-  /// **'COLLECTED'**
-  String get collectedSticker;
-
-  /// No description provided for @pendingSticker.
-  ///
-  /// In en, this message translates to:
-  /// **'PENDING'**
-  String get pendingSticker;
-
-  /// No description provided for @profileAccountLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Account'**
-  String get profileAccountLabel;
-
-  /// No description provided for @profileAccountSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Your Account Information'**
-  String get profileAccountSubtitle;
-
-  /// No description provided for @profilePreferencesLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Preferences'**
-  String get profilePreferencesLabel;
-
-  /// No description provided for @profileNotificationsLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Notifications'**
-  String get profileNotificationsLabel;
-
-  /// No description provided for @profileNotificationsSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Your Notification Settings'**
-  String get profileNotificationsSubtitle;
-
-  /// No description provided for @profilePrivacyLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy'**
-  String get profilePrivacyLabel;
-
-  /// No description provided for @profilePrivacySubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Privacy Policy'**
-  String get profilePrivacySubtitle;
-
-  /// No description provided for @profileLanguageLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Language'**
-  String get profileLanguageLabel;
-
-  /// No description provided for @profileLanguageSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Manage Your Language Preferences'**
-  String get profileLanguageSubtitle;
-
-  /// No description provided for @profileSupportLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Support'**
-  String get profileSupportLabel;
-
-  /// No description provided for @profileHelpCenterLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Help Center'**
-  String get profileHelpCenterLabel;
-
-  /// No description provided for @profileHelpCenterSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Chat With Support'**
-  String get profileHelpCenterSubtitle;
-
-  /// No description provided for @profileLogoutLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Logout'**
-  String get profileLogoutLabel;
-
-  /// No description provided for @profileLogoutSubtitle.
-  ///
-  /// In en, this message translates to:
-  /// **'Sign out of your account'**
-  String get profileLogoutSubtitle;
-
-  /// No description provided for @inProgress.
-  ///
-  /// In en, this message translates to:
-  /// **'IN PROGRESS'**
-  String get inProgress;
-
-  /// No description provided for @filters.
-  ///
-  /// In en, this message translates to:
-  /// **'Filters'**
-  String get filters;
-
-  /// No description provided for @reset.
-  ///
-  /// In en, this message translates to:
-  /// **'Reset'**
-  String get reset;
-
-  /// No description provided for @apply.
-  ///
-  /// In en, this message translates to:
-  /// **'Apply'**
-  String get apply;
+  /// **'Confirm'**
+  String get confirmBtn;
 
   /// No description provided for @sports.
   ///
@@ -3584,17 +3434,23 @@ abstract class AppLocalizations {
   /// **'Price Range'**
   String get priceRange;
 
-  /// No description provided for @ratings.
-  ///
-  /// In en, this message translates to:
-  /// **'Ratings'**
-  String get ratings;
-
   /// No description provided for @services.
   ///
   /// In en, this message translates to:
   /// **'Services'**
   String get services;
+
+  /// No description provided for @filters.
+  ///
+  /// In en, this message translates to:
+  /// **'Filters'**
+  String get filters;
+
+  /// No description provided for @reset.
+  ///
+  /// In en, this message translates to:
+  /// **'Reset'**
+  String get reset;
 
   /// No description provided for @selectSports.
   ///
@@ -3626,29 +3482,77 @@ abstract class AppLocalizations {
   /// **'Stadium Services'**
   String get stadiumServices;
 
-  /// No description provided for @stadiumApprovedTitle.
+  /// No description provided for @badgeUnlockedStatus.
   ///
   /// In en, this message translates to:
-  /// **'Stadium Approved!'**
-  String get stadiumApprovedTitle;
+  /// **'Badge Unlocked!'**
+  String get badgeUnlockedStatus;
 
-  /// No description provided for @stadiumApprovedSubtitle.
+  /// No description provided for @badgeLockedStatus.
   ///
   /// In en, this message translates to:
-  /// **'Congratulations! \"{name}\" is now live.'**
-  String stadiumApprovedSubtitle(Object name);
+  /// **'Badge Locked'**
+  String get badgeLockedStatus;
 
-  /// No description provided for @dismissBtn.
+  /// No description provided for @gotItBtn.
   ///
   /// In en, this message translates to:
-  /// **'DISMISS'**
-  String get dismissBtn;
+  /// **'Got It'**
+  String get gotItBtn;
 
-  /// No description provided for @createTournament.
+  /// No description provided for @bookingDetailsTitle.
   ///
   /// In en, this message translates to:
-  /// **'Create Tournament'**
-  String get createTournament;
+  /// **'Booking Details'**
+  String get bookingDetailsTitle;
+
+  /// No description provided for @manualBookingTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Manual Booking'**
+  String get manualBookingTitle;
+
+  /// No description provided for @timeAndStadium.
+  ///
+  /// In en, this message translates to:
+  /// **'Time & Stadium'**
+  String get timeAndStadium;
+
+  /// No description provided for @customerName.
+  ///
+  /// In en, this message translates to:
+  /// **'Customer Name'**
+  String get customerName;
+
+  /// No description provided for @enterNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter name'**
+  String get enterNameHint;
+
+  /// No description provided for @phoneOptionalHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Phone (Optional)'**
+  String get phoneOptionalHint;
+
+  /// No description provided for @internalNotes.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal Notes'**
+  String get internalNotes;
+
+  /// No description provided for @internalNotesHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Internal Notes Hint'**
+  String get internalNotesHint;
+
+  /// No description provided for @paymentStatus.
+  ///
+  /// In en, this message translates to:
+  /// **'Payment Status'**
+  String get paymentStatus;
 
   /// No description provided for @tournamentsTitle.
   ///
@@ -3677,13 +3581,13 @@ abstract class AppLocalizations {
   /// No description provided for @noTournamentsTitle.
   ///
   /// In en, this message translates to:
-  /// **'No Tournaments Yet'**
+  /// **'No Tournaments'**
   String get noTournamentsTitle;
 
   /// No description provided for @noTournamentsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Start organizing your first tournament and attract more players!'**
+  /// **'Create a tournament to see it here'**
   String get noTournamentsSubtitle;
 
   /// No description provided for @createYourFirst.
@@ -3695,422 +3599,482 @@ abstract class AppLocalizations {
   /// No description provided for @shareTournamentText.
   ///
   /// In en, this message translates to:
-  /// **'Join my tournament \"{name}\"! 🏆\n📅 Date: {startDate} - {endDate}\n💰 Prize: {prize} EGP\n⚽ Entry: {fee} EGP\nRegister now on VSP Application!'**
-  String shareTournamentText(Object name, Object startDate, Object endDate, Object prize, Object fee);
-
-  /// No description provided for @entryFeeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Entry Fee'**
-  String get entryFeeLabel;
-
-  /// No description provided for @grandPrizeLabel.
-  ///
-  /// In en, this message translates to:
-  /// **'Grand Prize'**
-  String get grandPrizeLabel;
+  /// **'Check out {name} starting from {startDate} to {endDate}! Grand Prize: {prize} EGP, Entry Fee: {fee} EGP.'**
+  String shareTournamentText(
+    String name,
+    String startDate,
+    String endDate,
+    int prize,
+    int fee,
+  );
 
   /// No description provided for @teamsJoinedCount.
   ///
   /// In en, this message translates to:
-  /// **'Teams: {count} / {max}'**
-  String teamsJoinedCount(Object count, Object max);
+  /// **'{current}/{max} Teams'**
+  String teamsJoinedCount(int current, int max);
 
-  /// No description provided for @stadiumsEmptyTitle.
+  /// No description provided for @actualLabel.
   ///
   /// In en, this message translates to:
-  /// **'No Stadiums Found'**
-  String get stadiumsEmptyTitle;
+  /// **'Actual'**
+  String get actualLabel;
 
-  /// No description provided for @stadiumsEmptySubtitle.
+  /// No description provided for @platformCommissionLabel.
   ///
   /// In en, this message translates to:
-  /// **'You haven\'t added any stadiums yet. Add your first stadium to start receiving bookings.'**
-  String get stadiumsEmptySubtitle;
+  /// **'Platform Commission'**
+  String get platformCommissionLabel;
 
-  /// No description provided for @noWorkingHoursTitle.
+  /// No description provided for @bookedHours.
   ///
   /// In en, this message translates to:
-  /// **'No Working Hours'**
-  String get noWorkingHoursTitle;
+  /// **'Booked Hours'**
+  String get bookedHours;
 
-  /// No description provided for @noWorkingHoursSubtitle.
+  /// No description provided for @stadiumApprovedTitle.
   ///
   /// In en, this message translates to:
-  /// **'Please set stadium working hours first.'**
-  String get noWorkingHoursSubtitle;
+  /// **'Stadium Approved'**
+  String get stadiumApprovedTitle;
 
-  /// No description provided for @addManualBooking.
+  /// No description provided for @stadiumApprovedSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Add Manual Booking'**
-  String get addManualBooking;
+  /// **'{name} has been approved!'**
+  String stadiumApprovedSubtitle(String name);
 
-  /// No description provided for @breakTime.
+  /// No description provided for @dismissBtn.
   ///
   /// In en, this message translates to:
-  /// **'Break Time'**
-  String get breakTime;
+  /// **'Dismiss'**
+  String get dismissBtn;
 
-  /// No description provided for @closedBadge.
+  /// No description provided for @createTournament.
   ///
   /// In en, this message translates to:
-  /// **'CLOSED'**
-  String get closedBadge;
+  /// **'Create Tournament'**
+  String get createTournament;
 
-  /// No description provided for @openBadge.
+  /// No description provided for @profileSettings.
   ///
   /// In en, this message translates to:
-  /// **'OPEN'**
-  String get openBadge;
+  /// **'Profile Settings'**
+  String get profileSettings;
 
-  /// No description provided for @bookedManually.
+  /// No description provided for @profileAccountLabel.
   ///
   /// In en, this message translates to:
-  /// **'BOOKED MANUALLY'**
-  String get bookedManually;
+  /// **'Account'**
+  String get profileAccountLabel;
 
-  /// No description provided for @bookingDetailsTitle.
+  /// No description provided for @profileAccountSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Booking Details'**
-  String get bookingDetailsTitle;
+  /// **'Manage your account'**
+  String get profileAccountSubtitle;
 
-  /// No description provided for @manualBookingTitle.
+  /// No description provided for @profilePreferencesLabel.
   ///
   /// In en, this message translates to:
-  /// **'Manual Booking'**
-  String get manualBookingTitle;
+  /// **'Preferences'**
+  String get profilePreferencesLabel;
 
-  /// No description provided for @cancelBooking.
+  /// No description provided for @profileNotificationsLabel.
   ///
   /// In en, this message translates to:
-  /// **'Cancel Booking?'**
-  String get cancelBooking;
+  /// **'Notifications'**
+  String get profileNotificationsLabel;
 
-  /// No description provided for @cancelBookingConfirm.
+  /// No description provided for @profileNotificationsSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to remove this booking? This action cannot be undone.'**
-  String get cancelBookingConfirm;
+  /// **'Manage notifications'**
+  String get profileNotificationsSubtitle;
 
-  /// No description provided for @timeAndStadium.
+  /// No description provided for @profilePrivacyLabel.
   ///
   /// In en, this message translates to:
-  /// **'Time & Stadium'**
-  String get timeAndStadium;
+  /// **'Privacy'**
+  String get profilePrivacyLabel;
 
-  /// No description provided for @customerName.
+  /// No description provided for @profilePrivacySubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Customer Name'**
-  String get customerName;
+  /// **'Manage privacy settings'**
+  String get profilePrivacySubtitle;
 
-  /// No description provided for @enterNameHint.
+  /// No description provided for @profileLanguageLabel.
   ///
   /// In en, this message translates to:
-  /// **'Enter name'**
-  String get enterNameHint;
+  /// **'Language'**
+  String get profileLanguageLabel;
 
-  /// No description provided for @phoneOptionalHint.
+  /// No description provided for @profileLanguageSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'01xxxxxxxxx (Optional)'**
-  String get phoneOptionalHint;
+  /// **'Change application language'**
+  String get profileLanguageSubtitle;
 
-  /// No description provided for @internalNotes.
+  /// No description provided for @profileSupportLabel.
   ///
   /// In en, this message translates to:
-  /// **'Internal Notes'**
-  String get internalNotes;
+  /// **'Support'**
+  String get profileSupportLabel;
 
-  /// No description provided for @internalNotesHint.
+  /// No description provided for @profileHelpCenterLabel.
   ///
   /// In en, this message translates to:
-  /// **'e.g. Paid deposit, special request...'**
-  String get internalNotesHint;
+  /// **'Help Center'**
+  String get profileHelpCenterLabel;
 
-  /// No description provided for @paymentStatus.
+  /// No description provided for @profileHelpCenterSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Payment Status'**
-  String get paymentStatus;
+  /// **'Get support and help'**
+  String get profileHelpCenterSubtitle;
 
-  /// No description provided for @collectedStatusAuto.
+  /// No description provided for @profileLogoutLabel.
   ///
   /// In en, this message translates to:
-  /// **'COLLECTED (Automated)'**
-  String get collectedStatusAuto;
+  /// **'Logout'**
+  String get profileLogoutLabel;
 
-  /// No description provided for @pendingStatusAuto.
+  /// No description provided for @profileLogoutSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'PENDING (Automated)'**
-  String get pendingStatusAuto;
+  /// **'Sign out of your account'**
+  String get profileLogoutSubtitle;
 
-  /// No description provided for @update.
+  /// No description provided for @inProgress.
   ///
   /// In en, this message translates to:
-  /// **'Update'**
-  String get update;
+  /// **'In Progress'**
+  String get inProgress;
 
-  /// No description provided for @enterCustomerNameError.
+  /// No description provided for @personalType.
   ///
   /// In en, this message translates to:
-  /// **'Please enter customer name'**
-  String get enterCustomerNameError;
+  /// **'Personal'**
+  String get personalType;
 
-  /// No description provided for @informationStadium.
+  /// No description provided for @teamType.
   ///
   /// In en, this message translates to:
-  /// **'Information Stadium'**
-  String get informationStadium;
+  /// **'Team'**
+  String get teamType;
 
-  /// No description provided for @noDescription.
+  /// No description provided for @challengeType.
   ///
   /// In en, this message translates to:
-  /// **'No description provided.'**
-  String get noDescription;
+  /// **'Challenge'**
+  String get challengeType;
 
-  /// No description provided for @ownerNotes.
+  /// No description provided for @forgotPasswordSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Owner Notes'**
-  String get ownerNotes;
+  /// **'Enter your email address and we will send you a link to reset your password.'**
+  String get forgotPasswordSubtitle;
 
-  /// No description provided for @noOwnerNotes.
+  /// No description provided for @resetPasswordSuccess.
   ///
   /// In en, this message translates to:
-  /// **'No special notes from the owner.'**
-  String get noOwnerNotes;
+  /// **'Password reset email sent! Check your inbox.'**
+  String get resetPasswordSuccess;
 
-  /// No description provided for @punctuality.
+  /// No description provided for @resetPasswordError.
   ///
   /// In en, this message translates to:
-  /// **'Punctuality'**
-  String get punctuality;
+  /// **'Failed to send reset email. Please check the address and try again.'**
+  String get resetPasswordError;
 
-  /// No description provided for @punctualityPolicy.
+  /// No description provided for @invalidEmail.
   ///
   /// In en, this message translates to:
-  /// **'Please arrive 15 minutes before your time slot.'**
-  String get punctualityPolicy;
+  /// **'Please enter a valid email address.'**
+  String get invalidEmail;
 
-  /// No description provided for @reservationDuration.
+  /// No description provided for @selectImageSource.
   ///
   /// In en, this message translates to:
-  /// **'Reservation Duration'**
-  String get reservationDuration;
+  /// **'Select Image Source'**
+  String get selectImageSource;
 
-  /// No description provided for @reservationDurationPolicy.
+  /// No description provided for @camera.
   ///
   /// In en, this message translates to:
-  /// **'The pitch must be vacated immediately when the session ends.'**
-  String get reservationDurationPolicy;
+  /// **'Camera'**
+  String get camera;
 
-  /// No description provided for @liability.
+  /// No description provided for @gallery.
   ///
   /// In en, this message translates to:
-  /// **'Liability'**
-  String get liability;
+  /// **'Gallery'**
+  String get gallery;
 
-  /// No description provided for @liabilityPolicy.
+  /// No description provided for @docUploadedSuccess.
   ///
   /// In en, this message translates to:
-  /// **'The stadium is not responsible for lost items or injuries.'**
-  String get liabilityPolicy;
+  /// **'Document uploaded successfully!'**
+  String get docUploadedSuccess;
 
-  /// No description provided for @noReviews.
+  /// No description provided for @uploadFailed.
   ///
   /// In en, this message translates to:
-  /// **'No reviews yet for this stadium.'**
-  String get noReviews;
+  /// **'Upload failed: {error}'**
+  String uploadFailed(String error);
 
-  /// No description provided for @recently.
+  /// No description provided for @uploadCommRegisterRequired.
   ///
   /// In en, this message translates to:
-  /// **'Recently'**
-  String get recently;
+  /// **'Please upload your Commercial Register before continuing.'**
+  String get uploadCommRegisterRequired;
 
-  /// No description provided for @buildYourSquad.
+  /// No description provided for @uploadIdFrontRequired.
   ///
   /// In en, this message translates to:
-  /// **'Build Your Squad'**
-  String get buildYourSquad;
+  /// **'Please upload the front side of your National ID.'**
+  String get uploadIdFrontRequired;
 
-  /// No description provided for @points.
+  /// No description provided for @uploadIdBackRequired.
   ///
   /// In en, this message translates to:
-  /// **'Points'**
-  String get points;
+  /// **'Please upload the back side of your National ID.'**
+  String get uploadIdBackRequired;
 
-  /// No description provided for @members.
+  /// No description provided for @regCompleteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Members'**
-  String get members;
+  /// **'Registration Complete! 🎉'**
+  String get regCompleteTitle;
 
-  /// No description provided for @trophies.
+  /// No description provided for @regCompleteBody.
   ///
   /// In en, this message translates to:
-  /// **'Trophies'**
-  String get trophies;
+  /// **'Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.'**
+  String get regCompleteBody;
 
-  /// No description provided for @wins.
+  /// No description provided for @goToDashboard.
   ///
   /// In en, this message translates to:
-  /// **'Wins'**
-  String get wins;
+  /// **'Go to Dashboard'**
+  String get goToDashboard;
 
-  /// No description provided for @teamName.
+  /// No description provided for @saveInfoFailed.
   ///
   /// In en, this message translates to:
-  /// **'Team Name'**
-  String get teamName;
+  /// **'Failed to save your information. Please check your connection and try again.'**
+  String get saveInfoFailed;
 
-  /// No description provided for @enterTeamName.
+  /// No description provided for @verificationPending.
   ///
   /// In en, this message translates to:
-  /// **'Enter team name'**
-  String get enterTeamName;
+  /// **'Verification Pending'**
+  String get verificationPending;
 
-  /// No description provided for @teamMembersHeader.
+  /// No description provided for @reviewingDocs.
   ///
   /// In en, this message translates to:
-  /// **'Team Members ({current}/{max})'**
-  String teamMembersHeader(Object current, Object max);
+  /// **'We are reviewing your submitted documents.'**
+  String get reviewingDocs;
 
-  /// No description provided for @addMember.
+  /// No description provided for @submissionStatus.
   ///
   /// In en, this message translates to:
-  /// **'Add Member'**
-  String get addMember;
+  /// **'Submission Status'**
+  String get submissionStatus;
 
-  /// No description provided for @addMembersHint.
+  /// No description provided for @nationalIdFront.
   ///
   /// In en, this message translates to:
-  /// **'Search and add members to your team'**
-  String get addMembersHint;
+  /// **'National ID Front'**
+  String get nationalIdFront;
 
-  /// No description provided for @teamAchievements.
+  /// No description provided for @nationalIdBack.
   ///
   /// In en, this message translates to:
-  /// **'Team Achievements'**
-  String get teamAchievements;
+  /// **'National ID Back'**
+  String get nationalIdBack;
 
-  /// No description provided for @registerTeamPrompt.
+  /// No description provided for @reviewDurationText.
   ///
   /// In en, this message translates to:
-  /// **'Create your team to start winning trophies!'**
-  String get registerTeamPrompt;
+  /// **'The review process typically takes up to 24 hours. We will notify you once your account has been verified and activated.'**
+  String get reviewDurationText;
 
-  /// No description provided for @deleteTeam.
+  /// No description provided for @refreshStatus.
   ///
   /// In en, this message translates to:
-  /// **'Delete Team'**
-  String get deleteTeam;
+  /// **'Refresh Status'**
+  String get refreshStatus;
 
-  /// No description provided for @deleteTeamConfirm.
+  /// No description provided for @verifiedSuccess.
   ///
   /// In en, this message translates to:
-  /// **'Are you sure you want to delete this team? This cannot be undone.'**
-  String get deleteTeamConfirm;
+  /// **'Account verified successfully!'**
+  String get verifiedSuccess;
 
-  /// No description provided for @saveChanges.
+  /// No description provided for @stillUnderReview.
   ///
   /// In en, this message translates to:
-  /// **'Save Changes'**
-  String get saveChanges;
+  /// **'Documents are still under review.'**
+  String get stillUnderReview;
 
-  /// No description provided for @badgeUnlockedStatus.
+  /// No description provided for @refreshStatusFailed.
   ///
   /// In en, this message translates to:
-  /// **'Status: Unlocked! Keep it up.'**
-  String get badgeUnlockedStatus;
+  /// **'Failed to refresh status: {error}'**
+  String refreshStatusFailed(String error);
 
-  /// No description provided for @badgeLockedStatus.
+  /// No description provided for @submitted.
   ///
   /// In en, this message translates to:
-  /// **'Status: Locked. Complete the requirement to earn this badge.'**
-  String get badgeLockedStatus;
+  /// **'Submitted'**
+  String get submitted;
 
-  /// No description provided for @gotItBtn.
+  /// No description provided for @ownerInformationTitle.
   ///
   /// In en, this message translates to:
-  /// **'Got it'**
-  String get gotItBtn;
+  /// **'Owner information'**
+  String get ownerInformationTitle;
 
-  /// No description provided for @selectDate.
+  /// No description provided for @clickToUploadRegister.
   ///
   /// In en, this message translates to:
-  /// **'Select Date'**
-  String get selectDate;
+  /// **'Click to upload commercial register'**
+  String get clickToUploadRegister;
 
-  /// No description provided for @selectTime.
+  /// No description provided for @uploadedSuccessfully.
   ///
   /// In en, this message translates to:
-  /// **'Select Time'**
-  String get selectTime;
+  /// **'Uploaded Successfully'**
+  String get uploadedSuccessfully;
 
-  /// No description provided for @expiredStatus.
+  /// No description provided for @saving.
   ///
   /// In en, this message translates to:
-  /// **'EXPIRED'**
-  String get expiredStatus;
+  /// **'Saving...'**
+  String get saving;
 
-  /// No description provided for @currentPlayersWithYou.
+  /// No description provided for @saveAndContinue.
   ///
   /// In en, this message translates to:
-  /// **'Current Players with You'**
-  String get currentPlayersWithYou;
+  /// **'Save & Continue'**
+  String get saveAndContinue;
 
-  /// No description provided for @playersInGroupSubtitle.
+  /// No description provided for @uploadNationalIdTitle.
   ///
   /// In en, this message translates to:
-  /// **'Including yourself'**
-  String get playersInGroupSubtitle;
+  /// **'Upload national ID'**
+  String get uploadNationalIdTitle;
 
-  /// No description provided for @totalPriceLabel.
+  /// No description provided for @submitDocuments.
   ///
   /// In en, this message translates to:
-  /// **'Total Price'**
-  String get totalPriceLabel;
+  /// **'Submit Documents'**
+  String get submitDocuments;
 
-  /// No description provided for @confirmSelections.
+  /// No description provided for @facilityOnboardingSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Confirm Selections'**
-  String get confirmSelections;
+  /// **'Add your stadium and verify your account to start receiving bookings.'**
+  String get facilityOnboardingSubtitle;
 
-  /// No description provided for @bookingSummary.
+  /// No description provided for @addedStadiumsCount.
   ///
   /// In en, this message translates to:
-  /// **'Booking Summary'**
-  String get bookingSummary;
+  /// **'Your Stadiums ({count})'**
+  String addedStadiumsCount(int count);
 
-  /// No description provided for @cashPayAtStadium.
+  /// No description provided for @noStadiumsAddedYet.
   ///
   /// In en, this message translates to:
-  /// **'Cash (Pay at Stadium)'**
-  String get cashPayAtStadium;
+  /// **'No stadiums added yet'**
+  String get noStadiumsAddedYet;
 
-  /// No description provided for @cashPayment.
+  /// No description provided for @addStadiumButtonSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Cash Payment'**
-  String get cashPayment;
+  /// **'Register your new stadium details'**
+  String get addStadiumButtonSubtitle;
 
-  /// No description provided for @cashPaymentDesc.
+  /// No description provided for @confirmContinueBtn.
   ///
   /// In en, this message translates to:
-  /// **'Please prepare the exact amount to pay at the stadium reception before starting.'**
-  String get cashPaymentDesc;
+  /// **'Confirm & Continue'**
+  String get confirmContinueBtn;
 
-  /// No description provided for @subtotalAmount.
+  /// No description provided for @confirmContinueSubtitle.
   ///
   /// In en, this message translates to:
-  /// **'Subtotal Amount'**
-  String get subtotalAmount;
+  /// **'Upload legal documents and ID'**
+  String get confirmContinueSubtitle;
+
+  /// No description provided for @addStadiumFirstError.
+  ///
+  /// In en, this message translates to:
+  /// **'Please add a stadium first'**
+  String get addStadiumFirstError;
+
+  /// No description provided for @blockedBannerTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Account Restricted ⚠️'**
+  String get blockedBannerTitle;
+
+  /// No description provided for @blockedBannerSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your account has been restricted. Action capability is limited.'**
+  String get blockedBannerSubtitle;
+
+  /// No description provided for @geographicFallbackBanner.
+  ///
+  /// In en, this message translates to:
+  /// **'No stadiums registered in your area yet 🟢.. here are the closest available stadiums in other areas.'**
+  String get geographicFallbackBanner;
+
+  /// No description provided for @teamMemberDeleteLockError.
+  ///
+  /// In en, this message translates to:
+  /// **'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ⚠️'**
+  String get teamMemberDeleteLockError;
+
+  /// No description provided for @memberRemovedSuccess.
+  ///
+  /// In en, this message translates to:
+  /// **'Team member has been removed successfully.'**
+  String get memberRemovedSuccess;
+
+  /// No description provided for @preliminaryRound.
+  ///
+  /// In en, this message translates to:
+  /// **'Preliminary Round'**
+  String get preliminaryRound;
+
+  /// No description provided for @byeBadge.
+  ///
+  /// In en, this message translates to:
+  /// **'[ Auto Qualified - BYE ]'**
+  String get byeBadge;
+
+  /// No description provided for @warning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning'**
+  String get warning;
+
+  /// No description provided for @unpaidTeamsWarning.
+  ///
+  /// In en, this message translates to:
+  /// **'Warning: The following teams have not paid the subscription fee: {teams}. Do you want to proceed anyway?'**
+  String unpaidTeamsWarning(String teams);
+
+  /// No description provided for @proceedAnyway.
+  ///
+  /// In en, this message translates to:
+  /// **'Proceed anyway'**
+  String get proceedAnyway;
 }
 
 class _AppLocalizationsDelegate

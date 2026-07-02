@@ -1,4 +1,3 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -6,7 +5,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
@@ -83,8 +81,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     );
     if (picked != null) {
       setState(() {
-        if (isStart) _startDate = picked;
-        else _endDate = picked;
+        if (isStart) {
+          _startDate = picked;
+        } else {
+          _endDate = picked;
+        }
       });
     }
   }
@@ -101,8 +102,9 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       
       List<String> payments = [];
-      if (_selectedPaymentMethod == 'Cash') payments = ['cash'];
-      else if (_selectedPaymentMethod == 'Online') payments = ['online'];
+      if (_selectedPaymentMethod == 'Cash') {
+        payments = ['cash'];
+      } else if (_selectedPaymentMethod == 'Online') payments = ['online'];
       else payments = ['cash', 'online'];
 
       final champData = {

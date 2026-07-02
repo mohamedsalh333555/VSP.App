@@ -5,13 +5,17 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:timeago/timeago.dart' as timeago;
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
-import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/providers/booking_provider.dart';
 
+// ─────────────────────────────────────────────────────────────────────────────
+// MAIN SCREEN
+// ─────────────────────────────────────────────────────────────────────────────
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
 
@@ -21,7 +25,8 @@ class StadiumDetailsScreen extends StatefulWidget {
   State<StadiumDetailsScreen> createState() => _StadiumDetailsScreenState();
 }
 
-class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
+class _StadiumDetailsScreenState extends State<StadiumDetailsScreen>
+    with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _currentImageIndex = 0;
   late final List<String> _displayImages;
@@ -30,7 +35,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _displayImages = widget.stadium.images.isNotEmpty ? widget.stadium.images : [widget.stadium.imageUrl];
+    _displayImages = widget.stadium.images.isNotEmpty
+        ? widget.stadium.images
+        : [widget.stadium.imageUrl];
   }
 
   @override
@@ -42,12 +49,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
+    final stadium = widget.stadium;
+    final hasDeposit = stadium.depositAmount > 0.0;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       body: Column(
         children: [
-          // Header (Stack with Image and Slider Dots)
+          // ── Hero Image Header ──────────────────────────────────────────────
           SizedBox(
             height: (MediaQuery.of(context).size.height * 0.35).clamp(250.0, 450.0),
             child: Stack(
@@ -56,27 +66,23 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   child: _displayImages.isNotEmpty && _displayImages.first.isNotEmpty
                       ? PageView.builder(
                           itemCount: _displayImages.length,
-                          onPageChanged: (index) {
-                            setState(() {
-                              _currentImageIndex = index;
-                            });
-                          },
+                          onPageChanged: (index) =>
+                              setState(() => _currentImageIndex = index),
                           itemBuilder: (context, index) {
                             return CachedNetworkImage(
                               imageUrl: _displayImages[index],
                               fit: BoxFit.cover,
                               memCacheHeight: 800,
                               maxHeightDiskCache: 1200,
-                              placeholder: (context, url) => Container(
-                                color: VSPColors.surface,
-                              ),
-                              errorWidget: (context, url, error) => _buildVspLogoBackground(),
+                              placeholder: (ctx, url) =>
+                                  Container(color: VSPColors.surface),
+                              errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
                             );
                           },
                         )
                       : _buildVspLogoBackground(),
                 ),
-                // Gradient Overlay
+                // Gradient overlay
                 Positioned.fill(
                   child: Container(
                     decoration: BoxDecoration(
@@ -91,16 +97,16 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     ),
                   ),
                 ),
-                // Header Icons
+                // Top icons row
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.only(top: 10, left: 16, right: 16, bottom: 16),
+                    padding: const EdgeInsets.only(
+                        top: 10, left: 16, right: 16, bottom: 16),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCircularIcon(
                           icon: Icons.arrow_back_ios_new,
-                          matchTextDirection: true,
                           onTap: () => Navigator.pop(context),
                         ),
                         Row(
@@ -109,18 +115,27 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               icon: Icons.share_outlined,
                               onTap: () {
                                 Share.share(
-                                  l10n.shareStadiumText(widget.stadium.name, widget.stadium.location),
+                                  l10n.shareStadiumText(
+                                      stadium.name, stadium.location),
                                 );
                               },
                             ),
                             const SizedBox(width: 16),
                             Consumer<AuthProvider>(
                               builder: (context, auth, _) {
-                                final isFavorite = auth.userModel?.favoriteStadiums.contains(widget.stadium.id) ?? false;
+                                final isFavorite = auth.userModel
+                                        ?.favoriteStadiums
+                                        .contains(stadium.id) ??
+                                    false;
                                 return _buildCircularIcon(
-                                  icon: isFavorite ? Icons.favorite : Icons.favorite_border,
-                                  color: isFavorite ? VSPColors.accent : VSPColors.textPrimary,
-                                  onTap: () => auth.toggleFavoriteStadium(widget.stadium.id),
+                                  icon: isFavorite
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: isFavorite
+                                      ? VSPColors.accent
+                                      : VSPColors.textPrimary,
+                                  onTap: () =>
+                                      auth.toggleFavoriteStadium(stadium.id),
                                 );
                               },
                             ),
@@ -130,28 +145,31 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     ),
                   ),
                 ),
-                // Slider Dots Indicator
+                // Slider dots
                 Positioned(
                   bottom: 16,
                   left: 0,
                   right: 0,
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_displayImages.length, (index) {
-                      return Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                    children: List.generate(
+                      _displayImages.length,
+                      (index) => Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 4),
                         child: _buildDot(isActive: index == _currentImageIndex),
-                      );
-                    }),
+                      ),
+                    ),
                   ),
                 ),
               ],
             ),
           ),
 
+          // ── Custom Tab Bar ─────────────────────────────────────────────────
           Container(
             color: VSPColors.background,
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+            padding: const EdgeInsets.symmetric(
+                horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             child: Container(
               height: 48,
               decoration: BoxDecoration(
@@ -160,7 +178,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
               ),
               child: AnimatedBuilder(
                 animation: _tabController,
-                builder: (context, child) {
+                builder: (context, _) {
                   return Row(
                     children: [
                       _buildTabItem(0, l10n.information),
@@ -173,20 +191,21 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             ),
           ),
 
-          // Tab Content
+          // ── Tab Content ────────────────────────────────────────────────────
           Expanded(
             child: TabBarView(
               controller: _tabController,
               children: [
-                _InformationTab(stadium: widget.stadium),
-                _PitchConditionsTab(stadium: widget.stadium),
-                _RatingsTab(stadium: widget.stadium),
+                _InformationTab(stadium: stadium),
+                _PitchConditionsTab(stadium: stadium),
+                _RatingsTab(stadium: stadium),
               ],
             ),
           ),
         ],
       ),
-      // Booking Button & Price Fixed Bottom Bar
+
+      // ── FEATURE 2: Deposit-Transparent Bottom Bar ─────────────────────────
       bottomNavigationBar: Container(
         padding: const EdgeInsets.all(VSPSpacing.lg),
         decoration: BoxDecoration(
@@ -200,27 +219,76 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         child: SafeArea(
           child: Row(
             children: [
+              // Price column — shows deposit note when applicable
               Column(
                 mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
                     l10n.pricePerHour,
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(color: VSPColors.textSecondary),
                   ),
                   RichText(
                     text: TextSpan(
                       children: [
                         TextSpan(
-                          text: '${widget.stadium.basePrice.toStringAsFixed(0)} ',
+                          text: '${stadium.basePrice.toStringAsFixed(0)} ',
                           style: Theme.of(context).textTheme.displayLarge,
                         ),
                         TextSpan(
                           text: l10n.egCurrency,
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold),
+                          style: Theme.of(context)
+                              .textTheme
+                              .labelSmall
+                              ?.copyWith(fontWeight: FontWeight.bold),
                         ),
                       ],
                     ),
+                  ),
+                  // Deposit / pay-at-pitch note
+                  AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 250),
+                    child: hasDeposit
+                        ? Row(
+                            key: const ValueKey('deposit'),
+                            children: [
+                              const Icon(Icons.lock_outline,
+                                  color: VSPColors.accent, size: 11),
+                              const SizedBox(width: 4),
+                              Text(
+                                '${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${l10n.egCurrency}',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: VSPColors.accent,
+                                      fontSize: 10,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                              ),
+                            ],
+                          )
+                        : Row(
+                            key: const ValueKey('cash'),
+                            children: [
+                              const Icon(Icons.payments_outlined,
+                                  color: VSPColors.textSecondary, size: 11),
+                              const SizedBox(width: 4),
+                              Text(
+                                isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium',
+                                style: Theme.of(context)
+                                    .textTheme
+                                    .labelSmall
+                                    ?.copyWith(
+                                      color: VSPColors.textSecondary,
+                                      fontSize: 10,
+                                    ),
+                              ),
+                            ],
+                          ),
                   ),
                 ],
               ),
@@ -232,7 +300,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     Navigator.push(
                       context,
                       MaterialPageRoute(
-                        builder: (context) => BookingTypeScreen(stadium: widget.stadium),
+                        builder: (_) => BookingTypeScreen(stadium: stadium),
                       ),
                     );
                   },
@@ -244,6 +312,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       ),
     );
   }
+
+  // ── Helpers ────────────────────────────────────────────────────────────────
 
   Widget _buildTabItem(int index, String label) {
     final isSelected = _tabController.index == index;
@@ -276,7 +346,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     required IconData icon,
     required VoidCallback onTap,
     Color color = VSPColors.textPrimary,
-    bool matchTextDirection = false,
   }) {
     return GestureDetector(
       onTap: onTap,
@@ -287,7 +356,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           color: VSPColors.background.withValues(alpha: 0.6),
           shape: BoxShape.circle,
         ),
-        child: Icon(icon, color: color, size: 20, matchTextDirection: matchTextDirection),
+        child: Icon(icon, color: color, size: 20),
       ),
     );
   }
@@ -297,7 +366,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       width: isActive ? 12 : 8,
       height: 8,
       decoration: BoxDecoration(
-        color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
+        color: isActive
+            ? VSPColors.accent
+            : VSPColors.textSecondary.withValues(alpha: 0.5),
         borderRadius: BorderRadius.circular(4),
       ),
     );
@@ -308,7 +379,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       color: VSPColors.surface,
       child: Center(
         child: Image.asset(
-          'assets/images/logo.png', // VSP logo
+          'assets/images/logo.png',
           width: 80,
           height: 80,
           color: VSPColors.textPrimary.withValues(alpha: 0.06),
@@ -319,6 +390,9 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// INFORMATION TAB
+// ─────────────────────────────────────────────────────────────────────────────
 class _InformationTab extends StatelessWidget {
   final Stadium stadium;
 
@@ -327,81 +401,114 @@ class _InformationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // Name and Stars
+          // ── FEATURE 4: Stadium Name + Verified Badge ──────────────────────
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Expanded(
-                child: Text(
-                  stadium.name,
-                  style: Theme.of(context).textTheme.displaySmall,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    Flexible(
+                      child: Text(
+                        stadium.name,
+                        style: Theme.of(context).textTheme.displaySmall,
+                      ),
+                    ),
+                    if (stadium.isVerified) ...[
+                      const SizedBox(width: 8),
+                      _VerifiedBadge(),
+                    ],
+                  ],
                 ),
               ),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Row(
-                    children: [
-                      ...List.generate(5, (index) => Icon(
-                        index < stadium.rating.round() ? Icons.star : Icons.star_border, 
-                        color: Colors.amber, 
-                        size: 16
-                      )),
-                    ],
+                    children: List.generate(
+                      5,
+                      (i) => Icon(
+                        i < stadium.rating.round()
+                            ? Icons.star
+                            : Icons.star_border,
+                        color: Colors.amber,
+                        size: 16,
+                      ),
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Text(
                     l10n.reviews(stadium.reviewsCount),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold),
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: VSPColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ],
               ),
             ],
           ),
+
           const SizedBox(height: VSPSpacing.sm),
-          
-          // Address and Location Badge
+
+          // ── Address + Location Button ──────────────────────────────────────
           Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Expanded(
                 child: Text(
                   stadium.address.isNotEmpty ? stadium.address : l10n.na,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+                  style: Theme.of(context)
+                      .textTheme
+                      .bodySmall
+                      ?.copyWith(color: VSPColors.textSecondary),
                 ),
               ),
               const SizedBox(width: VSPSpacing.sm),
               GestureDetector(
                 onTap: () async {
-                   final query = Uri.encodeComponent(stadium.name);
-                   final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
-                   try {
-                     await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
-                   } catch (e) {
-                     debugPrint('Could not launch maps: $e');
-                   }
+                  final query = Uri.encodeComponent(stadium.name);
+                  final googleMapsUrl = Uri.parse(
+                      'https://www.google.com/maps/search/?api=1&query=$query');
+                  try {
+                    await launchUrl(googleMapsUrl,
+                        mode: LaunchMode.externalApplication);
+                  } catch (e) {
+                    debugPrint('Could not launch maps: $e');
+                  }
                 },
                 child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                  padding: const EdgeInsets.symmetric(
+                      horizontal: 12, vertical: 6),
                   decoration: BoxDecoration(
                     color: VSPColors.accent,
                     borderRadius: BorderRadius.circular(VSPRadius.xl),
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on_outlined, color: VSPColors.background, size: 16),
+                      const Icon(Icons.location_on_outlined,
+                          color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
-                        stadium.location.isNotEmpty ? stadium.location : l10n.na,
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: VSPColors.background,
-                          fontWeight: FontWeight.bold,
-                        ),
+                        stadium.location.isNotEmpty
+                            ? stadium.location
+                            : l10n.na,
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(
+                              color: VSPColors.background,
+                              fontWeight: FontWeight.bold,
+                            ),
                       ),
                     ],
                   ),
@@ -409,50 +516,48 @@ class _InformationTab extends StatelessWidget {
               ),
             ],
           ),
-          
+
+          const SizedBox(height: VSPSpacing.md),
+
+          // ── FEATURE 3: Pitch Specifications Card ──────────────────────────
+          _PitchSpecsCard(stadium: stadium),
+
+          const SizedBox(height: VSPSpacing.md),
+
+          // ── FEATURE 1: Today's Real-Time Slots Preview ────────────────────
+          _TodaysSlotsPreview(stadium: stadium),
+
           const SizedBox(height: VSPSpacing.lg),
-          
-          // Information Stadium
+
+          // ── About the Stadium ─────────────────────────────────────────────
           Text(
             l10n.informationStadium,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.sm),
           Text(
-            stadium.description.isNotEmpty 
-              ? stadium.description 
-              : l10n.noDescription,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5),
+            stadium.description.isNotEmpty
+                ? stadium.description
+                : l10n.noDescription,
+            style: Theme.of(context)
+                .textTheme
+                .bodySmall
+                ?.copyWith(color: VSPColors.textSecondary, height: 1.5),
           ),
-          
+
           const SizedBox(height: VSPSpacing.lg),
-          
-          // Features
+
+          // ── FEATURE 5: Accessible Facilities Icon Grid ────────────────────
           Text(
             l10n.features,
             style: Theme.of(context).textTheme.titleLarge,
           ),
           const SizedBox(height: VSPSpacing.md),
-          Wrap(
-            spacing: VSPSpacing.sm,
-            runSpacing: VSPSpacing.sm,
-            children: (Stadium.parseFeatures(stadium.features).isNotEmpty ? Stadium.parseFeatures(stadium.features) : []).map((feature) => Container(
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-              decoration: BoxDecoration(
-                color: VSPColors.surfaceAlt,
-                border: Border.all(color: VSPColors.white12),
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-              ),
-              child: Text(
-                feature,
-                style: Theme.of(context).textTheme.labelMedium,
-              ),
-            )).toList(),
-          ),
+          _FacilitiesGrid(stadium: stadium),
 
           const SizedBox(height: VSPSpacing.lg),
-          
-          // Features For Money
+
+          // ── Paid Extras ───────────────────────────────────────────────────
           Text(
             l10n.featuresForMoney,
             style: Theme.of(context).textTheme.titleLarge,
@@ -460,20 +565,30 @@ class _InformationTab extends StatelessWidget {
           const SizedBox(height: VSPSpacing.md),
           if (stadium.hasBall)
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+              padding: const EdgeInsets.symmetric(
+                  horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                border: Border.all(
+                    color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sports_soccer, color: VSPColors.accent, size: 14),
+                  const Icon(Icons.sports_soccer,
+                      color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(
-                    l10n.ballAvailable(stadium.ballPrice.toStringAsFixed(0), l10n.egCurrency),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                    l10n.ballAvailable(
+                        stadium.ballPrice.toStringAsFixed(0), l10n.egCurrency),
+                    style: Theme.of(context)
+                        .textTheme
+                        .labelSmall
+                        ?.copyWith(
+                          color: VSPColors.accent,
+                          fontWeight: FontWeight.bold,
+                        ),
                   ),
                 ],
               ),
@@ -486,6 +601,529 @@ class _InformationTab extends StatelessWidget {
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE 4: Verified Badge Widget
+// ─────────────────────────────────────────────────────────────────────────────
+class _VerifiedBadge extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        gradient: const LinearGradient(
+          colors: [Color(0xFFD4AF37), Color(0xFFF5D36E)],
+        ),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: const [
+          Icon(Icons.verified, color: Colors.white, size: 12),
+          SizedBox(width: 4),
+          Text(
+            'Verified 🛡️',
+            style: TextStyle(
+              color: Colors.white,
+              fontSize: 10,
+              fontWeight: FontWeight.bold,
+              letterSpacing: 0.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE 3: Pitch Specs Card
+// ─────────────────────────────────────────────────────────────────────────────
+class _PitchSpecsCard extends StatelessWidget {
+  final Stadium stadium;
+
+  const _PitchSpecsCard({required this.stadium});
+
+  String _getFloorType() {
+    final f = stadium.features;
+    if (f is Map) {
+      return f['floorType']?.toString() ?? '';
+    }
+    return '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final ppt = stadium.playersPerTeam;
+    final matchLabel = ppt > 0 ? '$ppt vs $ppt' : '5 vs 5';
+    final floorType = _getFloorType();
+
+    // Map common floor types from database
+    String displayFloorType = floorType;
+    if (!isArabic) {
+      if (floorType == 'نجيل صناعي') displayFloorType = 'Artificial Grass';
+      if (floorType == 'نجيل طبيعي') displayFloorType = 'Natural Grass';
+      if (floorType == 'بلاط') displayFloorType = 'Tile';
+      if (floorType == 'ترتان') displayFloorType = 'Tartan';
+    }
+
+    return Container(
+      padding: const EdgeInsets.symmetric(
+          horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Row(
+        children: [
+          _buildSpecItem(
+            context,
+            icon: Icons.aspect_ratio,
+            label: isArabic ? 'حجم الملعب' : 'Pitch Size',
+            value: matchLabel,
+          ),
+          if (floorType.isNotEmpty) ...[
+            Container(
+                width: 1,
+                height: 36,
+                color: VSPColors.divider,
+                margin:
+                    const EdgeInsets.symmetric(horizontal: VSPSpacing.md)),
+            Expanded(
+              child: _buildSpecItem(
+                context,
+                icon: Icons.grass,
+                label: isArabic ? 'نوع الأرضية' : 'Surface Type',
+                value: displayFloorType,
+              ),
+            ),
+          ],
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSpecItem(BuildContext context,
+      {required IconData icon,
+      required String label,
+      required String value}) {
+    return Row(
+      mainAxisSize: MainAxisSize.min,
+      children: [
+        Container(
+          width: 36,
+          height: 36,
+          decoration: BoxDecoration(
+            color: VSPColors.accent.withValues(alpha: 0.1),
+            borderRadius: BorderRadius.circular(VSPRadius.sm),
+          ),
+          child: Icon(icon, color: VSPColors.accent, size: 18),
+        ),
+        const SizedBox(width: 10),
+        Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              label,
+              style: Theme.of(context)
+                  .textTheme
+                  .labelSmall
+                  ?.copyWith(color: VSPColors.textSecondary, fontSize: 10),
+            ),
+            Text(
+              value,
+              style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: VSPColors.textPrimary,
+                  ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE 1: Today's Real-Time Slots Preview
+// ─────────────────────────────────────────────────────────────────────────────
+class _TodaysSlotsPreview extends StatelessWidget {
+  final Stadium stadium;
+
+  const _TodaysSlotsPreview({required this.stadium});
+
+  List<String> _generateAllSlots() {
+    final f = stadium.features;
+    String startStr = '02:00 PM';
+    String endStr = '11:00 PM';
+    if (f is Map && f['workingHours'] != null) {
+      startStr = f['workingHours']['start'] ?? startStr;
+      endStr = f['workingHours']['end'] ?? endStr;
+    }
+
+    int parse(String t) {
+      if (t.isEmpty) return 0;
+      try {
+        final r = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
+        final m = r.firstMatch(t);
+        if (m == null) return 0;
+        int h = int.parse(m.group(1)!);
+        int min = m.group(2) != null ? int.parse(m.group(2)!) : 0;
+        final p = m.group(3)?.toUpperCase();
+        if (p == 'PM' && h != 12) h += 12;
+        if (p == 'AM' && h == 12) h = 0;
+        return h * 60 + min;
+      } catch (_) {
+        return 0;
+      }
+    }
+
+    String fmt(int total) {
+      total = total % (24 * 60);
+      final h = total ~/ 60;
+      final m = total % 60;
+      final p = h >= 12 ? 'PM' : 'AM';
+      final dh = h > 12 ? h - 12 : (h == 0 ? 12 : h);
+      return '${dh.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')} $p';
+    }
+
+    int s = parse(startStr);
+    int e = parse(endStr);
+    if (e < s) e += 24 * 60;
+    final slots = <String>[];
+    for (int t = s; t < e; t += 60) {
+      slots.add(fmt(t));
+    }
+    return slots;
+  }
+
+  bool _isSlotBooked(String slot, List<Booking> bookings, DateTime date) {
+    final r =
+        RegExp(r'(\d+):(\d+)\s*(AM|PM)', caseSensitive: false);
+    final m = r.firstMatch(slot);
+    if (m == null) return false;
+    int h = int.parse(m.group(1)!);
+    final min = int.parse(m.group(2)!);
+    final p = m.group(3)!.toUpperCase();
+    if (p == 'PM' && h != 12) h += 12;
+    if (p == 'AM' && h == 12) h = 0;
+    final slotStart = DateTime(date.year, date.month, date.day, h, min);
+    final slotEnd = slotStart.add(const Duration(hours: 1));
+    for (final b in bookings) {
+      if (slotStart.isBefore(b.endTime) && slotEnd.isAfter(b.startTime)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final today = DateTime.now();
+    return StreamBuilder<List<Booking>>(
+      stream: Provider.of<BookingProvider>(context, listen: false)
+          .getBookingsForStadium(stadium.id, today),
+      builder: (context, snapshot) {
+        final existingBookings = snapshot.data ?? [];
+        final allSlots = _generateAllSlots();
+
+        // Filter out past slots and booked slots, take next 3 available
+        final now = DateTime.now();
+        final available = allSlots.where((slot) {
+          final r = RegExp(r'(\d+):(\d+)\s*(AM|PM)', caseSensitive: false);
+          final m = r.firstMatch(slot);
+          if (m == null) return false;
+          int h = int.parse(m.group(1)!);
+          final min = int.parse(m.group(2)!);
+          final p = m.group(3)!.toUpperCase();
+          if (p == 'PM' && h != 12) h += 12;
+          if (p == 'AM' && h == 12) h = 0;
+          final dt = DateTime(today.year, today.month, today.day, h, min);
+          if (dt.isBefore(now)) return false;
+          return !_isSlotBooked(slot, existingBookings, today);
+        }).take(3).toList();
+
+        return Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              children: [
+                const Icon(Icons.schedule, color: VSPColors.accent, size: 16),
+                const SizedBox(width: 6),
+                Text(
+                  isArabic ? 'توفر الملاعب اليوم' : "Today's Availability",
+                  style: Theme.of(context)
+                      .textTheme
+                      .titleMedium
+                      ?.copyWith(fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            const SizedBox(height: 10),
+            if (available.isEmpty)
+              // Fully booked badge
+              Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                decoration: BoxDecoration(
+                  color: VSPColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                  border: Border.all(
+                      color: VSPColors.error.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 8,
+                      height: 8,
+                      decoration: const BoxDecoration(
+                        color: VSPColors.error,
+                        shape: BoxShape.circle,
+                      ),
+                    ),
+                    const SizedBox(width: 8),
+                    Text(
+                      isArabic ? 'الملعب مكتمل اليوم — تحقق غداً 🔴' : 'Pitch is fully booked today — Check tomorrow 🔴',
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(color: VSPColors.error),
+                    ),
+                  ],
+                ),
+              )
+            else
+              SingleChildScrollView(
+                scrollDirection: Axis.horizontal,
+                child: Row(
+                  children: available
+                      .map((slot) => _SlotPill(slot: slot))
+                      .toList(),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _SlotPill extends StatelessWidget {
+  final String slot;
+
+  const _SlotPill({required this.slot});
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      margin: const EdgeInsets.only(right: 8),
+      padding:
+          const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.08),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: VSPColors.accent, width: 1.5),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          const Icon(Icons.check_circle_outline,
+              color: VSPColors.accent, size: 13),
+          const SizedBox(width: 5),
+          Text(
+            slot,
+            style: const TextStyle(
+              color: VSPColors.accent,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// FEATURE 5: Accessible Facilities Icon Grid
+// ─────────────────────────────────────────────────────────────────────────────
+class _FacilitiesGrid extends StatelessWidget {
+  final Stadium stadium;
+
+  const _FacilitiesGrid({required this.stadium});
+
+  bool _getBool(String key) {
+    final f = stadium.features;
+    if (f is Map) return f[key] == true;
+    return false;
+  }
+
+  String _getSeat() {
+    final f = stadium.features;
+    if (f is Map) return f['seats']?.toString() ?? '';
+    return '';
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final hasCafeteria = _getBool('cafeteria');
+    final hasGarage = _getBool('garage');
+    final hasBathroom = stadium.features is Map
+        ? (stadium.features as Map)['bathOption'] == 'Yes'
+        : false;
+    final hasChangingRoom = _getBool('changingRoom');
+    final seats = _getSeat();
+    final hasSeats =
+        seats.isNotEmpty && seats != '0' && seats != 'null';
+
+    final facilities = [
+      _FacilityItem(
+          icon: Icons.shower,
+          label: isArabic ? 'حمامات' : 'Bathrooms',
+          active: hasBathroom),
+      _FacilityItem(
+          icon: Icons.local_parking,
+          label: isArabic ? 'جراج' : 'Garage',
+          active: hasGarage),
+      _FacilityItem(
+          icon: Icons.local_cafe,
+          label: isArabic ? 'كافتيريا' : 'Cafeteria',
+          active: hasCafeteria),
+      _FacilityItem(
+          icon: Icons.checkroom,
+          label: isArabic ? 'غرف تغيير' : 'Changing Rooms',
+          active: hasChangingRoom),
+      _FacilityItem(
+          icon: Icons.chair,
+          label: isArabic ? 'مدرجات' : 'Spectator Seats',
+          active: hasSeats,
+          badge: hasSeats ? seats : null),
+    ];
+
+    return GridView.count(
+      crossAxisCount: 4,
+      crossAxisSpacing: 8,
+      mainAxisSpacing: 8,
+      shrinkWrap: true,
+      physics: const NeverScrollableScrollPhysics(),
+      childAspectRatio: 0.85,
+      children: facilities
+          .map((f) => _FacilityTile(item: f))
+          .toList(),
+    );
+  }
+}
+
+class _FacilityItem {
+  final IconData icon;
+  final String label;
+  final bool active;
+  final String? badge;
+
+  const _FacilityItem({
+    required this.icon,
+    required this.label,
+    required this.active,
+    this.badge,
+  });
+}
+
+class _FacilityTile extends StatelessWidget {
+  final _FacilityItem item;
+
+  const _FacilityTile({required this.item});
+
+  @override
+  Widget build(BuildContext context) {
+    final activeColor = VSPColors.accent;
+    final inactiveColor =
+        VSPColors.textSecondary.withValues(alpha: 0.35);
+    final color = item.active ? activeColor : inactiveColor;
+
+    return AnimatedContainer(
+      duration: const Duration(milliseconds: 250),
+      decoration: BoxDecoration(
+        color: item.active
+            ? VSPColors.accent.withValues(alpha: 0.08)
+            : VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(
+          color: item.active
+              ? VSPColors.accent.withValues(alpha: 0.4)
+              : VSPColors.divider,
+          width: item.active ? 1.5 : 1,
+        ),
+        boxShadow: item.active
+            ? [
+                BoxShadow(
+                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  blurRadius: 8,
+                )
+              ]
+            : [],
+      ),
+      child: Stack(
+        alignment: Alignment.center,
+        children: [
+          Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(item.icon, color: color, size: 26),
+              const SizedBox(height: 6),
+              Text(
+                item.label,
+                textAlign: TextAlign.center,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: item.active
+                      ? FontWeight.bold
+                      : FontWeight.normal,
+                ),
+              ),
+            ],
+          ),
+          if (item.badge != null)
+            Positioned(
+              top: 6,
+              right: 6,
+              child: Container(
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 5, vertical: 2),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent,
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                ),
+                child: Text(
+                  item.badge!,
+                  style: const TextStyle(
+                    color: Colors.black,
+                    fontSize: 8,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+        ],
+      ),
+    );
+  }
+}
+
+// ─────────────────────────────────────────────────────────────────────────────
+// PITCH CONDITIONS TAB
+// ─────────────────────────────────────────────────────────────────────────────
 class _PitchConditionsTab extends StatelessWidget {
   final Stadium stadium;
 
@@ -496,12 +1134,13 @@ class _PitchConditionsTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
 
-    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ✅ Owner Notes Section (Priority Display)
+          // Owner Notes
           Container(
             width: double.infinity,
             padding: const EdgeInsets.all(VSPSpacing.md),
@@ -509,9 +1148,7 @@ class _PitchConditionsTab extends StatelessWidget {
               color: VSPColors.surface,
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               border: Border.all(
-                color: VSPColors.accent.withValues(alpha: 0.4),
-                width: 1,
-              ),
+                  color: VSPColors.accent.withValues(alpha: 0.4)),
             ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -519,16 +1156,15 @@ class _PitchConditionsTab extends StatelessWidget {
                 Text(
                   l10n.ownerNotes,
                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: VSPColors.accent,
-                    fontWeight: FontWeight.bold,
-                  ),
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.bold,
+                      ),
                 ),
                 const SizedBox(height: VSPSpacing.sm),
                 Text(
-                  hasOwnerNotes
-                      ? stadium.notes
-                      : l10n.noOwnerNotes,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+                  hasOwnerNotes ? stadium.notes : l10n.noOwnerNotes,
+                  style:
+                      Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
                 ),
               ],
             ),
@@ -536,7 +1172,7 @@ class _PitchConditionsTab extends StatelessWidget {
 
           const SizedBox(height: VSPSpacing.lg),
 
-          // Standard Policies Section
+          // Standard Policies
           Container(
             padding: const EdgeInsets.all(VSPSpacing.md),
             decoration: BoxDecoration(
@@ -547,28 +1183,20 @@ class _PitchConditionsTab extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 _buildPolicySection(
-                  context,
-                  l10n.punctuality,
-                  l10n.punctualityPolicy,
-                ),
+                    context, l10n.punctuality, l10n.punctualityPolicy),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
-                  context,
-                  l10n.reservationDuration,
-                  l10n.reservationDurationPolicy,
-                ),
+                    context,
+                    l10n.reservationDuration,
+                    l10n.reservationDurationPolicy),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
-                  context,
-                  l10n.cancellationPolicyTitle,
-                  l10n.cancellationPolicy,
-                ),
+                    context,
+                    l10n.cancellationPolicyTitle,
+                    l10n.cancellationPolicy),
                 const SizedBox(height: VSPSpacing.md),
                 _buildPolicySection(
-                  context,
-                  l10n.liability,
-                  l10n.liabilityPolicy,
-                ),
+                    context, l10n.liability, l10n.liabilityPolicy),
               ],
             ),
           ),
@@ -577,32 +1205,38 @@ class _PitchConditionsTab extends StatelessWidget {
     );
   }
 
-  Widget _buildPolicySection(BuildContext context, String title, String content) {
+  Widget _buildPolicySection(
+      BuildContext context, String title, String content) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           title,
           style: Theme.of(context).textTheme.labelSmall?.copyWith(
-            color: VSPColors.accent,
-            fontWeight: FontWeight.bold,
-          ),
+                color: VSPColors.accent,
+                fontWeight: FontWeight.bold,
+              ),
         ),
         const SizedBox(height: 4),
         Text(
           content,
-          style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
+          style:
+              Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5),
         ),
       ],
     );
   }
 }
 
+// ─────────────────────────────────────────────────────────────────────────────
+// RATINGS TAB
+// ─────────────────────────────────────────────────────────────────────────────
 class _RatingsTab extends StatelessWidget {
   final Stadium stadium;
+
   const _RatingsTab({required this.stadium});
 
-   @override
+  @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return Column(
@@ -618,26 +1252,36 @@ class _RatingsTab extends StatelessWidget {
             ),
             child: Row(
               children: [
-                // Big Score
                 Expanded(
                   child: Column(
                     children: [
                       Text(
                         stadium.rating.toStringAsFixed(1),
-                        style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42),
+                        style: Theme.of(context)
+                            .textTheme
+                            .displayLarge
+                            ?.copyWith(fontSize: 42),
                       ),
                       Row(
                         mainAxisAlignment: MainAxisAlignment.center,
-                        children: List.generate(5, (index) => Icon(
-                          index < stadium.rating.round() ? Icons.star : Icons.star_border,
-                          color: Colors.amber,
-                          size: 16,
-                        )),
+                        children: List.generate(
+                          5,
+                          (i) => Icon(
+                            i < stadium.rating.round()
+                                ? Icons.star
+                                : Icons.star_border,
+                            color: Colors.amber,
+                            size: 16,
+                          ),
+                        ),
                       ),
                       const SizedBox(height: VSPSpacing.xs),
                       Text(
                         l10n.reviews(stadium.reviewsCount),
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                        style: Theme.of(context)
+                            .textTheme
+                            .labelSmall
+                            ?.copyWith(color: VSPColors.textSecondary),
                       ),
                     ],
                   ),
@@ -646,8 +1290,8 @@ class _RatingsTab extends StatelessWidget {
             ),
           ),
         ),
-        
-        // Reviews List View
+
+        // Reviews List
         Expanded(
           child: StreamBuilder<QuerySnapshot>(
             stream: FirebaseFirestore.instance
@@ -658,9 +1302,11 @@ class _RatingsTab extends StatelessWidget {
                 .snapshots(),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                return const Center(
+                    child: CircularProgressIndicator(
+                        color: VSPColors.accent));
               }
-              
+
               if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
                 return Center(
                   child: Padding(
@@ -668,29 +1314,34 @@ class _RatingsTab extends StatelessWidget {
                     child: Text(
                       l10n.noReviews,
                       textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                      style: Theme.of(context)
+                          .textTheme
+                          .bodyMedium
+                          ?.copyWith(color: VSPColors.textSecondary),
                     ),
                   ),
                 );
               }
 
-              final reviews = snapshot.data!.docs;
-
               return ListView.builder(
                 padding: const EdgeInsets.all(VSPSpacing.md),
-                itemCount: reviews.length,
+                itemCount: snapshot.data!.docs.length,
                 itemBuilder: (context, index) {
-                  final reviewDoc = reviews[index].data() as Map<String, dynamic>;
-                  final rating = (reviewDoc['rating'] as num?)?.toInt() ?? 0;
-                  final text = reviewDoc['reviewText'] as String? ?? '';
-                  final createdAt = reviewDoc['createdAt'] as Timestamp?;
-                  
+                  final doc = snapshot.data!.docs[index].data()
+                      as Map<String, dynamic>;
+                  final rating =
+                      (doc['rating'] as num?)?.toInt() ?? 0;
+                  final text = doc['reviewText'] as String? ?? '';
+                  final createdAt = doc['createdAt'] as Timestamp?;
+
                   return _buildReviewItem(
                     context,
                     name: l10n.player,
-                    imageUrl: '',   
+                    imageUrl: '',
                     rating: rating,
-                    timeAgo: createdAt != null ? timeago.format(createdAt.toDate()) : l10n.recently,
+                    timeAgo: createdAt != null
+                        ? timeago.format(createdAt.toDate())
+                        : l10n.recently,
                     comment: text,
                   );
                 },
@@ -718,8 +1369,12 @@ class _RatingsTab extends StatelessWidget {
           CircleAvatar(
             radius: 20,
             backgroundColor: VSPColors.surfaceAlt,
-            backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-            child: imageUrl.isEmpty ? const Icon(Icons.person, color: VSPColors.textSecondary) : null,
+            backgroundImage:
+                imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
+            child: imageUrl.isEmpty
+                ? const Icon(Icons.person,
+                    color: VSPColors.textSecondary)
+                : null,
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -729,27 +1384,35 @@ class _RatingsTab extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(
-                      name,
-                      style: Theme.of(context).textTheme.titleSmall,
-                    ),
+                    Text(name,
+                        style:
+                            Theme.of(context).textTheme.titleSmall),
                     Text(
                       timeAgo,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                      style: Theme.of(context)
+                          .textTheme
+                          .labelSmall
+                          ?.copyWith(color: VSPColors.textSecondary),
                     ),
                   ],
                 ),
                 Row(
-                  children: List.generate(5, (index) => Icon(
-                    Icons.star,
-                    size: 12,
-                    color: index < rating ? Colors.amber : VSPColors.surfaceAlt,
-                  )),
+                  children: List.generate(
+                    5,
+                    (i) => Icon(Icons.star,
+                        size: 12,
+                        color: i < rating
+                            ? Colors.amber
+                            : VSPColors.surfaceAlt),
+                  ),
                 ),
                 const SizedBox(height: 8),
                 Text(
                   comment,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.4),
+                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                        height: 1.4,
+                      ),
                 ),
                 const Padding(
                   padding: EdgeInsets.symmetric(vertical: VSPSpacing.md),

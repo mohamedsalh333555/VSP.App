@@ -1,40 +1,40 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 
 class SearchRepository {
-  final FirebaseFirestore _firestore;
+  final SupabaseClient _supabase;
 
-  SearchRepository({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  SearchRepository({SupabaseClient? supabaseClient}) 
+      : _supabase = supabaseClient ?? Supabase.instance.client;
 
   Future<Map<String, List<dynamic>>> globalUnifiedSearch(String query) async {
-    final term = query.trim().toLowerCase();
+    final term = query.trim();
     if (term.isEmpty) return {'stadiums': [], 'teams': [], 'championships': []};
 
     try {
-      final stadiumSnap = await _firestore.collection('stadiums')
-          .where('name_lowercase', isGreaterThanOrEqualTo: term)
-          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
-          .limit(5)
-          .get();
-      
-      final stadiums = stadiumSnap.docs.map((d) => Stadium.fromFirestore(d.data(), d.id)).toList();
+      final stadiumResponse = await _supabase.from('stadiums')
+          .select()
+          .ilike('name', '%$term%')
+          .limit(5);
+      final stadiums = (stadiumResponse as List)
+          .map((d) => Stadium.fromFirestore(d, d['id'].toString()))
+          .toList();
 
-      final teamSnap = await _firestore.collection('teams')
-          .where('name_lowercase', isGreaterThanOrEqualTo: term)
-          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
-          .limit(5)
-          .get();
-      
-      final teams = teamSnap.docs.map((d) => Team.fromFirestore(d.data(), d.id)).toList();
+      final teamResponse = await _supabase.from('teams')
+          .select()
+          .ilike('name', '%$term%')
+          .limit(5);
+      final teams = (teamResponse as List)
+          .map((d) => Team.fromFirestore(d, d['id'].toString()))
+          .toList();
 
-      final champSnap = await _firestore.collection('championships')
-          .where('name_lowercase', isGreaterThanOrEqualTo: term)
-          .where('name_lowercase', isLessThanOrEqualTo: '$term\uf8ff')
-          .limit(5)
-          .get();
-      
-      final championships = champSnap.docs.map((d) => Championship.fromFirestore(d.data(), d.id)).toList();
+      final champResponse = await _supabase.from('championships')
+          .select()
+          .ilike('name', '%$term%')
+          .limit(5);
+      final championships = (champResponse as List)
+          .map((d) => Championship.fromFirestore(d, d['id'].toString()))
+          .toList();
 
       return {
         'stadiums': stadiums,

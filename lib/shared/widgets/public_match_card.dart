@@ -6,10 +6,8 @@ import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/providers/auth_provider.dart' as app_auth;
 import '../../core/services/sharing_service.dart';
 import '../../core/utils/vsp_feedback.dart';
-import 'primary_button.dart';
 import '../../data/models.dart';
 import '../../core/models/user_model.dart';
-import '../../core/repositories/tournament_repository.dart';
 import '../../core/repositories/match_repository.dart';
 import '../../core/repositories/user_repository.dart';
 
@@ -42,8 +40,8 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
         currentUser != null &&
         booking.createdByUserId == currentUser.uid;
     
-    final totalFieldCapacity = booking.maxPlayers > 0 ? booking.maxPlayers * 2 : 10;
-    final remainingPlayers = (totalFieldCapacity - booking.currentPlayers).clamp(0, totalFieldCapacity);
+    final totalFieldCapacity = booking.totalFieldCapacity;
+    final remainingPlayers = (booking.totalFieldCapacity - booking.currentPlayers).clamp(0, booking.totalFieldCapacity);
     final entryFee = (booking.totalPrice / totalFieldCapacity).toStringAsFixed(0);
 
     return Container(

@@ -1,4 +1,4 @@
-import 'package:flutter_test/flutter_test.dart';
+﻿import 'package:flutter_test/flutter_test.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/data/models.dart';
@@ -26,7 +26,7 @@ void main() {
         totalPrice: 200.0,
         paymentMethod: 'cash',
         currentPlayers: 1,
-        maxPlayers: 10,
+        totalFieldCapacity: 10,
       );
 
       final booking = Booking.fromDraft(
@@ -160,7 +160,7 @@ void main() {
         rentBall: false,
         totalPrice: 150,
         currentPlayers: 3,
-        maxPlayers: 10,
+        totalFieldCapacity: 10,
       );
 
       final booking = Booking.fromDraft(

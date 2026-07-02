@@ -1,7 +1,6 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 
 import '../../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../../core/theme/app_theme.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
@@ -22,7 +21,7 @@ class TournamentDetailsScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

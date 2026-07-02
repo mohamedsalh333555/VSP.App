@@ -1,123 +1,133 @@
-import 'dart:io' show Platform;
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
-import 'package:google_sign_in/google_sign_in.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/phone_utils.dart';
 import 'logger_service.dart';
-import '../constants/egypt_governorates.dart';
 
 class AuthService {
-  // Active Instances
-  final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   // Get current user
-  User? get currentUser => _auth.currentUser;
+  User? get currentUser => _supabase.auth.currentUser;
 
-  // Stream of auth state changes
-  Stream<User?> get authStateChanges => _auth.authStateChanges();
+  // Stream of auth state changes mapped to User?
+  Stream<User?> get authStateChanges => 
+      _supabase.auth.onAuthStateChange.map((data) => data.session?.user);
 
-  // Internal logger for security auditing (Can be connected to Sentry/Firebase Crashlytics)
+  // Internal logger for security auditing
   void _logSecurityEvent(String event, dynamic error) {
-    // For now, it logs to console, but in production, this should go to a secure log service
     debugPrint('[SECURITY_LOG] $event: $error');
   }
 
-  // Sign Up - Secured with Role Protection
+  // Sign Up
   Future<Map<String, dynamic>> signUpWithEmail({
     required String email,
     required String password,
     required String role,
     required Map<String, dynamic> userData,
   }) async {
-    // 1. Basic Sanitization
     final cleanEmail = email.trim().toLowerCase();
     
-    // 2. Duplicate Phone Check (Phase 3 Hardening)
+    // Duplicate Email Check, Role Conflict Guard & Auto Login Fallback
+    try {
+      final emailCheck = await _supabase
+          .from('users')
+          .select('id, role')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+      if (emailCheck != null) {
+        final existingRole = emailCheck['role']?.toString();
+
+        // 🔴 Role conflict: same email registered under a different role
+        if (existingRole != null && existingRole != role) {
+          final arabicExistingRole = existingRole == 'player' ? 'لاعب' : 'مالك ملعب';
+          return {
+            'success': false,
+            'message':
+                'هذا البريد مسجل مسبقاً كـ $arabicExistingRole. '
+                'يرجى تسجيل الدخول بحسابك أو استخدام بريد آخر.',
+          };
+        }
+
+        // ✅ Same role — auto sign-in and return existing user directly to home
+        try {
+          final signInResponse = await _supabase.auth.signInWithPassword(
+            email: cleanEmail,
+            password: password,
+          );
+          if (signInResponse.user != null) {
+            VSPLogger.i('Existing $role re-signed in automatically via signup flow: $cleanEmail');
+            return {'success': true, 'user': signInResponse.user};
+          }
+        } catch (_) {
+          // Wrong password for existing account
+          return {
+            'success': false,
+            'message': 'البريد الإلكتروني مسجل بالفعل. تأكد من كلمة المرور الصحيحة أو سجّل دخولك.',
+          };
+        }
+        return {'success': false, 'message': 'البريد الإلكتروني مسجل بالفعل.'};
+      }
+    } catch (e) {
+      _logSecurityEvent('EMAIL_CHECK_FAILED', e);
+    }
+    
+    // Duplicate Phone Check
     final rawPhone = userData['phone']?.toString() ?? '';
     final phone = PhoneUtils.normalize(rawPhone);
     if (await isPhoneRegistered(phone)) {
        return {'success': false, 'message': 'رقم الهاتف مسجل مسبقاً.'};
     }
 
-    // 3. Role Validation (Security Constraint)
     final allowedRoles = ['player', 'owner'];
     if (!allowedRoles.contains(role)) {
       return {'success': false, 'message': 'رتبة غير صالحة.'};
     }
 
-    UserCredential? credential;
     try {
-      credential = await _auth.createUserWithEmailAndPassword(
+      final response = await _supabase.auth.signUp(
         email: cleanEmail,
         password: password,
-      );
-      
-      // Create User Document
-      try {
-        await _firestore.collection('users').doc(credential.user!.uid).set({
-          'uid': credential.user!.uid,
-          'email': cleanEmail,
+        data: {
           'role': role,
           'name': userData['name']?.toString().trim() ?? '',
           'position': userData['position'] ?? 'GK',
-          'phone': PhoneUtils.normalize(userData['phone']?.toString() ?? ''),
-          'isEmailVerified': false,
-          'hasStadium': false,
-          'isIdentityVerified': false,
-          'isRegistrationComplete': false,
-          'createdAt': FieldValue.serverTimestamp(),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      } catch (firestoreError) {
-        _logSecurityEvent('FIRESTORE_PROFILE_SAVE_FAILED', firestoreError);
-        await credential.user?.delete();
-        return {'success': false, 'message': 'فشل في حفظ بيانات الملف الشخصي.'};
+          'phone': phone,
+          'governorate': userData['governorate'],
+        },
+      );
+      
+      final user = response.user;
+      if (user == null) {
+        return {'success': false, 'message': 'فشل إنشاء الحساب.'};
       }
 
-      return {'success': true, 'user': credential.user};
-    } on FirebaseAuthException catch (e) {
-      String message;
-      switch (e.code) {
-        case 'email-already-in-use':
-          message = 'هذا البريد مسجَّل بالفعل.';
-          break;
-        case 'invalid-email':
-          message = 'صيغة البريد الإلكتروني غير صحيحة.';
-          break;
-        case 'weak-password':
-          message = 'كلمة المرور ضعيفة جداً.';
-          break;
-        default:
-          message = 'عذراً، حدث خطأ في النظام. يرجى المحاولة لاحقاً.';
-          break;
-      }
-      return {'success': false, 'message': message};
+      return {'success': true, 'user': user};
+    } on AuthException catch (e) {
+      return {'success': false, 'message': e.message};
     } catch (e) {
       _logSecurityEvent('AUTH_UNKNOWN_ERROR', e);
       return {'success': false, 'message': 'خطأ غير معروف في المصادقة.'};
     }
   }
 
-  // Sign In - Hardened messages
+  // Sign In
   Future<Map<String, dynamic>> signInWithEmail({
     required String email,
     required String password,
   }) async {
     try {
-      final credential = await _auth.signInWithEmailAndPassword(
+      final response = await _supabase.auth.signInWithPassword(
         email: email.trim().toLowerCase(),
         password: password,
       );
       
       return {
         'success': true, 
-        'user': credential.user
+        'user': response.user
       };
-    } on FirebaseAuthException catch (e) {
-      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', e.code);
-      // Generic message to prevent User Enumeration attacks
+    } on AuthException catch (e) {
+      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', e.message);
       return {
         'success': false, 
         'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
@@ -131,36 +141,22 @@ class AuthService {
   // Sign Out
   Future<void> signOut() async {
     VSPLogger.i('🚪 Sign-Out Initiated');
-    
-    // 1. Firebase Sign-Out
     try {
-      await _auth.signOut();
+      await _supabase.auth.signOut();
     } catch (e) {
-      _logSecurityEvent('FIREBASE_SIGN_OUT_ERROR', e);
-      VSPLogger.e('❌ Firebase signOut error', e);
+      _logSecurityEvent('SUPABASE_SIGN_OUT_ERROR', e);
+      VSPLogger.e('❌ Supabase signOut error', e);
     }
-
-    // 2. Google Sign-Out (Try to disconnect to clear all scopes/cache)
-    try {
-      final googleSignIn = GoogleSignIn();
-      if (await googleSignIn.isSignedIn()) {
-        await googleSignIn.signOut();
-        await googleSignIn.disconnect();
-        VSPLogger.i('✅ Google account disconnected');
-      }
-    } catch (e) {
-      // Often fails if not initialized or already disconnected, but catch avoids PlatformException crash
-      _logSecurityEvent('GOOGLE_SIGN_OUT_CHANNEL_ERROR', e);
-      VSPLogger.w('⚠️ Google sign-out non-critical error: $e');
-    }
-    
     VSPLogger.i('👋 Sign-Out Complete');
   }
 
   // Send Password Reset Email
   Future<bool> sendPasswordResetEmail(String email) async {
     try {
-      await _auth.sendPasswordResetEmail(email: email.trim());
+      await _supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo: kIsWeb ? null : 'io.supabase.fluttervsp://reset-callback/',
+      );
       return true;
     } catch (e) {
       _logSecurityEvent('PASSWORD_RESET_FAILED', e);
@@ -168,16 +164,15 @@ class AuthService {
     }
   }
 
-  // SECURITY PATCH: Redacted email address in console logs to protect user privacy.
+  // Send Verification Resend
   Future<bool> sendEmailVerification() async {
     try {
-      final user = _auth.currentUser;
-      if (user == null) {
-        debugPrint('[AUTH] Cannot send verification: No current user logged in.');
-        return false;
-      }
-      await user.sendEmailVerification();
-      debugPrint('[AUTH] Verification email sent to: USER_IDENTITY_PROTECTED');
+      final user = _supabase.auth.currentUser;
+      if (user == null || user.email == null) return false;
+      await _supabase.auth.resend(
+        type: OtpType.signup,
+        email: user.email!,
+      );
       return true;
     } catch (e) {
       _logSecurityEvent('EMAIL_VERIFICATION_SENT_FAILED', e);
@@ -188,63 +183,25 @@ class AuthService {
   // Check Email Verified
   Future<bool> checkEmailVerified() async {
     try {
-      await _auth.currentUser?.reload();
-      return _auth.currentUser?.emailVerified ?? false;
+      final response = await _supabase.auth.getUser();
+      return response.user?.emailConfirmedAt != null;
     } catch (e) {
       return false;
     }
   }
 
-  // Sign In with Google - Forced Account Picker
+  // Sign In with Google
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
-    if (kIsWeb || !(Platform.isAndroid || Platform.isIOS)) {
-      return {
-        'success': false,
-        'message': 'Google Sign-In is only supported on Android/iOS.',
-      };
-    }
-
     try {
-      final googleSignIn = GoogleSignIn();
-      
-      // 🔴 FIX: Force sign out first to clear previous session cache
-      // This ensures the account picker dialog shows up every time.
-      await googleSignIn.signOut(); 
-
-      final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
-      if (googleUser == null) return {'success': false, 'message': 'تم إلغاء العملية.'};
-
-      final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
-      final AuthCredential credential = GoogleAuthProvider.credential(
-        accessToken: googleAuth.accessToken,
-        idToken: googleAuth.idToken,
+      final success = await _supabase.auth.signInWithOAuth(
+        OAuthProvider.google,
+        redirectTo: kIsWeb 
+            ? '${Uri.base.origin}/' 
+            : 'io.supabase.fluttervsp://login-callback/',
+        queryParams: {'prompt': 'select_account'},
       );
-
-      final UserCredential userCredential = await _auth.signInWithCredential(credential);
-      final user = userCredential.user;
-
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-
-        if (!doc.exists) {
-          // Verify role before injecting
-          final validatedRole = (role == 'owner' || role == 'player') ? role : 'player';
-          
-          await _firestore.collection('users').doc(user.uid).set({
-            'uid': user.uid,
-            'email': user.email,
-            'name': user.displayName ?? '',
-            'phone': user.phoneNumber ?? '',
-            'role': validatedRole,
-            'photoUrl': user.photoURL,
-            'isEmailVerified': true, // Google accounts are verified
-            'hasStadium': false,
-            'isIdentityVerified': false,
-            'createdAt': FieldValue.serverTimestamp(),
-            'isRegistrationComplete': false,
-          });
-        }
-        return {'success': true, 'user': user};
+      if (success) {
+        return {'success': true, 'user': _supabase.auth.currentUser};
       }
       return {'success': false, 'message': 'فشل الدخول عبر جوجل.'};
     } catch (e) {
@@ -253,38 +210,17 @@ class AuthService {
     }
   }
 
-  // Sign In with Apple (iOS only ideally, but Firebase handles web fallback)
+  // Sign In with Apple
   Future<Map<String, dynamic>> signInWithApple({String? role}) async {
     try {
-      final appleProvider = AppleAuthProvider();
-      // Request full name and email
-      appleProvider.addScope('email');
-      appleProvider.addScope('name');
-
-      final UserCredential userCredential = await _auth.signInWithProvider(appleProvider);
-      final user = userCredential.user;
-
-      if (user != null) {
-        final doc = await _firestore.collection('users').doc(user.uid).get();
-
-        if (!doc.exists) {
-          final validatedRole = (role == 'owner' || role == 'player') ? role : 'player';
-          
-          await _firestore.collection('users').doc(user.uid).set({
-            'uid': user.uid,
-            'email': user.email ?? '', // Apple might hide email
-            'name': user.displayName ?? 'Apple User',
-            'phone': '',
-            'role': validatedRole,
-            'photoUrl': user.photoURL,
-            'isEmailVerified': true, // Apple accounts are verified
-            'hasStadium': false,
-            'isIdentityVerified': false,
-            'createdAt': FieldValue.serverTimestamp(),
-            'isRegistrationComplete': false,
-          });
-        }
-        return {'success': true, 'user': user};
+      final success = await _supabase.auth.signInWithOAuth(
+        OAuthProvider.apple,
+        redirectTo: kIsWeb 
+            ? '${Uri.base.origin}/' 
+            : 'io.supabase.fluttervsp://login-callback/',
+      );
+      if (success) {
+        return {'success': true, 'user': _supabase.auth.currentUser};
       }
       return {'success': false, 'message': 'فشل تسجيل الدخول عبر آبل.'};
     } catch (e) {
@@ -293,64 +229,12 @@ class AuthService {
     }
   }
 
-  // Get User Data
-  Future<Map<String, dynamic>?> getUserData(String uid) async {
-    try {
-      final doc = await _firestore.collection('users').doc(uid).get();
-      return doc.data();
-    } catch (e) {
-      _logSecurityEvent('FETCH_USER_DATA_FAILED', e);
-      return null;
-    }
-  }
-
-  // SECURITY PATCH: Stripped sensitive fields (role, points, walletBalance, etc.) to prevent privilege escalation or data manipulation.
-  Future<bool> updateUserProfile(String uid, Map<String, dynamic> data) async {
-    // TODO: SECURITY - BIG REMINDER FOR BACKEND TEAM
-    // Client-side field removal is NOT enough. You MUST enforce Firestore Security Rules 
-    // to strictly prevent writes to `role`, `commissionDebt`, and `walletBalance` by regular users.
-    
-    // SECURITY: Prevent users from elevating privileges via client-side map.
-    // Fields explicitly blocked: role, uid, email, createdAt, points, walletBalance, isEmailVerified.
-    // NOTE: isIdentityVerified, isRegistrationComplete, hasStadium are intentionally ALLOWED —
-    // these are onboarding-state flags that must be writable by the owner flow.
-    // They are not security-sensitive: admins can revoke them via Firestore directly.
-    final securedData = Map<String, dynamic>.from(data);
-    securedData.remove('role');
-    securedData.remove('uid');
-    securedData.remove('email');
-    securedData.remove('createdAt');
-    securedData.remove('isEmailVerified'); // Must go through Firebase Auth, not Firestore
-    securedData.remove('points');
-    securedData.remove('walletBalance');
-    
-    // 🌍 Standardize Governorate
-    if (securedData.containsKey('governorate')) {
-      final String? gov = securedData['governorate']?.toString();
-      if (gov != null) {
-        // We import it here or at top
-        securedData['governorate'] = EgyptGovernorates.resolveGoogleName(gov);
-      }
-    }
-
-    securedData['updatedAt'] = FieldValue.serverTimestamp();
-
-    try {
-      // 🔴 FIX: Use set(merge: true) instead of update()
-      // This allows 'Ghost Users' (who have Auth but no Firestore doc) to have their
-      // profile created automatically during onboarding completion.
-      await _firestore.collection('users').doc(uid).set(securedData, SetOptions(merge: true));
-      return true;
-    } catch (e) {
-      _logSecurityEvent('UPDATE_PROFILE_FAILED', e);
-      VSPLogger.e('❌ Failed to update/create user profile for UID: $uid', e);
-      return false;
-    }
-  }
   // Update Password
   Future<bool> updatePassword(String newPassword) async {
     try {
-      await _auth.currentUser?.updatePassword(newPassword);
+      await _supabase.auth.updateUser(
+        UserAttributes(password: newPassword),
+      );
       return true;
     } catch (e) {
       _logSecurityEvent('PASSWORD_UPDATE_FAILED', e);
@@ -358,63 +242,13 @@ class AuthService {
     }
   }
 
-  // Phase 2: User Deletion Logic (Safe Delete)
+  // Delete Account
   Future<Map<String, dynamic>> deleteAccount(String uid) async {
     try {
-      // 1. Promote Next Captain in Teams
-      final teamSnap = await _firestore.collection('teams')
-          .where('memberUids', arrayContains: uid)
-          .get();
-
-      final batch = _firestore.batch();
-      
-      for (var doc in teamSnap.docs) {
-        final data = doc.data();
-        final memberUids = List<String>.from(data['memberUids'] ?? []);
-        
-        // If they are the captain (first in list)
-        if (memberUids.isNotEmpty && memberUids[0] == uid) {
-          memberUids.removeAt(0);
-          if (memberUids.isNotEmpty) {
-            // Promote next member
-            final nextCaptainUid = memberUids[0];
-            final nextCaptainDoc = await _firestore.collection('users').doc(nextCaptainUid).get();
-            final nextCaptainName = nextCaptainDoc.data()?['name'] ?? 'Captain';
-            
-            batch.update(doc.reference, {
-              'memberUids': memberUids,
-              'captainName': nextCaptainName,
-            });
-          } else {
-            // No more members, delete team
-            batch.delete(doc.reference);
-          }
-        } else {
-          // Just remove them from members
-          memberUids.remove(uid);
-          batch.update(doc.reference, {'memberUids': memberUids});
-        }
-      }
-
-      // 1.5 Delete Stadiums if Owner
-      final stadiumsSnap = await _firestore.collection('stadiums').where('ownerId', isEqualTo: uid).get();
-      for (var doc in stadiumsSnap.docs) {
-        // لا نحذف الملعب لتجنب تعطل الحجوزات السابقة، بل نجعله غير مرئي وغير موثق
-        batch.update(doc.reference, {
-          'isVerified': false, 
-          'isBlocked': true, 
-          'deletedAt': FieldValue.serverTimestamp()
-        });
-      }
-
-      // 2. Delete User Profile
-      batch.delete(_firestore.collection('users').doc(uid));
-      
-      await batch.commit();
-
-      // 3. Delete Auth User
-      await _auth.currentUser?.delete();
-      
+      // In Supabase, cascading triggers in PostgreSQL handles deleting related entries.
+      // We delete the user profile row, and then sign out.
+      await _supabase.from('users').delete().eq('id', uid);
+      await signOut();
       return {'success': true};
     } catch (e) {
       _logSecurityEvent('ACCOUNT_DELETION_FAILED', e);
@@ -422,28 +256,46 @@ class AuthService {
     }
   }
 
-  // duplicate phone check
+  // Duplicate phone check
   Future<bool> isPhoneRegistered(String phone) async {
     if (phone.isEmpty) return false;
-    final cleanPhone = PhoneUtils.normalize(phone);
-    final snapshot = await _firestore.collection('users')
-        .where('phone', isEqualTo: cleanPhone)
-        .limit(1)
-        .get();
-    return snapshot.docs.isNotEmpty;
+    try {
+      final cleanPhone = PhoneUtils.normalize(phone);
+      final response = await _supabase
+          .from('users')
+          .select('id')
+          .eq('phone', cleanPhone);
+      return (response as List).isNotEmpty;
+    } catch (e) {
+      _logSecurityEvent('PHONE_CHECK_FAILED', e);
+      return false;
+    }
   }
 
-  /// [DEVELOPER ONLY] Manual bypass for email verification
+  // Developer bypass manual verification
   Future<bool> verifyEmailManual(String uid) async {
     try {
-      // Direct Firestore update since this is a bypass mechanism
-      await _firestore.collection('users').doc(uid).update({
+      await _supabase.from('users').update({
         'isEmailVerified': true,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      }).eq('id', uid);
       return true;
     } catch (e) {
       _logSecurityEvent('MANUAL_VERIFICATION_BYPASS_FAILED', e);
+      return false;
+    }
+  }
+
+  // Verify OTP via Supabase Auth
+  Future<bool> verifyOtp({required String email, required String token}) async {
+    try {
+      final response = await _supabase.auth.verifyOTP(
+        type: OtpType.signup,
+        email: email,
+        token: token,
+      );
+      return response.session != null;
+    } catch (e) {
+      _logSecurityEvent('OTP_VERIFICATION_FAILED', e);
       return false;
     }
   }

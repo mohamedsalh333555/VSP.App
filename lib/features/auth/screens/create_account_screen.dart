@@ -5,18 +5,15 @@ import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import 'dart:io' show Platform;
-import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart' show kIsWeb;
-import 'package:flutter/services.dart';
-import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
+import 'package:go_router/go_router.dart';
 
 import 'signup_screen.dart';
-import '../../../core/navigation/root_screen.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 /// شاشة إنشاء حساب جديد - تظهر بعد اختيار الدور
 class CreateAccountScreen extends StatelessWidget {
@@ -63,9 +60,9 @@ class CreateAccountScreen extends StatelessWidget {
               child: Container(
                 width: 300,
                 height: 300,
-                decoration: BoxDecoration(
+                decoration: const BoxDecoration(
                   shape: BoxShape.circle,
-                  color: VSPColors.accent.withValues(alpha: 0.05),
+                  color: VSPColors.accentGlow,
                 ),
                 child: BackdropFilter(
                   filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
@@ -79,7 +76,7 @@ class CreateAccountScreen extends StatelessWidget {
               child: SingleChildScrollView(
                 keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
                 physics: const BouncingScrollPhysics(),
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
@@ -133,9 +130,9 @@ class CreateAccountScreen extends StatelessWidget {
                       child: Container(
                         padding: const EdgeInsets.all(VSPSpacing.md),
                         decoration: BoxDecoration(
-                          color: VSPColors.surface.withValues(alpha: 0.4),
+                          color: VSPColors.glassSurface,
                           borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
+                          border: Border.all(color: VSPColors.borderLight),
                         ),
                         child: Text(
                           subtitle,
@@ -172,17 +169,17 @@ class CreateAccountScreen extends StatelessWidget {
                       index: 4,
                       child: Row(
                         children: [
-                          Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.2))),
+                          const Expanded(child: Divider(color: VSPColors.borderMedium)),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text(
                               AppLocalizations.of(context)!.or,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              style: TextStyle(
                                 color: VSPColors.textSecondary.withValues(alpha: 0.5),
                               ),
                             ),
                           ),
-                          Expanded(child: Divider(color: VSPColors.divider.withValues(alpha: 0.2))),
+                          const Expanded(child: Divider(color: VSPColors.borderMedium)),
                         ],
                       ),
                     ),
@@ -203,12 +200,12 @@ class CreateAccountScreen extends StatelessWidget {
                                 onPressed: () async {
                                   authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                                   final success = await authProvider.signInWithApple();
-                                  if (success && context.mounted) {
-                                    Navigator.pushAndRemoveUntil(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => const RootScreen()),
-                                      (route) => false,
-                                    );
+                                  if (context.mounted) {
+                                    if (success) {
+                                      context.go('/');
+                                    } else {
+                                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
+                                    }
                                   }
                                 },
                               ),
@@ -253,16 +250,16 @@ class CreateAccountScreen extends StatelessWidget {
                                 ],
                               ),
                               onPressed: () async {
-                                authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                                final success = await authProvider.signInWithGoogle();
-                                if (success && context.mounted) {
-                                  Navigator.pushAndRemoveUntil(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => const RootScreen()),
-                                    (route) => false,
-                                  );
-                                }
-                              },
+                                  authProvider.setUserType(isUserOwner ? 'owner' : 'player');
+                                  final success = await authProvider.signInWithGoogle();
+                                  if (context.mounted) {
+                                    if (success) {
+                                      context.go('/');
+                                    } else {
+                                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+                                    }
+                                  }
+                               },
                             ),
                           ),
                         ],
@@ -328,7 +325,7 @@ class CreateAccountScreen extends StatelessWidget {
         decoration: BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
-          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
+          border: Border.all(color: VSPColors.borderLight),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
       ),
@@ -364,7 +361,6 @@ class _SocialButton extends StatelessWidget {
   final double? height;
 
   const _SocialButton({
-    super.key,
     this.icon,
     this.iconWidget,
     required this.onPressed,
@@ -384,7 +380,7 @@ class _SocialButton extends StatelessWidget {
           color: VSPColors.background.withValues(alpha: 0),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: VSPColors.divider.withValues(alpha: 0.1),
+            color: VSPColors.borderLight,
             width: 1.5,
           ),
         ),

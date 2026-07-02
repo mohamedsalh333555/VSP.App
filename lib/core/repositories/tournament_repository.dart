@@ -1,69 +1,161 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import '../repositories/notification_repository.dart';
+import '../repositories/team_repository.dart';
 import '../../data/models.dart';
-import '../models/user_model.dart';
 
 class TournamentRepository {
-  final FirebaseFirestore _firestore;
-
-  TournamentRepository({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   // ==================== CHAMPIONSHIPS ====================
   
   // Get all championships
   Stream<List<Championship>> getChampionshipsStream({String? governorate, String? sportType}) {
-    Query query = _firestore.collection('championships');
-    
-    if (governorate != null && governorate.isNotEmpty) {
-      query = query.where('governorate', isEqualTo: governorate);
-    }
-    
-    if (sportType != null && sportType.isNotEmpty) {
-      query = query.where('sportType', isEqualTo: sportType);
-    }
-
-    return query.snapshots().map((snapshot) => snapshot.docs
-        .map((doc) => Championship.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
-        .toList());
+    return _supabase
+        .from('championships')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          return list.map((data) {
+            if (governorate != null && governorate.isNotEmpty && data['governorate'] != governorate) {
+              return null;
+            }
+            if (sportType != null && sportType.isNotEmpty && (data['sport_type'] ?? data['sportType']) != sportType) {
+              return null;
+            }
+            return Championship.fromFirestore(data, data['id'].toString());
+          }).whereType<Championship>().toList();
+        });
   }
 
   Future<String?> createChampionship(Map<String, dynamic> data) async {
     try {
-      // SECURITY HARDENING
       final sanitizedData = Map<String, dynamic>.from(data);
       sanitizedData.remove('joinedTeams');
+      sanitizedData.remove('joined_teams');
       sanitizedData.remove('status');
       sanitizedData.remove('creatorId');
+      sanitizedData.remove('creator_id');
 
-      final docRef = await _firestore.collection('championships').add({
-        ...sanitizedData,
+      final pgData = {
+        'name': sanitizedData['name'],
+        'type': sanitizedData['type'] ?? 'Cup',
+        'sport_type': sanitizedData['sportType'] ?? sanitizedData['sport_type'] ?? 'Football',
+        'logo_url': sanitizedData['logoUrl'] ?? sanitizedData['logo_url'] ?? '',
+        'start_date': sanitizedData['startDate'] ?? sanitizedData['start_date'],
+        'end_date': sanitizedData['endDate'] ?? sanitizedData['end_date'],
+        'entry_fee': sanitizedData['entryFee'] ?? sanitizedData['entry_fee'] ?? 0.0,
+        'grand_prize': sanitizedData['grandPrize'] ?? sanitizedData['grand_prize'] ?? 0.0,
+        'max_teams': sanitizedData['maxTeams'] ?? sanitizedData['max_teams'] ?? 16,
+        'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '',
+        'governorate': sanitizedData['governorate'] ?? 'Cairo',
+        'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
-        'joinedTeams': [],
-        'createdAt': FieldValue.serverTimestamp(),
-      });
-      return docRef.id;
+        'joined_teams': [],
+        'paid_teams': [],
+        'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
+        
+        // Flat settings columns
+        'max_players_per_team': sanitizedData['maxPlayersPerTeam'] ?? sanitizedData['max_players_per_team'] ?? 11,
+        'min_players_per_team': sanitizedData['minPlayersPerTeam'] ?? sanitizedData['min_players_per_team'] ?? 5,
+        'winning_points': sanitizedData['winningPoints'] ?? sanitizedData['winning_points'] ?? 3,
+        'draw_points': sanitizedData['drawPoints'] ?? sanitizedData['draw_points'] ?? 1,
+        'loss_points': sanitizedData['lossPoints'] ?? sanitizedData['loss_points'] ?? 0,
+        'match_duration': sanitizedData['matchDuration'] ?? sanitizedData['match_duration'] ?? 30,
+        'is_back_and_forth': sanitizedData['isBackAndForth'] ?? sanitizedData['is_back_and_forth'] ?? false,
+        'trophy_medals': sanitizedData['trophyMedals'] ?? sanitizedData['trophy_medals'] ?? true,
+        'red_card_suspension': sanitizedData['redCardSuspension'] ?? sanitizedData['red_card_suspension'] ?? true,
+        'fair_play_scoring': sanitizedData['fairPlayScoring'] ?? sanitizedData['fair_play_scoring'] ?? false,
+      };
+
+      final response = await _supabase
+          .from('championships')
+          .insert(pgData)
+          .select('id')
+          .single();
+      return response['id']?.toString();
     } catch (e) {
-      debugPrint('Error creating championship: Masked for security');
+      debugPrint('Error creating championship: $e');
       return null;
     }
   }
 
   Future<bool> updateChampionship(String id, Map<String, dynamic> data) async {
     try {
-      final sanitizedData = Map<String, dynamic>.from(data);
-      // Protect sensitive fields during update
-      sanitizedData.remove('joinedTeams');
-      sanitizedData.remove('creatorId');
-      sanitizedData.remove('status');
-      sanitizedData.remove('ownerId');
+      final pgData = <String, dynamic>{};
+      if (data.containsKey('name')) pgData['name'] = data['name'];
+      if (data.containsKey('type')) pgData['type'] = data['type'];
+      if (data.containsKey('sportType')) pgData['sport_type'] = data['sportType'];
+      if (data.containsKey('sport_type')) pgData['sport_type'] = data['sport_type'];
+      if (data.containsKey('logoUrl')) pgData['logo_url'] = data['logoUrl'];
+      if (data.containsKey('logo_url')) pgData['logo_url'] = data['logo_url'];
+      if (data.containsKey('startDate')) pgData['start_date'] = data['startDate'];
+      if (data.containsKey('start_date')) pgData['start_date'] = data['start_date'];
+      if (data.containsKey('endDate')) pgData['end_date'] = data['endDate'];
+      if (data.containsKey('end_date')) pgData['end_date'] = data['end_date'];
+      if (data.containsKey('entryFee')) pgData['entry_fee'] = data['entryFee'];
+      if (data.containsKey('entry_fee')) pgData['entry_fee'] = data['entry_fee'];
+      if (data.containsKey('grandPrize')) pgData['grand_prize'] = data['grandPrize'];
+      if (data.containsKey('grand_prize')) pgData['grand_prize'] = data['grand_prize'];
+      if (data.containsKey('maxTeams')) pgData['max_teams'] = data['maxTeams'];
+      if (data.containsKey('max_teams')) pgData['max_teams'] = data['max_teams'];
+      if (data.containsKey('governorate')) pgData['governorate'] = data['governorate'];
+      if (data.containsKey('rules')) pgData['rules'] = data['rules'];
+      if (data.containsKey('paymentMethods')) pgData['payment_methods'] = data['paymentMethods'];
+      if (data.containsKey('payment_methods')) pgData['payment_methods'] = data['payment_methods'];
 
-      await _firestore.collection('championships').doc(id).update({
-        ...sanitizedData,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      // Flat settings columns
+      if (data.containsKey('maxPlayersPerTeam')) pgData['max_players_per_team'] = data['maxPlayersPerTeam'];
+      if (data.containsKey('max_players_per_team')) pgData['max_players_per_team'] = data['max_players_per_team'];
+      if (data.containsKey('minPlayersPerTeam')) pgData['min_players_per_team'] = data['minPlayersPerTeam'];
+      if (data.containsKey('min_players_per_team')) pgData['min_players_per_team'] = data['min_players_per_team'];
+      if (data.containsKey('winningPoints')) pgData['winning_points'] = data['winningPoints'];
+      if (data.containsKey('winning_points')) pgData['winning_points'] = data['winning_points'];
+      if (data.containsKey('drawPoints')) pgData['draw_points'] = data['drawPoints'];
+      if (data.containsKey('draw_points')) pgData['draw_points'] = data['draw_points'];
+      if (data.containsKey('lossPoints')) pgData['loss_points'] = data['lossPoints'];
+      if (data.containsKey('loss_points')) pgData['loss_points'] = data['loss_points'];
+      if (data.containsKey('matchDuration')) pgData['match_duration'] = data['matchDuration'];
+      if (data.containsKey('match_duration')) pgData['match_duration'] = data['match_duration'];
+      if (data.containsKey('isBackAndForth')) pgData['is_back_and_forth'] = data['isBackAndForth'];
+      if (data.containsKey('is_back_and_forth')) pgData['is_back_and_forth'] = data['is_back_and_forth'];
+      if (data.containsKey('trophyMedals')) pgData['trophy_medals'] = data['trophyMedals'];
+      if (data.containsKey('trophy_medals')) pgData['trophy_medals'] = data['trophy_medals'];
+      if (data.containsKey('redCardSuspension')) pgData['red_card_suspension'] = data['redCardSuspension'];
+      if (data.containsKey('red_card_suspension')) pgData['red_card_suspension'] = data['red_card_suspension'];
+      if (data.containsKey('fairPlayScoring')) pgData['fair_play_scoring'] = data['fairPlayScoring'];
+      if (data.containsKey('fair_play_scoring')) pgData['fair_play_scoring'] = data['fair_play_scoring'];
+
+      if (data.containsKey('settings') && data['settings'] is Map) {
+        final settings = data['settings'] as Map;
+        if (settings.containsKey('maxPlayers')) pgData['max_players_per_team'] = settings['maxPlayers'];
+        if (settings.containsKey('max_players')) pgData['max_players_per_team'] = settings['max_players'];
+        if (settings.containsKey('minPlayers')) pgData['min_players_per_team'] = settings['minPlayers'];
+        if (settings.containsKey('min_players')) pgData['min_players_per_team'] = settings['min_players'];
+        if (settings.containsKey('winningPoints')) pgData['winning_points'] = settings['winningPoints'];
+        if (settings.containsKey('winning_points')) pgData['winning_points'] = settings['winning_points'];
+        if (settings.containsKey('drawPoints')) pgData['draw_points'] = settings['drawPoints'];
+        if (settings.containsKey('draw_points')) pgData['draw_points'] = settings['draw_points'];
+        if (settings.containsKey('lossPoints')) pgData['loss_points'] = settings['lossPoints'];
+        if (settings.containsKey('loss_points')) pgData['loss_points'] = settings['loss_points'];
+        if (settings.containsKey('matchDuration')) pgData['match_duration'] = settings['matchDuration'];
+        if (settings.containsKey('match_duration')) pgData['match_duration'] = settings['match_duration'];
+        if (settings.containsKey('isBackAndForth')) pgData['is_back_and_forth'] = settings['isBackAndForth'];
+        if (settings.containsKey('is_back_and_forth')) pgData['is_back_and_forth'] = settings['is_back_and_forth'];
+        if (settings.containsKey('trophyMedals')) pgData['trophy_medals'] = settings['trophyMedals'];
+        if (settings.containsKey('trophy_medals')) pgData['trophy_medals'] = settings['trophy_medals'];
+        if (settings.containsKey('redCardSuspension')) pgData['red_card_suspension'] = settings['redCardSuspension'];
+        if (settings.containsKey('red_card_suspension')) pgData['red_card_suspension'] = settings['red_card_suspension'];
+        if (settings.containsKey('fairPlayScoring')) pgData['fair_play_scoring'] = settings['fairPlayScoring'];
+        if (settings.containsKey('fair_play_scoring')) pgData['fair_play_scoring'] = settings['fair_play_scoring'];
+      }
+
+      if (pgData.isEmpty) return true;
+
+      await _supabase
+          .from('championships')
+          .update(pgData)
+          .eq('id', id);
       return true;
     } catch (e) {
       debugPrint('Error updating championship: $e');
@@ -74,45 +166,38 @@ class TournamentRepository {
   // Join a championship with 5-player rule
   Future<bool> joinChampionship(String championshipId, String teamId, {bool skipMemberCheck = false}) async {
     try {
-      final teamRef = _firestore.collection('teams').doc(teamId);
-      final champRef = _firestore.collection('championships').doc(championshipId);
-      
-      await _firestore.runTransaction((transaction) async {
-        final teamSnap = await transaction.get(teamRef);
-        final champSnap = await transaction.get(champRef);
-        
-        if (!teamSnap.exists) throw Exception('المجموعة لا توجد.');
-        if (!champSnap.exists) throw Exception('البطولة لا توجد.');
+      final team = await TeamRepository().getTeam(teamId);
+      if (team == null) throw Exception('المجموعة لا توجد.');
 
-        final teamData = teamSnap.data() as Map<String, dynamic>;
-        final champData = champSnap.data() as Map<String, dynamic>;
-
-        if (!skipMemberCheck) {
-          final List members = teamData['memberUids'] ?? [];
-          final int playerCount = teamData['playersCount'] ?? members.length;
-          
-          if (playerCount < 5) {
-            throw Exception('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
-          }
+      if (!skipMemberCheck) {
+        if (team.memberUids.length < 5) {
+          throw Exception('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
         }
+      }
 
-        // 2. Check Championship Capacity
-        final List joinedTeams = champData['joinedTeams'] ?? [];
-        final int maxTeams = champData['maxTeams'] ?? 16;
+      final champResponse = await _supabase
+          .from('championships')
+          .select()
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champResponse == null) throw Exception('البطولة لا توجد.');
 
-        if (joinedTeams.length >= maxTeams) {
-          throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
-        }
+      final champ = Championship.fromFirestore(champResponse, championshipId);
 
-        if (joinedTeams.contains(teamId)) {
-          throw Exception('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
-        }
+      if (champ.joinedTeams.length >= champ.maxTeams) {
+        throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
+      }
 
-        // 3. Update Championship
-        transaction.update(champRef, {
-          'joinedTeams': FieldValue.arrayUnion([teamId]),
-        });
-      });
+      if (champ.joinedTeams.contains(teamId)) {
+        throw Exception('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
+      }
+
+      final updatedJoined = List<String>.from(champ.joinedTeams)..add(teamId);
+
+      await _supabase
+          .from('championships')
+          .update({'joined_teams': updatedJoined})
+          .eq('id', championshipId);
 
       return true;
     } catch (e) {
@@ -124,9 +209,10 @@ class TournamentRepository {
   // TOURNAMENT Logic: Update championship status
   Future<void> updateChampionshipStatus(String championshipId, String status) async {
     try {
-      await _firestore.collection('championships').doc(championshipId).update({
-        'status': status,
-      });
+      await _supabase
+          .from('championships')
+          .update({'status': status})
+          .eq('id', championshipId);
     } catch (e) {
       debugPrint('Error updating championship status: $e');
     }
@@ -134,26 +220,34 @@ class TournamentRepository {
 
   Future<void> crownChampion(String championshipId, String winningTeamId, String winningTeamName) async {
     try {
-      final batch = _firestore.batch();
-      
       // 1. Mark championship as completed
-      batch.update(_firestore.collection('championships').doc(championshipId), {
-        'status': 'completed',
-        'championTeamId': winningTeamId,
-        'championTeamName': winningTeamName,
-      });
+      await _supabase
+          .from('championships')
+          .update({
+            'status': 'completed',
+            'champion_team_id': winningTeamId,
+            'champion_team_name': winningTeamName,
+          })
+          .eq('id', championshipId);
 
-      // 2. Increment team's trophies and add badge (Prestige, NO ELO POINTS)
-      final teamRef = _firestore.collection('teams').doc(winningTeamId);
-      batch.update(teamRef, {
-        'championshipsWon': FieldValue.increment(1),
-        'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
-      });
-
-      await batch.commit();
+      // 2. Increment team's trophies and add badge
+      final team = await TeamRepository().getTeam(winningTeamId);
+      if (team != null) {
+        final badges = List<String>.from(team.unlockedBadges);
+        if (!badges.contains('cup_winner')) {
+          badges.add('cup_winner');
+        }
+        await _supabase
+            .from('teams')
+            .update({
+              'championships_won': team.championshipsWon + 1,
+              'unlocked_badges': badges,
+            })
+            .eq('id', winningTeamId);
+      }
 
       // 3. ── Celebration Notifications ──
-      _sendCelebrationNotifications(winningTeamId);
+      await _sendCelebrationNotifications(winningTeamId);
     } catch (e) {
       debugPrint('Error crowning champion: $e');
       throw 'Failed to crown champion';
@@ -162,13 +256,12 @@ class TournamentRepository {
 
   Future<void> _sendCelebrationNotifications(String teamId) async {
     try {
-      final teamDoc = await _firestore.collection('teams').doc(teamId).get();
-      if (!teamDoc.exists) return;
+      final team = await TeamRepository().getTeam(teamId);
+      if (team == null) return;
 
-      final List memberUids = List.from(teamDoc.data()?['memberUids'] ?? []);
-      for (final uid in memberUids) {
+      for (final uid in team.memberUids) {
         await NotificationRepository().sendNotification(
-          uid.toString(),
+          uid,
           AppNotification(
             id: '',
             title: "🏆 CHAMPIONS!",
@@ -187,11 +280,25 @@ class TournamentRepository {
   Future<List<Team>> getTeamsByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
     try {
-      final query = await _firestore.collection('teams')
-          .where(FieldPath.documentId, whereIn: ids)
-          .get();
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .inFilter('id', ids);
       
-      return query.docs.map((d) => Team.fromFirestore(d.data(), d.id)).toList();
+      final List<Team> teams = [];
+      for (final doc in (response as List)) {
+        final teamId = doc['id'].toString();
+        final memberUids = await TeamRepository().getTeamMemberUids(teamId);
+        final playerImages = await TeamRepository().getTeamPlayerImages(memberUids);
+        
+        final data = Map<String, dynamic>.from(doc);
+        data['memberUids'] = memberUids;
+        data['playerImages'] = playerImages;
+        data['playersCount'] = memberUids.length;
+        
+        teams.add(Team.fromFirestore(data, teamId));
+      }
+      return teams;
     } catch (e) {
       debugPrint('Error getting teams by IDs: $e');
       return [];
@@ -202,11 +309,14 @@ class TournamentRepository {
 
   Future<void> generateFixtures(String championshipId) async {
     try {
-      final champDoc = await _firestore.collection('championships').doc(championshipId).get();
-      if (!champDoc.exists) throw 'Championship not found';
+      final champDoc = await _supabase
+          .from('championships')
+          .select()
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champDoc == null) throw 'Championship not found';
 
-      final champData = champDoc.data() as Map<String, dynamic>;
-      final List<String> teamIds = List<String>.from(champData['joinedTeams'] ?? []);
+      final List<String> teamIds = List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
 
       int totalTeams = teamIds.length;
       if (totalTeams < 2) throw 'At least 2 teams are required to start a tournament.';
@@ -216,47 +326,41 @@ class TournamentRepository {
       while (targetP2 * 2 <= totalTeams) {
         targetP2 *= 2;
       }
+      int totalBracketRounds = (log(targetP2) / log(2)).round();
 
       // If N=10, P=8. Matches in R0 = 10 - 8 = 2. Teams in R0 = 4.
       int numOpeningMatches = totalTeams - targetP2;
       int numTeamsR0 = numOpeningMatches * 2;
-      int numByes = totalTeams - numTeamsR0;
 
       final teams = await getTeamsByIds(teamIds);
       final teamMap = {for (var t in teams) t.id: t.name};
       final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
 
-      final batch = _firestore.batch();
-      final matchesCollection = _firestore.collection('tournament_matches');
-
       String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
 
       // 2. Generate Opening Round (R0)
       for (int m = 0; m < numOpeningMatches; m++) {
-        final docRef = matchesCollection.doc(getMatchId(0, m));
         String homeId = shuffledIds[m * 2];
         String awayId = shuffledIds[m * 2 + 1];
 
-        final matchData = TournamentMatch(
-          id: docRef.id,
-          championshipId: championshipId,
-          roundIndex: 0,
-          matchIndex: m,
-          nextMatchId: getMatchId(1, m ~/ 2), 
-          homeTeamId: homeId,
-          homeTeamName: teamMap[homeId],
-          awayTeamId: awayId,
-          awayTeamName: teamMap[awayId],
-        );
-        batch.set(docRef, matchData.toFirestore());
+        final matchData = {
+          'id': getMatchId(0, m),
+          'championship_id': championshipId,
+          'round_index': totalBracketRounds,
+          'match_index': m,
+          'next_match_id': getMatchId(1, m ~/ 2),
+          'home_team_id': homeId,
+          'home_team_name': teamMap[homeId],
+          'away_team_id': awayId,
+          'away_team_name': teamMap[awayId],
+        };
+        await _supabase.from('tournament_matches').insert(matchData);
       }
 
       // 3. Generate main bracket rounds (R1...Final)
-      int totalBracketRounds = (log(targetP2) / log(2)).round();
       for (int r = 1; r <= totalBracketRounds; r++) {
         int matchCount = (targetP2 / pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
-          final docRef = matchesCollection.doc(getMatchId(r, m));
           String? nextMatchId = (matchCount > 1) ? getMatchId(r + 1, m ~/ 2) : null;
 
           String? homeId, homeName, awayId, awayName;
@@ -284,23 +388,26 @@ class TournamentRepository {
             }
           }
 
-          final matchData = TournamentMatch(
-            id: docRef.id,
-            championshipId: championshipId,
-            roundIndex: r,
-            matchIndex: m,
-            nextMatchId: nextMatchId,
-            homeTeamId: homeId,
-            homeTeamName: homeName,
-            awayTeamId: awayId,
-            awayTeamName: awayName,
-          );
-          batch.set(docRef, matchData.toFirestore());
+          final matchData = {
+            'id': getMatchId(r, m),
+            'championship_id': championshipId,
+            'round_index': totalBracketRounds - r,
+            'match_index': m,
+            'next_match_id': nextMatchId,
+            'home_team_id': homeId,
+            'home_team_name': homeName,
+            'away_team_id': awayId,
+            'away_team_name': awayName,
+          };
+          await _supabase.from('tournament_matches').insert(matchData);
         }
       }
 
-      batch.update(champDoc.reference, {'status': 'ongoing'});
-      await batch.commit();
+      await _supabase
+          .from('championships')
+          .update({'status': 'ongoing'})
+          .eq('id', championshipId);
+          
       debugPrint('✅ Flexible Bracket Generated for $championshipId: $totalTeams teams');
     } catch (e) {
       debugPrint('Error generating fixtures: $e');
@@ -316,51 +423,65 @@ class TournamentRepository {
     required String winnerName,
   }) async {
     try {
-      final matchRef = _firestore.collection('tournament_matches').doc(matchId);
+      final response = await _supabase
+          .from('tournament_matches')
+          .select()
+          .eq('id', matchId)
+          .maybeSingle();
+      if (response == null) throw 'Match not found';
 
-      await _firestore.runTransaction((transaction) async {
-        final matchDoc = await transaction.get(matchRef);
-        if (!matchDoc.exists) throw 'Match not found';
+      final String? nextMatchId = response['next_match_id'] ?? response['nextMatchId'];
+      final int matchIndex = response['match_index'] ?? response['matchIndex'] ?? 0;
+      final String championshipId = response['championship_id'] ?? response['championshipId'] ?? '';
 
-        final matchData = matchDoc.data() as Map<String, dynamic>;
-        final String? nextMatchId = matchData['nextMatchId'];
-        final int matchIndex = matchData['matchIndex'];
+      await _supabase
+          .from('tournament_matches')
+          .update({
+            'home_score': homeScore,
+            'away_score': awayScore,
+            'winner_id': winnerId,
+          })
+          .eq('id', matchId);
 
-        transaction.update(matchRef, {
-          'homeScore': homeScore,
-          'awayScore': awayScore,
-          'winnerId': winnerId,
-        });
+      if (nextMatchId != null) {
+        String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
 
-        if (nextMatchId != null) {
-          final nextMatchRef = _firestore.collection('tournament_matches').doc(nextMatchId);
+        await _supabase
+            .from('tournament_matches')
+            .update({
+              '${slotField}_team_id': winnerId,
+              '${slotField}_team_name': winnerName,
+            })
+            .eq('id', nextMatchId);
+      } else {
+        // ── Final Match: Crown the Champion ──
+        await _supabase
+            .from('championships')
+            .update({
+              'status': 'completed',
+              'champion_team_id': winnerId,
+              'champion_team_name': winnerName,
+            })
+            .eq('id', championshipId);
 
-          String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
-
-          transaction.update(nextMatchRef, {
-            '${slotField}TeamId': winnerId,
-            '${slotField}TeamName': winnerName,
-          });
-        } else {
-          // ── Final Match: Crown the Champion ──
-          final champRef = _firestore.collection('championships').doc(matchData['championshipId']);
-          final teamRef = _firestore.collection('teams').doc(winnerId);
-
-          transaction.update(champRef, {
-            'status': 'completed',
-            'championTeamId': winnerId,
-            'championTeamName': winnerName,
-          });
-
-          transaction.update(teamRef, {
-            'championshipsWon': FieldValue.increment(1),
-            'unlockedBadges': FieldValue.arrayUnion(['cup_winner']),
-          });
-
-          // ── Celebration Notifications (Final Match) ──
-          _sendCelebrationNotifications(winnerId);
+        final team = await TeamRepository().getTeam(winnerId);
+        if (team != null) {
+          final badges = List<String>.from(team.unlockedBadges);
+          if (!badges.contains('cup_winner')) {
+            badges.add('cup_winner');
+          }
+          await _supabase
+              .from('teams')
+              .update({
+                'championships_won': team.championshipsWon + 1,
+                'unlocked_badges': badges,
+              })
+              .eq('id', winnerId);
         }
-      });
+
+        // ── Celebration Notifications (Final Match) ──
+        await _sendCelebrationNotifications(winnerId);
+      }
     } catch (e) {
       debugPrint('Error updating tournament match score: $e');
       rethrow;
@@ -373,9 +494,9 @@ class TournamentRepository {
     required DateTime scheduledTime,
   }) async {
     try {
-      await _firestore.collection('tournament_matches').doc(matchId).update({
-        'scheduledTime': Timestamp.fromDate(scheduledTime),
-      });
+      await _supabase.from('tournament_matches').update({
+        'scheduled_time': scheduledTime.toUtc().toIso8601String(),
+      }).eq('id', matchId);
     } catch (e) {
       debugPrint('Error updating match scheduled time: $e');
       rethrow;
@@ -389,11 +510,25 @@ class TournamentRepository {
     required bool isPaid,
   }) async {
     try {
-      await _firestore.collection('championships').doc(championshipId).update({
-        'paidTeams': isPaid
-            ? FieldValue.arrayUnion([teamId])
-            : FieldValue.arrayRemove([teamId]),
-      });
+      final response = await _supabase
+          .from('championships')
+          .select('paid_teams, paidTeams')
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (response == null) throw 'Championship not found';
+
+      final paidTeams = List<String>.from(response['paid_teams'] ?? response['paidTeams'] ?? []);
+      if (isPaid) {
+        if (!paidTeams.contains(teamId)) {
+          paidTeams.add(teamId);
+        }
+      } else {
+        paidTeams.remove(teamId);
+      }
+
+      await _supabase.from('championships').update({
+        'paid_teams': paidTeams,
+      }).eq('id', championshipId);
     } catch (e) {
       debugPrint('Error toggling team payment: $e');
       rethrow;
@@ -401,19 +536,19 @@ class TournamentRepository {
   }
 
   Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) {
-    return _firestore
-        .collection('tournament_matches')
-        .where('championshipId', isEqualTo: championshipId)
-        .snapshots()
-        .map((snapshot) {
-      final matches = snapshot.docs
-          .map((doc) => TournamentMatch.fromFirestore(doc.data(), doc.id))
-          .toList();
-      matches.sort((a, b) {
-        if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
-        return a.matchIndex.compareTo(b.matchIndex);
-      });
-      return matches;
-    });
+    return _supabase
+        .from('tournament_matches')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          final matches = list
+              .map((data) => TournamentMatch.fromFirestore(data, data['id'].toString()))
+              .where((m) => m.championshipId == championshipId)
+              .toList();
+          matches.sort((a, b) {
+            if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
+            return a.matchIndex.compareTo(b.matchIndex);
+          });
+          return matches;
+        });
   }
 }

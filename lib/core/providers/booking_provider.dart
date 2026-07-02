@@ -1,10 +1,8 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
 import '../services/database_service.dart';
-import '../config/app_config.dart';
 
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
@@ -19,10 +17,9 @@ class BookingProvider with ChangeNotifier {
   StreamSubscription? _bookingSubscription; // ✅ Added tracking
 
   bool _isLoading = false;
-  bool _isLoadingMoreParticipants = false;
-  bool _isLoadingMoreMatches = false;
+  final bool _isLoadingMoreParticipants = false;
+  final bool _isLoadingMoreMatches = false;
   bool _hasMoreMatches = true;
-  DocumentSnapshot? _lastMatchDocument;
   String? _errorMessage;
   final Set<String> _cancellingIds = {};
 
@@ -42,7 +39,7 @@ class BookingProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
 
   BookingProvider() {
-    _repository = FirestoreBookingRepository();
+    _repository = SupabaseBookingRepository();
   }
 
   /// Set the current booking draft (used between screens)
@@ -81,9 +78,8 @@ class BookingProvider with ChangeNotifier {
         opponentTeamId: opponentTeamId,
         opponentTeamName: opponentTeamName,
         playerTeamId: playerTeamId,
-        playerTeamName: playerTeamName,
         currentPlayers: currentPlayers,
-        maxPlayers: maxPlayers,
+        totalFieldCapacity: maxPlayers,
       );
       notifyListeners();
     }
@@ -150,6 +146,10 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   void loadUserBookings(String userId) {
+    _repository.autoExpirePendingChallenges();
+    _repository.autoReconcileSingleEntryResults();
+    _repository.autoNudgePostMatchResults();
+
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
         .getUserBookings(userId)
@@ -185,6 +185,10 @@ class BookingProvider with ChangeNotifier {
 
   /// Load owner's bookings (for stadium owners)
   void loadOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
+    _repository.autoExpirePendingChallenges();
+    _repository.autoReconcileSingleEntryResults();
+    _repository.autoNudgePostMatchResults();
+
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
         .getOwnerBookings(ownerId, stadiumIds: stadiumIds)
@@ -297,6 +301,7 @@ class BookingProvider with ChangeNotifier {
   /// Join a public match
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
@@ -308,7 +313,12 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return success;
     } catch (e) {
-      _errorMessage = 'Error joining match: $e';
+      final errorStr = e.toString();
+      if (errorStr.contains('time_conflict')) {
+        _errorMessage = 'time_conflict';
+      } else {
+        _errorMessage = errorStr.replaceAll('Exception: ', '');
+      }
       _isLoading = false;
       notifyListeners();
       return false;
@@ -385,12 +395,42 @@ class BookingProvider with ChangeNotifier {
     return success;
   }
 
-  /// Auto-reconcile past bookings (Pivot Logic)
-  Future<void> autoReconcilePastBookings(String ownerId) async {
-    await _repository.autoReconcilePastBookings(ownerId);
-    // Note: No manual notifyListeners needed as the active loadOwnerBookings 
-    // stream will automatically push the updated models to the UI.
+  /// Update manual booking details (owner operation)
+  Future<bool> updateManualBooking({
+    required String bookingId,
+    required String name,
+    required String phone,
+    required String notes,
+    required bool isDepositPaid,
+    required double depositPaid,
+    required String paymentStatus,
+  }) async {
+    _isLoading = true;
+    _errorMessage = null;
+    notifyListeners();
+
+    try {
+      final success = await _repository.updateManualBooking(
+        bookingId: bookingId,
+        name: name,
+        phone: phone,
+        notes: notes,
+        isDepositPaid: isDepositPaid,
+        depositPaid: depositPaid,
+        paymentStatus: paymentStatus,
+      );
+      _isLoading = false;
+      notifyListeners();
+      return success;
+    } catch (e) {
+      _errorMessage = e.toString();
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
   }
+
+
 
   /// Get bookings for a specific stadium and date (Stream)
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {

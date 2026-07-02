@@ -165,6 +165,7 @@ class PaymentSelectionModal extends StatelessWidget {
       totalPrice: totalPrice,
       currency: 'EGP',
       paymentMethod: method,
+      needsDeposit: stadium?.needsDeposit ?? false,
     );
 
     Navigator.pop(context); // Close modal

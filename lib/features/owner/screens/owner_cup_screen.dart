@@ -1,9 +1,8 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -56,9 +55,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   AnimatedAlign(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
-                    alignment: _selectedTab == 0 
-                        ? Alignment.centerLeft 
-                        : (_selectedTab == 1 ? Alignment.center : Alignment.centerRight),
+                    alignment: Directionality.of(context) == TextDirection.rtl
+                        ? (_selectedTab == 0 
+                            ? Alignment.centerRight 
+                            : (_selectedTab == 1 ? Alignment.center : Alignment.centerLeft))
+                        : (_selectedTab == 0 
+                            ? Alignment.centerLeft 
+                            : (_selectedTab == 1 ? Alignment.center : Alignment.centerRight)),
                     child: FractionallySizedBox(
                       widthFactor: 1 / 3,
                       child: Container(
@@ -133,8 +136,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   
                   final now = DateTime.now();
                   bool isRightStatus = false;
-                  if (_selectedTab == 0) isRightStatus = c.startDate.isAfter(now);
-                  else if (_selectedTab == 1) isRightStatus = c.startDate.isBefore(now) && c.endDate.isAfter(now);
+                  if (_selectedTab == 0) {
+                    isRightStatus = c.startDate.isAfter(now);
+                  } else if (_selectedTab == 1) isRightStatus = c.startDate.isBefore(now) && c.endDate.isAfter(now);
                   else if (_selectedTab == 2) isRightStatus = c.endDate.isBefore(now);
                   
                   return isRightCategory && isRightStatus;
@@ -344,8 +348,8 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               _buildInfoColumn(l10n.date, dateRange),
-              _buildInfoColumn(l10n.entryFeeLabel, '${tournament.entryFee.toInt()} ${l10n.currency}'),
-              _buildInfoColumn(l10n.grandPrizeLabel, '${tournament.grandPrize.toInt()} ${l10n.currency}'),
+              _buildInfoColumn(l10n.entryFeeLabel, '${tournament.entryFee.toInt()} ${l10n.egCurrency}'),
+              _buildInfoColumn(l10n.grandPrizeLabel, '${tournament.grandPrize.toInt()} ${l10n.egCurrency}'),
             ],
           ),
           

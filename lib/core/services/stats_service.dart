@@ -1,44 +1,40 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 
 class StatsService {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-
   /// Aggregates stats for a specific player
   Future<Map<String, dynamic>> getPlayerStats(String userId) async {
     try {
-      // 1. Fetch all bookings where this user participated
-      final bookingsQuery = await _firestore
-          .collection('bookings')
-          .where('joinedUserIds', arrayContains: userId)
-          .where('status', isEqualTo: 'completed')
-          .get();
+      final response = await Supabase.instance.client
+          .from('bookings')
+          .select()
+          .eq('status', 'completed');
 
-      final bookings = bookingsQuery.docs.map((doc) => Booking.fromFirestore(doc.data(), doc.id)).toList();
+      final bookings = (response as List)
+          .map((doc) => Booking.fromFirestore(doc, doc['id'].toString()))
+          .where((booking) => booking.joinedUserIds.contains(userId))
+          .toList();
 
       if (bookings.isEmpty) {
         return {
-          'winRate': 0.0,
-          'totalGoals': 0,
+          'winRate': '0.0',
           'favoriteStadium': 'No matches yet',
           'matchesPlayed': 0,
         };
       }
 
       int wins = 0;
-      int goals = 0;
+      int challengeMatchesCount = 0;
       Map<String, int> stadiumCounts = {};
 
       for (final booking in bookings) {
         // Track Favorite Stadium
         stadiumCounts[booking.stadiumName] = (stadiumCounts[booking.stadiumName] ?? 0) + 1;
 
-        // Track Goals and Wins (if they are challenge matches)
+        // Track Wins (if they are challenge matches)
         if (booking.bookingType == BookingType.challenge) {
+          challengeMatchesCount++;
           final isHome = booking.playerTeamId != null && booking.joinedUserIds.contains(userId); 
-          // Simplified: if user is in home team, check homeScore
-          // NOTE: Real system would need a way to know WHICH team the user was on in THAT specific booking
-          // For now, we'll assume they were on the 'playerTeam' if it exists and they joined.
           
           if (booking.finalOutcome != null) {
             if (isHome && booking.finalOutcome == MatchOutcome.homeWin) {
@@ -47,8 +43,6 @@ class StatsService {
               wins++;
             }
           }
-          
-          goals += (isHome ? (booking.homeScore ?? 0) : (booking.awayScore ?? 0));
         }
       }
 
@@ -62,11 +56,10 @@ class StatsService {
         }
       });
 
-      final winRate = bookings.isNotEmpty ? (wins / bookings.length) * 100 : 0.0;
+      final winRate = challengeMatchesCount > 0 ? (wins / challengeMatchesCount) * 100 : 0.0;
 
       return {
         'winRate': winRate.toStringAsFixed(1),
-        'totalGoals': goals,
         'favoriteStadium': favStadium,
         'matchesPlayed': bookings.length,
       };
@@ -74,7 +67,6 @@ class StatsService {
       print('Error calculating stats: $e');
       return {
         'winRate': '0.0',
-        'totalGoals': 0,
         'favoriteStadium': 'Error',
         'matchesPlayed': 0,
       };

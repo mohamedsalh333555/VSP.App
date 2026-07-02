@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -10,6 +9,7 @@ import '../screens/challenge_select_team_screen.dart';
 import '../screens/booking_confirmation_screen.dart';
 import 'create_team_sheet.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../l10n/app_localizations.dart';
 
 class BookingTeamSelectionSheet extends StatefulWidget {
   final Stadium stadium;

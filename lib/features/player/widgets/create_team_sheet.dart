@@ -6,10 +6,8 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/models/user_model.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/storage_service.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
-
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -70,7 +68,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
 
       if (_selectedLogo != null) {
         _uploadedLogoUrl = await StorageService().uploadFile(
-          file: File(_selectedLogo!.path),
+          file: _selectedLogo!,
+          bucket: 'profile-pictures',
           path: 'teams/$uid/logos/team_logo_${DateTime.now().millisecondsSinceEpoch}.jpg',
         );
       }
@@ -162,7 +161,6 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // Header
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
@@ -189,14 +187,13 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               ],
             ),
             const SizedBox(height: VSPSpacing.lg),
-
             Expanded(
               child: SingleChildScrollView(
                 physics: const BouncingScrollPhysics(),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('${l10n.teamNameLabel}*', style: Theme.of(context).textTheme.labelMedium),
+                    Text(l10n.teamNameLabel, style: Theme.of(context).textTheme.labelMedium),
                     const SizedBox(height: VSPSpacing.sm),
                     TextField(
                       controller: _nameController,
@@ -213,10 +210,9 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
                       ),
                     ),
-                    const SizedBox(height: 16),
-
-                    Text('${l10n.sportTypeLabel}*', style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: VSPSpacing.md),
+                    Text(l10n.sportsType, style: Theme.of(context).textTheme.labelMedium),
+                    const SizedBox(height: VSPSpacing.sm),
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
@@ -238,9 +234,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                         ),
                       ),
                     ),
-                    
                     const SizedBox(height: VSPSpacing.lg),
-
                     GestureDetector(
                       onTap: _pickImage,
                       child: Row(
@@ -290,14 +284,12 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                         ],
                       ),
                     ),
-
                     const SizedBox(height: VSPSpacing.lg),
-
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         Text(
-                          '${l10n.teamMembers} (${_teamMembers.length}/12)',
+                          l10n.teamMembersHeader(_teamMembers.length + 1, 12),
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         ),
                         TextButton.icon(
@@ -308,7 +300,6 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                       ],
                     ),
                     const SizedBox(height: VSPSpacing.sm),
-                    
                     if (_teamMembers.isEmpty)
                       Container(
                         width: double.infinity,
@@ -374,13 +365,11 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                           }).toList(),
                         ),
                       ),
-
                     const SizedBox(height: VSPSpacing.xl),
                   ],
                 ),
               ),
             ),
-
             const SizedBox(height: VSPSpacing.md),
             Row(
               children: [

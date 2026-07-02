@@ -32,12 +32,12 @@ class VspBottomNavBar extends StatelessWidget {
     return Container(
       color: Colors.transparent, // Ensures no black background behind the nav bar
       child: SafeArea(
-        bottom: false, // Prevents forced black gap on modern notched devices
+        bottom: true, // 🛡️ Automatic safe area protection for gestures
         child: Container(
-          margin: EdgeInsets.only(
+          margin: const EdgeInsets.only(
             left: 20, 
             right: 20, 
-            bottom: MediaQuery.of(context).padding.bottom + 10, // Optimized floating height
+            bottom: 10, // 💡 Fixed margin to float elegantly above gesture line
           ),
           height: 65,
           decoration: BoxDecoration(

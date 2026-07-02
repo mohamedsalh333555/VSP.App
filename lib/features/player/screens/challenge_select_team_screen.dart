@@ -113,7 +113,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Icons.arrow_back_ios,  color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -476,4 +476,5 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     );
   }
 }
+
 

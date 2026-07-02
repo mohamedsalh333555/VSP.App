@@ -13,11 +13,15 @@ import 'package:flutter/services.dart';
 class StadiumCard extends StatelessWidget {
   final Stadium stadium;
   final VoidCallback? onTap;
+  final bool isOwnerView;
+  final VoidCallback? onEditTap;
 
   const StadiumCard({
     super.key, 
     required this.stadium,
     this.onTap,
+    this.isOwnerView = false,
+    this.onEditTap,
   });
 
   @override
@@ -25,7 +29,7 @@ class StadiumCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: 210,
+        height: isOwnerView ? 240 : 210,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           border: Border.all(color: VSPColors.divider, width: 1),
@@ -80,10 +84,10 @@ class StadiumCard extends StatelessWidget {
                     gradient: LinearGradient(
                       begin: Alignment.topCenter,
                       end: Alignment.bottomCenter,
-                      stops: const [0.6, 1.0],
+                      stops: isOwnerView ? const [0.35, 1.0] : const [0.6, 1.0],
                       colors: [
                         Colors.transparent,
-                        VSPColors.background.withValues(alpha: 0.9),
+                        VSPColors.background.withValues(alpha: 0.95),
                       ],
                     ),
                   ),
@@ -129,37 +133,57 @@ class StadiumCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                    const Spacer(),
-                    // DISTANCE BADGE
-                    _buildDistanceBadge(context),
-                    const SizedBox(width: VSPSpacing.sm),
-                    // FAVORITE BUTTON
-                    Consumer<AuthProvider>(
-                      builder: (context, auth, _) {
-                        final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) == true;
-                        return GestureDetector(
-                          behavior: HitTestBehavior.opaque,
-                          onTap: () {
-                            HapticFeedback.mediumImpact();
-                            auth.toggleFavoriteStadium(stadium.id);
-                          },
-                          child: Container(
-                            width: 36,
-                            height: 36,
-                            decoration: BoxDecoration(
-                              color: VSPColors.background.withValues(alpha: 0.7),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
-                            ),
-                            child: Icon(
-                              isFav ? Icons.favorite : Icons.favorite_border,
-                              color: isFav ? VSPColors.error : Colors.white,
-                              size: 20,
-                            ),
+                     const Spacer(),
+                    if (isOwnerView)
+                      GestureDetector(
+                        onTap: onEditTap,
+                        child: Container(
+                          width: 36,
+                          height: 36,
+                          decoration: BoxDecoration(
+                            color: VSPColors.background.withValues(alpha: 0.7),
+                            shape: BoxShape.circle,
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
-                        );
-                      },
-                    ),
+                          child: const Icon(
+                            Icons.edit_square,
+                            color: VSPColors.accent,
+                            size: 18,
+                          ),
+                        ),
+                      )
+                    else ...[
+                      // DISTANCE BADGE
+                      _buildDistanceBadge(context),
+                      const SizedBox(width: VSPSpacing.sm),
+                      // FAVORITE BUTTON
+                      Consumer<AuthProvider>(
+                        builder: (context, auth, _) {
+                          final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) == true;
+                          return GestureDetector(
+                            behavior: HitTestBehavior.opaque,
+                            onTap: () {
+                              HapticFeedback.mediumImpact();
+                              auth.toggleFavoriteStadium(stadium.id);
+                            },
+                            child: Container(
+                              width: 36,
+                              height: 36,
+                              decoration: BoxDecoration(
+                                color: VSPColors.background.withValues(alpha: 0.7),
+                                shape: BoxShape.circle,
+                                border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
+                              ),
+                              child: Icon(
+                                isFav ? Icons.favorite : Icons.favorite_border,
+                                color: isFav ? VSPColors.error : Colors.white,
+                                size: 20,
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                    ],
                   ],
                 ),
               ),
@@ -172,57 +196,137 @@ class StadiumCard extends StatelessWidget {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text(
-                      stadium.name,
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                        color: VSPColors.textPrimary,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 20,
-                        letterSpacing: 0.5,
+                    if (isOwnerView) ...[
+                      // Owner view details
+                      Text(
+                        '${stadium.name}  ${stadium.size} • ${stadium.type}',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: VSPColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 16,
+                        ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
                       ),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                    const SizedBox(height: 6),
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                          decoration: BoxDecoration(
-                            color: Colors.white10,
-                            borderRadius: BorderRadius.circular(4),
-                          ),
-                          child: Text(
-                            '${stadium.size} • ${stadium.type}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: Colors.white70,
-                              fontWeight: FontWeight.w600,
-                            ),
-                          ),
+                      const SizedBox(height: 6),
+                      // Seats
+                      Text(
+                        'Seats ${stadium.seatsCapacity} person',
+                        style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: Colors.white70,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 12,
                         ),
-                        const Spacer(),
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.end,
+                      ),
+                      const SizedBox(height: 6),
+                      // Amenities (Baths, Cafeteria, Garage, etc.)
+                      Builder(builder: (context) {
+                        final List<String> featuresList = stadium.features is List 
+                            ? List<String>.from(stadium.features)
+                            : Stadium.parseFeatures(stadium.features);
+                        
+                        final hasBaths = featuresList.any((f) => f.toLowerCase().contains('bath'));
+                        final hasCafe = featuresList.any((f) => f.toLowerCase().contains('cafe'));
+                        final hasGarage = featuresList.any((f) => f.toLowerCase().contains('garage'));
+                        
+                        return Row(
                           children: [
-                            Text(
-                              '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                color: VSPColors.accent,
-                                fontWeight: FontWeight.w900,
-                                fontSize: 18,
-                              ),
-                            ),
-                            Text(
-                              AppLocalizations.of(context)!.perHour,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: VSPColors.textSecondary,
-                                fontSize: 9,
-                              ),
-                            ),
+                            if (hasBaths) ...[
+                              const Icon(Icons.wc, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              const Text('Baths 🚻  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                            ],
+                            if (hasCafe) ...[
+                              const Icon(Icons.local_cafe, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              const Text('Cafeteria  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                            ],
+                            if (hasGarage) ...[
+                              const Icon(Icons.local_parking, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              const Text('Garage  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                            ],
+                            if (!hasBaths && !hasCafe && !hasGarage)
+                              const Text('No amenities listed  ', style: TextStyle(color: Colors.white38, fontSize: 11)),
                           ],
+                        );
+                      }),
+                      const SizedBox(height: 8),
+                      // Price & Governorate
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Text(
+                            'Price ${stadium.pricePerHour.toInt()} EGP',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 16,
+                            ),
+                          ),
+                          Text(
+                            stadium.governorate ?? stadium.location,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ] else ...[
+                      // Player standard view details
+                      Text(
+                        stadium.name,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: VSPColors.textPrimary,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 20,
+                          letterSpacing: 0.5,
                         ),
-                      ],
-                    ),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 6),
+                      Row(
+                        children: [
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                            decoration: BoxDecoration(
+                              color: Colors.white10,
+                              borderRadius: BorderRadius.circular(4),
+                            ),
+                            child: Text(
+                              '${stadium.size} • ${stadium.type}',
+                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: Colors.white70,
+                                fontWeight: FontWeight.w600,
+                              ),
+                            ),
+                          ),
+                          const Spacer(),
+                          Column(
+                            crossAxisAlignment: CrossAxisAlignment.end,
+                            children: [
+                              Text(
+                                '${stadium.pricePerHour.toInt()} ${AppLocalizations.of(context)!.egCurrency}',
+                                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                  color: VSPColors.accent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 18,
+                                ),
+                              ),
+                              Text(
+                                AppLocalizations.of(context)!.perHour,
+                                style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                  color: VSPColors.textSecondary,
+                                  fontSize: 9,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ],
                   ],
                 ),
               ),

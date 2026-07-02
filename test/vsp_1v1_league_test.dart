@@ -1,8 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
-import 'package:vsp_application/core/repositories/match_repository.dart';
-import 'package:vsp_application/core/repositories/team_repository.dart';
-import 'package:vsp_application/core/repositories/tournament_repository.dart';
 
 void main() {
   group('VSP 1v1 Official League - Core Logic & Data Tests', () {

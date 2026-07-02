@@ -2,7 +2,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 
-import '../../../core/navigation/root_screen.dart';
 
 class SplashScreen extends StatefulWidget {
   final bool navigate;

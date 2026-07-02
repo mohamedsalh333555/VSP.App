@@ -1,7 +1,8 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/user_repository.dart';
@@ -9,6 +10,7 @@ import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/database_service.dart';
+import '../services/notification_handler.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -53,30 +55,70 @@ abstract class BookingRepository {
 
   /// Auto-reconcile past bookings (Pivot Logic)
   Future<void> autoReconcilePastBookings(String ownerId);
+
+  /// Get unpaid bookings for a user
+  Future<List<Booking>> getUnpaidBookingsForUser(String userId);
+
+  Future<void> autoExpirePendingChallenges();
+  Future<void> autoReconcileSingleEntryResults();
+  Future<void> autoNudgePostMatchResults();
+
+  Future<bool> updateManualBooking({
+    required String bookingId,
+    required String name,
+    required String phone,
+    required String notes,
+    required bool isDepositPaid,
+    required double depositPaid,
+    required String paymentStatus,
+  });
 }
 
-/// Firestore implementation of BookingRepository
-class FirestoreBookingRepository implements BookingRepository {
-  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
-  
-  CollectionReference get _bookingsCollection => 
-      _firestore.collection('bookings');
+/// Supabase implementation of BookingRepository
+class SupabaseBookingRepository implements BookingRepository {
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   @override
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     try {
-      final docRef = _bookingsCollection.doc();
-      
-      // For the Cash-Only MVP, we auto-confirm all bookings.
+      // Rule 2: Track no-shows on user profile
+      final userDoc = await _supabase
+          .from('users')
+          .select('is_blocked, no_show_count')
+          .eq('id', userId)
+          .maybeSingle();
+      if (userDoc != null) {
+        final isBlocked = userDoc['is_blocked'] ?? false;
+        final noShowCount = userDoc['no_show_count'] ?? 0;
+        if (isBlocked || noShowCount >= 2) {
+          throw Exception("حسابك مقيد بسبب عدم الحضور للمباريات السابقة (No-Show).");
+        }
+      }
+
+      // Rule 1: Maximum of 1 active "unpaid" booking
+      final unpaidBookings = await getUnpaidBookingsForUser(userId);
+      final now = DateTime.now();
+      final hasActiveUnpaid = unpaidBookings.any((b) => 
+          b.status != BookingStatus.cancelled && 
+          b.status != BookingStatus.completed &&
+          b.endTime.isAfter(now));
+      if (hasActiveUnpaid) {
+        throw Exception("لا يمكنك إنشاء حجز جديد بينما لديك حجز نشط غير مدفوع بالفعل.");
+      }
+
       const status = BookingStatus.confirmed;
 
       // ── Data Denormalization: Add host info to booking ──
-      final userDoc = await _firestore.collection('users').doc(userId).get();
-      final hostName = userDoc.data()?['name'] ?? 'Player';
-      final hostAvatar = userDoc.data()?['profileImageUrl'] ?? '';
+      final userDetailsDoc = await _supabase
+          .from('users')
+          .select('name, profile_image_url')
+          .eq('id', userId)
+          .maybeSingle();
+      final hostName = userDetailsDoc?['name'] ?? 'Player';
+      final hostAvatar = userDetailsDoc?['profile_image_url'] ?? '';
 
       final booking = Booking.fromDraft(
-        id: docRef.id,
+        id: '', // Supabase/Postgres generates the UUID
         draft: draft.copyWith(
           hostName: hostName,
           hostAvatarUrl: hostAvatar,
@@ -85,51 +127,59 @@ class FirestoreBookingRepository implements BookingRepository {
         status: status,
       );
 
-      final bookingData = booking.toFirestore();
-      bookingData['createdAt'] = FieldValue.serverTimestamp(); 
-      bookingData['updatedAt'] = FieldValue.serverTimestamp();
+      final bookingMap = {
+        'stadium_id': booking.stadiumId,
+        'stadium_name': booking.stadiumName,
+        'stadium_image_url': booking.stadiumImageUrl,
+        'owner_id': booking.ownerId,
+        'start_time': booking.startTime.toUtc().toIso8601String(),
+        'end_time': booking.endTime.toUtc().toIso8601String(),
+        'booking_type': booking.bookingType.name,
+        'player_team_id': booking.playerTeamId,
+        'player_team_name': booking.playerTeamName,
+        'player_team_logo_url': booking.playerTeamLogoUrl,
+        'host_name': booking.hostName,
+        'host_avatar_url': booking.hostAvatarUrl,
+        'opponent_team_id': booking.opponentTeamId,
+        'opponent_team_name': booking.opponentTeamName,
+        'opponent_team_logo_url': booking.opponentTeamLogoUrl,
+        'is_private': booking.isPrivate,
+        'rent_ball': booking.rentBall,
+        'total_price': booking.totalPrice,
+        'currency': booking.currency,
+        'payment_method': booking.paymentMethod,
+        'payment_transaction_id': booking.paymentTransactionId,
+        'status': booking.status.name,
+        'created_by_user_id': booking.createdByUserId,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+        'home_score': booking.homeScore,
+        'away_score': booking.awayScore,
+        'result_submitted_by_team_id': booking.resultSubmittedByTeamId,
+        'match_result_status': booking.matchResultStatus.name,
+        'pending_outcome': booking.pendingOutcome?.name,
+        'final_outcome': booking.finalOutcome?.name,
+        'requires_admin_intervention': booking.requiresAdminIntervention,
+        'current_players': booking.currentPlayers,
+        'max_players': booking.maxPlayers,
+        'joined_user_ids': [userId],
+        'is_paid': booking.isPaid,
+        'payment_status': booking.paymentStatus,
+        'player_phone': booking.playerPhone,
+        'notes': booking.notes,
+        'deposit_paid': booking.depositPaid,
+        'is_deposit_paid': booking.isDepositPaid,
+        'players_per_team': booking.playersPerTeam,
+        'total_field_capacity': booking.totalFieldCapacity,
+      };
 
-      // Logic Fix: Prevent Double Booking (Race Condition) using atomic Slot Blocking
-      // We generate unique IDs for every 30-minute block within the booking duration.
-      final List<String> slotsToLock = [];
-      DateTime temp = draft.startTime;
-      while (temp.isBefore(draft.endTime)) {
-        final slotId = DateFormat('yyyyMMdd_HHmm').format(temp);
-        slotsToLock.add(slotId);
-        temp = temp.add(const Duration(minutes: 30));
-      }
+      final response = await _supabase
+          .from('bookings')
+          .insert(bookingMap)
+          .select()
+          .single();
 
-      await _firestore.runTransaction((transaction) async {
-        final stadiumRef = _firestore.collection('stadiums').doc(draft.stadiumId);
-        
-        // 1. Check all required 30-min slots for availability
-        for (final slotId in slotsToLock) {
-          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
-          final slotSnap = await transaction.get(slotRef);
-          
-          if (slotSnap.exists) {
-            final data = slotSnap.data() as Map<String, dynamic>;
-            // If the slot is held by a confirmed or pending booking, it's unavailable
-            if (data['status'] != 'cancelled') {
-              throw Exception("One of the selected time blocks is already booked.");
-            }
-          }
-        }
-
-        // 2. Lock the slots
-        for (final slotId in slotsToLock) {
-          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
-          transaction.set(slotRef, {
-            'bookingId': docRef.id,
-            'userId': userId,
-            'status': 'confirmed',
-            'timestamp': FieldValue.serverTimestamp(),
-          });
-        }
-
-        // 3. Create the booking document
-        transaction.set(docRef, bookingData);
-      });
+      final createdBooking = Booking.fromFirestore(response, response['id'].toString());
 
       // ── Challenge Notification Logic ──
       if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
@@ -137,11 +187,17 @@ class FirestoreBookingRepository implements BookingRepository {
       }
 
       // ── Owner Notification Logic ──
-      _sendOwnerNotification(draft, docRef.id);
+      _sendOwnerNotification(draft, createdBooking.id);
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
-      VSPLogger.i('✅ Booking created successfully: ${docRef.id}');
-      return booking;
+      VSPLogger.i('✅ Booking created successfully: ${createdBooking.id}');
+      return createdBooking;
+    } on PostgrestException catch (e) {
+      if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
+        throw Exception("Overlapping slots already booked!");
+      }
+      VSPLogger.e('❌ Postgres error creating booking', e);
+      rethrow;
     } catch (e) {
       VSPLogger.e('❌ Error creating booking', e);
       rethrow;
@@ -150,7 +206,7 @@ class FirestoreBookingRepository implements BookingRepository {
 
   Future<void> _sendOwnerNotification(BookingDraft draft, String bookingId) async {
     try {
-      await NotificationRepository().sendNotification(
+      await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
         draft.ownerId,
         AppNotification(
           id: '',
@@ -168,23 +224,23 @@ class FirestoreBookingRepository implements BookingRepository {
 
   Future<void> _sendChallengeNotification(BookingDraft draft) async {
     try {
-      // 1. Get opponent team to find captain phone
-      final teamDoc = await _firestore.collection('teams').doc(draft.opponentTeamId).get();
-      if (!teamDoc.exists) return;
+      if (draft.opponentTeamId == null) return;
+      // 1. Get opponent team from Supabase
+      final team = await TeamRepository().getTeam(draft.opponentTeamId!);
+      if (team == null) return;
       
-      final teamData = teamDoc.data() as Map<String, dynamic>;
-      final captainPhone = teamData['captainPhone'];
-      if (captainPhone == null) return;
+      final captainPhone = team.captainPhone;
+      if (captainPhone == null || captainPhone.isEmpty) return;
 
       // 2. Find captain user ID by phone
       final captainUser = await UserRepository().getUserByPhone(captainPhone);
       if (captainUser == null) return;
 
       // 3. Send notification
-      await NotificationRepository().sendNotification(
+      await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
         captainUser.uid,
         AppNotification(
-          id: '', // Firestore auto-generates
+          id: '', 
           title: 'Challenge Confirmed!',
           body: 'You are playing against ${draft.playerTeamName ?? "another team"} at ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)}.',
           type: 'info',
@@ -199,18 +255,14 @@ class FirestoreBookingRepository implements BookingRepository {
 
   @override
   Stream<List<Booking>> getUserBookings(String userId) {
-    // Broad query to fetch bookings where user is either creator or participant
-    // Removed orderBy to bypass index requirements; sorting happens client-side in Provider
-    return _bookingsCollection
-        .where('joinedUserIds', arrayContains: userId)
-        .snapshots()
-        .map((snapshot) {
-          final bookings = snapshot.docs
-              .map((doc) => Booking.fromFirestore(
-                  doc.data() as Map<String, dynamic>, doc.id))
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .toList();
-          
-          // Sort by start time descending (newest first) client-side
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
         });
@@ -218,37 +270,35 @@ class FirestoreBookingRepository implements BookingRepository {
 
   @override
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
-    // 🛡️ LEGACY FIX: If stadiumIds are provided, we query by stadiumId to capture 
-    // old bookings that might be missing the top-level 'ownerId' field.
-    
-    Query query = _bookingsCollection;
-    
-    if (stadiumIds != null && stadiumIds.isNotEmpty) {
-      // Note: limited to 10 stadiums by Firestore 'whereIn'
-      query = query.where('stadiumId', whereIn: stadiumIds.take(10).toList());
-    } else {
-      query = query.where('ownerId', isEqualTo: ownerId);
-    }
-
-    return query.snapshots().map((snapshot) {
-      final bookings = snapshot.docs
-          .map((doc) => Booking.fromFirestore(
-              doc.data() as Map<String, dynamic>, doc.id))
-          .toList();
-      
-      // Sort client-side
-      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
-      return bookings;
-    });
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('owner_id', ownerId)
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) {
+                if (stadiumIds != null && stadiumIds.isNotEmpty) {
+                  return stadiumIds.contains(b.stadiumId);
+                }
+                return true;
+              })
+              .toList();
+          bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return bookings;
+        });
   }
 
   @override
   Future<Booking?> getBookingById(String bookingId) async {
     try {
-      final doc = await _bookingsCollection.doc(bookingId).get();
-      if (doc.exists) {
-        return Booking.fromFirestore(
-            doc.data() as Map<String, dynamic>, doc.id);
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('id', bookingId)
+          .maybeSingle();
+      if (response != null) {
+        return Booking.fromFirestore(response, response['id'].toString());
       }
       return null;
     } catch (e) {
@@ -258,13 +308,15 @@ class FirestoreBookingRepository implements BookingRepository {
   }
 
   @override
-  Future<bool> updateBookingStatus(
-      String bookingId, BookingStatus status) async {
+  Future<bool> updateBookingStatus(String bookingId, BookingStatus status) async {
     try {
-      await _bookingsCollection.doc(bookingId).update({
-        'status': status.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
+      await _supabase
+          .from('bookings')
+          .update({
+            'status': status.name,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', bookingId);
       return true;
     } catch (e) {
       debugPrint('❌ Error updating booking status: $e');
@@ -275,42 +327,36 @@ class FirestoreBookingRepository implements BookingRepository {
   @override
   Future<bool> cancelBooking(String bookingId) async {
     try {
-      final doc = await _bookingsCollection.doc(bookingId).get();
-      if (!doc.exists) return false;
-
-      final data = doc.data() as Map<String, dynamic>;
-      final startTime = (data['startTime'] as Timestamp).toDate();
+      final booking = await getBookingById(bookingId);
+      if (booking == null) return false;
 
       // Business Rule: Cannot cancel after match starts
-      if (DateTime.now().isAfter(startTime)) {
+      if (DateTime.now().isAfter(booking.startTime)) {
         debugPrint('⚠️ Cannot cancel booking after start time: $bookingId');
         return false;
       }
 
-      await _firestore.runTransaction((transaction) async {
-        final bookingSnap = await transaction.get(_bookingsCollection.doc(bookingId));
-        if (!bookingSnap.exists) return;
-        
-        final data = bookingSnap.data() as Map<String, dynamic>;
-        final stadiumId = data['stadiumId'];
-        final startTime = (data['startTime'] as Timestamp).toDate();
-        final endTime = (data['endTime'] as Timestamp).toDate();
+      await _supabase
+          .from('bookings')
+          .update({
+            'status': BookingStatus.cancelled.name,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', bookingId);
 
-        // Release slots
-        final stadiumRef = _firestore.collection('stadiums').doc(stadiumId);
-        DateTime temp = startTime;
-        while (temp.isBefore(endTime)) {
-          final slotId = DateFormat('yyyyMMdd_HHmm').format(temp);
-          final slotRef = stadiumRef.collection('booked_slots').doc(slotId);
-          transaction.update(slotRef, {'status': 'cancelled'});
-          temp = temp.add(const Duration(minutes: 30));
-        }
+      // ── Notify Joined Participants ──
+      final List<String> otherParticipants = booking.joinedUserIds
+          .where((uid) => uid != booking.createdByUserId)
+          .toList();
 
-        transaction.update(_bookingsCollection.doc(bookingId), {
-          'status': BookingStatus.cancelled.name,
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-      });
+      if (otherParticipants.isNotEmpty) {
+        await NotificationHandler.notifyMatchCancelledByHost(
+          playerIds: otherParticipants,
+          stadiumName: booking.stadiumName,
+          timeSlot: booking.formattedTimeRange,
+        );
+      }
+
       return true;
     } catch (e) {
       debugPrint('❌ Error cancelling booking: $e');
@@ -321,288 +367,434 @@ class FirestoreBookingRepository implements BookingRepository {
   @override
   Stream<List<Booking>> getUpcomingBookings(String userId) {
     final now = DateTime.now();
-    return _bookingsCollection
-        .where('createdByUserId', isEqualTo: userId)
-        .where('status', isEqualTo: BookingStatus.confirmed.name)
-        .orderBy('startTime')
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(
-                doc.data() as Map<String, dynamic>, doc.id))
-            .where((booking) => booking.startTime.isAfter(now))
-            .toList());
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) => b.status == BookingStatus.confirmed && b.startTime.isAfter(now))
+              .toList();
+          bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
+          return bookings;
+        });
   }
 
   @override
   Stream<List<Booking>> getBookingHistory(String userId) {
-    return _bookingsCollection
-        .where('createdByUserId', isEqualTo: userId)
-        .where('status', isEqualTo: BookingStatus.completed.name)
-        .orderBy('startTime', descending: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Booking.fromFirestore(
-                doc.data() as Map<String, dynamic>, doc.id))
-            .toList());
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) => b.status == BookingStatus.completed)
+              .toList();
+          bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return bookings;
+        });
   }
 
-    @override
-    Future<bool> submitMatchResult({
-      required String bookingId,
-      required String teamId,
-      required MatchOutcome outcome,
-      double? rating,
-      String? review,
-    }) async {
-      try {
-        final docRef = _bookingsCollection.doc(bookingId);
-        final doc = await docRef.get();
-        if (!doc.exists) return false;
+  @override
+  Future<bool> submitMatchResult({
+    required String bookingId,
+    required String teamId,
+    required MatchOutcome outcome,
+    double? rating,
+    String? review,
+  }) async {
+    try {
+      final booking = await getBookingById(bookingId);
+      if (booking == null) return false;
 
-        final data = doc.data() as Map<String, dynamic>;
-        
-        // ── Elo Fraud Prevention: Time-Lock Result Submission ──
-        final endTime = (data['endTime'] as Timestamp).toDate();
-        if (DateTime.now().isBefore(endTime)) {
-          VSPLogger.w('⚠️ Result submission blocked: Match has not ended yet for booking $bookingId');
-          throw Exception("Cannot submit results before the match officially ends.");
-        }
+      // Elo Fraud Prevention: Time-Lock Result Submission
+      if (DateTime.now().toUtc().isBefore(booking.endTime.toUtc())) {
+        VSPLogger.w('⚠️ Result submission blocked: Match has not ended yet for booking $bookingId');
+        throw Exception("Cannot submit results before the match officially ends.");
+      }
 
-        final currentMatchStatus = data['matchResultStatus'] ?? 'noResult';
-        final submittedBy = data['resultSubmittedByTeamId'];
-        final stadiumId = data['stadiumId'];
+      final currentMatchStatus = booking.matchResultStatus;
+      final submittedBy = booking.resultSubmittedByTeamId;
 
-        // Helper to save rating if provided
-        Future<void> saveRating() async {
-          if (rating != null && rating > 0 && stadiumId != null) {
-            final stadiumRef = _firestore.collection('stadiums').doc(stadiumId);
-            
-            // 🚀 Duplicate Mitigation: Check if review already exists for this bookingId AND userId
-            final existingReviews = await stadiumRef.collection('reviews')
-                .where('bookingId', isEqualTo: bookingId)
-                .where('userId', isEqualTo: teamId)
-                .get();
+      Future<void> saveRating() async {
+        if (rating != null && rating > 0) {
+          final firestore = FirebaseFirestore.instance;
+          final stadiumRef = firestore.collection('stadiums').doc(booking.stadiumId);
+          
+          final existingReviews = await stadiumRef.collection('reviews')
+              .where('bookingId', isEqualTo: bookingId)
+              .where('userId', isEqualTo: teamId)
+              .get();
 
-            if (existingReviews.docs.isNotEmpty) {
-              VSPLogger.i('⚠️ Skipping duplicate review submission for booking $bookingId');
-              return;
-            }
-
-            // Add review document
-            await stadiumRef.collection('reviews').add({
-              'bookingId': bookingId,
-              'userId': teamId, // using teamId as userId for now
-              'rating': rating,
-              'reviewText': review ?? '',
-              'createdAt': FieldValue.serverTimestamp(),
-            });
-
-            // Update stadium aggregate rating
-            await _firestore.runTransaction((transaction) async {
-              final stadiumDoc = await transaction.get(stadiumRef);
-              if (!stadiumDoc.exists) return;
-              
-              final currentRating = (stadiumDoc.data()?['rating'] ?? 5.0).toDouble();
-              final reviewsCount = (stadiumDoc.data()?['reviewsCount'] ?? 0).toInt();
-              
-              final newReviewsCount = reviewsCount + 1;
-              final newRating = ((currentRating * reviewsCount) + rating) / newReviewsCount;
-              
-              transaction.update(stadiumRef, {
-                 'rating': newRating,
-                 'reviewsCount': newReviewsCount,
-              });
-            });
+          if (existingReviews.docs.isNotEmpty) {
+            VSPLogger.i('⚠️ Skipping duplicate review submission for booking $bookingId');
+            return;
           }
-        }
 
-        if (currentMatchStatus == 'noResult') {
-          // First team submitting
-          await docRef.update({
-            'pendingOutcome': outcome.name,
-            'resultSubmittedByTeamId': teamId,
-            'matchResultStatus': MatchResultStatus.waitingOpponent.name,
+          await stadiumRef.collection('reviews').add({
+            'bookingId': bookingId,
+            'userId': teamId,
+            'rating': rating,
+            'reviewText': review ?? '',
+            'createdAt': FieldValue.serverTimestamp(),
           });
+
+          await firestore.runTransaction((transaction) async {
+            final stadiumDoc = await transaction.get(stadiumRef);
+            if (!stadiumDoc.exists) return;
+            
+            final currentRating = (stadiumDoc.data()?['rating'] ?? 5.0).toDouble();
+            final reviewsCount = (stadiumDoc.data()?['reviewsCount'] ?? 0).toInt();
+            
+            final newReviewsCount = reviewsCount + 1;
+            final newRating = ((currentRating * reviewsCount) + rating) / newReviewsCount;
+            
+            transaction.update(stadiumRef, {
+               'rating': newRating,
+               'reviewsCount': newReviewsCount,
+            });
+          });
+        }
+      }
+
+      if (currentMatchStatus == MatchResultStatus.noResult) {
+        await _supabase.from('bookings').update({
+          'pending_outcome': outcome.name,
+          'result_submitted_by_team_id': teamId,
+          'match_result_status': MatchResultStatus.waitingOpponent.name,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', bookingId);
+        await saveRating();
+        return true;
+      } else if (currentMatchStatus == MatchResultStatus.waitingOpponent && submittedBy != teamId) {
+        final pendingOutcomeStr = booking.pendingOutcome?.name;
+
+        if (pendingOutcomeStr == outcome.name) {
+          await _supabase.from('bookings').update({
+            'final_outcome': outcome.name,
+            'match_result_status': MatchResultStatus.confirmed.name,
+            'status': BookingStatus.completed.name,
+            'pending_outcome': null,
+            'result_submitted_by_team_id': null,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', bookingId);
+
+          final homeTeamId = booking.playerTeamId;
+          final awayTeamId = booking.opponentTeamId;
+          if (homeTeamId != null && awayTeamId != null) {
+            await TeamRepository().updateMatchResult(
+              bookingId, 
+              homeTeamId, 
+              awayTeamId, 
+              outcome
+            );
+          }
           await saveRating();
           return true;
-        } else if (currentMatchStatus == 'waitingOpponent' && submittedBy != teamId) {
-          // Second team submitting - check if matches
-          final pendingOutcomeStr = data['pendingOutcome'];
-
-            if (pendingOutcomeStr == outcome.name) {
-              await docRef.update({
-                'finalOutcome': outcome.name,
-                'matchResultStatus': MatchResultStatus.confirmed.name,
-                'status': BookingStatus.completed.name,
-                'pendingOutcome': FieldValue.delete(),
-                'resultSubmittedByTeamId': FieldValue.delete(),
-              });
-
-              // ── Update Global Rankings ──
-              final homeTeamId = data['playerTeamId'];
-              final awayTeamId = data['opponentTeamId'];
-              if (homeTeamId != null && awayTeamId != null) {
-                await TeamRepository().updateMatchResult(
-                  bookingId, 
-                  homeTeamId, 
-                  awayTeamId, 
-                  outcome
-                );
-              }
-              await saveRating();
-              return true;
-            } else {
-            // Disagreement on result
-            await docRef.update({
-              'matchResultStatus': MatchResultStatus.disputed.name,
-              'requiresAdminIntervention': true,
-            });
-            await saveRating();
-            return false;
-          }
+        } else {
+          await _supabase.from('bookings').update({
+            'match_result_status': MatchResultStatus.disputed.name,
+            'requires_admin_intervention': true,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', bookingId);
+          await saveRating();
+          return false;
         }
-        return false;
-      } catch (e) {
-        debugPrint('❌ Error submitting match result: $e');
-        return false;
       }
-    }
-
-    @override
-    Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
-      final dateStr = DateFormat('yyyyMMdd').format(date);
-      
-      // Query booked_slots subcollection for privacy and efficiency
-      return _firestore.collection('stadiums').doc(stadiumId)
-          .collection('booked_slots')
-          .where(FieldPath.documentId, isGreaterThanOrEqualTo: dateStr)
-          .where(FieldPath.documentId, isLessThan: dateStr + 'z') // All slots for this day
-          .snapshots()
-          .map((snapshot) {
-            final List<Booking> syntheticBookings = [];
-            
-            for (var doc in snapshot.docs) {
-              final data = doc.data();
-              if (data['status'] == 'cancelled') continue;
-              
-              // Parse slot time from ID (yyyyMMdd_HHmm)
-              final slotId = doc.id;
-              try {
-                final year = int.parse(slotId.substring(0, 4));
-                final month = int.parse(slotId.substring(4, 6));
-                final day = int.parse(slotId.substring(6, 8));
-                final hour = int.parse(slotId.substring(9, 11));
-                final minute = int.parse(slotId.substring(11, 13));
-                
-                final startTime = DateTime(year, month, day, hour, minute);
-                
-                // Add a 30-min synthetic booking for availability checking
-                syntheticBookings.add(Booking(
-                  id: data['bookingId'] ?? slotId,
-                  stadiumId: stadiumId,
-                  stadiumName: '',
-                  ownerId: '',
-                  startTime: startTime,
-                  endTime: startTime.add(const Duration(minutes: 30)),
-                  bookingType: BookingType.personal,
-                  isPrivate: true,
-                  rentBall: false,
-                  totalPrice: 0,
-                  paymentMethod: 'cash',
-                  status: BookingStatus.confirmed,
-                  createdByUserId: data['userId'] ?? '',
-                  createdAt: DateTime.now(),
-                ));
-              } catch (e) {
-                debugPrint('Error parsing slot ID $slotId: $e');
-              }
-            }
-            return syntheticBookings;
-          });
-    }
-
-    @override
-    Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
-      try {
-        await _bookingsCollection.doc(bookingId).update({
-          'isPaid': isPaid,
-          'paymentStatus': isPaid ? 'paid' : 'pending',
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-        return true;
-      } catch (e) {
-        debugPrint('❌ Error updating payment status: $e');
-        return false;
-      }
-    }
-
-    @override
-    Future<void> autoReconcilePastBookings(String ownerId) async {
-      try {
-        final snapshot = await _bookingsCollection
-            .where('ownerId', isEqualTo: ownerId)
-            .where('isPaid', isEqualTo: false)
-            .get();
-
-        if (snapshot.docs.isEmpty) return;
-
-        final batch = _firestore.batch();
-        double totalCommission = 0;
-        int reconciledCount = 0;
-        final now = DateTime.now();
-
-        for (var doc in snapshot.docs) {
-          final data = doc.data() as Map<String, dynamic>;
-          
-          // Filter by endTime client-side to avoid index requirement
-          final endTime = (data['endTime'] as Timestamp?)?.toDate();
-          if (endTime == null || endTime.isAfter(now)) continue;
-          
-          // Skip if cancelled
-          if (data['status'] == BookingStatus.cancelled.name) continue;
-
-          final totalPrice = (data['totalPrice'] ?? 0).toDouble();
-          final commission = totalPrice * 0.05;
-          totalCommission += commission;
-          reconciledCount++;
-
-          batch.update(doc.reference, {
-            'isPaid': true,
-            'paymentStatus': 'paid',
-            'status': BookingStatus.completed.name,
-            'commission': commission,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-        }
-
-        if (reconciledCount == 0) return;
-
-        // Update owner debt
-        final ownerRef = _firestore.collection('users').doc(ownerId);
-        batch.update(ownerRef, {
-          'commissionDebt': FieldValue.increment(totalCommission),
-          'updatedAt': FieldValue.serverTimestamp(),
-        });
-
-        await batch.commit();
-        VSPLogger.i('✅ Auto-reconciled $reconciledCount bookings for owner: $ownerId');
-
-        // Kill Switch Check: Fetch updated document to check debt limit
-        final ownerDoc = await ownerRef.get();
-        final debt = (ownerDoc.data()?['commissionDebt'] ?? 0).toDouble();
-        
-        if (debt >= 500.0) {
-          await ownerRef.update({
-            'isSuspended': true,
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          VSPLogger.w('🛑 Owner $ownerId suspended due to debt: $debt');
-        }
-      } catch (e) {
-        VSPLogger.e('❌ Error in autoReconcilePastBookings', e);
-      }
+      return false;
+    } catch (e) {
+      debugPrint('❌ Error submitting match result: $e');
+      return false;
     }
   }
+
+  @override
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 1));
+    
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          return list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) =>
+                  b.stadiumId == stadiumId &&
+                  b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+                  b.startTime.isBefore(endOfDay) &&
+                  b.status != BookingStatus.cancelled)
+              .toList();
+        });
+  }
+
+  @override
+  Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
+    try {
+      await _supabase.from('bookings').update({
+        'is_paid': isPaid,
+        'payment_status': isPaid ? 'paid' : 'pending',
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', bookingId);
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error updating payment status: $e');
+      return false;
+    }
+  }
+
+  @override
+  Future<void> autoReconcilePastBookings(String ownerId) async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('owner_id', ownerId)
+          .eq('is_paid', false);
+
+      final bookings = (response as List)
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .toList();
+
+      final now = DateTime.now();
+      for (final booking in bookings) {
+        if (booking.endTime.add(const Duration(hours: 24)).isAfter(now) || booking.status == BookingStatus.cancelled) continue;
+        
+        await _supabase.from('bookings').update({
+          'is_paid': true,
+          'payment_status': 'paid',
+          'status': BookingStatus.completed.name,
+          'commission': 0.0,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', booking.id);
+      }
+    } catch (e) {
+      VSPLogger.e('❌ Error in autoReconcilePastBookings', e);
+    }
+  }
+
+  @override
+  Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('created_by_user_id', userId)
+          .eq('is_paid', false);
+      
+      return (response as List)
+          .map((doc) => Booking.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
+          .toList();
+    } catch (e) {
+      VSPLogger.e('Error fetching unpaid bookings for user $userId', e);
+      return [];
+    }
+  }
+
+  @override
+  Future<void> autoExpirePendingChallenges() async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('booking_type', BookingType.challenge.name)
+          .eq('status', BookingStatus.pending.name);
+
+      final now = DateTime.now();
+      for (final doc in (response as List)) {
+        final booking = Booking.fromFirestore(doc, doc['id'].toString());
+        final createdAt = booking.createdAt;
+        final startTime = booking.startTime;
+
+        bool shouldExpire = false;
+        if (now.difference(createdAt).inHours >= 4) {
+          shouldExpire = true;
+        } else if (startTime.difference(now).inHours <= 12) {
+          shouldExpire = true;
+        }
+
+        if (shouldExpire) {
+          await _supabase.from('bookings').update({
+            'status': BookingStatus.cancelled.name,
+            'updated_at': now.toUtc().toIso8601String(),
+          }).eq('id', booking.id);
+
+          await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+            booking.createdByUserId,
+            AppNotification(
+              id: '',
+              title: "⚽ إلغاء التحدي تلقائياً / Challenge Expired",
+              body: "انتهت مهلة التحدي لعدم رد الخصم، تم إلغاء الحجز تلقائياً لتتمكن من تحدي فريق آخر",
+              type: "info",
+              createdAt: DateTime.now(),
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      VSPLogger.e('Error in autoExpirePendingChallenges', e);
+    }
+  }
+
+  @override
+  Future<void> autoReconcileSingleEntryResults() async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('booking_type', BookingType.challenge.name)
+          .eq('match_result_status', MatchResultStatus.waitingOpponent.name);
+
+      final now = DateTime.now();
+      for (final doc in (response as List)) {
+        final booking = Booking.fromFirestore(doc, doc['id'].toString());
+        final updatedAt = booking.updatedAt ?? booking.createdAt;
+
+        // 🕒 5-Day Threshold (120 Hours)
+        if (now.difference(updatedAt).inHours >= 120) {
+          final outcome = booking.pendingOutcome ?? MatchOutcome.draw;
+          final homeTeamId = booking.playerTeamId;
+          final awayTeamId = booking.opponentTeamId;
+
+          if (homeTeamId != null && awayTeamId != null) {
+            // 1. Resolve match with the submitted outcome
+            await TeamRepository().updateMatchResult(
+              booking.id,
+              homeTeamId,
+              awayTeamId,
+              outcome,
+            );
+
+            // 2. Identify the non-responding team and apply 5% Fair Play penalty
+            final submittedBy = booking.resultSubmittedByTeamId;
+            final nonRespondingTeamId = (submittedBy == homeTeamId) ? awayTeamId : homeTeamId;
+
+            // Fetch non-responding team data
+            final teamDoc = await _supabase
+                .from('teams')
+                .select('fair_play_score')
+                .eq('id', nonRespondingTeamId)
+                .maybeSingle();
+
+            if (teamDoc != null) {
+              final currentFairPlay = (teamDoc['fair_play_score'] as int?) ?? 100;
+              // Deduct 5% (5 points out of 100)
+              final newFairPlay = (currentFairPlay - 5).clamp(0, 100);
+
+              await _supabase
+                  .from('teams')
+                  .update({'fair_play_score': newFairPlay})
+                  .eq('id', nonRespondingTeamId);
+
+              VSPLogger.i('🚨 Fair Play Penalty Applied: Team $nonRespondingTeamId penalized to $newFairPlay% due to no-response for 5 days.');
+            }
+          }
+
+          // 3. Confirm booking status
+          await _supabase.from('bookings').update({
+            'match_result_status': MatchResultStatus.confirmed.name,
+            'status': BookingStatus.completed.name,
+            'final_outcome': outcome.name,
+            'pending_outcome': null,
+            'result_submitted_by_team_id': null,
+            'updated_at': now.toUtc().toIso8601String(),
+          }).eq('id', booking.id);
+        }
+      }
+    } catch (e) {
+      VSPLogger.e('Error in autoReconcileSingleEntryResults', e);
+    }
+  }
+
+  @override
+  Future<void> autoNudgePostMatchResults() async {
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('booking_type', BookingType.challenge.name)
+          .eq('match_result_status', MatchResultStatus.noResult.name)
+          .eq('status', BookingStatus.confirmed.name);
+
+      final now = DateTime.now();
+      for (final doc in (response as List)) {
+        final booking = Booking.fromFirestore(doc, doc['id'].toString());
+        final endTime = booking.endTime;
+        final notes = booking.notes ?? '';
+
+        if (now.isAfter(endTime.add(const Duration(hours: 1))) && !notes.contains('[NUDGED]')) {
+          await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+            booking.createdByUserId,
+            AppNotification(
+              id: '',
+              title: "⚽ تسجيل نتيجة المباراة / Submit Match Result",
+              body: "انتهت مباراتك الرائعة ضد ${booking.opponentTeamName ?? 'الخصم'}! ⚽ يرجى إدخال النتيجة الآن لتحديث ترتيب فريقك وتجنب تعليق نقاطك.",
+              type: "info",
+              createdAt: DateTime.now(),
+            ),
+          );
+
+          final opponentTeamId = booking.opponentTeamId;
+          if (opponentTeamId != null) {
+            final opponentTeam = await TeamRepository().getTeam(opponentTeamId);
+            final captainPhone = opponentTeam?.captainPhone;
+            if (captainPhone != null && captainPhone.isNotEmpty) {
+              final captainUser = await UserRepository().getUserByPhone(captainPhone);
+              if (captainUser != null) {
+                await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+                  captainUser.uid,
+                  AppNotification(
+                    id: '',
+                    title: "⚽ تسجيل نتيجة المباراة / Submit Match Result",
+                    body: "انتهت مباراتك الرائعة ضد ${booking.playerTeamName ?? 'الخصم'}! ⚽ يرجى إدخال النتيجة الآن لتحديث ترتيب فريقك وتجنب تعليق نقاطك.",
+                    type: "info",
+                    createdAt: DateTime.now(),
+                  ),
+                );
+              }
+            }
+          }
+
+          await _supabase.from('bookings').update({
+            'notes': '$notes [NUDGED]'.trim(),
+            'updated_at': now.toUtc().toIso8601String(),
+          }).eq('id', booking.id);
+        }
+      }
+    } catch (e) {
+      VSPLogger.e('Error in autoNudgePostMatchResults', e);
+    }
+  }
+
+  @override
+  Future<bool> updateManualBooking({
+    required String bookingId,
+    required String name,
+    required String phone,
+    required String notes,
+    required bool isDepositPaid,
+    required double depositPaid,
+    required String paymentStatus,
+  }) async {
+    try {
+      await _supabase.from('bookings').update({
+        'player_team_name': name,
+        'player_phone': phone,
+        'notes': notes,
+        'is_deposit_paid': isDepositPaid,
+        'deposit_paid': depositPaid,
+        'payment_status': paymentStatus,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', bookingId);
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error updating manual booking: $e', e);
+      return false;
+    }
+  }
+}
 
 /// Mock implementation for demo/testing
 class MockBookingRepository implements BookingRepository {
@@ -779,6 +971,33 @@ class MockBookingRepository implements BookingRepository {
   Future<void> autoReconcilePastBookings(String ownerId) async {
     // Mock implementation not strictly necessary for this task but good for consistency
     return;
+  }
+
+  @override
+  Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {
+    return _bookings.where((b) => b.createdByUserId == userId && !b.isPaid).toList();
+  }
+
+  @override
+  Future<void> autoExpirePendingChallenges() async {}
+
+  @override
+  Future<void> autoReconcileSingleEntryResults() async {}
+
+  @override
+  Future<void> autoNudgePostMatchResults() async {}
+
+  @override
+  Future<bool> updateManualBooking({
+    required String bookingId,
+    required String name,
+    required String phone,
+    required String notes,
+    required bool isDepositPaid,
+    required double depositPaid,
+    required String paymentStatus,
+  }) async {
+    return true;
   }
 
   /// Add mock bookings for testing

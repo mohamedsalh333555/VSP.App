@@ -1,40 +1,43 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
-import '../models/user_model.dart';
 import '../config/app_config.dart';
 import '../services/logger_service.dart';
 import '../constants/egypt_governorates.dart';
 
 class StadiumRepository {
-  final FirebaseFirestore _firestore;
-
-  StadiumRepository({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
   // Get all stadiums (with expanded limit)
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
-    Query query = _firestore.collection('stadiums');
+    final query = _supabase.from('stadiums').stream(primaryKey: ['id']);
     
-    // Bypass verification check in demo mode so players can see stadiums
     if (!AppConfig.demoMode) {
-      query = query.where('isVerified', isEqualTo: true);
+      return query
+          .eq('is_verified', true)
+          .limit(limit)
+          .map((list) => list
+              .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
+              .toList());
     }
     
     return query
         .limit(limit)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+        .map((list) => list
+            .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .toList());
   }
 
   // Get stadium by ID
   Future<Stadium?> getStadiumById(String stadiumId) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('stadiums').doc(stadiumId).get();
-      if (doc.exists) {
-        return Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
+      final response = await _supabase
+          .from('stadiums')
+          .select()
+          .eq('id', stadiumId)
+          .maybeSingle();
+      if (response != null) {
+        return Stadium.fromFirestore(response, response['id'].toString());
       }
       return null;
     } catch (e) {
@@ -45,11 +48,12 @@ class StadiumRepository {
   // Get raw stadium data for editing
   Future<Map<String, dynamic>?> getStadiumSnapshot(String stadiumId) async {
     try {
-      DocumentSnapshot doc = await _firestore.collection('stadiums').doc(stadiumId).get();
-      if (doc.exists) {
-        return doc.data() as Map<String, dynamic>?;
-      }
-      return null;
+      final response = await _supabase
+          .from('stadiums')
+          .select()
+          .eq('id', stadiumId)
+          .maybeSingle();
+      return response;
     } catch (e) {
       return null;
     }
@@ -57,54 +61,103 @@ class StadiumRepository {
 
   // Get stadiums for a specific owner
   Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
-     return _firestore
-        .collection('stadiums')
-        .where('ownerId', isEqualTo: ownerId)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Stadium.fromFirestore(doc.data(), doc.id))
+     return _supabase
+        .from('stadiums')
+        .stream(primaryKey: ['id'])
+        .eq('owner_id', ownerId)
+        .map((list) => list
+            .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .toList());
   }
 
   // Add new stadium (Owner)
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
-      // SECURITY HARDENING: Strip sensitive fields from generic creation
       final sanitizedData = Map<String, dynamic>.from(stadiumData);
       sanitizedData.remove('isVerified');
+      sanitizedData.remove('is_verified');
       sanitizedData.remove('createdAt');
+      sanitizedData.remove('created_at');
 
-      DocumentReference ref = await _firestore.collection('stadiums').add({
-        ...sanitizedData,
-        'isVerified': true, // Auto-verify for testing
-        'createdAt': FieldValue.serverTimestamp(),
-        'isBlocked': false,
-        'name_lowercase': (sanitizedData['name'] ?? '').toString().toLowerCase(),
-      });
-      return ref.id;
+      final price = sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'] ?? 0.0;
+      final pgData = {
+        'name': sanitizedData['name'],
+        'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'],
+        'description': sanitizedData['description'] ?? sanitizedData['notes'] ?? '',
+        'governorate': sanitizedData['governorate'] ?? 'Cairo',
+        'city': sanitizedData['area'] ?? sanitizedData['location'] ?? 'Cairo',
+        'location': sanitizedData['address'] ?? sanitizedData['location'] ?? '',
+        'price_per_hour': price,
+        'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
+        'images': sanitizedData['images'] ?? (sanitizedData['imageUrl'] != null ? [sanitizedData['imageUrl']] : []),
+        'is_verified': true, // Auto-verify for testing
+        'is_blocked': false,
+        'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
+        'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
+      };
+
+      final response = await _supabase
+          .from('stadiums')
+          .insert(pgData)
+          .select('id')
+          .single();
+      
+      return response['id']?.toString();
     } catch (e) {
-      debugPrint('Error adding stadium: Masked for security');
+      debugPrint('Error adding stadium: $e');
       return null;
     }
   }
 
-  // SECURITY PATCH: Sanitize stadium updates to prevent hijacking verified status or owner identity.
+  // Update stadium
   Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
     try {
       final securedData = Map<String, dynamic>.from(data);
-      // SECURITY: Prevents unauthorized verification bypass or stadium ownership theft
       securedData.remove('isVerified');
+      securedData.remove('is_verified');
       securedData.remove('ownerId');
+      securedData.remove('owner_id');
       securedData.remove('createdAt');
-      
-      await _firestore.collection('stadiums').doc(stadiumId).update(securedData);
+      securedData.remove('created_at');
+
+      final pgData = <String, dynamic>{};
+      if (securedData.containsKey('name')) pgData['name'] = securedData['name'];
+      if (securedData.containsKey('description')) pgData['description'] = securedData['description'];
+      if (securedData.containsKey('governorate')) pgData['governorate'] = securedData['governorate'];
+      if (securedData.containsKey('address')) pgData['location'] = securedData['address'];
+      if (securedData.containsKey('location')) pgData['location'] = securedData['location'];
+      if (securedData.containsKey('pricePerHour')) pgData['price_per_hour'] = securedData['pricePerHour'];
+      if (securedData.containsKey('price_per_hour')) pgData['price_per_hour'] = securedData['price_per_hour'];
+      if (securedData.containsKey('basePrice')) pgData['base_price'] = securedData['basePrice'];
+      if (securedData.containsKey('base_price')) pgData['base_price'] = securedData['base_price'];
+      if (securedData.containsKey('images')) pgData['images'] = securedData['images'];
+      if (securedData.containsKey('isBlocked')) pgData['is_blocked'] = securedData['isBlocked'];
+      if (securedData.containsKey('is_blocked')) pgData['is_blocked'] = securedData['is_blocked'];
+      if (securedData.containsKey('rating')) pgData['rating'] = securedData['rating'];
+      if (securedData.containsKey('reviewsCount')) pgData['reviews_count'] = securedData['reviewsCount'];
+      if (securedData.containsKey('reviews_count')) pgData['reviews_count'] = securedData['reviews_count'];
+      if (securedData.containsKey('deposit_amount')) pgData['deposit_amount'] = securedData['deposit_amount'];
+      if (securedData.containsKey('depositAmount')) pgData['deposit_amount'] = securedData['depositAmount'];
+      if (securedData.containsKey('needs_deposit')) pgData['needs_deposit'] = securedData['needs_deposit'];
+      if (securedData.containsKey('needsDeposit')) pgData['needs_deposit'] = securedData['needsDeposit'];
+      if (securedData.containsKey('players_per_team')) pgData['players_per_team'] = securedData['players_per_team'];
+      if (securedData.containsKey('total_field_capacity')) pgData['total_field_capacity'] = securedData['total_field_capacity'];
+
+      // Keep base_price in sync with price_per_hour if modified
+      if (pgData.containsKey('price_per_hour') && !pgData.containsKey('base_price')) {
+        pgData['base_price'] = pgData['price_per_hour'];
+      }
+
+      if (pgData.isEmpty) return true;
+
+      await _supabase.from('stadiums').update(pgData).eq('id', stadiumId);
       return true;
     } catch (e) {
       return false;
     }
   }
   
-  // Create stadium with named parameters (helper)
+  // Create stadium helper
   Future<String?> createStadium({
     required String name,
     required String location,
@@ -116,6 +169,8 @@ class StadiumRepository {
     String? governorate,
     String? contractUrl,
     String? ownerIdUrl,
+    double depositAmount = 0.0,
+    bool needsDeposit = false,
     Map<String, dynamic>? features,
   }) async {
     return await addStadium({
@@ -124,116 +179,79 @@ class StadiumRepository {
       'governorate': governorate,
       'pricePerHour': pricePerHour,
       'seatsCapacity': seatsCapacity,
+      'depositAmount': depositAmount,
+      'needsDeposit': needsDeposit,
       'imageUrl': imageUrl,
       'ownerId': ownerId,
       'notes': notes,
       'contractUrl': contractUrl,
       'ownerIdUrl': ownerIdUrl,
-      'isVerified': true, // Auto-verify for testing
+      'isVerified': true,
       'features': features ?? {},
     });
   }
 
-  /// Fetch stadiums in batches of 10
+  /// Fetch stadiums in batches
   Future<Map<String, dynamic>> getStadiumsPaginated({
     int limit = 10,
-    DocumentSnapshot? startAfter,
+    dynamic startAfter,
     String? governorate,
   }) async {
     try {
-      Query query = _firestore.collection('stadiums');
+      dynamic query = _supabase.from('stadiums').select();
       
       if (!AppConfig.demoMode) {
-        query = query.where('isVerified', isEqualTo: true);
-        query = query.where('isBlocked', isEqualTo: false);
+        query = query.eq('is_verified', true);
+        query = query.eq('is_blocked', false);
       }
 
       if (governorate != null && governorate.isNotEmpty) {
-        final String standardGov = EgyptGovernorates.resolveGoogleName(governorate);
-        query = query.where('governorate', isEqualTo: standardGov);
+        final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
+        if (standardGov != null) {
+          query = query.eq('governorate', standardGov);
+        }
       }
       
-      query = query.orderBy('createdAt', descending: true).limit(limit);
+      query = query.order('created_at', ascending: false);
 
-      if (startAfter != null) {
-        query = query.startAfterDocument(startAfter);
-      }
-
-      final snapshot = await query.get();
-      final items = snapshot.docs
-          .map((doc) => Stadium.fromFirestore(doc.data() as Map<String, dynamic>, doc.id))
+      final int startIndex = (startAfter is int) ? startAfter : 0;
+      final int endIndex = startIndex + limit - 1;
+      
+      final response = await query.range(startIndex, endIndex);
+      final items = (response as List)
+          .map((doc) => Stadium.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))
           .toList();
       
       return {
         'items': items,
-        'lastDoc': snapshot.docs.isNotEmpty ? snapshot.docs.last : null,
+        'lastDoc': startIndex + items.length,
       };
     } catch (e) {
-      debugPrint('\n--- 🚨 FAILED TO FETCH STADIUMS 🚨 ---');
-      debugPrint('If you see a Firebase Index URL below, click it to enable compound queries:');
-      debugPrint('$e\n');
+      VSPLogger.e('FAILED TO FETCH STADIUMS', e);
       return {'items': [], 'lastDoc': null};
     }
   }
 
-  // Stadium Deletion Safeguard
+  // Stadium Deletion Safeguard via PostgreSQL cascade delete
   Future<bool> deleteStadium(String stadiumId) async {
     try {
-      // 1. Get Upcoming Bookings
-      final bookingSnap = await _firestore.collection('bookings')
-          .where('stadiumId', isEqualTo: stadiumId)
-          .where('status', isEqualTo: 'upcoming')
-          .get();
-
-      final batch = _firestore.batch();
-      
-      // 2. Cascade cancel bookings and Notify Players
-      if (bookingSnap.docs.isNotEmpty) {
-        for (var doc in bookingSnap.docs) {
-          batch.update(doc.reference, {
-            'status': 'cancelled_by_owner',
-            'updatedAt': FieldValue.serverTimestamp(),
-          });
-          
-          final bookingData = doc.data();
-          final userId = bookingData['createdByUserId'];
-          if (userId != null) {
-            final notificationRef = _firestore.collection('users').doc(userId).collection('notifications').doc();
-            batch.set(notificationRef, {
-              'title': 'Booking Cancelled 🏟️',
-              'body': 'Your booking at ${bookingData['stadiumName']} was cancelled as the stadium is no longer available.',
-              'type': 'cancelled_by_owner',
-              'isRead': false,
-              'createdAt': FieldValue.serverTimestamp(),
-              'bookingId': doc.id,
-            });
-          }
-        }
-      }
-
-      // 3. Mark Stadium as Deleted/Unverified
-      batch.update(_firestore.collection('stadiums').doc(stadiumId), {
-        'isVerified': false,
-        'deletedAt': FieldValue.serverTimestamp(),
-      });
-
-      await batch.commit();
+      // CASCADE option on DB triggers handles associated bookings cancellation and notifications
+      await _supabase.from('stadiums').delete().eq('id', stadiumId);
       return true;
     } catch (e) {
       VSPLogger.e('Error during stadium deletion cascade', e);
       return false;
     }
   }
-  // ==================== PROMOTIONS ====================
 
   /// Stream of active promotions for marketing
   Stream<List<Promotion>> getPromotionsStream() {
-    return _firestore
-        .collection('promotions')
-        .where('isActive', isEqualTo: true)
-        .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Promotion.fromFirestore(doc.data(), doc.id))
+    return _supabase
+        .from('promotions')
+        .stream(primaryKey: ['id'])
+        .eq('is_active', true)
+        .map((list) => list
+            .map((doc) => Promotion.fromFirestore(doc, doc['id'].toString()))
             .toList());
   }
 }

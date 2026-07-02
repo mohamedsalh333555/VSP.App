@@ -1,4 +1,4 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
@@ -6,13 +6,12 @@ import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-import 'booked_screen.dart';
+import 'bookings_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/notification_handler.dart';
-import '../../../core/services/database_service.dart';
-import '../../../core/services/notification_service.dart';
+import '../../../core/repositories/team_repository.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   final Booking booking;
@@ -86,7 +85,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     // 3. Notify Opponent (if Challenge)
     if (widget.booking.bookingType == BookingType.challenge && widget.booking.opponentTeamId != null) {
       try {
-        final opponentTeam = await DatabaseService().getTeam(widget.booking.opponentTeamId!);
+        final opponentTeam = await TeamRepository().getTeam(widget.booking.opponentTeamId!);
         if (opponentTeam != null && opponentTeam.memberUids.isNotEmpty) {
           // The first member in memberUids is the captain
           final captainId = opponentTeam.memberUids.first;
@@ -251,7 +250,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                           onPressed: () {
                             // Navigate to bookings screen
                             Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const BookedScreen()),
+                              MaterialPageRoute(builder: (context) => const BookingsScreen()),
                               (route) => route.isFirst,
                             );
                           },
@@ -312,3 +311,4 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     );
   }
 }
+

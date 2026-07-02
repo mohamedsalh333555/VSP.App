@@ -17,10 +17,8 @@ import 'profile_subscreens/edit_profile_screen.dart';
 import 'profile_subscreens/favorites_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import '../../admin/screens/admin_dashboard.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/config/app_config.dart';
-import '../../auth/screens/welcome_screen.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
 import '../../../shared/widgets/team_card_hero.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -93,7 +91,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
             children: [
               // 1. Team Card Section
               FutureBuilder<Team?>(
-                future: TeamRepository().getUserTeam(auth.currentUser!.uid),
+                future: auth.currentUser == null
+                    ? Future.value(null)
+                    : TeamRepository().getUserTeam(auth.currentUser!.uid),
                 builder: (context, teamSnapshot) {
                   if (teamSnapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
@@ -297,12 +297,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   isLogout: true,
                   onTap: () async {
                     await Provider.of<AuthProvider>(context, listen: false).signOut();
-                    if (context.mounted) {
-                      Navigator.of(context).pushAndRemoveUntil(
-                        MaterialPageRoute(builder: (_) => const WelcomeScreen()),
-                        (route) => false,
-                      );
-                    }
                   },
                 ),
               ),

@@ -1,12 +1,13 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../core/providers/auth_provider.dart';
 import 'add_stadium_wizard.dart';
 import 'owner_documentation_wizard.dart';
 
@@ -19,11 +20,12 @@ class MyStadiumsScreen extends StatefulWidget {
 
 class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
   final StadiumRepository _databaseService = StadiumRepository();
-  final String? _ownerId = FirebaseAuth.instance.currentUser?.uid;
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final auth = Provider.of<AuthProvider>(context);
+    final String? ownerId = auth.currentUser?.uid;
     
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -41,10 +43,10 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
           children: [
             // Content
             Expanded(
-              child: _ownerId == null
+              child: ownerId == null
                   ? _buildEmptyState()
                   : StreamBuilder<List<Stadium>>(
-                      stream: _databaseService.getOwnerStadiums(_ownerId!),
+                      stream: _databaseService.getOwnerStadiums(ownerId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -88,6 +90,15 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
           padding: const EdgeInsets.only(bottom: VSPSpacing.md),
           child: StadiumCard(
             stadium: stadiums[index],
+            isOwnerView: true,
+            onEditTap: () async {
+              await Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => AddStadiumWizard(stadiumId: stadiums[index].id),
+                ),
+              );
+            },
             onTap: () async {
               await Navigator.push(
                 context,

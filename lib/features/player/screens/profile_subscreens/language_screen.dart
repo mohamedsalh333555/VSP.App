@@ -1,4 +1,4 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -18,7 +18,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
     
     final languages = [
       {'name': 'English', 'code': 'en'},
-      {'name': 'Ø§Ù„Ø¹Ø±Ø¨ÙŠØ©', 'code': 'ar'},
+      {'name': 'العربية', 'code': 'ar'},
     ];
 
     return Scaffold(
@@ -27,7 +27,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, matchTextDirection: true, color: VSPColors.textPrimary),
+          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

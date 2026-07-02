@@ -7,8 +7,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
-import '../../owner/screens/add_stadium_wizard.dart';
-import '../../../core/navigation/root_screen.dart';
+
 
 class SocialOnboardingScreen extends StatefulWidget {
   const SocialOnboardingScreen({super.key});
@@ -23,7 +22,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   String _selectedPosition = 'GK';
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
-  bool _nameInitialized = false;
+  final bool _nameInitialized = false;
 
   final List<String> _positions = ['GK', 'CB', 'LB', 'RB', 'MID', 'LW', 'RW', 'ST'];
 
@@ -38,7 +37,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       
       // If we have a userModel, use its name. 
       // If we are a Ghost User, fallback to Firebase's displayName.
-      final displayName = auth.userModel?.name ?? auth.currentUser?.displayName;
+      final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
       
       if (displayName != null && displayName.isNotEmpty && _nameController.text.isEmpty) {
         setState(() {
@@ -81,17 +80,16 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     if (!mounted) return;
 
     if (success) {
-      if (AppConfig.bypassOtp) {
-        // ⚡ SEAMLESS BYPASS: Manually verify and complete registration
+      // Mark registration complete — GoRouter will automatically route to
+      // /player or /owner via its redirect function once notifyListeners fires.
+      if (authProvider.firebaseUser != null) {
         await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
-        await authProvider.updateProfile({'isRegistrationComplete': true});
-        if (!mounted) return;
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const RootScreen()),
-          (route) => false,
-        );
       }
+      await authProvider.updateProfile({
+        'isRegistrationComplete': true,
+        'isEmailVerified': true,
+      });
+      // ✅ No imperative navigation needed — GoRouter handles it.
     } else {
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(content: Text(authProvider.errorMessage ?? 'Registration failed')),
@@ -125,7 +123,12 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         body: SafeArea(
           child: SingleChildScrollView(
             keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-            padding: const EdgeInsets.symmetric(horizontal: 24.0),
+            padding: EdgeInsets.only(
+              left: 24.0,
+              right: 24.0,
+              top: 16.0,
+              bottom: MediaQuery.of(context).viewInsets.bottom + 24.0,
+            ),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [

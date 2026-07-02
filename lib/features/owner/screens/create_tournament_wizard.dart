@@ -4,9 +4,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
@@ -442,7 +440,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                         overflow: TextOverflow.ellipsis,
                       ),
                       Text(
-                        '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${l10n.currency}',
+                        '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${l10n.egCurrency}',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                           color: isSelected ? VSPColors.accent.withValues(alpha: 0.7) : VSPColors.textSecondary, 
                           fontSize: 9,

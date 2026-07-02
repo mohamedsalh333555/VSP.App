@@ -1,79 +1,179 @@
+import 'dart:convert';
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
-import 'package:vsp_application/core/services/database_service.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:vsp_application/core/repositories/match_repository.dart';
-import 'package:vsp_application/core/repositories/team_repository.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:http/http.dart' as http;
 import 'package:vsp_application/core/repositories/tournament_repository.dart';
+
+class MockSupabaseHttpClient extends http.BaseClient {
+  final Map<String, List<Map<String, dynamic>>> db = {
+    'championships': [
+      {
+        'id': 'champ1',
+        'name': 'Test Cup',
+        'joined_teams': ['t1', 't2', 't3', 't4'],
+        'max_teams': 4,
+        'status': 'open',
+        'type': 'Cup',
+        'sport_type': 'Football'
+      }
+    ],
+    'teams': [
+      {'id': 't1', 'name': 'Team A', 'captain_name': 'Captain A', 'logo_url': ''},
+      {'id': 't2', 'name': 'Team B', 'captain_name': 'Captain B', 'logo_url': ''},
+      {'id': 't3', 'name': 'Team C', 'captain_name': 'Captain C', 'logo_url': ''},
+      {'id': 't4', 'name': 'Team D', 'captain_name': 'Captain D', 'logo_url': ''},
+    ],
+    'team_members': [],
+    'users': [],
+    'tournament_matches': [],
+  };
+
+  @override
+  Future<http.StreamedResponse> send(http.BaseRequest request) async {
+    final uri = request.url;
+    final method = request.method;
+    final path = uri.path;
+
+    String responseBody = '[]';
+    int statusCode = 200;
+
+    if (method == 'GET') {
+      if (path.contains('championships')) {
+        responseBody = jsonEncode(db['championships']);
+      } else if (path.contains('teams')) {
+        final idMatch = uri.queryParameters['id'];
+        if (idMatch != null && idMatch.startsWith('eq.')) {
+          final id = idMatch.substring(3);
+          final team = db['teams']!.firstWhere((t) => t['id'] == id, orElse: () => {});
+          responseBody = jsonEncode(team.isEmpty ? [] : [team]);
+        } else if (idMatch != null && idMatch.startsWith('in.')) {
+          // Parse in.(t1,t2,t3,t4)
+          final inContent = idMatch.substring(4, idMatch.length - 1);
+          final ids = inContent.split(',');
+          final matches = db['teams']!.where((t) => ids.contains(t['id'])).toList();
+          responseBody = jsonEncode(matches);
+        } else {
+          responseBody = jsonEncode(db['teams']);
+        }
+      } else if (path.contains('team_members')) {
+        responseBody = jsonEncode(db['team_members']);
+      } else if (path.contains('users')) {
+        responseBody = jsonEncode(db['users']);
+      } else if (path.contains('tournament_matches')) {
+        final idMatch = uri.queryParameters['id'];
+        if (idMatch != null && idMatch.startsWith('eq.')) {
+          final id = idMatch.substring(3);
+          final match = db['tournament_matches']!.firstWhere((m) => m['id'] == id, orElse: () => {});
+          responseBody = jsonEncode(match.isEmpty ? [] : [match]);
+        } else {
+          responseBody = jsonEncode(db['tournament_matches']);
+        }
+      }
+    } else if (method == 'POST') {
+      if (request is http.Request) {
+        final data = jsonDecode(request.body);
+        if (path.contains('tournament_matches')) {
+          if (data is List) {
+            db['tournament_matches']!.addAll(List<Map<String, dynamic>>.from(data));
+          } else {
+            db['tournament_matches']!.add(Map<String, dynamic>.from(data));
+          }
+          responseBody = jsonEncode(data);
+        }
+      }
+    } else if (method == 'PATCH') {
+      if (request is http.Request) {
+        final data = jsonDecode(request.body);
+        if (path.contains('championships')) {
+          final idMatch = uri.queryParameters['id']?.substring(3);
+          final champ = db['championships']!.firstWhere((c) => c['id'] == idMatch);
+          champ.addAll(Map<String, dynamic>.from(data));
+          responseBody = jsonEncode([champ]);
+        } else if (path.contains('tournament_matches')) {
+          final idMatch = uri.queryParameters['id']?.substring(3);
+          final match = db['tournament_matches']!.firstWhere((m) => m['id'] == idMatch);
+          match.addAll(Map<String, dynamic>.from(data));
+          responseBody = jsonEncode([match]);
+        } else if (path.contains('teams')) {
+          final idMatch = uri.queryParameters['id']?.substring(3);
+          final team = db['teams']!.firstWhere((t) => t['id'] == idMatch);
+          team.addAll(Map<String, dynamic>.from(data));
+          responseBody = jsonEncode([team]);
+        }
+      }
+    }
+
+    final bytes = utf8.encode(responseBody);
+    return http.StreamedResponse(
+      Stream.value(bytes),
+      statusCode,
+      request: request,
+      headers: {
+        'content-type': 'application/json; charset=utf-8',
+      },
+    );
+  }
+}
+
+class MockGotrueAsyncStorage extends GotrueAsyncStorage {
+  final Map<String, String> _storage = {};
+
+  @override
+  Future<String?> getItem({required String key}) async => _storage[key];
+
+  @override
+  Future<void> removeItem({required String key}) async => _storage.remove(key);
+
+  @override
+  Future<void> setItem({required String key, required String value}) async => _storage[key] = value;
+}
 
 void main() {
   group('Tournament System Tests', () {
-    late FakeFirebaseFirestore fakeFirestore;
-    late DatabaseService dbService;
+    late MockSupabaseHttpClient mockHttpClient;
+    late TournamentRepository tournamentRepo;
 
-    // تجهيز البيئة قبل كل اختبار
-    setUp(() {
-      fakeFirestore = FakeFirebaseFirestore();
-      dbService = DatabaseService(firestore: fakeFirestore);
+    setUp(() async {
+      mockHttpClient = MockSupabaseHttpClient();
+      try {
+        TestWidgetsFlutterBinding.ensureInitialized();
+        await Supabase.initialize(
+          url: 'https://placeholder.supabase.co',
+          anonKey: 'placeholder',
+          httpClient: mockHttpClient,
+          authOptions: FlutterAuthClientOptions(
+            localStorage: const EmptyLocalStorage(),
+            pkceAsyncStorage: MockGotrueAsyncStorage(),
+          ),
+        );
+      } catch (_) {}
+      tournamentRepo = TournamentRepository();
     });
 
     test('Full Tournament Lifecycle: Generate -> Play -> Qualify', () async {
-      // 1. Setup: Create a Championship with 4 Teams
-      // (Using 4 teams means: Round of 4 -> Final)
-      
-      // Create Dummy Teams
-      await fakeFirestore.collection('teams').doc('t1').set({'name': 'Team A'});
-      await fakeFirestore.collection('teams').doc('t2').set({'name': 'Team B'});
-      await fakeFirestore.collection('teams').doc('t3').set({'name': 'Team C'});
-      await fakeFirestore.collection('teams').doc('t4').set({'name': 'Team D'});
+      // 1. Action: Generate Fixtures
+      await tournamentRepo.generateFixtures('champ1');
 
-      // Create Championship
-      await fakeFirestore.collection('championships').doc('champ1').set({
-        'name': 'Test Cup',
-        'joinedTeams': ['t1', 't2', 't3', 't4'],
-        'maxTeams': 4,
-        'status': 'open',
-        'type': 'Cup',
-        'sportType': 'Football',
-        'logoUrl': '',
-        'startDate': Timestamp.now(),
-        'endDate': Timestamp.now(),
-        'entryFee': 0,
-        'grandPrize': 0,
-        'ownerId': 'owner1',
-        'governorate': 'Cairo',
-      });
-
-      // // print('🔹 Step 1: Championship Created with 4 Teams.');
-
-      // 2. Action: Generate Fixtures
-      await dbService.generateFixtures('champ1');
-      // // print('🔹 Step 2: Fixtures Generated.');
-
-      // 3. Verification: Check Matches Count
+      // 2. Verification: Check Matches Count
       // With 4 teams, we expect 3 matches total (2 semis, 1 final)
-      final matchesSnap = await fakeFirestore.collection('tournament_matches').get();
-      expect(matchesSnap.docs.length, 3, reason: "Should generate exactly 3 matches for 4 teams");
+      final matchesList = mockHttpClient.db['tournament_matches']!;
+      expect(matchesList.length, 3, reason: "Should generate exactly 3 matches for 4 teams");
       
       // Verify Round 1 (Semis) has 2 matches
-      final round1Matches = matchesSnap.docs.where((m) => m['roundIndex'] == 1).toList();
+      final round1Matches = matchesList.where((m) => m['round_index'] == 1).toList();
       expect(round1Matches.length, 2, reason: "Round 1 (Semis) should have 2 matches");
 
       // Verify Round 0 (Final) has 1 match and is empty
-      final finalMatchDoc = matchesSnap.docs.firstWhere((m) => m['roundIndex'] == 0);
-      expect(finalMatchDoc['homeTeamId'], isNull, reason: "Final match should be empty initially");
+      final finalMatchDoc = matchesList.firstWhere((m) => m['round_index'] == 0);
+      expect(finalMatchDoc['home_team_id'], isNull, reason: "Final match should be empty initially");
 
-      // // print('✅ Fixture Generation Test Passed.');
-
-      // 4. Action: Play Match 1 (Team A vs Team B)
+      // 3. Action: Play Match 1 (Team A vs Team B)
       // Let's find the match where t1 is playing
-      final match1 = round1Matches.firstWhere((m) => m['homeTeamId'] == 't1' || m['awayTeamId'] == 't1');
-      final String match1Id = match1.id;
-      
-      // // print('🔹 Step 3: Simulating Match 1 (Winner: Team A)...');
+      final match1 = round1Matches.firstWhere((m) => m['home_team_id'] == 't1' || m['away_team_id'] == 't1');
+      final String match1Id = match1['id'];
       
       // Assume Team A (t1) wins 3-0
-      await dbService.updateTournamentMatchScore(
+      await tournamentRepo.updateTournamentMatchScore(
         matchId: match1Id,
         homeScore: 3,
         awayScore: 0,
@@ -81,17 +181,14 @@ void main() {
         winnerName: 'Team A',
       );
 
-      // 5. Verification: Check Progression
+      // 4. Verification: Check Progression
       // The winner (t1) should now appear in the Final Match (Round 0)
-      final finalMatchUpdated = await fakeFirestore.collection('tournament_matches').doc(finalMatchDoc.id).get();
+      final finalMatchUpdated = matchesList.firstWhere((m) => m['id'] == finalMatchDoc['id']);
       
-      // Determine expected slot (Home or Away based on index logic)
-      final bool isHomeSlot = finalMatchUpdated['homeTeamId'] == 't1';
-      final bool isAwaySlot = finalMatchUpdated['awayTeamId'] == 't1';
+      final bool isHomeSlot = finalMatchUpdated['home_team_id'] == 't1';
+      final bool isAwaySlot = finalMatchUpdated['away_team_id'] == 't1';
 
       expect(isHomeSlot || isAwaySlot, true, reason: "Winner T1 should be moved to the Final Match");
-      
-      // // print('✅ Progression Test Passed: Team A is in the Final!');
     });
   });
 }

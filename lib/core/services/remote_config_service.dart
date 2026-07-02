@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:flutter/foundation.dart';
 import 'package:package_info_plus/package_info_plus.dart';
 
@@ -7,7 +7,7 @@ class RemoteConfigService {
   factory RemoteConfigService() => _instance;
   RemoteConfigService._internal();
 
-  FirebaseFirestore get _firestore => FirebaseFirestore.instance;
+  final _supabase = Supabase.instance.client;
 
   bool _isMaintenanceMode = false;
   String _minAppVersion = '1.0.0';
@@ -19,12 +19,14 @@ class RemoteConfigService {
 
   Future<void> initialize() async {
     try {
-      final snapshot = await _firestore.collection('config').doc('app_config').get();
-      if (snapshot.exists) {
-        final data = snapshot.data()!;
-        _isMaintenanceMode = data['isMaintenanceMode'] ?? false;
-        _minAppVersion = data['minAppVersion'] ?? '1.0.0';
-        _forceUpdateUrl = data['forceUpdateUrl'] ?? '';
+      final response = await _supabase
+          .from('app_config')
+          .select()
+          .maybeSingle();
+      if (response != null) {
+        _isMaintenanceMode = response['is_maintenance'] ?? response['isMaintenanceMode'] ?? false;
+        _minAppVersion = response['min_version'] ?? response['minAppVersion'] ?? '1.0.0';
+        _forceUpdateUrl = response['force_update_url'] ?? response['forceUpdateUrl'] ?? '';
       }
     } catch (e) {
       debugPrint('Error initializing RemoteConfigService: $e');

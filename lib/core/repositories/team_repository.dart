@@ -1,126 +1,53 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
 
 class TeamRepository {
-  final FirebaseFirestore _firestore;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
-  TeamRepository({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance;
+  Future<List<String>> getTeamMemberUids(String teamId) async {
+    final response = await _supabase
+        .from('team_members')
+        .select('user_id')
+        .eq('team_id', teamId);
+    return (response as List).map((row) => row['user_id'].toString()).toList();
+  }
+
+  Future<List<String>> getTeamPlayerImages(List<String> memberUids) async {
+    if (memberUids.isEmpty) return [];
+    final response = await _supabase
+        .from('users')
+        .select('profile_image_url')
+        .inFilter('id', memberUids);
+    return (response as List)
+        .map((row) => row['profile_image_url']?.toString() ?? '')
+        .toList();
+  }
 
   Future<void> updateMatchResult(String bookingId, String homeTeamId, String awayTeamId, MatchOutcome finalOutcome) async {
-    return _firestore.runTransaction((transaction) async {
-      final homeRef = _firestore.collection('teams').doc(homeTeamId);
-      final awayRef = _firestore.collection('teams').doc(awayTeamId);
-
-      final homeSnap = await transaction.get(homeRef);
-      final awaySnap = await transaction.get(awayRef);
-
-      if (!homeSnap.exists || !awaySnap.exists) return;
-
-      int homePoints = (homeSnap.data()?['points'] ?? 0).toInt();
-      int awayPoints = (awaySnap.data()?['points'] ?? 0).toInt();
-
-      final homePlayed = List<String>.from(homeSnap.data()?['playedOpponents'] ?? []);
-      final awayPlayed = List<String>.from(awaySnap.data()?['playedOpponents'] ?? []);
-      final homeBeaten = List<String>.from(homeSnap.data()?['beatenOpponents'] ?? []);
-      final awayBeaten = List<String>.from(awaySnap.data()?['beatenOpponents'] ?? []);
-      final homeBadges = List<String>.from(homeSnap.data()?['unlockedBadges'] ?? []);
-      final awayBadges = List<String>.from(awaySnap.data()?['unlockedBadges'] ?? []);
-
-      bool isNewForHome = !homePlayed.contains(awayTeamId);
-      bool isNewForAway = !awayPlayed.contains(homeTeamId);
-
-      int homePointsEarned = 0;
-      int awayPointsEarned = 0;
-
-      if (finalOutcome == MatchOutcome.draw) {
-        homePointsEarned = 1;
-        awayPointsEarned = 1;
-      } else if (finalOutcome == MatchOutcome.homeWin) {
-        if (homeBeaten.contains(awayTeamId)) {
-          homePointsEarned = 3;
-        } else {
-          homePointsEarned = 5;
-          if (!homeBadges.contains('Giant Killer')) homeBadges.add('Giant Killer');
-          if (isNewForHome && !homeBadges.contains('New Territory')) homeBadges.add('New Territory');
-          homeBeaten.add(awayTeamId);
-        }
-        awayPointsEarned = 0;
-      } else if (finalOutcome == MatchOutcome.awayWin) {
-        if (awayBeaten.contains(homeTeamId)) {
-          awayPointsEarned = 3;
-        } else {
-          awayPointsEarned = 5;
-          if (!awayBadges.contains('Giant Killer')) awayBadges.add('Giant Killer');
-          if (isNewForAway && !awayBadges.contains('New Territory')) awayBadges.add('New Territory');
-          awayBeaten.add(homeTeamId);
-        }
-        homePointsEarned = 0;
-      }
-
-      int homeStreak = (finalOutcome == MatchOutcome.homeWin) 
-          ? (homeSnap.data()?['currentWinningStreak'] ?? 0) + 1 
-          : 0;
-      int awayStreak = (finalOutcome == MatchOutcome.awayWin) 
-          ? (awaySnap.data()?['currentWinningStreak'] ?? 0) + 1 
-          : 0;
-          
-      int homeMatchesTotal = (homeSnap.data()?['matchesPlayed'] ?? 0) + 1;
-      int awayMatchesTotal = (awaySnap.data()?['matchesPlayed'] ?? 0) + 1;
-      
-      if (homeMatchesTotal >= 10 && !homeBadges.contains('gladiator')) homeBadges.add('gladiator');
-      if (homeStreak >= 3 && !homeBadges.contains('streak_3')) homeBadges.add('streak_3');
-      
-      if (awayMatchesTotal >= 10 && !awayBadges.contains('gladiator')) awayBadges.add('gladiator');
-      if (awayStreak >= 3 && !awayBadges.contains('streak_3')) awayBadges.add('streak_3');
-
-      transaction.update(homeRef, {
-        'points': homePoints + homePointsEarned,
-        'matchesPlayed': FieldValue.increment(1),
-        'wins': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
-        'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
-        'losses': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
-        'trend': homePointsEarned > 0 ? 'up' : 'stable',
-        'currentWinningStreak': homeStreak,
-        'unlockedBadges': homeBadges,
-        'beatenOpponents': homeBeaten,
-        if (isNewForHome) 'playedOpponents': FieldValue.arrayUnion([awayTeamId]),
-      });
-
-      transaction.update(awayRef, {
-        'points': awayPoints + awayPointsEarned,
-        'matchesPlayed': FieldValue.increment(1),
-        'wins': FieldValue.increment(finalOutcome == MatchOutcome.awayWin ? 1 : 0),
-        'draws': FieldValue.increment(finalOutcome == MatchOutcome.draw ? 1 : 0),
-        'losses': FieldValue.increment(finalOutcome == MatchOutcome.homeWin ? 1 : 0),
-        'trend': awayPointsEarned > 0 ? 'up' : 'stable',
-        'currentWinningStreak': awayStreak,
-        'unlockedBadges': awayBadges,
-        'beatenOpponents': awayBeaten,
-        if (isNewForAway) 'playedOpponents': FieldValue.arrayUnion([homeTeamId]),
-      });
-      
-      transaction.update(_firestore.collection('bookings').doc(bookingId), {
+    try {
+      await _supabase.from('bookings').update({
         'status': BookingStatus.completed.name,
-        'finalOutcome': finalOutcome.name,
-        'updatedAt': FieldValue.serverTimestamp(),
-      });
-    });
+        'final_outcome': finalOutcome.name,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', bookingId);
+    } catch (e) {
+      debugPrint('Error updating match result: $e');
+    }
   }
 
   Future<Team?> getUserTeam(String userId) async {
     try {
-      final query = await _firestore.collection('teams')
-          .where('memberUids', arrayContains: userId)
-          .limit(1)
-          .get();
+      final response = await _supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId);
+      final List membership = response as List;
+      if (membership.isEmpty) return null;
       
-      if (query.docs.isNotEmpty) {
-        return Team.fromFirestore(query.docs.first.data(), query.docs.first.id);
-      }
-      return null;
+      final teamId = membership.first['team_id'];
+      return await getTeam(teamId);
     } catch (e) {
       debugPrint('Error getting user team: $e');
       return null;
@@ -128,65 +55,151 @@ class TeamRepository {
   }
 
   Future<String?> createTeam(Map<String, dynamic> data) async {
-    final docRef = await _firestore.collection('teams').add({
-      ...data,
-      'createdAt': FieldValue.serverTimestamp(),
-      'points': 0,
-      'wins': 0,
-      'draws': 0,
-      'losses': 0,
-      'matchesPlayed': 0,
-      'currentWinningStreak': 0,
-      'unlockedBadges': ['explorer'],
-      'playedOpponents': [],
-      'beatenOpponents': [],
-      'championshipsWon': 0,
-    });
-    
-    // ── Anti-Silent Kidnapping Notification ──
-    final List memberUids = List.from(data['memberUids'] ?? []);
-    if (memberUids.length > 1) {
-      // Loop through all members except the first one (Captain)
-      for (int i = 1; i < memberUids.length; i++) {
-        _sendJoinNotification(memberUids[i].toString());
-      }
-    }
+    try {
+      final pgData = {
+        'name': data['name'],
+        'captain_id': (data['memberUids'] as List?)?.first?.toString(),
+        'captain_name': data['captainName'] ?? 'Captain',
+        'captain_image_url': data['captainImageUrl'] ?? '',
+        'logo_url': data['logoUrl'] ?? '',
+        'date': data['date'] ?? 'Upcoming',
+        'stadium': data['stadium'] ?? 'TBD',
+        'price_per_person': data['pricePerPerson'] ?? 50.0,
+        'points': 0,
+        'wins': 0,
+        'draws': 0,
+        'losses': 0,
+        'matches_played': 0,
+        'current_winning_streak': 0,
+        'unlocked_badges': ['explorer'],
+        'played_opponents': [],
+        'beaten_opponents': [],
+        'championships_won': 0,
+        'governorate': data['governorate'] ?? 'Cairo',
+        'sport_type': data['sportType'] ?? 'Football',
+      };
 
-    return docRef.id;
+      final response = await _supabase
+          .from('teams')
+          .insert(pgData)
+          .select('id')
+          .single();
+      
+      final teamId = response['id'].toString();
+
+      final List memberUids = List.from(data['memberUids'] ?? []);
+      for (final uid in memberUids) {
+        await _supabase.from('team_members').insert({
+          'team_id': teamId,
+          'user_id': uid.toString(),
+        });
+      }
+
+      // ── Anti-Silent Kidnapping Notification ──
+      if (memberUids.length > 1) {
+        for (int i = 1; i < memberUids.length; i++) {
+          _sendJoinNotification(memberUids[i].toString());
+        }
+      }
+
+      return teamId;
+    } catch (e) {
+      debugPrint('Error creating team: $e');
+      return null;
+    }
   }
 
   Future<Team?> getTeam(String id) async {
-    final doc = await _firestore.collection('teams').doc(id).get();
-    if (doc.exists) {
-      return Team.fromFirestore(doc.data()!, doc.id);
+    try {
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .eq('id', id)
+          .maybeSingle();
+      if (response == null) return null;
+
+      final memberUids = await getTeamMemberUids(id);
+      final playerImages = await getTeamPlayerImages(memberUids);
+
+      final data = Map<String, dynamic>.from(response);
+      data['memberUids'] = memberUids;
+      data['playerImages'] = playerImages;
+      data['playersCount'] = memberUids.length;
+
+      return Team.fromFirestore(data, id);
+    } catch (e) {
+      debugPrint('Error getting team: $e');
+      return null;
     }
-    return null;
   }
 
   Stream<List<Team>> getTeams({String? governorate}) {
-    Query query = _firestore.collection('teams');
-    if (governorate != null) {
-      query = query.where('governorate', isEqualTo: governorate);
-    }
-    return query.snapshots().map((snapshot) => snapshot.docs.map((doc) => Team.fromFirestore(doc.data() as Map<String, dynamic>, doc.id)).toList());
+    return _supabase
+        .from('teams')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          return list.map((data) {
+            if (governorate != null && data['governorate'] != governorate) {
+              return null;
+            }
+            return Team.fromFirestore(data, data['id'].toString());
+          }).whereType<Team>().toList();
+        });
   }
 
   Future<List<Team>> searchOpponentTeams(String query) async {
-    final snapshot = await _firestore.collection('teams')
-        .where('name', isGreaterThanOrEqualTo: query)
-        .where('name', isLessThanOrEqualTo: '$query\uf8ff')
-        .get();
-    return snapshot.docs.map((doc) => Team.fromFirestore(doc.data(), doc.id)).toList();
+    try {
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .ilike('name', '%$query%');
+      
+      final List<Team> teams = [];
+      for (final doc in (response as List)) {
+        final teamId = doc['id'].toString();
+        final memberUids = await getTeamMemberUids(teamId);
+        final playerImages = await getTeamPlayerImages(memberUids);
+        
+        final data = Map<String, dynamic>.from(doc);
+        data['memberUids'] = memberUids;
+        data['playerImages'] = playerImages;
+        data['playersCount'] = memberUids.length;
+        
+        teams.add(Team.fromFirestore(data, teamId));
+      }
+      return teams;
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<List<Team>> getPreviousOpponents(String teamId) async {
-    final team = await getTeam(teamId);
-    if (team == null || team.playedOpponents.isEmpty) return [];
-    
-    final snapshot = await _firestore.collection('teams')
-        .where(FieldPath.documentId, whereIn: team.playedOpponents)
-        .get();
-    return snapshot.docs.map((doc) => Team.fromFirestore(doc.data(), doc.id)).toList();
+    try {
+      final team = await getTeam(teamId);
+      if (team == null || team.playedOpponents.isEmpty) return [];
+      
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .inFilter('id', team.playedOpponents);
+          
+      final List<Team> teams = [];
+      for (final doc in (response as List)) {
+        final id = doc['id'].toString();
+        final memberUids = await getTeamMemberUids(id);
+        final playerImages = await getTeamPlayerImages(memberUids);
+        
+        final data = Map<String, dynamic>.from(doc);
+        data['memberUids'] = memberUids;
+        data['playerImages'] = playerImages;
+        data['playersCount'] = memberUids.length;
+        
+        teams.add(Team.fromFirestore(data, id));
+      }
+      return teams;
+    } catch (e) {
+      return [];
+    }
   }
 
   Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
@@ -194,38 +207,118 @@ class TeamRepository {
   }
 
   Future<Team?> getTeamByCaptainPhone(String phone) async {
-    final snapshot = await _firestore.collection('teams')
-        .where('captainPhone', isEqualTo: phone)
-        .limit(1)
-        .get();
-    if (snapshot.docs.isNotEmpty) {
-      return Team.fromFirestore(snapshot.docs.first.data(), snapshot.docs.first.id);
+    try {
+      final response = await _supabase
+          .from('teams')
+          .select()
+          .eq('captain_phone', phone)
+          .maybeSingle();
+      if (response == null) return null;
+      
+      final teamId = response['id'].toString();
+      return await getTeam(teamId);
+    } catch (e) {
+      return null;
     }
-    return null;
   }
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
-    await _firestore.collection('teams').doc(teamId).update({
-      'memberUids': FieldValue.arrayUnion([userId]),
-      'playerImages': FieldValue.arrayUnion([imageUrl]),
-      'playersCount': FieldValue.increment(1),
-    });
-
-    // ── Anti-Silent Kidnapping Notification ──
-    _sendJoinNotification(userId);
+    try {
+      await _supabase.from('team_members').insert({
+        'team_id': teamId,
+        'user_id': userId,
+      });
+      _sendJoinNotification(userId);
+    } on PostgrestException catch (e) {
+      if (e.message.contains('الحد الأقصى') || e.message.contains('limit')) {
+        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى).");
+      }
+      rethrow;
+    } catch (e) {
+      debugPrint('Error adding member to team: $e');
+      rethrow;
+    }
   }
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
-    await _firestore.collection('teams').doc(teamId).update({
-      'memberUids': FieldValue.arrayRemove([userId]),
-      'playerImages': FieldValue.arrayRemove([imageUrl]),
-      'playersCount': FieldValue.increment(-1),
-    });
+    try {
+      final bookings1 = await _supabase
+          .from('bookings')
+          .select('end_time')
+          .eq('status', 'confirmed')
+          .eq('player_team_id', teamId);
+          
+      final bookings2 = await _supabase
+          .from('bookings')
+          .select('end_time')
+          .eq('status', 'confirmed')
+          .eq('opponent_team_id', teamId);
+
+      bool hasActiveMatch = false;
+      for (var doc in [...bookings1 as List, ...bookings2 as List]) {
+        final endTime = DateTime.parse(doc['end_time']);
+        if (endTime.isAfter(DateTime.now())) {
+          hasActiveMatch = true;
+          break;
+        }
+      }
+
+      // Also check ongoing or open championships
+      final championshipsResponse = await _supabase
+          .from('championships')
+          .select('joined_teams')
+          .inFilter('status', ['open', 'ongoing']);
+
+      bool hasActiveTournament = false;
+      for (var row in championshipsResponse as List) {
+        final List joined = List.from(row['joined_teams'] ?? []);
+        if (joined.contains(teamId)) {
+          hasActiveTournament = true;
+          break;
+        }
+      }
+    
+      if (hasActiveMatch || hasActiveTournament) {
+        throw Exception("active_match_or_tournament_error");
+      }
+
+      await _supabase
+          .from('team_members')
+          .delete()
+          .eq('team_id', teamId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error removing member from team: $e');
+      rethrow;
+    }
   }
 
   Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
     try {
-      await _firestore.collection('teams').doc(teamId).update(data);
+      final pgData = <String, dynamic>{};
+      if (data.containsKey('name')) pgData['name'] = data['name'];
+      if (data.containsKey('captainName')) pgData['captain_name'] = data['captainName'];
+      if (data.containsKey('captainImageUrl')) pgData['captain_image_url'] = data['captainImageUrl'];
+      if (data.containsKey('logoUrl')) pgData['logo_url'] = data['logoUrl'];
+      if (data.containsKey('date')) pgData['date'] = data['date'];
+      if (data.containsKey('stadium')) pgData['stadium'] = data['stadium'];
+      if (data.containsKey('pricePerPerson')) pgData['price_per_person'] = data['pricePerPerson'];
+      if (data.containsKey('points')) pgData['points'] = data['points'];
+      if (data.containsKey('wins')) pgData['wins'] = data['wins'];
+      if (data.containsKey('draws')) pgData['draws'] = data['draws'];
+      if (data.containsKey('losses')) pgData['losses'] = data['losses'];
+      if (data.containsKey('matchesPlayed')) pgData['matches_played'] = data['matchesPlayed'];
+      if (data.containsKey('currentWinningStreak')) pgData['current_winning_streak'] = data['currentWinningStreak'];
+      if (data.containsKey('unlockedBadges')) pgData['unlocked_badges'] = data['unlockedBadges'];
+      if (data.containsKey('playedOpponents')) pgData['played_opponents'] = data['playedOpponents'];
+      if (data.containsKey('beatenOpponents')) pgData['beaten_opponents'] = data['beatenOpponents'];
+      if (data.containsKey('championshipsWon')) pgData['championships_won'] = data['championshipsWon'];
+      if (data.containsKey('governorate')) pgData['governorate'] = data['governorate'];
+      if (data.containsKey('sportType')) pgData['sport_type'] = data['sportType'];
+
+      if (pgData.isEmpty) return true;
+
+      await _supabase.from('teams').update(pgData).eq('id', teamId);
       return true;
     } catch (e) {
       return false;
@@ -234,7 +327,8 @@ class TeamRepository {
 
   Future<bool> deleteTeam(String teamId) async {
     try {
-      await _firestore.collection('teams').doc(teamId).delete();
+      await _supabase.from('team_members').delete().eq('team_id', teamId);
+      await _supabase.from('teams').delete().eq('id', teamId);
       return true;
     } catch (e) {
       return false;
@@ -258,3 +352,4 @@ class TeamRepository {
     }
   }
 }
+

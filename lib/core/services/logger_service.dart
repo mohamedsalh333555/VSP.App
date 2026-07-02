@@ -6,13 +6,43 @@ class VSPLogger {
       methodCount: 0,
       errorMethodCount: 5,
       lineLength: 80,
-      colors: true,
+      colors: false,
       printEmojis: true,
     ),
   );
 
-  static void d(String message) => _logger.d(message);
-  static void e(String message, [dynamic error, StackTrace? stackTrace]) => _logger.e(message, error: error, stackTrace: stackTrace);
-  static void i(String message) => _logger.i(message);
-  static void w(String message) => _logger.w(message);
+  static void d(String message) {
+    try {
+      _logger.d(message);
+    } catch (e) {
+      print('[DEBUG] $message');
+    }
+  }
+
+  static void e(String message, [dynamic error, StackTrace? stackTrace]) {
+    try {
+      _logger.e(message, error: error, stackTrace: stackTrace);
+    } catch (e) {
+      print('[ERROR] $message: $error');
+      if (stackTrace != null) {
+        print(stackTrace);
+      }
+    }
+  }
+
+  static void i(String message) {
+    try {
+      _logger.i(message);
+    } catch (e) {
+      print('[INFO] $message');
+    }
+  }
+
+  static void w(String message) {
+    try {
+      _logger.w(message);
+    } catch (e) {
+      print('[WARN] $message');
+    }
+  }
 }

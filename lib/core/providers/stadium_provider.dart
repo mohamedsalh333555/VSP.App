@@ -1,6 +1,5 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../repositories/stadium_repository.dart';
 import '../utils/geo_helper.dart';
@@ -16,9 +15,10 @@ class StadiumProvider with ChangeNotifier {
   bool _isLoading = false;
   bool _isLoadingMore = false;
   bool _hasMore = true;
-  DocumentSnapshot? _lastDocument;
+  int? _lastDocument;
   String? _errorMessage;
   String? _selectedGovernorate;
+  bool _isGeographicFallback = false;
 
   // Getters
   List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
@@ -30,6 +30,7 @@ class StadiumProvider with ChangeNotifier {
   String? get errorMessage => _errorMessage;
   bool get isFilterActive => _isFilterActive;
   String? get selectedGovernorate => _selectedGovernorate;
+  bool get isGeographicFallback => _isGeographicFallback;
 
   // Private helpers to manage state consistently
   void _setLoading(bool value) {
@@ -49,11 +50,11 @@ class StadiumProvider with ChangeNotifier {
     if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
     if (isRefresh) {
-      _stadiums = [];
-      _filteredStadiums = [];
       _lastDocument = null;
       _hasMore = true;
-      _setLoading(true);
+      if (_stadiums.isEmpty) {
+        _setLoading(true);
+      }
     } else {
       _isLoadingMore = true;
       notifyListeners();
@@ -63,7 +64,7 @@ class StadiumProvider with ChangeNotifier {
       final result = await _databaseService.getStadiumsPaginated(
         limit: 10,
         startAfter: _lastDocument,
-        governorate: _selectedGovernorate,
+        governorate: _isGeographicFallback ? null : _selectedGovernorate,
       );
 
       final List<Stadium> newStadiums = result['items'];
@@ -71,15 +72,44 @@ class StadiumProvider with ChangeNotifier {
 
       // Phase 4: Fallback Logic - If city search is empty during initial refresh, show all stadiums
       if (newStadiums.isEmpty && _selectedGovernorate != null && isRefresh) {
+        _isGeographicFallback = true;
         final fallbackResult = await _databaseService.getStadiumsPaginated(
           limit: 10,
           governorate: null, // Clear filter to show everything
         );
-        _stadiums = fallbackResult['items'];
+        final List<Stadium> fallbackStadiums = List<Stadium>.from(fallbackResult['items']);
+        
+        Position? userPosition;
+        try {
+          if (await Geolocator.isLocationServiceEnabled()) {
+            LocationPermission permission = await Geolocator.checkPermission();
+            if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+              userPosition = await Geolocator.getLastKnownPosition();
+              userPosition ??= await Geolocator.getCurrentPosition(
+                timeLimit: const Duration(seconds: 4),
+              );
+            }
+          }
+        } catch (e) {
+          debugPrint('Error getting GPS location for fallback: $e');
+        }
+
+        if (userPosition != null) {
+          fallbackStadiums.sort((a, b) {
+            if (a.lat == null || a.lng == null) return 1;
+            if (b.lat == null || b.lng == null) return -1;
+            final distA = GeoHelper.calculateDistance(userPosition!.latitude, userPosition.longitude, a.lat!, a.lng!);
+            final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
+            return distA.compareTo(distB);
+          });
+        }
+        
+        _stadiums = fallbackStadiums;
         _lastDocument = fallbackResult['lastDoc'];
       } else {
         if (isRefresh) {
           _stadiums = newStadiums;
+          _isGeographicFallback = false;
         } else {
           _stadiums.addAll(newStadiums);
         }
@@ -89,7 +119,8 @@ class StadiumProvider with ChangeNotifier {
         _hasMore = false;
       }
       
-      _setError(null);
+      _errorMessage = null;
+      notifyListeners();
     } catch (e) {
       _setError('Failed to fetch stadiums: ${e.toString()}');
     } finally {
@@ -184,6 +215,7 @@ class StadiumProvider with ChangeNotifier {
     _lastDocument = null;
     _hasMore = true;
     _isFilterActive = false; 
+    _isGeographicFallback = false;
     
     fetchStadiums(isRefresh: true);
   }
