@@ -1,4 +1,4 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+﻿import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
@@ -1060,6 +1060,7 @@ class Team {
     String? sportType,
     int? fairPlayScore,
     int? lastResetYear,
+    List<String>? unlockedBadges,
   }) {
     return Team(
       id: id ?? this.id,
@@ -1086,6 +1087,7 @@ class Team {
       sportType: sportType ?? this.sportType,
       fairPlayScore: fairPlayScore ?? this.fairPlayScore,
       lastResetYear: lastResetYear ?? this.lastResetYear,
+      unlockedBadges: unlockedBadges ?? this.unlockedBadges,
     );
   }
 

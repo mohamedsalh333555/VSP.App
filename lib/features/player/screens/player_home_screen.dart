@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -104,7 +105,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              const Icon(Icons.location_on_outlined, color: VSPColors.accent, size: 28),
+              const Icon(LucideIcons.mapPin_outlined, color: VSPColors.accent, size: 28),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -192,7 +193,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           VspNavItem(activeIcon: Icons.groups_rounded, inactiveIcon: Icons.groups_outlined, label: AppLocalizations.of(context)!.matchesNav),
           VspNavItem(activeIcon: Icons.emoji_events_rounded, inactiveIcon: Icons.emoji_events_outlined, label: AppLocalizations.of(context)!.championNav),
           VspNavItem(activeIcon: Icons.bookmark_rounded, inactiveIcon: Icons.bookmark_outline_rounded, label: AppLocalizations.of(context)!.bookedNav),
-          VspNavItem(activeIcon: Icons.person_rounded, inactiveIcon: Icons.person_outline_rounded, label: AppLocalizations.of(context)!.profileNav),
+          VspNavItem(activeIcon: LucideIcons.user_rounded, inactiveIcon: LucideIcons.user_outline_rounded, label: AppLocalizations.of(context)!.profileNav),
         ],
       ),
     );
@@ -441,7 +442,7 @@ class _HomeContent extends StatelessWidget {
                 CircleAvatar(
                   radius: 25, backgroundColor: VSPColors.surface, 
                   backgroundImage: auth.userModel?.profileImageUrl != null ? NetworkImage(auth.userModel!.profileImageUrl!) : null, 
-                  child: auth.userModel?.profileImageUrl == null ? const Icon(Icons.person, color: VSPColors.textSecondary) : null
+                  child: auth.userModel?.profileImageUrl == null ? const Icon(LucideIcons.user, color: VSPColors.textSecondary) : null
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -455,7 +456,7 @@ class _HomeContent extends StatelessWidget {
                             onTap: () => _showLocationPickerHelper(context, auth),
                             child: Row(
                               children: [
-                                const Icon(Icons.location_on, color: VSPColors.accent, size: 14), 
+                                const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14), 
                                 const SizedBox(width: 4), 
                                 Text(
                                   auth.userModel?.governorate ?? AppLocalizations.of(context)!.selectLocation, 
@@ -480,7 +481,7 @@ class _HomeContent extends StatelessWidget {
                             },
                             child: const Padding(
                               padding: EdgeInsets.all(4.0),
-                              child: Icon(Icons.my_location, color: VSPColors.accent, size: 14),
+                              child: Icon(LucideIcons.locate, color: VSPColors.accent, size: 14),
                             ),
                           ),
                         ],
@@ -489,7 +490,7 @@ class _HomeContent extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(Icons.notifications_none, color: Colors.white),
+                  icon: const Icon(LucideIcons.bell, color: Colors.white),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
@@ -545,7 +546,7 @@ class _HomeContent extends StatelessWidget {
                       shape: BoxShape.circle,
                       border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2), width: 1),
                     ),
-                    child: const Icon(Icons.search, color: VSPColors.accent, size: 22),
+                    child: const Icon(LucideIcons.search, color: VSPColors.accent, size: 22),
                   ),
                 ],
               ),
@@ -576,7 +577,7 @@ class _HomeContent extends StatelessWidget {
               borderRadius: BorderRadius.circular(12),
               border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
             ),
-            child: const Icon(Icons.tune, color: VSPColors.accent),
+            child: const Icon(LucideIcons.sliders, color: VSPColors.accent),
           ),
         ),
       ],
@@ -814,3 +815,4 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
     }
   );
 }
+

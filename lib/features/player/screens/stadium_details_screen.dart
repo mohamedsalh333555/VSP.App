@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
@@ -106,13 +107,13 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen>
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCircularIcon(
-                          icon: Icons.arrow_back_ios_new,
+                          icon: LucideIcons.chevronLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                         Row(
                           children: [
                             _buildCircularIcon(
-                              icon: Icons.share_outlined,
+                              icon: LucideIcons.share2,
                               onTap: () {
                                 Share.share(
                                   l10n.shareStadiumText(
@@ -129,8 +130,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen>
                                     false;
                                 return _buildCircularIcon(
                                   icon: isFavorite
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
+                                      ? LucideIcons.heart
+                                      : LucideIcons.heart,
                                   color: isFavorite
                                       ? VSPColors.accent
                                       : VSPColors.textPrimary,
@@ -438,8 +439,8 @@ class _InformationTab extends StatelessWidget {
                       5,
                       (i) => Icon(
                         i < stadium.rating.round()
-                            ? Icons.star
-                            : Icons.star_border,
+                            ? LucideIcons.star
+                            : LucideLucideIcons.star,
                         color: Colors.amber,
                         size: 16,
                       ),
@@ -495,7 +496,7 @@ class _InformationTab extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.location_on_outlined,
+                      const Icon(LucideIcons.mapPin,
                           color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
@@ -989,23 +990,23 @@ class _FacilitiesGrid extends StatelessWidget {
 
     final facilities = [
       _FacilityItem(
-          icon: Icons.shower,
+          icon: LucideIcons.showerHead,
           label: isArabic ? 'حمامات' : 'Bathrooms',
           active: hasBathroom),
       _FacilityItem(
-          icon: Icons.local_parking,
+          icon: LucideIcons.car,
           label: isArabic ? 'جراج' : 'Garage',
           active: hasGarage),
       _FacilityItem(
-          icon: Icons.local_cafe,
+          icon: LucideIcons.coffee,
           label: isArabic ? 'كافتيريا' : 'Cafeteria',
           active: hasCafeteria),
       _FacilityItem(
-          icon: Icons.checkroom,
+          icon: LucideIcons.shirt,
           label: isArabic ? 'غرف تغيير' : 'Changing Rooms',
           active: hasChangingRoom),
       _FacilityItem(
-          icon: Icons.chair,
+          icon: LucideIcons.armchair,
           label: isArabic ? 'مدرجات' : 'Spectator Seats',
           active: hasSeats,
           badge: hasSeats ? seats : null),
@@ -1268,8 +1269,8 @@ class _RatingsTab extends StatelessWidget {
                           5,
                           (i) => Icon(
                             i < stadium.rating.round()
-                                ? Icons.star
-                                : Icons.star_border,
+                                ? LucideIcons.star
+                                : LucideLucideIcons.star,
                             color: Colors.amber,
                             size: 16,
                           ),
@@ -1399,7 +1400,7 @@ class _RatingsTab extends StatelessWidget {
                 Row(
                   children: List.generate(
                     5,
-                    (i) => Icon(Icons.star,
+                    (i) => Icon(LucideIcons.star,
                         size: 12,
                         color: i < rating
                             ? Colors.amber
@@ -1426,3 +1427,4 @@ class _RatingsTab extends StatelessWidget {
     );
   }
 }
+

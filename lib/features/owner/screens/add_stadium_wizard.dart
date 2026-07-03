@@ -1,4 +1,4 @@
-import '../../../l10n/app_localizations.dart';
+﻿import '../../../l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:async';
@@ -47,7 +47,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _widthController = TextEditingController();
   final _seatsController = TextEditingController();
   final _notesController = TextEditingController();
-  bool _hasBall = false;
+  bool? _hasBall;
 
   // State variables for features
   bool? _cafeteria;
@@ -793,7 +793,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _showError(AppLocalizations.of(context)!.selectFeaturesError);
         return;
       }
-      if (_hasBall) {
+      if (_hasBall == true) {
         final ballPrice = double.tryParse(_ballPriceController.text) ?? 0.0;
         if (ballPrice < 5.0) {
           _showError(AppLocalizations.of(context)!.ballPriceMinError);
@@ -866,8 +866,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         'seats': _seatsController.text.trim(),
         'length': _lengthController.text.trim(),
         'width': _widthController.text.trim(),
-        'hasBall': _hasBall,
-        'ballPrice': double.tryParse(_ballPriceController.text) ?? 0.0,
+        'hasBall': _hasBall ?? false,
+        'ballPrice': (_hasBall == true) ? (double.tryParse(_ballPriceController.text) ?? 0.0) : 0.0,
         'workingHours': {
           'start': _formatTime(_startTime, '08:00 AM'),
           'end': _formatTime(_endTime, '12:00 AM'),
@@ -1266,7 +1266,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       ),
       child: Column(
         children: [
-          _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
+          _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == null ? null : _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
           const SizedBox(height: 20),
           _buildYesNoSection(AppLocalizations.of(context)!.cafeteria, _cafeteria, (val) => setState(() => _cafeteria = val)),
           const SizedBox(height: 20),
@@ -1294,7 +1294,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 16),
           _buildYesNoSection(AppLocalizations.of(context)!.ballAvailableLabel, _hasBall, (val) => setState(() => _hasBall = val)),
           
-          if (_hasBall) ...[
+          if (_hasBall == true) ...[
             const SizedBox(height: 16),
              _buildTextField(
                'Ball Rental Price (EGP)', 

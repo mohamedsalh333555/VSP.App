@@ -261,7 +261,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     Text(l10n.teamMembersHeader(1 + _teamMembers.length, 12), style: Theme.of(context).textTheme.bodyMedium),
-                    if (isCaptain)
+                    if (isCaptain && (1 + _teamMembers.length) < 12)
                       TextButton.icon(
                         onPressed: () => _showAddPlayerSheet(team),
                         icon: const Icon(Icons.add_circle_outline, size: 16, color: VSPColors.accent),
@@ -492,7 +492,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             ),
             const SizedBox(width: VSPSpacing.sm),
             Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
-            if (isCaptain)
+            if (isCaptain && (1 + _teamMembers.length) < 12)
               GestureDetector(
                 onTap: () async {
                   final userToRemove = user;
@@ -636,4 +636,5 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     );
   }
 }
+
 

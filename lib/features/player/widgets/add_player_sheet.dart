@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -101,7 +102,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary),
               ),
             ],
           ),
@@ -143,7 +144,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                           padding: EdgeInsets.all(VSPSpacing.sm),
                           child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
-                      : const Icon(Icons.search, color: VSPColors.background),
+                      : const Icon(LucideIcons.search, color: VSPColors.background),
                 ),
               ),
             ],
@@ -202,7 +203,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               child: const Row(
                 children: [
-                   Icon(Icons.check, color: VSPColors.accent, size: 16),
+                   Icon(LucideIcons.check, color: VSPColors.accent, size: 16),
                    SizedBox(width: 4),
                    Text('Joined', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
@@ -237,7 +238,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
       ),
       child: Column(
         children: [
-          Icon(Icons.person_search_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.2), size: 48),
+          Icon(LucideIcons.user_search_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.2), size: 48),
           const SizedBox(height: VSPSpacing.md),
           Text(
             "User Not Found",
@@ -264,3 +265,4 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     );
   }
 }
+

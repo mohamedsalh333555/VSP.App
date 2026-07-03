@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -207,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 0,
                 child: VSPMenuItem(
-                  icon: Icons.edit_outlined,
+                  icon: LucideIcons.pencilLine,
                   title: l10n.editProfile,
                   subtitle: l10n.editProfileSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
@@ -216,7 +217,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 1,
                 child: VSPMenuItem(
-                  icon: Icons.groups_outlined,
+                  icon: LucideIcons.users,
                   title: l10n.myTeam,
                   subtitle: l10n.manageTeamInfo,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
@@ -225,7 +226,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 2,
                 child: VSPMenuItem(
-                  icon: Icons.favorite_border,
+                  icon: LucideIcons.heart,
                   title: l10n.favoriteStadiums,
                   subtitle: l10n.viewLikedFacilities,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
@@ -235,7 +236,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 VSPFadeInItem(
                   index: 3,
                   child: VSPMenuItem(
-                    icon: Icons.payment_outlined,
+                    icon: LucideIcons.creditCard,
                     title: l10n.paymentMethods,
                     subtitle: l10n.managePaymentMethods,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
@@ -251,7 +252,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 4,
                 child: VSPMenuItem(
-                  icon: Icons.notifications_none_outlined,
+                  icon: LucideIcons.bell,
                   title: l10n.notifications,
                   subtitle: l10n.manageNotificationSettings,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
@@ -260,7 +261,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 5,
                 child: VSPMenuItem(
-                  icon: Icons.shield_outlined,
+                  icon: LucideIcons.shieldCheck,
                   title: l10n.privacy,
                   subtitle: l10n.privacyPolicy,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
@@ -269,7 +270,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 6,
                 child: VSPMenuItem(
-                  icon: Icons.translate,
+                  icon: LucideIcons.globe,
                   title: l10n.language,
                   subtitle: l10n.manageLanguagePreferences,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
@@ -278,7 +279,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 7,
                 child: VSPMenuItem(
-                  icon: Icons.help_outline,
+                  icon: LucideIcons.helpCircle,
                   title: l10n.helpCenter,
                   subtitle: l10n.getHelpSupport,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
@@ -291,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 8,
                 child: VSPMenuItem(
-                  icon: Icons.logout,
+                  icon: LucideIcons.logOut,
                   title: l10n.logout,
                   subtitle: l10n.signOutAccount,
                   isLogout: true,
@@ -309,3 +310,4 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+

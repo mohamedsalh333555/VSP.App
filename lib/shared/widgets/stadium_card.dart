@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -119,7 +120,7 @@ class StadiumCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(Icons.location_on, color: VSPColors.accent, size: 14),
+                            const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               stadium.area.isNotEmpty ? stadium.area : stadium.location,
@@ -146,7 +147,7 @@ class StadiumCard extends StatelessWidget {
                             border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
                           child: const Icon(
-                            Icons.edit_square,
+                            LucideIcons.edit,
                             color: VSPColors.accent,
                             size: 18,
                           ),
@@ -175,7 +176,7 @@ class StadiumCard extends StatelessWidget {
                                 border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
                               ),
                               child: Icon(
-                                isFav ? Icons.favorite : Icons.favorite_border,
+                                isFav ? LucideIcons.heart : LucideIcons.heart,
                                 color: isFav ? VSPColors.error : Colors.white,
                                 size: 20,
                               ),
@@ -232,17 +233,17 @@ class StadiumCard extends StatelessWidget {
                         return Row(
                           children: [
                             if (hasBaths) ...[
-                              const Icon(Icons.wc, color: VSPColors.accent, size: 14),
+                              const Icon(LucideIcons.showerHead, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Baths 🚻  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasCafe) ...[
-                              const Icon(Icons.local_cafe, color: VSPColors.accent, size: 14),
+                              const Icon(LucideIcons.coffee, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Cafeteria  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasGarage) ...[
-                              const Icon(Icons.local_parking, color: VSPColors.accent, size: 14),
+                              const Icon(LucideIcons.car, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Garage  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
@@ -361,7 +362,7 @@ class StadiumCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.directions_walk, color: Colors.black, size: 12),
+          const Icon(LucideIcons.navigation, color: Colors.black, size: 12),
           const SizedBox(width: 4),
           Text(
             GeoHelper.formatDistance(distance),
@@ -391,3 +392,4 @@ class StadiumCard extends StatelessWidget {
     );
   }
 }
+

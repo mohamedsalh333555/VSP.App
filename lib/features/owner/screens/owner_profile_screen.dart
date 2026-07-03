@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -47,7 +48,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 0,
               child: VSPMenuItem(
-                icon: Icons.person_outline,
+                icon: LucideIcons.userCheck,
                 title: l10n.profileAccountLabel,
                 subtitle: l10n.profileAccountSubtitle,
                 onTap: () {
@@ -64,7 +65,7 @@ class OwnerProfileScreen extends StatelessWidget {
               VSPFadeInItem(
                 index: 1,
                 child: VSPMenuItem(
-                  icon: Icons.payment_outlined,
+                  icon: LucideIcons.creditCard,
                   title: l10n.paymentMethods,
                   subtitle: l10n.paymentMethods, // Can refine if needed
                   onTap: () {
@@ -85,7 +86,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 2,
               child: VSPMenuItem(
-                icon: Icons.notifications_none_outlined,
+                icon: LucideIcons.bell,
                 title: l10n.profileNotificationsLabel,
                 subtitle: l10n.profileNotificationsSubtitle,
                 onTap: () {
@@ -100,7 +101,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 3,
               child: VSPMenuItem(
-                icon: Icons.shield_outlined,
+                icon: LucideIcons.shieldCheck,
                 title: l10n.profilePrivacyLabel,
                 subtitle: l10n.profilePrivacySubtitle,
                 onTap: () {
@@ -115,7 +116,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 4,
               child: VSPMenuItem(
-                icon: Icons.language_outlined,
+                icon: LucideIcons.globe,
                 title: l10n.profileLanguageLabel,
                 subtitle: l10n.profileLanguageSubtitle,
                 onTap: () {
@@ -136,7 +137,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 5,
               child: VSPMenuItem(
-                icon: Icons.help_outline,
+                icon: LucideIcons.helpCircle,
                 title: l10n.profileHelpCenterLabel,
                 subtitle: l10n.profileHelpCenterSubtitle,
                 onTap: () {
@@ -155,7 +156,7 @@ class OwnerProfileScreen extends StatelessWidget {
             VSPFadeInItem(
               index: 6,
               child: VSPMenuItem(
-                icon: Icons.logout,
+                icon: LucideIcons.logOut,
                 title: l10n.profileLogoutLabel,
                 subtitle: l10n.profileLogoutSubtitle,
                 isLogout: true,
@@ -173,3 +174,4 @@ class OwnerProfileScreen extends StatelessWidget {
     );
   }
 }
+

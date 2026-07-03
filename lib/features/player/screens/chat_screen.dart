@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -78,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -100,7 +101,7 @@ class _ChatScreenState extends State<ChatScreen> {
                     child: Column(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(Icons.chat_bubble_outline, size: 64, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
+                        Icon(LucideIcons.messageSquare, size: 64, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
                         const SizedBox(height: 16),
                         Text(
                           lang.isArabic ? 'لا توجد رسائل بعد' : 'No messages yet',
@@ -157,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.lock_outline, color: VSPColors.textSecondary, size: 18),
+              const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 18),
               const SizedBox(width: 8),
               Text(
                 isCancelled 
@@ -214,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: VSPColors.accent,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(Icons.send, color: VSPColors.background, size: 20),
+              child: const Icon(LucideIcons.send, color: VSPColors.background, size: 20),
             ),
           ),
         ],

@@ -1,4 +1,5 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -174,7 +175,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.hourglass_empty_rounded, color: Colors.orange, size: 28),
+                      const Icon(LucideIcons.clock, color: Colors.orange, size: 28),
                       const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
@@ -214,7 +215,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 28),
+                      const Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 28),
                       const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
@@ -267,7 +268,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.info_outline, color: VSPColors.warning),
+                          const Icon(LucideIcons.info, color: VSPColors.warning),
                           const SizedBox(width: VSPSpacing.sm),
                           Expanded(
                             child: Text(
@@ -354,7 +355,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent, size: 18),
+                            const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 18),
                           ],
                         ),
                       ),
@@ -413,7 +414,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 final count = snap.data ?? 0;
                 return Stack(
                     children: [
-                    const Icon(Icons.notifications_outlined, color: VSPColors.textPrimary, size: 24),
+                    const Icon(LucideIcons.bell, color: VSPColors.textPrimary, size: 24),
                     if (count > 0)
                       Positioned(
                         top: 0,
@@ -467,7 +468,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               child: DropdownButton<String>(
                 value: _selectedStadium,
                 dropdownColor: VSPColors.surface,
-                icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
+                icon: const Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 18),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 13),
                 isExpanded: true,
                 items: stadiumNames.map((stadium) {
@@ -507,7 +508,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                          Expanded(child: Text(dateDisplayText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 11), overflow: TextOverflow.ellipsis)),
-                         const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 16),
+                         const Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 16),
                       ],
                     ),
                   ),
@@ -641,9 +642,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      _buildFinanceMetric(isArabic ? 'كاش' : 'Cash', '$cashStr ${l10n.egCurrency}', Icons.payments_outlined, Colors.green),
+                      _buildFinanceMetric(isArabic ? 'كاش' : 'Cash', '$cashStr ${l10n.egCurrency}', LucideIcons.banknote, Colors.green),
                       Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
-                      _buildFinanceMetric(isArabic ? 'رقمي' : 'Digital', '$digitalStr ${l10n.egCurrency}', Icons.credit_card_outlined, Colors.lightBlueAccent),
+                      _buildFinanceMetric(isArabic ? 'رقمي' : 'Digital', '$digitalStr ${l10n.egCurrency}', LucideIcons.creditCard, Colors.lightBlueAccent),
                     ],
                   ),
                 ),
@@ -662,7 +663,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 child: VSPStatCard(
                   label: l10n.bookedHours,
                   value: timeStr,
-                  icon: Icons.history_toggle_off_rounded,
+                  icon: LucideIcons.clock,
                 ),
               ),
               const SizedBox(width: VSPSpacing.md),
@@ -670,7 +671,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 child: VSPStatCard(
                   label: l10n.activeBookingsLabel,
                   value: bookedStr,
-                  icon: Icons.confirmation_number_outlined,
+                  icon: LucideIcons.ticket,
                 ),
               ),
             ],
@@ -731,7 +732,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     if (todayBookings.isEmpty) {
       return VSPEmptyState(
-        icon: Icons.calendar_today_outlined,
+        icon: LucideIcons.calendar,
         title: l10n.noBookingsForTodayLabel,
         subtitle: l10n.liveBookingsForToday,
       );
@@ -855,4 +856,5 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 }
+
 

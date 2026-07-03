@@ -1,5 +1,7 @@
 {
   "projects": {
     "default": "vsp-app-103b1"
-  }
+  },
+  "targets": {},
+  "etags": {}
 }

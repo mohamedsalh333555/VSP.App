@@ -1,3 +1,4 @@
+﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -228,7 +229,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                         color: VSPColors.accent.withValues(alpha: 0.3)),
                   ),
                   child: const Icon(
-                    Icons.mark_email_read_outlined,
+                    LucideIcons.mailOpen,
                     color: VSPColors.accent,
                     size: 36,
                   ),
@@ -478,3 +479,4 @@ class _OtpBox extends StatelessWidget {
     );
   }
 }
+

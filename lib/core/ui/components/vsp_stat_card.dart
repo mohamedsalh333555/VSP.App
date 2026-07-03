@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPStatCard extends StatelessWidget {
@@ -36,18 +36,24 @@ class VSPStatCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                label,
-                style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                      color: VSPColors.textSecondary,
-                    ),
+              Expanded(
+                child: Text(
+                  label,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                        color: VSPColors.textSecondary,
+                      ),
+                ),
               ),
-              if (icon != null)
+              if (icon != null) ...[
+                const SizedBox(width: 4),
                 Icon(
                   icon,
                   color: color ?? VSPColors.accent,
                   size: 20,
                 ),
+              ],
             ],
           ),
           const SizedBox(height: VSPSpacing.xs),
