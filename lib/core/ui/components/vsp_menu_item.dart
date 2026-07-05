@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPMenuItem extends StatelessWidget {
@@ -73,7 +74,7 @@ class VSPMenuItem extends StatelessWidget {
             
             // Chevron
             if (!isLogout)
-              const Icon(Icons.chevron_right,
+              Icon(LucideIcons.chevronRight,
                 color: VSPColors.textSecondary,
                 size: 22,
               ),

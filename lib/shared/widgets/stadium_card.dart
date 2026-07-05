@@ -1,13 +1,13 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../core/providers/auth_provider.dart';
 import '../../core/utils/geo_helper.dart';
 import '../../data/models.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
+import '../../core/widgets/shimmer_image.dart';
 
 /// Stadium Card with Real Image Background and Glass Effect
 /// Refactored from PlayerHomeScreen for reusability
@@ -49,15 +49,11 @@ class StadiumCard extends StatelessWidget {
             children: [
               // REAL PHOTOGRAPHY BACKGROUND
               stadium.imageUrl.isNotEmpty
-                  ? CachedNetworkImage(
+                  ? ShimmerImage(
                       imageUrl: stadium.imageUrl,
                       fit: BoxFit.cover,
                       memCacheWidth: 600,
-                      maxHeightDiskCache: 1200,
-                      placeholder: (context, url) => Container(
-                        color: VSPColors.surface,
-                      ),
-                      errorWidget: (context, url, error) => _buildVspLogoBackground(),
+                      errorWidget: _buildVspLogoBackground(),
                     )
                   : _buildVspLogoBackground(),
 
@@ -120,7 +116,7 @@ class StadiumCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                            Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               stadium.area.isNotEmpty ? stadium.area : stadium.location,
@@ -146,8 +142,8 @@ class StadiumCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
-                          child: const Icon(
-                            LucideIcons.edit,
+                          child: Icon(
+                            LucideIcons.edit2,
                             color: VSPColors.accent,
                             size: 18,
                           ),
@@ -233,17 +229,17 @@ class StadiumCard extends StatelessWidget {
                         return Row(
                           children: [
                             if (hasBaths) ...[
-                              const Icon(LucideIcons.showerHead, color: VSPColors.accent, size: 14),
+                              Icon(LucideIcons.showerHead, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Baths 🚻  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasCafe) ...[
-                              const Icon(LucideIcons.coffee, color: VSPColors.accent, size: 14),
+                              Icon(LucideIcons.coffee, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Cafeteria  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasGarage) ...[
-                              const Icon(LucideIcons.car, color: VSPColors.accent, size: 14),
+                              Icon(LucideIcons.car, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               const Text('Garage  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
@@ -362,7 +358,7 @@ class StadiumCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(LucideIcons.navigation, color: Colors.black, size: 12),
+          Icon(LucideIcons.navigation, color: Colors.black, size: 12),
           const SizedBox(width: 4),
           Text(
             GeoHelper.formatDistance(distance),
@@ -392,4 +388,6 @@ class StadiumCard extends StatelessWidget {
     );
   }
 }
+
+
 

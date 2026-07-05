@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
@@ -98,7 +99,7 @@ class _UnifiedSuccessDialogState extends State<_UnifiedSuccessDialog>
                   ),
                   child: const Center(
                     child: Icon(
-                      Icons.check,
+                      LucideIcons.check,
                       color: VSPColors.accent,
                       size: 50,
                     ),

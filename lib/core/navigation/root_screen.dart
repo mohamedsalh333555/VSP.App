@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -13,7 +14,6 @@ import '../../features/owner/screens/owner_documentation_wizard.dart';
 import 'suspended_account_screen.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import '../../features/player/screens/match_details_screen.dart';
-import 'package:app_links/app_links.dart';
 import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -26,8 +26,6 @@ class RootScreen extends StatefulWidget {
 }
 
 class _RootScreenState extends State<RootScreen> {
-  late AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
   Timer? _loadingTimeout;
   bool _loadingTimedOut = false;
 
@@ -35,7 +33,6 @@ class _RootScreenState extends State<RootScreen> {
   void initState() {
     super.initState();
     _initRemoteConfig();
-    _initDeepLinks();
     // 📍 Trigger location check after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -90,64 +87,10 @@ class _RootScreenState extends State<RootScreen> {
     );
   }
 
-  void _initDeepLinks() {
-    _appLinks = AppLinks();
 
-    // Check for initial link when app starts
-    _appLinks.getInitialLink().then((uri) {
-      if (uri != null) _handleDeepLink(uri);
-    });
-
-    // Listen to incoming links while app is running
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    });
-  }
-
-  void _handleDeepLink(Uri uri) {
-    debugPrint('🔗 Handling deep link: $uri');
-    
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    
-    // 🛡️ AUTH GUARD: If not fully authenticated/onboarded, save for later
-    if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
-      debugPrint('💾 Saving pending deep link for after login: $uri');
-      SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
-      return;
-    }
-
-    // Pattern: https://vsp.app/match/BOOKING_ID
-    if (uri.pathSegments.length >= 2) {
-      final type = uri.pathSegments[0]; // match, team, etc.
-      final id = uri.pathSegments[1];
-
-      if (type == 'match') {
-        Navigator.push(
-          context,
-          MaterialPageRoute(
-            builder: (context) => MatchDetailsScreen(bookingId: id),
-          ),
-        );
-      }
-    }
-  }
-
-  void _checkAndNavigatePendingDeepLink() {
-    SharedPreferences.getInstance().then((prefs) {
-      final pendingLink = prefs.getString('pending_deep_link');
-      if (pendingLink != null) {
-        prefs.remove('pending_deep_link');
-        final uri = Uri.parse(pendingLink);
-        WidgetsBinding.instance.addPostFrameCallback((_) {
-          _handleDeepLink(uri);
-        });
-      }
-    });
-  }
 
   @override
   void dispose() {
-    _linkSubscription?.cancel();
     _loadingTimeout?.cancel();
     super.dispose();
   }
@@ -199,7 +142,7 @@ class _RootScreenState extends State<RootScreen> {
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.wifi_off_rounded, color: VSPColors.textSecondary, size: 56),
+                  Icon(LucideIcons.wifiOff, color: VSPColors.textSecondary, size: 56),
                   const SizedBox(height: 24),
                   Text(
                     'Connection Problem',
@@ -274,12 +217,10 @@ class _RootScreenState extends State<RootScreen> {
         return const OwnerDocumentationWizard();
       }
 
-      _checkAndNavigatePendingDeepLink();
       return const OwnerMainScreen();
     }
 
     // 7. Player → Dashboard
-    _checkAndNavigatePendingDeepLink();
     return const PlayerHomeScreen();
   }
 }
@@ -300,7 +241,7 @@ class MaintenanceScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.settings_suggest_rounded, size: 80, color: VSPColors.accent),
+              Icon(LucideIcons.settings, size: 80, color: VSPColors.accent),
               const SizedBox(height: VSPSpacing.xl),
               Text(
                 'We’ll be back soon!',

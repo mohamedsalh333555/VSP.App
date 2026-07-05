@@ -1,4 +1,5 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
@@ -63,7 +64,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         ),
         title: const Row(
           children: [
-            Icon(Icons.verified, color: VSPColors.accent, size: 28),
+            Icon(LucideIcons.badgeCheck, color: VSPColors.accent, size: 28),
             SizedBox(width: 12),
             Text(
               "Account Verified! 🎉",
@@ -113,7 +114,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             children: [
               const OwnerDashboardScreen(),
               OwnerCupScreen(onTournamentListChanged: (isEmpty) {
-                _showTournamentFAB.value = !isEmpty;
+                _showTournamentFAB.value = true;
               }),
               const OwnerInboxScreen(), // New Chat tab
               const OwnerBookingsScreen(),
@@ -160,7 +161,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                       l10n.createTournament,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
                     ),
-                    icon: const Icon(Icons.add, color: Colors.black),
+                    icon: Icon(LucideIcons.plus, color: Colors.black),
                     elevation: 4,
                   ),
                 )

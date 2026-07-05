@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/core/utils/vsp_feedback.dart';
@@ -61,11 +62,11 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         actions: [
           if (_userTeam != null)
             IconButton(
-              icon: const Icon(Icons.share_outlined, color: VSPColors.accent),
+              icon: Icon(LucideIcons.share2, color: VSPColors.accent),
               onPressed: () => _showTeamCard(context, _userTeam!),
             ),
           IconButton(
-            icon: const Icon(Icons.support_agent_outlined, color: VSPColors.textSecondary),
+            icon: Icon(LucideIcons.headphones, color: VSPColors.textSecondary),
             onPressed: () => SupportService().openSupport(context),
           ),
           const SizedBox(width: 8),
@@ -102,7 +103,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Icon(
-                      Icons.sports_soccer_outlined,
+                      LucideIcons.trophy,
                       color: VSPColors.textPrimary.withValues(alpha: 0.1),
                       size: 80,
                     ),
@@ -167,7 +168,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close),
+                  icon: Icon(LucideIcons.x),
                   label: Text(AppLocalizations.of(context)!.close),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.surfaceAlt,
@@ -181,7 +182,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                       AppLocalizations.of(context)!.shareTeamText(team.name, team.rankTitle),
                     );
                   },
-                  icon: const Icon(Icons.share),
+                  icon: Icon(LucideIcons.share2),
                   label: Text(AppLocalizations.of(context)!.shareLink),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,

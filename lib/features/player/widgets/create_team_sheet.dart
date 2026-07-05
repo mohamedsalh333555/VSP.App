@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -182,7 +183,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                  icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
                 ),
               ],
             ),
@@ -254,7 +255,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                                   : null,
                             ),
                             child: _selectedLogo == null 
-                                ? const Icon(Icons.add_photo_alternate_outlined, color: VSPColors.accent)
+                                ? Icon(LucideIcons.imagePlus, color: VSPColors.accent)
                                 : null,
                           ),
                           const SizedBox(width: VSPSpacing.md),
@@ -268,7 +269,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                   Icon(Icons.cloud_upload_outlined, color: VSPColors.background),
+                                   Icon(LucideIcons.uploadCloud, color: VSPColors.background),
                                    const SizedBox(width: VSPSpacing.sm),
                                    Text(
                                     _selectedLogo == null ? l10n.uploadLogo : l10n.changeLogo,
@@ -294,7 +295,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                         ),
                         TextButton.icon(
                           onPressed: _showAddPlayerSheet,
-                          icon: const Icon(Icons.add_circle_outline, size: 18, color: VSPColors.accent),
+                          icon: Icon(LucideIcons.plusCircle, size: 18, color: VSPColors.accent),
                           label: Text(l10n.addMemberBtn, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                         ),
                       ],
@@ -311,7 +312,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                         ),
                         child: Column(
                           children: [
-                            Icon(Icons.group_add_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.1), size: 40),
+                            Icon(LucideIcons.userPlus, color: VSPColors.textSecondary.withValues(alpha: 0.1), size: 40),
                             const SizedBox(height: 12),
                             Text(
                               l10n.noMembersAddedYet,
@@ -356,7 +357,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                                     onTap: () => setState(() => _teamMembers.remove(member)),
                                     child: const Padding(
                                       padding: EdgeInsets.all(4.0),
-                                      child: Icon(Icons.close, size: 14, color: VSPColors.textSecondary),
+                                      child: Icon(LucideIcons.x, size: 14, color: VSPColors.textSecondary),
                                     ),
                                   ),
                                 ],

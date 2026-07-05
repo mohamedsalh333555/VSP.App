@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -267,7 +268,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     return Row(
                       children: [
                         roundColumn,
-                        const Icon(Icons.arrow_forward_ios_rounded, color: VSPColors.accent, size: 14),
+                        Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 14),
                       ],
                     );
                   }),
@@ -290,7 +291,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                           child: const Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Icons.emoji_events, color: VSPColors.accent, size: 32),
+                              Icon(LucideIcons.trophy, color: VSPColors.accent, size: 32),
                               SizedBox(height: 8),
                               Text(
                                 '🏆 البطل',
@@ -556,17 +557,16 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     
                     setState(() => _isLoading = true);
                     try {
-                      // Create a placeholder team doc in Firestore
+                      // Create a placeholder team doc
                       final teamId = await DatabaseService().createTeam({
                         'name': teamName,
-                        'captainId': 'manual_entry',
                         'captainName': AppLocalizations.of(context)!.manualRegistration,
-                        'captainImage': '',
-                        'sport': _currentChampionship.sportType,
-                        'members': [],
-                        'memberNames': [],
-                        'memberImages': [],
-                        'createdAt': DateTime.now().toIso8601String(),
+                        'captainImageUrl': '',
+                        'logoUrl': '',
+                        'sportType': _currentChampionship.sportType,
+                        'governorate': _currentChampionship.governorate,
+                        'memberUids': ['manual_entry'],
+                        'date': 'Upcoming',
                       });
                       
                       if (teamId != null) {
@@ -646,7 +646,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
@@ -688,7 +688,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
                 child: Row(
                   children: [
-                    const Icon(Icons.groups, color: VSPColors.textSecondary, size: 18),
+                    Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 18),
                     const SizedBox(width: 8),
                     Text(AppLocalizations.of(context)!.joinedTeamsLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(
                       color: VSPColors.textSecondary, 
@@ -708,7 +708,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              const Icon(Icons.person_add_alt_1, color: VSPColors.accent, size: 14),
+                              Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(AppLocalizations.of(context)!.addTeam, style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.accent,
@@ -748,7 +748,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                       : null,
                                   backgroundColor: VSPColors.surfaceAlt,
                                   child: team.captainImageUrl.isEmpty
-                                      ? const Icon(Icons.group, color: VSPColors.textSecondary, size: 20)
+                                      ? Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 20)
                                       : null,
                                 ),
                                 const SizedBox(width: 12),
@@ -758,45 +758,105 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                     children: [
                                       Text(team.name, style: Theme.of(context).textTheme.titleSmall),
                                       Text(team.captainName, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                                    ],
-                                  ),
-                                ),
-                                // â”€â”€ Entry Fee Payment Badge â”€â”€
-                                GestureDetector(
-                                  onTap: () => _togglePaymentStatus(team.id),
-                                  child: AnimatedContainer(
-                                    duration: const Duration(milliseconds: 250),
-                                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                    decoration: BoxDecoration(
-                                      color: isPaid
-                                          ? VSPColors.success.withValues(alpha: 0.15)
-                                          : VSPColors.warning.withValues(alpha: 0.15),
-                                      borderRadius: BorderRadius.circular(VSPRadius.full),
-                                      border: Border.all(
-                                        color: isPaid
-                                            ? VSPColors.success.withValues(alpha: 0.5)
-                                            : VSPColors.warning.withValues(alpha: 0.5),
-                                      ),
-                                    ),
-                                    child: Row(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        Icon(
-                                          isPaid ? Icons.check_circle : Icons.pending,
-                                          size: 14,
-                                          color: isPaid ? VSPColors.success : VSPColors.warning,
-                                        ),
-                                        const SizedBox(width: 4),
-                                        Text(
-                                          isPaid ? AppLocalizations.of(context)!.paid : AppLocalizations.of(context)!.pending,
-                                          style: TextStyle(
-                                            color: isPaid ? VSPColors.success : VSPColors.warning,
-                                            fontSize: 11,
-                                            fontWeight: FontWeight.bold,
+                                      const SizedBox(height: 8),
+                                      Row(
+                                        children: [
+                                          // Entry Fee Payment Badge
+                                          GestureDetector(
+                                            onTap: () => _togglePaymentStatus(team.id),
+                                            child: AnimatedContainer(
+                                              duration: const Duration(milliseconds: 250),
+                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                              decoration: BoxDecoration(
+                                                color: isPaid
+                                                    ? VSPColors.success.withValues(alpha: 0.15)
+                                                    : VSPColors.warning.withValues(alpha: 0.15),
+                                                borderRadius: BorderRadius.circular(VSPRadius.full),
+                                                border: Border.all(
+                                                  color: isPaid
+                                                      ? VSPColors.success.withValues(alpha: 0.5)
+                                                      : VSPColors.warning.withValues(alpha: 0.5),
+                                                ),
+                                              ),
+                                              child: Row(
+                                                mainAxisSize: MainAxisSize.min,
+                                                children: [
+                                                  Icon(
+                                                    isPaid ? LucideIcons.checkCircle : LucideIcons.clock,
+                                                    size: 14,
+                                                    color: isPaid ? VSPColors.success : VSPColors.warning,
+                                                  ),
+                                                  const SizedBox(width: 4),
+                                                  Text(
+                                                    isPaid ? AppLocalizations.of(context)!.paid : AppLocalizations.of(context)!.pending,
+                                                    style: TextStyle(
+                                                      color: isPaid ? VSPColors.success : VSPColors.warning,
+                                                      fontSize: 11,
+                                                      fontWeight: FontWeight.bold,
+                                                    ),
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
                                           ),
-                                        ),
-                                      ],
-                                    ),
+                                          if (_currentChampionship.status == 'open') ...[
+                                            const SizedBox(width: 8),
+                                            IconButton(
+                                              icon: const Icon(LucideIcons.trash2, color: VSPColors.error, size: 18),
+                                              onPressed: () async {
+                                                final confirm = await showDialog<bool>(
+                                                  context: context,
+                                                  builder: (ctx) => AlertDialog(
+                                                    backgroundColor: VSPColors.surface,
+                                                    title: const Text('إلغاء انضمام الفريق', style: TextStyle(color: Colors.white)),
+                                                    content: Text('هل أنت متأكد من إلغاء انضمام فريق ${team.name} للبطولة؟'),
+                                                    actions: [
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, false),
+                                                        child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+                                                      ),
+                                                      TextButton(
+                                                        onPressed: () => Navigator.pop(ctx, true),
+                                                        child: const Text('تأكيد الحذف', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                                                      ),
+                                                    ],
+                                                  ),
+                                                );
+                                                if (confirm == true) {
+                                                  setState(() => _isLoading = true);
+                                                  try {
+                                                    final success = await TournamentRepository().leaveChampionship(_currentChampionship.id, team.id);
+                                                    if (success) {
+                                                      setState(() {
+                                                        final updatedList = List<String>.from(_currentChampionship.joinedTeams)..remove(team.id);
+                                                        final updatedPaid = List<String>.from(_currentChampionship.paidTeams)..remove(team.id);
+                                                        _currentChampionship = _currentChampionship.copyWith(
+                                                          joinedTeams: updatedList,
+                                                          paidTeams: updatedPaid,
+                                                        );
+                                                      });
+                                                      if (mounted) {
+                                                        ScaffoldMessenger.of(context).showSnackBar(
+                                                          const SnackBar(content: Text('تم إلغاء انضمام الفريق بنجاح.'), backgroundColor: VSPColors.success),
+                                                        );
+                                                      }
+                                                    }
+                                                  } catch (e) {
+                                                    if (mounted) {
+                                                      ScaffoldMessenger.of(context).showSnackBar(
+                                                        SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                                                      );
+                                                    }
+                                                  } finally {
+                                                    if (mounted) setState(() => _isLoading = false);
+                                                  }
+                                                }
+                                              },
+                                            ),
+                                          ],
+                                        ],
+                                      ),
+                                    ],
                                   ),
                                 ),
                               ],

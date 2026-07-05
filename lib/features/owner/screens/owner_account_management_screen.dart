@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -93,7 +94,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -141,7 +142,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
+                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'الموقع' : 'Location'),
@@ -154,7 +155,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      ),
                      child: Row(
                        children: [
-                         const Icon(Icons.location_on, color: VSPColors.accent, size: 28),
+                         Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
                          const SizedBox(width: 12),
                          Expanded(
                            child: Column(
@@ -174,7 +175,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                          _isLocating 
                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                          : IconButton(
-                           icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                           icon: Icon(LucideIcons.locate, color: VSPColors.accent),
                            onPressed: () async {
                              setState(() => _isLocating = true);
                              await authProvider.updateUserLocation();
@@ -274,7 +275,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       child: Row(
         children: [
-           const Icon(Icons.image_outlined, color: VSPColors.textPrimary, size: 24),
+           Icon(LucideIcons.image, color: VSPColors.textPrimary, size: 24),
            const SizedBox(width: VSPSpacing.md),
            Expanded(
              child: Column(
@@ -343,7 +344,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.location_on, color: VSPColors.accent, size: 14),
+                  Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 4),
                   Text(stadium.location, style: Theme.of(context).textTheme.labelSmall),
                 ],
@@ -375,9 +376,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                      children: [
                        Row(children: const [
-                         Icon(Icons.male, color: VSPColors.textPrimary, size: 14),
+                         Icon(LucideIcons.mars, color: VSPColors.textPrimary, size: 14),
                          SizedBox(width: 4),
-                         Icon(Icons.location_on_outlined, color: VSPColors.textPrimary, size: 14),
+                         Icon(LucideIcons.mapPin, color: VSPColors.textPrimary, size: 14),
                        ]),
                        Text('Cafeteria', style: Theme.of(context).textTheme.labelSmall),
                        Text('Seats K${(stadium.seatsCapacity/1000).toStringAsFixed(0)} person', style: Theme.of(context).textTheme.labelSmall),

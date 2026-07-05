@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -11,6 +12,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import '../../../shared/widgets/stadium_card.dart';
 
 class AccountScreen extends StatefulWidget {
   const AccountScreen({super.key});
@@ -100,7 +102,7 @@ class _AccountScreenState extends State<AccountScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -116,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             // Stadiums List (Horizontal)
             SizedBox(
-              height: 200,
+              height: 250,
               child: stadiums.isEmpty
                 ? Center(child: Text(isArabic ? 'لم يتم إضافة ملاعب بعد' : 'No stadiums added yet'))
                 : ListView.builder(
@@ -124,7 +126,29 @@ class _AccountScreenState extends State<AccountScreen> {
                     itemCount: stadiums.length,
                     itemBuilder: (context, index) => Padding(
                       padding: const EdgeInsets.only(right: 16),
-                      child: _buildStadiumCard(context, stadiums[index]),
+                      child: SizedBox(
+                        width: 320,
+                        child: StadiumCard(
+                          stadium: stadiums[index],
+                          isOwnerView: true,
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id),
+                              ),
+                            );
+                          },
+                          onEditTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id),
+                              ),
+                            );
+                          },
+                        ),
+                      ),
                     ),
                   ),
             ),
@@ -140,7 +164,7 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 16),
 
             _buildLabel(context, isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-            CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', enabled: false, suffixIcon: const Icon(Icons.lock_outline, size: 18, color: VSPColors.textSecondary)),
+            CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', enabled: false, suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)),
             const SizedBox(height: 16),
 
             _buildLabel(context, isArabic ? 'الموقع' : 'Location'),
@@ -153,7 +177,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.location_on, color: VSPColors.accent, size: 28),
+                  Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -173,7 +197,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   _isLocating 
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                   : IconButton(
-                    icon: const Icon(Icons.my_location, color: VSPColors.accent),
+                    icon: Icon(LucideIcons.locate, color: VSPColors.accent),
                     onPressed: () async {
                       setState(() => _isLocating = true);
                       await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
@@ -225,104 +249,6 @@ class _AccountScreenState extends State<AccountScreen> {
     );
   }
 
-  Widget _buildStadiumCard(BuildContext context, Stadium stadium) {
-    return SizedBox(
-      width: 320,
-      height: 200,
-      child: Stack(
-        children: [
-            VSPCard(
-              width: 320,
-              height: 200,
-              padding: EdgeInsets.zero,
-              margin: EdgeInsets.zero,
-              borderRadius: VSPRadius.lg,
-              border: Border.all(color: VSPColors.accent),
-              child: Stack(
-                children: [
-                    ShimmerImage(
-                      imageUrl: stadium.imageUrl,
-                      width: 320,
-                      height: 200,
-                      borderRadius: VSPRadius.lg,
-                    ),
-                    Container(
-                      width: 320,
-                      height: 200,
-                      decoration: BoxDecoration(
-                        color: Colors.black.withValues(alpha: 0.4),
-                        borderRadius: BorderRadius.circular(VSPRadius.lg),
-                      ),
-                    ),
-            Positioned(
-              top: 10,
-              left: 10,
-              child: Row(
-                children: [
-                  const Icon(Icons.location_on, color: VSPColors.accent, size: 16),
-                  const SizedBox(width: 4),
-                  Text(stadium.location, style: Theme.of(context).textTheme.titleSmall),
-                ],
-              ),
-            ),
-            Positioned(
-              top: 10,
-              right: 10,
-              child: GestureDetector(
-                onTap: () {
-                   Navigator.push(context, MaterialPageRoute(builder: (_) => const AddStadiumWizard())); 
-                },
-                child: const Icon(Icons.edit_square, color: VSPColors.accent),
-              ),
-            ),
-            Positioned(
-              bottom: 10,
-              left: 10,
-              right: 10,
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Expanded(child: Text(stadium.name, style: Theme.of(context).textTheme.bodySmall, maxLines: 1, overflow: TextOverflow.ellipsis)),
-                            Text('Seats ${stadium.seatsCapacity} person', style: Theme.of(context).textTheme.labelSmall),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Row(
-                              children: [
-                                Text('Baths', style: Theme.of(context).textTheme.labelSmall),
-                                const SizedBox(width: 4),
-                                const Icon(Icons.male, color: VSPColors.textPrimary, size: 12),
-                                const Icon(Icons.female, color: VSPColors.textPrimary, size: 12),
-                              ],
-                            ),
-                            Text(stadium.cafeteria > 0 ? 'Cafeteria' : 'No Cafeteria', style: Theme.of(context).textTheme.labelSmall),
-                          ],
-                        ),
-                        const SizedBox(height: 4),
-                        Row(
-                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                          children: [
-                            Text('Price ${stadium.pricePerHour} EGP', style: Theme.of(context).textTheme.titleSmall?.copyWith(color: VSPColors.accent)),
-                            Text(stadium.area, style: Theme.of(context).textTheme.labelSmall),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-        ],
-      ),
-    );
-  }
-
   Widget _buildLabel(BuildContext context, String text) {
      return Padding(
         padding: const EdgeInsets.only(bottom: VSPSpacing.xs),
@@ -342,7 +268,7 @@ class _AccountScreenState extends State<AccountScreen> {
       border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
       child: Row(
         children: [
-          const Icon(Icons.image_outlined, color: VSPColors.textPrimary),
+          Icon(LucideIcons.image, color: VSPColors.textPrimary),
           const SizedBox(width: VSPSpacing.md),
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,

@@ -1,4 +1,5 @@
 ﻿import 'dart:io';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -110,7 +111,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -152,9 +153,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     imageUrl: userProfileUrl,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => const CircularProgressIndicator(color: VSPColors.accent),
-                                    errorWidget: (context, url, error) => const Icon(Icons.person, size: 50, color: VSPColors.textSecondary),
+                                    errorWidget: (context, url, error) => Icon(LucideIcons.user, size: 50, color: VSPColors.textSecondary),
                                   )
-                                : const Icon(Icons.person, size: 50, color: VSPColors.textSecondary),
+                                : Icon(LucideIcons.user, size: 50, color: VSPColors.textSecondary),
                       ),
                     ),
                     Container(
@@ -164,7 +165,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: VSPColors.background, width: 3),
                       ),
-                      child: const Icon(Icons.camera_alt, size: 16, color: Colors.black),
+                      child: Icon(LucideIcons.camera, size: 16, color: Colors.black),
                     ),
                   ],
                 ),
@@ -180,7 +181,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               CustomTextField(
                 controller: _nameController,
                 hintText: AppLocalizations.of(context)!.enterName,
-                prefixIcon: Icons.person_outline,
+                prefixIcon: LucideIcons.user,
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -194,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _phoneController,
                 hintText: AppLocalizations.of(context)!.enterPhone,
                 keyboardType: TextInputType.phone,
-                prefixIcon: Icons.phone_outlined,
+                prefixIcon: LucideIcons.phone,
               ),
 
               const SizedBox(height: VSPSpacing.md),
@@ -216,7 +217,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: DropdownButton<String>(
                     value: _selectedPosition,
                     dropdownColor: VSPColors.surface,
-                    icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+                    icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
                     isExpanded: true,
                     style: Theme.of(context).textTheme.bodyMedium,
                     items: _positions.map((String pos) {

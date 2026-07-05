@@ -1,4 +1,5 @@
 ﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -74,7 +75,7 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;
     return VSPEmptyState(
-      icon: Icons.stadium_outlined,
+      icon: LucideIcons.building,
       title: l10n.stadiumsEmptyTitle,
       subtitle: l10n.stadiumsEmptySubtitle,
     );

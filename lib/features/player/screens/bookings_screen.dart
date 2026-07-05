@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
@@ -57,7 +57,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
         centerTitle: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+                icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -181,7 +181,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;
     return VSPEmptyState(
-      icon: Icons.calendar_today_outlined,
+      icon: LucideIcons.calendar,
       title: l10n.noBookings,
       subtitle: l10n.noBookingsSubtitle,
       buttonText: l10n.exploreStadiums,
@@ -239,7 +239,7 @@ class _BookingCard extends StatelessWidget {
                         )
                       : Container(
                           color: VSPColors.surface,
-                          child: const Icon(LucideIcons.mapPin, color: VSPColors.accent),
+                          child: Icon(LucideIcons.mapPin, color: VSPColors.accent),
                         ),
                 ),
               ),
@@ -319,7 +319,7 @@ class _BookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(Icons.sports_soccer, color: VSPColors.warning, size: 20),
+                  Icon(LucideIcons.trophy, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
                     l10n.vsOpponent(booking.opponentTeamName ?? ""),
@@ -423,7 +423,7 @@ class _BookingCard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.timerReset, color: VSPColors.textSecondary, size: 16),
+              Icon(LucideIcons.timer, color: VSPColors.textSecondary, size: 16),
               const SizedBox(width: 8),
               Text(
                 isArabic ? 'انتهت مهلة إدخال النتيجة (30 يوم)' : 'Result submission period expired (30 days)',
@@ -471,7 +471,7 @@ class _BookingCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.timerReset, color: VSPColors.textSecondary, size: 16),
+                Icon(LucideIcons.timer, color: VSPColors.textSecondary, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   isArabic ? 'انتهت مهلة الرد على النتيجة' : 'Opponent response period expired',
@@ -680,7 +680,7 @@ class _BookingCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 18),
+                    Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -756,6 +756,8 @@ class _BookingCard extends StatelessWidget {
     );
   }
 }
+
+
 
 
 

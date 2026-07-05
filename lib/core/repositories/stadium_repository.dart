@@ -80,10 +80,15 @@ class StadiumRepository {
       sanitizedData.remove('created_at');
 
       final price = sanitizedData['pricePerHour'] ?? sanitizedData['price_per_hour'] ?? 0.0;
+      final features = sanitizedData['features'] ?? {};
+      final String sport = features['sportType'] ?? sanitizedData['sportType'] ?? sanitizedData['type'] ?? 'Football';
+      final String originalDesc = sanitizedData['description'] ?? sanitizedData['notes'] ?? '';
+      final String descWithSport = '$originalDesc|Sport:$sport';
+
       final pgData = {
         'name': sanitizedData['name'],
         'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'],
-        'description': sanitizedData['description'] ?? sanitizedData['notes'] ?? '',
+        'description': descWithSport,
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'city': sanitizedData['area'] ?? sanitizedData['location'] ?? 'Cairo',
         'location': sanitizedData['address'] ?? sanitizedData['location'] ?? '',
@@ -122,7 +127,11 @@ class StadiumRepository {
 
       final pgData = <String, dynamic>{};
       if (securedData.containsKey('name')) pgData['name'] = securedData['name'];
-      if (securedData.containsKey('description')) pgData['description'] = securedData['description'];
+      if (securedData.containsKey('description') || securedData.containsKey('sportType') || securedData.containsKey('type')) {
+        final String sport = securedData['sportType'] ?? securedData['type'] ?? 'Football';
+        final String desc = securedData['description'] ?? '';
+        pgData['description'] = '$desc|Sport:$sport';
+      }
       if (securedData.containsKey('governorate')) pgData['governorate'] = securedData['governorate'];
       if (securedData.containsKey('address')) pgData['location'] = securedData['address'];
       if (securedData.containsKey('location')) pgData['location'] = securedData['location'];

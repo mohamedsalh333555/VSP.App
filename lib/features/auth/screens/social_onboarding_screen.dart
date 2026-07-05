@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
@@ -115,7 +116,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
+            icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
             onPressed: () => auth.signOut(),
           ),
           actions: const [],
@@ -160,7 +161,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 CustomTextField(
                   controller: _nameController,
                   hintText: 'Enter your full name',
-                  prefixIcon: Icons.person_outline,
+                  prefixIcon: LucideIcons.user,
                 ),
                 const SizedBox(height: 20),
                 _buildReadOnlyField('Email Address', auth.userModel?.email ?? auth.currentUser?.email ?? 'N/A'),
@@ -171,7 +172,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                   controller: _phoneController,
                   hintText: '01xxxxxxxxx',
                   keyboardType: TextInputType.phone,
-                  prefixIcon: Icons.phone_outlined,
+                  prefixIcon: LucideIcons.phone,
                 ),
 
                 const SizedBox(height: 20),
@@ -192,7 +193,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                       child: DropdownButton<String>(
                         value: _selectedPosition,
                         dropdownColor: VSPColors.surface,
-                        icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+                        icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
                         isExpanded: true,
                         style: Theme.of(context).textTheme.bodyMedium,
                         onChanged: (String? newValue) {
@@ -284,7 +285,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         child: DropdownButton<String>(
           value: _selectedGovernorate,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {

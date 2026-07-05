@@ -1,4 +1,4 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
@@ -141,12 +141,29 @@ class Stadium {
     final int ppt = data['players_per_team'] ?? data['playersPerTeam'] ?? parsedPPT;
     final int tfc = data['total_field_capacity'] ?? data['totalFieldCapacity'] ?? (ppt * 2);
 
+    final String rawDesc = data['description'] ?? '';
+    String sportType = 'Football';
+    String cleanDesc = rawDesc;
+    if (rawDesc.contains('|Sport:')) {
+      final parts = rawDesc.split('|Sport:');
+      cleanDesc = parts[0];
+      sportType = parts[1];
+    }
+
+    final String rawNotes = data['notes'] ?? '';
+    String cleanNotes = rawNotes;
+    if (rawNotes.contains('|Sport:')) {
+      final parts = rawNotes.split('|Sport:');
+      cleanNotes = parts[0];
+      sportType = parts[1];
+    }
+
     return Stadium(
       id: id,
       name: data['name'] ?? '',
       location: data['location'] ?? data['address'] ?? '',
       governorate: data['governorate'], // ✅ Added for filtering
-      type: data['type'] ?? 'Football',
+      type: sportType,
       size: data['size'] ?? '5 VS 5',
       imageUrl: data['imageUrl'] ?? data['image_url'] ?? '',
       images: data['images'] != null 
@@ -165,7 +182,7 @@ class Stadium {
       address: data['address'] ?? '',
       rating: (data['rating'] ?? 0.0).toDouble(),
       reviewsCount: data['reviewsCount'] ?? data['reviews_count'] ?? 0,
-      description: data['description'] ?? '',
+      description: cleanDesc,
       features: data['features'] ?? {},
       policies: (data['policies'] is List) ? List<String>.from(data['policies']) : [],
       pitchCondition: data['pitchCondition'] ?? 'Good',

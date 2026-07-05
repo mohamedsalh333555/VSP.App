@@ -257,7 +257,7 @@ class NotificationService {
       try {
         await DatabaseService().sendNotification(uid, appNotif);
       } catch (e) {
-        VSPLogger.e('Error saving FCM to Firestore', e);
+        VSPLogger.e('Error saving FCM to Supabase', e);
       }
     }
   }
@@ -312,7 +312,7 @@ class NotificationService {
       try {
         await DatabaseService().sendNotification(uid, appNotif);
       } catch (e) {
-        VSPLogger.e('Error saving booking confirmation to Firestore', e);
+        VSPLogger.e('Error saving booking confirmation to Supabase', e);
       }
     }
   }

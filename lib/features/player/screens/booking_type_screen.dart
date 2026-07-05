@@ -1,4 +1,5 @@
 ﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -73,7 +74,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         centerTitle: true,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -259,7 +260,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(Icons.warning_amber_rounded, color: Color(0xFFFF6B00), size: 38),
+                Icon(LucideIcons.alertTriangle, color: Color(0xFFFF6B00), size: 38),
                 const SizedBox(height: 20),
                 const Text(
                   'تنبيه مهم قبل المتابعة',
@@ -267,7 +268,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                 ),
                 const SizedBox(height: 20),
                 _warningBullet(
-                  icon: Icons.money_off_rounded,
+                  icon: LucideIcons.dollarSign,
                   text: 'المنصة لا تضمن دفع حصص اللاعبين الغائبين (No-Show). المسؤولية المالية الكاملة تقع على عاتق صاحب الحجز.',
                 ),
                 const SizedBox(height: 28),
@@ -362,7 +363,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                               Text(title, style: Theme.of(context).textTheme.displaySmall),
                             ],
                           ),
-                          if (isSelected) const Icon(Icons.check_circle, color: VSPColors.accent),
+                          if (isSelected) Icon(LucideIcons.checkCircle, color: VSPColors.accent),
                         ],
                       ),
                       const SizedBox(height: 4),
@@ -391,7 +392,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         title: AppLocalizations.of(context)!.createTeamToCompete,
         subtitle: isArabic ? 'أنشئ فريقاً يضم 5 لاعبين على الأقل لتتمكن من اللعب التنافسي.' : 'Create a team with 5+ players to compete.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
-        icon: Icons.lock_outline,
+        icon: LucideIcons.lock,
       );
     }
     
@@ -402,7 +403,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         title: AppLocalizations.of(context)!.teamIncomplete,
         subtitle: isArabic ? 'الفريق غير مكتمل، تحتاج لـ 5 لاعبين على الأقل.' : 'Team is incomplete, need 5+ players.',
         imageUrl: 'https://images.unsplash.com/photo-1526232761682-d26e03ac148e?w=800&q=80',
-        icon: Icons.warning_amber_rounded,
+        icon: LucideIcons.alertTriangle,
       );
     }
 
@@ -416,7 +417,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       title: AppLocalizations.of(context)!.challengeMatch,
       subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle,
       imageUrl: 'https://images.unsplash.com/photo-1529900748604-07564a03e7a6?w=800&q=80',
-      icon: Icons.emoji_events_outlined,
+      icon: LucideIcons.trophy,
     );
   }
 
@@ -437,7 +438,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
           children: [
             const Row(
               children: [
-                Icon(Icons.gavel_rounded, color: VSPColors.error),
+                Icon(LucideIcons.gavel, color: VSPColors.error),
                 SizedBox(width: 10),
                 Text('محظور من التحديات المصنّفة', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
               ],

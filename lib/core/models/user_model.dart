@@ -45,6 +45,18 @@ class UserModel {
 
   // Create UserModel from Firestore document
   factory UserModel.fromFirestore(Map<String, dynamic> data) {
+    final rawAdditional = data['additionalData'] ?? data['additional_data'];
+    final Map<String, dynamic> addData = rawAdditional is Map<String, dynamic>
+        ? Map<String, dynamic>.from(rawAdditional)
+        : <String, dynamic>{};
+    
+    if (data.containsKey('last_warning')) {
+      addData['last_warning'] = data['last_warning'];
+    }
+    if (data.containsKey('rejection_reason')) {
+      addData['rejection_reason'] = data['rejection_reason'];
+    }
+
     return UserModel(
       uid: data['id'] ?? data['uid'] ?? '',
       email: data['email'] ?? '',
@@ -53,7 +65,7 @@ class UserModel {
       phone: data['phone'],
       profileImageUrl: data['profile_image_url'] ?? data['profileImageUrl'],
       position: data['position'],
-      additionalData: data['additionalData'] ?? data['additional_data'],
+      additionalData: addData.isNotEmpty ? addData : null,
       createdAt: (data['created_at'] ?? data['createdAt']) != null
           ? ((data['created_at'] ?? data['createdAt']) is String
               ? DateTime.tryParse(data['created_at'] ?? data['createdAt'])

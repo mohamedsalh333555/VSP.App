@@ -11,7 +11,11 @@ class TournamentRepository {
   // ==================== CHAMPIONSHIPS ====================
   
   // Get all championships
-  Stream<List<Championship>> getChampionshipsStream({String? governorate, String? sportType}) {
+  Stream<List<Championship>> getChampionshipsStream({
+    String? governorate, 
+    String? sportType,
+    bool isOwner = false,
+  }) {
     return _supabase
         .from('championships')
         .stream(primaryKey: ['id'])
@@ -23,7 +27,14 @@ class TournamentRepository {
             if (sportType != null && sportType.isNotEmpty && (data['sport_type'] ?? data['sportType']) != sportType) {
               return null;
             }
-            return Championship.fromFirestore(data, data['id'].toString());
+            final champ = Championship.fromFirestore(data, data['id'].toString());
+            if (!isOwner && champ.status == 'completed') {
+              final daysSinceEnd = DateTime.now().difference(champ.endDate).inDays;
+              if (daysSinceEnd > 5) {
+                return null;
+              }
+            }
+            return champ;
           }).whereType<Championship>().toList();
         });
   }
@@ -163,8 +174,13 @@ class TournamentRepository {
     }
   }
 
-  // Join a championship with 5-player rule
-  Future<bool> joinChampionship(String championshipId, String teamId, {bool skipMemberCheck = false}) async {
+  Future<bool> joinChampionship(
+    String championshipId, 
+    String teamId, {
+    List<String> selectedPlayerIds = const [],
+    List<String> offlineGuestNames = const [],
+    bool skipMemberCheck = false,
+  }) async {
     try {
       final team = await TeamRepository().getTeam(teamId);
       if (team == null) throw Exception('المجموعة لا توجد.');
@@ -198,6 +214,14 @@ class TournamentRepository {
           .from('championships')
           .update({'joined_teams': updatedJoined})
           .eq('id', championshipId);
+
+      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد
+      await _supabase.from('championship_rosters').insert({
+        'championship_id': championshipId,
+        'team_id': teamId,
+        'player_ids': selectedPlayerIds,
+        'guest_names': offlineGuestNames,
+      });
 
       return true;
     } catch (e) {
@@ -408,6 +432,9 @@ class TournamentRepository {
           .update({'status': 'ongoing'})
           .eq('id', championshipId);
           
+      // Trigger notifications silently in the background
+      _sendDrawNotifications(championshipId);
+          
       debugPrint('✅ Flexible Bracket Generated for $championshipId: $totalTeams teams');
     } catch (e) {
       debugPrint('Error generating fixtures: $e');
@@ -550,5 +577,100 @@ class TournamentRepository {
           });
           return matches;
         });
+  }
+
+  Future<bool> leaveChampionship(String championshipId, String teamId) async {
+    try {
+      final champResponse = await _supabase
+          .from('championships')
+          .select('joined_teams, paid_teams')
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champResponse == null) throw Exception('البطولة لا توجد.');
+
+      final List<String> joinedTeams = List<String>.from(champResponse['joined_teams'] ?? champResponse['joinedTeams'] ?? []);
+      final List<String> paidTeams = List<String>.from(champResponse['paid_teams'] ?? champResponse['paidTeams'] ?? []);
+
+      joinedTeams.remove(teamId);
+      paidTeams.remove(teamId);
+
+      await _supabase
+          .from('championships')
+          .update({
+            'joined_teams': joinedTeams,
+            'paid_teams': paidTeams,
+          })
+          .eq('id', championshipId);
+
+      return true;
+    } catch (e) {
+      debugPrint('Error leaving championship: $e');
+      return false;
+    }
+  }
+
+  Future<void> _sendDrawNotifications(String championshipId) async {
+    try {
+      // 1. Get the championship name
+      final champ = await _supabase
+          .from('championships')
+          .select('name')
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champ == null) return;
+      final champName = champ['name']?.toString() ?? 'البطولة';
+
+      // 2. Fetch all matches of this championship
+      final response = await _supabase
+          .from('tournament_matches')
+          .select()
+          .eq('championship_id', championshipId);
+      
+      final matchesList = response as List;
+      for (final matchData in matchesList) {
+        final String? homeId = matchData['home_team_id'];
+        final String? awayId = matchData['away_team_id'];
+        final String? homeName = matchData['home_team_name'];
+        final String? awayName = matchData['away_team_name'];
+
+        if (homeId != null && homeId.isNotEmpty && awayId != null && awayId.isNotEmpty) {
+          // Send notification to home team members
+          final homeTeam = await TeamRepository().getTeam(homeId);
+          if (homeTeam != null) {
+            for (final uid in homeTeam.memberUids) {
+              await NotificationRepository().sendNotification(
+                uid,
+                AppNotification(
+                  id: '',
+                  title: "🏆 تم إجراء قرعة البطولة!",
+                  body: "فريقك سيواجه فريق ($awayName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
+                  type: "info",
+                  createdAt: DateTime.now(),
+                ),
+              );
+            }
+          }
+
+          // Send notification to away team members
+          final awayTeam = await TeamRepository().getTeam(awayId);
+          if (awayTeam != null) {
+            for (final uid in awayTeam.memberUids) {
+              await NotificationRepository().sendNotification(
+                uid,
+                AppNotification(
+                  id: '',
+                  title: "🏆 تم إجراء قرعة البطولة!",
+                  body: "فريقك سيواجه فريق ($homeName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
+                  type: "info",
+                  createdAt: DateTime.now(),
+                ),
+              );
+            }
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error sending draw notifications: $e');
+    }
   }
 }

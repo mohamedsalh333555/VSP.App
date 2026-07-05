@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -91,7 +92,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         actions: [
           if (_searchController.text.isNotEmpty)
             IconButton(
-              icon: const Icon(Icons.clear, color: VSPColors.textSecondary),
+              icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
               onPressed: () {
                 _searchController.clear();
                 _performSearch('');
@@ -156,23 +157,23 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             final item = items[index];
             String name = '';
             String sub = '';
-            IconData icon = Icons.help;
+            IconData icon = LucideIcons.helpCircle;
             VoidCallback? onTap;
 
             if (item is Stadium) {
               name = item.name;
               sub = item.location;
-              icon = Icons.location_on;
+              icon = LucideIcons.mapPin;
               onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => StadiumDetailsScreen(stadium: item)));
             } else if (item is Team) {
               name = item.name;
               sub = '${item.sportType} - ${item.governorate}';
-              icon = Icons.group;
+              icon = LucideIcons.users;
               // TODO: Navigate to TeamProfile
             } else if (item is Championship) {
               name = item.name;
               sub = AppLocalizations.of(context)!.prizeLabel(item.grandPrize.toString());
-              icon = Icons.emoji_events;
+              icon = LucideIcons.trophy;
               // TODO: Navigate to ChampionshipDetails
               onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => ChampionshipDetailsScreen(championship: item)));
             }

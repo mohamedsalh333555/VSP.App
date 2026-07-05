@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:google_mobile_ads/google_mobile_ads.dart';
@@ -168,7 +169,7 @@ class _VSPNativeAdState extends State<VSPNativeAd> {
                     ),
                   ),
                 ),
-                const Icon(Icons.info_outline, color: VSPColors.textSecondary, size: 16),
+                Icon(LucideIcons.info, color: VSPColors.textSecondary, size: 16),
               ],
             ),
             const Spacer(),

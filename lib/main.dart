@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -15,7 +16,6 @@ import 'core/providers/auth_provider.dart' as app_auth;
 import 'core/providers/stadium_provider.dart';
 import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
-import 'core/utils/data_migration.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'core/config/app_config.dart' as app_config;
@@ -87,10 +87,7 @@ void main() async {
       VSPLogger.i("✅ Firebase initialized (Crashlytics disabled in debug mode)");
     }
     
-    // DATA MIGRATIONS & REPAIR
-    if (app_config.AppConfig.demoMode) {
-      await DataMigration().seedDatabase(); 
-    }
+
   } catch (e) {
     VSPLogger.e("❌ FIREBASE INIT FAILED", e);
   }
@@ -122,7 +119,7 @@ void main() async {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(Icons.error_outline_rounded, size: 80, color: VSPColors.error),
+              Icon(LucideIcons.alertCircle, size: 80, color: VSPColors.error),
               const SizedBox(height: VSPSpacing.xl),
               Text(
                 'Something went wrong! 🎮',

@@ -1,3 +1,5 @@
+import 'owner_tournament_dashboard_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -7,6 +9,7 @@ import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 class CreateTournamentScreen extends StatefulWidget {
   const CreateTournamentScreen({super.key});
@@ -18,12 +21,12 @@ class CreateTournamentScreen extends StatefulWidget {
 class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   // Controllers
   final _nameController = TextEditingController();
-  final _winningPointsController = TextEditingController(text: '3');
-  final _breakEvenPointsController = TextEditingController(text: '1');
-  final _lossPointsController = TextEditingController(text: '0');
-  final _durationController = TextEditingController(text: '30');
-  final _feesController = TextEditingController(text: '1000');
-  final _prizeController = TextEditingController(text: '5000');
+  final _winningPointsController = TextEditingController();
+  final _breakEvenPointsController = TextEditingController();
+  final _lossPointsController = TextEditingController();
+  final _durationController = TextEditingController();
+  final _feesController = TextEditingController();
+  final _prizeController = TextEditingController();
   final _instructionsController = TextEditingController();
 
   @override
@@ -114,22 +117,22 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         'startDate': _startDate.toIso8601String(),
         'endDate': _endDate.toIso8601String(),
         'governorate': auth.governorate,
-        'ownerId': auth.currentUser?.uid,
+        'ownerId': auth.userModel?.uid,
         'image': '', // Removed fake tournament image
         'teamsCount': int.parse(_selectedNumTeams),
         'maxTeams': int.parse(_selectedNumTeams),
         'joinedTeams': [],
-        'prize': _prizeController.text.trim(),
-        'fees': _feesController.text.trim(),
+        'grandPrize': double.tryParse(_prizeController.text.trim()) ?? 5000.0,
+        'entryFee': double.tryParse(_feesController.text.trim()) ?? 500.0,
         'rules': _instructionsController.text.trim(),
         'paymentMethods': payments,
         'settings': {
           'maxPlayers': _selectedMaxPlayers,
           'minPlayers': _selectedMinPlayers,
-          'winningPoints': _winningPointsController.text.trim(),
-          'drawPoints': _breakEvenPointsController.text.trim(),
-          'lossPoints': _lossPointsController.text.trim(),
-          'matchDuration': _durationController.text.trim(),
+          'winningPoints': int.tryParse(_winningPointsController.text.trim()) ?? 3,
+          'drawPoints': int.tryParse(_breakEvenPointsController.text.trim()) ?? 1,
+          'lossPoints': int.tryParse(_lossPointsController.text.trim()) ?? 0,
+          'matchDuration': int.tryParse(_durationController.text.trim()) ?? 30,
           'isBackAndForth': _selectedBackForth == 'Yes',
           'trophyMedals': _trophyMedals,
           'redCardSuspension': _redCardSuspension,
@@ -142,6 +145,18 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       if (id != null && mounted) {
         Navigator.pop(context);
         VSPFeedback.showSuccess(context, 'Tournament Created Successfully!');
+        
+        try {
+          final newChampList = await TournamentRepository().getChampionshipsStream(sportType: _selectedSport).first;
+          final newChamp = newChampList.firstWhere((c) => c.id == id);
+          if (mounted) {
+            Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerTournamentDashboardScreen(championship: newChamp)));
+          }
+        } catch (e) {
+          // Fallback
+        }
+      } else if (id == null && mounted) {
+        VSPFeedback.showError(context, 'فشل إنشاء البطولة. يرجى التحقق من دورك والاتصال بالإنترنت.');
       }
     } catch (e) {
       if (mounted) {
@@ -160,7 +175,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -236,7 +251,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    const Icon(Icons.camera_alt_outlined, color: VSPColors.accent, size: 32),
+                    Icon(LucideIcons.camera, color: VSPColors.accent, size: 32),
                     const SizedBox(height: VSPSpacing.xs),
                     Text('Upload Image', style: Theme.of(context).textTheme.titleSmall),
                     Text('JPG, JPEG, PNG Less Than 10MB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
@@ -260,19 +275,19 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               // --- Scoring Rules ---
               const VSPSectionTitle('Scoring Rules'),
               _buildInputLabel('Winning Points'),
-              _buildTextField(_winningPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildTextField(_winningPointsController, hint: 'e.g. 3', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Break-Even Points'),
-              _buildTextField(_breakEvenPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildTextField(_breakEvenPointsController, hint: 'e.g. 1', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Loss Points'),
-              _buildTextField(_lossPointsController, maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildTextField(_lossPointsController, hint: 'e.g. 0', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 24),
 
               // --- Match Settings ---
               const VSPSectionTitle('Match Settings'),
               _buildInputLabel('Duration Of The Match'),
-              _buildTextField(_durationController, maxLength: 3, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]), // Could be dropdown or text with suffix
+              _buildTextField(_durationController, hint: 'e.g. 30', maxLength: 3, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]), // Could be dropdown or text with suffix
                const SizedBox(height: 16),
               _buildInputLabel('Back And Forth'),
               _buildDropdown(['Yes', 'No'], _selectedBackForth, (v) => setState(() => _selectedBackForth = v!)),
@@ -287,10 +302,10 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               // --- Fees & Prize ---
               const VSPSectionTitle('Fees & Prize'),
               _buildInputLabel('Team Subscription Fees'),
-              _buildTextField(_feesController, maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildTextField(_feesController, hint: 'e.g. 1000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Grand Prize'),
-              _buildTextField(_prizeController, maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildTextField(_prizeController, hint: 'e.g. 5000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
               _buildInputLabel('Payment Method'),
               _buildDropdown(['Cash', 'Online', 'Both'], _selectedPaymentMethod, (v) => setState(() => _selectedPaymentMethod = v!)),
@@ -399,26 +414,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
   }) {
-    return Container(
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-      ),
-      child: TextField(
-        controller: controller,
-        maxLength: maxLength,
-        keyboardType: keyboardType,
-        inputFormatters: inputFormatters,
-        style: Theme.of(context).textTheme.bodyMedium,
-        decoration: InputDecoration(
-          border: InputBorder.none,
-          counterText: "",
-          contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-          isDense: true,
-          hintText: hint,
-          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-        ),
-      ),
+    return CustomTextField(
+      controller: controller,
+      hintText: hint,
+      maxLength: maxLength,
+      keyboardType: keyboardType ?? TextInputType.text,
+      inputFormatters: inputFormatters,
     );
   }
 
@@ -433,7 +434,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           items: items.map((String item) {
@@ -462,7 +463,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             "${date.day}/${date.month}/${date.year}",
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          const Icon(Icons.calendar_today, color: VSPColors.accent, size: 18),
+          Icon(LucideIcons.calendar, color: VSPColors.accent, size: 18),
         ],
       ),
     );

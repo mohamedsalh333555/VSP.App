@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -142,7 +143,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                       color: VSPColors.surfaceAlt,
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(Icons.groups_outlined, color: VSPColors.accent),
+                    child: Icon(LucideIcons.users, color: VSPColors.accent),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -184,7 +185,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                             ),
                           ),
                           SizedBox(width: 4),
-                          Icon(Icons.refresh, size: 14, color: VSPColors.background), 
+                          Icon(LucideIcons.refreshCw, size: 14, color: VSPColors.background), 
                         ],
                       ),
                     ),
@@ -198,7 +199,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             id: 'Personal',
             title: 'Personal Booking',
             subtitle: 'Booking The Pitch For Yourself Only',
-            iconData: Icons.person_outline, // Replaced fake Unsplash image with neutral icon
+            iconData: LucideIcons.user, // Replaced fake Unsplash image with neutral icon
             isAvatar: true,
           ),
 
@@ -217,7 +218,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             id: 'Challenge',
             title: 'Challenge',
             subtitle: hasTeam ? 'Challenge Another Team' : "You Don't Have A Team.",
-            iconData: Icons.bolt,
+            iconData: LucideIcons.zap,
             enabled: hasTeam,
           ),
 

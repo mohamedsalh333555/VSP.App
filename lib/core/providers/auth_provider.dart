@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
 import 'package:shared_preferences/shared_preferences.dart';
@@ -133,6 +133,13 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     
     try {
+      final prefs = await SharedPreferences.getInstance();
+      final pendingRole = prefs.getString('pending_oauth_role');
+      if (pendingRole != null) {
+        _userType = pendingRole; // استعادة الخيار المفقود
+        await prefs.remove('pending_oauth_role'); // حذفه فوراً
+      }
+
       Map<String, dynamic>? userData;
       int retries = 3;
       while (retries > 0) {
@@ -388,6 +395,9 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_oauth_role', _userType ?? 'player');
+
       final result = await _authService.signInWithGoogle(role: _userType);
 
       if (result['success']) {
@@ -430,6 +440,9 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_oauth_role', _userType ?? 'player');
+
       final result = await _authService.signInWithApple(role: _userType);
 
       if (result['success']) {

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -123,6 +124,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             child: StreamBuilder<List<Championship>>(
               stream: TournamentRepository().getChampionshipsStream(
                 sportType: _selectedSport,
+                isOwner: true,
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -150,7 +152,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
                 if (filtered.isEmpty) {
                   return VSPEmptyState(
-                    icon: Icons.emoji_events_outlined,
+                    icon: LucideIcons.trophy,
                     title: l10n.noTournamentsTitle,
                     subtitle: l10n.noTournamentsSubtitle,
                     buttonText: l10n.createYourFirst,
@@ -222,7 +224,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
+          icon: Icon(LucideIcons.chevronDown, color: VSPColors.accent),
           style: Theme.of(context).textTheme.bodySmall,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
@@ -270,7 +272,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   border: Border.all(color: VSPColors.divider, width: 1),
                 ),
                 child: tournament.imageUrl.isEmpty 
-                  ? Icon(Icons.emoji_events, color: VSPColors.textSecondary.withValues(alpha: 0.3)) 
+                  ? Icon(LucideIcons.trophy, color: VSPColors.textSecondary.withValues(alpha: 0.3)) 
                   : null,
               ),
               const SizedBox(width: 12),
@@ -310,7 +312,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                       ),
-                      child: const Icon(Icons.edit_outlined, color: VSPColors.accent, size: 18),
+                      child: Icon(LucideIcons.edit2, color: VSPColors.accent, size: 18),
                     ),
                    ),
                    const SizedBox(width: 8),
@@ -334,7 +336,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                          shape: BoxShape.circle,
                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                        ),
-                       child: const Icon(Icons.share_outlined, color: VSPColors.textSecondary, size: 18),
+                       child: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 18),
                      ),
                    ),
                 ],

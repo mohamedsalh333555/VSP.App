@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -68,7 +69,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       hintStyle: const TextStyle(color: VSPColors.textSecondary),
-                      prefixIcon: const Icon(Icons.email_outlined, color: VSPColors.textSecondary, size: 20),
+                      prefixIcon: Icon(LucideIcons.mail, color: VSPColors.textSecondary, size: 20),
                       filled: true,
                       fillColor: VSPColors.surfaceAlt,
                       border: OutlineInputBorder(
@@ -223,7 +224,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
+                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -283,14 +284,14 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
-                      prefixIcon: Icons.email_outlined,
+                      prefixIcon: LucideIcons.mail,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
                       controller: _passwordController,
                       hintText: AppLocalizations.of(context)!.password,
                       obscureText: true,
-                      prefixIcon: Icons.lock_outline,
+                      prefixIcon: LucideIcons.lock,
                     ),
                     
                     const SizedBox(height: 12),
@@ -344,7 +345,7 @@ class _LoginScreenState extends State<LoginScreen> {
                            Expanded(
                              child: _SocialButton(
                                height: 56,
-                               icon: Icons.apple,
+                               icon: LucideIcons.apple,
                                onPressed: _isLoading ? null : () async {
                                  setState(() => _isLoading = true);
                                  final authProvider = Provider.of<AuthProvider>(context, listen: false);

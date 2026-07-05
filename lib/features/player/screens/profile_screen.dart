@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -117,7 +117,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: VSPSpacing.md),
                         PrimaryButton(
                           text: l10n.shareTeamCard,
-                          icon: Icons.share_rounded,
+                          icon: LucideIcons.share2,
                           color: VSPColors.accent.withValues(alpha: 0.15),
                           textColor: VSPColors.accent,
                           isLoading: _isSharing,
@@ -167,7 +167,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : null,
                             ),
                             child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 40)
+                                ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 40)
                                 : null,
                           ),
                           const SizedBox(height: VSPSpacing.sm),
@@ -208,7 +208,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 0,
                 child: VSPMenuItem(
-                  icon: LucideIcons.pencilLine,
+                  icon: LucideIcons.pencil,
                   title: l10n.editProfile,
                   subtitle: l10n.editProfileSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
@@ -310,4 +310,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
     );
   }
 }
+
+
 

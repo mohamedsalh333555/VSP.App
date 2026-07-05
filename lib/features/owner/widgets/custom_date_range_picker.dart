@@ -1,4 +1,5 @@
 ﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -70,7 +71,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
               children: [
                 IconButton(
                   onPressed: () => _changeMonth(-1),
-                  icon: const Icon(Icons.chevron_left, color: VSPColors.textPrimary),
+                  icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
                 ),
                 Text(
                   DateFormat('MMMM yyyy').format(_focusedMonth),
@@ -80,7 +81,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                 ),
                 IconButton(
                   onPressed: () => _changeMonth(1),
-                  icon: const Icon(Icons.chevron_right, color: VSPColors.textPrimary),
+                  icon: Icon(LucideIcons.chevronRight, color: VSPColors.textPrimary),
                 ),
               ],
             ),

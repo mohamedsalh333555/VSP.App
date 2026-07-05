@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:introduction_screen/introduction_screen.dart';
 import 'package:provider/provider.dart';
@@ -65,7 +66,7 @@ class OnboardingScreen extends StatelessWidget {
       },
       showSkipButton: true,
       skip: const Text("Skip", style: TextStyle(color: VSPColors.textSecondary)),
-      next: const Icon(Icons.arrow_forward, color: VSPColors.accent),
+      next: Icon(LucideIcons.arrowRight, color: VSPColors.accent),
       done: const Text("Get Started", style: TextStyle(fontWeight: FontWeight.w600, color: VSPColors.accent)),
       dotsDecorator: DotsDecorator(
         size: const Size(10.0, 10.0),
@@ -89,7 +90,7 @@ class OnboardingScreen extends StatelessWidget {
           color: VSPColors.surface,
           shape: BoxShape.circle,
         ),
-        child: const Icon(Icons.sports_soccer, size: 100, color: VSPColors.accent), // Placeholder icons for now
+        child: Icon(LucideIcons.trophy, size: 100, color: VSPColors.accent), // Placeholder icons for now
       ),
     );
   }

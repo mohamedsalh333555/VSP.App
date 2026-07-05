@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -61,7 +62,7 @@ class OwnerInboxScreen extends StatelessWidget {
 
           if (bookings.isEmpty) {
             return VSPEmptyState(
-              icon: Icons.chat_bubble_outline_rounded,
+              icon: LucideIcons.messageSquare,
               title: isArabic ? 'لا توجد محادثات نشطة' : 'No active chats',
               subtitle: isArabic 
                   ? 'ستظهر هنا المحادثات الواردة من اللاعبين بخصوص الحجوزات.' 
@@ -109,7 +110,7 @@ class OwnerInboxScreen extends StatelessWidget {
                                 ? NetworkImage(booking.hostAvatarUrl!)
                                 : null,
                             child: (booking.hostAvatarUrl == null || booking.hostAvatarUrl!.isEmpty)
-                                ? const Icon(Icons.person, color: VSPColors.accent)
+                                ? Icon(LucideIcons.user, color: VSPColors.accent)
                                 : null,
                           ),
                           const SizedBox(width: 14),

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -79,7 +80,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         automaticallyImplyLeading: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+                icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -120,7 +121,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           child: DropdownButton<Stadium>(
                             value: effectiveValue,
                             dropdownColor: VSPColors.surface,
-                            icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary, size: 18),
+                            icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 18),
                             isExpanded: true,
                             items: stadiums.map((s) => DropdownMenuItem(
                               value: s,
@@ -169,7 +170,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        const Icon(Icons.calendar_month_outlined, color: VSPColors.textSecondary, size: 16),
+                        Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 16),
                       ],
                     ),
                   ),
@@ -248,7 +249,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                  if (selectedStadium == null) {
                     return VSPEmptyState(
-                      icon: Icons.stadium_outlined,
+                      icon: LucideIcons.building,
                       title: l10n.stadiumsEmptyTitle,
                       subtitle: l10n.stadiumsEmptySubtitle,
                     );
@@ -326,7 +327,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                   if (slots.isEmpty) {
                     return VSPEmptyState(
-                      icon: Icons.access_time,
+                      icon: LucideIcons.clock,
                       title: l10n.noWorkingHoursTitle,
                       subtitle: l10n.noWorkingHoursSubtitle,
                     );
@@ -399,7 +400,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         ),
         child: Row(
           children: [
-            Icon(isBreak ? Icons.block : Icons.add_circle, color: VSPColors.textSecondary, size: 24),
+            Icon(isBreak ? LucideIcons.ban : LucideIcons.plusCircle, color: VSPColors.textSecondary, size: 24),
             const SizedBox(width: 12),
             Text(
               isBreak ? l10n.breakTime : l10n.addManualBooking,
@@ -464,7 +465,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               color: isManual ? Colors.blueAccent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
             ),
             child: Icon(
-              isManual ? Icons.edit_note : Icons.sports_soccer, 
+              isManual ? LucideIcons.fileSignature : LucideIcons.trophy, 
               size: 22, 
               color: isManual ? Colors.blueAccent : VSPColors.accent
             ),
@@ -518,7 +519,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             ),
           ),
           
-          const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 14),
+          Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 14),
         ],
       ),
     );
@@ -703,7 +704,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       ),
       child: Row(
         children: [
-          const Icon(Icons.handshake_outlined, color: VSPColors.accent),
+          Icon(LucideIcons.handshake, color: VSPColors.accent),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -777,7 +778,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 ),
                 if (widget.isEdit)
                   IconButton(
-                    icon: const Icon(Icons.delete_outline, color: VSPColors.error),
+                    icon: Icon(LucideIcons.trash2, color: VSPColors.error),
                     onPressed: _isDeleting ? null : () async {
                       final confirm = await showDialog<bool>(
                         context: context,
@@ -841,7 +842,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.payments_outlined, color: VSPColors.accent),
+                          Icon(LucideIcons.banknote, color: VSPColors.accent),
                           const SizedBox(width: 12),
                           Expanded(
                             child: Column(

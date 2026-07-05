@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
@@ -19,7 +20,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

@@ -1,4 +1,4 @@
-﻿import 'package:geolocator/geolocator.dart';
+import 'package:geolocator/geolocator.dart';
 import 'package:geocoding/geocoding.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:safe_device/safe_device.dart';
@@ -29,11 +29,11 @@ class LocationService {
       try {
         final bool isJailBroken = await SafeDevice.isJailBroken.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => false,
+          onTimeout: () => true, // في حال انتهاء المهلة نفترض وجود خطر لمنع التجاوز
         );
         final bool isMockLocation = await SafeDevice.isMockLocation.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => false,
+          onTimeout: () => true, // في حال انتهاء المهلة نفترض وجود خطر لمنع التجاوز
         );
         if (isJailBroken || isMockLocation) {
           VSPLogger.w("⚠️ Device Security Alert: Jailbroken=$isJailBroken, MockLocation=$isMockLocation");
@@ -41,6 +41,7 @@ class LocationService {
         }
       } catch (e) {
         VSPLogger.e("Error performing safe device checks: $e");
+        return (null, "mock_location_detected"); // الحظر الاحترازي عند حدوث أي خطأ بالفحص
       }
 
       // 🌍 Get Position safely using getLastKnownPosition first or getCurrentPosition with a strict timeLimit

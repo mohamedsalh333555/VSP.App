@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -88,17 +89,17 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                       ? CachedNetworkImage(
                           imageUrl: booking.hostAvatarUrl!,
                           fit: BoxFit.cover,
-                          errorWidget: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                          errorWidget: (_, __, ___) => Icon(LucideIcons.user, color: VSPColors.accent, size: 24),
                           placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
                         )
                       : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
                           ? CachedNetworkImage(
                               imageUrl: booking.playerTeamLogoUrl!,
                               fit: BoxFit.cover,
-                              errorWidget: (_, __, ___) => const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                              errorWidget: (_, __, ___) => Icon(LucideIcons.user, color: VSPColors.accent, size: 24),
                               placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
                             )
-                          : const Icon(Icons.person, color: VSPColors.accent, size: 24),
+                          : Icon(LucideIcons.user, color: VSPColors.accent, size: 24),
                 ),
               ),
               const SizedBox(width: 12),
@@ -132,7 +133,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
               ),
               IconButton(
                 visualDensity: VisualDensity.compact,
-                icon: const Icon(Icons.ios_share, color: VSPColors.textSecondary, size: 20),
+                icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20),
                 onPressed: () => _handleShare(booking),
               ),
             ],
@@ -147,11 +148,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCompactInfo(Icons.calendar_month, booking.formattedDate),
+                _buildCompactInfo(LucideIcons.calendar, booking.formattedDate),
                 _buildDivider(),
-                _buildCompactInfo(Icons.schedule, _formatTimeShort(booking.formattedTimeRange)),
+                _buildCompactInfo(LucideIcons.clock, _formatTimeShort(booking.formattedTimeRange)),
                 _buildDivider(),
-                _buildCompactInfo(Icons.payments_outlined, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"),
+                _buildCompactInfo(LucideIcons.banknote, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"),
               ],
             ),
           ),
@@ -543,7 +544,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
               children: [
                 Text(AppLocalizations.of(context)!.manageMatch, style: Theme.of(context).textTheme.displaySmall),
                 IconButton(
-                  icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                  icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
                   onPressed: () => Navigator.pop(context),
                 ),
               ],
@@ -572,7 +573,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                     children: [
                       IconButton(
                         onPressed: (_isUpdatingCount || _hostBasePlayers <= 0) ? null : () => _updateHostPlayers(-1),
-                        icon: Icon(Icons.remove_circle_outline, color: _hostBasePlayers <= 0 ? VSPColors.textSecondary : VSPColors.error),
+                        icon: Icon(LucideIcons.minusCircle, color: _hostBasePlayers <= 0 ? VSPColors.textSecondary : VSPColors.error),
                       ),
                       SizedBox(
                         width: 24,
@@ -584,7 +585,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                       ),
                       IconButton(
                         onPressed: _isUpdatingCount ? null : () => _updateHostPlayers(1),
-                        icon: const Icon(Icons.add_circle_outline, color: VSPColors.accent),
+                        icon: Icon(LucideIcons.plusCircle, color: VSPColors.accent),
                       ),
                     ],
                   ),
@@ -625,7 +626,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                               radius: 20,
                               backgroundColor: VSPColors.surfaceAlt,
                               backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty) ? CachedNetworkImageProvider(user.profileImageUrl!) : null,
-                              child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty) ? const Icon(Icons.person, color: VSPColors.accent, size: 20) : null,
+                              child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty) ? Icon(LucideIcons.user, color: VSPColors.accent, size: 20) : null,
                             ),
                             const SizedBox(width: 12),
                             Expanded(
@@ -655,7 +656,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                             ),
                             if (!isHost)
                               IconButton(
-                                icon: const Icon(Icons.person_remove_outlined, color: VSPColors.error, size: 20),
+                                icon: Icon(LucideIcons.userMinus, color: VSPColors.error, size: 20),
                                 onPressed: () => _removeUser(user.uid),
                               ),
                           ],

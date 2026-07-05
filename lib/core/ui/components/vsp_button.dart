@@ -1,4 +1,5 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPPrimaryButton extends StatelessWidget {
@@ -8,6 +9,7 @@ class VSPPrimaryButton extends StatelessWidget {
   final Color? color;
   final Color? textColor;
   final double? height;
+  final List<Color>? gradientColors;
 
   const VSPPrimaryButton({
     super.key,
@@ -17,19 +19,46 @@ class VSPPrimaryButton extends StatelessWidget {
     this.color,
     this.textColor,
     this.height,
+    this.gradientColors,
   });
 
   @override
   Widget build(BuildContext context) {
-    return SizedBox(
-      height: height ?? 56,
+    final double h = height ?? 56;
+    final bool hasCustomColor = color != null;
+    final fontName = GoogleFonts.titilliumWeb().fontFamily;
+    
+    return Container(
+      height: h,
       width: double.infinity,
+      decoration: BoxDecoration(
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        gradient: hasCustomColor 
+            ? null 
+            : LinearGradient(
+                colors: gradientColors ?? [
+                  VSPColors.accent,          // Volt/Neon Green
+                  const Color(0xFF02DFD4),   // Electric Cyan
+                ],
+                begin: Alignment.topLeft,
+                end: Alignment.bottomRight,
+              ),
+        color: hasCustomColor ? color : null,
+        boxShadow: [
+          BoxShadow(
+            color: (color ?? VSPColors.accent).withValues(alpha: 0.18),
+            blurRadius: 12,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
       child: ElevatedButton(
         onPressed: isLoading ? null : onPressed,
         style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? VSPColors.accent,
+          backgroundColor: Colors.transparent, // Transparent to show parent container gradient
           foregroundColor: textColor ?? Colors.black,
           elevation: 0,
+          shadowColor: Colors.transparent,
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
@@ -48,6 +77,7 @@ class VSPPrimaryButton extends StatelessWidget {
                 style: TextStyle(
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
+                  fontFamily: fontName,
                   color: textColor ?? Colors.black,
                 ),
               ),

@@ -1,4 +1,5 @@
 ﻿import 'package:flutter/material.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
@@ -69,7 +70,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                 ),
                 IconButton(
                   onPressed: () => Navigator.pop(context),
-                  icon: const Icon(Icons.close, color: VSPColors.textPrimary),
+                  icon: Icon(LucideIcons.x, color: VSPColors.textPrimary),
                   padding: EdgeInsets.zero,
                   constraints: const BoxConstraints(),
                   visualDensity: VisualDensity.compact,
@@ -120,11 +121,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
             const SizedBox(height: 24),
 
             // Selection Options
-            _buildSelectionOption(0, 'We Won', Icons.emoji_events_outlined, VSPColors.warning),
+            _buildSelectionOption(0, 'We Won', LucideIcons.trophy, VSPColors.warning),
             const SizedBox(height: 12),
-            _buildSelectionOption(1, 'Draw', Icons.sync_alt, const Color(0xFF3B82F6)), // Blue is used for Draw specifically, could use a custom token if available
+            _buildSelectionOption(1, 'Draw', LucideIcons.repeat, const Color(0xFF3B82F6)), // Blue is used for Draw specifically, could use a custom token if available
             const SizedBox(height: 12),
-            _buildSelectionOption(2, 'We Lost', Icons.sentiment_very_dissatisfied, VSPColors.error),
+            _buildSelectionOption(2, 'We Lost', LucideIcons.frown, VSPColors.error),
 
             const SizedBox(height: VSPSpacing.lg),
             const Divider(color: VSPColors.divider),
@@ -205,7 +206,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                 });
               },
               child: Icon(
-                index < _rating ? Icons.star : Icons.star_border,
+                index < _rating ? LucideIcons.star : LucideIcons.star,
                 color: VSPColors.warning,
                 size: 32,
               ),
@@ -261,7 +262,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             ),
             const Spacer(),
             if (isSelected)
-              Icon(Icons.check_circle, color: activeColor),
+              Icon(LucideIcons.checkCircle, color: activeColor),
           ],
         ),
       ),
@@ -279,7 +280,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             shape: BoxShape.circle,
             border: Border.all(color: VSPColors.divider),
           ),
-          child: const Icon(Icons.sports_soccer, color: VSPColors.textSecondary),
+          child: Icon(LucideIcons.trophy, color: VSPColors.textSecondary),
         ),
         const SizedBox(height: VSPSpacing.sm),
         SizedBox(

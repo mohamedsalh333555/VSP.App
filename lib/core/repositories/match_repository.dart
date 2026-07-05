@@ -113,42 +113,13 @@ class MatchRepository {
         });
         rpcSuccess = true;
       } catch (rpcError) {
-        VSPLogger.w('Supabase RPC join_public_match failed, falling back to client-side update: $rpcError');
+        VSPLogger.w('RPC failed: $rpcError');
         rpcSuccess = false;
       }
 
-      // 2. Client-side fallback if RPC is not deployed/fails
       if (!rpcSuccess) {
-        final doc = await _supabase
-            .from('bookings')
-            .select()
-            .eq('id', bookingId)
-            .maybeSingle();
-        if (doc == null) throw 'Match not found';
-
-        hostId = doc['owner_id'] ?? doc['created_by_user_id'] ?? '';
-        stadiumName = doc['stadium_name'] ?? 'Match';
-        final current = doc['current_players'] ?? 0;
-        final ppt = doc['players_per_team'] ?? doc['playersPerTeam'];
-        final totalFieldCapacity = doc['total_field_capacity'] ?? doc['totalFieldCapacity'] ?? ((ppt != null) ? ppt * 2 : (doc['max_players'] != null ? doc['max_players'] * 2 : 10));
-        
-        final joinedList = doc['joined_user_ids'];
-        final joined = joinedList != null 
-            ? List<String>.from((joinedList as List).map((e) => e.toString()))
-            : <String>[];
-
-        if (current >= totalFieldCapacity) throw 'Match is full';
-        if (joined.contains(userId)) throw 'Already joined';
-
-        joined.add(userId);
-
-        final response = await _supabase.from('bookings').update({
-          'current_players': current + 1,
-          'joined_user_ids': joined,
-        }).eq('id', bookingId).eq('current_players', current).select();
-        if ((response as List).isEmpty) {
-          throw 'Race condition detected: current_players updated during transaction. Please try again.';
-        }
+        // هنا نقوم برمي استثناء فوري بدلاً من السماح للعميل بتحديث البيانات يدوياً
+        throw Exception("عذراً، تداخلت عمليتك مع مستخدم آخر واكتمل عدد مقاعد المباراة بالفعل! ⚠️");
       }
 
       // 3. Retrieve final details for notifications
@@ -203,7 +174,7 @@ class MatchRepository {
       return true;
     } catch (e, stack) {
       VSPLogger.e('Error joining public match', e, stack);
-      return false;
+      rethrow;
     }
   }
 

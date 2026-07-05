@@ -83,8 +83,31 @@ class MockSupabaseHttpClient extends http.BaseClient {
         responseBody = jsonEncode(isSingle ? userMap : [userMap]);
       }
     } else if (uri.path.contains('rpc/join_public_match')) {
-      statusCode = 400;
-      responseBody = '{"message": "RPC failed"}';
+      final body = jsonDecode(requestBody);
+      final bookingId = body['p_booking_id'];
+      final userId = body['p_user_id'];
+      final booking = bookingsDb[bookingId];
+      if (booking != null) {
+        final current = booking['current_players'] ?? 0;
+        final maxPlayers = booking['max_players'] ?? 10;
+        final joined = List<String>.from(booking['joined_user_ids'] ?? []);
+        if (current >= maxPlayers) {
+          statusCode = 400;
+          responseBody = '{"message": "Match is full"}';
+        } else if (joined.contains(userId)) {
+          statusCode = 400;
+          responseBody = '{"message": "Already joined"}';
+        } else {
+          joined.add(userId);
+          booking['joined_user_ids'] = joined;
+          booking['current_players'] = current + 1;
+          statusCode = 200;
+          responseBody = 'true';
+        }
+      } else {
+        statusCode = 404;
+        responseBody = '{"message": "Match not found"}';
+      }
     }
 
     print('HTTP RESPONSE: Status $statusCode (Body: $responseBody)');
@@ -221,8 +244,12 @@ void main() {
       expect(mockHttpClient.bookingsDb[matchId]?['current_players'], 2);
 
       // 3. User 2 tries to join AGAIN
-      bool joinedAgain = await matchRepo.joinPublicMatch(matchId, 'user_2');
-      expect(joinedAgain, false, reason: "Should not allow joining twice");
+      try {
+        await matchRepo.joinPublicMatch(matchId, 'user_2');
+        fail("Should have thrown an exception on duplicate join");
+      } catch (e) {
+        expect(e.toString().contains('Already joined') || e.toString().contains('تداخلت'), true);
+      }
 
       // 4. User 2 leaves
       bool left = await matchRepo.leavePublicMatch(matchId, 'user_2');

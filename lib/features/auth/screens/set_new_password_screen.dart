@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
@@ -135,8 +136,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       border: Border.all(
                           color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    child: const Icon(
-                      Icons.lock_reset_outlined,
+                    child: Icon(LucideIcons.unlock,
                       color: VSPColors.accent,
                       size: 32,
                     ),
@@ -367,11 +367,11 @@ class _PasswordField extends StatelessWidget {
           borderRadius: BorderRadius.circular(VSPRadius.md),
           borderSide: const BorderSide(color: VSPColors.error),
         ),
-        prefixIcon: const Icon(Icons.lock_outline,
+        prefixIcon: Icon(LucideIcons.lock,
             color: VSPColors.textSecondary, size: 20),
         suffixIcon: IconButton(
           icon: Icon(
-            obscure ? Icons.visibility_off_outlined : Icons.visibility_outlined,
+            obscure ? LucideIcons.eyeOff : LucideIcons.eye,
             color: VSPColors.textSecondary,
             size: 20,
           ),

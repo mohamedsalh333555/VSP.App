@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -29,7 +30,7 @@ class FavoritesScreen extends StatelessWidget {
           
           if (favoriteIds.isEmpty) {
             return const VSPEmptyState(
-              icon: Icons.favorite_border,
+              icon: LucideIcons.heart,
               title: 'No Favorites Yet',
               subtitle: 'Explore stadiums and heart your favorites to see them here.',
             );
@@ -45,7 +46,7 @@ class FavoritesScreen extends StatelessWidget {
             // we could either fetch them or show empty. 
             // For now, let's assume allStadiums has what we need or show a message.
             return const VSPEmptyState(
-              icon: Icons.search_off_rounded,
+              icon: LucideIcons.search,
               title: 'Stadiums Not Found',
               subtitle: 'Your favorite stadiums could not be loaded right now.',
             );

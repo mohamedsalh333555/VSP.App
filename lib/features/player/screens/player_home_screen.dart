@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -58,27 +58,38 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
       
-      // Phase 4: Initializing data based on user profile
       if (auth.isAuthenticated && !auth.isOwner) {
         String? gov = auth.userModel?.governorate;
         
-        // CUX View Issue A: Prompt manual selection when GPS / location info is not set
+        // إذا لم يكن لديه محافظة مسجلة، نقوم بمحاولة جلبها فوراً بالـ GPS أولاً في الخلفية
         if (gov == null || gov.isEmpty) {
-          _showLocationPickerHelper(context, auth);
-        } else {
-          stadiumProvider.applyGovernorateFilter(gov);
-        }
-
-        // Silent GPS check on startup for travelers
-        try {
-          final gpsGov = await auth.determineGPSGovernorate();
-          if (gpsGov != null && gpsGov != gov) {
+          VSPFeedback.showSuccess(context, 'جاري تحديد موقعك الجغرافي تلقائياً... 📍');
+          final success = await auth.updateUserLocation();
+          
+          if (success) {
+            final resolvedGov = auth.userModel?.governorate ?? 'Cairo';
+            stadiumProvider.applyGovernorateFilter(resolvedGov);
+          } else {
+            // إذا فشل الـ GPS أو رفض المستخدم الإذن، نفتح له نافذة الاختيار اليدوي كخيار بديل
             if (mounted) {
-              _showGovernorateChangeAlert(context, auth, gpsGov, stadiumProvider);
+              VSPFeedback.showError(context, 'تعذر تحديد الموقع الجغرافي. يرجى الاختيار يدوياً.');
+              _showLocationPickerHelper(context, auth);
             }
           }
-        } catch (e) {
-          debugPrint('Silent startup GPS check failed: $e');
+        } else {
+          stadiumProvider.applyGovernorateFilter(gov);
+          
+          // Silent GPS check on startup for travelers
+          try {
+            final gpsGov = await auth.determineGPSGovernorate();
+            if (gpsGov != null && gpsGov != gov) {
+              if (mounted) {
+                _showGovernorateChangeAlert(context, auth, gpsGov, stadiumProvider);
+              }
+            }
+          } catch (e) {
+            debugPrint('Silent startup GPS check failed: $e');
+          }
         }
       } else {
         stadiumProvider.fetchStadiums(isRefresh: true);
@@ -105,7 +116,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              const Icon(LucideIcons.mapPin_outlined, color: VSPColors.accent, size: 28),
+              Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -189,11 +200,11 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
         selectedIndex: _selectedIndex,
         onItemTapped: (index) => setState(() => _selectedIndex = index),
         items: [
-          VspNavItem(activeIcon: Icons.home_rounded, inactiveIcon: Icons.home_outlined, label: AppLocalizations.of(context)!.homeNav),
-          VspNavItem(activeIcon: Icons.groups_rounded, inactiveIcon: Icons.groups_outlined, label: AppLocalizations.of(context)!.matchesNav),
-          VspNavItem(activeIcon: Icons.emoji_events_rounded, inactiveIcon: Icons.emoji_events_outlined, label: AppLocalizations.of(context)!.championNav),
-          VspNavItem(activeIcon: Icons.bookmark_rounded, inactiveIcon: Icons.bookmark_outline_rounded, label: AppLocalizations.of(context)!.bookedNav),
-          VspNavItem(activeIcon: LucideIcons.user_rounded, inactiveIcon: LucideIcons.user_outline_rounded, label: AppLocalizations.of(context)!.profileNav),
+          VspNavItem(activeIcon: LucideIcons.home, inactiveIcon: LucideIcons.home, label: AppLocalizations.of(context)!.homeNav),
+          VspNavItem(activeIcon: LucideIcons.users, inactiveIcon: LucideIcons.users, label: AppLocalizations.of(context)!.matchesNav),
+          VspNavItem(activeIcon: LucideIcons.trophy, inactiveIcon: LucideIcons.trophy, label: AppLocalizations.of(context)!.championNav),
+          VspNavItem(activeIcon: LucideIcons.bookmark, inactiveIcon: LucideIcons.bookmark, label: AppLocalizations.of(context)!.bookedNav),
+          VspNavItem(activeIcon: LucideIcons.user, inactiveIcon: LucideIcons.user, label: AppLocalizations.of(context)!.profileNav),
         ],
       ),
     );
@@ -275,8 +286,8 @@ class ChampionshipCard extends StatelessWidget {
                 decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2)),
                 child: ClipOval(
                   child: championship.logoUrl.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Icons.emoji_events, color: VSPColors.accent))
-                      : const Icon(Icons.emoji_events, color: VSPColors.accent, size: 28),
+                      ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(LucideIcons.trophy, color: VSPColors.accent))
+                      : Icon(LucideIcons.trophy, color: VSPColors.accent, size: 28),
                 ),
               ),
               const SizedBox(width: 12),
@@ -290,7 +301,7 @@ class ChampionshipCard extends StatelessWidget {
                 ),
               ),
               IconButton(
-                icon: const Icon(Icons.ios_share, color: VSPColors.textSecondary, size: 20), 
+                icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), 
                 onPressed: () => SharingService.shareChampionship(id: championship.id, name: championship.name, date: DateFormat('MMM d').format(championship.startDate))
               ),
             ],
@@ -302,11 +313,11 @@ class ChampionshipCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCompactInfo(Icons.calendar_month, DateFormat('MMM d').format(championship.startDate)),
+                _buildCompactInfo(LucideIcons.calendar, DateFormat('MMM d').format(championship.startDate)),
                 _buildDivider(),
-                _buildCompactInfo(Icons.emoji_events_outlined, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                _buildCompactInfo(LucideIcons.trophy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
                 _buildDivider(),
-                _buildCompactInfo(Icons.payments_outlined, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                _buildCompactInfo(LucideIcons.banknote, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
               ],
             ),
           ),
@@ -625,7 +636,7 @@ class _HomeContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                const Icon(Icons.info_outline, color: VSPColors.accent, size: 20),
+                Icon(LucideIcons.info, color: VSPColors.accent, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -789,7 +800,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                   final isSelected = auth.userModel?.governorate == gov; 
                   return ListTile(
                     leading: Icon(
-                      Icons.location_city, 
+                      LucideIcons.building, 
                       color: isSelected ? VSPColors.accent : VSPColors.textSecondary
                     ), 
                     title: Text(
@@ -799,7 +810,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
                       )
                     ), 
-                    trailing: isSelected ? const Icon(Icons.check, color: VSPColors.accent) : null, 
+                    trailing: isSelected ? Icon(LucideIcons.check, color: VSPColors.accent) : null, 
                     onTap: () { 
                       auth.updateProfile({'governorate': gov}); 
                       context.read<StadiumProvider>().applyGovernorateFilter(gov); 
@@ -815,4 +826,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
     }
   );
 }
+
+
+
 

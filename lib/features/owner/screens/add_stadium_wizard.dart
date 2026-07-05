@@ -1,4 +1,5 @@
-﻿import '../../../l10n/app_localizations.dart';
+import '../../../l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:async';
@@ -377,8 +378,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       alignment: Alignment.center,
                       child: Container(
                         transform: Matrix4.translationValues(0, -20, 0),
-                        child: const Icon(
-                          Icons.location_on,
+                        child: Icon(LucideIcons.mapPin,
                           color: VSPColors.accent,
                           size: 48,
                           shadows: [
@@ -416,7 +416,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(Icons.search, color: VSPColors.accent, size: 22),
+                                Icon(LucideIcons.search, color: VSPColors.accent, size: 22),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
@@ -441,7 +441,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   )
                                 else if (searchController.text.isNotEmpty)
                                   IconButton(
-                                    icon: const Icon(Icons.clear, color: VSPColors.textSecondary, size: 18),
+                                    icon: Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 18),
                                     onPressed: () {
                                       searchController.clear();
                                       setSheetState(() {
@@ -470,7 +470,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   final result = searchResults[index];
                                   return ListTile(
                                     dense: true,
-                                    leading: const Icon(Icons.pin_drop, color: VSPColors.accent, size: 18),
+                                    leading: Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 18),
                                     title: Text(
                                       result['display_name'],
                                       maxLines: 2,
@@ -504,7 +504,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           border: Border.all(color: VSPColors.divider),
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.white, size: 20),
+                          icon: Icon(LucideIcons.x, color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ),
@@ -528,7 +528,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           ],
                         ),
                         child: IconButton(
-                          icon: const Icon(Icons.gps_fixed, color: VSPColors.accent, size: 24),
+                          icon: Icon(LucideIcons.locate, color: VSPColors.accent, size: 24),
                           onPressed: () async {
                             setSheetState(() {
                               isSearching = true;
@@ -677,11 +677,27 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       ),
     );
     if (picked != null && mounted) {
+      int minutes = picked.minute;
+      int roundedMinute;
+      int hour = picked.hour;
+
+      // تقريب الدقائق تلقائياً لأقرب 30 دقيقة (00 أو 30)
+      if (minutes < 15) {
+        roundedMinute = 0;
+      } else if (minutes < 45) {
+        roundedMinute = 30;
+      } else {
+        roundedMinute = 0;
+        hour = (hour + 1) % 24; // الانتقال للساعة التالية
+      }
+
+      final roundedTime = TimeOfDay(hour: hour, minute: roundedMinute);
+
       setState(() {
         if (isStart) {
-          _breakTimes[index]['start'] = picked;
+          _breakTimes[index]['start'] = roundedTime;
         } else {
-          _breakTimes[index]['end'] = picked;
+          _breakTimes[index]['end'] = roundedTime;
         }
       });
     }
@@ -960,7 +976,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
-        leading: IconButton(icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary), onPressed: _previousPage),
+        leading: IconButton(icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary), onPressed: _previousPage),
         title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
         elevation: 0,
@@ -969,10 +985,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         child: Column(
           children: [
             const SizedBox(height: 10),
-            Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: List.generate(3, (index) => _buildDot(index)),
-            ),
+            _buildStepIndicator(),
             const SizedBox(height: 20),
             Expanded(
               child: PageView(
@@ -991,14 +1004,86 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     );
   }
 
-  Widget _buildDot(int index) {
-    return Container(
-      margin: const EdgeInsets.symmetric(horizontal: 4),
-      width: _currentStep == index ? 24 : 8,
-      height: 4,
-      decoration: BoxDecoration(
-        color: _currentStep == index ? VSPColors.accent : VSPColors.divider,
-        borderRadius: BorderRadius.circular(VSPRadius.xs),
+  Widget _buildStepIndicator() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final labels = [
+      isArabic ? 'البيانات' : 'Details',
+      isArabic ? 'الخدمات' : 'Features',
+      isArabic ? 'الصور' : 'Photos',
+    ];
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Stack(
+        children: [
+          // Background Connecting Lines
+          Positioned(
+            left: 28 / 2 + 12, // Half circle diameter + horizontal padding
+            right: 28 / 2 + 12,
+            top: 28 / 2 - 1, // Centered vertically on the circles
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: _currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: _currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          // Stepper Circles and Text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(3, (i) {
+              final isActive = i <= _currentStep;
+              final isCurrent = i == _currentStep;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive ? VSPColors.accent : VSPColors.surface,
+                      border: Border.all(
+                        color: isActive ? VSPColors.accent : VSPColors.divider,
+                        width: 2,
+                      ),
+                    ),
+                    child: Center(
+                      child: i < _currentStep
+                          ? Icon(LucideIcons.check, color: Colors.black, size: 16)
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: isActive ? Colors.black : VSPColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    labels[i],
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 9,
+                        ),
+                  ),
+                ],
+              );
+            }),
+          ),
+        ],
       ),
     );
   }
@@ -1019,33 +1104,59 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         children: [
           _buildTextField(AppLocalizations.of(context)!.location, AppLocalizations.of(context)!.tapToFetch, controller: _locationController, readOnly: true),
           const SizedBox(height: 8),
-          _isLocationLoading
-              ? const Center(
-                  child: Padding(
-                    padding: EdgeInsets.symmetric(vertical: 12),
-                    child: CircularProgressIndicator(color: VSPColors.accent),
-                  ),
-                )
-              : SizedBox(
-                  width: double.infinity,
-                  child: ElevatedButton.icon(
-                    onPressed: _openMapPicker,
-                    icon: const Icon(Icons.map, color: Colors.black),
-                    label: Text(
-                      isArabic ? 'تحديد موقع الملعب على الخريطة 🗺️' : 'Select Stadium Location on Map 🗺️',
-                      style: const TextStyle(fontWeight: FontWeight.bold),
+          if (widget.stadiumId != null) ...[
+            Container(
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+              ),
+              child: Row(
+                children: [
+                  Icon(LucideIcons.lock, color: VSPColors.accent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'الموقع الجغرافي للملعب ثابت ولا يمكن تعديله بعد التسجيل.'
+                          : 'The geographical location of the stadium is fixed and cannot be changed.',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                     ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.accent,
-                      foregroundColor: Colors.black,
-                      padding: const EdgeInsets.symmetric(vertical: 14),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 16),
+          ] else ...[
+            _isLocationLoading
+                ? const Center(
+                    child: Padding(
+                      padding: EdgeInsets.symmetric(vertical: 12),
+                      child: CircularProgressIndicator(color: VSPColors.accent),
+                    ),
+                  )
+                : SizedBox(
+                    width: double.infinity,
+                    child: ElevatedButton.icon(
+                      onPressed: _openMapPicker,
+                      icon: Icon(LucideIcons.map, color: Colors.black),
+                      label: Text(
+                        isArabic ? 'تحديد موقع الملعب على الخريطة 🗺️' : 'Select Stadium Location on Map 🗺️',
+                        style: const TextStyle(fontWeight: FontWeight.bold),
+                      ),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 14),
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                        ),
                       ),
                     ),
                   ),
-                ),
-          const SizedBox(height: 16),
+            const SizedBox(height: 16),
+          ],
           _buildTextField(AppLocalizations.of(context)!.stadiumName, 'Ex: Anfield', controller: _nameController, maxLength: 50),
           const SizedBox(height: 16),
           _buildGovernorateDropdown(),
@@ -1082,7 +1193,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                const Icon(Icons.info_outline, color: VSPColors.accent, size: 14),
+                Icon(LucideIcons.info, color: VSPColors.accent, size: 14),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Builder(
@@ -1152,7 +1263,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: const Icon(Icons.delete_outline, color: VSPColors.error, size: 20),
+                          icon: Icon(LucideIcons.trash2, color: VSPColors.error, size: 20),
                           onPressed: () {
                             setState(() {
                               _breakTimes.removeAt(index);
@@ -1179,7 +1290,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     _breakTimes.add({'start': null, 'end': null});
                   });
                 },
-                icon: const Icon(Icons.add, color: VSPColors.accent, size: 18),
+                icon: Icon(LucideIcons.plus, color: VSPColors.accent, size: 18),
                 label: const Text('+ Add Another Break', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
               ),
             ),
@@ -1194,7 +1305,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 ),
                 child: const Row(
                   children: [
-                    Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 16),
+                    Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 16),
                     SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1317,7 +1428,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 children: [
                   Row(
                     children: [
-                      const Icon(Icons.lock_outline, color: VSPColors.accent, size: 18),
+                      Icon(LucideIcons.lock, color: VSPColors.accent, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         'Require Booking Deposit (العربون)',
@@ -1535,7 +1646,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               dropdownColor: VSPColors.surface,
               isExpanded: true,
               items: govs.map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
-              onChanged: (val) => setState(() => _governorate = val),
+              onChanged: widget.stadiumId != null
+                  ? null
+                  : (val) => setState(() => _governorate = val),
             ),
           ),
         ),
@@ -1619,7 +1732,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               thumbnail
             else
               Icon(
-                fileUrl != null ? Icons.check_circle : Icons.upload_file,
+                fileUrl != null ? LucideIcons.checkCircle : LucideIcons.upload,
                 color: fileUrl != null ? Colors.green : VSPColors.accent,
                 size: 32,
               ),
@@ -1646,7 +1759,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               ),
             ),
             IconButton(
-              icon: const Icon(Icons.delete_outline, color: Colors.red),
+              icon: Icon(LucideIcons.trash2, color: Colors.red),
               onPressed: onDelete,
             ),
           ],

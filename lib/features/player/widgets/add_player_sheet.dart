@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -26,9 +26,11 @@ class AddPlayerSheet extends StatefulWidget {
 
 class _AddPlayerSheetState extends State<AddPlayerSheet> {
   final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _guestNameController = TextEditingController();
   UserModel? _foundUser;
   bool _isSearching = false;
   bool _hasSearched = false;
+  bool _isCreatingGuest = false;
 
   Future<void> _searchPlayer() async {
     final phone = _phoneController.text.trim();
@@ -102,7 +104,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary),
+                icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
               ),
             ],
           ),
@@ -144,7 +146,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                           padding: EdgeInsets.all(VSPSpacing.sm),
                           child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
-                      : const Icon(LucideIcons.search, color: VSPColors.background),
+                      : Icon(LucideIcons.search, color: VSPColors.background),
                 ),
               ),
             ],
@@ -201,11 +203,11 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                 color: VSPColors.surfaceAlt,
                 borderRadius: BorderRadius.circular(VSPRadius.md),
               ),
-              child: const Row(
+              child: Row(
                 children: [
                    Icon(LucideIcons.check, color: VSPColors.accent, size: 16),
-                   SizedBox(width: 4),
-                   Text('Joined', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                   const SizedBox(width: 4),
+                   const Text('Joined', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
               ),
             )
@@ -228,41 +230,97 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   }
 
   Widget _buildInviteCard() {
+    final phone = _phoneController.text.trim();
     return Container(
       width: double.infinity,
-      padding: const EdgeInsets.all(VSPSpacing.xl),
+      padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         border: Border.all(color: VSPColors.divider),
       ),
       child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Icon(LucideIcons.user_search_outlined, color: VSPColors.textSecondary.withValues(alpha: 0.2), size: 48),
-          const SizedBox(height: VSPSpacing.md),
-          Text(
-            "User Not Found",
-            style: Theme.of(context).textTheme.titleLarge,
+          Row(
+            children: [
+              Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 24),
+              const SizedBox(width: 8),
+              Text(
+                "لاعب غير مسجل (Guest Player)",
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+            ],
           ),
-          const SizedBox(height: VSPSpacing.sm),
+          const SizedBox(height: 8),
           Text(
-            "This number isn't registered on VSP yet. Invite them to join the game!",
-            textAlign: TextAlign.center,
+            "هذا الرقم غير مسجل في VSP حالياً. اكتب اسم اللاعب لإضافته كلاعب ضيف لفريقك:",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
-          const SizedBox(height: VSPSpacing.lg),
-          SizedBox(
-            width: double.infinity,
-            child: PrimaryButton(
-              text: 'Invite via WhatsApp',
-              onPressed: _inviteViaWhatsApp,
-              color: const Color(0xFF25D366),
-              textColor: Colors.white, // WhatsApp branding
+          const SizedBox(height: 12),
+          TextField(
+            controller: _guestNameController,
+            style: Theme.of(context).textTheme.bodyMedium,
+            decoration: InputDecoration(
+              hintText: 'اسم اللاعب (Player Name)',
+              hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+              filled: true,
+              fillColor: VSPColors.background,
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                borderSide: BorderSide.none,
+              ),
+              contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 12),
             ),
+          ),
+          const SizedBox(height: 16),
+          Row(
+            children: [
+              Expanded(
+                child: PrimaryButton(
+                  text: 'إضافة كلاعب ضيف (Add)',
+                  isLoading: _isCreatingGuest,
+                  onPressed: () async {
+                    final name = _guestNameController.text.trim();
+                    if (name.isEmpty) {
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(content: Text('برجاء إدخال اسم اللاعب أولاً!')),
+                      );
+                      return;
+                    }
+                    setState(() => _isCreatingGuest = true);
+                    try {
+                      final guestUser = await UserRepository().createGuestUser(name);
+                      if (guestUser != null && mounted) {
+                        widget.onPlayerAdded(guestUser);
+                        Navigator.pop(context);
+                      }
+                    } catch (e) {
+                      if (mounted) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(content: Text('Error: $e')),
+                        );
+                      }
+                    } finally {
+                      if (mounted) setState(() => _isCreatingGuest = false);
+                    }
+                  },
+                ),
+              ),
+            ],
           ),
         ],
       ),
     );
   }
+
+  @override
+  void dispose() {
+    _phoneController.dispose();
+    _guestNameController.dispose();
+    super.dispose();
+  }
 }
+
+
 

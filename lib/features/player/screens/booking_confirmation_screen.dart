@@ -1,4 +1,5 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -96,35 +97,45 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void _generateDynamicTimeSlots() {
     try {
       final features = widget.stadium.features;
-      String startStr = '02:00 PM';
-      String endStr = '11:00 PM';
+      String startStr = '03:00 PM'; // وقت الفتح (3 عصراً)
+      String endStr = '03:00 AM';   // وقت الإغلاق (3 فجراً)
 
-      if (features is Map) {
-        if (features['workingHours'] != null) {
-          startStr = features['workingHours']['start'] ?? startStr;
-          endStr = features['workingHours']['end'] ?? endStr;
-        }
+      if (features is Map && features['workingHours'] != null) {
+        startStr = features['workingHours']['start'] ?? startStr;
+        endStr = features['workingHours']['end'] ?? endStr;
       }
 
       int startMinutes = _parseTimeToMinutes(startStr);
       int endMinutes = _parseTimeToMinutes(endStr);
 
+      // إذا كان وقت الإغلاق أصغر من وقت الفتح (عبور منتصف الليل)
       if (endMinutes < startMinutes) {
-        endMinutes += 24 * 60;
+        endMinutes += 24 * 60; // إضافة 24 ساعة لوقت النهاية
       }
 
-      int? breakStart;
-      int? breakEnd;
+      // دالة داخلية لمزامنة أوقات الإغلاق (البريك) تراكمياً مع وقت الفتح
+      int getCumulativeMinutes(String timeStr) {
+        int min = _parseTimeToMinutes(timeStr);
+        if (min < startMinutes) {
+          min += 24 * 60; // إذا كان الوقت فجراً (بعد منتصف الليل)، نعتبره تابعاً لليوم السابق تراكمياً
+        }
+        return min;
+      }
+
+      int? bStart;
+      int? bEnd;
       if (features is Map && features['breakTime'] != null) {
-        breakStart = _parseTimeToMinutes(features['breakTime']['start'] ?? '');
-        breakEnd = _parseTimeToMinutes(features['breakTime']['end'] ?? '');
+        bStart = getCumulativeMinutes(features['breakTime']['start'] ?? '');
+        bEnd = getCumulativeMinutes(features['breakTime']['end'] ?? '');
       }
 
       final List<String> slots = [];
+      // الحلقة تبدأ من وقت الفتح وتتصاعد بالدقائق التراكمية
       for (int m = startMinutes; m <= endMinutes; m += 30) {
-        if (breakStart != null && breakEnd != null) {
-          if ((m >= breakStart && m < breakEnd) || (m + 30 > breakStart && m + 30 <= breakEnd)) {
-            continue;
+        // فحص ما إذا كان هذا الوقت يقع داخل فترة الاستراحة المغلقة يدوياً
+        if (bStart != null && bEnd != null) {
+          if ((m >= bStart && m < bEnd) || (m + 30 > bStart && m + 30 <= bEnd)) {
+            continue; // تجاهل وإخفاء هذه الساعة لأنها فترة استراحة مغلقة
           }
         }
         slots.add(_formatMinutesToTime(m % (24 * 60)));
@@ -134,6 +145,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         _timeSlots = slots;
       });
     } catch (e) {
+      // كود السقوط الخلفي الآمن في حال حدوث خطأ غير متوقع
       setState(() {
         _timeSlots = ['02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'];
       });
@@ -291,7 +303,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       children: [
                         IconButton(
                           icon: Icon(
-                            Icons.chevron_left,
+                            LucideIcons.chevronLeft,
                             color: currentMonth.isAfter(todayMonth)
                                 ? VSPColors.textSecondary
                                 : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -310,7 +322,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                         IconButton(
                           icon: Icon(
-                            Icons.chevron_right,
+                            LucideIcons.chevronRight,
                             color: currentMonth.isBefore(maxMonth)
                                 ? VSPColors.textSecondary
                                 : VSPColors.textSecondary.withValues(alpha: 0.25),
@@ -435,7 +447,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -471,7 +483,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(width: VSPSpacing.xs),
-                          const Icon(Icons.calendar_month, color: VSPColors.textPrimary, size: 18),
+                          Icon(LucideIcons.calendar, color: VSPColors.textPrimary, size: 18),
                         ],
                       ),
                     ),
@@ -597,7 +609,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isSelected) ...[
-                                    const Icon(Icons.check_circle, size: 16, color: VSPColors.accent),
+                                    Icon(LucideIcons.checkCircle, size: 16, color: VSPColors.accent),
                                     const SizedBox(width: 8),
                                   ],
                                   Text(
@@ -675,14 +687,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       ),
                       Row(
                         children: [
-                          _buildCounterButton(Icons.remove, () {
+                          _buildCounterButton(LucideIcons.minus, () {
                             if (_currentPlayers > 1) setState(() => _currentPlayers--);
                           }),
                           Padding(
                             padding: const EdgeInsets.symmetric(horizontal: 16),
                             child: Text('$_currentPlayers', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
                           ),
-                          _buildCounterButton(Icons.add, () {
+                          _buildCounterButton(LucideIcons.plus, () {
                             final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10;
                             if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++);
                           }),
@@ -713,7 +725,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           borderRadius: BorderRadius.circular(VSPRadius.sm),
                           border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.borderMedium),
                         ),
-                        child: _isBallRented ? const Icon(Icons.check, size: 16, color: VSPColors.background) : null,
+                        child: _isBallRented ? Icon(LucideIcons.check, size: 16, color: VSPColors.background) : null,
                       ),
                     ],
                   ),
@@ -744,7 +756,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             children: [
                               Row(
                                 children: [
-                                  const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 18),
+                                  Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 18),
                                   const SizedBox(width: 8),
                                   Text(
                                     isArabic ? "تقييد الحساب" : "Account Restricted",
@@ -773,10 +785,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: false),
                         const SizedBox(height: 8),
                         _buildPriceRow('العربون المطلوب', '${deposit.toInt()} ${l10n.egCurrency}',
-                            icon: Icons.lock_outline, highlight: false, color: VSPColors.accent),
+                            icon: LucideIcons.lock, highlight: false, color: VSPColors.accent),
                         const SizedBox(height: 8),
                         _buildPriceRow('المتبقي عند الملعب', '${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}',
-                            icon: Icons.payments_outlined, highlight: false, color: VSPColors.textSecondary),
+                            icon: LucideIcons.banknote, highlight: false, color: VSPColors.textSecondary),
                         const SizedBox(height: VSPSpacing.lg),
                       ],
                     );
@@ -894,7 +906,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.phone_in_talk, color: VSPColors.accent, size: 18),
+                Icon(LucideIcons.phoneCall, color: VSPColors.accent, size: 18),
                 const SizedBox(width: 8),
                 Text(
                   isArabic ? 'اتصل بالملعب للاستفسار المباشر' : 'Call Stadium directly to inquire',

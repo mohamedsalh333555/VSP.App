@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
@@ -16,7 +17,7 @@ class HelpCenterScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -46,7 +47,7 @@ class HelpCenterScreen extends StatelessWidget {
               context,
               title: 'Chat with Support',
               subtitle: 'Talk directly with our team on WhatsApp',
-              icon: Icons.chat_bubble_outline_rounded,
+              icon: LucideIcons.messageSquare,
               color: const Color(0xFF25D366),
               onTap: () => _launchWhatsApp(context),
             ),
@@ -57,7 +58,7 @@ class HelpCenterScreen extends StatelessWidget {
               context,
               title: 'Call Support',
               subtitle: 'Emergency assistance for bookings',
-              icon: Icons.phone_in_talk_outlined,
+              icon: LucideIcons.phoneCall,
               color: VSPColors.accent,
               onTap: () => launchUrl(Uri.parse('tel:+201100229462')),
             ),
@@ -112,7 +113,7 @@ class HelpCenterScreen extends StatelessWidget {
                 ],
               ),
             ),
-            const Icon(Icons.arrow_forward_ios, color: VSPColors.textSecondary, size: 16),
+            Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 16),
           ],
         ),
       ),

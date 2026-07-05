@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -23,7 +24,7 @@ class NotificationsCenterScreen extends StatelessWidget {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -50,7 +51,7 @@ class NotificationsCenterScreen extends StatelessWidget {
 
           if (notifications.isEmpty) {
             return VSPEmptyState(
-              icon: Icons.notifications_off_outlined,
+              icon: LucideIcons.bellOff,
               title: AppLocalizations.of(context)!.noNotificationsTitle,
               subtitle: AppLocalizations.of(context)!.noNotificationsSubtitle,
               buttonText: AppLocalizations.of(context)!.backToDashboard,
@@ -78,7 +79,7 @@ class NotificationsCenterScreen extends StatelessWidget {
                       color: VSPColors.error.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(VSPRadius.lg),
                     ),
-                    child: const Icon(Icons.delete_outline, color: VSPColors.error, size: 24),
+                    child: Icon(LucideIcons.trash2, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
                     NotificationRepository().deleteNotification(userId, notification.id);
@@ -209,34 +210,34 @@ class _NotificationCard extends StatelessWidget {
   IconData _getIcon(String type) {
     switch (type) {
       case 'challenge':
-        return Icons.sports_soccer;
+        return LucideIcons.trophy;
       case 'result_confirmation':
-        return Icons.emoji_events_outlined;
+        return LucideIcons.trophy;
       case 'booking_confirmed':
-        return Icons.check_circle_outline;
+        return LucideIcons.checkCircle;
       case 'booking_new':
-        return Icons.calendar_today;
+        return LucideIcons.calendar;
       case 'booking_cancelled':
-        return Icons.cancel_outlined;
+        return LucideIcons.xCircle;
       case 'debt_warning':
-        return Icons.warning_amber_rounded;
+        return LucideIcons.alertTriangle;
       case 'debt_grace':
-        return Icons.timer_outlined;
+        return LucideIcons.timer;
       case 'account_blocked':
-        return Icons.block;
+        return LucideIcons.ban;
       case 'player_blocked':
-        return Icons.person_off_outlined;
+        return LucideIcons.userMinus;
       case 'stadium_approved':
-        return Icons.verified_outlined;
+        return LucideIcons.badgeCheck;
       case 'public_match_joined':
-        return Icons.person_add_alt_1;
+        return LucideIcons.userPlus;
       case 'match_full':
-        return Icons.groups;
+        return LucideIcons.users;
       case 'chat':
-        return Icons.chat_bubble_outline;
+        return LucideIcons.messageSquare;
       case 'info':
       default:
-        return Icons.info_outline;
+        return LucideIcons.info;
     }
   }
 

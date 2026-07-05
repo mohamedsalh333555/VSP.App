@@ -1,3 +1,4 @@
+import 'owner_tournament_dashboard_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -194,12 +195,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         'startDate': _startDate.toIso8601String(),
         'endDate': _endDate.toIso8601String(),
         'governorate': auth.governorate,
-        'ownerId': auth.currentUser?.uid,
+        'ownerId': auth.userModel?.uid,
         'image': widget.tournament?.imageUrl ?? '',
         'teamsCount': int.parse(_selectedTeams),
         'maxTeams': int.parse(_selectedTeams),
-        'prize': double.tryParse(_prizeController.text) ?? 5000.0,
-        'fees': double.tryParse(_feeController.text) ?? 500.0,
+        'grandPrize': double.tryParse(_prizeController.text) ?? 5000.0,
+        'entryFee': double.tryParse(_feeController.text) ?? 500.0,
         'rules': widget.tournament?.rules ?? '',
         'paymentMethods': widget.tournament?.paymentMethods ?? ['cash'],
         'settings': {
@@ -208,7 +209,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           'winningPoints': widget.tournament?.winningPoints ?? 3,
           'drawPoints': widget.tournament?.drawPoints ?? 1,
           'lossPoints': widget.tournament?.lossPoints ?? 0,
-          'matchDuration': _durationController.text.trim(),
+          'matchDuration': int.tryParse(_durationController.text.trim()) ?? 30,
           'isBackAndForth': widget.tournament?.isBackAndForth ?? false,
           'trophyMedals': widget.tournament?.trophyMedals ?? true,
           'redCardSuspension': widget.tournament?.redCardSuspension ?? true,
@@ -220,8 +221,10 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // UPDATE
         final success = await TournamentRepository().updateChampionship(widget.tournament!.id, champData);
         if (success && mounted) {
-           Navigator.pop(context);
-           VSPFeedback.showSuccess(context, 'Tournament updated successfully! 🏆');
+            Navigator.pop(context);
+            VSPFeedback.showSuccess(context, 'Tournament updated successfully! 🏆');
+        } else if (!success && mounted) {
+          VSPFeedback.showError(context, 'فشل تعديل البطولة. يرجى المحاولة مرة أخرى.');
         }
       } else {
         // CREATE
@@ -229,6 +232,18 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         if (id != null && mounted) {
           Navigator.pop(context);
           VSPFeedback.showSuccess(context, 'Tournament created successfully! 🏆');
+          
+          try {
+            final newChampList = await TournamentRepository().getChampionshipsStream(sportType: _selectedSport).first;
+            final newChamp = newChampList.firstWhere((c) => c.id == id);
+            if (mounted) {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerTournamentDashboardScreen(championship: newChamp)));
+            }
+          } catch (e) {
+            // Fallback
+          }
+        } else if (id == null && mounted) {
+          VSPFeedback.showError(context, 'فشل إنشاء البطولة. يرجى التحقق من دورك والاتصال بالإنترنت.');
         }
       }
     } catch (e) {
@@ -330,63 +345,77 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       l10n.schedulingStep,
     ];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
+      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.md),
       child: Row(
-        children: List.generate(3, (i) {
-          final isActive = i <= _currentStep;
-          final isCurrent = i == _currentStep;
-          return Expanded(
-            child: Row(
-              children: [
-                if (i > 0)
-                  Expanded(
-                    child: Container(
-                      height: 2,
-                      color: isActive ? VSPColors.accent : VSPColors.divider,
-                    ),
-                  ),
-                Column(
-                  children: [
-                    Container(
-                      width: 28,
-                      height: 28,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        color: isActive ? VSPColors.accent : VSPColors.surface,
-                        border: Border.all(
-                          color: isActive ? VSPColors.accent : VSPColors.divider,
-                          width: 2,
-                        ),
-                      ),
-                      child: Center(
-                        child: i < _currentStep
-                            ? const Icon(Icons.check, color: Colors.black, size: 16)
-                            : Text(
-                                '${i + 1}',
-                                style: TextStyle(
-                                  color: isActive ? Colors.black : VSPColors.textSecondary,
-                                  fontSize: 12,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                      ),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      labels[i],
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
-                            fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                            fontSize: 9,
-                          ),
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          );
-        }),
+        children: [
+          // Step 1
+          _buildStepNode(0, labels[0]),
+          // Line 1-2
+          Expanded(child: _buildStepLine(1)),
+          // Step 2
+          _buildStepNode(1, labels[1]),
+          // Line 2-3
+          Expanded(child: _buildStepLine(2)),
+          // Step 3
+          _buildStepNode(2, labels[2]),
+        ],
       ),
+    );
+  }
+
+  Widget _buildStepNode(int i, String label) {
+    final isActive = i <= _currentStep;
+    final isCurrent = i == _currentStep;
+    return SizedBox(
+      width: 70, // Fixed width so text and circle align perfectly and don't push the line
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          Container(
+            width: 28,
+            height: 28,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: isActive ? VSPColors.accent : VSPColors.surface,
+              border: Border.all(
+                color: isActive ? VSPColors.accent : VSPColors.divider,
+                width: 2,
+              ),
+            ),
+            child: Center(
+              child: i < _currentStep
+                  ? const Icon(Icons.check, color: Colors.black, size: 16)
+                  : Text(
+                      '${i + 1}',
+                      style: TextStyle(
+                        color: isActive ? Colors.black : VSPColors.textSecondary,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+            ),
+          ),
+          const SizedBox(height: 6),
+          Text(
+            label,
+            textAlign: TextAlign.center,
+            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                  color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                  fontSize: 10,
+                ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStepLine(int nextStepIndex) {
+    final isActive = nextStepIndex <= _currentStep;
+    return Container(
+      margin: const EdgeInsets.only(bottom: 20), // Center vertically with the circle
+      height: 2,
+      color: isActive ? VSPColors.accent : VSPColors.divider,
     );
   }
 

@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
@@ -79,7 +79,7 @@ class _ChatScreenState extends State<ChatScreen> {
           ],
         ),
         leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
       ),
@@ -158,7 +158,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 18),
+              Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 18),
               const SizedBox(width: 8),
               Text(
                 isCancelled 
@@ -215,7 +215,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: VSPColors.accent,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(LucideIcons.send, color: VSPColors.background, size: 20),
+              child: Icon(LucideIcons.send, color: VSPColors.background, size: 20),
             ),
           ),
         ],
@@ -281,3 +281,5 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 }
+
+

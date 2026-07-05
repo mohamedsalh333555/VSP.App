@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -119,7 +119,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(Icons.gavel_rounded, color: Colors.red, size: 28),
+                      Icon(LucideIcons.gavel, color: Colors.red, size: 28),
                       const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
@@ -134,9 +134,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               ),
                             ),
                             const SizedBox(height: 2),
-                            const Text(
+                            Text(
+                              auth.userModel?.additionalData?['rejection_reason'] ?? 
+                              auth.userModel?.additionalData?['last_warning'] ??
                               "Your documents were rejected during audit. Please click below to re-submit clear documents.",
-                              style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
                             ),
                             const SizedBox(height: 8),
                             ElevatedButton(
@@ -175,7 +177,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.clock, color: Colors.orange, size: 28),
+                      Icon(LucideIcons.clock, color: Colors.orange, size: 28),
                       const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
@@ -215,7 +217,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 28),
+                      Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 28),
                       const SizedBox(width: VSPSpacing.sm),
                       Expanded(
                         child: Column(
@@ -268,7 +270,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(LucideIcons.info, color: VSPColors.warning),
+                          Icon(LucideIcons.info, color: VSPColors.warning),
                           const SizedBox(width: VSPSpacing.sm),
                           Expanded(
                             child: Text(
@@ -276,7 +278,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.warning, fontWeight: FontWeight.bold),
                             ),
                           ),
-                          const Icon(Icons.arrow_forward_ios, size: 14, color: VSPColors.warning),
+                          Icon(LucideIcons.chevronRight, size: 14, color: VSPColors.warning),
                         ],
                       ),
                     ),
@@ -355,7 +357,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                               style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.accent),
                             ),
                             const SizedBox(width: 4),
-                            const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 18),
+                            Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 18),
                           ],
                         ),
                       ),
@@ -414,7 +416,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 final count = snap.data ?? 0;
                 return Stack(
                     children: [
-                    const Icon(LucideIcons.bell, color: VSPColors.textPrimary, size: 24),
+                    Icon(LucideIcons.bell, color: VSPColors.textPrimary, size: 24),
                     if (count > 0)
                       Positioned(
                         top: 0,
@@ -468,7 +470,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               child: DropdownButton<String>(
                 value: _selectedStadium,
                 dropdownColor: VSPColors.surface,
-                icon: const Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 18),
+                icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 18),
                 style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 13),
                 isExpanded: true,
                 items: stadiumNames.map((stadium) {
@@ -508,7 +510,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                          Expanded(child: Text(dateDisplayText, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textPrimary, fontSize: 11), overflow: TextOverflow.ellipsis)),
-                         const Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 16),
+                         Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 16),
                       ],
                     ),
                   ),
@@ -527,7 +529,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     border: Border.all(color: _isAllTime ? VSPColors.accent : VSPColors.divider, width: 0.5),
                   ),
                   child: Icon(
-                    Icons.public, 
+                    LucideIcons.globe, 
                     color: _isAllTime ? VSPColors.accent : VSPColors.textSecondary, 
                     size: 20
                   ),
@@ -801,7 +803,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                   : null,
                             ),
                             child: (booking.hostAvatarUrl == null || booking.hostAvatarUrl!.isEmpty)
-                                ? const Icon(Icons.person_outline, color: VSPColors.textSecondary, size: 20)
+                                ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 20)
                                 : null,
                           ),
                           const SizedBox(width: 14),
@@ -840,7 +842,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                 ),
                               ),
                               const SizedBox(height: 4),
-                              const Icon(Icons.more_vert, color: VSPColors.textSecondary, size: 20),
+                              Icon(LucideIcons.moreVertical, color: VSPColors.textSecondary, size: 20),
                             ],
                           ),
                         ],
@@ -856,5 +858,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 }
+
+
 
 

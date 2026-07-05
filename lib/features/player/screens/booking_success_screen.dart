@@ -1,4 +1,5 @@
 ﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
@@ -152,7 +153,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                         border: Border.all(color: VSPColors.accent, width: 4),
                         color: VSPColors.surface,
                       ),
-                      child: const Icon(Icons.check, color: VSPColors.accent, size: 60),
+                      child: Icon(LucideIcons.check, color: VSPColors.accent, size: 60),
                     ),
                   ),
                   const SizedBox(height: 24),
@@ -175,20 +176,20 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                     ),
                     child: Column(
                       children: [
-                        _buildDetailRow(Icons.stadium, widget.booking.stadiumName),
+                        _buildDetailRow(LucideIcons.building, widget.booking.stadiumName),
                         const SizedBox(height: VSPSpacing.md),
-                        _buildDetailRow(Icons.calendar_today, widget.booking.formattedDate),
+                        _buildDetailRow(LucideIcons.calendar, widget.booking.formattedDate),
                         const SizedBox(height: VSPSpacing.md),
-                        _buildDetailRow(Icons.access_time, widget.booking.formattedTimeRange),
+                        _buildDetailRow(LucideIcons.clock, widget.booking.formattedTimeRange),
                         const SizedBox(height: VSPSpacing.md),
                         _buildDetailRow(
-                          Icons.payment, 
+                          LucideIcons.creditCard, 
                           '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
                         ),
                         if (widget.booking.bookingType == BookingType.challenge) ...[
                           const SizedBox(height: 12),
                           _buildDetailRow(
-                            Icons.sports_soccer, 
+                            LucideIcons.trophy, 
                             AppLocalizations.of(context)!.vsOpponent(widget.booking.opponentTeamName ?? 'Opponent')
                           ),
                         ],
@@ -230,7 +231,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                               color: VSPColors.accent,
                               borderRadius: BorderRadius.circular(VSPRadius.xs),
                             ),
-                            child: const Icon(Icons.content_copy, color: VSPColors.background, size: 18),
+                            child: Icon(LucideIcons.copy, color: VSPColors.background, size: 18),
                           ),
                         ),
                       ],

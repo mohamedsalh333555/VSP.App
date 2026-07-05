@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -77,8 +78,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: const Icon(
-                      Icons.close,
+                    icon: Icon(LucideIcons.x,
                       color: VSPColors.textSecondary,
                     ),
                   ),
@@ -105,10 +105,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                     child: ListView(
                       padding: EdgeInsets.zero,
                       children: [
-                        _buildCategoryItem('Sports', categoryTitles['Sports']!, Icons.sports_soccer),
-                        _buildCategoryItem('Price Range', categoryTitles['Price Range']!, Icons.attach_money),
-                        _buildCategoryItem('Ratings', categoryTitles['Ratings']!, Icons.star_outline),
-                        _buildCategoryItem('Services', categoryTitles['Services']!, Icons.room_service),
+                        _buildCategoryItem('Sports', categoryTitles['Sports']!, LucideIcons.trophy),
+                        _buildCategoryItem('Price Range', categoryTitles['Price Range']!, LucideIcons.dollarSign),
+                        _buildCategoryItem('Ratings', categoryTitles['Ratings']!, LucideIcons.star),
+                        _buildCategoryItem('Services', categoryTitles['Services']!, LucideIcons.conciergeBell),
                       ],
                     ),
                   ),
@@ -267,8 +267,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       borderRadius: BorderRadius.circular(VSPRadius.sm),
                     ),
                     child: entry.value
-                        ? const Icon(
-                            Icons.check,
+                        ? Icon(LucideIcons.check,
                             color: VSPColors.background,
                             size: 16,
                           )
@@ -345,7 +344,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 });
               },
               icon: Icon(
-                starPosition <= _selectedRating ? Icons.star : Icons.star_border,
+                starPosition <= _selectedRating ? LucideIcons.star : LucideIcons.star,
                 color: starPosition <= _selectedRating ? Colors.amber : VSPColors.textSecondary,
                 size: 32,
               ),

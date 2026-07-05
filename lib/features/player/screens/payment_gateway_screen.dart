@@ -1,9 +1,12 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
+import 'dart:io';
+import 'package:image_picker/image_picker.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
@@ -14,6 +17,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/services/storage_service.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
@@ -33,6 +37,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _depositConfirmed = false;
   String? _ownerPhone;
   bool _isLoadingPhone = true;
+  XFile? _receiptImage;
 
   @override
   void initState() {
@@ -64,94 +69,138 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   void _processPayment() async {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    setState(() => _isLoading = true);
-    await Future.delayed(const Duration(milliseconds: 600));
-    if (!mounted) return;
+    
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.uid;
+    
+    if (userId == null) {
+      VSPFeedback.showError(context, l10n.sessionExpiredError);
+      return;
+    }
 
-    try {
-      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-      final userId = authProvider.currentUser?.uid;
-      
-      if (userId == null) {
-        setState(() => _isLoading = false);
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.sessionExpiredError), backgroundColor: Colors.red));
+    final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
+    final activeOptionIndex = isCashLocked ? 1 : _selectedOptionIndex;
+    final hasDeposit = widget.bookingDraft.depositPaid > 0 && widget.bookingDraft.needsDeposit;
+
+    if (hasDeposit && activeOptionIndex == 0) {
+      if (_receiptImage == null) {
+        VSPFeedback.showError(context, isArabic ? 'يرجى إرفاق صورة إيصال تحويل العربون أولاً' : 'Please upload the deposit receipt first.');
         return;
       }
-
-      final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
-      final activeOptionIndex = isCashLocked ? 1 : _selectedOptionIndex;
-      final hasDeposit = widget.bookingDraft.depositPaid > 0 && widget.bookingDraft.needsDeposit;
       
-      bool isPaid = false;
-      bool isDepositPaid = false;
-      double depositPaidVal = widget.bookingDraft.depositPaid;
-      String paymentStatus = 'pending';
-      String paymentMethod = 'cash';
+      setState(() => _isLoading = true);
+      
+      try {
+        // رفع إيصال التحويل على السيرفر
+        final receiptUrl = await StorageService().uploadFile(
+          file: _receiptImage!,
+          bucket: 'deposit-receipts', // تم التحديث هنا لمطابقة لقطة الشاشة
+          path: 'bookings/$userId/receipts/rec_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        );
 
-      if (hasDeposit) {
-        if (activeOptionIndex == 0) {
-          if (!_depositConfirmed) {
+        if (receiptUrl == null) throw Exception('Failed to upload receipt');
+
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        final draftWithPayment = widget.bookingDraft.copyWith(
+          isPaid: false,
+          isDepositPaid: true,
+          depositPaid: widget.bookingDraft.depositPaid,
+          paymentStatus: 'awaiting_verification', // حالة مخصصة للمراجعة اليدوية
+          paymentMethod: 'manual_transfer',
+          paymentTransactionId: 'TRANSFER_RC_manual',
+          notes: '${widget.bookingDraft.notes ?? ""}\n[Manual Receipt]: $receiptUrl'.trim(),
+        );
+
+        final booking = await bookingProvider.createBooking(draftWithPayment, userId);
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        if (booking != null) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+        } else {
+          final errorMsg = bookingProvider.errorMessage ?? '';
+          if (errorMsg.contains('Overlapping') || errorMsg.contains('overlapping') || errorMsg.contains('already booked')) {
+            VSPFeedback.showError(
+              context,
+              isArabic 
+                ? 'عذراً، هذه الساعة تم حجزها وتأكيدها من لاعب آخر للتو! ⚠️' 
+                : 'Sorry, this slot was just booked and confirmed by another player! ⚠️'
+            );
+          } else {
+            VSPFeedback.showError(context, errorMsg.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''));
+          }
+        }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        VSPFeedback.showError(context, l10n.bookingFailedError(e.toString()));
+      }
+    } else {
+      // التدفق القديم للدفع النقدي بالكامل أو الدفع الإلكتروني المباشر
+      setState(() => _isLoading = true);
+      await Future.delayed(const Duration(milliseconds: 600));
+      if (!mounted) return;
+
+      try {
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        
+        bool isPaid = false;
+        bool isDepositPaid = false;
+        double depositPaidVal = widget.bookingDraft.depositPaid;
+        String paymentStatus = 'pending';
+        String paymentMethod = 'cash';
+
+        if (hasDeposit) {
+          setState(() => _isLoading = false);
+          VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
+          return;
+        } else {
+          if (activeOptionIndex == 0) {
+            isPaid = false;
+            isDepositPaid = false;
+            depositPaidVal = 0.0;
+            paymentStatus = 'unpaid';
+            paymentMethod = 'cash';
+          } else {
             setState(() => _isLoading = false);
-            VSPFeedback.showError(context, isArabic ? 'يجب تأكيد دفع العربون أولاً قبل إتمام الحجز' : 'You must confirm the deposit payment first.');
+            VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
             return;
           }
-          isPaid = false;
-          isDepositPaid = true;
-          depositPaidVal = widget.bookingDraft.depositPaid;
-          paymentStatus = 'partially_paid';
-          paymentMethod = 'card';
-        } else {
-          setState(() => _isLoading = false);
-          VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
-          return;
         }
-      } else {
-        if (activeOptionIndex == 0) {
-          isPaid = false;
-          isDepositPaid = false;
-          depositPaidVal = 0.0;
-          paymentStatus = 'unpaid';
-          paymentMethod = 'cash';
+
+        final draftWithPayment = widget.bookingDraft.copyWith(
+          isPaid: isPaid,
+          isDepositPaid: isDepositPaid,
+          depositPaid: depositPaidVal,
+          paymentStatus: paymentStatus,
+          paymentMethod: paymentMethod,
+          paymentTransactionId: '_',
+        );
+
+        final booking = await bookingProvider.createBooking(draftWithPayment, userId);
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+
+        if (booking != null) {
+          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
         } else {
-          setState(() => _isLoading = false);
-          VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
-          return;
+          final errorMsg = bookingProvider.errorMessage ?? '';
+          if (errorMsg.contains('Overlapping') || errorMsg.contains('overlapping') || errorMsg.contains('already booked')) {
+            VSPFeedback.showError(
+              context,
+              isArabic 
+                ? 'عذراً، هذه الساعة تم حجزها وتأكيدها من لاعب آخر للتو! ⚠️' 
+                : 'Sorry, this slot was just booked and confirmed by another player! ⚠️'
+            );
+          } else {
+            VSPFeedback.showError(context, errorMsg.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''));
+          }
         }
+      } catch (e) {
+        if (!mounted) return;
+        setState(() => _isLoading = false);
+        VSPFeedback.showError(context, l10n.bookingFailedError(e.toString()));
       }
-
-      final draftWithPayment = widget.bookingDraft.copyWith(
-        isPaid: isPaid,
-        isDepositPaid: isDepositPaid,
-        depositPaid: depositPaidVal,
-        paymentStatus: paymentStatus,
-        paymentMethod: paymentMethod,
-        paymentTransactionId: '_',
-      );
-
-      final booking = await bookingProvider.createBooking(draftWithPayment, userId);
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-
-      if (booking != null) {
-        Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-      } else {
-        final errorMsg = bookingProvider.errorMessage ?? '';
-        if (errorMsg.contains('Overlapping') || errorMsg.contains('overlapping') || errorMsg.contains('already booked')) {
-          VSPFeedback.showError(
-            context,
-            isArabic 
-              ? 'عذراً، هذه الساعة تم حجزها وتأكيدها من لاعب آخر للتو! ⚠️' 
-              : 'Sorry, this slot was just booked and confirmed by another player! ⚠️'
-          );
-        } else {
-          VSPFeedback.showError(context, errorMsg.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''));
-        }
-      }
-    } catch (e) {
-      if (!mounted) return;
-      setState(() => _isLoading = false);
-      VSPFeedback.showError(context, l10n.bookingFailedError(e.toString()));
     }
   }
 
@@ -171,7 +220,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -247,9 +296,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final total = widget.bookingDraft.totalPrice;
     final deposit = widget.bookingDraft.depositPaid;
     final remaining = (total - deposit).clamp(0.0, double.infinity);
+    final showAcknowledgement = hasDeposit && activeOptionIndex == 0;
 
+    Widget optionsColumn;
     if (isCashLocked) {
-      return Column(
+      optionsColumn = Column(
         children: [
           _buildOptionCard(
             index: 1,
@@ -259,15 +310,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 : "Pay the full booking amount now (${total.toInt()} EGP) online",
             tag: isArabic ? 'تأكيد بالكامل' : 'Full Payment',
             priceText: '${total.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            icon: Icons.account_balance_wallet_outlined,
+            icon: LucideIcons.wallet,
             activeOptionIndex: activeOptionIndex,
           ),
         ],
       );
-    }
-
-    if (hasDeposit) {
-      return Column(
+    } else if (hasDeposit) {
+      optionsColumn = Column(
         children: [
           _buildOptionCard(
             index: 0,
@@ -277,7 +326,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 : "Pay deposit to secure booking (${deposit.toInt()} EGP), rest in cash (${remaining.toInt()} EGP)",
             tag: isArabic ? 'عربون مسبق' : 'Deposit',
             priceText: '${deposit.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            icon: Icons.lock_outline,
+            icon: LucideIcons.lock,
             activeOptionIndex: activeOptionIndex,
           ),
           const SizedBox(height: 16),
@@ -289,13 +338,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 : "Pay the full booking amount now (${total.toInt()} EGP) online",
             tag: isArabic ? 'تأكيد بالكامل' : 'Full Payment',
             priceText: '${total.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            icon: Icons.account_balance_wallet_outlined,
+            icon: LucideIcons.wallet,
             activeOptionIndex: activeOptionIndex,
           ),
         ],
       );
     } else {
-      return Column(
+      optionsColumn = Column(
         children: [
           _buildOptionCard(
             index: 0,
@@ -305,7 +354,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 : "Pay the full amount (${total.toInt()} EGP) in cash at the stadium",
             tag: isArabic ? 'دفع عند الوصول' : 'Cash',
             priceText: '${total.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            icon: Icons.payments_outlined,
+            icon: LucideIcons.banknote,
             activeOptionIndex: activeOptionIndex,
           ),
           const SizedBox(height: 16),
@@ -317,12 +366,78 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 : "Pay the full booking amount now (${total.toInt()} EGP) online",
             tag: isArabic ? 'تأكيد بالكامل' : 'Full Payment',
             priceText: '${total.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
-            icon: Icons.account_balance_wallet_outlined,
+            icon: LucideIcons.wallet,
             activeOptionIndex: activeOptionIndex,
           ),
         ],
       );
     }
+
+    if (showAcknowledgement) {
+      return Column(
+        children: [
+          optionsColumn,
+          const SizedBox(height: 16),
+          Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.xl),
+              border: Border.all(color: VSPColors.divider),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic ? 'بيانات تحويل العربون اليدوي:' : 'Manual Deposit Details:',
+                  style: const TextStyle(fontWeight: FontWeight.bold, color: VSPColors.accent),
+                ),
+                const SizedBox(height: 8),
+                Text(
+                  isArabic 
+                      ? 'يرجى تحويل مبلغ ${widget.bookingDraft.depositPaid.toInt()} ج.م إلى الرقم ${_ownerPhone ?? "غير متوفر"} عبر إنستاباي أو المحفظة الإلكترونية، ثم أرفق إيصال التحويل أدناه:'
+                      : 'Please transfer ${widget.bookingDraft.depositPaid.toInt()} EGP to ${_ownerPhone ?? "N/A"} via InstaPay or Mobile Wallet, then attach the receipt:',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                ),
+                const SizedBox(height: 16),
+                _receiptImage == null 
+                    ? ElevatedButton.icon(
+                        onPressed: () async {
+                          final picker = ImagePicker();
+                          final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                          if (image != null) setState(() => _receiptImage = image);
+                        },
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: Colors.black,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+                        ),
+                        icon: const Icon(LucideIcons.upload, color: Colors.black, size: 18),
+                        label: Text(isArabic ? 'إرفاق إيصال التحويل' : 'Attach Receipt'),
+                      )
+                    : Row(
+                        children: [
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(8),
+                            child: Image.file(File(_receiptImage!.path), width: 50, height: 50, fit: BoxFit.cover),
+                          ),
+                          const SizedBox(width: 12),
+                          Text(isArabic ? 'تم اختيار الإيصال' : 'Receipt Selected', style: const TextStyle(color: VSPColors.success, fontSize: 12)),
+                          const Spacer(),
+                          IconButton(
+                            icon: const Icon(LucideIcons.trash2, color: VSPColors.error),
+                            onPressed: () => setState(() => _receiptImage = null),
+                          ),
+                        ],
+                      ),
+              ],
+            ),
+          ),
+        ],
+      );
+    }
+
+    return optionsColumn;
   }
 
   Widget _buildOptionCard({
@@ -461,7 +576,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(Icons.phone_in_talk, color: VSPColors.accent, size: 20),
+                Icon(LucideIcons.phoneCall, color: VSPColors.accent, size: 20),
                 const SizedBox(width: 10),
                 Text(
                   isArabic ? 'اتصل بإدارة الملعب للاستفسار مباشر' : 'Call Pitch directly to inquire',
@@ -492,7 +607,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         children: [
           Row(
             children: [
-              const Icon(Icons.warning_amber_rounded, color: VSPColors.error, size: 20),
+              Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 20),
               const SizedBox(width: 10),
               Text(
                 isArabic ? "تقييد الحساب" : "Account Restricted",
@@ -549,7 +664,7 @@ class _DepositAcknowledgementCard extends StatelessWidget {
         children: [
           Row(
             children: [
-              const Icon(Icons.lock_outline, color: VSPColors.accent, size: 20),
+              Icon(LucideIcons.lock, color: VSPColors.accent, size: 20),
               const SizedBox(width: 10),
               Text(
                 'تأكيد العربون المطلوب',
@@ -588,7 +703,7 @@ class _DepositAcknowledgementCard extends StatelessWidget {
                     ),
                   ),
                   child: confirmed
-                      ? const Icon(Icons.check, size: 14, color: Colors.black)
+                      ? Icon(LucideIcons.check, size: 14, color: Colors.black)
                       : null,
                 ),
                 const SizedBox(width: 12),
@@ -650,7 +765,7 @@ class _BookingSummaryCard extends StatelessWidget {
               Container(
                 width: 48, height: 48,
                 decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md)),
-                child: const Icon(Icons.stadium_outlined, color: VSPColors.accent),
+                child: Icon(LucideIcons.building, color: VSPColors.accent),
               ),
               const SizedBox(width: 16),
               Expanded(
@@ -668,11 +783,11 @@ class _BookingSummaryCard extends StatelessWidget {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSummaryItem(context, Icons.calendar_today_outlined, 
+              _buildSummaryItem(context, LucideIcons.calendar, 
                 DateFormat('yyyy/MM/dd').format(bookingDraft.startTime)),
-              _buildSummaryItem(context, Icons.access_time, 
+              _buildSummaryItem(context, LucideIcons.clock, 
                 DateFormat('hh:mm a').format(bookingDraft.startTime)),
-              _buildSummaryItem(context, Icons.sports_soccer, 
+              _buildSummaryItem(context, LucideIcons.trophy, 
                 bookingDraft.bookingType == BookingType.challenge ? l10n.ranked : l10n.friendly),
             ],
           ),

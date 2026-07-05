@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -190,7 +191,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
+                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -253,7 +254,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   CustomTextField(
                     controller: _nameController,
                     hintText: AppLocalizations.of(context)!.enterName,
-                    prefixIcon: Icons.person_outline,
+                    prefixIcon: LucideIcons.user,
                     maxLength: 50,
                   ),
                   
@@ -264,7 +265,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: '01xxxxxxxxx',
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    prefixIcon: Icons.phone_outlined,
+                    prefixIcon: LucideIcons.phone,
                     maxLength: 15,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
@@ -285,7 +286,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _emailController,
                     hintText: 'example@email.com',
                     keyboardType: TextInputType.emailAddress,
-                    prefixIcon: Icons.email_outlined,
+                    prefixIcon: LucideIcons.mail,
                   ),
                   
                   const SizedBox(height: 16),
@@ -294,10 +295,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _passwordController,
                     hintText: '********',
                     obscureText: _obscurePassword,
-                    prefixIcon: Icons.lock_outline,
+                    prefixIcon: LucideIcons.lock,
                     onChanged: (val) => setState(() {}),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? Icons.visibility_off : Icons.visibility, color: VSPColors.textSecondary),
+                      icon: Icon(_obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
@@ -313,9 +314,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _confirmPasswordController,
                     hintText: '********',
                     obscureText: _obscureConfirmPassword,
-                    prefixIcon: Icons.lock_clock_outlined,
+                    prefixIcon: LucideIcons.lock,
                     suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirmPassword ? Icons.visibility_off : Icons.visibility, color: VSPColors.textSecondary),
+                      icon: Icon(_obscureConfirmPassword ? LucideIcons.eyeOff : LucideIcons.eye, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
@@ -460,7 +461,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: DropdownButton<String>(
           value: auth.governorate.isEmpty ? 'Cairo' : auth.governorate,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {

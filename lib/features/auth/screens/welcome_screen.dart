@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -111,7 +112,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       ),
                       child: Row(
                         children: [
-                          const Icon(Icons.language, size: 16, color: VSPColors.accent),
+                          Icon(LucideIcons.globe, size: 16, color: VSPColors.accent),
                           const SizedBox(width: 8),
                           Text(
                             langProvider.isArabic ? AppLocalizations.of(context)!.english : AppLocalizations.of(context)!.arabic,

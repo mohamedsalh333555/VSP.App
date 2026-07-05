@@ -1,5 +1,4 @@
-﻿import 'dart:async';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -102,8 +101,13 @@ class SupabaseBookingRepository implements BookingRepository {
           b.status != BookingStatus.cancelled && 
           b.status != BookingStatus.completed &&
           b.endTime.isAfter(now));
-      if (hasActiveUnpaid) {
-        throw Exception("لا يمكنك إنشاء حجز جديد بينما لديك حجز نشط غير مدفوع بالفعل.");
+
+      final bool isNewBookingUnpaid = !draft.isPaid && draft.paymentMethod == 'cash';
+      if (hasActiveUnpaid && isNewBookingUnpaid) {
+        throw Exception(
+          "حسابك مقيد بحد أقصى حجز نقدي واحد نشط في نفس الوقت. "
+          "يرجى سداد الحجز الآخر أو الدفع إلكترونياً (أونلاين) لهذا الحجز الجديد للمتابعة."
+        );
       }
 
       const status = BookingStatus.confirmed;
@@ -206,7 +210,7 @@ class SupabaseBookingRepository implements BookingRepository {
 
   Future<void> _sendOwnerNotification(BookingDraft draft, String bookingId) async {
     try {
-      await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+      await NotificationRepository().sendNotification(
         draft.ownerId,
         AppNotification(
           id: '',
@@ -237,7 +241,7 @@ class SupabaseBookingRepository implements BookingRepository {
       if (captainUser == null) return;
 
       // 3. Send notification
-      await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+      await NotificationRepository().sendNotification(
         captainUser.uid,
         AppNotification(
           id: '', 
@@ -420,42 +424,50 @@ class SupabaseBookingRepository implements BookingRepository {
 
       Future<void> saveRating() async {
         if (rating != null && rating > 0) {
-          final firestore = FirebaseFirestore.instance;
-          final stadiumRef = firestore.collection('stadiums').doc(booking.stadiumId);
-          
-          final existingReviews = await stadiumRef.collection('reviews')
-              .where('bookingId', isEqualTo: bookingId)
-              .where('userId', isEqualTo: teamId)
-              .get();
+          // 1. تحقق من عدم تكرار التقييم لنفس الملعب والمستخدم في Supabase
+          final existing = await _supabase
+              .from('reviews')
+              .select('id')
+              .eq('stadium_id', booking.stadiumId)
+              .eq('user_id', teamId)
+              .maybeSingle();
 
-          if (existingReviews.docs.isNotEmpty) {
+          if (existing != null) {
             VSPLogger.i('⚠️ Skipping duplicate review submission for booking $bookingId');
             return;
           }
 
-          await stadiumRef.collection('reviews').add({
-            'bookingId': bookingId,
-            'userId': teamId,
-            'rating': rating,
-            'reviewText': review ?? '',
-            'createdAt': FieldValue.serverTimestamp(),
+          // 2. إدراج التقييم الجديد في جدول reviews في Supabase
+          await _supabase.from('reviews').insert({
+            'stadium_id': booking.stadiumId,
+            'user_id': teamId,
+            'rating': rating.toInt(),
+            'review_text': review ?? '',
+            'created_at': DateTime.now().toUtc().toIso8601String(),
           });
 
-          await firestore.runTransaction((transaction) async {
-            final stadiumDoc = await transaction.get(stadiumRef);
-            if (!stadiumDoc.exists) return;
-            
-            final currentRating = (stadiumDoc.data()?['rating'] ?? 5.0).toDouble();
-            final reviewsCount = (stadiumDoc.data()?['reviewsCount'] ?? 0).toInt();
-            
+          // 3. جلب التقييم الحالي وعدد المراجعات لتحديث المتوسط في جدول الملاعب (stadiums)
+          final stadiumDoc = await _supabase
+              .from('stadiums')
+              .select('rating, reviews_count')
+              .eq('id', booking.stadiumId)
+              .maybeSingle();
+
+          if (stadiumDoc != null) {
+            final currentRating = (stadiumDoc['rating'] ?? 5.0).toDouble();
+            final reviewsCount = (stadiumDoc['reviews_count'] ?? 0).toInt();
+
             final newReviewsCount = reviewsCount + 1;
             final newRating = ((currentRating * reviewsCount) + rating) / newReviewsCount;
+
+            // 4. تحديث الحقول الرياضية في جدول الملاعب في Supabase
+            await _supabase.from('stadiums').update({
+              'rating': newRating,
+              'reviews_count': newReviewsCount,
+            }).eq('id', booking.stadiumId);
             
-            transaction.update(stadiumRef, {
-               'rating': newRating,
-               'reviewsCount': newReviewsCount,
-            });
-          });
+            VSPLogger.i('⭐ Stadium rating updated on Supabase: $newRating ($newReviewsCount reviews)');
+          }
         }
       }
 
@@ -621,7 +633,7 @@ class SupabaseBookingRepository implements BookingRepository {
             'updated_at': now.toUtc().toIso8601String(),
           }).eq('id', booking.id);
 
-          await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+          await NotificationRepository().sendNotification(
             booking.createdByUserId,
             AppNotification(
               id: '',
@@ -725,7 +737,7 @@ class SupabaseBookingRepository implements BookingRepository {
         final notes = booking.notes ?? '';
 
         if (now.isAfter(endTime.add(const Duration(hours: 1))) && !notes.contains('[NUDGED]')) {
-          await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+          await NotificationRepository().sendNotification(
             booking.createdByUserId,
             AppNotification(
               id: '',
@@ -743,7 +755,7 @@ class SupabaseBookingRepository implements BookingRepository {
             if (captainPhone != null && captainPhone.isNotEmpty) {
               final captainUser = await UserRepository().getUserByPhone(captainPhone);
               if (captainUser != null) {
-                await NotificationRepository(firestore: FirebaseFirestore.instance).sendNotification(
+                await NotificationRepository().sendNotification(
                   captainUser.uid,
                   AppNotification(
                     id: '',

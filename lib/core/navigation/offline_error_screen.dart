@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -25,8 +26,7 @@ class OfflineErrorScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: VSPColors.borderLight),
                 ),
-                child: const Icon(
-                  Icons.wifi_off_rounded,
+                child: Icon(LucideIcons.wifiOff,
                   color: VSPColors.textSecondary,
                   size: 56,
                 ),

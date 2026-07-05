@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import '../../../data/models.dart';
@@ -47,7 +48,7 @@ class PaymentSelectionModal extends StatelessWidget {
             Align(
               alignment: Alignment.topRight,
               child: IconButton(
-                icon: const Icon(Icons.close, color: VSPColors.textPrimary, size: 24),
+                icon: Icon(LucideIcons.x, color: VSPColors.textPrimary, size: 24),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -62,8 +63,7 @@ class PaymentSelectionModal extends StatelessWidget {
                 color: VSPColors.accent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: const Icon(
-                Icons.check_circle_outline,
+              child: Icon(LucideIcons.checkCircle,
                 color: VSPColors.accent,
                 size: 40,
               ),

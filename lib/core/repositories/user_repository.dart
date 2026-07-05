@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:uuid/uuid.dart';
 import '../models/user_model.dart';
 import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
@@ -182,6 +183,38 @@ class UserRepository {
     } catch (e) {
       VSPLogger.e('Error creating user profile', e);
       return false;
+    }
+  }
+
+  Future<UserModel?> createGuestUser(String name) async {
+    try {
+      // توليد معرف عشوائي آمن للضيف
+      final guestId = 'guest_${const Uuid().v4()}'; 
+      final initialData = {
+        'id': guestId,
+        'email': '',
+        'role': 'player',
+        'name': name,
+        'phone': null, // الرقم فارغ تماماً لحماية الهوية
+        'is_email_verified': false,
+        'has_stadium': false,
+        'is_identity_verified': false,
+        'is_registration_complete': false,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      };
+
+      await _supabase.from('users').insert(initialData);
+      return UserModel(
+        uid: guestId,
+        email: '',
+        name: name,
+        role: 'player',
+        isRegistrationComplete: false,
+      );
+    } catch (e) {
+      VSPLogger.e('Error creating guest user', e);
+      return null;
     }
   }
 }

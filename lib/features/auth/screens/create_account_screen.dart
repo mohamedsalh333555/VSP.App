@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -87,7 +88,7 @@ class CreateAccountScreen extends StatelessWidget {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? Icons.arrow_forward : Icons.arrow_back,
+                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                       ],
@@ -196,7 +197,7 @@ class CreateAccountScreen extends StatelessWidget {
                             Expanded(
                               child: _SocialButton(
                                 height: 56,
-                                icon: Icons.apple,
+                                icon: LucideIcons.apple,
                                 onPressed: () async {
                                   authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                                   final success = await authProvider.signInWithApple();

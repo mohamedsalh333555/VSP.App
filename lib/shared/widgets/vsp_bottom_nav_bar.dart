@@ -1,4 +1,3 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -31,33 +30,26 @@ class VspBottomNavBar extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Container(
-      color: Colors.transparent, // Ensures no black background behind the nav bar
+      color: Colors.transparent,
       child: SafeArea(
-        bottom: true, // 🛡️ Automatic safe area protection for gestures
+        bottom: true,
         child: Container(
-          margin: const EdgeInsets.only(
-            left: 20, 
-            right: 20, 
-            bottom: 10, // 💡 Fixed margin to float elegantly above gesture line
-          ),
-          height: 65,
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(30),
-            boxShadow: [
-              BoxShadow(
-                color: Colors.black.withValues(alpha: 0.3),
-                blurRadius: 20,
-                offset: const Offset(0, 10),
-              ),
-            ],
-          ),
+          margin: const EdgeInsets.fromLTRB(16, 0, 16, 12),
+          height: 68,
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(30),
+            borderRadius: BorderRadius.circular(24),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20),
               child: Container(
-                color: VSPColors.surface.withValues(alpha: 0.85),
-                padding: const EdgeInsets.symmetric(horizontal: 12),
+                decoration: BoxDecoration(
+                  color: VSPColors.glassSurface.withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(24),
+                  border: Border.all(
+                    color: VSPColors.white.withValues(alpha: 0.08),
+                    width: 1,
+                  ),
+                ),
+                padding: const EdgeInsets.symmetric(horizontal: 8),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceAround,
                   children: items.asMap().entries.map((entry) {
@@ -72,32 +64,29 @@ class VspBottomNavBar extends StatelessWidget {
                       },
                       behavior: HitTestBehavior.opaque,
                       child: AnimatedContainer(
-                        duration: const Duration(milliseconds: 300),
-                        curve: Curves.easeInOut,
-                        padding: EdgeInsets.symmetric(
-                          horizontal: isSelected ? 16 : 12,
-                          vertical: isSelected ? 10 : 0,
-                        ),
+                        duration: const Duration(milliseconds: 400),
+                        curve: Curves.elasticOut,
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                         decoration: BoxDecoration(
-                          color: isSelected ? VSPColors.accent.withValues(alpha: 0.15) : Colors.transparent,
-                          borderRadius: BorderRadius.circular(20),
+                          color: isSelected ? VSPColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+                          borderRadius: BorderRadius.circular(16),
                         ),
-                        child: Row(
+                        child: Column(
                           mainAxisSize: MainAxisSize.min,
                           children: [
                             Icon(
-                              isSelected ? item.activeIcon : item.inactiveIcon,
-                              color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
-                              size: 24,
+                              item.activeIcon,
+                              color: isSelected ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5),
+                              size: 22,
                             ),
                             if (isSelected) ...[
-                              const SizedBox(width: 8),
-                              Text(
-                                item.label,
-                                style: const TextStyle(
+                              const SizedBox(height: 4),
+                              Container(
+                                width: 4,
+                                height: 4,
+                                decoration: const BoxDecoration(
                                   color: VSPColors.accent,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 12,
+                                  shape: BoxShape.circle,
                                 ),
                               ),
                             ],
@@ -115,4 +104,3 @@ class VspBottomNavBar extends StatelessWidget {
     );
   }
 }
-

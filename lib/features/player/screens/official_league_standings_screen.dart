@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -24,7 +25,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back_ios_new, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -77,7 +78,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                       const SizedBox(height: VSPSpacing.md),
                       ElevatedButton.icon(
                         onPressed: _launchHighlights,
-                        icon: const Icon(Icons.play_circle_fill, color: Colors.black, size: 20),
+                        icon: Icon(LucideIcons.playCircle, color: Colors.black, size: 20),
                         label: const Text(
                           'WATCH HIGHLIGHTS',
                           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 1.0),
@@ -237,7 +238,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                             player.titles, 
                             (i) => const Padding(
                               padding: EdgeInsets.only(right: 4, top: 4),
-                              child: Icon(Icons.emoji_events, color: VSPColors.accent, size: 18),
+                              child: Icon(LucideIcons.trophy, color: VSPColors.accent, size: 18),
                             ),
                           ),
                         ),
@@ -427,7 +428,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(player.titles, (i) => const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 1),
-                    child: Icon(Icons.emoji_events, color: Colors.black, size: 14),
+                    child: Icon(LucideIcons.trophy, color: Colors.black, size: 14),
                   )),
                 )
             ]
@@ -501,7 +502,7 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
                           child: Row(
                             children: List.generate(
                               widget.player.titles, 
-                              (i) => const Icon(Icons.emoji_events, color: VSPColors.accent, size: 12)
+                              (i) => Icon(LucideIcons.trophy, color: VSPColors.accent, size: 12)
                             ),
                           ),
                         ),
@@ -517,7 +518,7 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
                 ),
                 const SizedBox(width: 12),
                 Icon(
-                  _isExpanded ? Icons.keyboard_arrow_up : Icons.keyboard_arrow_down,
+                  _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
                   color: VSPColors.textSecondary.withValues(alpha: 0.4),
                   size: 16,
                 ),
@@ -549,9 +550,9 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
   }
 
   Widget _buildTrendIcon(String trend) {
-    if (trend == 'up') return const Icon(Icons.arrow_drop_up, color: VSPColors.accent, size: 16);
-    if (trend == 'down') return const Icon(Icons.arrow_drop_down, color: Colors.red, size: 16);
-    return const Icon(Icons.remove, color: VSPColors.textSecondary, size: 12);
+    if (trend == 'up') return Icon(LucideIcons.chevronUp, color: VSPColors.accent, size: 16);
+    if (trend == 'down') return Icon(LucideIcons.chevronDown, color: Colors.red, size: 16);
+    return Icon(LucideIcons.minus, color: VSPColors.textSecondary, size: 12);
   }
 
   Widget _buildDetailStat(String label, String value, BuildContext context) {

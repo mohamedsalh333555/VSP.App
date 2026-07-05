@@ -17,6 +17,7 @@ class CustomTextField extends StatelessWidget {
   final TextInputAction? textInputAction;
   final ValueChanged<String>? onChanged;
   final bool? enabled;
+  final bool autofocus;
 
   const CustomTextField({
     super.key,
@@ -33,6 +34,7 @@ class CustomTextField extends StatelessWidget {
     this.textInputAction,
     this.onChanged,
     this.enabled,
+    this.autofocus = false,
   });
 
   @override
@@ -47,6 +49,7 @@ class CustomTextField extends StatelessWidget {
       textInputAction: textInputAction,
       onChanged: onChanged,
       enabled: enabled,
+      autofocus: autofocus,
       style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(
         hintText: hintText,

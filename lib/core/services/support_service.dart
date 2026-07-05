@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -33,19 +34,19 @@ class SupportService {
             const SizedBox(height: VSPSpacing.md),
             _buildSupportOption(
               context,
-              Icons.verified_user_outlined,
+              LucideIcons.shieldCheck,
               isArabic ? "التوثيق وتفعيل الحساب" : "Document Verification & Profile",
               isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.",
             ),
             _buildSupportOption(
               context,
-              Icons.person_off_outlined,
+              LucideIcons.userMinus,
               isArabic ? "الإبلاغ عن غياب لاعب" : "Report Player No-Show",
               isArabic ? "الإبلاغ عن عدم حضور اللاعبين في الوقت المحدد" : "Report players who did not show up on time.",
             ),
             _buildSupportOption(
               context,
-              Icons.bug_report_outlined,
+              LucideIcons.bug,
               isArabic ? "مشكلة تقنية بالبطولات" : "Championships & Technical Issues",
               isArabic ? "الإبلاغ عن أعطال تقنية أو في لوحة المتصدرين" : "Report bugs or leaderboard/brackets issues.",
             ),

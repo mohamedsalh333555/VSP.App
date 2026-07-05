@@ -1,4 +1,5 @@
-﻿import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -151,14 +152,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             backgroundColor: Colors.transparent,
             elevation: 0,
             leading: IconButton(
-              icon: const Icon(Icons.arrow_back_ios, color: VSPColors.textPrimary, size: 20),
+              icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
               onPressed: () => Navigator.pop(context),
             ),
             title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
             actions: [
               if (team != null)
                 IconButton(
-                  icon: const Icon(Icons.share, color: VSPColors.accent),
+                  icon: Icon(LucideIcons.share2, color: VSPColors.accent),
                   onPressed: () {
                     SharingService.shareTeam(
                       context,
@@ -234,7 +235,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       ShimmerImage(
                         imageUrl: team?.logoUrl ?? '',
                         width: 50, height: 50, borderRadius: 25,
-                        errorWidget: const Icon(Icons.groups, color: VSPColors.textSecondary),
+                        errorWidget: Icon(LucideIcons.users, color: VSPColors.textSecondary),
                       ),
                     const SizedBox(width: VSPSpacing.md),
                     Expanded(
@@ -243,7 +244,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                         height: 45,
                         color: VSPColors.surfaceAlt,
                         textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
-                        icon: Icons.cloud_upload_outlined,
+                        icon: LucideIcons.uploadCloud,
                         onPressed: !isCaptain ? null : () async {
                           final picker = ImagePicker();
                           final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
@@ -264,7 +265,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     if (isCaptain && (1 + _teamMembers.length) < 12)
                       TextButton.icon(
                         onPressed: () => _showAddPlayerSheet(team),
-                        icon: const Icon(Icons.add_circle_outline, size: 16, color: VSPColors.accent),
+                        icon: Icon(LucideIcons.plusCircle, size: 16, color: VSPColors.accent),
                         label: Text(l10n.addMember, style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
                       ),
                   ],
@@ -305,13 +306,13 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       onPressed: _isSaving ? null : () => _handleCreateTeam(auth.userModel),
                     ),
                   )
-                else
+                else ...[
                   Row(
                     children: [
                       Expanded(
                         child: PrimaryButton(
                           text: l10n.deleteTeam,
-                          color: VSPColors.error.withValues(alpha: 0.8),
+                          color: VSPColors.error.withOpacity(0.8),
                           textColor: VSPColors.textPrimary,
                           onPressed: !isCaptain ? null : () => _showDeleteConfirmation(team!),
                         ),
@@ -326,6 +327,17 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                       ),
                     ],
                   ),
+                  const SizedBox(height: VSPSpacing.md),
+                  SizedBox(
+                    width: double.infinity,
+                    child: PrimaryButton(
+                      text: "مغادرة الفريق",
+                      color: VSPColors.error.withOpacity(0.15),
+                      textColor: VSPColors.error,
+                      onPressed: () => _showLeaveConfirmation(team!, uid),
+                    ),
+                  ),
+                ],
                 const SizedBox(height: VSPSpacing.md),
               ],
             ),
@@ -473,7 +485,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       child: CircleAvatar(
         radius: 17, backgroundColor: VSPColors.surfaceAlt,
         backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-        child: imageUrl.isEmpty ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 18) : null,
+        child: imageUrl.isEmpty ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 18) : null,
       ),
     );
   }
@@ -488,7 +500,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             CircleAvatar(
               radius: 12, backgroundColor: VSPColors.surface,
               backgroundImage: (user.profileImageUrl?.isNotEmpty ?? false) ? NetworkImage(user.profileImageUrl!) : null,
-              child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(Icons.person, color: VSPColors.textSecondary, size: 12) : null,
+              child: (user.profileImageUrl?.isEmpty ?? true) ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 12) : null,
             ),
             const SizedBox(width: VSPSpacing.sm),
             Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -520,7 +532,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     setState(() => _teamMembers.removeWhere((m) => m.uid == userToRemove.uid));
                   }
                 },
-                child: const Padding(padding: EdgeInsets.only(left: 6, right: 2), child: Icon(Icons.close, color: VSPColors.error, size: 14)),
+                child: const Padding(padding: EdgeInsets.only(left: 6, right: 2), child: Icon(LucideIcons.x, color: VSPColors.error, size: 14)),
               ),
         ],
       ),
@@ -530,9 +542,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   Widget _buildAchievementSection(Team team) {
     final l10n = AppLocalizations.of(context)!;
     final badges = [
-      {'id': 'explorer', 'name': 'Explorer', 'icon': Icons.explore, 'desc': 'Play against 5 different teams'},
-      {'id': 'gladiator', 'name': 'Gladiator', 'icon': Icons.security, 'desc': 'Played 10+ matches'},
-      {'id': 'streak_3', 'name': 'Streak 3', 'icon': Icons.local_fire_department, 'desc': 'Won 3 matches in a row'},
+      {'id': 'explorer', 'name': 'Explorer', 'icon': LucideIcons.compass, 'desc': 'Play against 5 different teams'},
+      {'id': 'gladiator', 'name': 'Gladiator', 'icon': LucideIcons.shield, 'desc': 'Played 10+ matches'},
+      {'id': 'streak_3', 'name': 'Streak 3', 'icon': LucideIcons.flame, 'desc': 'Won 3 matches in a row'},
     ];
 
     return Column(
@@ -546,7 +558,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: VSPColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: VSPColors.warning.withValues(alpha: 0.5))),
-                child: Row(children: [const Icon(Icons.bolt, color: VSPColors.warning, size: 14), const SizedBox(width: 4), Text(l10n.winStreak(team.currentWinningStreak), style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold))]),
+                child: Row(children: [Icon(LucideIcons.zap, color: VSPColors.warning, size: 14), const SizedBox(width: 4), Text(l10n.winStreak(team.currentWinningStreak), style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold))]),
               ),
           ],
         ),
@@ -604,6 +616,46 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           ],
         ),
         actions: [PrimaryButton(text: l10n.gotItBtn, height: 48, onPressed: () => Navigator.pop(context))],
+      ),
+    );
+  }
+
+  void _showLeaveConfirmation(Team team, String userId) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: const Text('مغادرة الفريق', style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+        content: const Text('هل أنت متأكد من رغبتك في مغادرة هذا الفريق؟'),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+        actions: [
+          Row(children: [
+            Expanded(child: PrimaryButton(text: 'إلغاء', height: 48, color: VSPColors.surfaceAlt, textColor: VSPColors.textPrimary, onPressed: () => Navigator.pop(context))),
+            const SizedBox(width: VSPSpacing.md),
+            Expanded(child: PrimaryButton(text: 'تأكيد المغادرة', height: 48, color: VSPColors.error, textColor: Colors.white, onPressed: () async {
+              Navigator.pop(context);
+              setState(() => _isSaving = true);
+              try {
+                await DatabaseService().removeMemberFromTeam(team.id, userId, '');
+                if (mounted) {
+                  ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تمت مغادرة الفريق بنجاح.'), backgroundColor: VSPColors.success));
+                  Navigator.pop(context);
+                }
+              } catch (e) {
+                if (mounted) {
+                  final errorMsg = e.toString().replaceAll('Exception:', '').trim();
+                  final displayMsg = errorMsg == 'active_match_or_tournament_error'
+                      ? AppLocalizations.of(context)!.teamMemberDeleteLockError
+                      : errorMsg;
+                  ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error));
+                }
+              } finally {
+                if (mounted) setState(() => _isSaving = false);
+              }
+            })),
+          ]),
+        ],
       ),
     );
   }

@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -9,7 +10,7 @@ class VSPFeedback {
       message: message,
       backgroundColor: VSPColors.accent,
       textColor: Colors.black,
-      icon: Icons.check_circle_outline,
+      icon: LucideIcons.checkCircle,
     );
   }
 
@@ -19,7 +20,7 @@ class VSPFeedback {
       message: message,
       backgroundColor: Colors.red,
       textColor: Colors.white,
-      icon: Icons.error_outline,
+      icon: LucideIcons.alertCircle,
     );
   }
 

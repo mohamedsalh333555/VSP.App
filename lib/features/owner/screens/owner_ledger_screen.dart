@@ -1,6 +1,7 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 
@@ -17,31 +18,39 @@ class OwnerLedgerScreen extends StatelessWidget {
         title: Text('Financial Ledger', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
-      body: StreamBuilder<QuerySnapshot>(
-        stream: FirebaseFirestore.instance.collection('transactions').orderBy('createdAt', descending: true).snapshots(),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: Supabase.instance.client
+            .from('transactions')
+            .stream(primaryKey: ['id'])
+            .map((list) {
+              final sorted = List<Map<String, dynamic>>.from(list);
+              sorted.sort((a, b) {
+                final dateA = DateTime.parse(a['created_at'].toString());
+                final dateB = DateTime.parse(b['created_at'].toString());
+                return dateB.compareTo(dateA);
+              });
+              return sorted;
+            }),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
           }
 
-          if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+          final transactions = snapshot.data ?? [];
+
+          if (transactions.isEmpty) {
             return Center(child: Text('No transactions yet.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)));
           }
 
-          final transactions = snapshot.data!.docs;
-
           double totalCash = 0;
           for (var doc in transactions) {
-            final data = doc.data() as Map<String, dynamic>;
-            if (data['type'] != 'match_win') {
-              totalCash += (data['amount'] ?? 0).toDouble();
+            if (doc['type'] != 'match_win') {
+              totalCash += (doc['amount'] ?? 0).toDouble();
             }
           }
 
           return Column(
             children: [
-              // ── Financial Summary Header ──
-              // Unified design system card showing only total revenue cleanly
               VSPCard(
                 margin: const EdgeInsets.all(VSPSpacing.md),
                 padding: const EdgeInsets.all(VSPSpacing.lg),
@@ -63,10 +72,11 @@ class OwnerLedgerScreen extends StatelessWidget {
                   itemCount: transactions.length,
                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
-                    final trans = transactions[index].data() as Map<String, dynamic>;
+                    final trans = transactions[index];
                     final isWin = trans['type'] == 'match_win';
                     final amount = trans['amount'] ?? 0;
-                    final date = (trans['createdAt'] as Timestamp?)?.toDate() ?? DateTime.now();
+                    final dateStr = trans['created_at'] as String?;
+                    final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
 
                     return VSPCard(
                       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -80,7 +90,7 @@ class OwnerLedgerScreen extends StatelessWidget {
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isWin ? Icons.emoji_events : Icons.attach_money,
+                              isWin ? LucideIcons.trophy : LucideIcons.dollarSign,
                               color: isWin ? VSPColors.warning : VSPColors.accent,
                               size: 24,
                             ),

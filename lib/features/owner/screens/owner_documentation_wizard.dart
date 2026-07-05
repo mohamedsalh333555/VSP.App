@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -67,7 +68,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
             const SizedBox(height: VSPSpacing.md),
             ListTile(
-              leading: const Icon(Icons.camera_alt, color: VSPColors.accent),
+              leading: Icon(LucideIcons.camera, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.camera, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -75,7 +76,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.photo_library, color: VSPColors.accent),
+              leading: Icon(LucideIcons.image, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.gallery, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -83,7 +84,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: const Icon(Icons.description, color: VSPColors.accent),
+              leading: Icon(LucideIcons.fileText, color: VSPColors.accent),
               title: const Text('الملفات (PDF / صور)', style: TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -268,7 +269,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
           icon: Icon(
-            autoApprove ? Icons.check_circle_rounded : Icons.access_time_rounded,
+            autoApprove ? LucideIcons.checkCircle : LucideIcons.clock,
             color: VSPColors.accent,
             size: 48,
           ),
@@ -344,7 +345,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
+          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
           onPressed: _previousPage,
         ),
         title: Text(

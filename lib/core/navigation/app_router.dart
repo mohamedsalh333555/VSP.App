@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../features/auth/screens/splash_screen.dart';
@@ -164,7 +164,7 @@ class AppRouter {
           }
           
           // Redirect fully onboarded owners to RootScreen
-          if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/facility-onboarding' || path == '/documentation' || path == '/verify-email' || path == '/owner') {
+          if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/facility-onboarding' || path == '/verify-email' || path == '/owner') {
             return '/';
           }
           return null;

@@ -54,7 +54,6 @@ dependencies:
   firebase_auth: ^5.3.3
   cloud_firestore: ^5.5.2
   google_sign_in: ^6.2.1
-  firebase_storage: ^12.3.6
   image_picker: ^1.0.7
   firebase_messaging: ^15.1.6
   file_picker: ^8.0.0
@@ -79,6 +78,9 @@ dependencies:
   introduction_screen: ^3.1.14
   logger: ^2.4.0
   sign_in_with_apple: ^7.0.1
+  lucide_icons_flutter: ^3.1.14+2
+  uuid: ^4.5.1
+
 
 dev_dependencies:
   flutter_test:

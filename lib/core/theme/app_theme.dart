@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -22,8 +22,8 @@ class AppTheme {
   static const Color accentSoft = VSPColors.accentSoft;
 
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
-    final poppinsFamily = GoogleFonts.poppins().fontFamily;
+    final baseTextTheme = GoogleFonts.titilliumWebTextTheme(ThemeData.dark().textTheme);
+    final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
 
     return ThemeData(
@@ -36,7 +36,7 @@ class AppTheme {
         surface: VSPColors.surface,
       ),
 
-      fontFamily: poppinsFamily,
+      fontFamily: titilliumWebFamily,
       fontFamilyFallback: [tajawalFamily!, 'sans-serif'],
 
       textTheme: baseTextTheme.copyWith(
@@ -120,9 +120,10 @@ class AppTheme {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
-          textStyle: const TextStyle(
-            fontSize: 18,
+          textStyle: TextStyle(
+            fontSize: 16,
             fontWeight: FontWeight.bold,
+            fontFamily: GoogleFonts.poppins().fontFamily, // Smooth athletic integration
           ),
         ),
       ),
@@ -150,3 +151,5 @@ class AppTheme {
     );
   }
 }
+
+

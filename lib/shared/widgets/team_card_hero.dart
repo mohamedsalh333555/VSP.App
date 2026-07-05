@@ -1,3 +1,4 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
@@ -52,7 +53,7 @@ class TeamCardHero extends StatelessWidget {
             right: -50,
             top: -50,
             child: Icon(
-              Icons.shield,
+              LucideIcons.shield,
               size: 250,
               color: VSPColors.white.withValues(alpha: 0.03),
             ),
@@ -90,7 +91,7 @@ class TeamCardHero extends StatelessWidget {
                   child: ClipOval(
                     child: team.logoUrl.isNotEmpty 
                         ? Image.network(team.logoUrl, fit: BoxFit.cover)
-                        : const Icon(Icons.shield, size: 80, color: VSPColors.white),
+                        : Icon(LucideIcons.shield, size: 80, color: VSPColors.white),
                   ),
                 ),
                 

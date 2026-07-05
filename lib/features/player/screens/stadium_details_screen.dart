@@ -1,10 +1,11 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -256,7 +257,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen>
                         ? Row(
                             key: const ValueKey('deposit'),
                             children: [
-                              const Icon(Icons.lock_outline,
+                              Icon(LucideIcons.lock,
                                   color: VSPColors.accent, size: 11),
                               const SizedBox(width: 4),
                               Text(
@@ -275,7 +276,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen>
                         : Row(
                             key: const ValueKey('cash'),
                             children: [
-                              const Icon(Icons.payments_outlined,
+                              Icon(LucideIcons.banknote,
                                   color: VSPColors.textSecondary, size: 11),
                               const SizedBox(width: 4),
                               Text(
@@ -440,7 +441,7 @@ class _InformationTab extends StatelessWidget {
                       (i) => Icon(
                         i < stadium.rating.round()
                             ? LucideIcons.star
-                            : LucideLucideIcons.star,
+                            : LucideIcons.star,
                         color: Colors.amber,
                         size: 16,
                       ),
@@ -496,7 +497,7 @@ class _InformationTab extends StatelessWidget {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.mapPin,
+                      Icon(LucideIcons.mapPin,
                           color: VSPColors.background, size: 16),
                       const SizedBox(width: 4),
                       Text(
@@ -577,7 +578,7 @@ class _InformationTab extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(Icons.sports_soccer,
+                  Icon(LucideIcons.trophy,
                       color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(
@@ -626,7 +627,7 @@ class _VerifiedBadge extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: const [
-          Icon(Icons.verified, color: Colors.white, size: 12),
+          Icon(LucideIcons.badgeCheck, color: Colors.white, size: 12),
           SizedBox(width: 4),
           Text(
             'Verified 🛡️',
@@ -687,7 +688,7 @@ class _PitchSpecsCard extends StatelessWidget {
         children: [
           _buildSpecItem(
             context,
-            icon: Icons.aspect_ratio,
+            icon: LucideIcons.expand,
             label: isArabic ? 'حجم الملعب' : 'Pitch Size',
             value: matchLabel,
           ),
@@ -701,7 +702,7 @@ class _PitchSpecsCard extends StatelessWidget {
             Expanded(
               child: _buildSpecItem(
                 context,
-                icon: Icons.grass,
+                icon: LucideIcons.leaf,
                 label: isArabic ? 'نوع الأرضية' : 'Surface Type',
                 value: displayFloorType,
               ),
@@ -858,7 +859,7 @@ class _TodaysSlotsPreview extends StatelessWidget {
           children: [
             Row(
               children: [
-                const Icon(Icons.schedule, color: VSPColors.accent, size: 16),
+                Icon(LucideIcons.clock, color: VSPColors.accent, size: 16),
                 const SizedBox(width: 6),
                 Text(
                   isArabic ? 'توفر الملاعب اليوم' : "Today's Availability",
@@ -938,7 +939,7 @@ class _SlotPill extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          const Icon(Icons.check_circle_outline,
+          Icon(LucideIcons.checkCircle,
               color: VSPColors.accent, size: 13),
           const SizedBox(width: 5),
           Text(
@@ -1006,7 +1007,7 @@ class _FacilitiesGrid extends StatelessWidget {
           label: isArabic ? 'غرف تغيير' : 'Changing Rooms',
           active: hasChangingRoom),
       _FacilityItem(
-          icon: LucideIcons.armchair,
+          icon: LucideIcons.sofa,
           label: isArabic ? 'مدرجات' : 'Spectator Seats',
           active: hasSeats,
           badge: hasSeats ? seats : null),
@@ -1270,7 +1271,7 @@ class _RatingsTab extends StatelessWidget {
                           (i) => Icon(
                             i < stadium.rating.round()
                                 ? LucideIcons.star
-                                : LucideLucideIcons.star,
+                                : LucideIcons.star,
                             color: Colors.amber,
                             size: 16,
                           ),
@@ -1292,15 +1293,22 @@ class _RatingsTab extends StatelessWidget {
           ),
         ),
 
-        // Reviews List
+        // Reviews List المحدث بالكامل لـ سوبابيز
         Expanded(
-          child: StreamBuilder<QuerySnapshot>(
-            stream: FirebaseFirestore.instance
-                .collection('stadiums')
-                .doc(stadium.id)
-                .collection('reviews')
-                .orderBy('createdAt', descending: true)
-                .snapshots(),
+          child: StreamBuilder<List<Map<String, dynamic>>>(
+            stream: Supabase.instance.client
+                .from('reviews')
+                .stream(primaryKey: ['id'])
+                .eq('stadium_id', stadium.id)
+                .map((list) {
+                  final sorted = List<Map<String, dynamic>>.from(list);
+                  sorted.sort((a, b) {
+                    final dateA = DateTime.parse(a['created_at'].toString());
+                    final dateB = DateTime.parse(b['created_at'].toString());
+                    return dateB.compareTo(dateA);
+                  });
+                  return sorted;
+                }),
             builder: (context, snapshot) {
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
@@ -1308,7 +1316,9 @@ class _RatingsTab extends StatelessWidget {
                         color: VSPColors.accent));
               }
 
-              if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
+              final docs = snapshot.data ?? [];
+
+              if (docs.isEmpty) {
                 return Center(
                   child: Padding(
                     padding: const EdgeInsets.all(40.0),
@@ -1326,14 +1336,13 @@ class _RatingsTab extends StatelessWidget {
 
               return ListView.builder(
                 padding: const EdgeInsets.all(VSPSpacing.md),
-                itemCount: snapshot.data!.docs.length,
+                itemCount: docs.length,
                 itemBuilder: (context, index) {
-                  final doc = snapshot.data!.docs[index].data()
-                      as Map<String, dynamic>;
-                  final rating =
-                      (doc['rating'] as num?)?.toInt() ?? 0;
-                  final text = doc['reviewText'] as String? ?? '';
-                  final createdAt = doc['createdAt'] as Timestamp?;
+                  final doc = docs[index];
+                  final rating = (doc['rating'] as num?)?.toInt() ?? 0;
+                  final text = doc['review_text'] as String? ?? '';
+                  final createdAtStr = doc['created_at'] as String?;
+                  final createdAt = createdAtStr != null ? DateTime.parse(createdAtStr) : null;
 
                   return _buildReviewItem(
                     context,
@@ -1341,7 +1350,7 @@ class _RatingsTab extends StatelessWidget {
                     imageUrl: '',
                     rating: rating,
                     timeAgo: createdAt != null
-                        ? timeago.format(createdAt.toDate())
+                        ? timeago.format(createdAt)
                         : l10n.recently,
                     comment: text,
                   );
@@ -1373,7 +1382,7 @@ class _RatingsTab extends StatelessWidget {
             backgroundImage:
                 imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
             child: imageUrl.isEmpty
-                ? const Icon(Icons.person,
+                ? Icon(LucideIcons.user,
                     color: VSPColors.textSecondary)
                 : null,
           ),
@@ -1427,4 +1436,6 @@ class _RatingsTab extends StatelessWidget {
     );
   }
 }
+
+
 
