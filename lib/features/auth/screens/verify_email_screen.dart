@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -392,6 +392,21 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     ),
                   ),
                 ],
+                const SizedBox(height: 24),
+                TextButton(
+                  onPressed: () async {
+                    await Provider.of<AuthProvider>(context, listen: false).signOut();
+                  },
+                  child: const Text(
+                    'أدخلت البريد بالخطأ؟ تسجيل الخروج',
+                    style: TextStyle(
+                      color: VSPColors.error,
+                      decoration: TextDecoration.underline,
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ),
               ],
             ),
           ),

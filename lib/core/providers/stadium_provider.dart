@@ -238,37 +238,92 @@ class StadiumProvider with ChangeNotifier {
     ).toList();
   }
 
+  // Private helper to check dynamic features mapping safely
+  bool _checkAmenity(Stadium stadium, String amenity) {
+    if (amenity == 'Professional Lighting') {
+      return stadium.hasJerash;
+    }
+    if (amenity == 'Spectator Seats') {
+      return stadium.hasSeats;
+    }
+    if (amenity == 'Ball Provided') {
+      return stadium.hasBall;
+    }
+    
+    final dynamic feats = stadium.features;
+    final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
+
+    if (amenity == 'Cafeteria') {
+      return stadium.cafeteria > 0 || 
+             featMap['cafeteria'] == true || 
+             featMap['cafeteria'] == 'yes' || 
+             featMap['hasCafeteria'] == true;
+    }
+    if (amenity == 'Changing Rooms') {
+      return featMap['changingRooms'] == true || 
+             featMap['changing_rooms'] == true || 
+             featMap['hasChangingRooms'] == true;
+    }
+    if (amenity == 'Garage') {
+      return featMap['garage'] == true || 
+             featMap['hasGarage'] == true || 
+             featMap['parking'] == true;
+    }
+
+    // Default fallback checks
+    final key = amenity.replaceAll(' ', '').toLowerCase();
+    final firstLowerKey = amenity[0].toLowerCase() + amenity.substring(1).replaceAll(' ', '');
+    return featMap[key] == true || 
+           featMap[firstLowerKey] == true || 
+           featMap['has${amenity.replaceAll(' ', '')}'] == true;
+  }
+
   // Apply complex filters
   void applyFilters(Map<String, dynamic> filters) {
     _isFilterActive = true;
     
-    final Map<String, dynamic> sports = filters['sports'] is Map ? Map<String, bool>.from(filters['sports']) : {};
+    final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
+    final String? location = filters['location'] as String?;
+    final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
     final double minPrice = (filters['minPrice'] ?? 0.0).toDouble();
     final double maxPrice = (filters['maxPrice'] ?? 3000.0).toDouble();
-    final int minRating = filters['minRating'] ?? 0;
-    final Map<String, dynamic> services = filters['selectedServices'] is Map ? Map<String, bool>.from(filters['selectedServices']) : {};
+    final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
 
     _filteredStadiums = _stadiums.where((stadium) {
-      // Sport filter
-      bool matchesSport = true;
-      final activeSports = sports.entries.where((e) => e.value).map((e) => e.key).toList();
-      if (activeSports.isNotEmpty) {
-        matchesSport = activeSports.any((s) => stadium.type.toLowerCase() == s.toLowerCase());
+      // 1. Sports Filter
+      if (sports.isNotEmpty) {
+        final matchesSport = sports.any((s) => stadium.type.toLowerCase() == s.toLowerCase());
+        if (!matchesSport) return false;
       }
 
-      // Price filter
-      bool matchesPrice = stadium.pricePerHour >= minPrice && stadium.pricePerHour <= maxPrice;
+      // 2. Location Filter
+      if (location != null && location.isNotEmpty) {
+        final govMatch = stadium.governorate?.toLowerCase().contains(location.toLowerCase()) ?? false;
+        final areaMatch = stadium.area.toLowerCase().contains(location.toLowerCase());
+        if (!govMatch && !areaMatch) return false;
+      }
 
-      // Rating filter
-      bool matchesRating = stadium.rating >= minRating;
+      // 3. Pitch Size Filter
+      if (sizes.isNotEmpty) {
+        final matchesSize = sizes.any((sz) => stadium.size.toLowerCase() == sz.toLowerCase());
+        if (!matchesSize) return false;
+      }
 
-      // Services filter (All selected services must be available at the stadium)
-      bool matchesServices = true;
-      if (services['Has Ball'] == true && !stadium.hasBall) matchesServices = false;
-      if (services['Has Seats'] == true && !stadium.hasSeats) matchesServices = false;
-      if (services['Professional Lighting'] == true && !stadium.hasJerash) matchesServices = false;
+      // 4. Price Filter
+      if (stadium.pricePerHour < minPrice || stadium.pricePerHour > maxPrice) {
+        return false;
+      }
 
-      return matchesSport && matchesPrice && matchesRating && matchesServices;
+      // 5. Amenities Filter
+      if (amenities.isNotEmpty) {
+        for (final amenity in amenities) {
+          if (!_checkAmenity(stadium, amenity)) {
+            return false;
+          }
+        }
+      }
+
+      return true;
     }).toList();
 
     notifyListeners();

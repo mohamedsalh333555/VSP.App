@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../core/constants/egypt_governorates.dart';
 
 class FilterBottomSheet extends StatefulWidget {
   const FilterBottomSheet({super.key});
@@ -13,41 +14,51 @@ class FilterBottomSheet extends StatefulWidget {
 
 class _FilterBottomSheetState extends State<FilterBottomSheet> {
   String _selectedCategory = 'Sports';
-  
+
   final Map<String, bool> _sportsFilters = {
-    for (var sport in VSPConstants.sports) sport: sport == 'Football',
+    'Football': false,
+    'Basketball': false,
+    'Padel': false,
+    'Volleyball': false,
+    'Handball': false,
+  };
+
+  String? _selectedGov;
+
+  final Map<String, bool> _sizeFilters = {
+    '5 VS 5': false,
+    '7 VS 7': false,
+    '11 VS 11': false,
   };
 
   RangeValues _priceRange = const RangeValues(0, 3000);
-  int _selectedRating = 0;
-  final Map<String, bool> _servicesFilters = {
-    'Has Ball': false,
-    'Has Seats': false,
+
+  final Map<String, bool> _amenitiesFilters = {
     'Professional Lighting': false,
+    'Spectator Seats': false,
+    'Ball Provided': false,
+    'Cafeteria': false,
+    'Changing Rooms': false,
+    'Garage': false,
   };
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    
-    // Initialize or Update Category Titles based on Localization
-    final sportsTitle = l10n.sports;
-    final priceTitle = l10n.priceRange;
-    final ratingsTitle = l10n.ratings;
-    final servicesTitle = l10n.services;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    // Mapping internal keys to localized titles for UI
     final Map<String, String> categoryTitles = {
-      'Sports': sportsTitle,
-      'Price Range': priceTitle,
-      'Ratings': ratingsTitle,
-      'Services': servicesTitle,
+      'Sports': isArabic ? 'الرياضة' : 'Sports',
+      'Location': isArabic ? 'الموقع' : 'Location',
+      'Pitch Size': isArabic ? 'مساحة الملعب' : 'Pitch Size',
+      'Price Range': isArabic ? 'نطاق السعر' : 'Price Range',
+      'Amenities': isArabic ? 'الخدمات والمرافق' : 'Amenities',
     };
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        height: MediaQuery.of(context).size.height * 0.7,
+        height: MediaQuery.of(context).size.height * 0.85,
         decoration: const BoxDecoration(
           color: VSPColors.background,
           borderRadius: BorderRadius.only(
@@ -56,7 +67,6 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           ),
         ),
         child: Column(
-          mainAxisSize: MainAxisSize.min,
           children: [
             // Header
             Container(
@@ -78,7 +88,8 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(LucideIcons.x,
+                    icon: Icon(
+                      LucideIcons.x,
                       color: VSPColors.textSecondary,
                     ),
                   ),
@@ -89,10 +100,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
             // Content - Split View
             Expanded(
               child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Left Sidebar - Categories
+                  // Left Sidebar - Categories (Scrollable)
                   Container(
-                    width: 110,
+                    width: 115,
                     decoration: const BoxDecoration(
                       color: VSPColors.surface,
                       border: Border(
@@ -102,22 +114,28 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                         ),
                       ),
                     ),
-                    child: ListView(
-                      padding: EdgeInsets.zero,
-                      children: [
-                        _buildCategoryItem('Sports', categoryTitles['Sports']!, LucideIcons.trophy),
-                        _buildCategoryItem('Price Range', categoryTitles['Price Range']!, LucideIcons.dollarSign),
-                        _buildCategoryItem('Ratings', categoryTitles['Ratings']!, LucideIcons.star),
-                        _buildCategoryItem('Services', categoryTitles['Services']!, LucideIcons.conciergeBell),
-                      ],
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        children: [
+                          _buildCategoryItem('Sports', categoryTitles['Sports']!, LucideIcons.trophy),
+                          _buildCategoryItem('Location', categoryTitles['Location']!, LucideIcons.mapPin),
+                          _buildCategoryItem('Pitch Size', categoryTitles['Pitch Size']!, LucideIcons.maximize),
+                          _buildCategoryItem('Price Range', categoryTitles['Price Range']!, LucideIcons.dollarSign),
+                          _buildCategoryItem('Amenities', categoryTitles['Amenities']!, LucideIcons.sparkles),
+                        ],
+                      ),
                     ),
                   ),
 
-                  // Right Content Area
+                  // Right Content Area (Scrollable to prevent overflow)
                   Expanded(
                     child: Container(
-                       padding: const EdgeInsets.all(VSPSpacing.md),
-                      child: _buildContentForCategory(l10n),
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      child: SingleChildScrollView(
+                        physics: const BouncingScrollPhysics(),
+                        child: _buildContentForCategory(isArabic, l10n),
+                      ),
                     ),
                   ),
                 ],
@@ -143,9 +161,10 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       onPressed: () {
                         setState(() {
                           _sportsFilters.updateAll((key, value) => false);
+                          _sizeFilters.updateAll((key, value) => false);
+                          _amenitiesFilters.updateAll((key, value) => false);
+                          _selectedGov = null;
                           _priceRange = const RangeValues(0, 3000);
-                          _selectedRating = 0;
-                          _servicesFilters.updateAll((key, value) => false);
                         });
                       },
                       color: VSPColors.surfaceAlt,
@@ -158,11 +177,12 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                       text: l10n.apply,
                       onPressed: () {
                         final filters = {
-                          'sports': _sportsFilters,
+                          'sports': _sportsFilters.entries.where((e) => e.value).map((e) => e.key).toList(),
+                          'location': _selectedGov,
+                          'sizes': _sizeFilters.entries.where((e) => e.value).map((e) => e.key).toList(),
                           'minPrice': _priceRange.start,
                           'maxPrice': _priceRange.end,
-                          'minRating': _selectedRating,
-                          'selectedServices': _servicesFilters,
+                          'amenities': _amenitiesFilters.entries.where((e) => e.value).map((e) => e.key).toList(),
                         };
                         Navigator.pop(context, filters);
                       },
@@ -220,80 +240,158 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildContentForCategory(AppLocalizations l10n) {
+  Widget _buildContentForCategory(bool isArabic, AppLocalizations l10n) {
     switch (_selectedCategory) {
       case 'Sports':
-        return _buildSportsContent(l10n);
+        return _buildSportsContent(isArabic, l10n);
+      case 'Location':
+        return _buildLocationContent(isArabic, l10n);
+      case 'Pitch Size':
+        return _buildPitchSizeContent(isArabic, l10n);
       case 'Price Range':
-        return _buildPriceRangeContent(l10n);
-      case 'Ratings':
-        return _buildRatingsContent(l10n);
-      case 'Services':
-        return _buildServicesContent(l10n);
+        return _buildPriceRangeContent(isArabic, l10n);
+      case 'Amenities':
+        return _buildAmenitiesContent(isArabic, l10n);
       default:
         return const SizedBox();
     }
   }
 
-  Widget _buildSportsContent(AppLocalizations l10n) {
+  Widget _buildSportsContent(bool isArabic, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.selectSports,
-          style: Theme.of(context).textTheme.titleMedium,
+          isArabic ? 'اختر الرياضات' : 'Select Sports',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: VSPSpacing.md),
-        ..._sportsFilters.entries.map((entry) {
-          return Padding(
-            padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-            child: InkWell(
-              onTap: () {
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _sportsFilters.entries.map((entry) {
+            final isSelected = entry.value;
+            return ChoiceChip(
+              label: Text(entry.key),
+              selected: isSelected,
+              onSelected: (selected) {
                 setState(() {
-                  _sportsFilters[entry.key] = !entry.value;
+                  _sportsFilters[entry.key] = selected;
                 });
               },
-              child: Row(
-                children: [
-                   Container(
-                    width: 24,
-                    height: 24,
-                    decoration: BoxDecoration(
-                      color: entry.value ? VSPColors.accent : Colors.transparent,
-                      border: Border.all(
-                        color: entry.value ? VSPColors.accent : VSPColors.textSecondary,
-                        width: 2,
-                      ),
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    ),
-                    child: entry.value
-                        ? Icon(LucideIcons.check,
-                            color: VSPColors.background,
-                            size: 16,
-                          )
-                        : null,
-                  ),
-                  const SizedBox(width: VSPSpacing.sm),
-                  Text(
-                    entry.key,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                  ),
-                ],
+              selectedColor: VSPColors.accent.withValues(alpha: 0.15),
+              checkmarkColor: VSPColors.accent,
+              labelStyle: TextStyle(
+                color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
               ),
-            ),
-          );
-        }),
+              backgroundColor: VSPColors.surface,
+              shape: const StadiumBorder(),
+            );
+          }).toList(),
+        ),
       ],
     );
   }
 
-  Widget _buildPriceRangeContent(AppLocalizations l10n) {
+  Widget _buildLocationContent(bool isArabic, AppLocalizations l10n) {
+    final govs = EgyptGovernorates.allGovernorates;
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isArabic ? 'اختر المحافظة' : 'Select Governorate',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: VSPSpacing.md),
+        Container(
+          padding: const EdgeInsets.symmetric(horizontal: 16),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+          ),
+          child: DropdownButtonHideUnderline(
+            child: DropdownButton<String>(
+              value: _selectedGov,
+              hint: Text(
+                isArabic ? 'كل المحافظات' : 'All Governorates',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+              ),
+              dropdownColor: VSPColors.surface,
+              icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+              isExpanded: true,
+              style: Theme.of(context).textTheme.bodyMedium,
+              onChanged: (String? newValue) {
+                setState(() {
+                  _selectedGov = newValue;
+                });
+              },
+              items: [
+                DropdownMenuItem<String>(
+                  value: null,
+                  child: Text(isArabic ? 'كل المحافظات' : 'All Governorates'),
+                ),
+                ...govs.map<DropdownMenuItem<String>>((String value) {
+                  return DropdownMenuItem<String>(
+                    value: value,
+                    child: Text(value),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPitchSizeContent(bool isArabic, AppLocalizations l10n) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          isArabic ? 'حجم الملعب' : 'Pitch Size',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+        ),
+        const SizedBox(height: VSPSpacing.md),
+        Wrap(
+          spacing: 8,
+          runSpacing: 8,
+          children: _sizeFilters.entries.map((entry) {
+            final isSelected = entry.value;
+            return ChoiceChip(
+              label: Text(entry.key),
+              selected: isSelected,
+              onSelected: (selected) {
+                setState(() {
+                  _sizeFilters[entry.key] = selected;
+                });
+              },
+              selectedColor: VSPColors.accent.withValues(alpha: 0.15),
+              checkmarkColor: VSPColors.accent,
+              labelStyle: TextStyle(
+                color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                fontSize: 12,
+              ),
+              backgroundColor: VSPColors.surface,
+              shape: const StadiumBorder(),
+            );
+          }).toList(),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildPriceRangeContent(bool isArabic, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
           '${l10n.priceRange} (${l10n.egCurrency})',
-          style: Theme.of(context).textTheme.titleMedium,
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: VSPSpacing.lg),
         Row(
@@ -309,7 +407,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           max: 3000,
           divisions: 30,
           activeColor: VSPColors.accent,
-          inactiveColor: VSPColors.divider,
+          inactiveColor: VSPColors.surfaceAlt,
           labels: RangeLabels(
             _priceRange.start.round().toString(),
             _priceRange.end.round().toString(),
@@ -324,78 +422,37 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     );
   }
 
-  Widget _buildRatingsContent(AppLocalizations l10n) {
+  Widget _buildAmenitiesContent(bool isArabic, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          l10n.minRating,
-          style: Theme.of(context).textTheme.titleMedium,
-        ),
-        const SizedBox(height: VSPSpacing.md),
-        Row(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: List.generate(5, (index) {
-            final starPosition = index + 1;
-            return IconButton(
-              onPressed: () {
-                setState(() {
-                  _selectedRating = starPosition;
-                });
-              },
-              icon: Icon(
-                starPosition <= _selectedRating ? LucideIcons.star : LucideIcons.star,
-                color: starPosition <= _selectedRating ? Colors.amber : VSPColors.textSecondary,
-                size: 32,
-              ),
-            );
-          }),
-        ),
-        const SizedBox(height: VSPSpacing.sm),
-        Center(
-          child: Text(
-            _selectedRating == 0 ? l10n.anyRating : '$_selectedRating+ ${l10n.stars}',
-            style: const TextStyle(color: VSPColors.textSecondary),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildServicesContent(AppLocalizations l10n) {
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          l10n.stadiumServices,
-          style: Theme.of(context).textTheme.titleMedium,
+          isArabic ? 'الخدمات والمرافق' : 'Amenities',
+          style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
         ),
         const SizedBox(height: VSPSpacing.md),
         Wrap(
           spacing: 8,
           runSpacing: 8,
-          children: _servicesFilters.entries.map((entry) {
+          children: _amenitiesFilters.entries.map((entry) {
+            final isSelected = entry.value;
             return FilterChip(
               label: Text(entry.key),
-              selected: entry.value,
+              selected: isSelected,
               onSelected: (selected) {
                 setState(() {
-                  _servicesFilters[entry.key] = selected;
+                  _amenitiesFilters[entry.key] = selected;
                 });
               },
-              selectedColor: VSPColors.accent.withValues(alpha: 0.2),
+              selectedColor: VSPColors.accent.withValues(alpha: 0.15),
               checkmarkColor: VSPColors.accent,
               labelStyle: TextStyle(
-                color: entry.value ? VSPColors.accent : VSPColors.textPrimary,
+                color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 fontSize: 12,
               ),
-              backgroundColor: VSPColors.surfaceAlt,
-              shape: RoundedRectangleBorder(
-                borderRadius: BorderRadius.circular(VSPRadius.sm),
-                side: BorderSide(
-                  color: entry.value ? VSPColors.accent : VSPColors.divider,
-                ),
-              ),
+              backgroundColor: VSPColors.surface,
+              shape: const StadiumBorder(),
             );
           }).toList(),
         ),

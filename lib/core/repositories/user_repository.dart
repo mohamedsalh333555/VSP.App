@@ -103,7 +103,10 @@ class UserRepository {
     securedData.remove('uid');
     securedData.remove('email');
     securedData.remove('created_at');
-    securedData.remove('is_email_verified');
+    // Allow 'is_email_verified' to be updated if explicitly passed in data (e.g. during auth synchronization)
+    if (!data.containsKey('is_email_verified') && !data.containsKey('isEmailVerified')) {
+      securedData.remove('is_email_verified');
+    }
     securedData.remove('points');
     securedData.remove('wallet_balance');
     

@@ -63,6 +63,19 @@ class SharingService {
     await Share.share(text, subject: 'View Team on VSP');
   }
 
+  /// Share Team Link with branding and localized text
+  static Future<void> shareTeamLink(String teamId, String teamName) async {
+    final link = getTeamLink(teamId);
+    final text = 'انضم إلى مجموعتنا الرياضية على VSP! ⚽\n'
+        'Check out our sports team on VSP!\n\n'
+        '🛡️ فريق: $teamName\n'
+        '🛡️ Team: $teamName\n\n'
+        'رابط الفريق / Team Link:\n'
+        '$link';
+    
+    await Share.share(text, subject: 'VSP Sports Team: $teamName');
+  }
+
   /// Generic text sharing (Fixed for CMO Social Strategy)
   Future<void> shareText(String text, {String? subject}) async {
     await Share.share(text, subject: subject);

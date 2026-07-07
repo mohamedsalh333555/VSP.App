@@ -1,9 +1,9 @@
 import 'package:flutter/material.dart';
 
 class VSPColors {
-  static const background = Color(0xFF121212); 
-  static const surface = Color(0xFF1E1E1E);    
-  static const surfaceAlt = Color(0xFF262626); 
+  static const background = Color(0xFF09090B); // Deep matte Zinc 950
+  static const surface = Color(0xFF18181B);    // Zinc 900
+  static const surfaceAlt = Color(0xFF27272A); // Zinc 800
   static const accent = Color(0xFF9FDF02);     
   static const accentSoft = Color(0x1F9FDF02);
   static const textPrimary = Color(0xFFE4E4E7);
@@ -19,28 +19,28 @@ class VSPColors {
   static const white38 = Color(0x61FFFFFF);
   static const white = Color(0xFFFFFFFF);
   
-  static const Color accentGlow = Color(0x0D9FDF02); // 5% opacity
-  static const Color borderLight = Color(0x1A262626); // 10% opacity divider
-  static const Color borderMedium = Color(0x33262626); // 20% opacity divider
-  static const Color glassSurface = Color(0x66121212); // 40% opacity surface
-  static const Color black80 = Color(0xCC000000); // 80% opacity black
-  static const Color white24 = Color(0x3DFFFFFF); // 24% opacity white
+  static const Color accentGlow = Color(0x0D9FDF02); 
+  static const Color borderLight = Color(0x0DFFFFFF); // 5% opacity white for elegant strokes
+  static const Color borderMedium = Color(0x33262626); 
+  static const Color glassSurface = Color(0x66121212); 
+  static const Color black80 = Color(0xCC000000); 
+  static const Color white24 = Color(0x3DFFFFFF); 
 }
 
 class VSPRadius {
   static const double xs = 4.0;
   static const double sm = 8.0;
-  static const double md = 12.0;
-  static const double lg = 16.0;
-  static const double xl = 22.0;
+  static const double md = 16.0; // Smoother
+  static const double lg = 24.0; // Premium Elite standard
+  static const double xl = 32.0; // Ultra smooth
   static const double full = 999.0;
 }
 
 class VSPSpacing {
   static const double xs = 4.0;
   static const double sm = 8.0;
-  static const double md = 16.0;
-  static const double lg = 24.0;
+  static const double md = 20.0; // More breathing room
+  static const double lg = 32.0; // More breathing room
   static const double xl = 32.0;
   static const double xxl = 48.0;
 }

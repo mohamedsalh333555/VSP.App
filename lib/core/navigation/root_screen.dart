@@ -18,6 +18,9 @@ import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
+import 'package:go_router/go_router.dart';
+import 'package:url_launcher/url_launcher.dart';
+
 class RootScreen extends StatefulWidget {
   const RootScreen({super.key});
 
@@ -28,12 +31,13 @@ class RootScreen extends StatefulWidget {
 class _RootScreenState extends State<RootScreen> {
   Timer? _loadingTimeout;
   bool _loadingTimedOut = false;
+  bool _deepLinkChecked = false;
 
   @override
   void initState() {
     super.initState();
     _initRemoteConfig();
-    // 📍 Trigger location check after first frame
+    // 📍 Trigger location check and pending deep link check after first frame
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
       // Only run for authenticated players (Owners have fixed stadium locations usually)
@@ -41,8 +45,14 @@ class _RootScreenState extends State<RootScreen> {
         auth.updateUserLocation();
       }
 
+      // معالجة الرابط العميق المعلق بعد نجاح التحقق والدخول
+      if (auth.isAuthenticated && auth.userModel != null) {
+        _deepLinkChecked = true;
+        _handlePendingDeepLink();
+      }
+
       // 🛡️ Safety Net: If user is authenticated but userModel never loads within
-      // 3 seconds (e.g. Firestore offline), show a Connection Error screen.
+      // 5 seconds (e.g. Firestore offline), show a Connection Error screen.
       if (auth.isAuthenticated && auth.userModel == null) {
         _loadingTimeout = Timer(const Duration(seconds: 5), () {
           if (mounted && auth.userModel == null) {
@@ -51,6 +61,31 @@ class _RootScreenState extends State<RootScreen> {
         });
       }
     });
+  }
+
+  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق
+  Future<void> _handlePendingDeepLink() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String? pendingLink = prefs.getString('pending_deep_link');
+      if (pendingLink != null && mounted) {
+        debugPrint('🔗 Recovering pending deep link: $pendingLink');
+        await prefs.remove('pending_deep_link'); // حذف الرابط فوراً لمنع التكرار
+        
+        final uri = Uri.parse(pendingLink);
+        if (uri.pathSegments.length >= 2) {
+          final type = uri.pathSegments[0]; // match
+          final id = uri.pathSegments[1];
+
+          if (type == 'match' && mounted) {
+            // التوجيه المباشر إلى تفاصيل المباراة
+            GoRouter.of(context).push('/match/$id');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('⚠️ Error processing pending deep link: $e');
+    }
   }
 
   Future<void> _initRemoteConfig() async {
@@ -78,8 +113,20 @@ class _RootScreenState extends State<RootScreen> {
         actions: [
           PrimaryButton(
             text: 'Update Now',
-            onPressed: () {
-              // TODO: Launch Store URL
+            onPressed: () async {
+              final Uri storeUri = Uri.parse(url);
+              try {
+                if (await canLaunchUrl(storeUri)) {
+                  await launchUrl(
+                    storeUri,
+                    mode: LaunchMode.externalApplication,
+                  );
+                } else {
+                  debugPrint('Could not launch store URL: $url');
+                }
+              } catch (e) {
+                debugPrint('Error launching store URL: $e');
+              }
             },
           ),
         ],
@@ -99,6 +146,18 @@ class _RootScreenState extends State<RootScreen> {
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
     final remoteConfig = RemoteConfigService();
+
+    // 🔗 Reactive Deep Link recovery safety net
+    if (auth.isAuthenticated && auth.userModel != null && !_deepLinkChecked) {
+      _deepLinkChecked = true;
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        if (mounted) {
+          _handlePendingDeepLink();
+        }
+      });
+    } else if (!auth.isAuthenticated && _deepLinkChecked) {
+      _deepLinkChecked = false;
+    }
 
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle.light.copyWith(
@@ -196,8 +255,9 @@ class _RootScreenState extends State<RootScreen> {
 
     final user = auth.userModel!;
 
-    // 3. Prevent bypass: Social Login users missing phone → Complete Profile
-    if (user.phone == null || user.phone!.isEmpty) {
+    // 3. Prevent bypass: Social Login users missing phone or containing invalid/hyphen phone → Complete Profile
+    final phone = user.phone?.trim() ?? '';
+    if (phone.isEmpty || phone == '-' || phone.length < 10) {
       return const SocialOnboardingScreen();
     }
 

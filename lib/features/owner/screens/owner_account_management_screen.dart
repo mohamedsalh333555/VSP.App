@@ -24,6 +24,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   late TextEditingController _phoneController;
   late TextEditingController _emailController;
   late TextEditingController _socialController;
+  late TextEditingController _instapayController;
+  late TextEditingController _vodafoneController;
+  late TextEditingController _bankController;
   
   bool _isLoading = false;
   bool _isDeleting = false;
@@ -40,16 +43,35 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     _phoneController = TextEditingController(text: userModel?.phone ?? '');
     _emailController = TextEditingController(text: userModel?.email ?? '');
     _socialController = TextEditingController(text: userModel?.additionalData?['socialMedia'] ?? '');
+    _instapayController = TextEditingController(text: userModel?.p2pInstapay ?? '');
+    _vodafoneController = TextEditingController(text: userModel?.p2pVodafone ?? '');
+    _bankController = TextEditingController(text: userModel?.p2pBank ?? '');
     
     final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
     _stadiums = stadiumProvider.stadiums;
   }
 
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _phoneController.dispose();
+    _emailController.dispose();
+    _socialController.dispose();
+    _instapayController.dispose();
+    _vodafoneController.dispose();
+    _bankController.dispose();
+    super.dispose();
+  }
+
   Future<void> _updateUserData() async {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     final name = _nameController.text.trim();
     final phone = _phoneController.text.trim();
+    final instapay = _instapayController.text.trim();
+    final vodafone = _vodafoneController.text.trim();
+    final bank = _bankController.text.trim();
 
     if (name.isEmpty) {
       VSPFeedback.showError(context, 'Name cannot be empty');
@@ -59,12 +81,24 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       VSPFeedback.showError(context, 'Phone number cannot be empty');
       return;
     }
+    if (instapay.isEmpty && vodafone.isEmpty && bank.isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isArabic
+            ? "يجب إدخال طريقة دفع واحدة على الأقل (محفظة، إنستا باي، أو تحويل بنكي) لحفظ البيانات وتفعيل استقبال الحجوزات ⚠️"
+            : "You must enter at least one payment method (Wallet, InstaPay, or Bank) to save settings ⚠️",
+      );
+      return;
+    }
 
     setState(() => _isLoading = true);
     
     final success = await authProvider.updateProfile({
       'name': name,
       'phone': phone,
+      'p2p_instapay': instapay,
+      'p2p_vodafone': vodafone,
+      'p2p_bank': bank,
       'additionalData': {
         ...authProvider.userModel?.additionalData ?? {},
         'socialMedia': _socialController.text.trim(),
@@ -194,6 +228,55 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    _buildInputLabel(isArabic ? 'روابط التواصل الاجتماعي' : 'Social media'),
                    CustomTextField(controller: _socialController, hintText: isArabic ? 'أدخل رابط التواصل الاجتماعي' : 'Enter social media link'),
                 ],
+              ),
+            ),
+
+            const SizedBox(height: 24),
+
+            // P2P Receivables Settings
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: VSPCard(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                margin: EdgeInsets.zero,
+                color: VSPColors.surface,
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'إعدادات تحصيل مستحقات P2P' : 'P2P Receivables Settings',
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.accent),
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputLabel(isArabic ? '📲 عنوان إنستا باي (InstaPay IPN / Phone)' : '📲 InstaPay IPN / Phone'),
+                    CustomTextField(
+                      controller: _instapayController,
+                      hintText: isArabic ? 'أدخل عنوان إنستا باي أو الهاتف' : 'Enter InstaPay IPN or phone number',
+                      suffixIcon: _instapayController.text.isNotEmpty 
+                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _instapayController.clear()))
+                        : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputLabel(isArabic ? '💵 رقم محفظة فودافون كاش (Vodafone Cash Number)' : '💵 Vodafone Cash Number'),
+                    CustomTextField(
+                      controller: _vodafoneController,
+                      hintText: isArabic ? 'أدخل رقم المحفظة' : 'Enter Vodafone Cash number',
+                      keyboardType: TextInputType.phone,
+                      suffixIcon: _vodafoneController.text.isNotEmpty 
+                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _vodafoneController.clear()))
+                        : null,
+                    ),
+                    const SizedBox(height: 16),
+                    _buildInputLabel(isArabic ? '🏦 الحساب البنكي / المستفيد (IBAN & Holder)' : '🏦 Bank Account Number/IBAN & Holder Name'),
+                    CustomTextField(
+                      controller: _bankController,
+                      hintText: isArabic ? 'أدخل تفاصيل الحساب واسم المستفيد' : 'Enter Bank Account/IBAN and Holder Name',
+                      suffixIcon: _bankController.text.isNotEmpty 
+                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _bankController.clear()))
+                        : null,
+                    ),
+                  ],
+                ),
               ),
             ),
 

@@ -12,6 +12,9 @@ import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/phone_utils.dart';
+import '../../../core/models/user_model.dart';
+import '../../../core/services/database_service.dart';
+import '../../../core/services/notification_handler.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -738,12 +741,131 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     );
   }
 
+  Future<void> _showNoShowReportDialog(Booking booking) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
+    showDialog(
+      context: context,
+      builder: (dialogContext) {
+        return AlertDialog(
+          backgroundColor: VSPColors.surface,
+          title: Text(
+            isArabic ? 'الإبلاغ عن غياب لاعب' : 'Report Player No-Show',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+          ),
+          content: SizedBox(
+            width: double.maxFinite,
+            child: FutureBuilder<List<UserModel>>(
+              future: DatabaseService().getUsersByIds(booking.joinedUserIds),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(
+                    child: CircularProgressIndicator(color: VSPColors.accent),
+                  );
+                }
+                if (snapshot.hasError || !snapshot.hasData || snapshot.data!.isEmpty) {
+                  return Text(
+                    isArabic ? 'تعذر جلب قائمة اللاعبين' : 'Could not fetch players list',
+                    style: const TextStyle(color: VSPColors.textSecondary),
+                  );
+                }
+
+                final players = snapshot.data!;
+                return ListView.builder(
+                  shrinkWrap: true,
+                  itemCount: players.length,
+                  itemBuilder: (context, index) {
+                    final player = players[index];
+                    return ListTile(
+                      leading: CircleAvatar(
+                        backgroundColor: VSPColors.surfaceAlt,
+                        backgroundImage: (player.profileImageUrl?.isNotEmpty ?? false)
+                            ? NetworkImage(player.profileImageUrl!)
+                            : null,
+                        child: (player.profileImageUrl?.isEmpty ?? true)
+                            ? const Icon(LucideIcons.user, color: VSPColors.textSecondary)
+                            : null,
+                      ),
+                      title: Text(player.name ?? 'Player', style: const TextStyle(color: Colors.white)),
+                      trailing: Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 16),
+                      onTap: () async {
+                        final confirmReport = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: VSPColors.surface,
+                            title: Text(isArabic ? 'تأكيد الإبلاغ' : 'Confirm Report'),
+                            content: Text(
+                              isArabic
+                                  ? 'هل أنت متأكد من تسجيل غياب اللاعب (${player.name})؟ سيتم تطبيق العقوبة فوراً.'
+                                  : 'Are you sure you want to report (${player.name}) as absent? The penalty will be applied immediately.',
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, false),
+                                child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                              ),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text(
+                                  isArabic ? 'تأكيد' : 'Confirm',
+                                  style: const TextStyle(color: VSPColors.error),
+                                ),
+                              ),
+                            ],
+                          ),
+                        );
+
+                        if (confirmReport == true) {
+                          Navigator.pop(dialogContext);
+                          
+                          final stadiumLat = widget.selectedStadium?.lat ?? 30.059618;
+                          final stadiumLng = widget.selectedStadium?.lng ?? 31.336104;
+                          
+                          await NotificationHandler.handleNoShowReport(
+                            booking.id,
+                            player.uid,
+                            stadiumLat,
+                            stadiumLng,
+                          );
+                          
+                          if (mounted) {
+                            ScaffoldMessenger.of(this.context).showSnackBar(
+                              SnackBar(
+                                content: Text(
+                                  isArabic
+                                      ? 'تم الإبلاغ عن غياب اللاعب وتطبيق العقوبة.'
+                                      : 'Player reported absent and penalty applied.',
+                                ),
+                                backgroundColor: VSPColors.success,
+                              ),
+                            );
+                          }
+                        }
+                      },
+                    );
+                  },
+                );
+              },
+            ),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogContext),
+              child: Text(isArabic ? 'إلغاء' : 'Close'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final booking = widget.slot['booking'] as Booking?;
     final bool isCompleted = booking != null && booking.endTime.isBefore(DateTime.now());
+    final bool hasParticipants = booking != null && booking.joinedUserIds.isNotEmpty;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
@@ -871,6 +993,27 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                         ],
                       ),
                     ),
+                    if (widget.isEdit && isCompleted && hasParticipants) ...[
+                      const SizedBox(height: 15),
+                      SizedBox(
+                        width: double.infinity,
+                        height: 50,
+                        child: ElevatedButton.icon(
+                          onPressed: () => _showNoShowReportDialog(booking!),
+                          icon: const Icon(LucideIcons.userX, color: Colors.white, size: 20),
+                          label: Text(
+                            isArabic ? 'الإبلاغ عن غياب لاعب' : 'Report No-Show',
+                            style: const TextStyle(fontWeight: FontWeight.bold, color: Colors.white),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: VSPColors.error,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                            ),
+                          ),
+                        ),
+                      ),
+                    ],
                   ],
                 ),
               ),

@@ -30,6 +30,11 @@ class StorageService {
   }
 
   Future<String?> uploadFile({required XFile file, required String bucket, required String path}) async {
+    final size = await file.length();
+    if (size > 10 * 1024 * 1024) {
+      throw Exception('File is too large. Please select a file under 10MB.');
+    }
+
     try {
       String uploadPath = path;
       final mimeType = _getMimeType(file.name);

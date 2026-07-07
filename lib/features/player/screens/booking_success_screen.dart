@@ -1,4 +1,4 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -239,7 +239,6 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                   ),
 
                   const SizedBox(height: 24),
-
                   // Action Buttons
                   Row(
                     children: [
@@ -249,11 +248,7 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                           color: VSPColors.surfaceAlt,
                           textColor: VSPColors.textPrimary,
                           onPressed: () {
-                            // Navigate to bookings screen
-                            Navigator.of(context).pushAndRemoveUntil(
-                              MaterialPageRoute(builder: (context) => const BookingsScreen()),
-                              (route) => route.isFirst,
-                            );
+                            Navigator.of(context).popUntil((route) => route.isFirst);
                           },
                         ),
                       ),

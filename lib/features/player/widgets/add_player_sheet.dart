@@ -1,4 +1,5 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:share_plus/share_plus.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -308,6 +309,43 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 16),
+          const Divider(color: VSPColors.divider, height: 1),
+          const SizedBox(height: 16),
+          Text(
+            "أو قم بدعوته مباشرة للتسجيل في التطبيق والانضمام لفريقك:",
+            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            width: double.infinity,
+            height: 48,
+            child: ElevatedButton.icon(
+              onPressed: () async {
+                const message = 'حمل تطبيق VSP الرياضي وادخل برقمك عشان أضيفك في تشكيلة فريقي ونبدأ نلعب مباريات! ⚽🏆 حمل التطبيق من هنا: https://vsp.app';
+                final encoded = Uri.encodeComponent(message);
+                final whatsappUrl = Uri.parse('https://wa.me/?text=$encoded');
+                try {
+                  if (await canLaunchUrl(whatsappUrl)) {
+                    await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                  }
+                } catch (e) {
+                  debugPrint('Error launching WhatsApp: $e');
+                }
+              },
+              style: ElevatedButton.styleFrom(
+                backgroundColor: const Color(0xFF25D366),
+                foregroundColor: Colors.white,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                elevation: 0,
+              ),
+              icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 20),
+              label: const Text(
+                'دعوة صديقك عبر واتساب',
+                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
           ),
         ],
       ),

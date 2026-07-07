@@ -1,6 +1,7 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -9,6 +10,8 @@ import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/repositories/booking_repository.dart';
+import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
 import '../../../core/repositories/user_repository.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -56,6 +59,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   Future<void> _fetchOwnerPhone() async {
     try {
+      final features = widget.stadium.features;
+      if (features is Map && features['stadiumPhone'] != null && features['stadiumPhone'].toString().trim().isNotEmpty) {
+        if (mounted) {
+          setState(() {
+            _ownerPhone = features['stadiumPhone'].toString().trim();
+            _isLoadingPhone = false;
+          });
+        }
+        return;
+      }
+
       final ownerId = widget.stadium.ownerId;
       if (ownerId.isNotEmpty) {
         final userData = await UserRepository().getUserData(ownerId);
@@ -817,6 +831,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                            setState(() => _isLoading = true);
                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
                            final currentUserModel = authProvider.userModel;
+                           if (currentUserModel == null) {
+                             setState(() => _isLoading = false);
+                             return;
+                           }
+                           
                            final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
                            final firstSlot = sortedSlots.first;
                            int parseHr(String t) {
@@ -844,7 +863,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                              stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
                              ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
                              playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
-                             playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel?.name,
+                             playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
                              opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
                              totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
                              currentPlayers: _currentPlayers,
@@ -854,9 +873,57 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                              needsDeposit: widget.stadium.needsDeposit,
                            );
 
-                           await Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft)));
-                           if (mounted) {
-                             setState(() => _isLoading = false);
+                           final needsDeposit = widget.stadium.needsDeposit;
+                           final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                           final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(currentUserModel.uid);
+                           final now = DateTime.now();
+                           final activeUnpaidBookings = unpaidBookings.where((b) {
+                             return b.status != BookingStatus.cancelled &&
+                                 b.status != BookingStatus.completed &&
+                                 b.endTime.isAfter(now);
+                           }).toList();
+                           final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
+
+                           if (!needsDeposit && !hasActiveUnpaid) {
+                             final cashDraft = draft.copyWith(
+                               isPaid: false,
+                               isDepositPaid: false,
+                               depositPaid: 0.0,
+                               paymentStatus: 'unpaid',
+                               paymentMethod: 'cash',
+                               paymentTransactionId: '_',
+                             );
+                             final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                             if (mounted) {
+                               setState(() => _isLoading = false);
+                               if (booking != null) {
+                                 Navigator.pushReplacement(
+                                   context,
+                                   MaterialPageRoute(
+                                     builder: (context) => BookingSuccessScreen(booking: booking),
+                                   ),
+                                 );
+                               } else {
+                                 final errorMsg = bookingProvider.errorMessage ?? 'Failed to create booking';
+                                 ScaffoldMessenger.of(context).showSnackBar(
+                                   SnackBar(content: Text(errorMsg)),
+                                 );
+                               }
+                             }
+                           } else {
+                             final forceFullPayment = !needsDeposit && hasActiveUnpaid;
+                             await Navigator.push(
+                               context,
+                               MaterialPageRoute(
+                                 builder: (context) => PaymentGatewayScreen(
+                                   bookingDraft: draft,
+                                   forceFullPayment: forceFullPayment,
+                                 ),
+                               ),
+                             );
+                             if (mounted) {
+                               setState(() => _isLoading = false);
+                             }
                            }
                         },
                       ),
@@ -898,6 +965,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               }
             } catch (e) {
               debugPrint('Error launching dialer: $e');
+            }
+          },
+          onLongPress: () async {
+            await Clipboard.setData(ClipboardData(text: phone));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(
+                    isArabic ? 'تم نسخ رقم الهاتف: $phone' : 'Phone number copied: $phone',
+                    style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+                  ),
+                  backgroundColor: VSPColors.accent,
+                  duration: const Duration(seconds: 2),
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                ),
+              );
             }
           },
           borderRadius: BorderRadius.circular(VSPRadius.lg),

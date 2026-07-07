@@ -1,16 +1,57 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+import '../../../shared/widgets/primary_button.dart';
 
 class TournamentBracketsScreen extends StatelessWidget {
   final Championship championship;
   final bool isOwner;
 
   const TournamentBracketsScreen({super.key, required this.championship, required this.isOwner});
+
+  // دالة لجلب كشف أسماء اللاعبين (أونلاين وأوفلاين) لكلا الفريقين من Supabase
+  Future<Map<String, List<String>>> _fetchRosters(String homeTeamId, String awayTeamId) async {
+    final supabase = Supabase.instance.client;
+    List<String> homePlayers = [];
+    List<String> awayPlayers = [];
+
+    try {
+      // جلب كشف الفريق الأول (المستضيف)
+      final homeRoster = await supabase
+          .from('championship_rosters')
+          .select('guest_names')
+          .eq('championship_id', championship.id)
+          .eq('team_id', homeTeamId)
+          .maybeSingle();
+      if (homeRoster != null && homeRoster['guest_names'] != null) {
+        homePlayers = List<String>.from(homeRoster['guest_names']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching home roster: $e');
+    }
+
+    try {
+      // جلب كشف الفريق الثاني (الضيف)
+      final awayRoster = await supabase
+          .from('championship_rosters')
+          .select('guest_names')
+          .eq('championship_id', championship.id)
+          .eq('team_id', awayTeamId)
+          .maybeSingle();
+      if (awayRoster != null && awayRoster['guest_names'] != null) {
+        awayPlayers = List<String>.from(awayRoster['guest_names']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching away roster: $e');
+    }
+
+    return {'home': homePlayers, 'away': awayPlayers};
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -34,13 +75,12 @@ class TournamentBracketsScreen extends StatelessWidget {
           );
         }
 
-        // Group matches by roundIndex
+        // تجميع المباريات حسب رقم الدور
         final Map<int, List<TournamentMatch>> groupedMatches = {};
         for (var match in matches) {
           groupedMatches.putIfAbsent(match.roundIndex, () => []).add(match);
         }
 
-        // Sort roundIndex in descending order (highest round Index i.e. Round of 16/Quarters first, final roundIndex 0 last)
         final sortedRounds = groupedMatches.keys.toList()..sort((a, b) => b.compareTo(a));
 
         return DefaultTabController(
@@ -91,17 +131,16 @@ class TournamentBracketsScreen extends StatelessWidget {
 
     switch (roundIndex) {
       case 0:
-        return l10n.finalRound; // النهائي
+        return l10n.finalRound;
       case 1:
-        return l10n.semiFinalRound; // نصف النهائي
+        return l10n.semiFinalRound;
       case 2:
-        return l10n.quarterFinalRound; // ربع النهائي
+        return l10n.quarterFinalRound;
       case 3:
         return isArabic ? 'دور الـ 16' : 'Round of 16';
       case 4:
         return isArabic ? 'دور الـ 32' : 'Round of 32';
       default:
-        // إذا كانت الجولة التمهيدية الأولى غير المنتظمة في الحسابات التراكمية
         if (roundIndex == totalRounds - 1) {
           return isArabic ? 'الجولة التمهيدية' : 'Preliminary Round';
         }
@@ -157,8 +196,13 @@ class TournamentBracketsScreen extends StatelessWidget {
           ),
           ListTile(
             title: Text('${match.homeTeamName ?? "TBD"} vs ${match.awayTeamName ?? "TBD"}', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-            subtitle: Text(match.winnerId != null ? 'Winner: ${match.winnerId == match.homeTeamId ? match.homeTeamName : match.awayTeamName}' : 'Pending', style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54)),
-            // 🛡️ قفل الحماية: نتحقق من أن الفريقين محددان بالفعل (ليسا null) قبل إتاحة أيقونة التعديل
+            subtitle: Text(
+              match.winnerId != null 
+                  ? 'Winner: ${match.winnerId == match.homeTeamId ? match.homeTeamName : match.awayTeamName} (${match.homeScore} - ${match.awayScore})' 
+                  : 'Pending', 
+              style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54)
+            ),
+            // أيقونة التعديل تفتح الآن نافذة تسجيل النتيجة وعرض الكشوفات التفاعلية
             trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
               ? IconButton(
                   icon: const Icon(LucideIcons.pencilLine, color: VSPColors.accent),
@@ -171,19 +215,371 @@ class TournamentBracketsScreen extends StatelessWidget {
                       ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول! ⚠️', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: VSPColors.error));
                       return;
                     }
-                    TournamentRepository().updateTournamentMatchScore(
-                      matchId: match.id, 
-                      homeScore: 1, 
-                      awayScore: 0, 
-                      winnerId: match.homeTeamId!, 
-                      winnerName: match.homeTeamName!
-                    );
+                    // فتح شاشة تسجيل النتيجة التفاعلية
+                    _showScoreInputDialog(context, match);
                   },
                 ) 
               : null,
           ),
         ],
       ),
+    );
+  }
+
+  // 🕒 واجهة تسجيل النتيجة المتقدمة للبطولة
+  void _showScoreInputDialog(BuildContext context, TournamentMatch match) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        int homeScore = 0;
+        int awayScore = 0;
+        String? selectedWinnerId; // لمعالجة التعادل في الكأس
+        bool isSubmitting = false;
+
+        return Container(
+          height: MediaQuery.of(sheetContext).size.height * 0.85,
+          decoration: const BoxDecoration(
+            color: VSPColors.background,
+            borderRadius: BorderRadius.only(
+              topLeft: Radius.circular(VSPRadius.xl),
+              topRight: Radius.circular(VSPRadius.xl),
+            ),
+          ),
+          child: StatefulBuilder(
+            builder: (BuildContext context, StateSetter setModalState) {
+              final isCupAndTied = championship.type == 'Cup' && homeScore == awayScore;
+              final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
+
+              return Column(
+                children: [
+                  const SizedBox(height: 12),
+                  Container(
+                    width: 40, height: 4,
+                    decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
+                  ),
+                  const SizedBox(height: 20),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 20),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Text(isArabic ? 'تسجيل نتيجة المباراة' : 'Submit Match Score', style: Theme.of(context).textTheme.displaySmall),
+                        IconButton(
+                          icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
+                          onPressed: () => Navigator.pop(sheetContext),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(color: VSPColors.divider),
+                  
+                  Expanded(
+                    child: SingleChildScrollView(
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 🏁 واجهة تسجيل الأهداف التفاعلية لكلا الفريقين
+                          Row(
+                            children: [
+                              // الفريق الأول (المستضيف)
+                              Expanded(
+                                child: _buildScoreCounterColumn(
+                                  teamName: match.homeTeamName ?? 'Team A',
+                                  score: homeScore,
+                                  onIncrement: () => setModalState(() {
+                                    homeScore++;
+                                    selectedWinnerId = null;
+                                  }),
+                                  onDecrement: () => setModalState(() {
+                                    if (homeScore > 0) homeScore--;
+                                    selectedWinnerId = null;
+                                  }),
+                                ),
+                              ),
+                              const Text('VS', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 24)),
+                              // الفريق الثاني (الضيف)
+                              Expanded(
+                                child: _buildScoreCounterColumn(
+                                  teamName: match.awayTeamName ?? 'Team B',
+                                  score: awayScore,
+                                  onIncrement: () => setModalState(() {
+                                    awayScore++;
+                                    selectedWinnerId = null;
+                                  }),
+                                  onDecrement: () => setModalState(() {
+                                    if (awayScore > 0) awayScore--;
+                                    selectedWinnerId = null;
+                                  }),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 24),
+
+                          // ⚔️ سيناريو التعادل في الكأس (ركلات الترجيح)
+                          if (isCupAndTied) ...[
+                            Container(
+                              padding: const EdgeInsets.all(12),
+                              decoration: BoxDecoration(
+                                color: VSPColors.warning.withOpacity(0.1),
+                                borderRadius: BorderRadius.circular(VSPRadius.md),
+                                border: Border.all(color: VSPColors.warning.withOpacity(0.3)),
+                              ),
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    isArabic 
+                                        ? '⚠️ لا يسمح بالتعادل في مباريات خروج المغلوب' 
+                                        : '⚠️ Draws not allowed in knockout matches',
+                                    style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text(
+                                    isArabic 
+                                        ? 'يرجى تحديد الفريق الفائز بركلات الترجيح لتصعيده:' 
+                                        : 'Please select the team that won on penalties to advance:',
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                  ),
+                                  const SizedBox(height: 12),
+                                  Row(
+                                    children: [
+                                      Expanded(
+                                        child: _buildPenaltyWinnerButton(
+                                          label: match.homeTeamName ?? 'Home',
+                                          isSelected: selectedWinnerId == match.homeTeamId,
+                                          onTap: () => setModalState(() => selectedWinnerId = match.homeTeamId),
+                                        ),
+                                      ),
+                                      const SizedBox(width: 8),
+                                      Expanded(
+                                        child: _buildPenaltyWinnerButton(
+                                          label: match.awayTeamName ?? 'Away',
+                                          isSelected: selectedWinnerId == match.awayTeamId,
+                                          onTap: () => setModalState(() => selectedWinnerId = match.awayTeamId),
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ],
+                              ),
+                            ),
+                            const SizedBox(height: 24),
+                          ],
+
+                          const Divider(color: VSPColors.divider),
+                          const SizedBox(height: 12),
+
+                          // 👥 جلب وعرض كشف أسماء اللاعبين (Roster Viewer)
+                          Text(
+                            isArabic ? '📋 كشف أسماء اللاعبين المشاركين بالبطولة:' : '📋 Championship Team Rosters:',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                          const SizedBox(height: 12),
+                          FutureBuilder<Map<String, List<String>>>(
+                            future: _fetchRosters(match.homeTeamId!, match.awayTeamId!),
+                            builder: (context, rosterSnapshot) {
+                              if (rosterSnapshot.connectionState == ConnectionState.waiting) {
+                                return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: VSPColors.accent)));
+                              }
+
+                              final homeRoster = rosterSnapshot.data?['home'] ?? [];
+                              final awayRoster = rosterSnapshot.data?['away'] ?? [];
+
+                              return Row(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  // كشف الفريق الأول
+                                  Expanded(child: _buildRosterListColumn(match.homeTeamName ?? 'Home', homeRoster)),
+                                  const SizedBox(width: 12),
+                                  // كشف الفريق الثاني
+                                  Expanded(child: _buildRosterListColumn(match.awayTeamName ?? 'Away', awayRoster)),
+                                ],
+                              );
+                            },
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // أزرار التأكيد والإرسال
+                  Container(
+                    padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 16),
+                    decoration: const BoxDecoration(
+                      border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
+                    ),
+                    child: Row(
+                      children: [
+                        Expanded(
+                          child: PrimaryButton(
+                            text: isArabic ? 'إلغاء' : 'Cancel',
+                            color: VSPColors.surfaceAlt,
+                            textColor: VSPColors.textPrimary,
+                            onPressed: () => Navigator.pop(sheetContext),
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: PrimaryButton(
+                            text: isArabic ? 'تأكيد النتيجة وتصعيد الفائز' : 'Submit & Advance',
+                            isLoading: isSubmitting,
+                            onPressed: !isValidToSubmit ? null : () async {
+                              setModalState(() => isSubmitting = true);
+                              try {
+                                // حساب الفائز الفعلي بناءً على النتيجة أو ركلات الترجيح
+                                final finalWinnerId = (homeScore == awayScore)
+                                    ? selectedWinnerId
+                                    : (homeScore > awayScore ? match.homeTeamId : match.awayTeamId);
+
+                                final finalWinnerName = finalWinnerId == match.homeTeamId
+                                    ? match.homeTeamName
+                                    : match.awayTeamName;
+
+                                // إرسال النتيجة لجدول ومحرك البطولة
+                                await TournamentRepository().updateTournamentMatchScore(
+                                  matchId: match.id,
+                                  homeScore: homeScore,
+                                  awayScore: awayScore,
+                                  winnerId: finalWinnerId,
+                                  winnerName: finalWinnerName,
+                                );
+
+                                if (sheetContext.mounted) {
+                                  Navigator.pop(sheetContext);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(
+                                      content: Text(isArabic ? '🏆 تم حفظ النتيجة وتصعيد الفائز تلقائياً!' : '🏆 Score saved and winner advanced!'),
+                                      backgroundColor: VSPColors.success,
+                                    ),
+                                  );
+                                }
+                              } catch (e) {
+                                if (sheetContext.mounted) {
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                                  );
+                                }
+                              } finally {
+                                setModalState(() => isSubmitting = false);
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
+          ),
+        );
+      },
+    );
+  }
+
+  // مكوّن عداد الأهداف التفاعلي
+  Widget _buildScoreCounterColumn({
+    required String teamName,
+    required int score,
+    required VoidCallback onIncrement,
+    required VoidCallback onDecrement,
+  }) {
+    return Column(
+      children: [
+        Text(teamName, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14), maxLines: 1, overflow: TextOverflow.ellipsis, textAlign: TextAlign.center),
+        const SizedBox(height: 12),
+        Row(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            GestureDetector(
+              onTap: onDecrement,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle),
+                child: const Icon(LucideIcons.minus, color: Colors.white, size: 16),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              child: Text('$score', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+            ),
+            GestureDetector(
+              onTap: onIncrement,
+              child: Container(
+                padding: const EdgeInsets.all(8),
+                decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
+                child: const Icon(LucideIcons.plus, color: Colors.black, size: 16),
+              ),
+            ),
+          ],
+        ),
+      ],
+    );
+  }
+
+  // زر تحديد الفائز بركلات الترجيح
+  Widget _buildPenaltyWinnerButton({
+    required String label,
+    required bool isSelected,
+    required VoidCallback onTap,
+  }) {
+    return GestureDetector(
+      onTap: onTap,
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 8),
+        alignment: Alignment.center,
+        decoration: BoxDecoration(
+          color: isSelected ? VSPColors.accent : VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider, width: 1.5),
+        ),
+        child: Text(
+          label,
+          style: TextStyle(
+            color: isSelected ? Colors.black : Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 12,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+      ),
+    );
+  }
+
+  // عمود كشف اللاعبين المشاركين
+  Widget _buildRosterListColumn(String teamName, List<String> roster) {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(teamName, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12), maxLines: 1, overflow: TextOverflow.ellipsis),
+        const SizedBox(height: 6),
+        Container(
+          width: double.infinity,
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(8)),
+          child: roster.isEmpty
+              ? const Text('لا يوجد لاعبون مسجلون', style: TextStyle(color: VSPColors.textSecondary, fontSize: 11))
+              : Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: roster.asMap().entries.map((entry) {
+                    final idx = entry.key;
+                    final name = entry.value;
+                    return Padding(
+                      padding: const EdgeInsets.symmetric(vertical: 4),
+                      child: Text('${idx + 1}. $name', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+                    );
+                  }).toList(),
+                ),
+        ),
+      ],
     );
   }
 }

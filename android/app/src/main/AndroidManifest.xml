@@ -29,15 +29,19 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Deep Linking for Supabase Google OAuth Redirect -->
-            <intent-filter>
+            <!-- Deep Linking for Supabase Google/Apple OAuth Redirect -->
+            <!-- Primary scheme: catches the auth code from Supabase -->
+            <intent-filter android:label="login_callback">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <data android:scheme="io.supabase.fluttervsp" android:host="login-callback" />
+                <!-- Matches: io.supabase.fluttervsp://login-callback/ -->
+                <data
+                    android:scheme="io.supabase.fluttervsp"
+                    android:host="login-callback" />
             </intent-filter>
 
-            <!-- 
+            <!--
                 DEEP LINKING (App Links): 
                 Structural intent-filter placeholder for future domain-based deep linking.
                 Domain verification (vsp.app) is still pending in production.

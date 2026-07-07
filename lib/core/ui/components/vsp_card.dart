@@ -1,4 +1,4 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../tokens/vsp_tokens.dart';
 
@@ -23,7 +23,7 @@ class VSPCard extends StatelessWidget {
     this.width,
     this.height,
     this.borderRadius,
-    this.isGlass = true, // Default to true for the new modern blurred glass look
+    this.isGlass = false, // Default to false for solid premium readability
   });
 
   @override
@@ -43,7 +43,7 @@ class VSPCard extends StatelessWidget {
               color: color ?? (isGlass ? VSPColors.glassSurface : VSPColors.surface),
               borderRadius: BorderRadius.circular(r),
               border: border ?? Border.all(
-                color: isGlass ? VSPColors.accent.withValues(alpha: 0.18) : VSPColors.divider.withValues(alpha: 0.3),
+                color: isGlass ? VSPColors.accent.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05), // Subtle white stroke
                 width: 1,
               ),
               boxShadow: isGlass ? [

@@ -41,9 +41,7 @@ class PrimaryButton extends StatelessWidget {
         style: ElevatedButton.styleFrom(
           backgroundColor: color ?? VSPColors.accent,
           foregroundColor: textColor ?? VSPColors.background,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-          ),
+          shape: const StadiumBorder(),
           elevation: 0,
           disabledBackgroundColor: VSPColors.surface,
           padding: padding,

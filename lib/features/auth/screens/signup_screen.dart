@@ -25,7 +25,8 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
@@ -35,10 +36,53 @@ class _SignupScreenState extends State<SignupScreen> {
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
+  bool _isFetchingLocation = false;
+  DateTime? _dateOfBirth;
+
+  @override
+  void initState() {
+    super.initState();
+    Future.microtask(() => _fetchAutoLocation());
+  }
+
+  Future<void> _fetchAutoLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      await Provider.of<AuthProvider>(context, listen: false).updateUserLocation(force: true);
+    } catch (e) {
+      debugPrint('Error auto-fetching location in signup: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
+    }
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: VSPColors.accent,
+            onPrimary: VSPColors.background,
+            surface: VSPColors.surface,
+            onSurface: VSPColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _dateOfBirth = picked);
+  }
 
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     _emailController.dispose();
     _passwordController.dispose();
@@ -47,16 +91,22 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _handleSignup() async {
-    final name = _nameController.text.trim();
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    final fullName = '$firstName $lastName';
     final phone = _phoneController.text.trim();
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-    if (name.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+    if (firstName.isEmpty || lastName.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
       VSPFeedback.showError(
         context, 
         AppLocalizations.of(context)!.fillAllFields
       );
+      return;
+    }
+    if (_dateOfBirth == null) {
+      VSPFeedback.showError(context, 'يرجى إدخال تاريخ الميلاد');
       return;
     }
 
@@ -97,9 +147,10 @@ class _SignupScreenState extends State<SignupScreen> {
       password: password,
       role: role,
       userData: {
-        'name': name,
+        'name': fullName,
         'phone': phone,
         'position': widget.isOwner ? null : _selectedPosition,
+        'date_of_birth': _dateOfBirth?.toUtc().toIso8601String(),
       },
     );
 
@@ -249,17 +300,75 @@ class _SignupScreenState extends State<SignupScreen> {
 
                     const SizedBox(height: 24),
                   
-                  // Fields
-                  _buildLabel(AppLocalizations.of(context)!.fullName),
-                  CustomTextField(
-                    controller: _nameController,
-                    hintText: AppLocalizations.of(context)!.enterName,
-                    prefixIcon: LucideIcons.user,
-                    maxLength: 50,
+                  // Fields — First & Last Name
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('الاسم الأول'),
+                            CustomTextField(
+                              controller: _firstNameController,
+                              hintText: 'محمد',
+                              prefixIcon: LucideIcons.user,
+                              maxLength: 30,
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            _buildLabel('الاسم الأخير'),
+                            CustomTextField(
+                              controller: _lastNameController,
+                              hintText: 'أحمد',
+                              prefixIcon: LucideIcons.user2,
+                              maxLength: 30,
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+
+                  // Date of Birth
+                  const SizedBox(height: 16),
+                  _buildLabel('تاريخ الميلاد'),
+                  GestureDetector(
+                    onTap: _pickDateOfBirth,
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.borderLight),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
+                          const SizedBox(width: 12),
+                          Text(
+                            _dateOfBirth != null
+                                ? '${_dateOfBirth!.year}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}'
+                                : 'YYYY-MM-DD',
+                            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                              color: _dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary,
+                            ),
+                          ),
+                          const Spacer(),
+                          if (_dateOfBirth != null)
+                            Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 16),
+                        ],
+                      ),
+                    ),
                   ),
                   
                   const SizedBox(height: 16),
-                  _buildLabel(AppLocalizations.of(context)!.phoneNumber),
+                  _buildLabel(widget.isOwner ? 'إضافة رقم (رقم الهاتف الشخصي)' : AppLocalizations.of(context)!.phoneNumber),
                   CustomTextField(
                     controller: _phoneController,
                     hintText: '01xxxxxxxxx',
@@ -271,7 +380,27 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
 
                   const SizedBox(height: 16),
-                  _buildLabel(AppLocalizations.of(context)!.governorate),
+                  Row(
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.governorate,
+                        style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+                      ),
+                      const Spacer(),
+                      if (_isFetchingLocation)
+                        const SizedBox(
+                          width: 16,
+                          height: 16,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                        )
+                      else
+                        GestureDetector(
+                          onTap: _fetchAutoLocation,
+                          child: const Icon(LucideIcons.locate, color: VSPColors.accent, size: 18),
+                        ),
+                    ],
+                  ),
+                  const SizedBox(height: 8),
                   _buildGovernorateDropdown(languageProvider),
 
                   // Position Selector (Players Only)
@@ -447,7 +576,7 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildGovernorateDropdown(LanguageProvider lang) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final auth = Provider.of<AuthProvider>(context);
     final govs = EgyptGovernorates.allGovernorates;
     
     return Container(

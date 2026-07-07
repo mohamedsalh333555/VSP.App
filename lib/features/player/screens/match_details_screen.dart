@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -201,151 +202,165 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
 
   @override
   Widget build(BuildContext context) {
-    if (_isLoading) {
-      return const Scaffold(
-        backgroundColor: VSPColors.background,
-        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
-      );
-    }
+    final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
 
-    if (_booking == null) {
-      return Scaffold(
-        backgroundColor: VSPColors.background,
-        appBar: AppBar(backgroundColor: Colors.transparent),
-        body: Center(
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(LucideIcons.alertCircle, color: VSPColors.error, size: 48),
-              const SizedBox(height: 16),
-              Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
-              TextButton(
-                onPressed: () => Navigator.pop(context),
-                child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
-              )
-            ],
-          ),
-        ),
-      );
-    }
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Supabase.instance.client
+          .from('bookings')
+          .stream(primaryKey: ['id'])
+          .eq('id', widget.bookingId),
+      builder: (context, snapshot) {
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          _booking = Booking.fromFirestore(snapshot.data!.first, widget.bookingId);
+        }
 
-    final isHost = _booking!.createdByUserId == Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
-    final isFull = _booking!.joinedUserIds.length >= _booking!.maxPlayers;
-    final alreadyJoined = _booking!.joinedUserIds.contains(Provider.of<AuthProvider>(context, listen: false).currentUser?.uid);
-
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      body: CustomScrollView(
-        slivers: [
-          SliverAppBar(
-            expandedHeight: 250,
-            pinned: true,
+        if (_isLoading) {
+          return const Scaffold(
             backgroundColor: VSPColors.background,
-            actions: [
-              IconButton(
-                icon: Icon(LucideIcons.share2, color: Colors.white),
-                onPressed: () {
-                  if (_booking != null) {
-                    SharingService.shareMatch(
-                      bookingId: widget.bookingId,
-                      teamName: 'VSP Public Match',
-                      stadiumName: _stadium?.name ?? 'Stadium',
-                      date: ' at ',
-                    );
-                  }
-                },
-              ),
-              IconButton(
-                icon: Icon(LucideIcons.alertTriangle, color: VSPColors.textSecondary),
-                onPressed: _onReport,
-              ),
-              const SizedBox(width: 8),
-            ],
-            flexibleSpace: FlexibleSpaceBar(
-              background: _stadium != null
-                  ? CachedNetworkImage(
-                      imageUrl: _stadium!.imageUrl,
-                      fit: BoxFit.cover,
-                    )
-                  : Container(color: VSPColors.surface),
-            ),
-          ),
-          SliverToBoxAdapter(
-            child: Padding(
-              padding: const EdgeInsets.all(VSPSpacing.lg),
+            body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+          );
+        }
+
+        if (_booking == null) {
+          return Scaffold(
+            backgroundColor: VSPColors.background,
+            appBar: AppBar(backgroundColor: Colors.transparent),
+            body: Center(
               child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      Expanded(
-                        child: Text(
-                          AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium"),
-                          style: Theme.of(context).textTheme.headlineSmall?.copyWith(
-                            fontWeight: FontWeight.bold,
-                            color: VSPColors.textPrimary,
-                          ),
-                        ),
-                      ),
-                      Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent.withValues(alpha: 0.2),
-                          borderRadius: BorderRadius.circular(VSPRadius.xl),
-                        ),
-                        child: Text(
-                          AppLocalizations.of(context)!.vsMatchFormat('', ''),
-                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
-                        ),
-                      ),
-                    ],
-                  ),
-                  const SizedBox(height: VSPSpacing.md),
-                  _buildDetailRow(LucideIcons.calendar, AppLocalizations.of(context)!.date, _booking!.formattedDate),
-                  _buildDetailRow(LucideIcons.clock, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
-                  _buildDetailRow(LucideIcons.mapPin, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
-                  if (isHost) ...[
-                    const SizedBox(height: 16),
-                    _buildHostSettingsCard(context),
-                  ],
-                  const Divider(color: VSPColors.divider, height: 40),
-                  Text(
-                    AppLocalizations.of(context)!.playersCount(_booking!.joinedUserIds.length, _booking!.maxPlayers),
-                    style: Theme.of(context).textTheme.titleLarge,
-                  ),
-                  const SizedBox(height: VSPSpacing.md),
-                  ListView.builder(
-                    shrinkWrap: true,
-                    physics: const NeverScrollableScrollPhysics(),
-                    itemCount: _booking!.joinedUserIds.length,
-                    itemBuilder: (context, index) {
-                      return ListTile(
-                        leading: const CircleAvatar(
-                          backgroundColor: VSPColors.surface,
-                          child: Icon(LucideIcons.user, color: VSPColors.textSecondary),
-                        ),
-                        title: Text(AppLocalizations.of(context)!.playerLabel(index + 1), style: const TextStyle(color: Colors.white)),
-                        trailing: index == 0 ? Text(AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.accent)) : null,
-                      );
-                    },
-                  ),
-                  const SizedBox(height: 100),
+                  Icon(LucideIcons.alertCircle, color: VSPColors.error, size: 48),
+                  const SizedBox(height: 16),
+                  Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context),
+                    child: Text(AppLocalizations.of(context)!.goBack, style: const TextStyle(color: VSPColors.accent)),
+                  )
                 ],
               ),
             ),
+          );
+        }
+
+        final isHost = _booking!.createdByUserId == currentUserId;
+        final isFull = _booking!.joinedUserIds.length >= _booking!.maxPlayers;
+        final alreadyJoined = _booking!.joinedUserIds.contains(currentUserId);
+
+        return Scaffold(
+          backgroundColor: VSPColors.background,
+          body: CustomScrollView(
+            slivers: [
+              SliverAppBar(
+                expandedHeight: 250,
+                pinned: true,
+                backgroundColor: VSPColors.background,
+                actions: [
+                  IconButton(
+                    icon: Icon(LucideIcons.share2, color: Colors.white),
+                    onPressed: () {
+                      if (_booking != null) {
+                        SharingService.shareMatch(
+                          bookingId: widget.bookingId,
+                          teamName: 'VSP Public Match',
+                          stadiumName: _stadium?.name ?? 'Stadium',
+                          date: ' at ',
+                        );
+                      }
+                    },
+                  ),
+                  IconButton(
+                    icon: Icon(LucideIcons.alertTriangle, color: VSPColors.textSecondary),
+                    onPressed: _onReport,
+                  ),
+                  const SizedBox(width: 8),
+                ],
+                flexibleSpace: FlexibleSpaceBar(
+                  background: _stadium != null
+                      ? CachedNetworkImage(
+                          imageUrl: _stadium!.imageUrl,
+                          fit: BoxFit.cover,
+                        )
+                      : Container(color: VSPColors.surface),
+                ),
+              ),
+              SliverToBoxAdapter(
+                child: Padding(
+                  padding: const EdgeInsets.all(VSPSpacing.lg),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Text(
+                              AppLocalizations.of(context)!.publicMatchAt(_stadium?.name ?? "Stadium"),
+                              style: Theme.of(context).textTheme.headlineSmall?.copyWith(
+                                fontWeight: FontWeight.bold,
+                                color: VSPColors.textPrimary,
+                              ),
+                            ),
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.2),
+                              borderRadius: BorderRadius.circular(VSPRadius.xl),
+                            ),
+                            child: Text(
+                              AppLocalizations.of(context)!.vsMatchFormat('', ''),
+                              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const SizedBox(height: VSPSpacing.md),
+                      _buildDetailRow(LucideIcons.calendar, AppLocalizations.of(context)!.date, _booking!.formattedDate),
+                      _buildDetailRow(LucideIcons.clock, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
+                      _buildDetailRow(LucideIcons.mapPin, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
+                      if (isHost) ...[
+                        const SizedBox(height: 16),
+                        _buildHostSettingsCard(context),
+                      ],
+                      const Divider(color: VSPColors.divider, height: 40),
+                      Text(
+                        AppLocalizations.of(context)!.playersCount(_booking!.joinedUserIds.length, _booking!.maxPlayers),
+                        style: Theme.of(context).textTheme.titleLarge,
+                      ),
+                      const SizedBox(height: VSPSpacing.md),
+                      ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _booking!.joinedUserIds.length,
+                        itemBuilder: (context, index) {
+                          return ListTile(
+                            leading: const CircleAvatar(
+                              backgroundColor: VSPColors.surface,
+                              child: Icon(LucideIcons.user, color: VSPColors.textSecondary),
+                            ),
+                            title: Text(AppLocalizations.of(context)!.playerLabel(index + 1), style: const TextStyle(color: Colors.white)),
+                            trailing: index == 0 ? Text(AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.accent)) : null,
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 100),
+                    ],
+                  ),
+                ),
+              ),
+            ],
           ),
-        ],
-      ),
-      bottomSheet: Container(
-        padding: const EdgeInsets.all(VSPSpacing.lg),
-        color: VSPColors.background,
-        child: PrimaryButton(
-          text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.join),
-          onPressed: (alreadyJoined || isFull || isHost) ? null : _onJoin,
-          isLoading: _isJoining,
-        ),
-      ),
+          bottomSheet: Container(
+            padding: const EdgeInsets.all(VSPSpacing.lg),
+            color: VSPColors.background,
+            child: PrimaryButton(
+              text: alreadyJoined ? AppLocalizations.of(context)!.joined : (isFull ? AppLocalizations.of(context)!.matchFull : AppLocalizations.of(context)!.join),
+              onPressed: (alreadyJoined || isFull || isHost) ? null : _onJoin,
+              isLoading: _isJoining,
+            ),
+          ),
+        );
+      },
     );
   }
 

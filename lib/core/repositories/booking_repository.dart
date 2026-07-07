@@ -110,7 +110,9 @@ class SupabaseBookingRepository implements BookingRepository {
         );
       }
 
-      const status = BookingStatus.confirmed;
+      final status = (draft.paymentStatus == 'pending' || draft.paymentStatus == 'awaiting_verification')
+          ? BookingStatus.pending
+          : BookingStatus.confirmed;
 
       // ── Data Denormalization: Add host info to booking ──
       final userDetailsDoc = await _supabase
@@ -354,11 +356,15 @@ class SupabaseBookingRepository implements BookingRepository {
           .toList();
 
       if (otherParticipants.isNotEmpty) {
-        await NotificationHandler.notifyMatchCancelledByHost(
-          playerIds: otherParticipants,
-          stadiumName: booking.stadiumName,
-          timeSlot: booking.formattedTimeRange,
-        );
+        try {
+          await NotificationHandler.notifyMatchCancelledByHost(
+            playerIds: otherParticipants,
+            stadiumName: booking.stadiumName,
+            timeSlot: booking.formattedTimeRange,
+          );
+        } catch (e) {
+          VSPLogger.w('⚠️ Failed to send cancellation notifications: $e');
+        }
       }
 
       return true;
@@ -437,7 +443,7 @@ class SupabaseBookingRepository implements BookingRepository {
             return;
           }
 
-          // 2. إدراج التقييم الجديد في جدول reviews في Supabase
+          // 2. إدراج التقييم الجديد في جدول reviews في Supabase (سيتكفل الـ Trigger بتحديث الملعب تلقائياً)
           await _supabase.from('reviews').insert({
             'stadium_id': booking.stadiumId,
             'user_id': teamId,
@@ -445,29 +451,8 @@ class SupabaseBookingRepository implements BookingRepository {
             'review_text': review ?? '',
             'created_at': DateTime.now().toUtc().toIso8601String(),
           });
-
-          // 3. جلب التقييم الحالي وعدد المراجعات لتحديث المتوسط في جدول الملاعب (stadiums)
-          final stadiumDoc = await _supabase
-              .from('stadiums')
-              .select('rating, reviews_count')
-              .eq('id', booking.stadiumId)
-              .maybeSingle();
-
-          if (stadiumDoc != null) {
-            final currentRating = (stadiumDoc['rating'] ?? 5.0).toDouble();
-            final reviewsCount = (stadiumDoc['reviews_count'] ?? 0).toInt();
-
-            final newReviewsCount = reviewsCount + 1;
-            final newRating = ((currentRating * reviewsCount) + rating) / newReviewsCount;
-
-            // 4. تحديث الحقول الرياضية في جدول الملاعب في Supabase
-            await _supabase.from('stadiums').update({
-              'rating': newRating,
-              'reviews_count': newReviewsCount,
-            }).eq('id', booking.stadiumId);
-            
-            VSPLogger.i('⭐ Stadium rating updated on Supabase: $newRating ($newReviewsCount reviews)');
-          }
+          
+          VSPLogger.i('⭐ Stadium review inserted. DB Trigger will update rating average.');
         }
       }
 

@@ -1,5 +1,6 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/chat_model.dart';
@@ -12,6 +13,7 @@ import '../../../data/models.dart';
 
 class ChatScreen extends StatefulWidget {
   final Booking booking;
+  static String? activeBookingId;
 
   const ChatScreen({super.key, required this.booking});
 
@@ -26,6 +28,7 @@ class _ChatScreenState extends State<ChatScreen> {
   @override
   void initState() {
     super.initState();
+    ChatScreen.activeBookingId = widget.booking.id;
     // Mark messages as read when entering the screen
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -53,6 +56,14 @@ class _ChatScreenState extends State<ChatScreen> {
     ChatRepository().sendMessage(widget.booking.id, message);
     AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
     _messageController.clear();
+  }
+
+  @override
+  void dispose() {
+    ChatScreen.activeBookingId = null;
+    _messageController.dispose();
+    _scrollController.dispose();
+    super.dispose();
   }
 
   @override
@@ -95,40 +106,22 @@ class _ChatScreenState extends State<ChatScreen> {
 
                 final messages = snapshot.data ?? [];
 
-                if (messages.isEmpty) {
-                  final lang = Provider.of<LanguageProvider>(context);
-                  return Center(
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(LucideIcons.messageSquare, size: 64, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
-                        const SizedBox(height: 16),
-                        Text(
-                          lang.isArabic ? 'لا توجد رسائل بعد' : 'No messages yet',
-                          style: const TextStyle(color: VSPColors.textSecondary),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          lang.isArabic ? 'ابدأ المحادثة مع زملائك!' : 'Say hello to your teammates!',
-                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  );
-                }
-
                 return ListView.builder(
                   controller: _scrollController,
                   reverse: true,
                   padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 20),
-                  itemCount: messages.length,
+                  itemCount: messages.length + 1,
                   itemBuilder: (context, index) {
+                    if (index == messages.length) {
+                      return _buildSystemMessage(context);
+                    }
                     final message = messages[index];
                     final isMe = message.senderId == currentUserId;
 
                     return _ChatBubble(
                       message: message,
                       isMe: isMe,
+                      booking: widget.booking,
                     );
                   },
                 );
@@ -222,16 +215,75 @@ class _ChatScreenState extends State<ChatScreen> {
       ),
     );
   }
+
+  Widget _buildSystemMessage(BuildContext context) {
+    final lang = Provider.of<LanguageProvider>(context, listen: false);
+    final text = lang.isArabic
+        ? '🏆 تم تأكيد الحجز! الساحة بانتظاركم... من جاهز للتحدي؟ ⚽'
+        : '🏆 Booking Confirmed! The pitch is waiting... Who is ready? ⚽';
+
+    return Center(
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 16),
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.1),
+              blurRadius: 10,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          child: BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 10.0, sigmaY: 10.0),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+              color: VSPColors.surface.withValues(alpha: 0.4),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  const Icon(LucideIcons.trophy, color: VSPColors.warning, size: 20),
+                  const SizedBox(width: 8),
+                  Flexible(
+                    child: Text(
+                      text,
+                      style: const TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontSize: 13,
+                        fontWeight: FontWeight.bold,
+                      ),
+                      textAlign: TextAlign.center,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        ),
+      ),
+    );
+  }
 }
 
 class _ChatBubble extends StatelessWidget {
   final ChatMessage message;
   final bool isMe;
+  final Booking booking;
 
-  const _ChatBubble({required this.message, required this.isMe});
+  const _ChatBubble({
+    required this.message,
+    required this.isMe,
+    required this.booking,
+  });
 
   @override
   Widget build(BuildContext context) {
+    final isHost = message.senderId == booking.createdByUserId;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Align(
       alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
       child: Container(
@@ -242,22 +294,48 @@ class _ChatBubble extends StatelessWidget {
           borderRadius: BorderRadius.only(
             topLeft: const Radius.circular(16),
             topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 0),
-            bottomRight: Radius.circular(isMe ? 0 : 16),
+            bottomLeft: Radius.circular(isMe ? 16 : 4),
+            bottomRight: Radius.circular(isMe ? 4 : 16),
           ),
+          boxShadow: isHost
+              ? [
+                  BoxShadow(
+                    color: VSPColors.accent.withValues(alpha: 0.3),
+                    blurRadius: 8,
+                    spreadRadius: 1,
+                    offset: const Offset(0, 2),
+                  ),
+                ]
+              : null,
         ),
         child: Column(
           crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
           mainAxisSize: MainAxisSize.min,
           children: [
             if (!isMe)
-              Text(
-                message.senderName,
-                style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontSize: 10,
-                  fontWeight: FontWeight.bold,
-                ),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    message.senderName,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontSize: 10,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  if (isHost) ...[
+                    const SizedBox(width: 4),
+                    Text(
+                      isArabic ? '[المُضيف 👑]' : '[HOST 👑]',
+                      style: const TextStyle(
+                        color: VSPColors.warning,
+                        fontSize: 10,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ],
+                ],
               ),
             if (!isMe) const SizedBox(height: 2),
             Text(

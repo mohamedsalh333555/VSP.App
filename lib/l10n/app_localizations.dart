@@ -4075,6 +4075,42 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Proceed anyway'**
   String get proceedAnyway;
+
+  /// No description provided for @welcomePage1Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Live the Pro Vibe'**
+  String get welcomePage1Title;
+
+  /// No description provided for @welcomePage1Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your pitch is ready, and new challenges await. Book your match with a single tap and head towards glory.'**
+  String get welcomePage1Subtitle;
+
+  /// No description provided for @welcomePage2Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Be the Area Champion'**
+  String get welcomePage2Title;
+
+  /// No description provided for @welcomePage2Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Form your squad, compete in major tournaments, and climb the leaderboard to be the best in your region.'**
+  String get welcomePage2Subtitle;
+
+  /// No description provided for @welcomePage3Title.
+  ///
+  /// In en, this message translates to:
+  /// **'Ready to Start?!'**
+  String get welcomePage3Title;
+
+  /// No description provided for @welcomePage3Subtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.'**
+  String get welcomePage3Subtitle;
 }
 
 class _AppLocalizationsDelegate

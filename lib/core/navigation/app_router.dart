@@ -11,6 +11,7 @@ import '../../features/owner/screens/owner_documentation_wizard.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
+import '../../features/player/screens/team_profile_screen.dart';
 import '../config/app_config.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
@@ -82,6 +83,13 @@ class AppRouter {
             return MatchDetailsScreen(bookingId: bookingId);
           },
         ),
+        GoRoute(
+          path: '/team/:teamId',
+          builder: (context, state) {
+            final teamId = state.pathParameters['teamId'] ?? '';
+            return TeamProfileScreen(teamId: teamId);
+          },
+        ),
       ],
       redirect: (context, state) {
         final isInitializing = authProvider.isInitializing;
@@ -125,7 +133,10 @@ class AppRouter {
         }
 
         // 5. OTP verification block
-        if (!AppConfig.bypassOtp && !userModel.isRegistrationComplete) {
+        // Checks isEmailVerified — NOT isRegistrationComplete.
+        // Google/Apple users are already email-verified by the provider → skip this gate.
+        // Email/password users must verify their OTP before proceeding.
+        if (!AppConfig.bypassOtp && !userModel.isEmailVerified) {
           if (path != '/verify-email') return '/verify-email';
           return null;
         }

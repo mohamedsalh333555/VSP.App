@@ -48,6 +48,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _widthController = TextEditingController();
   final _seatsController = TextEditingController();
   final _notesController = TextEditingController();
+  final _stadiumPhoneController = TextEditingController();
   bool? _hasBall;
 
   // State variables for features
@@ -125,6 +126,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _requireDeposit = data['needs_deposit'] ?? data['needsDeposit'] ?? (depositVal > 0.0);
         
         final features = data['features'] as Map<String, dynamic>? ?? {};
+        _stadiumPhoneController.text = features['stadiumPhone']?.toString() ?? '';
         _selectedFloorType = features['floorType'];
         _selectedSportType = features['sportType'];
         _selectedBathOption = features['bathOption'];
@@ -209,6 +211,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     _widthController.dispose();
     _seatsController.dispose();
     _notesController.dispose();
+    _stadiumPhoneController.dispose();
     _pageController.dispose();
     _ballPriceController.dispose();
     _depositController.dispose();
@@ -771,6 +774,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         return;
       }
 
+      if (_stadiumPhoneController.text.trim().isEmpty) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        _showError(isArabic ? 'يرجى إدخال رقم هاتف الملعب' : 'Please enter stadium phone number');
+        return;
+      }
+
       // ── Split-Shift (Break Time) Validation ──
       if (_isSplitShift) {
         if (_breakTimes.isEmpty) {
@@ -834,6 +843,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _showError(AppLocalizations.of(context)!.uploadPhotoError);
         return;
       }
+      if (_images.any((img) => img['isUploading'] == true)) {
+        _showError('Please wait for all images to finish uploading.');
+        return;
+      }
       _saveStadium(); // Submit immediately after images
       return;
     }
@@ -873,6 +886,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
 
       final stadiumFeatures = {
+        'stadiumPhone': _stadiumPhoneController.text.trim(),
         'sportType': _selectedSportType,
         'floorType': _selectedFloorType,
         'bathOption': _selectedBathOption,
@@ -1158,6 +1172,15 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             const SizedBox(height: 16),
           ],
           _buildTextField(AppLocalizations.of(context)!.stadiumName, 'Ex: Anfield', controller: _nameController, maxLength: 50),
+          const SizedBox(height: 16),
+          _buildTextField(
+            isArabic ? 'رقم هاتف الملعب' : 'Stadium Phone Number',
+            '01xxxxxxxxx',
+            controller: _stadiumPhoneController,
+            maxLength: 15,
+            keyboardType: TextInputType.phone,
+            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          ),
           const SizedBox(height: 16),
           _buildGovernorateDropdown(),
           const SizedBox(height: 16),
@@ -1569,6 +1592,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           hintText: hint,
           keyboardType: keyboardType ?? (maxLines > 1 ? TextInputType.multiline : TextInputType.text),
           maxLength: maxLength,
+          maxLines: maxLines,
           inputFormatters: inputFormatters,
           onChanged: (val) {
             if (readOnly) {

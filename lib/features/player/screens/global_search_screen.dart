@@ -7,6 +7,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import 'stadium_details_screen.dart';
 import 'championship_details_screen.dart';
+import 'team_profile_screen.dart';
 
 class GlobalSearchScreen extends StatefulWidget {
   final String? initialQuery;
@@ -169,7 +170,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
               name = item.name;
               sub = '${item.sportType} - ${item.governorate}';
               icon = LucideIcons.users;
-              // TODO: Navigate to TeamProfile
+              onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => TeamProfileScreen(team: item)));
             } else if (item is Championship) {
               name = item.name;
               sub = AppLocalizations.of(context)!.prizeLabel(item.grandPrize.toString());

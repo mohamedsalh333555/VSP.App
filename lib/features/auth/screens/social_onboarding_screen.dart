@@ -2,6 +2,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
+import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 
@@ -18,39 +19,81 @@ class SocialOnboardingScreen extends StatefulWidget {
 }
 
 class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
-  final _nameController = TextEditingController();
+  final _firstNameController = TextEditingController();
+  final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
   String _selectedPosition = 'GK';
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
-  final bool _nameInitialized = false;
+  bool _isFetchingLocation = false;
+  DateTime? _dateOfBirth;
 
   final List<String> _positions = ['GK', 'CB', 'LB', 'RB', 'MID', 'LW', 'RW', 'ST'];
 
   @override
   void initState() {
     super.initState();
-    _phoneController.addListener(() => setState(() {})); // Re-evaluate form validity
+    _phoneController.addListener(() => setState(() {}));
+    _firstNameController.addListener(() => setState(() {}));
+    _lastNameController.addListener(() => setState(() {}));
+    Future.microtask(() => _fetchAutoLocation());
 
-    // Pre-fill name from Google/Social provider properly
+    // Smart split of Google/Apple display name
     WidgetsBinding.instance.addPostFrameCallback((_) {
       final auth = Provider.of<AuthProvider>(context, listen: false);
-      
-      // If we have a userModel, use its name. 
-      // If we are a Ghost User, fallback to Firebase's displayName.
       final displayName = auth.userModel?.name ?? auth.currentUser?.userMetadata?['name'] as String?;
-      
-      if (displayName != null && displayName.isNotEmpty && _nameController.text.isEmpty) {
-        setState(() {
-          _nameController.text = displayName;
-        });
+      if (displayName != null && displayName.trim().isNotEmpty) {
+        final parts = displayName.trim().split(' ');
+        _firstNameController.text = parts.first;
+        if (parts.length > 1) _lastNameController.text = parts.sublist(1).join(' ');
+        setState(() {});
       }
     });
   }
 
+  Future<void> _fetchAutoLocation() async {
+    setState(() => _isFetchingLocation = true);
+    try {
+      final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
+      if (result != null && mounted) {
+        setState(() {
+          _selectedGovernorate = result;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error auto-fetching location: $e');
+    } finally {
+      if (mounted) {
+        setState(() => _isFetchingLocation = false);
+      }
+    }
+  }
+
+  Future<void> _pickDateOfBirth() async {
+    final picked = await showDatePicker(
+      context: context,
+      initialDate: _dateOfBirth ?? DateTime(2000),
+      firstDate: DateTime(1930),
+      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
+      builder: (context, child) => Theme(
+        data: Theme.of(context).copyWith(
+          colorScheme: const ColorScheme.dark(
+            primary: VSPColors.accent,
+            onPrimary: VSPColors.background,
+            surface: VSPColors.surface,
+            onSurface: VSPColors.textPrimary,
+          ),
+        ),
+        child: child!,
+      ),
+    );
+    if (picked != null) setState(() => _dateOfBirth = picked);
+  }
+
   @override
   void dispose() {
-    _nameController.dispose();
+    _firstNameController.dispose();
+    _lastNameController.dispose();
     _phoneController.dispose();
     super.dispose();
   }
@@ -59,23 +102,26 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
 
   bool get _isFormValid {
     final phone = _phoneController.text.trim();
-    return phone.length >= 10 && !_isLoading;
+    final firstName = _firstNameController.text.trim();
+    final lastName = _lastNameController.text.trim();
+    return phone.length >= 10 && firstName.isNotEmpty && lastName.isNotEmpty && _dateOfBirth != null && !_isLoading;
   }
 
   Future<void> _handleCompleteRegistration() async {
     if (!_isFormValid) return;
 
     final phone = _phoneController.text.trim();
-    final name = _nameController.text.trim();
+    final fullName = '${_firstNameController.text.trim()} ${_lastNameController.text.trim()}';
 
     setState(() => _isLoading = true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
 
     final success = await authProvider.completeSocialRegistration(
       phone: phone,
-      name: name,
+      name: fullName,
       position: authProvider.isPlayer ? _selectedPosition : null,
       governorate: _selectedGovernorate,
+      dateOfBirth: _dateOfBirth,
     );
 
     if (!mounted) return;
@@ -107,17 +153,77 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
 
     return PopScope(
       canPop: false,
-      onPopInvokedWithResult: (didPop, _) async {
-        if (!didPop) await auth.signOut();
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+
+        final shouldSignOut = await showDialog<bool>(
+          context: context,
+          barrierDismissible: false,
+          builder: (dialogContext) {
+            return BackdropFilter(
+              filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+              child: AlertDialog(
+                backgroundColor: VSPColors.surface,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                title: Row(
+                  children: [
+                    Icon(LucideIcons.logOut, color: VSPColors.warning),
+                    const SizedBox(width: 10),
+                    const Text(
+                      'تأكيد الخروج؟',
+                      style: TextStyle(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 18,
+                      ),
+                    ),
+                  ],
+                ),
+                content: const Text(
+                  'هل أنت متأكد من التراجع؟ ستحتاج إلى إدخال رقم هاتفك لتأكيد حسابك لاحقاً.',
+                  style: TextStyle(
+                    color: VSPColors.textSecondary,
+                    height: 1.5,
+                    fontSize: 14,
+                  ),
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(dialogContext, false),
+                    child: const Text(
+                      'إلغاء',
+                      style: TextStyle(color: VSPColors.textSecondary),
+                    ),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.pop(dialogContext, true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VSPColors.error,
+                      foregroundColor: Colors.white,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                    ),
+                    child: const Text('تسجيل الخروج'),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+
+        if (shouldSignOut == true) {
+          await auth.signOut();
+        }
       },
       child: Scaffold(
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: Colors.transparent,
           elevation: 0,
+          scrolledUnderElevation: 0, // ✅ منع تغيير اللون عند السكرول
           leading: IconButton(
             icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
-            onPressed: () => auth.signOut(),
+            onPressed: () => Navigator.maybePop(context),
           ),
           actions: const [],
         ),
@@ -143,7 +249,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 ),
                 const SizedBox(height: 30),
                 const Text(
-                  'Complete Your Profile',
+                  'أكمل ملفك الشخصي',
                   style: TextStyle(
                     color: VSPColors.textPrimary,
                     fontSize: 28,
@@ -152,64 +258,146 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 ),
                 const SizedBox(height: 8),
                 const Text(
-                  'Just a few more details to get you started',
+                  'بضع تفاصيل إضافية لتبدأ رحلتك',
                   style: TextStyle(color: VSPColors.textSecondary, fontSize: 16),
                 ),
                 const SizedBox(height: 32),
 
-                _buildLabel('Full Name'),
-                CustomTextField(
-                  controller: _nameController,
-                  hintText: 'Enter your full name',
-                  prefixIcon: LucideIcons.user,
+                // First & Last Name side-by-side
+                Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel('الاسم الأول'),
+                          CustomTextField(
+                            controller: _firstNameController,
+                            hintText: 'محمد',
+                            prefixIcon: LucideIcons.user,
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          _buildLabel('الاسم الأخير'),
+                          CustomTextField(
+                            controller: _lastNameController,
+                            hintText: 'أحمد',
+                            prefixIcon: LucideIcons.user2,
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+
+                // Date of Birth
+                const SizedBox(height: 20),
+                _buildLabel('تاريخ الميلاد'),
+                GestureDetector(
+                  onTap: _pickDateOfBirth,
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.borderLight),
+                    ),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
+                        const SizedBox(width: 12),
+                        Text(
+                          _dateOfBirth != null
+                              ? '${_dateOfBirth!.year}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}'
+                              : 'YYYY-MM-DD',
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                            color: _dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary,
+                          ),
+                        ),
+                        const Spacer(),
+                        if (_dateOfBirth != null)
+                          Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 16),
+                      ],
+                    ),
+                  ),
                 ),
                 const SizedBox(height: 20),
-                _buildReadOnlyField('Email Address', auth.userModel?.email ?? auth.currentUser?.email ?? 'N/A'),
+                _buildReadOnlyField('البريد الإلكتروني', auth.userModel?.email ?? auth.currentUser?.email ?? 'N/A'),
                 
                 const SizedBox(height: 20),
-                _buildLabel('Phone Number'),
+                _buildLabel('رقم الهاتف'),
                 CustomTextField(
                   controller: _phoneController,
                   hintText: '01xxxxxxxxx',
                   keyboardType: TextInputType.phone,
                   prefixIcon: LucideIcons.phone,
                 ),
-
-                const SizedBox(height: 20),
-                _buildLabel('Governorate'),
+                           const SizedBox(height: 20),
+                Row(
+                  children: [
+                    Text(
+                      'المحافظة',
+                      style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+                    ),
+                    const Spacer(),
+                    if (_isFetchingLocation)
+                      const SizedBox(
+                        width: 16,
+                        height: 16,
+                        child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                      )
+                    else
+                      GestureDetector(
+                        onTap: _fetchAutoLocation,
+                        child: const Icon(LucideIcons.locate, color: VSPColors.accent, size: 18),
+                      ),
+                  ],
+                ),
+                const SizedBox(height: 8),
                 _buildGovernorateDropdown(),
 
 
                 if (!isOwner) ...[
                   const SizedBox(height: 20),
-                  _buildLabel('Preferred Position'),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _selectedPosition,
-                        dropdownColor: VSPColors.surface,
-                        icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
-                        isExpanded: true,
-                        style: Theme.of(context).textTheme.bodyMedium,
-                        onChanged: (String? newValue) {
-                          if (newValue != null) {
-                            setState(() {
-                              _selectedPosition = newValue;
-                            });
-                          }
-                        },
-                        items: _positions.map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
-                      ),
+                  _buildLabel('المركز المفضل'),
+                  SingleChildScrollView(
+                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+                    scrollDirection: Axis.horizontal,
+                    physics: const BouncingScrollPhysics(),
+                    child: Row(
+                      children: _positions.map((pos) {
+                        final isSelected = _selectedPosition == pos;
+                        return Padding(
+                          padding: const EdgeInsets.only(right: 8.0),
+                          child: ChoiceChip(
+                            label: Text(pos),
+                            selected: isSelected,
+                            onSelected: (selected) {
+                              if (selected) setState(() => _selectedPosition = pos);
+                            },
+                            selectedColor: VSPColors.accent,
+                            backgroundColor: VSPColors.surface,
+                            showCheckmark: false,
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: isSelected ? VSPColors.background : VSPColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(VSPRadius.sm),
+                              side: BorderSide(
+                                color: isSelected ? VSPColors.accent : VSPColors.divider,
+                              ),
+                            ),
+                          ),
+                        );
+                      }).toList(),
                     ),
                   ),
                 ],
@@ -228,8 +416,8 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
             height: 56,
             child: PrimaryButton(
               text: AppConfig.bypassOtp 
-                ? 'Complete & Verify (Bypass)' 
-                : (isOwner ? 'Continue to Stadium Setup' : 'Complete Registration'),
+                ? 'إتمام وتحقق (وضع التطوير)' 
+                : (isOwner ? 'متابعة لإعداد الملعب' : 'إتمام التسجيل'),
               isLoading: _isLoading,
               onPressed: _isFormValid ? _handleCompleteRegistration : null,
             ),

@@ -432,28 +432,70 @@ class _InformationTab extends StatelessWidget {
                   ],
                 ),
               ),
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.end,
+              Row(
                 children: [
-                  Row(
-                    children: List.generate(
-                      5,
-                      (i) => Icon(
-                        i < stadium.rating.round()
-                            ? LucideIcons.star
-                            : LucideIcons.star,
-                        color: Colors.amber,
-                        size: 16,
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(
+                        color: VSPColors.accent.withValues(alpha: 0.35),
+                        width: 1.5,
                       ),
+                      boxShadow: [
+                        BoxShadow(
+                          color: VSPColors.accent.withValues(alpha: 0.1),
+                          blurRadius: 8,
+                          spreadRadius: 1,
+                        ),
+                      ],
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(
+                          LucideIcons.star,
+                          color: VSPColors.accent,
+                          size: 16,
+                        ),
+                        const SizedBox(width: 6),
+                        Text(
+                          stadium.rating.toStringAsFixed(1),
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 15,
+                            fontWeight: FontWeight.w900,
+                            letterSpacing: -0.2,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
-                  const SizedBox(height: 2),
-                  Text(
-                    l10n.reviews(stadium.reviewsCount),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: VSPColors.textSecondary,
-                          fontWeight: FontWeight.bold,
+                  const SizedBox(width: 8),
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        children: List.generate(
+                          5,
+                          (i) => Icon(
+                            LucideIcons.star,
+                            color: i < stadium.rating.round() ? VSPColors.accent : VSPColors.surfaceAlt,
+                            size: 10,
+                          ),
                         ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        l10n.reviews(stadium.reviewsCount),
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary,
+                              fontSize: 10,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                    ],
                   ),
                 ],
               ),
@@ -613,29 +655,35 @@ class _VerifiedBadge extends StatelessWidget {
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
       decoration: BoxDecoration(
         gradient: const LinearGradient(
-          colors: [Color(0xFFD4AF37), Color(0xFFF5D36E)],
+          colors: [Color(0xFFD4AF37), Color(0xFFFFDF7A), Color(0xFFAC7C11)],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
         ),
         borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(
+          color: const Color(0xFFFFF0B3).withValues(alpha: 0.5),
+          width: 1,
+        ),
         boxShadow: [
           BoxShadow(
-            color: const Color(0xFFD4AF37).withValues(alpha: 0.4),
-            blurRadius: 8,
-            offset: const Offset(0, 2),
+            color: const Color(0xFFD4AF37).withValues(alpha: 0.3),
+            blurRadius: 10,
+            spreadRadius: 1,
           ),
         ],
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: const [
-          Icon(LucideIcons.badgeCheck, color: Colors.white, size: 12),
+          Icon(LucideIcons.badgeCheck, color: VSPColors.background, size: 12),
           SizedBox(width: 4),
           Text(
-            'Verified 🛡️',
+            'VERIFIED 🛡️',
             style: TextStyle(
-              color: Colors.white,
-              fontSize: 10,
-              fontWeight: FontWeight.bold,
-              letterSpacing: 0.5,
+              color: VSPColors.background,
+              fontSize: 9,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.8,
             ),
           ),
         ],

@@ -1,3 +1,5 @@
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
@@ -18,13 +20,17 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/storage_service.dart';
+import '../../../core/repositories/chat_repository.dart';
+import '../../../core/models/chat_model.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
+  final bool forceFullPayment;
 
   const PaymentGatewayScreen({
     super.key,
     required this.bookingDraft,
+    this.forceFullPayment = false,
   });
 
   @override
@@ -36,13 +42,477 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   int _selectedOptionIndex = 0;
   bool _depositConfirmed = false;
   String? _ownerPhone;
+  String? _ownerInstapay;
+  String? _ownerVodafone;
+  String? _ownerBank;
   bool _isLoadingPhone = true;
   XFile? _receiptImage;
+  Timer? _timer;
+  int _secondsRemaining = 600;
+
+  Booking? _booking;
+  late TextEditingController _chatController;
+  bool _receiptUploaded = false;
+  String? _uploadedReceiptUrl;
 
   @override
   void initState() {
     super.initState();
+    _chatController = TextEditingController();
     _fetchOwnerPhone();
+    _startTimer();
+    _createPendingBooking();
+  }
+
+  @override
+  void dispose() {
+    _timer?.cancel();
+    _chatController.dispose();
+    super.dispose();
+  }
+
+  Future<void> _createPendingBooking() async {
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.uid;
+    if (userId != null) {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      final draft = widget.bookingDraft.copyWith(
+        paymentStatus: 'pending',
+        paymentMethod: 'manual_transfer',
+      );
+      final booking = await bookingProvider.createBooking(draft, userId);
+      if (mounted) {
+        setState(() {
+          _booking = booking;
+        });
+      }
+    }
+  }
+
+  void _sendChatMessage() {
+    if (_chatController.text.trim().isEmpty || _booking == null) return;
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    if (user == null) return;
+
+    final message = ChatMessage(
+      id: '',
+      senderId: user.uid,
+      senderName: user.name ?? 'Guest',
+      text: _chatController.text.trim(),
+      timestamp: DateTime.now(),
+    );
+
+    ChatRepository().sendMessage(_booking!.id, message);
+    _chatController.clear();
+  }
+
+  Future<void> _uploadReceiptFromChat() async {
+    if (_booking == null) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final picker = ImagePicker();
+    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+    if (image == null) return;
+
+    setState(() => _isLoading = true);
+
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userId = auth.currentUser?.uid;
+      if (userId == null) return;
+
+      final receiptUrl = await StorageService().uploadFile(
+        file: image,
+        bucket: 'deposit-receipts',
+        path: 'bookings/$userId/receipts/rec_${DateTime.now().millisecondsSinceEpoch}.jpg',
+      );
+
+      if (receiptUrl != null) {
+        final message = ChatMessage(
+          id: '',
+          senderId: userId,
+          senderName: auth.userModel?.name ?? 'Player',
+          text: '[Receipt]: $receiptUrl',
+          timestamp: DateTime.now(),
+        );
+        await ChatRepository().sendMessage(_booking!.id, message);
+        
+        setState(() {
+          _uploadedReceiptUrl = receiptUrl;
+          _receiptUploaded = true;
+          _isLoading = false;
+        });
+
+        if (mounted) {
+          VSPFeedback.showSuccess(context, isArabic ? 'تم رفع الإيصال في المحادثة بنجاح!' : 'Receipt uploaded successfully to chat!');
+        }
+      } else {
+        throw Exception('Failed to upload file');
+      }
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
+        VSPFeedback.showError(context, isArabic ? 'فشل رفع الإيصال: $e' : 'Failed to upload receipt: $e');
+      }
+    }
+  }
+
+  Widget _buildOwnerPaymentDetails(BuildContext context, bool isArabic) {
+    if (_isLoadingPhone) {
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+    }
+
+    final hasInstapay = _ownerInstapay != null && _ownerInstapay!.trim().isNotEmpty;
+    final hasVodafone = _ownerVodafone != null && _ownerVodafone!.trim().isNotEmpty;
+    final hasBank = _ownerBank != null && _ownerBank!.trim().isNotEmpty;
+
+    if (!hasInstapay && !hasVodafone && !hasBank) {
+      return Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Text(
+          isArabic
+              ? 'تنبيه: لم يقم صاحب الملعب بتحديد إعدادات تحصيل P2P بعد. يرجى التواصل معه هاتفياً.'
+              : 'Warning: Stadium owner has not set up P2P receivables yet. Please contact them directly.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        ),
+      );
+    }
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            isArabic ? 'حسابات تحويل صاحب الملعب:' : 'Stadium Owner Payment Details:',
+            style: const TextStyle(fontWeight: FontWeight.bold, color: VSPColors.accent, fontSize: 14),
+          ),
+          const SizedBox(height: 12),
+          if (hasInstapay)
+            _buildCopyableRow(
+              context,
+              icon: LucideIcons.smartphone,
+              label: isArabic ? 'عنوان إنستا باي / InstaPay IPN:' : 'InstaPay IPN:',
+              value: _ownerInstapay!,
+              successMsg: isArabic ? 'تم نسخ عنوان إنستا باي!' : 'InstaPay IPN copied!',
+            ),
+          if (hasInstapay && (hasVodafone || hasBank)) const SizedBox(height: 12),
+          if (hasVodafone)
+            _buildCopyableRow(
+              context,
+              icon: LucideIcons.banknote,
+              label: isArabic ? 'رقم محفظة فودافون كاش:' : 'Vodafone Cash:',
+              value: _ownerVodafone!,
+              successMsg: isArabic ? 'تم نسخ رقم فودافون كاش!' : 'Vodafone Cash number copied!',
+            ),
+          if (hasVodafone && hasBank) const SizedBox(height: 12),
+          if (hasBank)
+            _buildCopyableRow(
+              context,
+              icon: LucideIcons.building,
+              label: isArabic ? 'تفاصيل الحساب البنكي / IBAN:' : 'Bank Account/IBAN Details:',
+              value: _ownerBank!,
+              successMsg: isArabic ? 'تم نسخ تفاصيل الحساب البنكي!' : 'Bank details copied!',
+            ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCopyableRow(
+    BuildContext context, {
+    required IconData icon,
+    required String label,
+    required String value,
+    required String successMsg,
+  }) {
+    return Row(
+      children: [
+        Icon(icon, color: VSPColors.textSecondary, size: 18),
+        const SizedBox(width: 8),
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+              Text(value, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13)),
+            ],
+          ),
+        ),
+        IconButton(
+          icon: Icon(LucideIcons.copy, color: VSPColors.accent, size: 16),
+          onPressed: () async {
+            await Clipboard.setData(ClipboardData(text: value));
+            if (context.mounted) {
+              ScaffoldMessenger.of(context).hideCurrentSnackBar();
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(successMsg, style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
+                  backgroundColor: VSPColors.accent,
+                  behavior: SnackBarBehavior.floating,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                ),
+              );
+            }
+          },
+        ),
+      ],
+    );
+  }
+
+  Widget _buildForceFullPaymentWarningCard(BuildContext context, bool isArabic) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.error.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: VSPColors.error.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                isArabic ? "تأكيد الحجز الإجباري" : "Required Online Booking",
+                style: const TextStyle(
+                  color: VSPColors.error,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isArabic
+                ? "تنبيه: نظراً لوجود حجز آخر نشط لم يتم لعبه بعد، يتعين دفع كامل قيمة هذا الحجز الجديد (الأجرة كاملة) لتأكيده."
+                : "Warning: Because you have another active booking, you must pay the full price to confirm this new booking.",
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildDepositWarningCard(BuildContext context, bool isArabic, double depositAmount) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Icon(LucideIcons.alertCircle, color: VSPColors.accent, size: 20),
+              const SizedBox(width: 10),
+              Text(
+                isArabic ? "متطلبات العربون" : "Deposit Required",
+                style: const TextStyle(
+                  color: VSPColors.accent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Text(
+            isArabic
+                ? "تنبيه: يشترط هذا الملعب دفع عربون بقيمة ${depositAmount.toInt()} ج.م لتأكيد حجز الساعة."
+                : "Warning: This stadium requires a deposit of ${depositAmount.toInt()} EGP to confirm the booking.",
+            style: const TextStyle(
+              color: VSPColors.textSecondary,
+              fontSize: 12,
+              height: 1.5,
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmbeddedChat(BuildContext context, bool isArabic) {
+    if (_booking == null) {
+      return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+    }
+
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final currentUserId = auth.currentUser?.uid;
+
+    return Container(
+      height: 300,
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        children: [
+          Expanded(
+            child: StreamBuilder<List<ChatMessage>>(
+              stream: ChatRepository().getChatMessages(_booking!.id),
+              builder: (context, snapshot) {
+                if (snapshot.connectionState == ConnectionState.waiting) {
+                  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                }
+                final messages = snapshot.data ?? [];
+                
+                final hasReceipt = messages.any((msg) =>
+                    msg.senderId == currentUserId && msg.text.startsWith('[Receipt]:'));
+                
+                if (hasReceipt && !_receiptUploaded) {
+                  WidgetsBinding.instance.addPostFrameCallback((_) {
+                    setState(() {
+                      _receiptUploaded = true;
+                    });
+                  });
+                }
+
+                return ListView.builder(
+                  reverse: true,
+                  padding: const EdgeInsets.all(12),
+                  itemCount: messages.length,
+                  itemBuilder: (context, index) {
+                    final message = messages[index];
+                    final isMe = message.senderId == currentUserId;
+                    return _buildEmbeddedChatBubble(message, isMe);
+                  },
+                );
+              },
+            ),
+          ),
+          const Divider(color: VSPColors.divider, height: 1),
+          _buildChatInputRow(isArabic),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildEmbeddedChatBubble(ChatMessage message, bool isMe) {
+    final isReceipt = message.text.startsWith('[Receipt]:');
+    return Align(
+      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+      child: Container(
+        margin: const EdgeInsets.symmetric(vertical: 4),
+        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+        decoration: BoxDecoration(
+          color: isMe ? VSPColors.accent : VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.only(
+            topLeft: const Radius.circular(12),
+            topRight: const Radius.circular(12),
+            bottomLeft: Radius.circular(isMe ? 12 : 3),
+            bottomRight: Radius.circular(isMe ? 3 : 12),
+          ),
+        ),
+        child: Column(
+          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            if (!isMe)
+              Text(
+                message.senderName,
+                style: const TextStyle(color: VSPColors.accent, fontSize: 9, fontWeight: FontWeight.bold),
+              ),
+            if (!isMe) const SizedBox(height: 2),
+            if (isReceipt)
+              ClipRRect(
+                borderRadius: BorderRadius.circular(8),
+                child: Image.network(
+                  message.text.substring(10).trim(),
+                  width: 120,
+                  height: 120,
+                  fit: BoxFit.cover,
+                ),
+              )
+            else
+              Text(
+                message.text,
+                style: TextStyle(color: isMe ? VSPColors.background : VSPColors.textPrimary, fontSize: 13),
+              ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildChatInputRow(bool isArabic) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 6),
+      color: VSPColors.surface,
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(LucideIcons.paperclip, color: VSPColors.accent, size: 20),
+            onPressed: _uploadReceiptFromChat,
+          ),
+          Expanded(
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12),
+              decoration: BoxDecoration(
+                color: VSPColors.background,
+                borderRadius: BorderRadius.circular(20),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
+              child: TextField(
+                controller: _chatController,
+                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13),
+                decoration: InputDecoration(
+                  hintText: isArabic ? 'اكتب رسالة...' : 'Type a message...',
+                  hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  border: InputBorder.none,
+                ),
+                onSubmitted: (_) => _sendChatMessage(),
+              ),
+            ),
+          ),
+          const SizedBox(width: 4),
+          IconButton(
+            icon: Icon(LucideIcons.send, color: VSPColors.accent, size: 20),
+            onPressed: _sendChatMessage,
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _startTimer() {
+    _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      setState(() {
+        if (_secondsRemaining > 0) {
+          _secondsRemaining--;
+        } else {
+          _timer?.cancel();
+        }
+      });
+    });
+  }
+
+  String get _formattedTime {
+    final minutes = (_secondsRemaining ~/ 60).toString().padLeft(2, '0');
+    final seconds = (_secondsRemaining % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   Future<void> _fetchOwnerPhone() async {
@@ -53,17 +523,105 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (userData != null && mounted) {
           setState(() {
             _ownerPhone = userData['phone']?.toString();
+            _ownerInstapay = userData['p2p_instapay'] ?? userData['p2pInstapay'];
+            _ownerVodafone = userData['p2p_vodafone'] ?? userData['p2pVodafone'];
+            _ownerBank = userData['p2p_bank'] ?? userData['p2pBank'];
             _isLoadingPhone = false;
           });
           return;
         }
       }
     } catch (e) {
-      debugPrint('Error fetching owner phone: $e');
+      debugPrint('Error fetching owner details: $e');
     }
     if (mounted) {
       setState(() => _isLoadingPhone = false);
     }
+  }
+
+  void _showCashLimitDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: VSPColors.surface,
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            side: const BorderSide(color: VSPColors.error, width: 1.5),
+          ),
+          title: const Row(
+            children: [
+              Icon(LucideIcons.alertTriangle, color: VSPColors.error),
+              SizedBox(width: 8),
+              Text(
+                'تنبيه النظام 🛑',
+                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+              ),
+            ],
+          ),
+          content: Text(
+            message.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''),
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text('موافق', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  void _showDoubleBookingDialog() {
+    HapticFeedback.heavyImpact();
+    final outerContext = context;
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+          child: AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                const SizedBox(height: 8),
+                const Icon(
+                  LucideIcons.calendarX,
+                  color: VSPColors.error,
+                  size: 48,
+                ),
+                const SizedBox(height: 16),
+                const Text(
+                  'عذراً، جزء من هذا الوقت تم حجزه وتأكيده للتو من لاعب آخر. يرجى العودة وتحديث الأوقات المتاحة.',
+                  textAlign: TextAlign.center,
+                  style: TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontSize: 16,
+                    height: 1.5,
+                  ),
+                ),
+                const SizedBox(height: 24),
+                PrimaryButton(
+                  text: 'العودة لاختيار وقت آخر',
+                  onPressed: () {
+                    Navigator.pop(dialogContext);
+                    if (outerContext.mounted) {
+                      Navigator.pop(outerContext);
+                    }
+                  },
+                ),
+              ],
+            ),
+          ),
+        );
+      },
+    );
   }
 
   void _processPayment() async {
@@ -73,132 +631,44 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.uid;
     
-    if (userId == null) {
+    if (userId == null || _booking == null) {
       VSPFeedback.showError(context, l10n.sessionExpiredError);
       return;
     }
 
-    final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
-    final activeOptionIndex = isCashLocked ? 1 : _selectedOptionIndex;
-    final hasDeposit = widget.bookingDraft.depositPaid > 0 && widget.bookingDraft.needsDeposit;
+    setState(() => _isLoading = true);
 
-    if (hasDeposit && activeOptionIndex == 0) {
-      if (_receiptImage == null) {
-        VSPFeedback.showError(context, isArabic ? 'يرجى إرفاق صورة إيصال تحويل العربون أولاً' : 'Please upload the deposit receipt first.');
-        return;
-      }
+    try {
+      final receiptUrl = _uploadedReceiptUrl;
       
-      setState(() => _isLoading = true);
-      
-      try {
-        // رفع إيصال التحويل على السيرفر
-        final receiptUrl = await StorageService().uploadFile(
-          file: _receiptImage!,
-          bucket: 'deposit-receipts', // تم التحديث هنا لمطابقة لقطة الشاشة
-          path: 'bookings/$userId/receipts/rec_${DateTime.now().millisecondsSinceEpoch}.jpg',
-        );
+      // Update the pending booking in Supabase to awaiting_verification
+      await Supabase.instance.client.from('bookings').update({
+        'payment_status': 'awaiting_verification',
+        'payment_method': 'manual_transfer',
+        'payment_transaction_id': 'TRANSFER_RC_manual',
+        'notes': '${_booking!.notes ?? ""}\n[Manual Receipt]: $receiptUrl'.trim(),
+      }).eq('id', _booking!.id);
 
-        if (receiptUrl == null) throw Exception('Failed to upload receipt');
+      final updatedBooking = await Provider.of<BookingProvider>(context, listen: false)
+          .getBookingById(_booking!.id);
 
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        final draftWithPayment = widget.bookingDraft.copyWith(
-          isPaid: false,
-          isDepositPaid: true,
-          depositPaid: widget.bookingDraft.depositPaid,
-          paymentStatus: 'awaiting_verification', // حالة مخصصة للمراجعة اليدوية
-          paymentMethod: 'manual_transfer',
-          paymentTransactionId: 'TRANSFER_RC_manual',
-          notes: '${widget.bookingDraft.notes ?? ""}\n[Manual Receipt]: $receiptUrl'.trim(),
-        );
+      setState(() => _isLoading = false);
 
-        final booking = await bookingProvider.createBooking(draftWithPayment, userId);
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-
-        if (booking != null) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-        } else {
-          final errorMsg = bookingProvider.errorMessage ?? '';
-          if (errorMsg.contains('Overlapping') || errorMsg.contains('overlapping') || errorMsg.contains('already booked')) {
-            VSPFeedback.showError(
-              context,
-              isArabic 
-                ? 'عذراً، هذه الساعة تم حجزها وتأكيدها من لاعب آخر للتو! ⚠️' 
-                : 'Sorry, this slot was just booked and confirmed by another player! ⚠️'
-            );
-          } else {
-            VSPFeedback.showError(context, errorMsg.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''));
-          }
+      if (updatedBooking != null) {
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
+            ),
+          );
         }
-      } catch (e) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-        VSPFeedback.showError(context, l10n.bookingFailedError(e.toString()));
+      } else {
+        throw Exception('Failed to reload updated booking');
       }
-    } else {
-      // التدفق القديم للدفع النقدي بالكامل أو الدفع الإلكتروني المباشر
-      setState(() => _isLoading = true);
-      await Future.delayed(const Duration(milliseconds: 600));
-      if (!mounted) return;
-
-      try {
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        
-        bool isPaid = false;
-        bool isDepositPaid = false;
-        double depositPaidVal = widget.bookingDraft.depositPaid;
-        String paymentStatus = 'pending';
-        String paymentMethod = 'cash';
-
-        if (hasDeposit) {
-          setState(() => _isLoading = false);
-          VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
-          return;
-        } else {
-          if (activeOptionIndex == 0) {
-            isPaid = false;
-            isDepositPaid = false;
-            depositPaidVal = 0.0;
-            paymentStatus = 'unpaid';
-            paymentMethod = 'cash';
-          } else {
-            setState(() => _isLoading = false);
-            VSPFeedback.showError(context, isArabic ? 'الدفع الإلكتروني غير متاح حالياً' : 'Online payment is currently unavailable.');
-            return;
-          }
-        }
-
-        final draftWithPayment = widget.bookingDraft.copyWith(
-          isPaid: isPaid,
-          isDepositPaid: isDepositPaid,
-          depositPaid: depositPaidVal,
-          paymentStatus: paymentStatus,
-          paymentMethod: paymentMethod,
-          paymentTransactionId: '_',
-        );
-
-        final booking = await bookingProvider.createBooking(draftWithPayment, userId);
-        if (!mounted) return;
-        setState(() => _isLoading = false);
-
-        if (booking != null) {
-          Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-        } else {
-          final errorMsg = bookingProvider.errorMessage ?? '';
-          if (errorMsg.contains('Overlapping') || errorMsg.contains('overlapping') || errorMsg.contains('already booked')) {
-            VSPFeedback.showError(
-              context,
-              isArabic 
-                ? 'عذراً، هذه الساعة تم حجزها وتأكيدها من لاعب آخر للتو! ⚠️' 
-                : 'Sorry, this slot was just booked and confirmed by another player! ⚠️'
-            );
-          } else {
-            VSPFeedback.showError(context, errorMsg.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''));
-          }
-        }
-      } catch (e) {
-        if (!mounted) return;
-        setState(() => _isLoading = false);
+    } catch (e) {
+      setState(() => _isLoading = false);
+      if (mounted) {
         VSPFeedback.showError(context, l10n.bookingFailedError(e.toString()));
       }
     }
@@ -210,7 +680,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final hasDeposit = widget.bookingDraft.depositPaid > 0 && widget.bookingDraft.needsDeposit;
     final authProvider = Provider.of<AuthProvider>(context);
     final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
-    final activeOptionIndex = isCashLocked ? 1 : _selectedOptionIndex;
+    final activeOptionIndex = (isCashLocked || widget.forceFullPayment) ? 1 : _selectedOptionIndex;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final showAcknowledgement = hasDeposit && activeOptionIndex == 0;
 
@@ -241,17 +711,87 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                if (isCashLocked) ...[
+                // ⏳ FOMO Timer Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: VSPColors.error.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.error),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.clock, color: VSPColors.error, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          '⏳ يرجى إتمام الدفع أو إرفاق الإيصال خلال $_formattedTime وإلا سيتم إلغاء الحجز.',
+                          style: const TextStyle(
+                            color: VSPColors.error,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+                
+                // Volt Green Bordered Alert Banner
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(12),
+                  margin: const EdgeInsets.only(bottom: 16),
+                  decoration: BoxDecoration(
+                    color: VSPColors.accent.withValues(alpha: 0.1),
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.accent, width: 1.5),
+                  ),
+                  child: Row(
+                    children: [
+                      Icon(LucideIcons.alertCircle, color: VSPColors.accent, size: 20),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          isArabic 
+                              ? '📸 حوّل وابعت اسكرين تأكيد في الشات لمنع إلغاء الحجز تلقائياً 💳'
+                              : '📸 Transfer and send confirmation screen in chat to prevent auto cancellation 💳',
+                          style: const TextStyle(
+                            color: VSPColors.accent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 13,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ),
+
+                if (widget.forceFullPayment) ...[
+                  _buildForceFullPaymentWarningCard(context, isArabic),
+                  const SizedBox(height: 24),
+                ] else if (isCashLocked) ...[
                   _buildRestrictedWarningCard(context, isArabic),
                   const SizedBox(height: 24),
+                ] else if (hasDeposit) ...[
+                  _buildDepositWarningCard(context, isArabic, widget.bookingDraft.depositPaid),
+                  const SizedBox(height: 24),
                 ],
+
                 VSPFadeInItem(delay: const Duration(milliseconds: 100), child: _SectionHeader(title: l10n.bookingSummary)),
                 const SizedBox(height: 16),
                 VSPFadeInItem(delay: const Duration(milliseconds: 200), child: _BookingSummaryCard(bookingDraft: widget.bookingDraft)),
                 const SizedBox(height: 32),
                 VSPFadeInItem(delay: const Duration(milliseconds: 300), child: _SectionHeader(title: l10n.paymentMethod)),
                 const SizedBox(height: 16),
-                VSPFadeInItem(delay: const Duration(milliseconds: 400), child: _buildPaymentOptionsList(context, isCashLocked, activeOptionIndex)),
+                VSPFadeInItem(delay: const Duration(milliseconds: 400), child: _buildPaymentOptionsList(context, isCashLocked || widget.forceFullPayment, activeOptionIndex)),
+                const SizedBox(height: 24),
+                VSPFadeInItem(
+                  delay: const Duration(milliseconds: 410),
+                  child: _buildOwnerPaymentDetails(context, isArabic),
+                ),
                 const SizedBox(height: 24),
                 if (!_isLoadingPhone && _ownerPhone != null && _ownerPhone!.isNotEmpty) ...[
                   VSPFadeInItem(
@@ -261,6 +801,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                   const SizedBox(height: 24),
                 ],
                 const SizedBox(height: 8),
+                VSPFadeInItem(
+                  delay: const Duration(milliseconds: 430),
+                  child: _buildEmbeddedChat(context, isArabic),
+                ),
+                const SizedBox(height: 24),
                 if (showAcknowledgement) ...[
                   VSPFadeInItem(
                     delay: const Duration(milliseconds: 450),
@@ -276,9 +821,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 VSPFadeInItem(
                   delay: const Duration(milliseconds: 600),
                   child: PrimaryButton(
-                    text: l10n.confirmBooking,
+                    text: _secondsRemaining == 0 
+                      ? (isArabic ? 'انتهى وقت الحجز' : 'Booking expired') 
+                      : (isArabic ? 'تم التحويل، إخطار المالك' : 'Transferred, notify seller'),
                     isLoading: _isLoading,
-                    onPressed: (showAcknowledgement && !_depositConfirmed) ? null : _processPayment,
+                    onPressed: (_secondsRemaining == 0 || !_receiptUploaded) ? null : _processPayment,
                   ),
                 ),
                 const SizedBox(height: 48),

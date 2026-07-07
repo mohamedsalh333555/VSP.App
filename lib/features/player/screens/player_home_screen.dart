@@ -1,4 +1,5 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -17,6 +18,7 @@ import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
 import '../../../core/widgets/promo_slider.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../shared/widgets/public_match_card.dart';
+import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -419,20 +421,29 @@ class _HomeContent extends StatelessWidget {
       children: [
         _buildTopBar(context, auth),
         Expanded(
-          child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-            physics: const BouncingScrollPhysics(),
-            padding: const EdgeInsets.only(bottom: 120),
-            child: Column(
-              children: [
-                const SizedBox(height: 16),
-                _buildPromos(),
-                const SizedBox(height: 24),
-                _buildStadiumsList(context, stadiumProvider),
-                const SizedBox(height: 32),
-                _buildMatchesList(context),
-                const SizedBox(height: 32),
-                _buildChampionshipsList(context, auth),
-              ],
+          child: RefreshIndicator(
+            color: VSPColors.accent,
+            backgroundColor: VSPColors.surface,
+            onRefresh: () async {
+              context.read<StadiumProvider>().fetchStadiums(isRefresh: true);
+              await Future.delayed(const Duration(milliseconds: 800));
+            },
+            child: SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+              physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+              padding: const EdgeInsets.only(bottom: 120),
+              child: Column(
+                children: [
+                  const SizedBox(height: 16),
+                  _buildPromos(),
+                  const SizedBox(height: 24),
+                  _buildStadiumsList(context, stadiumProvider),
+                  const SizedBox(height: 32),
+                  _buildMatchesList(context),
+                  const SizedBox(height: 32),
+                  _buildChampionshipsList(context, auth),
+                ],
+              ),
             ),
           ),
         ),
@@ -599,24 +610,57 @@ class _HomeContent extends StatelessWidget {
 
   Widget _buildStadiumsList(BuildContext context, StadiumProvider provider) {
     if (provider.stadiums.isEmpty && !provider.isLoading) {
-      final cityName = context.read<AuthProvider>().userModel?.governorate ?? 'your area';
+      final cityName = context.read<AuthProvider>().userModel?.governorate ?? 'منطقتك';
       return Container(
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 24),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
+        margin: const EdgeInsets.symmetric(horizontal: 16),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(color: VSPColors.divider),
+        ),
         child: Column(
+          mainAxisSize: MainAxisSize.min,
           children: [
-            Text(
-              '${AppLocalizations.of(context)!.noStadiumsFoundIn} $cityName',
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+            Opacity(
+              opacity: 0.3,
+              child: Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 64),
             ),
-            const SizedBox(height: 12),
-            ElevatedButton(
-              onPressed: () => provider.fetchStadiums(isRefresh: true),
-              style: ElevatedButton.styleFrom(
-                backgroundColor: VSPColors.surfaceAlt,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+            const SizedBox(height: 16),
+            Text(
+              'لم نصل إلى $cityName بعد! 📍',
+              textAlign: TextAlign.center,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 18,
               ),
-              child: Text(AppLocalizations.of(context)!.refresh, style: const TextStyle(color: VSPColors.accent)),
-            )
+            ),
+            const SizedBox(height: 8),
+            const Text(
+              'ولكننا نتوسع بسرعة في جميع المحافظات.',
+              textAlign: TextAlign.center,
+              style: TextStyle(
+                color: VSPColors.textSecondary,
+                fontSize: 13,
+              ),
+            ),
+            const SizedBox(height: 24),
+            PrimaryButton(
+              text: 'اقترح ملعباً في منطقتك 🏟️',
+              onPressed: () async {
+                final message = 'مرحباً VSP، أنا من محافظة $cityName وأريد اقتراح إضافة ملاعب في منطقتي!';
+                final encoded = Uri.encodeComponent(message);
+                final whatsappUrl = Uri.parse('https://wa.me/201100229462?text=$encoded');
+                try {
+                  if (await canLaunchUrl(whatsappUrl)) {
+                    await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                  }
+                } catch (e) {
+                  debugPrint('Error launching WhatsApp support: $e');
+                }
+              },
+            ),
           ],
         ),
       );

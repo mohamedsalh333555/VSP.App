@@ -178,32 +178,39 @@ class AuthProvider with ChangeNotifier {
               VSPLogger.e('Failed to correct role in DB for incomplete signup', e);
             }
           } else {
-            // 🔴 PREVIOUSLY COMPLETED USER: Block the login and force sign-out.
-            final arabicDbRole = dbRole == 'player' ? 'لاعب' : 'مالك ملعب';
-            final arabicAttemptRole = _userType == 'player' ? 'لاعب' : 'مالك ملعب';
-            _errorMessage =
-                'هذا الحساب مسجل كـ $arabicDbRole بالفعل. '
-                'يرجى تسجيل الدخول كـ $arabicDbRole أو استخدام حساب آخر.\n\n'
-                'This account is already registered as a $dbRole. '
-                'Please login as a $dbRole or use a different account.';
-            VSPLogger.w('⛔ Role conflict: DB=$dbRole, attempted=$_userType — forcing sign-out.');
-            _preserveError = true;
-            // Silent sign-out — no notifyListeners yet, we clean state first.
-            await _authService.signOut();
-            _firebaseUser = null;
-            _userModel = null;
-            _isGhostUser = false;
-            _userType = null;
-            return; // finally block will call notifyListeners
+            // 💡 EXISTING USER WITH ROLE MISMATCH: Respect database role silently.
+            VSPLogger.w('⚠️ User clicked $_userType but is already registered as $dbRole. Respecting database role.');
+            _userType = null; // Let the system use the actual database role
           }
         }
         // ===== END ROLE CONFLICT GUARD =====
 
         _userModel = UserModel.fromFirestore(userData);
-        // ⚡ TIMING FIX: A user with a DB row is already registered.
-        // Force isRegistrationComplete=true before notifyListeners so GoRouter
-        // never redirects them to /onboarding, even if the DB flag is stale.
-        if (!_userModel!.isRegistrationComplete) {
+        
+        // ⚡ SYNC EMAIL VERIFIED FROM AUTH SOURCE OF TRUTH
+        // The DB column (is_email_verified) can be stale for users registered
+        // before the trigger fix. Always trust the Supabase Auth object instead:
+        // - Google/Apple users: emailConfirmedAt is set automatically by the provider
+        // - Email/password users: emailConfirmedAt is set after OTP confirmation
+        final bool isActuallyEmailVerified = user.emailConfirmedAt != null;
+        if (_userModel != null && isActuallyEmailVerified && !_userModel!.isEmailVerified) {
+          _userModel = _userModel!.copyWith(isEmailVerified: true);
+          // Silently patch the DB column so it's consistent going forward
+          _userRepository.updateUserProfile(
+            user.id,
+            {'is_email_verified': true},
+            authUser: user,
+            role: userData['role']?.toString(),
+          );
+        }
+
+        // ⚡ FIX: Only auto-complete registration if the user ACTUALLY has a phone number.
+        // This ensures new social sign-ups are forced to the onboarding screen.
+        final bool hasValidPhone = _userModel != null && 
+                                   _userModel!.phone != null && 
+                                   _userModel!.phone!.trim().isNotEmpty;
+                                   
+        if (_userModel != null && !_userModel!.isRegistrationComplete && hasValidPhone) {
           _userModel = _userModel!.copyWith(isRegistrationComplete: true);
           _userRepository.updateUserProfile(
             user.id,
@@ -217,8 +224,8 @@ class AuthProvider with ChangeNotifier {
         // For an existing complete user (phone set + isRegistrationComplete),
         // clear _userType so GoRouter routes by their DB role, not the
         // sign-up screen they came from. This prevents ghost-user onboarding.
-        final hasPhone = (_userModel!.phone?.isNotEmpty == true);
-        if (_userModel!.isRegistrationComplete && hasPhone) {
+        final hasPhone = (_userModel != null && _userModel!.phone?.isNotEmpty == true);
+        if (_userModel != null && _userModel!.isRegistrationComplete && hasPhone) {
           _userType = null; // let GoRouter use userModel.role
         }
         // ===== END AUTO-LOGIN REDIRECT =====
@@ -232,8 +239,8 @@ class AuthProvider with ChangeNotifier {
         _isGhostUser = true;
         _userModel = null;
       }
-    } catch (e) {
-      VSPLogger.e("❌ AuthProvider: Supabase fetch exception", e);
+    } catch (e, stack) {
+      VSPLogger.e("❌ AuthProvider: Supabase fetch exception", e, stack);
       _dataFetchError = true;
     } finally {
       _isFetchingUser = false;
@@ -532,6 +539,9 @@ class AuthProvider with ChangeNotifier {
             name: userData?['name'],
             phone: userData?['phone'],
             position: userData?['position'] ?? 'GK',
+            dateOfBirth: userData?['date_of_birth'] != null
+                ? DateTime.tryParse(userData!['date_of_birth'])
+                : null,
           );
         }
         _isLoading = false;
@@ -679,6 +689,12 @@ class AuthProvider with ChangeNotifier {
           governorate: sanitizedData['governorate'] ?? _userModel!.governorate,
           favoriteStadiums: sanitizedData['favoriteStadiums'] ?? _userModel!.favoriteStadiums,
           verificationStatus: sanitizedData['verificationStatus'] ?? _userModel!.verificationStatus,
+          dateOfBirth: sanitizedData['date_of_birth'] != null
+              ? DateTime.tryParse(sanitizedData['date_of_birth'])
+              : (sanitizedData['dateOfBirth'] ?? _userModel!.dateOfBirth),
+          p2pInstapay: sanitizedData['p2p_instapay'] ?? sanitizedData['p2pInstapay'] ?? _userModel!.p2pInstapay,
+          p2pVodafone: sanitizedData['p2p_vodafone'] ?? sanitizedData['p2pVodafone'] ?? _userModel!.p2pVodafone,
+          p2pBank: sanitizedData['p2p_bank'] ?? sanitizedData['p2pBank'] ?? _userModel!.p2pBank,
         );
       }
       _isLoading = false;
@@ -748,6 +764,7 @@ class AuthProvider with ChangeNotifier {
     String? name,
     String? position,
     String? governorate,
+    DateTime? dateOfBirth,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -765,6 +782,7 @@ class AuthProvider with ChangeNotifier {
         'phone': PhoneUtils.normalize(phone),
         'governorate': governorate ?? _governorate,
         'isRegistrationComplete': true,
+        'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
       };
       if (name != null && name.isNotEmpty) {
         updateData['name'] = name;
@@ -780,6 +798,7 @@ class AuthProvider with ChangeNotifier {
           governorate: governorate ?? _governorate,
           position: position ?? _userModel!.position,
           isRegistrationComplete: true,
+          dateOfBirth: dateOfBirth ?? _userModel!.dateOfBirth,
         );
       }
 
@@ -877,16 +896,18 @@ class AuthProvider with ChangeNotifier {
       notifyListeners();
       return null;
     }
+    if (result.$2 != null) {
+      _governorate = result.$2!;
+      notifyListeners();
+    }
     return result.$2;
   }
 
   /// 📍 Auto-update user location based on GPS with Throttling
   Future<bool> updateUserLocation({bool force = false}) async {
-    if (_userModel == null) return false;
-    
     final newGov = await determineGPSGovernorate(force: force);
     if (newGov != null) {
-      if (_userModel!.governorate != newGov) {
+      if (_userModel != null && _userModel!.governorate != newGov) {
         await updateProfile({'governorate': newGov});
       }
       return true;

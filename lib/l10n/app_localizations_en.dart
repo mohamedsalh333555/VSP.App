@@ -2164,4 +2164,25 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get proceedAnyway => 'Proceed anyway';
+
+  @override
+  String get welcomePage1Title => 'Live the Pro Vibe';
+
+  @override
+  String get welcomePage1Subtitle =>
+      'Your pitch is ready, and new challenges await. Book your match with a single tap and head towards glory.';
+
+  @override
+  String get welcomePage2Title => 'Be the Area Champion';
+
+  @override
+  String get welcomePage2Subtitle =>
+      'Form your squad, compete in major tournaments, and climb the leaderboard to be the best in your region.';
+
+  @override
+  String get welcomePage3Title => 'Ready to Start?!';
+
+  @override
+  String get welcomePage3Subtitle =>
+      'Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.';
 }

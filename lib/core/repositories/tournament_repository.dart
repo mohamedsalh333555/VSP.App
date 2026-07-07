@@ -446,8 +446,8 @@ class TournamentRepository {
     required String matchId,
     required int homeScore,
     required int awayScore,
-    required String winnerId,
-    required String winnerName,
+    String? winnerId,
+    String? winnerName,
   }) async {
     try {
       final response = await _supabase
@@ -482,32 +482,34 @@ class TournamentRepository {
             .eq('id', nextMatchId);
       } else {
         // ── Final Match: Crown the Champion ──
-        await _supabase
-            .from('championships')
-            .update({
-              'status': 'completed',
-              'champion_team_id': winnerId,
-              'champion_team_name': winnerName,
-            })
-            .eq('id', championshipId);
-
-        final team = await TeamRepository().getTeam(winnerId);
-        if (team != null) {
-          final badges = List<String>.from(team.unlockedBadges);
-          if (!badges.contains('cup_winner')) {
-            badges.add('cup_winner');
-          }
+        if (winnerId != null) {
           await _supabase
-              .from('teams')
+              .from('championships')
               .update({
-                'championships_won': team.championshipsWon + 1,
-                'unlocked_badges': badges,
+                'status': 'completed',
+                'champion_team_id': winnerId,
+                'champion_team_name': winnerName,
               })
-              .eq('id', winnerId);
-        }
+              .eq('id', championshipId);
 
-        // ── Celebration Notifications (Final Match) ──
-        await _sendCelebrationNotifications(winnerId);
+          final team = await TeamRepository().getTeam(winnerId);
+          if (team != null) {
+            final badges = List<String>.from(team.unlockedBadges);
+            if (!badges.contains('cup_winner')) {
+              badges.add('cup_winner');
+            }
+            await _supabase
+                .from('teams')
+                .update({
+                  'championships_won': team.championshipsWon + 1,
+                  'unlocked_badges': badges,
+                })
+                .eq('id', winnerId);
+          }
+
+          // ── Celebration Notifications (Final Match) ──
+          await _sendCelebrationNotifications(winnerId);
+        }
       }
     } catch (e) {
       debugPrint('Error updating tournament match score: $e');

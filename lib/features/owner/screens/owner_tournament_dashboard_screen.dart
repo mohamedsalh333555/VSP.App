@@ -9,7 +9,8 @@ import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
-import 'tournament_brackets_screen.dart'; // ðŸŸ¢ IMPORT
+import 'tournament_brackets_screen.dart'; // 🟢 IMPORT
+import 'package:supabase_flutter/supabase_flutter.dart';
 
 class OwnerTournamentDashboardScreen extends StatefulWidget {
   final Championship championship;
@@ -501,111 +502,310 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
   void _showAddTeamManuallyDialog() {
     final nameCtrl = TextEditingController();
+    final playerInputCtrl = TextEditingController();
+    
+    // قائمة الألوان الأساسية
+    final List<Map<String, dynamic>> quickColors = [
+      {'name': 'أبيض', 'value': '#FFFFFF', 'color': Colors.white},
+      {'name': 'أحمر', 'value': '#EF4444', 'color': Colors.red},
+      {'name': 'أزرق', 'value': '#3B82F6', 'color': Colors.blue},
+      {'name': 'أخضر', 'value': '#22C55E', 'color': Colors.green},
+      {'name': 'أصفر', 'value': '#F59E0B', 'color': Colors.amber},
+      {'name': 'أسود', 'value': '#18181B', 'color': Colors.black},
+    ];
+
+    String selectedPrimaryColor = '#FFFFFF';
+    List<String> offlinePlayerNames = []; // كشف أسماء لاعبي الفريق
+
     showDialog(
       context: context,
+      barrierDismissible: false,
       builder: (ctx) => AlertDialog(
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(AppLocalizations.of(context)!.addTeamManually, style: Theme.of(context).textTheme.titleLarge),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(
-              AppLocalizations.of(context)!.manualRegistrationSub,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-            ),
-            const SizedBox(height: VSPSpacing.md),
-            TextField(
-              controller: nameCtrl,
-              style: Theme.of(context).textTheme.bodyMedium,
-              decoration: InputDecoration(
-                hintText: AppLocalizations.of(context)!.teamName,
-                hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                filled: true,
-                fillColor: VSPColors.background,
-                border: OutlineInputBorder(
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  borderSide: BorderSide.none,
+        content: SizedBox(
+          width: MediaQuery.of(context).size.width * 0.9,
+          child: StatefulBuilder(
+            builder: (context, setDialogState) {
+              final totalPlayers = offlinePlayerNames.length;
+              final bool isValidRoster = totalPlayers >= 5 && totalPlayers <= 12;
+
+              return SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      AppLocalizations.of(context)!.manualRegistrationSub,
+                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+                    ),
+                    const SizedBox(height: VSPSpacing.md),
+                    
+                    // 1. اسم الفريق
+                    _buildInputLabel('اسم الفريق:'),
+                    TextField(
+                      controller: nameCtrl,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      decoration: InputDecoration(
+                        hintText: AppLocalizations.of(context)!.teamName,
+                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                        filled: true,
+                        fillColor: VSPColors.background,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          borderSide: BorderSide.none,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // 2. لون قميص الفريق
+                    _buildInputLabel('لون قميص الفريق الأساسي:'),
+                    SizedBox(
+                      height: 40,
+                      child: ListView.builder(
+                        scrollDirection: Axis.horizontal,
+                        itemCount: quickColors.length,
+                        itemBuilder: (context, index) {
+                          final item = quickColors[index];
+                          final isSelected = selectedPrimaryColor == item['value'];
+                          return GestureDetector(
+                            onTap: () {
+                              setDialogState(() {
+                                selectedPrimaryColor = item['value'];
+                              });
+                            },
+                            child: Container(
+                              width: 34,
+                              height: 34,
+                              margin: const EdgeInsets.only(right: 8),
+                              decoration: BoxDecoration(
+                                color: item['color'],
+                                shape: BoxShape.circle,
+                                border: Border.all(
+                                  color: isSelected ? VSPColors.accent : VSPColors.divider,
+                                  width: isSelected ? 3.0 : 1.0,
+                                ),
+                              ),
+                              child: isSelected 
+                                  ? Icon(Icons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 14) 
+                                  : null,
+                            ),
+                          );
+                        },
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+
+                    // 3. إدخال أسماء اللاعبين
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        const Text(
+                          'كشف أسماء اللاعبين (من 5 إلى 12):',
+                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                        Text(
+                          '$totalPlayers / 12',
+                          style: TextStyle(
+                            color: isValidRoster ? VSPColors.accent : Colors.redAccent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 8),
+                    Row(
+                      children: [
+                        Expanded(
+                          child: TextField(
+                            controller: playerInputCtrl,
+                            style: const TextStyle(color: Colors.white, fontSize: 13),
+                            decoration: InputDecoration(
+                              hintText: 'اكتب اسم اللاعب واضغط إضافة...',
+                              hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                              filled: true,
+                              fillColor: VSPColors.background,
+                              border: OutlineInputBorder(
+                                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                                  borderSide: BorderSide.none,
+                              ),
+                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        ElevatedButton(
+                          onPressed: () {
+                            final pName = playerInputCtrl.text.trim();
+                            if (pName.isEmpty) return;
+                            if (offlinePlayerNames.contains(pName)) return;
+                            if (offlinePlayerNames.length >= 12) return;
+
+                            setDialogState(() {
+                              offlinePlayerNames.add(pName);
+                              playerInputCtrl.clear();
+                            });
+                          },
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: VSPColors.accent,
+                            foregroundColor: Colors.black,
+                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                          ),
+                          child: const Icon(Icons.add, size: 20),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 12),
+
+                    // عرض قائمة اللاعبين المضافين على شكل بطاقات صغيرة (Chips) قابلة للحذف
+                    if (offlinePlayerNames.isNotEmpty)
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: BoxDecoration(
+                          color: VSPColors.background.withOpacity(0.4),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                        ),
+                        child: Wrap(
+                          spacing: 6,
+                          runSpacing: 6,
+                          children: offlinePlayerNames.map((name) {
+                            return Chip(
+                              backgroundColor: VSPColors.surfaceAlt,
+                              label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11)),
+                              deleteIcon: const Icon(Icons.close, size: 12, color: Colors.redAccent),
+                              onDeleted: () {
+                                setDialogState(() {
+                                  offlinePlayerNames.remove(name);
+                                });
+                              },
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                                side: const BorderSide(color: VSPColors.divider),
+                              ),
+                            );
+                          }).toList(),
+                        ),
+                      ),
+                    
+                    if (totalPlayers < 5) ...[
+                      const SizedBox(height: 8),
+                      Text(
+                        '⚠️ يجب إضافة ${5 - totalPlayers} لاعبين إضافيين على الأقل لتفعيل خيار الحفظ.',
+                        style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                      ),
+                    ],
+                  ],
                 ),
-              ),
-            ),
-          ],
+              );
+            }
+          ),
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
         actions: [
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.cancel,
-                  height: 44,
-                  color: VSPColors.surfaceAlt,
-                  textColor: VSPColors.textPrimary,
-                  onPressed: () => Navigator.pop(ctx),
-                ),
-              ),
-              const SizedBox(width: VSPSpacing.md),
-              Expanded(
-                child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.addMember.split(' ').first,
-                  height: 44,
-                  onPressed: () async {
-                    final teamName = nameCtrl.text.trim();
-                    if (teamName.isEmpty) return;
-                    Navigator.pop(ctx);
-                    
-                    setState(() => _isLoading = true);
-                    try {
-                      // Create a placeholder team doc
-                      final teamId = await DatabaseService().createTeam({
-                        'name': teamName,
-                        'captainName': AppLocalizations.of(context)!.manualRegistration,
-                        'captainImageUrl': '',
-                        'logoUrl': '',
-                        'sportType': _currentChampionship.sportType,
-                        'governorate': _currentChampionship.governorate,
-                        'memberUids': ['manual_entry'],
-                        'date': 'Upcoming',
-                      });
-                      
-                      if (teamId != null) {
-                        // Join the team to the championship
-                        await TournamentRepository().joinChampionship(
-                          _currentChampionship.id,
-                          teamId,
-                          skipMemberCheck: true,
-                        );
-                        // Refresh state
-                        setState(() {
-                          _currentChampionship = _currentChampionship.copyWith(
-                            joinedTeams: [..._currentChampionship.joinedTeams, teamId],
-                          );
-                        });
-                        if (mounted) {
-                          ScaffoldMessenger.of(context).showSnackBar(
-                            SnackBar(
-                              content: Text(AppLocalizations.of(context)!.teamCreatedSuccess),
-                              backgroundColor: VSPColors.success,
-                            ),
-                          );
+          StatefulBuilder(
+            builder: (context, setButtonState) {
+              final bool canSave = nameCtrl.text.trim().isNotEmpty && offlinePlayerNames.length >= 5;
+              
+              return Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      text: AppLocalizations.of(context)!.cancel,
+                      height: 44,
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                      onPressed: () => Navigator.pop(ctx),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: AppLocalizations.of(context)!.addMember.split(' ').first,
+                      height: 44,
+                      onPressed: !canSave ? null : () async {
+                        final teamName = nameCtrl.text.trim();
+                        Navigator.pop(ctx);
+                        
+                        setState(() => _isLoading = true);
+                        try {
+                          // 1. إنشاء الفريق في جدول teams
+                          final teamId = await DatabaseService().createTeam({
+                            'name': teamName,
+                            'captainName': AppLocalizations.of(context)!.manualRegistration,
+                            'captainImageUrl': '',
+                            'logoUrl': '',
+                            'sportType': _currentChampionship.sportType,
+                            'governorate': _currentChampionship.governorate,
+                            'memberUids': ['manual_entry'],
+                            'date': 'Upcoming',
+                            'primary_color': selectedPrimaryColor,
+                            'secondary_color': '#000000',
+                          });
+                          
+                          if (teamId != null) {
+                            // 2. تسجيل انضمام الفريق في جدول البطولة الرئيسي
+                            await TournamentRepository().joinChampionship(
+                              _currentChampionship.id,
+                              teamId,
+                              skipMemberCheck: true,
+                            );
+
+                            // 3. أتمتة حفظ كشف أسماء اللاعبين المضافين في جدول championship_rosters الخاص بالبطولة
+                            await Supabase.instance.client.from('championship_rosters').insert({
+                              'championship_id': _currentChampionship.id,
+                              'team_id': teamId,
+                              'player_ids': [], // لا يوجد معرفات مستخدمين أونلاين
+                              'guest_names': offlinePlayerNames, // حفظ كشف الأسماء هنا!
+                            });
+
+                            // تحديث الواجهة فوراً
+                            setState(() {
+                              _currentChampionship = _currentChampionship.copyWith(
+                                joinedTeams: [..._currentChampionship.joinedTeams, teamId],
+                              );
+                            });
+
+                            if (mounted) {
+                              ScaffoldMessenger.of(context).showSnackBar(
+                                SnackBar(
+                                  content: Text(AppLocalizations.of(context)!.teamCreatedSuccess),
+                                  backgroundColor: VSPColors.success,
+                                ),
+                              );
+                            }
+                          }
+                        } catch (e) {
+                          if (mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
+                            );
+                          }
+                        } finally {
+                          if (mounted) setState(() => _isLoading = false);
                         }
-                      }
-                    } catch (e) {
-                      if (mounted) {
-                        ScaffoldMessenger.of(context).showSnackBar(
-                          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
-                        );
-                      }
-                    } finally {
-                      if (mounted) setState(() => _isLoading = false);
-                    }
-                  },
-                ),
-              ),
-            ],
+                      },
+                    ),
+                  ),
+                ],
+              );
+            }
           ),
         ],
+      ),
+    );
+  }
+
+  Widget _buildInputLabel(String label) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 6, left: 4),
+      child: Text(
+        label,
+        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
       ),
     );
   }

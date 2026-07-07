@@ -1,6 +1,9 @@
 import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
+import 'package:flutter/services.dart';
+import '../ui/tokens/vsp_tokens.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
@@ -60,8 +63,16 @@ class NotificationService {
 
     // 2. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+      final bookingId = message.data['bookingId']?.toString();
+      final type = message.data['type']?.toString();
+
+      if (type == 'chat' && ChatScreen.activeBookingId == bookingId) {
+        return;
+      }
+
       if (message.notification != null) {
         _showLocalNotification(message);
+        _showInAppAlert(message);
       }
     });
 
@@ -106,6 +117,20 @@ class NotificationService {
           }
         },
       );
+
+      final androidPlugin = _localNotifications
+          .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
+      if (androidPlugin != null) {
+        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+          'vsp_p2p_alerts',
+          'VSP P2P Alerts',
+          description: 'High-priority notifications for P2P trading',
+          importance: Importance.max,
+          enableVibration: true,
+          playSound: true,
+        );
+        await androidPlugin.createNotificationChannel(channel);
+      }
     }
   }
 
@@ -314,6 +339,49 @@ class NotificationService {
       } catch (e) {
         VSPLogger.e('Error saving booking confirmation to Supabase', e);
       }
+    }
+  }
+
+  void _showInAppAlert(RemoteMessage message) {
+    final context = _navigatorKey?.currentContext;
+    if (context == null) return;
+
+    try {
+      HapticFeedback.heavyImpact();
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Row(
+            children: [
+              const Icon(LucideIcons.messageSquare, color: Colors.black, size: 20),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Text(
+                      message.notification?.title ?? 'New Message',
+                      style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    Text(
+                      message.notification?.body ?? '',
+                      style: const TextStyle(color: Colors.black, fontSize: 11),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          backgroundColor: VSPColors.accent,
+          behavior: SnackBarBehavior.floating,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+          duration: const Duration(seconds: 4),
+        ),
+      );
+    } catch (e) {
+      VSPLogger.e('Error showing in-app alert snackbar', e);
     }
   }
 }

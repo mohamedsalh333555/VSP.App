@@ -17,6 +17,12 @@ class UserModel {
   final String? governorate;
   final List<String> favoriteStadiums;
   final String? verificationStatus; // 'pending', 'approved', 'rejected' or null
+  final DateTime? dateOfBirth;
+
+  // P2P Receivables Settings
+  final String? p2pInstapay;
+  final String? p2pVodafone;
+  final String? p2pBank;
 
   // 🔴 Kill Switch & Debt Flags
   final bool isBlocked; // ✅ Administrative user block
@@ -41,6 +47,10 @@ class UserModel {
     this.favoriteStadiums = const [],
     this.verificationStatus,
     this.noShowCount = 0,
+    this.dateOfBirth,
+    this.p2pInstapay,
+    this.p2pVodafone,
+    this.p2pBank,
   });
 
   // Create UserModel from Firestore document
@@ -80,6 +90,10 @@ class UserModel {
       favoriteStadiums: List<String>.from(data['favorite_stadiums'] ?? data['favoriteStadiums'] ?? []),
       verificationStatus: data['verification_status'] ?? data['verificationStatus'],
       noShowCount: data['no_show_count'] ?? data['noShowCount'] ?? 0,
+      dateOfBirth: data['date_of_birth'] != null ? DateTime.tryParse(data['date_of_birth']) : null,
+      p2pInstapay: data['p2p_instapay'] ?? data['p2pInstapay'],
+      p2pVodafone: data['p2p_vodafone'] ?? data['p2pVodafone'],
+      p2pBank: data['p2p_bank'] ?? data['p2pBank'],
     );
   }
 
@@ -103,6 +117,10 @@ class UserModel {
       'favorite_stadiums': favoriteStadiums,
       'verification_status': verificationStatus,
       'no_show_count': noShowCount,
+      'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
+      'p2p_instapay': p2pInstapay,
+      'p2p_vodafone': p2pVodafone,
+      'p2p_bank': p2pBank,
     };
   }
 
@@ -126,6 +144,10 @@ class UserModel {
     List<String>? favoriteStadiums,
     String? verificationStatus,
     int? noShowCount,
+    DateTime? dateOfBirth,
+    String? p2pInstapay,
+    String? p2pVodafone,
+    String? p2pBank,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -146,6 +168,10 @@ class UserModel {
       favoriteStadiums: favoriteStadiums ?? this.favoriteStadiums,
       verificationStatus: verificationStatus ?? this.verificationStatus,
       noShowCount: noShowCount ?? this.noShowCount,
+      dateOfBirth: dateOfBirth ?? this.dateOfBirth,
+      p2pInstapay: p2pInstapay ?? this.p2pInstapay,
+      p2pVodafone: p2pVodafone ?? this.p2pVodafone,
+      p2pBank: p2pBank ?? this.p2pBank,
     );
   }
 }

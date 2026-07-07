@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -25,6 +25,82 @@ class AppTheme {
     final baseTextTheme = GoogleFonts.titilliumWebTextTheme(ThemeData.dark().textTheme);
     final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
+    
+    final List<String> fallbackFonts = [tajawalFamily!, 'sans-serif'];
+
+    // Helper to apply fallback font family to all styles in TextTheme
+    TextTheme applyFallback(TextTheme theme) {
+      return theme.copyWith(
+        displayLarge: theme.displayLarge?.copyWith(fontFamilyFallback: fallbackFonts),
+        displayMedium: theme.displayMedium?.copyWith(fontFamilyFallback: fallbackFonts),
+        displaySmall: theme.displaySmall?.copyWith(fontFamilyFallback: fallbackFonts),
+        headlineLarge: theme.headlineLarge?.copyWith(fontFamilyFallback: fallbackFonts),
+        headlineMedium: theme.headlineMedium?.copyWith(fontFamilyFallback: fallbackFonts),
+        headlineSmall: theme.headlineSmall?.copyWith(fontFamilyFallback: fallbackFonts),
+        titleLarge: theme.titleLarge?.copyWith(fontFamilyFallback: fallbackFonts),
+        titleMedium: theme.titleMedium?.copyWith(fontFamilyFallback: fallbackFonts),
+        titleSmall: theme.titleSmall?.copyWith(fontFamilyFallback: fallbackFonts),
+        bodyLarge: theme.bodyLarge?.copyWith(fontFamilyFallback: fallbackFonts),
+        bodyMedium: theme.bodyMedium?.copyWith(fontFamilyFallback: fallbackFonts),
+        bodySmall: theme.bodySmall?.copyWith(fontFamilyFallback: fallbackFonts),
+        labelLarge: theme.labelLarge?.copyWith(fontFamilyFallback: fallbackFonts),
+        labelMedium: theme.labelMedium?.copyWith(fontFamilyFallback: fallbackFonts),
+        labelSmall: theme.labelSmall?.copyWith(fontFamilyFallback: fallbackFonts),
+      );
+    }
+
+    final TextTheme finalTextTheme = baseTextTheme.copyWith(
+      displayLarge: baseTextTheme.displayLarge?.copyWith(
+        fontSize: 40,
+        fontWeight: FontWeight.w900, // Punchy Black
+        color: VSPColors.textPrimary,
+        letterSpacing: 1.0,
+        height: 1.2,
+      ),
+      displayMedium: baseTextTheme.displayMedium?.copyWith(
+        fontSize: 32,
+        fontWeight: FontWeight.w900, // Punchy Black
+        color: VSPColors.textPrimary,
+        letterSpacing: 0.5,
+        height: 1.2,
+      ),
+      displaySmall: baseTextTheme.displaySmall?.copyWith(
+        fontSize: 24,
+        fontWeight: FontWeight.w900, // Punchy Black
+        color: VSPColors.textPrimary,
+        height: 1.2,
+      ),
+      titleLarge: baseTextTheme.titleLarge?.copyWith(
+        fontSize: 20,
+        fontWeight: FontWeight.w700, // Bold
+        color: VSPColors.textPrimary,
+        height: 1.2,
+      ),
+      bodyLarge: baseTextTheme.bodyLarge?.copyWith(
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
+        color: VSPColors.textPrimary,
+        height: 1.3,
+      ),
+      bodyMedium: baseTextTheme.bodyMedium?.copyWith(
+        fontSize: 14,
+        fontWeight: FontWeight.w400,
+        color: VSPColors.textSecondary,
+        height: 1.3,
+      ),
+      bodySmall: baseTextTheme.bodySmall?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w400,
+        color: VSPColors.textSecondary,
+        height: 1.3,
+      ),
+      labelMedium: baseTextTheme.labelMedium?.copyWith(
+        fontSize: 12,
+        fontWeight: FontWeight.w600,
+        color: VSPColors.textSecondary,
+        height: 1.2,
+      ),
+    );
 
     return ThemeData(
       brightness: Brightness.dark,
@@ -37,58 +113,14 @@ class AppTheme {
       ),
 
       fontFamily: titilliumWebFamily,
-      fontFamilyFallback: [tajawalFamily!, 'sans-serif'],
+      fontFamilyFallback: [tajawalFamily, 'sans-serif'],
 
-      textTheme: baseTextTheme.copyWith(
-        displayLarge: baseTextTheme.displayLarge?.copyWith(
-          fontSize: 40,
-          fontWeight: FontWeight.bold,
-          color: VSPColors.textPrimary,
-          letterSpacing: 1.0,
-          height: 1.2,
-        ),
-        displayMedium: baseTextTheme.displayMedium?.copyWith(
-          fontSize: 32,
-          fontWeight: FontWeight.bold,
-          color: VSPColors.textPrimary,
-          letterSpacing: 0.5,
-          height: 1.2,
-        ),
-        displaySmall: baseTextTheme.displaySmall?.copyWith(
-          fontSize: 24,
-          fontWeight: FontWeight.bold,
-          color: VSPColors.textPrimary,
-          height: 1.2,
-        ),
-        titleLarge: baseTextTheme.titleLarge?.copyWith(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: VSPColors.textPrimary,
-          height: 1.2,
-        ),
-        bodyLarge: baseTextTheme.bodyLarge?.copyWith(
-          fontSize: 16,
-          fontWeight: FontWeight.w400,
-          color: VSPColors.textPrimary,
-          height: 1.3,
-        ),
-        bodyMedium: baseTextTheme.bodyMedium?.copyWith(
-          fontSize: 14,
-          fontWeight: FontWeight.w400,
-          color: VSPColors.textSecondary,
-          height: 1.3,
-        ),
-        labelMedium: baseTextTheme.labelMedium?.copyWith(
-          fontSize: 12,
-          fontWeight: FontWeight.w600,
-          color: VSPColors.textSecondary,
-          height: 1.2,
-        ),
-      ),
+      textTheme: applyFallback(finalTextTheme),
 
       appBarTheme: const AppBarTheme(
         backgroundColor: VSPColors.background,
         elevation: 0,
+        scrolledUnderElevation: 0, // ✅ منع تغيير لون الـ AppBar عند السكرول في كل الشاشات
         iconTheme: IconThemeData(color: VSPColors.textPrimary),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -117,13 +149,11 @@ class AppTheme {
           backgroundColor: VSPColors.accent,
           foregroundColor: Colors.black,
           elevation: 0,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-          ),
+          shape: const StadiumBorder(), // Pill-shaped buttons
           textStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            fontFamily: GoogleFonts.poppins().fontFamily, // Smooth athletic integration
+            fontFamily: GoogleFonts.poppins().fontFamily,
           ),
         ),
       ),

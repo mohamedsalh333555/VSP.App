@@ -219,21 +219,35 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
   void _handleDeepLink(Uri uri) {
     debugPrint('🔗 Handling deep link: $uri');
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    
-    // 🛡️ AUTH GUARD: If not fully authenticated/onboarded, save for later
+
+    // ✅ CRITICAL: Supabase OAuth callbacks (login-callback) MUST be forwarded
+    // directly to Supabase — never blocked or saved as "pending". Supabase's own
+    // internal listener (SupabaseAuth._handleIncomingLinks) handles these.
+    final isOAuthCallback = uri.scheme == 'io.supabase.fluttervsp' &&
+        uri.host == 'login-callback';
+    if (isOAuthCallback) {
+      debugPrint('🔐 OAuth callback detected — forwarding to Supabase auth handler.');
+      // Supabase SDK handles this automatically via its own stream listener.
+      // We must NOT intercept or block it here.
+      return;
+    }
+
+    // 🛡️ AUTH GUARD: For app-level deep links (e.g. /match/ID), require auth.
     if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
       debugPrint('💾 Saving pending deep link for after login: $uri');
       SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
       return;
     }
 
-    // Pattern: https://vsp.app/match/BOOKING_ID
+    // Pattern: https://vsp.app/match/BOOKING_ID or https://vsp.app/team/TEAM_ID
     if (uri.pathSegments.length >= 2) {
       final type = uri.pathSegments[0]; // match
       final id = uri.pathSegments[1];
 
       if (type == 'match') {
         _router.push('/match/$id');
+      } else if (type == 'team') {
+        _router.push('/team/$id');
       }
     }
   }

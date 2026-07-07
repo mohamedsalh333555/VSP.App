@@ -2144,4 +2144,25 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get proceedAnyway => 'الاستمرار على أي حال';
+
+  @override
+  String get welcomePage1Title => 'عِش أجواء الاحتراف';
+
+  @override
+  String get welcomePage1Subtitle =>
+      'ملعبك جاهز، وتحديات جديدة بانتظارك. احجز مباراتك بضغطة واحدة وانطلق نحو المجد.';
+
+  @override
+  String get welcomePage2Title => 'كُن بطل منطقتك';
+
+  @override
+  String get welcomePage2Subtitle =>
+      'كوّن فريقك، شارك في أقوى البطولات، وارتقِ في جدول الترتيب لتصبح الأفضل في محافظتك';
+
+  @override
+  String get welcomePage3Title => 'جاهز للبداية؟!';
+
+  @override
+  String get welcomePage3Subtitle =>
+      'حدد دورك الآن. انضم كلاعب لخوض التحديات، أو كمالك لزيادة أرباح ملعبك وإدارته بذكاء';
 }

@@ -1,9 +1,12 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:safe_device/safe_device.dart';
 import '../../data/models.dart';
+import '../../main.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/booking_repository.dart';
+import '../utils/vsp_feedback.dart';
 import 'logger_service.dart';
 
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
@@ -231,6 +234,13 @@ class NotificationHandler {
         type: 'chat',
         bookingId: bookingId,
         createdAt: DateTime.now(),
+        metadata: {
+          'priority': 'high',
+          'content_available': true,
+          'sound': 'default',
+          'android_channel_id': 'vsp_p2p_alerts',
+          'vibration_pattern': [0, 500, 200, 500],
+        },
       );
       await _notificationRepo.sendNotification(uid, notif);
     }
@@ -303,14 +313,95 @@ class NotificationHandler {
     }
   }
 
-  /// Handle reported player absence (No-Show) with automatic GPS dispute check.
-  static Future<void> handleNoShowReport({
+  /// Handle reported player absence (No-Show)
+  static Future<void> handleNoShowReport(
+    String bookingId,
+    String playerId,
+    double stadiumLat,
+    double stadiumLng,
+  ) async {
+    try {
+      // 1. Call Supabase RPC 'apply_no_show_penalty' to increment the player's no-show count
+      await Supabase.instance.client.rpc('apply_no_show_penalty', params: {
+        'p_player_id': playerId,
+      });
+
+      // 2. Send an interactive FCM push notification to the player
+      final notif = AppNotification(
+        id: '',
+        title: 'No-Show Warning! ⚠️',
+        body: 'You were reported absent. Open the app to Dispute using GPS.',
+        type: 'no_show_warning',
+        bookingId: bookingId,
+        createdAt: DateTime.now(),
+        metadata: {
+          'stadiumLat': stadiumLat,
+          'stadiumLng': stadiumLng,
+          'playerId': playerId,
+        },
+      );
+      await _notificationRepo.sendNotification(playerId, notif);
+      VSPLogger.i('No-show penalty applied and notification sent to player $playerId.');
+    } catch (e) {
+      VSPLogger.e('Error applying no-show report: $e');
+    }
+  }
+
+  /// Dispute a no-show report on player's device using GPS location and SafeDevice spoofing checks
+  static Future<bool> disputeNoShowWithGPS({
     required String bookingId,
     required String playerId,
     required double stadiumLat,
     required double stadiumLng,
   }) async {
     try {
+      // 1. Security Check: SafeDevice checks
+      try {
+        final bool isJailBroken = await SafeDevice.isJailBroken.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => true,
+        );
+        final bool isMockLocation = await SafeDevice.isMockLocation.timeout(
+          const Duration(seconds: 2),
+          onTimeout: () => true,
+        );
+        if (isJailBroken || isMockLocation) {
+          VSPLogger.w("⚠️ Device Security Alert: Jailbroken=$isJailBroken, MockLocation=$isMockLocation");
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            VSPFeedback.showError(context, 'فشل التحقق: تم كشف التلاعب بالموقع الجغرافي! ⚠️');
+          }
+          return false;
+        }
+      } catch (e) {
+        VSPLogger.e("Error performing safe device checks: $e");
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(context, 'فشل التحقق بسبب خطأ أمني! ⚠️');
+        }
+        return false;
+      }
+
+      // 2. Fetch player's current location using Geolocator
+      LocationPermission permission = await Geolocator.checkPermission();
+      if (permission == LocationPermission.denied) {
+        permission = await Geolocator.requestPermission();
+        if (permission == LocationPermission.denied) {
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            VSPFeedback.showError(context, 'يرجى إعطاء صلاحية الموقع الجغرافي لتقديم النزاع. 📍');
+          }
+          return false;
+        }
+      }
+      if (permission == LocationPermission.deniedForever) {
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(context, 'صلاحية الموقع الجغرافي معطلة تماماً. يرجى تفعيلها من الإعدادات. ⚙️');
+        }
+        return false;
+      }
+
       Position? position;
       try {
         position = await Geolocator.getLastKnownPosition();
@@ -323,34 +414,56 @@ class NotificationHandler {
       }
 
       if (position == null) {
-        await Supabase.instance.client.rpc('apply_no_show_penalty', params: {
-          'p_player_id': playerId
-        });
-        VSPLogger.w('No-show penalty applied: GPS location could not be verified.');
-        return;
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(context, 'تعذر تحديد موقعك الحالي. يرجى التحقق من اتصال الـ GPS. 📡');
+        }
+        return false;
       }
-      
-      // 2. Calculate geographic distance between player and stadium in meters
+
+      // 3. Calculate distance
       final double distance = Geolocator.distanceBetween(
-        position.latitude, position.longitude, stadiumLat, stadiumLng
+        position.latitude,
+        position.longitude,
+        stadiumLat,
+        stadiumLng,
       );
 
-      // 3. If within 150m, dispute automatically and hold for admin moderation
+      // 4. Validate if player is within 150m of stadium
       if (distance <= 150) {
-        await Supabase.instance.client.from('bookings').update({
-          'no_show_disputed': true,
-          'notes': 'Disputed: Player was within ${distance.toStringAsFixed(0)}m of stadium.'
-        }).eq('id', bookingId);
-        VSPLogger.i('No-show disputed: Player was close to stadium.');
-      } else {
-        // Otherwise apply penalty via DB function
-        await Supabase.instance.client.rpc('apply_no_show_penalty', params: {
-          'p_player_id': playerId
+        // Clear no-show count / dismiss penalty
+        await Supabase.instance.client.rpc('dismiss_no_show_penalty', params: {
+          'p_player_id': playerId,
         });
-        VSPLogger.i('No-show penalty applied: Player was far from stadium (${distance.toStringAsFixed(0)}m).');
+
+        // Mark booking as no_show_disputed
+        await Supabase.instance.client
+            .from('bookings')
+            .update({
+              'no_show_disputed': true,
+              'notes': 'Dispute verified: Player was within ${distance.toStringAsFixed(0)}m of stadium.'
+            })
+            .eq('id', bookingId);
+            
+        VSPLogger.i('No-show penalty successfully dismissed via GPS.');
+        
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.triggerSuccess();
+          VSPFeedback.showSuccess(context, 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆');
+        }
+        return true;
+      } else {
+        VSPLogger.i('GPS dispute rejected: Player is too far (${distance.toStringAsFixed(0)}m).');
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(context, 'أنت لست متواجداً في الملعب! المسافة الحالية: ${distance.toStringAsFixed(0)} متر.');
+        }
+        return false;
       }
     } catch (e) {
-      VSPLogger.e('Error handling no show report with GPS check: $e');
+      VSPLogger.e('Error disputing no-show with GPS: $e');
+      return false;
     }
   }
 
