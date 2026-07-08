@@ -45,6 +45,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   String? _ownerInstapay;
   String? _ownerVodafone;
   String? _ownerBank;
+  String? _ownerBinance;
   bool _isLoadingPhone = true;
   XFile? _receiptImage;
   Timer? _timer;
@@ -165,8 +166,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final hasInstapay = _ownerInstapay != null && _ownerInstapay!.trim().isNotEmpty;
     final hasVodafone = _ownerVodafone != null && _ownerVodafone!.trim().isNotEmpty;
     final hasBank = _ownerBank != null && _ownerBank!.trim().isNotEmpty;
+    final hasBinance = _ownerBinance != null && _ownerBinance!.trim().isNotEmpty;
 
-    if (!hasInstapay && !hasVodafone && !hasBank) {
+    if (!hasInstapay && !hasVodafone && !hasBank && !hasBinance) {
       return Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
@@ -198,7 +200,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             style: const TextStyle(fontWeight: FontWeight.bold, color: VSPColors.accent, fontSize: 14),
           ),
           const SizedBox(height: 12),
-          if (hasInstapay)
+          if (hasInstapay) ...[
             _buildCopyableRow(
               context,
               icon: LucideIcons.smartphone,
@@ -206,8 +208,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               value: _ownerInstapay!,
               successMsg: isArabic ? 'تم نسخ عنوان إنستا باي!' : 'InstaPay IPN copied!',
             ),
-          if (hasInstapay && (hasVodafone || hasBank)) const SizedBox(height: 12),
-          if (hasVodafone)
+            const SizedBox(height: 12),
+          ],
+          if (hasVodafone) ...[
             _buildCopyableRow(
               context,
               icon: LucideIcons.banknote,
@@ -215,7 +218,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               value: _ownerVodafone!,
               successMsg: isArabic ? 'تم نسخ رقم فودافون كاش!' : 'Vodafone Cash number copied!',
             ),
-          if (hasVodafone && hasBank) const SizedBox(height: 12),
+            const SizedBox(height: 12),
+          ],
+          if (hasBinance) ...[
+            _buildCopyableRow(
+              context,
+              icon: LucideIcons.wallet,
+              label: isArabic ? 'معرف بينانس Binance Pay ID:' : 'Binance Pay ID:',
+              value: _ownerBinance!,
+              successMsg: isArabic ? 'تم نسخ معرف بينانس!' : 'Binance Pay ID copied!',
+            ),
+            const SizedBox(height: 12),
+          ],
           if (hasBank)
             _buildCopyableRow(
               context,
@@ -496,12 +510,59 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 
+  void _handleTimeout() {
+    if (!mounted) return;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogContext) {
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+          child: AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+            title: Row(
+              children: [
+                const Icon(LucideIcons.clock, color: VSPColors.error),
+                const SizedBox(width: 8),
+                Text(
+                  isArabic ? 'انتهى الوقت ⏳' : 'Timeout ⏳',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                ),
+              ],
+            ),
+            content: Text(
+              isArabic
+                  ? 'عذراً، انتهت المهلة المحددة للدفع (10 دقائق) وتم إلغاء الحجز تلقائياً لتفريغ الملعب.'
+                  : 'Sorry, the 10-minute payment window has expired, and your booking has been cancelled automatically to free up the pitch.',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+            ),
+            actions: [
+              PrimaryButton(
+                text: isArabic ? 'العودة للرئيسية' : 'Back to Home',
+                onPressed: () {
+                  Navigator.pop(dialogContext); // pop dialog
+                  Navigator.of(context).popUntil((route) => route.isFirst); // pop to home
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
   void _startTimer() {
     _timer = Timer.periodic(const Duration(seconds: 1), (timer) {
       if (!mounted) return;
       setState(() {
         if (_secondsRemaining > 0) {
           _secondsRemaining--;
+          if (_secondsRemaining == 0) {
+            _timer?.cancel();
+            _handleTimeout();
+          }
         } else {
           _timer?.cancel();
         }
@@ -523,9 +584,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (userData != null && mounted) {
           setState(() {
             _ownerPhone = userData['phone']?.toString();
-            _ownerInstapay = userData['p2p_instapay'] ?? userData['p2pInstapay'];
-            _ownerVodafone = userData['p2p_vodafone'] ?? userData['p2pVodafone'];
+            _ownerInstapay = widget.bookingDraft.instapay ?? userData['p2p_instapay'] ?? userData['p2pInstapay'];
+            _ownerVodafone = widget.bookingDraft.vodafoneCash ?? userData['p2p_vodafone'] ?? userData['p2pVodafone'];
             _ownerBank = userData['p2p_bank'] ?? userData['p2pBank'];
+            _ownerBinance = widget.bookingDraft.binanceId ?? userData['binanceId'] ?? userData['binance_id'];
             _isLoadingPhone = false;
           });
           return;
@@ -649,6 +711,58 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         'notes': '${_booking!.notes ?? ""}\n[Manual Receipt]: $receiptUrl'.trim(),
       }).eq('id', _booking!.id);
 
+      // 🛡️ SECURITY BARRIER: Server-Side State Verification
+      // NEVER trust local in-memory UI state to assume booking success.
+      // Perform a direct, fresh fetch from the Supabase backend to verify
+      // the payment_status is actually set in the database before navigating.
+      final freshBooking = await Supabase.instance.client
+          .from('bookings')
+          .select('status, payment_status')
+          .eq('id', _booking!.id)
+          .single();
+
+      final verifiedPaymentStatus = freshBooking['payment_status'] as String?;
+      const allowedStatuses = {'awaiting_verification', 'paid', 'partially_paid'};
+
+      if (verifiedPaymentStatus == null || !allowedStatuses.contains(verifiedPaymentStatus)) {
+        // Backend state does not match expected — possible spoofing or race condition
+        setState(() => _isLoading = false);
+        if (mounted) {
+          showDialog(
+            context: context,
+            barrierDismissible: false,
+            builder: (dialogContext) => AlertDialog(
+              backgroundColor: VSPColors.surface,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+              title: Row(
+                children: [
+                  Icon(LucideIcons.shieldAlert, color: VSPColors.error),
+                  const SizedBox(width: 8),
+                  Text(
+                    isArabic ? 'خطأ في التحقق الأمني' : 'Security Verification Failed',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                ],
+              ),
+              content: Text(
+                isArabic
+                    ? 'تعذر التحقق من حالة الدفع من الخادم. يرجى المحاولة مرة أخرى أو التواصل مع الدعم الفني.'
+                    : 'Could not verify payment status from the server. Please try again or contact support.',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+              ),
+              actions: [
+                PrimaryButton(
+                  text: isArabic ? 'موافق' : 'OK',
+                  onPressed: () => Navigator.pop(dialogContext),
+                ),
+              ],
+            ),
+          );
+        }
+        return;
+      }
+
+      // Verified: payment_status is legitimate on the backend
       final updatedBooking = await Provider.of<BookingProvider>(context, listen: false)
           .getBookingById(_booking!.id);
 

@@ -204,8 +204,14 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                                 );
                                 return;
                               }
-                              // Set hasStadium flag only after verifying a stadium exists
-                              await authProvider.updateProfile({'hasStadium': true});
+                              // Set hasStadium flag and confirm onboarding flag
+                              final currentAdditional = authProvider.userModel?.additionalData ?? {};
+                              final updatedAdditional = Map<String, dynamic>.from(currentAdditional)
+                                ..['isOnboardingConfirmed'] = true;
+                              await authProvider.updateProfile({
+                                'hasStadium': true,
+                                'additionalData': updatedAdditional,
+                              });
                               if (!context.mounted) return;
                               Navigator.push(
                                 context,

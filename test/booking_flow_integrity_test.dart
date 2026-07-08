@@ -1,6 +1,4 @@
-﻿import 'package:flutter_test/flutter_test.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/repositories/booking_repository.dart';
 
@@ -118,8 +116,8 @@ void main() {
         'stadiumId': 's1',
         'stadiumName': 'Test',
         'ownerId': 'o1',
-        'startTime': Timestamp.fromDate(DateTime(2026, 4, 1, 10, 0)),
-        'endTime': Timestamp.fromDate(DateTime(2026, 4, 1, 11, 0)),
+        'startTime': DateTime(2026, 4, 1, 10, 0),
+        'endTime': DateTime(2026, 4, 1, 11, 0),
         // bookingType is personal - opponent data should be null even if present
         'bookingType': 'personal',
         'opponentTeamId': 'ghost_team',
@@ -131,7 +129,7 @@ void main() {
         'paymentMethod': 'cash',
         'status': 'confirmed',
         'createdByUserId': 'u1',
-        'createdAt': Timestamp.fromDate(DateTime.now()),
+        'createdAt': DateTime.now(),
         'matchResultStatus': 'noResult',
         'currentPlayers': 1,
         'maxPlayers': 10,
@@ -339,32 +337,27 @@ void main() {
 
   group('E. Double-booking overlap detection', () {
     test('Overlapping time slots are detected correctly', () async {
-      final fakeFirestore = FakeFirebaseFirestore();
       final baseTime = DateTime(2026, 5, 1, 18, 0); // 6 PM
 
       // Existing confirmed booking: 6 PM - 7 PM
-      await fakeFirestore.collection('bookings').add({
-        'stadiumId': 'stad_1',
-        'startTime': Timestamp.fromDate(baseTime),
-        'endTime': Timestamp.fromDate(baseTime.add(const Duration(hours: 1))),
-        'status': 'confirmed',
-      });
+      final bookingsDb = [
+        {
+          'stadiumId': 'stad_1',
+          'startTime': baseTime,
+          'endTime': baseTime.add(const Duration(hours: 1)),
+          'status': 'confirmed',
+        }
+      ];
 
       // New draft: 6:30 PM - 7:30 PM (overlap!)
       final newStart = baseTime.add(const Duration(minutes: 30));
       final newEnd = baseTime.add(const Duration(minutes: 90));
 
-      final snapshot = await fakeFirestore
-          .collection('bookings')
-          .where('stadiumId', isEqualTo: 'stad_1')
-          .get();
-
       bool isOverlapping = false;
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
+      for (var data in bookingsDb) {
         if (data['status'] == 'cancelled') continue;
-        final bStart = (data['startTime'] as Timestamp).toDate();
-        final bEnd = (data['endTime'] as Timestamp).toDate();
+        final bStart = data['startTime'] as DateTime;
+        final bEnd = data['endTime'] as DateTime;
         if (newStart.isBefore(bEnd) && newEnd.isAfter(bStart)) {
           isOverlapping = true;
         }
@@ -375,32 +368,27 @@ void main() {
     });
 
     test('Non-overlapping booking is allowed', () async {
-      final fakeFirestore = FakeFirebaseFirestore();
       final baseTime = DateTime(2026, 5, 1, 18, 0); // 6 PM
 
       // Existing booking: 6 PM - 7 PM
-      await fakeFirestore.collection('bookings').add({
-        'stadiumId': 'stad_1',
-        'startTime': Timestamp.fromDate(baseTime),
-        'endTime': Timestamp.fromDate(baseTime.add(const Duration(hours: 1))),
-        'status': 'confirmed',
-      });
+      final bookingsDb = [
+        {
+          'stadiumId': 'stad_1',
+          'startTime': baseTime,
+          'endTime': baseTime.add(const Duration(hours: 1)),
+          'status': 'confirmed',
+        }
+      ];
 
       // New draft: 7 PM - 8 PM (no overlap)
       final newStart = baseTime.add(const Duration(hours: 1));
       final newEnd = baseTime.add(const Duration(hours: 2));
 
-      final snapshot = await fakeFirestore
-          .collection('bookings')
-          .where('stadiumId', isEqualTo: 'stad_1')
-          .get();
-
       bool isOverlapping = false;
-      for (var doc in snapshot.docs) {
-        final data = doc.data();
+      for (var data in bookingsDb) {
         if (data['status'] == 'cancelled') continue;
-        final bStart = (data['startTime'] as Timestamp).toDate();
-        final bEnd = (data['endTime'] as Timestamp).toDate();
+        final bStart = data['startTime'] as DateTime;
+        final bEnd = data['endTime'] as DateTime;
         if (newStart.isBefore(bEnd) && newEnd.isAfter(bStart)) {
           isOverlapping = true;
         }

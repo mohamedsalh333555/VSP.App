@@ -10,7 +10,7 @@
         <activity
             android:name=".MainActivity"
             android:exported="true"
-            android:launchMode="singleTop"
+            android:launchMode="singleTask"
             android:taskAffinity=""
             android:theme="@style/LaunchTheme"
             android:configChanges="orientation|keyboardHidden|keyboard|screenSize|smallestScreenSize|locale|layoutDirection|fontScale|screenLayout|density|uiMode"
@@ -29,16 +29,15 @@
                 <category android:name="android.intent.category.LAUNCHER"/>
             </intent-filter>
 
-            <!-- Deep Linking for Supabase Google/Apple OAuth Redirect -->
-            <!-- Primary scheme: catches the auth code from Supabase -->
-            <intent-filter android:label="login_callback">
+            <!-- Deep Linking for Supabase OAuth & Password Reset Redirects -->
+            <intent-filter android:label="vsp_deep_link">
                 <action android:name="android.intent.action.VIEW" />
                 <category android:name="android.intent.category.DEFAULT" />
                 <category android:name="android.intent.category.BROWSABLE" />
-                <!-- Matches: io.supabase.fluttervsp://login-callback/ -->
-                <data
-                    android:scheme="io.supabase.fluttervsp"
-                    android:host="login-callback" />
+                <!-- Accepts URIs that begin with "io.supabase.fluttervsp://login-callback" -->
+                <data android:scheme="io.supabase.fluttervsp" android:host="login-callback" />
+                <!-- Accepts URIs that begin with "io.supabase.fluttervsp://reset-callback" -->
+                <data android:scheme="io.supabase.fluttervsp" android:host="reset-callback" />
             </intent-filter>
 
             <!--

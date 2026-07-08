@@ -5,7 +5,6 @@ import 'package:flutter/services.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -60,16 +59,11 @@ void main() async {
     VSPLogger.e("❌ SUPABASE INIT FAILED", e);
   }
   
-  // FIREBASE INITIALIZATION
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    );
-    
-    // RE-ENABLE PERSISTENCE FOR PRODUCTION
-    FirebaseFirestore.instance.settings = const Settings(
-      persistenceEnabled: true,
-    );
+    // FIREBASE INITIALIZATION
+    try {
+      await Firebase.initializeApp(
+        options: DefaultFirebaseOptions.currentPlatform,
+      );
 
     // CRASHLYTICS INITIALIZATION (Disabled in debug/emulator mode to prevent main thread blocking/ANR on startup)
     await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
@@ -239,16 +233,40 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
       return;
     }
 
-    // Pattern: https://vsp.app/match/BOOKING_ID or https://vsp.app/team/TEAM_ID
-    if (uri.pathSegments.length >= 2) {
-      final type = uri.pathSegments[0]; // match
-      final id = uri.pathSegments[1];
+    try {
+      String? type;
+      String? id;
 
-      if (type == 'match') {
-        _router.push('/match/$id');
-      } else if (type == 'team') {
-        _router.push('/team/$id');
+      if (uri.scheme == 'io.supabase.fluttervsp') {
+        type = uri.host;
+        if (uri.pathSegments.isNotEmpty) {
+          id = uri.pathSegments.first;
+        }
+      } else {
+        if (uri.pathSegments.length >= 2) {
+          type = uri.pathSegments[0]; // match or team
+          id = uri.pathSegments[1];
+        }
       }
+
+      if (type != null && id != null && id.isNotEmpty) {
+        // Validate ID format (alphanumeric, dashes, underscores) to prevent path injection or invalid characters
+        final bool isValidId = RegExp(r'^[a-zA-Z0-9\-_\s]+$').hasMatch(id);
+        if (!isValidId) {
+          debugPrint('⚠️ Malicious or garbage ID detected in deep link: $id. Redirecting to safe fallback.');
+          _router.go('/');
+          return;
+        }
+
+        if (type == 'match') {
+          _router.push('/match/$id');
+        } else if (type == 'team') {
+          _router.push('/team/$id');
+        }
+      }
+    } catch (e, stackTrace) {
+      debugPrint('🚨 Error processing deep link: $e\n$stackTrace');
+      _router.go('/'); // Safe fallback on error
     }
   }
 

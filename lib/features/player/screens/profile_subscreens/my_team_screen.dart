@@ -1,4 +1,5 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'dart:async';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -34,6 +35,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   bool _isSaving = false;
   XFile? _selectedLogo; 
   
+  StreamSubscription? _teamSubscription;
+  StreamSubscription? _membershipSubscription;
+
   bool _isCaptain(Team? currentTeam) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (currentTeam == null) return true; 
@@ -44,6 +48,36 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   void initState() {
     super.initState();
     _initialLoad();
+
+    // Listen to membership changes in Supabase
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.currentUser?.uid;
+      if (uid != null) {
+        _membershipSubscription = Supabase.instance.client
+            .from('team_members')
+            .stream(primaryKey: ['id'])
+            .eq('user_id', uid)
+            .listen((data) {
+              _initialLoad();
+            });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    // 🛡️ SECURITY BARRIER: Rigorous Stream Subscription Cleanup
+    // Cancel ALL Supabase Realtime subscriptions to prevent:
+    // 1. Memory leaks from orphaned stream listeners
+    // 2. Socket/WebSocket connection leaks exhausting Supabase free tier limits
+    // 3. Potential DDOS-like behavior from accumulated zombie connections
+    _teamSubscription?.cancel();
+    _teamSubscription = null;
+    _membershipSubscription?.cancel();
+    _membershipSubscription = null;
+    _teamNameController.dispose();
+    super.dispose();
   }
 
   Future<void> _initialLoad() async {
@@ -57,9 +91,33 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         _teamNameController.text = team.name;
         _selectedSport = team.sportType;
         _localTeam = team;
+        
+        // Listen to team updates in Supabase
+        _teamSubscription?.cancel();
+        _teamSubscription = Supabase.instance.client
+            .from('teams')
+            .stream(primaryKey: ['id'])
+            .eq('id', team.id)
+            .listen((data) async {
+              if (data.isNotEmpty && mounted) {
+                final updatedTeam = await DatabaseService().team.getTeam(team.id);
+                if (updatedTeam != null && mounted) {
+                  setState(() {
+                    _teamNameController.text = updatedTeam.name;
+                    _selectedSport = updatedTeam.sportType;
+                    _localTeam = updatedTeam;
+                  });
+                }
+              }
+            });
+        
         await _loadMemberDetails(team);
       } else {
-        setState(() => _isLoadingMembers = false);
+        _teamSubscription?.cancel();
+        setState(() {
+          _localTeam = null;
+          _isLoadingMembers = false;
+        });
       }
     }
   }
@@ -117,233 +175,212 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
     if (uid == null) return const Scaffold(body: Center(child: Text("Not authenticated")));
 
-    return StreamBuilder<QuerySnapshot>(
-      stream: FirebaseFirestore.instance
-          .collection('teams')
-          .where('memberUids', arrayContains: uid)
-          .snapshots(),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting && _localTeam == null) {
-          return const Scaffold(
-            backgroundColor: VSPColors.background,
-            body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
-          );
-        }
+    if (_isLoadingMembers && _localTeam == null) {
+      return const Scaffold(
+        backgroundColor: VSPColors.background,
+        body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+      );
+    }
 
-        Team? team;
-        if (snapshot.hasData && snapshot.data!.docs.isNotEmpty) {
-          final doc = snapshot.data!.docs.first;
-          team = Team.fromFirestore(doc.data() as Map<String, dynamic>, doc.id);
-          
-          // Sync controllers once when team is first found or changed
-          if (_localTeam?.id != team.id) {
-             _teamNameController.text = team.name;
-             _selectedSport = team.sportType;
-             _localTeam = team;
-             _loadMemberDetails(team); // Reload full member objects for chips
-          }
-        }
+    final team = _localTeam;
+    final isCaptain = _isCaptain(team);
 
-        final isCaptain = _isCaptain(team);
-
-        return Scaffold(
-          backgroundColor: VSPColors.background,
-          appBar: AppBar(
-            backgroundColor: Colors.transparent,
-            elevation: 0,
-            leading: IconButton(
-              icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
-              onPressed: () => Navigator.pop(context),
+    return Scaffold(
+      backgroundColor: VSPColors.background,
+      appBar: AppBar(
+        backgroundColor: Colors.transparent,
+        elevation: 0,
+        leading: IconButton(
+          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
+        actions: [
+          if (team != null)
+            IconButton(
+              icon: Icon(LucideIcons.share2, color: VSPColors.accent),
+              onPressed: () {
+                SharingService.shareTeam(
+                  context,
+                  teamId: team.id,
+                  teamName: team.name,
+                  governorate: team.governorate,
+                );
+              },
             ),
-            title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
-            actions: [
-              if (team != null)
-                IconButton(
-                  icon: Icon(LucideIcons.share2, color: VSPColors.accent),
-                  onPressed: () {
-                    SharingService.shareTeam(
-                      context,
-                      teamId: team!.id,
-                      teamName: team.name,
-                      governorate: team.governorate,
-                    );
-                  },
-                ),
-              const SizedBox(width: 8),
-            ],
-            centerTitle: true,
-          ),
-          body: SingleChildScrollView(
-            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-            physics: const BouncingScrollPhysics(),
-            padding: EdgeInsets.fromLTRB(
-              VSPSpacing.md, 
-              VSPSpacing.md, 
-              VSPSpacing.md, 
-              MediaQuery.of(context).padding.bottom + 100 + MediaQuery.of(context).viewInsets.bottom
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
+          const SizedBox(width: 8),
+        ],
+        centerTitle: true,
+      ),
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+        physics: const BouncingScrollPhysics(),
+        padding: EdgeInsets.fromLTRB(
+          VSPSpacing.md, 
+          VSPSpacing.md, 
+          VSPSpacing.md, 
+          MediaQuery.of(context).padding.bottom + 100 + MediaQuery.of(context).viewInsets.bottom
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            // 1. Stats Grid
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // 1. Stats Grid
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildStatCard(team?.points.toString() ?? '0', l10n.points, width: 80),
-                    _buildStatCard((1 + _teamMembers.length).toString(), l10n.members, width: 80),
-                    _buildStatCard(team?.championshipsWon.toString() ?? '0', l10n.trophies, width: 85),
-                    _buildStatCard(team?.wins.toString() ?? '0', l10n.wins, width: 85),
-                  ],
+                _buildStatCard(team?.points.toString() ?? '0', l10n.points, width: 80),
+                _buildStatCard((1 + _teamMembers.length).toString(), l10n.members, width: 80),
+                _buildStatCard(team?.championshipsWon.toString() ?? '0', l10n.trophies, width: 85),
+                _buildStatCard(team?.wins.toString() ?? '0', l10n.wins, width: 85),
+              ],
+            ),
+
+            const SizedBox(height: VSPSpacing.lg),
+
+            // 2. Team Profile Section
+            Text(l10n.teamName, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: VSPSpacing.sm),
+            _buildTextField(_teamNameController, hint: l10n.enterTeamName, readOnly: !isCaptain),
+
+            const SizedBox(height: VSPSpacing.md),
+
+            Text(l10n.sportsType, style: Theme.of(context).textTheme.titleLarge),
+            const SizedBox(height: VSPSpacing.sm),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 16),
+              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
+              child: DropdownButtonHideUnderline(
+                child: DropdownButton<String>(
+                  value: _selectedSport,
+                  isExpanded: true,
+                  dropdownColor: VSPColors.surface,
+                  items: VSPConstants.sports.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)))).toList(),
+                  onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
                 ),
+              ),
+            ),
 
-                const SizedBox(height: VSPSpacing.lg),
+            const SizedBox(height: VSPSpacing.lg),
 
-                // 2. Team Profile Section
-                Text(l10n.teamName, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: VSPSpacing.sm),
-                _buildTextField(_teamNameController, hint: l10n.enterTeamName, readOnly: !isCaptain),
-
-                const SizedBox(height: VSPSpacing.md),
-
-                Text(l10n.sportsType, style: Theme.of(context).textTheme.titleLarge),
-                const SizedBox(height: VSPSpacing.sm),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: _selectedSport,
-                      isExpanded: true,
-                      dropdownColor: VSPColors.surface,
-                      items: VSPConstants.sports.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)))).toList(),
-                      onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
-                    ),
-                  ),
-                ),
-
-                const SizedBox(height: VSPSpacing.lg),
-
-                // 3. Logo Upload
-                Row(
-                  children: [
-                    if (_selectedLogo != null)
-                      ClipRRect(
-                        borderRadius: BorderRadius.circular(25),
-                        child: Image.file(File(_selectedLogo!.path), width: 50, height: 50, fit: BoxFit.cover),
-                      )
-                    else
-                      ShimmerImage(
-                        imageUrl: team?.logoUrl ?? '',
-                        width: 50, height: 50, borderRadius: 25,
-                        errorWidget: Icon(LucideIcons.users, color: VSPColors.textSecondary),
-                      ),
-                    const SizedBox(width: VSPSpacing.md),
-                    Expanded(
-                      child: PrimaryButton(
-                        text: l10n.uploadPhoto,
-                        height: 45,
-                        color: VSPColors.surfaceAlt,
-                        textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
-                        icon: LucideIcons.uploadCloud,
-                        onPressed: !isCaptain ? null : () async {
-                          final picker = ImagePicker();
-                          final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-                          if (image != null && mounted) setState(() => _selectedLogo = image);
-                        },
-                      ),
-                    ),
-                  ],
-                ),
-
-                const SizedBox(height: VSPSpacing.lg),
-
-                // 4. Members Section
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(l10n.teamMembersHeader(1 + _teamMembers.length, 12), style: Theme.of(context).textTheme.bodyMedium),
-                    if (isCaptain && (1 + _teamMembers.length) < 12)
-                      TextButton.icon(
-                        onPressed: () => _showAddPlayerSheet(team),
-                        icon: Icon(LucideIcons.plusCircle, size: 16, color: VSPColors.accent),
-                        label: Text(l10n.addMember, style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
-                      ),
-                  ],
-                ),
-                const SizedBox(height: VSPSpacing.sm),
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(VSPSpacing.md),
-                  decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
-                  child: _isLoadingMembers 
-                    ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)))
-                    : (team == null && _teamMembers.isEmpty)
-                        ? Center(child: Text(l10n.addMembersHint, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.3), fontSize: 12)))
-                        : Wrap(
-                            spacing: 8, runSpacing: 8,
-                            children: [
-                              _buildMemberAvatar(team?.captainImageUrl ?? auth.userModel?.profileImageUrl ?? ''),
-                              ..._teamMembers.map((member) => _buildMemberChip(member, team, isCaptain)),
-                            ],
-                          ),
-                ),
-
-                const SizedBox(height: VSPSpacing.xl),
-
-                // 5. Achievements
-                if (team != null) _buildAchievementSection(team) 
-                else Center(child: Padding(padding: const EdgeInsets.all(20), child: Text(l10n.registerTeamPrompt, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontStyle: FontStyle.italic)))),
-
-                const SizedBox(height: VSPSpacing.xxl),
-
-                // 6. Action Buttons
-                if (team == null)
-                  SizedBox(
-                    width: double.infinity,
-                    child: PrimaryButton(
-                      text: l10n.createTeam,
-                      isLoading: _isSaving,
-                      onPressed: _isSaving ? null : () => _handleCreateTeam(auth.userModel),
-                    ),
+            // 3. Logo Upload
+            Row(
+              children: [
+                if (_selectedLogo != null)
+                  ClipRRect(
+                    borderRadius: BorderRadius.circular(25),
+                    child: Image.file(File(_selectedLogo!.path), width: 50, height: 50, fit: BoxFit.cover),
                   )
-                else ...[
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryButton(
-                          text: l10n.deleteTeam,
-                          color: VSPColors.error.withOpacity(0.8),
-                          textColor: VSPColors.textPrimary,
-                          onPressed: !isCaptain ? null : () => _showDeleteConfirmation(team!),
-                        ),
-                      ),
-                      const SizedBox(width: VSPSpacing.md),
-                      Expanded(
-                        child: PrimaryButton(
-                          text: l10n.saveChanges,
-                          isLoading: _isSaving,
-                          onPressed: (_isSaving || !isCaptain) ? null : () => _handleUpdateTeam(team!),
-                        ),
-                      ),
-                    ],
+                else
+                  ShimmerImage(
+                    imageUrl: team?.logoUrl ?? '',
+                    width: 50, height: 50, borderRadius: 25,
+                    errorWidget: Icon(LucideIcons.users, color: VSPColors.textSecondary),
                   ),
-                  const SizedBox(height: VSPSpacing.md),
-                  SizedBox(
-                    width: double.infinity,
+                const SizedBox(width: VSPSpacing.md),
+                Expanded(
+                  child: PrimaryButton(
+                    text: l10n.uploadPhoto,
+                    height: 45,
+                    color: VSPColors.surfaceAlt,
+                    textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
+                    icon: LucideIcons.uploadCloud,
+                    onPressed: !isCaptain ? null : () async {
+                      final picker = ImagePicker();
+                      final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                      if (image != null && mounted) setState(() => _selectedLogo = image);
+                    },
+                  ),
+                ),
+              ],
+            ),
+
+            const SizedBox(height: VSPSpacing.lg),
+
+            // 4. Members Section
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(l10n.teamMembersHeader(1 + _teamMembers.length, 12), style: Theme.of(context).textTheme.bodyMedium),
+                if (isCaptain && (1 + _teamMembers.length) < 12)
+                  TextButton.icon(
+                    onPressed: () => _showAddPlayerSheet(team),
+                    icon: Icon(LucideIcons.plusCircle, size: 16, color: VSPColors.accent),
+                    label: Text(l10n.addMember, style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
+                  ),
+              ],
+            ),
+            const SizedBox(height: VSPSpacing.sm),
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
+              child: _isLoadingMembers 
+                ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)))
+                : (team == null && _teamMembers.isEmpty)
+                    ? Center(child: Text(l10n.addMembersHint, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.3), fontSize: 12)))
+                    : Wrap(
+                        spacing: 8, runSpacing: 8,
+                        children: [
+                          _buildMemberAvatar(team?.captainImageUrl ?? auth.userModel?.profileImageUrl ?? ''),
+                          ..._teamMembers.map((member) => _buildMemberChip(member, team, isCaptain)),
+                        ],
+                      ),
+            ),
+
+            const SizedBox(height: VSPSpacing.xl),
+
+            // 5. Achievements
+            if (team != null) _buildAchievementSection(team) 
+            else Center(child: Padding(padding: const EdgeInsets.all(20), child: Text(l10n.registerTeamPrompt, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontStyle: FontStyle.italic)))),
+
+            const SizedBox(height: VSPSpacing.xxl),
+
+            // 6. Action Buttons
+            if (team == null)
+              SizedBox(
+                width: double.infinity,
+                child: PrimaryButton(
+                  text: l10n.createTeam,
+                  isLoading: _isSaving,
+                  onPressed: _isSaving ? null : () => _handleCreateTeam(auth.userModel),
+                ),
+              )
+            else ...[
+              Row(
+                children: [
+                  Expanded(
                     child: PrimaryButton(
-                      text: "مغادرة الفريق",
-                      color: VSPColors.error.withOpacity(0.15),
-                      textColor: VSPColors.error,
-                      onPressed: () => _showLeaveConfirmation(team!, uid),
+                      text: l10n.deleteTeam,
+                      color: VSPColors.error.withOpacity(0.8),
+                      textColor: VSPColors.textPrimary,
+                      onPressed: !isCaptain ? null : () => _showDeleteConfirmation(team),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: l10n.saveChanges,
+                      isLoading: _isSaving,
+                      onPressed: (_isSaving || !isCaptain) ? null : () => _handleUpdateTeam(team),
                     ),
                   ),
                 ],
-                const SizedBox(height: VSPSpacing.md),
-              ],
-            ),
-          ),
-        );
-      },
+              ),
+              const SizedBox(height: VSPSpacing.md),
+              SizedBox(
+                width: double.infinity,
+                child: PrimaryButton(
+                  text: "مغادرة الفريق",
+                  color: VSPColors.error.withOpacity(0.15),
+                  textColor: VSPColors.error,
+                  onPressed: () => _showLeaveConfirmation(team, uid),
+                ),
+              ),
+            ],
+            const SizedBox(height: VSPSpacing.md),
+          ],
+        ),
+      ),
     );
   }
 

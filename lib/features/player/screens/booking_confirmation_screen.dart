@@ -859,6 +859,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                ? widget.stadium.totalFieldCapacity
                                : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
 
+                           final instapayVal = (widget.stadium.features is Map) ? widget.stadium.features['instapay']?.toString() : null;
+                           final vodafoneVal = (widget.stadium.features is Map) ? widget.stadium.features['vodafoneCash']?.toString() : null;
+                           final binanceVal = (widget.stadium.features is Map) ? widget.stadium.features['binanceId']?.toString() : null;
+
                            final draft = BookingDraft(
                              stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
                              ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
@@ -871,6 +875,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                              depositPaid: widget.stadium.needsDeposit ? depositAmount : 0.0,
                              isDepositPaid: false,
                              needsDeposit: widget.stadium.needsDeposit,
+                             instapay: instapayVal,
+                             vodafoneCash: vodafoneVal,
+                             binanceId: binanceVal,
                            );
 
                            final needsDeposit = widget.stadium.needsDeposit;
@@ -880,7 +887,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                            final activeUnpaidBookings = unpaidBookings.where((b) {
                              return b.status != BookingStatus.cancelled &&
                                  b.status != BookingStatus.completed &&
-                                 b.endTime.isAfter(now);
+                                 b.endTime.isAfter(now) &&
+                                 !b.isPaid &&
+                                 b.paymentMethod == 'cash';
                            }).toList();
                            final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
 

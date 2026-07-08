@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
@@ -352,6 +351,9 @@ class BookingDraft {
   final bool isDepositPaid;
   final String? paymentStatus;
   final bool needsDeposit;
+  final String? instapay;
+  final String? vodafoneCash;
+  final String? binanceId;
 
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
@@ -388,6 +390,9 @@ class BookingDraft {
     this.isDepositPaid = false,
     this.paymentStatus,
     this.needsDeposit = false,
+    this.instapay,
+    this.vodafoneCash,
+    this.binanceId,
   });
 
   BookingDraft copyWith({
@@ -422,6 +427,9 @@ class BookingDraft {
     bool? isDepositPaid,
     String? paymentStatus,
     bool? needsDeposit,
+    String? instapay,
+    String? vodafoneCash,
+    String? binanceId,
   }) {
     return BookingDraft(
       stadiumId: stadiumId ?? this.stadiumId,
@@ -455,6 +463,9 @@ class BookingDraft {
       isDepositPaid: isDepositPaid ?? this.isDepositPaid,
       paymentStatus: paymentStatus ?? this.paymentStatus,
       needsDeposit: needsDeposit ?? this.needsDeposit,
+      instapay: instapay ?? this.instapay,
+      vodafoneCash: vodafoneCash ?? this.vodafoneCash,
+      binanceId: binanceId ?? this.binanceId,
     );
   }
 
@@ -490,6 +501,9 @@ class BookingDraft {
       'deposit_paid': depositPaid,
       'is_deposit_paid': isDepositPaid,
       'payment_status': paymentStatus,
+      'instapay': instapay,
+      'vodafoneCash': vodafoneCash,
+      'binanceId': binanceId,
     };
   }
 }
@@ -557,6 +571,9 @@ class Booking {
   final String paymentStatus; // 'pending', 'paid', 'refunded'
   final double depositPaid;
   final bool isDepositPaid;
+  final String? instapay;
+  final String? vodafoneCash;
+  final String? binanceId;
 
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
@@ -605,6 +622,9 @@ class Booking {
     this.notes,
     this.depositPaid = 0.0,
     this.isDepositPaid = false,
+    this.instapay,
+    this.vodafoneCash,
+    this.binanceId,
   });
 
   /// Create Booking from Firestore/Supabase document
@@ -629,18 +649,14 @@ class Booking {
       stadiumImageUrl: data['stadiumImageUrl'] ?? data['stadium_image_url'] ?? '',
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
       startTime: startTimeVal != null 
-          ? (startTimeVal is Timestamp 
-              ? startTimeVal.toDate()
-              : (startTimeVal is DateTime 
-                  ? startTimeVal 
-                  : DateTime.parse(startTimeVal.toString())))
+          ? (startTimeVal is DateTime 
+              ? startTimeVal 
+              : DateTime.parse(startTimeVal.toString()))
           : DateTime.now(),
       endTime: endTimeVal != null 
-          ? (endTimeVal is Timestamp 
-              ? endTimeVal.toDate()
-              : (endTimeVal is DateTime 
-                  ? endTimeVal 
-                  : DateTime.parse(endTimeVal.toString())))
+          ? (endTimeVal is DateTime 
+              ? endTimeVal 
+              : DateTime.parse(endTimeVal.toString()))
           : DateTime.now(),
       bookingType: BookingType.values.firstWhere(
         (e) => e.name == bookingTypeVal,
@@ -666,18 +682,14 @@ class Booking {
       ),
       createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? '',
       createdAt: createdAtVal != null 
-          ? (createdAtVal is Timestamp 
-              ? createdAtVal.toDate()
-              : (createdAtVal is DateTime 
-                  ? createdAtVal 
-                  : DateTime.parse(createdAtVal.toString())))
+          ? (createdAtVal is DateTime 
+              ? createdAtVal 
+              : DateTime.parse(createdAtVal.toString()))
           : DateTime.now(),
       updatedAt: updatedAtVal != null 
-          ? (updatedAtVal is Timestamp 
-              ? updatedAtVal.toDate()
-              : (updatedAtVal is DateTime 
-                  ? updatedAtVal 
-                  : DateTime.parse(updatedAtVal.toString())))
+          ? (updatedAtVal is DateTime 
+              ? updatedAtVal 
+              : DateTime.parse(updatedAtVal.toString()))
           : null,
       homeScore: data['homeScore'] ?? data['home_score'],
       awayScore: data['awayScore'] ?? data['away_score'],
@@ -707,6 +719,9 @@ class Booking {
       notes: data['notes'],
       depositPaid: (data['deposit_paid'] ?? data['depositPaid'] ?? 0.0).toDouble(),
       isDepositPaid: data['is_deposit_paid'] ?? data['isDepositPaid'] ?? false,
+      instapay: data['instapay'] ?? data['insta_pay'],
+      vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],
+      binanceId: data['binanceId'] ?? data['binance_id'],
     );
   }
 
@@ -717,8 +732,8 @@ class Booking {
       'stadiumName': stadiumName,
       'stadiumImageUrl': stadiumImageUrl,
       'ownerId': ownerId,
-      'startTime': Timestamp.fromDate(startTime),
-      'endTime': Timestamp.fromDate(endTime),
+      'startTime': startTime.toIso8601String(),
+      'endTime': endTime.toIso8601String(),
       'bookingType': bookingType.name,
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,
@@ -736,8 +751,8 @@ class Booking {
       'paymentTransactionId': paymentTransactionId,
       'status': status.name,
       'createdByUserId': createdByUserId,
-      'createdAt': Timestamp.fromDate(createdAt),
-      'updatedAt': updatedAt != null ? Timestamp.fromDate(updatedAt!) : FieldValue.serverTimestamp(),
+      'createdAt': createdAt.toIso8601String(),
+      'updatedAt': updatedAt?.toIso8601String() ?? DateTime.now().toIso8601String(),
       'homeScore': homeScore,
       'awayScore': awayScore,
       'resultSubmittedByTeamId': resultSubmittedByTeamId,
@@ -756,6 +771,9 @@ class Booking {
       'notes': notes,
       'deposit_paid': depositPaid,
       'is_deposit_paid': isDepositPaid,
+      'instapay': instapay,
+      'vodafoneCash': vodafoneCash,
+      'binanceId': binanceId,
     };
   }
 
@@ -802,6 +820,9 @@ class Booking {
       depositPaid: draft.depositPaid,
       isDepositPaid: draft.isDepositPaid,
       paymentStatus: draft.paymentStatus ?? (draft.isPaid ? 'paid' : (draft.isDepositPaid ? 'partially_paid' : 'pending')),
+      instapay: draft.instapay,
+      vodafoneCash: draft.vodafoneCash,
+      binanceId: draft.binanceId,
     );
   }
 
@@ -845,6 +866,9 @@ class Booking {
     String? paymentStatus,
     double? depositPaid,
     bool? isDepositPaid,
+    String? instapay,
+    String? vodafoneCash,
+    String? binanceId,
   }) {
     return Booking(
       id: id ?? this.id,
@@ -886,6 +910,9 @@ class Booking {
       paymentStatus: paymentStatus ?? this.paymentStatus,
       depositPaid: depositPaid ?? this.depositPaid,
       isDepositPaid: isDepositPaid ?? this.isDepositPaid,
+      instapay: instapay ?? this.instapay,
+      vodafoneCash: vodafoneCash ?? this.vodafoneCash,
+      binanceId: binanceId ?? this.binanceId,
     );
   }
 
@@ -1473,9 +1500,9 @@ class AppNotification {
       type: data['type'] ?? 'info',
       isRead: data['isRead'] ?? false,
       createdAt: data['createdAt'] != null 
-          ? (data['createdAt'] is Timestamp 
-              ? (data['createdAt'] as Timestamp).toDate() 
-              : DateTime.parse(data['createdAt']))
+          ? (data['createdAt'] is DateTime 
+              ? data['createdAt'] 
+              : DateTime.parse(data['createdAt'].toString()))
           : DateTime.now(),
       bookingId: data['bookingId'],
       metadata: data['metadata'] is Map<String, dynamic> ? Map<String, dynamic>.from(data['metadata']) : null,
@@ -1488,7 +1515,7 @@ class AppNotification {
       'body': body,
       'type': type,
       'isRead': isRead,
-      'createdAt': Timestamp.fromDate(createdAt),
+      'createdAt': createdAt.toIso8601String(),
       'bookingId': bookingId,
       'metadata': metadata,
     };
@@ -1556,8 +1583,8 @@ class TournamentMatch {
       winnerId: data['winnerId'] ?? data['winner_id'],
       nextMatchId: data['nextMatchId'] ?? data['next_match_id'],
       scheduledTime: scheduledTimeVal != null
-          ? (scheduledTimeVal is Timestamp 
-              ? scheduledTimeVal.toDate() 
+          ? (scheduledTimeVal is DateTime 
+              ? scheduledTimeVal 
               : DateTime.tryParse(scheduledTimeVal.toString()))
           : null,
     );
@@ -1576,7 +1603,7 @@ class TournamentMatch {
       'awayScore': awayScore,
       'winnerId': winnerId,
       'nextMatchId': nextMatchId,
-      'scheduledTime': scheduledTime != null ? Timestamp.fromDate(scheduledTime!) : null,
+      'scheduledTime': scheduledTime?.toIso8601String(),
     };
   }
 }

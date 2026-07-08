@@ -1,12 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:vsp_application/core/services/auth_service.dart';
 import 'package:vsp_application/data/models.dart';
-// Note: We test the service logic directly to ensure Firestore operations are solid.
-// Testing the AuthProvider directly in CLI requires complex mocking of FirebaseAuth and UI contexts,
-// so we test the underlying AuthService which AuthProvider relies on.
-
 import 'package:supabase_flutter/supabase_flutter.dart';
 
 class MockGotrueAsyncStorage extends GotrueAsyncStorage {
@@ -24,12 +19,7 @@ class MockGotrueAsyncStorage extends GotrueAsyncStorage {
 
 void main() {
   group('VSP Critical Flows Test', () {
-    late FakeFirebaseFirestore fakeFirestore;
-    late AuthService authService;
-    late DatabaseService dbService;
-
     setUp(() async {
-      // Initialize Supabase with placeholders to prevent constructor crashes
       try {
         TestWidgetsFlutterBinding.ensureInitialized();
         await Supabase.initialize(
@@ -41,25 +31,21 @@ void main() {
           ),
         );
       } catch (_) {}
-      
-      fakeFirestore = FakeFirebaseFirestore();
-      dbService = DatabaseService(firestore: fakeFirestore);
     });
 
     test('1. Edit Profile Logic & Security Checks', () async {
-      // // print('🔹 Testing Edit Profile Logic...');
-      
       const testUid = 'player_123';
 
-      // 1. Create Initial User
-      await fakeFirestore.collection('users').doc(testUid).set({
-        'uid': testUid,
-        'name': 'Old Name',
-        'phone': '01000000000',
-        'position': 'GK',
-        'role': 'player',
-        'isSuspended': false,
-      });
+      final mockUserDb = <String, Map<String, dynamic>>{
+        testUid: {
+          'uid': testUid,
+          'name': 'Old Name',
+          'phone': '01000000000',
+          'position': 'GK',
+          'role': 'player',
+          'isSuspended': false,
+        }
+      };
 
       // 2. Simulate User trying to update Profile + Hack the System
       Map<String, dynamic> incomingDataFromUI = {
@@ -77,54 +63,53 @@ void main() {
         sanitizedData.remove(field);
       }
 
-      // 4. Update Firestore
-      await fakeFirestore.collection('users').doc(testUid).update(sanitizedData);
+      // 4. Update local mock db
+      sanitizedData.forEach((key, value) {
+        mockUserDb[testUid]![key] = value;
+      });
 
       // 5. Verify the Update
-      final updatedDoc = await fakeFirestore.collection('users').doc(testUid).get();
+      final updatedUser = mockUserDb[testUid]!;
       
       // Check legitimate changes
-      expect(updatedDoc['name'], 'New Name', reason: "Name should update");
-      expect(updatedDoc['phone'], '01111111111', reason: "Phone should update");
-      expect(updatedDoc['position'], 'FW', reason: "Position should update");
+      expect(updatedUser['name'], 'New Name', reason: "Name should update");
+      expect(updatedUser['phone'], '01111111111', reason: "Phone should update");
+      expect(updatedUser['position'], 'FW', reason: "Position should update");
       
       // Check SECURITY protections
-      expect(updatedDoc['role'], 'player', reason: "Role MUST NOT change");
-      expect(updatedDoc['isSuspended'], false, reason: "Suspension MUST NOT change");
-
-      // // print('✅ Edit Profile & Security Sanitization Working Perfectly.');
+      expect(updatedUser['role'], 'player', reason: "Role MUST NOT change");
+      expect(updatedUser['isSuspended'], false, reason: "Suspension MUST NOT change");
     });
 
     test('2. VSP 1v1 Official League Fetch & Sort', () async {
-      // // print('🔹 Testing 1v1 League Standings...');
-      
-      // 1. Seed Fake Data into the specific 1v1 collection
-      await fakeFirestore.collection('vsp_1VS1_players').doc('p1').set({
-        'name': 'Player B',
-        'totalPoints': 50,
-      });
-      await fakeFirestore.collection('vsp_1VS1_players').doc('p2').set({
-        'name': 'Player A',
-        'totalPoints': 120, // Should be First
-      });
-      await fakeFirestore.collection('vsp_1VS1_players').doc('p3').set({
-        'name': 'Player C',
-        'totalPoints': 90, // Should be Second
-      });
+      // 1. Seed Fake Data into a mock list
+      final mockStandings = [
+        {
+          'id': 'p1',
+          'name': 'Player B',
+          'totalPoints': 50,
+        },
+        {
+          'id': 'p2',
+          'name': 'Player A',
+          'totalPoints': 120, // Should be First
+        },
+        {
+          'id': 'p3',
+          'name': 'Player C',
+          'totalPoints': 90, // Should be Second
+        }
+      ];
 
-      // 2. Simulate the Stream fetching data
-      // In database_service we do: orderBy('totalPoints', descending: true)
-      final snapshot = await fakeFirestore
-          .collection('vsp_1VS1_players')
-          .orderBy('totalPoints', descending: true)
-          .get();
+      // 2. Simulate the database sorting
+      mockStandings.sort((a, b) => (b['totalPoints'] as int).compareTo(a['totalPoints'] as int));
 
       // Convert to our model just like the stream does
       List<VSP1v1Player> players = [];
-      for (int i = 0; i < snapshot.docs.length; i++) {
-        var data = snapshot.docs[i].data();
+      for (int i = 0; i < mockStandings.length; i++) {
+        var data = Map<String, dynamic>.from(mockStandings[i]);
         data['rank'] = i + 1; 
-        players.add(VSP1v1Player.fromFirestore(data, snapshot.docs[i].id));
+        players.add(VSP1v1Player.fromFirestore(data, data['id'].toString()));
       }
 
       // 3. Verify Sorting and Ranking
@@ -138,8 +123,6 @@ void main() {
 
       expect(players[2].name, 'Player B', reason: "Player B has 50 pts, must be 3rd");
       expect(players[2].rank, 3, reason: "Rank must be 3");
-
-      // // print('✅ 1v1 League Data Fetching & Ranking Working Perfectly.');
     });
   });
 }

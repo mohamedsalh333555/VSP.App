@@ -1,8 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
 import 'package:vsp_application/core/services/database_service.dart';
 import 'package:vsp_application/data/models.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:vsp_application/core/repositories/match_repository.dart';
 import 'package:vsp_application/core/repositories/notification_repository.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -127,9 +125,6 @@ final mockHttpClient = MockSupabaseHttpClient();
 
 void main() {
   group('VSP App Core Logic Tests (The Ultimate Test)', () {
-    late FakeFirebaseFirestore fakeFirestore;
-    late DatabaseService dbService;
-
     setUp(() async {
       mockHttpClient.bookingsDb.clear();
       try {
@@ -145,48 +140,22 @@ void main() {
         );
       } catch (_) {}
       
-      fakeFirestore = FakeFirebaseFirestore();
-      NotificationHandler.notificationRepo = NotificationRepository(firestore: fakeFirestore);
-      // MatchRepository is a singleton or uses Firestore via dependency injection
-      // For tests, we use the firestore argument
+      NotificationHandler.notificationRepo = NotificationRepository();
     });
 
     test('1. Double Booking Prevention (Race Condition)', () async {
-      // // print('🔹 Testing Double Booking Prevention...');
-      
-      // 1. Create a Stadium
-      await fakeFirestore.collection('stadiums').doc('stad_1').set({
-        'name': 'Test Stadium',
-        'isVerified': true,
-      });
-
       final baseTime = DateTime(2025, 1, 1, 18, 0); // 6:00 PM
       final endTime = baseTime.add(const Duration(hours: 1)); // 7:00 PM
 
-      // 2. First User Books 6 PM to 7 PM
-      final draft1 = BookingDraft(
-        stadiumId: 'stad_1',
-        stadiumName: 'Test Stadium',
-        ownerId: 'owner1',
-        startTime: baseTime,
-        endTime: endTime,
-        bookingType: BookingType.personal,
-        isPrivate: true,
-        rentBall: false,
-        totalPrice: 150,
-      );
+      final existingBookings = [
+        {
+          'stadiumId': 'stad_1',
+          'startTime': baseTime,
+          'endTime': endTime,
+          'status': 'confirmed',
+        }
+      ];
 
-      // We need to implement createBooking logically in tests or use a mock that simulates it.
-      // For this test, we assume DatabaseService.createBooking would handle this.
-      // However, createBooking usually takes a Map. Let's create it directly in Firestore for setup.
-      await fakeFirestore.collection('bookings').add({
-        'stadiumId': 'stad_1',
-        'startTime': Timestamp.fromDate(draft1.startTime),
-        'endTime': Timestamp.fromDate(draft1.endTime),
-        'status': 'confirmed',
-      });
-
-      // 3. Second User Tries to Book 6:30 PM to 7:30 PM (Overlap!)
       final draft2 = BookingDraft(
         stadiumId: 'stad_1',
         stadiumName: 'Test Stadium',
@@ -200,18 +169,16 @@ void main() {
       );
 
       // Manual overlap check simulation
-      final existingBookings = await fakeFirestore.collection('bookings').where('stadiumId', isEqualTo: 'stad_1').get();
       bool isOverlapping = false;
-      for (var doc in existingBookings.docs) {
-        final bStart = (doc['startTime'] as Timestamp).toDate();
-        final bEnd = (doc['endTime'] as Timestamp).toDate();
+      for (var b in existingBookings) {
+        final bStart = b['startTime'] as DateTime;
+        final bEnd = b['endTime'] as DateTime;
         if (draft2.startTime.isBefore(bEnd) && draft2.endTime.isAfter(bStart)) {
           isOverlapping = true;
         }
       }
 
       expect(isOverlapping, true, reason: "System must detect overlapping time!");
-      // // print('✅ Overlap strictly prevented. Double booking is impossible.');
     });
 
     test('2. Public Matches Join/Leave Logic', () async {
@@ -232,10 +199,7 @@ void main() {
         'end_time': DateTime.now().add(const Duration(hours: 2)).toUtc().toIso8601String(),
       };
 
-      final matchRepo = MatchRepository(
-        firestore: fakeFirestore,
-        notificationRepo: NotificationRepository(firestore: fakeFirestore),
-      );
+      final matchRepo = MatchRepository();
 
       // 2. User 2 joins
       bool joined = await matchRepo.joinPublicMatch(matchId, 'user_2');
@@ -259,25 +223,20 @@ void main() {
     });
 
     test('3. The Kill Switch (Owner Suspension)', () async {
-      // // print('🔹 Testing The Kill Switch...');
-      
-      // 1. Create User
-      await fakeFirestore.collection('users').doc('owner_99').set({
-        'role': 'owner',
-        'isSuspended': false,
-      });
+      final mockUserDb = <String, Map<String, dynamic>>{
+        'owner_99': {
+          'role': 'owner',
+          'isSuspended': false,
+        }
+      };
 
-      // 2. Admin Suspends Owner
-      await fakeFirestore.collection('users').doc('owner_99').update({
-        'isSuspended': true,
-      });
+      // Admin Suspends Owner
+      mockUserDb['owner_99']!['isSuspended'] = true;
 
-      // 3. Fetch User and verify Kill Switch
-      final userDoc = await fakeFirestore.collection('users').doc('owner_99').get();
-      final isSuspended = userDoc['isSuspended'];
+      // Fetch User and verify Kill Switch
+      final isSuspended = mockUserDb['owner_99']!['isSuspended'];
 
       expect(isSuspended, true, reason: "Owner must be suspended");
-      // // print('✅ Kill Switch works. Owner is blocked at RootScreen.');
     });
   });
 }

@@ -1,11 +1,14 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/services/database_service.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/providers/auth_provider.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class OfficialLeagueStandingsScreen extends StatelessWidget {
   const OfficialLeagueStandingsScreen({super.key});
@@ -14,6 +17,39 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
     final Uri url = Uri.parse('https://instagram.com/vsp.app');
     if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
       debugPrint('Could not launch $url');
+    }
+  }
+
+  Future<void> _joinWhatsAppTournament(BuildContext context) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    if (user == null) {
+      VSPFeedback.showError(context, 'الرجاء تسجيل الدخول أولاً للمتابعة.');
+      return;
+    }
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final uid = user.uid;
+    final name = user.name ?? 'لاعب VSP';
+
+    final String messageText = 
+        'مرحباً كابتن محمد، أود التسجيل في بطولة 1ضد1 القادمة. كود حسابه الخاص بي هو: $uid واسمي الموثق: $name';
+    final String encodedMsg = Uri.encodeComponent(messageText);
+    final Uri waUrl = Uri.parse('https://wa.me/201100229462?text=$encodedMsg');
+
+    try {
+      if (await canLaunchUrl(waUrl)) {
+        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
+      } else {
+        throw 'Could not launch WhatsApp url';
+      }
+    } catch (e) {
+      if (context.mounted) {
+        VSPFeedback.showError(
+          context, 
+          isArabic ? 'فشل فتح تطبيق واتساب. تأكد من تثبيته على جهازك.' : 'Failed to open WhatsApp. Make sure it is installed.'
+        );
+      }
     }
   }
 
@@ -85,6 +121,20 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                         ),
                         style: ElevatedButton.styleFrom(
                           backgroundColor: VSPColors.textPrimary,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        ),
+                      ),
+                      const SizedBox(height: 12),
+                      ElevatedButton.icon(
+                        onPressed: () => _joinWhatsAppTournament(context),
+                        icon: Icon(LucideIcons.userPlus, color: Colors.black, size: 20),
+                        label: const Text(
+                          'انضم للبطولة القادمة | JOIN TOURNAMENT',
+                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 0.5),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent, // Volt Green
                           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
                           padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
                         ),

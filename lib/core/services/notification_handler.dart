@@ -421,7 +421,25 @@ class NotificationHandler {
         return false;
       }
 
-      // 3. Calculate distance
+      // 🛡️ SECURITY BARRIER: GPS Accuracy Gate
+      // Reject disputes when GPS signal accuracy is worse than 30 meters.
+      // This prevents spoofed/indoor/WiFi-only low-accuracy GPS from falsely
+      // passing the proximity check. Players must be in an open area with a
+      // strong satellite lock.
+      if (position.accuracy > 30) {
+        VSPLogger.w('GPS dispute rejected: Accuracy too low (${position.accuracy.toStringAsFixed(1)}m > 30m threshold)');
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(
+            context,
+            'فشل التحقق! دقة إشارة الـ GPS ضعيفة جداً (${position.accuracy.toStringAsFixed(0)} متر). '
+            'يجب أن تكون الدقة أقل من 30 متراً. يرجى الانتقال لمنطقة مفتوحة وإعادة المحاولة. 📡',
+          );
+        }
+        return false;
+      }
+
+      // 3. Calculate distance and dynamic allowed threshold
       final double distance = Geolocator.distanceBetween(
         position.latitude,
         position.longitude,
@@ -429,8 +447,10 @@ class NotificationHandler {
         stadiumLng,
       );
 
-      // 4. Validate if player is within 150m of stadium
-      if (distance <= 150) {
+      final double allowedThreshold = 150.0 + position.accuracy;
+
+      // 4. Validate if player is within allowed threshold of stadium
+      if (distance <= allowedThreshold) {
         // Clear no-show count / dismiss penalty
         await Supabase.instance.client.rpc('dismiss_no_show_penalty', params: {
           'p_player_id': playerId,
@@ -441,23 +461,25 @@ class NotificationHandler {
             .from('bookings')
             .update({
               'no_show_disputed': true,
-              'notes': 'Dispute verified: Player was within ${distance.toStringAsFixed(0)}m of stadium.'
+              'notes': 'Dispute verified: Player was within ${distance.toStringAsFixed(0)}m of stadium with GPS accuracy of ${position.accuracy.toStringAsFixed(0)}m (threshold: ${allowedThreshold.toStringAsFixed(0)}m).'
             })
             .eq('id', bookingId);
             
-        VSPLogger.i('No-show penalty successfully dismissed via GPS.');
+        VSPLogger.i('No-show penalty successfully dismissed via GPS. Distance: $distance, Accuracy: ${position.accuracy}');
         
         final context = navigatorKey.currentContext;
         if (context != null) {
           VSPFeedback.triggerSuccess();
-          VSPFeedback.showSuccess(context, 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆');
+          final msgAr = 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆\nالمسافة: ${distance.toStringAsFixed(0)}م، الدقة: ${position.accuracy.toStringAsFixed(0)}م';
+          VSPFeedback.showSuccess(context, msgAr);
         }
         return true;
       } else {
-        VSPLogger.i('GPS dispute rejected: Player is too far (${distance.toStringAsFixed(0)}m).');
+        VSPLogger.i('GPS dispute rejected: Player is too far (${distance.toStringAsFixed(0)}m), threshold: $allowedThreshold.');
         final context = navigatorKey.currentContext;
         if (context != null) {
-          VSPFeedback.showError(context, 'أنت لست متواجداً في الملعب! المسافة الحالية: ${distance.toStringAsFixed(0)} متر.');
+          final msgAr = 'أنت لست متواجداً في الملعب! المسافة الحالية: ${distance.toStringAsFixed(0)} متر (هامش الدقة المسموح به: ${allowedThreshold.toStringAsFixed(0)} متر).';
+          VSPFeedback.showError(context, msgAr);
         }
         return false;
       }

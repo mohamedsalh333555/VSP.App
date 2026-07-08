@@ -63,6 +63,8 @@
 		<dict>
 			<key>CFBundleTypeRole</key>
 			<string>Editor</string>
+			<key>CFBundleURLName</key>
+			<string>io.supabase.fluttervsp</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>io.supabase.fluttervsp</string>

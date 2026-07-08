@@ -695,6 +695,7 @@ class AuthProvider with ChangeNotifier {
           p2pInstapay: sanitizedData['p2p_instapay'] ?? sanitizedData['p2pInstapay'] ?? _userModel!.p2pInstapay,
           p2pVodafone: sanitizedData['p2p_vodafone'] ?? sanitizedData['p2pVodafone'] ?? _userModel!.p2pVodafone,
           p2pBank: sanitizedData['p2p_bank'] ?? sanitizedData['p2pBank'] ?? _userModel!.p2pBank,
+          additionalData: sanitizedData['additionalData'] ?? sanitizedData['additional_data'] ?? _userModel!.additionalData,
         );
       }
       _isLoading = false;

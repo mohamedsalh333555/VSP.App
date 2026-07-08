@@ -91,104 +91,120 @@ class AppRouter {
           },
         ),
       ],
-      redirect: (context, state) {
-        final isInitializing = authProvider.isInitializing;
-        final isAuthenticated = authProvider.isAuthenticated;
-        final isGhostUser = authProvider.isGhostUser;
-        final userModel = authProvider.userModel;
-        final isOwner = authProvider.isOwner;
-        final hasDataFetchError = authProvider.hasDataFetchError;
-        
-        final path = state.uri.path;
-
-        // 0. Password recovery link bypass
-        if (path == '/set-new-password') return null;
-
-        // 1. Session initialization check
-        if (isInitializing) {
-          if (path != '/splash') return '/splash';
-          return null;
-        }
-
-        // 2. Unauthenticated check
-        if (!isAuthenticated) {
-          if (path != '/welcome') return '/welcome';
-          return null;
-        }
-
-        // 3. Ghost user onboarding check
-        if (isGhostUser) {
-          if (path != '/onboarding') return '/onboarding';
-          return null;
-        }
-
-        // 4. User data loading check
-        if (userModel == null) {
-          if (hasDataFetchError) {
-            if (path != '/offline') return '/offline';
-            return null;
-          }
-          if (path != '/splash') return '/splash';
-          return null;
-        }
-
-        // 5. OTP verification block
-        // Checks isEmailVerified — NOT isRegistrationComplete.
-        // Google/Apple users are already email-verified by the provider → skip this gate.
-        // Email/password users must verify their OTP before proceeding.
-        if (!AppConfig.bypassOtp && !userModel.isEmailVerified) {
-          if (path != '/verify-email') return '/verify-email';
-          return null;
-        }
-
-        // 6. Registration detail check (missing phone)
-        // Only force onboarding if the user never completed registration AND phone is missing.
-        // If isRegistrationComplete is true (set on first successful onboarding), skip this gate.
-        final bool hasPhone = userModel.phone != null && userModel.phone!.isNotEmpty;
-        if (!hasPhone && !userModel.isRegistrationComplete) {
-          if (path != '/onboarding') return '/onboarding';
-          return null;
-        }
-
-        if (userModel.isBlocked) {
-          if (isOwner) {
-            // Suspended/Blocked owners proceed to owner dashboard with alert
-            if (path != '/owner') return '/owner';
-            return null;
-          } else {
-            // Blocked players locked out completely
-            if (path != '/suspended') return '/suspended';
-            return null;
-          }
-        }
-
-        // 7. Owner flow gating
-        if (isOwner) {
-          if (!userModel.hasStadium) {
-            if (path != '/facility-onboarding') return '/facility-onboarding';
-            return null;
-          }
-          // Allow owners with verificationStatus == 'pending' or 'rejected' to bypass the block and access dashboard
-          if (!userModel.isIdentityVerified && userModel.verificationStatus != 'pending' && userModel.verificationStatus != 'rejected') {
-            if (path != '/documentation') return '/documentation';
-            return null;
-          }
-          
-          // Redirect fully onboarded owners to RootScreen
-          if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/facility-onboarding' || path == '/verify-email' || path == '/owner') {
-            return '/';
-          }
-          return null;
-        }
-
-        // 8. Player flow gating
-        if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/suspended' || path == '/verify-email' || path == '/player') {
-          return '/';
-        }
-
-        return null;
-      },
+      redirect: (context, state) => redirectLogic(context, state, authProvider),
     );
+  }
+
+  static String? redirectLogic(BuildContext context, GoRouterState state, AuthProvider authProvider) {
+    final isInitializing = authProvider.isInitializing;
+    final isAuthenticated = authProvider.isAuthenticated;
+    final isGhostUser = authProvider.isGhostUser;
+    final userModel = authProvider.userModel;
+    final isOwner = authProvider.isOwner;
+    final hasDataFetchError = authProvider.hasDataFetchError;
+    
+    final path = state.uri.path;
+
+    // 0. Password recovery link bypass
+    if (path == '/set-new-password') return null;
+
+    // 1. Session initialization check
+    if (isInitializing) {
+      if (path != '/splash') return '/splash';
+      return null;
+    }
+
+    // 2. Unauthenticated check
+    if (!isAuthenticated) {
+      if (path != '/welcome') return '/welcome';
+      return null;
+    }
+
+    // 3. Ghost user onboarding check
+    if (isGhostUser) {
+      if (path != '/onboarding') return '/onboarding';
+      return null;
+    }
+
+    // 4. User data loading check
+    if (userModel == null) {
+      if (hasDataFetchError) {
+        if (path != '/offline') return '/offline';
+        return null;
+      }
+      if (path != '/splash') return '/splash';
+      return null;
+    }
+
+    // 5. OTP verification block
+    // Checks isEmailVerified — NOT isRegistrationComplete.
+    // Google/Apple users are already email-verified by the provider → skip this gate.
+    // Email/password users must verify their OTP before proceeding.
+    if (!AppConfig.bypassOtp && !userModel.isEmailVerified) {
+      if (path != '/verify-email') return '/verify-email';
+      return null;
+    }
+
+    // 6. Registration detail check (missing phone)
+    final bool hasPhone = userModel.phone != null && userModel.phone!.trim().isNotEmpty && userModel.phone!.trim().length >= 10;
+    if (!hasPhone) {
+      if (path != '/onboarding') return '/onboarding';
+      return null;
+    }
+
+    if (userModel.isBlocked) {
+      if (isOwner) {
+        // Suspended/Blocked owners proceed to owner dashboard with alert
+        if (path != '/owner') return '/owner';
+        return null;
+      } else {
+        // Blocked players locked out completely
+        if (path != '/suspended') return '/suspended';
+        return null;
+      }
+    }
+
+    // 7. Owner flow gating
+    if (isOwner) {
+      // 🛡️ ROLE ISOLATION: Owners must NOT view player match or team details.
+      if (path.startsWith('/match/') || path.startsWith('/team/')) {
+        return '/owner';
+      }
+
+      final bool isOnboardingConfirmed = userModel.additionalData?['isOnboardingConfirmed'] == true;
+      
+      if (!userModel.hasStadium || !isOnboardingConfirmed) {
+        if (path != '/facility-onboarding') return '/facility-onboarding';
+        return null;
+      }
+
+      // 🛡️ FIX GATING BUG:
+      // If the owner has a stadium, they must be allowed to stay on /facility-onboarding
+      // so they can see their added stadiums list, add more, or manually proceed.
+      // Likewise, allow them to stay on /documentation to upload docs.
+      if (path == '/facility-onboarding' || path == '/documentation') {
+        return null;
+      }
+
+      // Allow owners with verificationStatus == 'pending' or 'rejected' to bypass the block and access dashboard
+      if (!userModel.isIdentityVerified && userModel.verificationStatus != 'pending' && userModel.verificationStatus != 'rejected') {
+        if (path != '/documentation') return '/documentation';
+        return null;
+      }
+      
+      // Redirect fully onboarded owners to RootScreen
+      if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/verify-email' || path == '/owner') {
+        return '/';
+      }
+      return null;
+    }
+
+    // 8. Player flow gating
+    if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/suspended' || path == '/verify-email' || path == '/player') {
+      return '/';
+    }
+
+    return null;
   }
 }
 

@@ -1,4 +1,3 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import '../../data/models.dart';
 import '../repositories/user_repository.dart';
 import '../repositories/team_repository.dart';
@@ -16,8 +15,6 @@ import '../models/user_model.dart'; // Added for UserModel support
 /// LEGACY FACADE: This class is being phased out in favor of individual repositories.
 /// New code should use [UserRepository], [TeamRepository], etc., directly.
 class DatabaseService {
-  final FirebaseFirestore _firestore;
-  
   // Repository Singletons/Instances
   late final UserRepository user;
   late final TeamRepository team;
@@ -31,18 +28,17 @@ class DatabaseService {
   late final OwnerRepository owner;
   late final TournamentRepository tournament;
 
-  DatabaseService({FirebaseFirestore? firestore}) 
-      : _firestore = firestore ?? FirebaseFirestore.instance {
+  DatabaseService({dynamic firestore}) {
     user = UserRepository();
     team = TeamRepository();
-    report = ReportRepository(firestore: _firestore);
-    notification = NotificationRepository(firestore: _firestore);
-    league = LeagueRepository(firestore: _firestore);
-    match = MatchRepository(firestore: _firestore);
+    report = ReportRepository();
+    notification = NotificationRepository();
+    league = LeagueRepository();
+    match = MatchRepository();
     stadium = StadiumRepository();
     booking = SupabaseBookingRepository(); // Note: Internal implementation
     search = SearchRepository();
-    owner = OwnerRepository(firestore: _firestore);
+    owner = OwnerRepository();
     tournament = TournamentRepository();
   }
 
@@ -112,8 +108,8 @@ class DatabaseService {
     required String matchId,
     required int homeScore,
     required int awayScore,
-    required String winnerId,
-    required String winnerName,
+    String? winnerId,
+    String? winnerName,
   }) => tournament.updateTournamentMatchScore(
     matchId: matchId, 
     homeScore: homeScore, 

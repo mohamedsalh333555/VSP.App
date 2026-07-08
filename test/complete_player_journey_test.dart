@@ -1,16 +1,13 @@
-﻿import 'package:flutter_test/flutter_test.dart';
-import 'package:fake_cloud_firestore/fake_cloud_firestore.dart';
+import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/utils/elo_calculator.dart';
 
 void main() {
   group('VSP Ultimate Player & Tournament Journey E2E Test', () {
-    late FakeFirebaseFirestore fakeFirestore;
     late List<Team> mockDatabaseTeams;
     late List<Booking> mockDatabaseBookings;
 
     setUp(() {
-      fakeFirestore = FakeFirebaseFirestore();
       mockDatabaseTeams = [];
       mockDatabaseBookings = [];
     });
