@@ -1,7 +1,8 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
+import '../utils/phone_utils.dart';
 
 class TeamRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -60,7 +61,7 @@ class TeamRepository {
         'name': data['name'],
         'captain_id': (data['memberUids'] as List?)?.first?.toString(),
         'captain_name': data['captainName'] ?? 'Captain',
-        'captain_image_url': data['captainImageUrl'] ?? '',
+        'captain_phone': PhoneUtils.normalize(data['captainPhone'] ?? ''),
         'logo_url': data['logoUrl'] ?? '',
         'date': data['date'] ?? 'Upcoming',
         'stadium': data['stadium'] ?? 'TBD',
@@ -73,7 +74,6 @@ class TeamRepository {
         'current_winning_streak': 0,
         'unlocked_badges': ['explorer'],
         'played_opponents': [],
-        'beaten_opponents': [],
         'championships_won': 0,
         'governorate': data['governorate'] ?? 'Cairo',
         'sport_type': data['sportType'] ?? 'Football',

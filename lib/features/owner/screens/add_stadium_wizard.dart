@@ -23,6 +23,7 @@ import 'package:flutter_map/flutter_map.dart';
 import 'package:latlong2/latlong.dart';
 import 'package:http/http.dart' as http;
 import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class AddStadiumWizard extends StatefulWidget {
   final String? stadiumId;
@@ -112,6 +113,211 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     super.initState();
     if (widget.stadiumId != null) {
       _loadStadiumData();
+    } else {
+      _loadPersistedForm().then((_) {
+        _setupAutoSaveListeners();
+      });
+    }
+  }
+
+  Future<void> _saveToPrefs(String key, String value) async {
+    final prefs = await SharedPreferences.getInstance();
+    await prefs.setString(key, value);
+  }
+
+  Future<void> _saveBoolToPrefs(String key, bool? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    if (value == null) {
+      await prefs.remove(key);
+    } else {
+      await prefs.setBool(key, value);
+    }
+  }
+
+  Future<void> _loadPersistedForm() async {
+    if (widget.stadiumId != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      setState(() {
+        _nameController.text = prefs.getString('temp_stadium_name') ?? '';
+        _locationController.text = prefs.getString('temp_stadium_location') ?? '';
+        _priceController.text = prefs.getString('temp_stadium_price') ?? '';
+        _capacityController.text = prefs.getString('temp_stadium_capacity') ?? '';
+        _stadiumPhoneController.text = prefs.getString('temp_stadium_phone') ?? '';
+        _instapayController.text = prefs.getString('temp_stadium_instapay') ?? '';
+        _vodafoneController.text = prefs.getString('temp_stadium_vodafone') ?? '';
+        _binanceController.text = prefs.getString('temp_stadium_binance') ?? '';
+        _notesController.text = prefs.getString('temp_stadium_notes') ?? '';
+        _lengthController.text = prefs.getString('temp_stadium_length') ?? '';
+        _widthController.text = prefs.getString('temp_stadium_width') ?? '';
+        _seatsController.text = prefs.getString('temp_stadium_seats') ?? '';
+        _ballPriceController.text = prefs.getString('temp_stadium_ball_price') ?? '';
+        _depositController.text = prefs.getString('temp_stadium_deposit') ?? '';
+
+        _governorate = prefs.getString('temp_stadium_governorate');
+        _selectedSportType = prefs.getString('temp_stadium_sport_type');
+        _selectedFloorType = prefs.getString('temp_stadium_floor_type');
+        _selectedBathOption = prefs.getString('temp_stadium_bath_option');
+
+        _cafeteria = prefs.getBool('temp_stadium_cafeteria');
+        _garage = prefs.getBool('temp_stadium_garage');
+        _changingRoom = prefs.getBool('temp_stadium_changing_room');
+        _hasBall = prefs.getBool('temp_stadium_has_ball');
+        _requireDeposit = prefs.getBool('temp_stadium_require_deposit') ?? false;
+        _isSplitShift = prefs.getBool('temp_stadium_is_split_shift') ?? false;
+      });
+    } catch (e) {
+      debugPrint('Error loading persisted form data: $e');
+    }
+  }
+
+  void _setupAutoSaveListeners() {
+    _nameController.addListener(() => _saveToPrefs('temp_stadium_name', _nameController.text));
+    _locationController.addListener(() => _saveToPrefs('temp_stadium_location', _locationController.text));
+    _priceController.addListener(() => _saveToPrefs('temp_stadium_price', _priceController.text));
+    _capacityController.addListener(() => _saveToPrefs('temp_stadium_capacity', _capacityController.text));
+    _stadiumPhoneController.addListener(() => _saveToPrefs('temp_stadium_phone', _stadiumPhoneController.text));
+    _instapayController.addListener(() => _saveToPrefs('temp_stadium_instapay', _instapayController.text));
+    _vodafoneController.addListener(() => _saveToPrefs('temp_stadium_vodafone', _vodafoneController.text));
+    _binanceController.addListener(() => _saveToPrefs('temp_stadium_binance', _binanceController.text));
+    _notesController.addListener(() => _saveToPrefs('temp_stadium_notes', _notesController.text));
+    _lengthController.addListener(() => _saveToPrefs('temp_stadium_length', _lengthController.text));
+    _widthController.addListener(() => _saveToPrefs('temp_stadium_width', _widthController.text));
+    _seatsController.addListener(() => _saveToPrefs('temp_stadium_seats', _seatsController.text));
+    _ballPriceController.addListener(() => _saveToPrefs('temp_stadium_ball_price', _ballPriceController.text));
+    _depositController.addListener(() => _saveToPrefs('temp_stadium_deposit', _depositController.text));
+  }
+
+  Future<void> _clearPersistedForm() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final keys = [
+        'temp_stadium_name',
+        'temp_stadium_location',
+        'temp_stadium_price',
+        'temp_stadium_capacity',
+        'temp_stadium_phone',
+        'temp_stadium_instapay',
+        'temp_stadium_vodafone',
+        'temp_stadium_binance',
+        'temp_stadium_notes',
+        'temp_stadium_length',
+        'temp_stadium_width',
+        'temp_stadium_seats',
+        'temp_stadium_ball_price',
+        'temp_stadium_deposit',
+        'temp_stadium_governorate',
+        'temp_stadium_sport_type',
+        'temp_stadium_floor_type',
+        'temp_stadium_bath_option',
+        'temp_stadium_cafeteria',
+        'temp_stadium_garage',
+        'temp_stadium_changing_room',
+        'temp_stadium_has_ball',
+        'temp_stadium_require_deposit',
+        'temp_stadium_is_split_shift',
+      ];
+      for (final key in keys) {
+        await prefs.remove(key);
+      }
+    } catch (e) {
+      debugPrint('Error clearing persisted form data: $e');
+    }
+  }
+
+  void _updateGovernorate(String? val) {
+    setState(() {
+      _governorate = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveToPrefs('temp_stadium_governorate', val ?? '');
+    }
+  }
+
+  void _updateSportType(String? val) {
+    setState(() {
+      _selectedSportType = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveToPrefs('temp_stadium_sport_type', val ?? '');
+    }
+  }
+
+  void _updateFloorType(String? val) {
+    setState(() {
+      _selectedFloorType = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveToPrefs('temp_stadium_floor_type', val ?? '');
+    }
+  }
+
+  void _updateBathOption(bool val) {
+    setState(() {
+      _selectedBathOption = val ? 'Yes' : 'No';
+    });
+    if (widget.stadiumId == null) {
+      _saveToPrefs('temp_stadium_bath_option', _selectedBathOption!);
+    }
+  }
+
+  void _updateCafeteria(bool val) {
+    setState(() {
+      _cafeteria = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_cafeteria', val);
+    }
+  }
+
+  void _updateGarage(bool val) {
+    setState(() {
+      _garage = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_garage', val);
+    }
+  }
+
+  void _updateChangingRoom(bool val) {
+    setState(() {
+      _changingRoom = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_changing_room', val);
+    }
+  }
+
+  void _updateHasBall(bool val) {
+    setState(() {
+      _hasBall = val;
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_has_ball', val);
+    }
+  }
+
+  void _updateRequireDeposit(bool val) {
+    setState(() {
+      _requireDeposit = val;
+      if (!val) {
+        _depositController.clear();
+      }
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_require_deposit', val);
+    }
+  }
+
+  void _updateIsSplitShift(bool val) {
+    setState(() {
+      _isSplitShift = val;
+      if (_isSplitShift && _breakTimes.isEmpty) {
+        _breakTimes.add({'start': null, 'end': null});
+      }
+    });
+    if (widget.stadiumId == null) {
+      _saveBoolToPrefs('temp_stadium_is_split_shift', val);
     }
   }
 
@@ -265,11 +471,19 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           }
           VSPLogger.i('📍 Address resolved to: $readableAddress, Governorate: $_governorate');
         });
+        if (widget.stadiumId == null) {
+          _saveToPrefs('temp_stadium_location', readableAddress);
+          _saveToPrefs('temp_stadium_governorate', _governorate ?? 'Cairo');
+        }
       } else {
         setState(() {
           _locationController.text = 'Lat: $lat, Long: $lng';
           _governorate = 'Cairo'; // Fallback
         });
+        if (widget.stadiumId == null) {
+          _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
+          _saveToPrefs('temp_stadium_governorate', 'Cairo');
+        }
       }
     } catch (e) {
       VSPLogger.e('❌ Geocoding error', e);
@@ -277,6 +491,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _locationController.text = 'Lat: $lat, Long: $lng';
         _governorate = 'Cairo'; // Fallback
       });
+      if (widget.stadiumId == null) {
+        _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
+        _saveToPrefs('temp_stadium_governorate', 'Cairo');
+      }
     }
   }
 
@@ -972,6 +1190,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
       
       if (mounted) {
+        if (widget.stadiumId == null) {
+          await _clearPersistedForm();
+        }
         VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.stadiumSubmitSuccess);
         Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
       }
@@ -1219,6 +1440,36 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
           const SizedBox(height: 16),
+          // Warm payment settings warning
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            margin: const EdgeInsets.only(bottom: 16),
+            decoration: BoxDecoration(
+              color: VSPColors.warning.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+            ),
+            child: Row(
+              children: [
+                Icon(LucideIcons.info, color: VSPColors.warning, size: 20),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: Text(
+                    isArabic
+                        ? "تنبيه: يمكنك استكمال إعدادات التحصيل والربط المالي لاحقاً من شاشة إدارة الحساب لتفعيل استقبال المدفوعات."
+                        : "Note: You can complete collection settings and financial linking later from the account management screen to activate payment reception.",
+                    style: TextStyle(
+                      color: VSPColors.warning,
+                      fontSize: 12,
+                      fontWeight: FontWeight.w500,
+                      height: 1.4,
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ),
           _buildSportDropdown(),
           const SizedBox(height: 16),
           _buildTextField(
@@ -1232,7 +1483,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 16),
           _buildTextField(
             AppLocalizations.of(context)!.playersTeam, 
-            '5', 
+            isArabic ? "اكتب رقم عدد الفريق الواحد" : "Write the number of players for a single team", 
             controller: _capacityController,
             maxLength: 2,
             keyboardType: TextInputType.number,
@@ -1285,14 +1536,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               Text(AppLocalizations.of(context)!.setDailyBreak, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
               Switch.adaptive(
                 value: _isSplitShift,
-                onChanged: (val) {
-                  setState(() {
-                    _isSplitShift = val;
-                    if (_isSplitShift && _breakTimes.isEmpty) {
-                      _breakTimes.add({'start': null, 'end': null});
-                    }
-                  });
-                },
+                onChanged: _updateIsSplitShift,
                 activeColor: VSPColors.accent,
               ),
             ],
@@ -1435,13 +1679,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       ),
       child: Column(
         children: [
-          _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == null ? null : _selectedBathOption == 'Yes', (val) => setState(() => _selectedBathOption = val ? 'Yes' : 'No')),
+          _buildYesNoSection(AppLocalizations.of(context)!.bathrooms, _selectedBathOption == null ? null : _selectedBathOption == 'Yes', _updateBathOption),
           const SizedBox(height: 20),
-          _buildYesNoSection(AppLocalizations.of(context)!.cafeteria, _cafeteria, (val) => setState(() => _cafeteria = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.cafeteria, _cafeteria, _updateCafeteria),
           const SizedBox(height: 20),
-          _buildYesNoSection(AppLocalizations.of(context)!.garage, _garage, (val) => setState(() => _garage = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.garage, _garage, _updateGarage),
           const SizedBox(height: 20),
-          _buildYesNoSection(AppLocalizations.of(context)!.changingRoom, _changingRoom, (val) => setState(() => _changingRoom = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.changingRoom, _changingRoom, _updateChangingRoom),
           const SizedBox(height: 20),
           _buildTextField(
             AppLocalizations.of(context)!.seatCount, 
@@ -1461,7 +1705,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),
-          _buildYesNoSection(AppLocalizations.of(context)!.ballAvailableLabel, _hasBall, (val) => setState(() => _hasBall = val)),
+          _buildYesNoSection(AppLocalizations.of(context)!.ballAvailableLabel, _hasBall, _updateHasBall),
           
           if (_hasBall == true) ...[
             const SizedBox(height: 16),
@@ -1496,14 +1740,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   ),
                   Switch.adaptive(
                     value: _requireDeposit,
-                    onChanged: (val) {
-                      setState(() {
-                        _requireDeposit = val;
-                        if (!val) {
-                          _depositController.clear();
-                        }
-                      });
-                    },
+                    onChanged: _updateRequireDeposit,
                     activeColor: VSPColors.accent,
                   ),
                 ],

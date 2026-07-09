@@ -316,6 +316,10 @@ class BookingProvider with ChangeNotifier {
       final errorStr = e.toString();
       if (errorStr.contains('time_conflict')) {
         _errorMessage = 'time_conflict';
+      } else if (errorStr.contains('match_is_full')) {
+        _errorMessage = 'match_is_full';
+      } else if (errorStr.contains('already_joined')) {
+        _errorMessage = 'already_joined';
       } else {
         _errorMessage = errorStr.replaceAll('Exception: ', '');
       }

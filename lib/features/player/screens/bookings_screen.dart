@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
@@ -666,29 +666,29 @@ class _BookingCard extends StatelessWidget {
               l10n.cancelBookingConfirm,
               style: Theme.of(context).textTheme.bodyMedium,
             ),
-            // ── Deposit non-refundable warning ──
+            // ── Direct Mobile Wallet / Bank account refund notification ──
             if (hasDeposit) ...[
               const SizedBox(height: VSPSpacing.md),
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(12),
                 decoration: BoxDecoration(
-                  color: VSPColors.error.withValues(alpha: 0.08),
+                  color: VSPColors.accent.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.4)),
+                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
                 ),
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(LucideIcons.shieldAlert, color: VSPColors.error, size: 18),
+                    Icon(LucideIcons.refreshCw, color: VSPColors.accent, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
                         isArabic
-                            ? 'تنبيه: العربون المدفوع (${booking.depositPaid.toInt()} ج) غير قابل للاسترداد عند الإلغاء.'
-                            : 'Warning: The paid deposit (${booking.depositPaid.toInt()} EGP) is non-refundable upon cancellation.',
+                            ? 'سيتم استرداد مبلغ العربون تلقائياً وإرجاعه إلى حسابك البنكي (InstaPay) أو محفظتك الإلكترونية التي دفعت منها خلال دقائق معدودة 💸.'
+                            : 'The deposit will be automatically refunded directly to your mobile wallet or bank account linked to InstaPay within minutes 💸.',
                         style: const TextStyle(
-                          color: VSPColors.error,
+                          color: VSPColors.accent,
                           fontSize: 12,
                           height: 1.4,
                         ),

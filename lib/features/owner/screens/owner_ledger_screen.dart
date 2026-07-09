@@ -73,10 +73,34 @@ class OwnerLedgerScreen extends StatelessWidget {
                   separatorBuilder: (context, index) => const SizedBox(height: 12),
                   itemBuilder: (context, index) {
                     final trans = transactions[index];
-                    final isWin = trans['type'] == 'match_win';
-                    final amount = trans['amount'] ?? 0;
+                    final type = trans['type'] ?? 'cash';
+                    final amountVal = trans['amount'] ?? 0;
+                    final double amount = (amountVal is num) ? amountVal.toDouble() : 0.0;
                     final dateStr = trans['created_at'] as String?;
                     final date = dateStr != null ? DateTime.parse(dateStr) : DateTime.now();
+
+                    final IconData icon;
+                    final Color color;
+                    final String title;
+                    final String amountText;
+
+                    if (type == 'match_win') {
+                      icon = LucideIcons.trophy;
+                      color = VSPColors.warning;
+                      title = 'Match Win Reward';
+                      amountText = '+3 pts';
+                    } else if (type == 'digital') {
+                      icon = LucideIcons.creditCard;
+                      color = const Color(0xFF3B82F6); // Electric Blue/Indigo
+                      title = 'تحصيل إلكتروني آمن';
+                      amountText = '+${amount.toStringAsFixed(0)} eg';
+                    } else {
+                      // Default to cash
+                      icon = LucideIcons.banknote;
+                      color = VSPColors.success;
+                      title = 'تحصيل نقدي بالملعب';
+                      amountText = '+${amount.toStringAsFixed(0)} eg';
+                    }
 
                     return VSPCard(
                       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -86,12 +110,12 @@ class OwnerLedgerScreen extends StatelessWidget {
                           Container(
                             padding: const EdgeInsets.all(10),
                             decoration: BoxDecoration(
-                              color: (isWin ? VSPColors.warning : VSPColors.accent).withValues(alpha: 0.1),
+                              color: color.withValues(alpha: 0.1),
                               shape: BoxShape.circle,
                             ),
                             child: Icon(
-                              isWin ? LucideIcons.trophy : LucideIcons.dollarSign,
-                              color: isWin ? VSPColors.warning : VSPColors.accent,
+                              icon,
+                              color: color,
                               size: 24,
                             ),
                           ),
@@ -101,20 +125,20 @@ class OwnerLedgerScreen extends StatelessWidget {
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Text(
-                                  isWin ? 'Match Win Reward' : 'Booking Payment',
+                                  title,
                                   style: Theme.of(context).textTheme.titleSmall,
                                 ),
                                 Text(
-                                  DateFormat('MMM d, yyyy • h:mm a').format(date),
+                                  DateFormat('MMM d, yyyy • h:mm a', Localizations.localeOf(context).toString()).format(date),
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                                 ),
                               ],
                             ),
                           ),
                           Text(
-                            isWin ? '+3 pts' : '+$amount eg',
+                            amountText,
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                              color: isWin ? VSPColors.warning : VSPColors.accent,
+                              color: color,
                               fontWeight: FontWeight.bold,
                             ),
                           ),

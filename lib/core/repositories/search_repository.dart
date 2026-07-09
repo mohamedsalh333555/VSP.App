@@ -12,28 +12,23 @@ class SearchRepository {
     if (term.isEmpty) return {'stadiums': [], 'teams': [], 'championships': []};
 
     try {
-      final stadiumResponse = await _supabase.from('stadiums')
-          .select()
-          .ilike('name', '%$term%')
-          .limit(5);
-      final stadiums = (stadiumResponse as List)
-          .map((d) => Stadium.fromFirestore(d, d['id'].toString()))
+      final response = await _supabase.rpc('global_search', params: {'search_term': term});
+      final data = response as Map<String, dynamic>;
+
+      final stadiumsList = data['stadiums'] as List? ?? [];
+      final teamsList = data['teams'] as List? ?? [];
+      final championshipsList = data['championships'] as List? ?? [];
+
+      final stadiums = stadiumsList
+          .map((d) => Stadium.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
 
-      final teamResponse = await _supabase.from('teams')
-          .select()
-          .ilike('name', '%$term%')
-          .limit(5);
-      final teams = (teamResponse as List)
-          .map((d) => Team.fromFirestore(d, d['id'].toString()))
+      final teams = teamsList
+          .map((d) => Team.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
 
-      final champResponse = await _supabase.from('championships')
-          .select()
-          .ilike('name', '%$term%')
-          .limit(5);
-      final championships = (champResponse as List)
-          .map((d) => Championship.fromFirestore(d, d['id'].toString()))
+      final championships = championshipsList
+          .map((d) => Championship.fromFirestore(d as Map<String, dynamic>, d['id'].toString()))
           .toList();
 
       return {

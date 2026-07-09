@@ -209,10 +209,8 @@ class StadiumRepository {
     try {
       dynamic query = _supabase.from('stadiums').select();
       
-      if (!AppConfig.demoMode) {
-        query = query.eq('is_verified', true);
-        query = query.eq('is_blocked', false);
-      }
+      // 🛡️ Gating Safety: Rely on Supabase's Row Level Security (RLS) policy
+      // Database will silently and securely omit unverified owner facilities from search results based on current user status.
 
       if (governorate != null && governorate.isNotEmpty) {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
@@ -250,6 +248,25 @@ class StadiumRepository {
     } catch (e) {
       VSPLogger.e('Error during stadium deletion cascade', e);
       return false;
+    }
+  }
+
+  // 🛡️ Discovery and Search Geo-Matching: Database-Level Geodistance Query
+  // Offloads GPS distance calculation and trigonometric sorting from client device to Supabase execution.
+  Future<List<Stadium>> fetchNearbyStadiums(double lat, double lng, {int limit = 10}) async {
+    try {
+      final response = await _supabase.rpc('get_nearby_stadiums', params: {
+        'user_lat': lat,
+        'user_lng': lng,
+        'max_limit': limit,
+      });
+      final List<dynamic> list = response as List? ?? [];
+      return list
+          .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .toList();
+    } catch (e) {
+      VSPLogger.e('FAILED TO FETCH NEARBY STADIUMS', e);
+      return [];
     }
   }
 

@@ -16,6 +16,7 @@ import '../services/logger_service.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/database_service.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
   // Singleton pattern
@@ -62,13 +63,16 @@ class NotificationService {
     }
 
     // 2. Foreground Handler
-    FirebaseMessaging.onMessage.listen((RemoteMessage message) {
+    FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       final bookingId = message.data['bookingId']?.toString();
       final type = message.data['type']?.toString();
 
       if (type == 'chat' && ChatScreen.activeBookingId == bookingId) {
         return;
       }
+
+      final shouldShow = await _shouldShowNotification(type);
+      if (!shouldShow) return;
 
       if (message.notification != null) {
         _showLocalNotification(message);
@@ -140,6 +144,13 @@ class NotificationService {
     required DateTime matchTime,
   }) async {
     if (kIsWeb) return; // Local scheduling not supported on Web
+    
+    // Check match reminders setting
+    final prefs = await SharedPreferences.getInstance();
+    final general = prefs.getBool('notif_general') ?? true;
+    final matchReminders = prefs.getBool('notif_match_reminders') ?? true;
+    if (!general || !matchReminders) return;
+
     final reminderTime = matchTime.subtract(const Duration(hours: 2));
     if (reminderTime.isBefore(DateTime.now())) return;
 
@@ -293,6 +304,12 @@ class NotificationService {
     required String timeSlot,
   }) async {
     if (kIsWeb) return; // Local notifications not supported on Web
+
+    // Check cash booking confirmations setting
+    final prefs = await SharedPreferences.getInstance();
+    final general = prefs.getBool('notif_general') ?? true;
+    final cashBookings = prefs.getBool('notif_cash_bookings') ?? true;
+    if (!general || !cashBookings) return;
     const AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'booking_channel',
@@ -342,12 +359,53 @@ class NotificationService {
     }
   }
 
-  void _showInAppAlert(RemoteMessage message) {
+  Future<bool> _shouldShowNotification(String? type) async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final general = prefs.getBool('notif_general') ?? true;
+      if (!general) return false;
+
+      if (type == null) return true;
+
+      switch (type) {
+        case 'chat':
+          return prefs.getBool('notif_chat') ?? true;
+        case 'booking_new':
+        case 'booking_confirmed':
+        case 'booking_cancelled':
+          return prefs.getBool('notif_cash_bookings') ?? true;
+        case 'team_transfer':
+        case 'team_invite':
+        case 'info':
+          return prefs.getBool('notif_team_transfers') ?? true;
+        case 'match_reminder':
+          return prefs.getBool('notif_match_reminders') ?? true;
+        case 'challenge':
+        case 'challenge_accepted':
+        case 'challenge_declined':
+          return prefs.getBool('notif_challenge_results') ?? true;
+        default:
+          return true;
+      }
+    } catch (_) {
+      return true;
+    }
+  }
+
+  void _showInAppAlert(RemoteMessage message) async {
     final context = _navigatorKey?.currentContext;
     if (context == null) return;
 
     try {
-      HapticFeedback.heavyImpact();
+      final prefs = await SharedPreferences.getInstance();
+      final soundEnabled = prefs.getBool('notif_sound') ?? true;
+
+      if (soundEnabled) {
+        HapticFeedback.heavyImpact();
+      }
+      
+      if (!context.mounted) return;
+
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
           content: Row(

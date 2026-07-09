@@ -439,47 +439,63 @@ class NotificationHandler {
         return false;
       }
 
-      // 3. Calculate distance and dynamic allowed threshold
-      final double distance = Geolocator.distanceBetween(
-        position.latitude,
-        position.longitude,
-        stadiumLat,
-        stadiumLng,
-      );
-
-      final double allowedThreshold = 150.0 + position.accuracy;
-
-      // 4. Validate if player is within allowed threshold of stadium
-      if (distance <= allowedThreshold) {
-        // Clear no-show count / dismiss penalty
-        await Supabase.instance.client.rpc('dismiss_no_show_penalty', params: {
+      // 3. Invoke the secured Supabase RPC dispute function
+      try {
+        final bool success = await Supabase.instance.client.rpc('dispute_no_show_with_gps', params: {
+          'p_booking_id': bookingId,
           'p_player_id': playerId,
+          'p_lat': position.latitude,
+          'p_lng': position.longitude,
+          'p_accuracy': position.accuracy,
         });
 
-        // Mark booking as no_show_disputed
-        await Supabase.instance.client
-            .from('bookings')
-            .update({
-              'no_show_disputed': true,
-              'notes': 'Dispute verified: Player was within ${distance.toStringAsFixed(0)}m of stadium with GPS accuracy of ${position.accuracy.toStringAsFixed(0)}m (threshold: ${allowedThreshold.toStringAsFixed(0)}m).'
-            })
-            .eq('id', bookingId);
-            
-        VSPLogger.i('No-show penalty successfully dismissed via GPS. Distance: $distance, Accuracy: ${position.accuracy}');
-        
-        final context = navigatorKey.currentContext;
-        if (context != null) {
-          VSPFeedback.triggerSuccess();
-          final msgAr = 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆\nالمسافة: ${distance.toStringAsFixed(0)}م، الدقة: ${position.accuracy.toStringAsFixed(0)}م';
-          VSPFeedback.showSuccess(context, msgAr);
+        if (success) {
+          VSPLogger.i('No-show penalty successfully dismissed via GPS database verification.');
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            VSPFeedback.triggerSuccess();
+            const msgAr = 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆';
+            VSPFeedback.showSuccess(context, msgAr);
+          }
+          return true;
+        } else {
+          final context = navigatorKey.currentContext;
+          if (context != null) {
+            const msgAr = 'فشل النزاع: لم يتم التحقق من موقعك.';
+            VSPFeedback.showError(context, msgAr);
+          }
+          return false;
         }
-        return true;
-      } else {
-        VSPLogger.i('GPS dispute rejected: Player is too far (${distance.toStringAsFixed(0)}m), threshold: $allowedThreshold.');
+      } on PostgrestException catch (e) {
+        VSPLogger.e('Database error during GPS dispute: ${e.message}');
         final context = navigatorKey.currentContext;
         if (context != null) {
-          final msgAr = 'أنت لست متواجداً في الملعب! المسافة الحالية: ${distance.toStringAsFixed(0)} متر (هامش الدقة المسموح به: ${allowedThreshold.toStringAsFixed(0)} متر).';
-          VSPFeedback.showError(context, msgAr);
+          final String errorMsg = e.message.toLowerCase();
+          if (errorMsg.contains('dispute_window_expired')) {
+            VSPFeedback.showError(
+              context,
+              'عذراً، انتهت المهلة الزمنية لتقديم النزاع! ⚠️ كان يجب تقديم النزاع خلال ساعة واحدة كحد أقصى من نهاية وقت المباراة.',
+            );
+          } else if (errorMsg.contains('not_at_stadium')) {
+            VSPFeedback.showError(
+              context,
+              'فشل النزاع: أنت لست متواجداً في محيط الملعب حالياً! 📍 يرجى تفعيل الـ GPS والتواجد في أرضية الملعب للمحاولة.',
+            );
+          } else if (errorMsg.contains('booking_not_found')) {
+            VSPFeedback.showError(
+              context,
+              'هذا الحجز غير مسجل في النظام.',
+            );
+          } else {
+            VSPFeedback.showError(context, e.message);
+          }
+        }
+        return false;
+      } catch (e) {
+        VSPLogger.e('Unexpected error during GPS dispute: $e');
+        final context = navigatorKey.currentContext;
+        if (context != null) {
+          VSPFeedback.showError(context, e.toString());
         }
         return false;
       }

@@ -26,7 +26,7 @@ class AppTheme {
     final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
-    final List<String> fallbackFonts = [tajawalFamily!, 'sans-serif'];
+    final List<String> fallbackFonts = const ['Tajawal', 'sans-serif'];
 
     // Helper to apply fallback font family to all styles in TextTheme
     TextTheme applyFallback(TextTheme theme) {
@@ -113,7 +113,7 @@ class AppTheme {
       ),
 
       fontFamily: titilliumWebFamily,
-      fontFamilyFallback: [tajawalFamily, 'sans-serif'],
+      fontFamilyFallback: const ['Tajawal', 'sans-serif'],
 
       textTheme: applyFallback(finalTextTheme),
 

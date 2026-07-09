@@ -1,3 +1,4 @@
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -602,6 +603,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
   bool _isDeleting = false;
   int _selectedMinutes = 60;
   bool _isManualDepositReceived = false;
+  bool? _isVerifiedByOwner;
+  bool _isLoadingVerification = true;
 
   @override
   void initState() {
@@ -614,6 +617,141 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     if (widget.isEdit && booking != null) {
       _selectedMinutes = booking.endTime.difference(booking.startTime).inMinutes;
       _isManualDepositReceived = booking.isDepositPaid;
+      _fetchOwnerVerificationStatus();
+    }
+  }
+
+  Future<void> _fetchOwnerVerificationStatus() async {
+    final booking = widget.slot['booking'] as Booking?;
+    if (booking == null) return;
+    try {
+      final response = await Supabase.instance.client
+          .from('bookings')
+          .select('is_verified_by_owner')
+          .eq('id', booking.id)
+          .maybeSingle();
+      if (response != null && mounted) {
+        setState(() {
+          _isVerifiedByOwner = response['is_verified_by_owner'] as bool?;
+          _isLoadingVerification = false;
+        });
+      } else {
+        if (mounted) setState(() => _isLoadingVerification = false);
+      }
+    } catch (e) {
+      debugPrint('Error fetching verification status: $e');
+      if (mounted) {
+        setState(() => _isLoadingVerification = false);
+      }
+    }
+  }
+
+  Future<void> _verifyMatchPlayed(Booking booking) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    setState(() => _isSaving = true);
+    try {
+      await Supabase.instance.client.rpc('verify_match_played', params: {
+        'p_booking_id': booking.id,
+        'p_attended': true,
+      });
+
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic ? 'تم تأكيد حضور ولعب المباراة بنجاح 🏆' : 'Match attendance confirmed successfully 🏆'),
+            backgroundColor: VSPColors.success,
+          ),
+        );
+        _fetchOwnerVerificationStatus();
+        final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+        bookingProvider.loadOwnerBookings(booking.ownerId);
+        Navigator.pop(context);
+      }
+    } catch (e) {
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(isArabic ? 'فشل تأكيد حضور المباراة: $e' : 'Failed to confirm attendance: $e'),
+            backgroundColor: VSPColors.error,
+          ),
+        );
+      }
+    } finally {
+      if (mounted) setState(() => _isSaving = false);
+    }
+  }
+
+  Future<void> _showAbsentTeamDialog(Booking booking) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final homeId = booking.playerTeamId;
+    final homeName = booking.playerTeamName ?? (isArabic ? 'الفريق المستضيف' : 'Home Team');
+    final awayId = booking.opponentTeamId;
+    final awayName = booking.opponentTeamName ?? (isArabic ? 'الفريق الضيف' : 'Away Team');
+
+    String? selectedTeamId = await showDialog<String>(
+      context: context,
+      builder: (ctx) {
+        return AlertDialog(
+          backgroundColor: VSPColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: Text(
+            isArabic ? 'اختر الفريق الغائب ❌' : 'Select Absent Team ❌',
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (homeId != null)
+                ListTile(
+                  title: Text(homeName, style: const TextStyle(color: Colors.white)),
+                  trailing: const Icon(LucideIcons.chevronRight, color: VSPColors.error),
+                  onTap: () => Navigator.pop(ctx, homeId),
+                ),
+              if (awayId != null)
+                ListTile(
+                  title: Text(awayName, style: const TextStyle(color: Colors.white)),
+                  trailing: const Icon(LucideIcons.chevronRight, color: VSPColors.error),
+                  onTap: () => Navigator.pop(ctx, awayId),
+                ),
+            ],
+          ),
+        );
+      }
+    );
+
+    if (selectedTeamId != null) {
+      setState(() => _isSaving = true);
+      try {
+        await Supabase.instance.client.rpc('verify_match_played', params: {
+          'p_booking_id': booking.id,
+          'p_attended': false,
+          'p_absent_team_id': selectedTeamId,
+        });
+
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isArabic ? 'تم تسجيل غياب الفريق وتحديث الحالة بنجاح.' : 'Team absence reported and status updated.'),
+              backgroundColor: VSPColors.success,
+            ),
+          );
+          _fetchOwnerVerificationStatus();
+          final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+          bookingProvider.loadOwnerBookings(booking.ownerId);
+          Navigator.pop(context);
+        }
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(isArabic ? 'فشل تحديث الحالة: $e' : 'Failed to update status: $e'),
+              backgroundColor: VSPColors.error,
+            ),
+          );
+        }
+      } finally {
+        if (mounted) setState(() => _isSaving = false);
+      }
     }
   }
 
@@ -993,6 +1131,85 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                         ],
                       ),
                     ),
+                    if (widget.isEdit && booking != null && booking.bookingType == BookingType.challenge && isCompleted) ...[
+                      const SizedBox(height: 15),
+                      if (_isLoadingVerification)
+                        const Center(child: CircularProgressIndicator(color: VSPColors.accent))
+                      else if (_isVerifiedByOwner == null)
+                        Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: VSPColors.surfaceAlt,
+                            borderRadius: BorderRadius.circular(VSPRadius.xl),
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5), width: 1.5),
+                          ),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 22),
+                                  const SizedBox(width: 10),
+                                  Text(
+                                    isArabic ? 'تأكيد حضور ولعب المباراة 🏆' : 'Confirm Match Attendance 🏆',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                isArabic
+                                    ? 'يرجى تأكيد ما إذا كان الفريقان قد حضرا ولعبا المباراة لتحديث نقاط الترتيب (Elo).'
+                                    : 'Please confirm if both teams attended and played the match to update Elo rankings.',
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
+                              ),
+                              const SizedBox(height: 16),
+                              Row(
+                                children: [
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: _isSaving ? null : () => _verifyMatchPlayed(booking),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: VSPColors.accent,
+                                        foregroundColor: Colors.black,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                                      ),
+                                      child: Text(
+                                        isArabic ? 'تم الحضور واللعب' : 'Confirmed & Played',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11, color: Colors.black),
+                                      ),
+                                    ),
+                                  ),
+                                  const SizedBox(width: 12),
+                                  Expanded(
+                                    child: ElevatedButton(
+                                      onPressed: _isSaving ? null : () => _showAbsentTeamDialog(booking),
+                                      style: ElevatedButton.styleFrom(
+                                        backgroundColor: VSPColors.error.withValues(alpha: 0.2),
+                                        foregroundColor: VSPColors.error,
+                                        elevation: 0,
+                                        shape: RoundedRectangleBorder(
+                                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                                          side: const BorderSide(color: VSPColors.error, width: 1),
+                                        ),
+                                      ),
+                                      child: Text(
+                                        isArabic ? 'تسجيل غياب فريق' : 'Report Absence',
+                                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                                      ),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                            ],
+                          ),
+                        ),
+                    ],
                     if (widget.isEdit && isCompleted && hasParticipants) ...[
                       const SizedBox(height: 15),
                       SizedBox(

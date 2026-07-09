@@ -31,13 +31,12 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // GOOGLE MOBILE ADS INITIALIZATION
-  try {
-    await MobileAds.instance.initialize();
+  // GOOGLE MOBILE ADS INITIALIZATION (Non-blocking to prevent ANR on emulator)
+  MobileAds.instance.initialize().then((_) {
     VSPLogger.i("✅ Google Mobile Ads SDK initialized successfully");
-  } catch (e) {
+  }).catchError((e) {
     VSPLogger.e("❌ ADS SDK INIT FAILED", e);
-  }
+  });
   
   // SUPABASE INITIALIZATION
   try {

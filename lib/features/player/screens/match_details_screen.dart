@@ -75,7 +75,23 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         if (errorMsg == 'time_conflict') {
           VSPFeedback.showError(
             context,
-            isArabic ? 'لديك حجز متداخل أو مباراة أخرى في نفس هذا الوقت! ⚠️' : 'You have a conflicting booking or match at this time! ⚠️',
+            isArabic 
+                ? 'لديك حجز متداخل أو مباراة أخرى في نفس هذا الوقت! ⚠️' 
+                : 'You have a conflicting booking or match at this time! ⚠️',
+          );
+        } else if (errorMsg == 'match_is_full') {
+          VSPFeedback.showError(
+            context,
+            isArabic 
+                ? 'عذراً، هذه المباراة مكتملة العدد بالكامل! ⚽' 
+                : 'Sorry, this match is completely full! ⚽',
+          );
+        } else if (errorMsg == 'already_joined') {
+          VSPFeedback.showError(
+            context,
+            isArabic 
+                ? 'لقد انضممت بالفعل لهذه المباراة!' 
+                : 'You have already joined this match!',
           );
         } else {
           VSPFeedback.showError(

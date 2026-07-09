@@ -65,72 +65,22 @@ class MatchRepository {
 
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     try {
-      String hostId = '';
-      String stadiumName = '';
-      String joiningUserName = 'A player';
+      // 🛡️ Public Matchmaking: Atomic RPC Database Lock & Time-Conflict check
+      // Offloads calculations from client-side loops to PostgreSQL atomic trigger.
+      await _supabase.rpc('join_public_match', params: {
+        'p_booking_id': bookingId,
+        'p_user_id': userId,
+      });
 
-      // ── Enforce Time conflict block ──
-      final matchDoc = await _supabase
-          .from('bookings')
-          .select('start_time, end_time, status')
-          .eq('id', bookingId)
-          .maybeSingle();
-      if (matchDoc == null) throw 'Match not found';
-      
-      final DateTime matchStart = DateTime.parse(matchDoc['start_time'].toString()).toUtc();
-      final DateTime matchEnd = DateTime.parse(matchDoc['end_time'].toString()).toUtc();
-
-      final userBookings = await _supabase
-          .from('bookings')
-          .select('id, start_time, end_time, status, joined_user_ids, created_by_user_id')
-          .eq('status', BookingStatus.confirmed.name);
-
-      final List bookingsList = userBookings as List;
-      for (final doc in bookingsList) {
-        final String otherId = doc['id'].toString();
-        if (otherId == bookingId) continue;
-
-        final String createdBy = doc['created_by_user_id'] ?? '';
-        final List joinedIds = doc['joined_user_ids'] is List ? doc['joined_user_ids'] : [];
-
-        final isUserParticipant = (createdBy == userId) || joinedIds.contains(userId);
-        if (!isUserParticipant) continue;
-
-        final DateTime otherStart = DateTime.parse(doc['start_time'].toString()).toUtc();
-        final DateTime otherEnd = DateTime.parse(doc['end_time'].toString()).toUtc();
-
-        if (matchStart.isBefore(otherEnd) && matchEnd.isAfter(otherStart)) {
-          throw 'time_conflict';
-        }
-      }
-
-      // 1. Try safe transactional join via Supabase RPC
-      bool rpcSuccess = false;
-      try {
-        await _supabase.rpc('join_public_match', params: {
-          'p_booking_id': bookingId,
-          'p_user_id': userId,
-        });
-        rpcSuccess = true;
-      } catch (rpcError) {
-        VSPLogger.w('RPC failed: $rpcError');
-        rpcSuccess = false;
-      }
-
-      if (!rpcSuccess) {
-        // هنا نقوم برمي استثناء فوري بدلاً من السماح للعميل بتحديث البيانات يدوياً
-        throw Exception("عذراً، تداخلت عمليتك مع مستخدم آخر واكتمل عدد مقاعد المباراة بالفعل! ⚠️");
-      }
-
-      // 3. Retrieve final details for notifications
+      // Retrieve final details for notifications
       final finalDoc = await _supabase
           .from('bookings')
           .select()
           .eq('id', bookingId)
           .single();
 
-      hostId = finalDoc['owner_id'] ?? finalDoc['created_by_user_id'] ?? '';
-      stadiumName = finalDoc['stadium_name'] ?? 'Match';
+      final hostId = finalDoc['owner_id'] ?? finalDoc['created_by_user_id'] ?? '';
+      final stadiumName = finalDoc['stadium_name'] ?? 'Match';
       final finalCurrent = finalDoc['current_players'] ?? 0;
       final ppt = finalDoc['players_per_team'] ?? finalDoc['playersPerTeam'];
       final totalCapacity = finalDoc['total_field_capacity'] ?? finalDoc['totalFieldCapacity'] ?? ((ppt != null) ? ppt * 2 : (finalDoc['max_players'] != null ? finalDoc['max_players'] * 2 : 10));
@@ -138,6 +88,7 @@ class MatchRepository {
           (finalDoc['joined_user_ids'] as List?)?.map((e) => e.toString()) ?? []
       );
 
+      String joiningUserName = 'A player';
       try {
         final user = await UserRepository().getUserData(userId);
         if (user != null) {
@@ -172,6 +123,17 @@ class MatchRepository {
 
       AnalyticsService.logMatchJoined(bookingId, 'public');
       return true;
+    } on PostgrestException catch (e) {
+      final msg = (e.message + (e.details?.toString() ?? '')).toLowerCase();
+      if (msg.contains('time_conflict')) {
+        throw 'time_conflict';
+      } else if (msg.contains('match_is_full')) {
+        throw 'match_is_full';
+      } else if (msg.contains('already_joined')) {
+        throw 'already_joined';
+      } else {
+        throw e.message;
+      }
     } catch (e, stack) {
       VSPLogger.e('Error joining public match', e, stack);
       rethrow;

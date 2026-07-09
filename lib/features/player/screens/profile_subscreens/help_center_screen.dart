@@ -1,16 +1,37 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 
-class HelpCenterScreen extends StatelessWidget {
+class HelpCenterScreen extends StatefulWidget {
   const HelpCenterScreen({super.key});
 
   @override
+  State<HelpCenterScreen> createState() => _HelpCenterScreenState();
+}
+
+class _HelpCenterScreenState extends State<HelpCenterScreen> {
+  @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isAr = l10n.localeName == 'ar';
+
+    final List<Map<String, String>> faqs = [
+      {'q': l10n.faq1_q, 'a': l10n.faq1_a},
+      {'q': l10n.faq2_q, 'a': l10n.faq2_a},
+      {'q': l10n.faq3_q, 'a': l10n.faq3_a},
+      {'q': l10n.faq4_q, 'a': l10n.faq4_a},
+      {'q': l10n.faq5_q, 'a': l10n.faq5_a},
+      {'q': l10n.faq6_q, 'a': l10n.faq6_a},
+      {'q': l10n.faq7_q, 'a': l10n.faq7_a},
+      {'q': l10n.faq8_q, 'a': l10n.faq8_a},
+      {'q': l10n.faq9_q, 'a': l10n.faq9_a},
+      {'q': l10n.faq10_q, 'a': l10n.faq10_a},
+    ];
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -21,71 +42,116 @@ class HelpCenterScreen extends StatelessWidget {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Help Center',
+          l10n.helpCenter,
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
-      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            const Text(
-              'How can we help you today?',
-              style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+            // Hero Header
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.all(20),
+              margin: const EdgeInsets.only(bottom: 24),
+              decoration: BoxDecoration(
+                gradient: LinearGradient(
+                  colors: [
+                    VSPColors.accent.withValues(alpha: 0.12),
+                    VSPColors.accent.withValues(alpha: 0.03),
+                  ],
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                ),
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Icon(LucideIcons.headphones, color: VSPColors.accent, size: 32),
+                  const SizedBox(height: 12),
+                  Text(
+                    isAr ? 'كيف يمكننا مساعدتك اليوم؟' : 'How can we help you today?',
+                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: Colors.white,
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                        ),
+                  ),
+                  const SizedBox(height: 8),
+                  Text(
+                    isAr
+                        ? 'فريق الدعم متاح لمساعدتك في أي وقت عبر واتساب أو الهاتف.'
+                        : 'Support team is available to assist you anytime via WhatsApp or phone.',
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
+                  ),
+                ],
+              ),
             ),
-            const SizedBox(height: VSPSpacing.md),
-            const Text(
-              'Our support team is available 24/7 to assist you with any issues or questions.',
-              style: TextStyle(color: VSPColors.textSecondary),
-            ),
-            const SizedBox(height: VSPSpacing.xl),
-            
-            // WhatsApp Support Card
+
+            // WhatsApp Support
             _buildSupportAction(
               context,
-              title: 'Chat with Support',
-              subtitle: 'Talk directly with our team on WhatsApp',
-              icon: LucideIcons.messageSquare,
+              title: isAr ? 'محادثة الدعم' : 'Chat with Support',
+              subtitle: isAr ? 'تحدث مباشرة مع فريقنا على واتساب' : 'Chat directly with our team on WhatsApp',
+              icon: LucideIcons.messageCircle,
               color: const Color(0xFF25D366),
               onTap: () => _launchWhatsApp(context),
             ),
-            
             const SizedBox(height: VSPSpacing.md),
-            
             _buildSupportAction(
               context,
-              title: 'Call Support',
-              subtitle: 'Emergency assistance for bookings',
+              title: isAr ? 'اتصل بالدعم' : 'Call Support',
+              subtitle: isAr ? 'مساعدة طارئة للحجوزات والمباريات' : 'Emergency help for bookings and matches',
               icon: LucideIcons.phoneCall,
               color: VSPColors.accent,
               onTap: () => launchUrl(Uri.parse('tel:+201100229462')),
             ),
 
             const SizedBox(height: VSPSpacing.xl),
-            const Text(
-              'Frequently Asked Questions',
-              style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+
+            // FAQs
+            Text(
+              isAr ? 'الأسئلة الشائعة' : 'Frequently Asked Questions',
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                  ),
+            ),
+            const SizedBox(height: 4),
+            Text(
+              isAr ? 'إجابات لأكثر الأسئلة شيوعاً حول تطبيق VSP' : 'Answers to the most common questions about the VSP app',
+              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                  ),
             ),
             const SizedBox(height: VSPSpacing.md),
-            _buildFAQTile(AppLocalizations.of(context)!.faq1_q, AppLocalizations.of(context)!.faq1_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq2_q, AppLocalizations.of(context)!.faq2_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq3_q, AppLocalizations.of(context)!.faq3_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq4_q, AppLocalizations.of(context)!.faq4_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq5_q, AppLocalizations.of(context)!.faq5_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq6_q, AppLocalizations.of(context)!.faq6_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq7_q, AppLocalizations.of(context)!.faq7_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq8_q, AppLocalizations.of(context)!.faq8_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq9_q, AppLocalizations.of(context)!.faq9_a),
-            _buildFAQTile(AppLocalizations.of(context)!.faq10_q, AppLocalizations.of(context)!.faq10_a),
+
+            ...List.generate(faqs.length, (i) => _buildFAQTile(faqs[i]['q']!, faqs[i]['a']!)),
+            const SizedBox(height: 20),
           ],
         ),
       ),
     );
   }
 
-  Widget _buildSupportAction(BuildContext context, {required String title, required String subtitle, required IconData icon, required Color color, required VoidCallback onTap}) {
+  Widget _buildSupportAction(BuildContext context, {
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
     return InkWell(
       onTap: onTap,
       borderRadius: BorderRadius.circular(VSPRadius.lg),
@@ -108,8 +174,21 @@ class HelpCenterScreen extends StatelessWidget {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16)),
-                  Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                  Text(
+                    title,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                  ),
+                  Text(
+                    subtitle,
+                    style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                          color: VSPColors.textSecondary,
+                          fontSize: 12,
+                        ),
+                  ),
                 ],
               ),
             ),
@@ -121,45 +200,86 @@ class HelpCenterScreen extends StatelessWidget {
   }
 
   Widget _buildFAQTile(String question, String answer) {
-    return ExpansionTile(
-      title: Text(question, style: const TextStyle(color: Colors.white, fontSize: 14)),
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(VSPSpacing.md),
-          child: Text(answer, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+    return Container(
+      margin: const EdgeInsets.only(bottom: 8),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+      ),
+      child: ExpansionTile(
+        tilePadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+        childrenPadding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
+        iconColor: VSPColors.accent,
+        collapsedIconColor: VSPColors.textSecondary,
+        shape: const Border(),
+        collapsedShape: const Border(),
+        title: Text(
+          question,
+          style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                color: Colors.white,
+                fontSize: 13.5,
+                fontWeight: FontWeight.w600,
+                height: 1.4,
+              ),
         ),
-      ],
+        children: [
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(12),
+            decoration: BoxDecoration(
+              color: VSPColors.background,
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+            ),
+            child: Text(
+              answer,
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12.5,
+                    height: 1.65,
+                  ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
   void _launchWhatsApp(BuildContext context) async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final user = auth.userModel;
-    
-    final message = 'Support Request:\nUID: ${user?.uid}\nGov: ${user?.governorate}\nIssue: ';
-    final phone = '+201100229462'.replaceAll('+', ''); // wa.me needs phone without +
-    
-    // Universal WhatsApp Link - More reliable on modern Android/iOS
-    final whatsappUrl = Uri.parse("https://wa.me/$phone?text=${Uri.encodeComponent(message)}");
-    
+    final name = user?.name ?? 'مستخدم VSP';
+    final uid = user?.uid ?? 'N/A';
+    final gov = user?.governorate ?? 'N/A';
+
+    final message =
+        'السلام عليكم فريق VSP 👋\n'
+        'أحتاج مساعدة في:\n\n'
+        '────────────────\n'
+        'الاسم: $name\n'
+        'المحافظة: $gov\n'
+        'الكود: $uid\n'
+        '────────────────\n'
+        'وصف المشكلة: ';
+
+    final phone = '201100229462';
+    final whatsappUrl = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
+
     try {
-      final success = await launchUrl(
-        whatsappUrl,
-        mode: LaunchMode.externalApplication,
-      );
-      
+      final success = await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
       if (!success && context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(AppLocalizations.of(context)!.whatsAppNotInstalled))
+          const SnackBar(
+            content: Text('يرجى تثبيت تطبيق واتساب أولاً / Please install WhatsApp first'),
+          ),
         );
       }
     } catch (e) {
       if (context.mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Could not launch WhatsApp. Please try again.'))
+          const SnackBar(content: Text('تعذر فتح واتساب. يرجى المحاولة مجدداً.')),
         );
       }
     }
   }
 }
-

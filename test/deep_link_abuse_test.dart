@@ -97,7 +97,7 @@ class DummyBuildContext implements BuildContext {
 void main() {
   group('🛡️ VSP Deep Link Security & Gating Abuse Tests', () {
     
-    test('1. Abuse Test: Blocked Player Deep Link Bypass Prevention', () {
+    test('1. Abuse Test: Blocked Player Deep Link Bypass Prevention', () async {
       // Simulate an authenticated player who is administrative-blocked
       final authProvider = FakeAuthProvider(
         isAuthenticated: true,
@@ -115,7 +115,7 @@ void main() {
       );
       
       // Simulate receiving deep link to a match while blocked
-      final redirectResult = AppRouter.redirectLogic(
+      final redirectResult = await AppRouter.redirectLogic(
         DummyBuildContext(),
         FakeGoRouterState('/match/valid-booking-uuid'),
         authProvider,
@@ -141,7 +141,7 @@ void main() {
       expect(isValidPass, isTrue, reason: 'Valid UUID/Alphanumeric ID format must pass validation');
     });
 
-    test('3. Role Isolation Test: Owner Attempting Player Match Deep Link', () {
+    test('3. Role Isolation Test: Owner Attempting Player Match Deep Link', () async {
       // Simulate an authenticated and fully verified Owner
       final authProvider = FakeAuthProvider(
         isAuthenticated: true,
@@ -162,7 +162,7 @@ void main() {
       );
 
       // Simulate Owner attempting to navigate to player-specific match deep link
-      final redirectResult = AppRouter.redirectLogic(
+      final redirectResult = await AppRouter.redirectLogic(
         DummyBuildContext(),
         FakeGoRouterState('/match/valid-booking-uuid'),
         authProvider,

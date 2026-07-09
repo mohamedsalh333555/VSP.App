@@ -395,10 +395,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                 const SizedBox(height: 24),
                 TextButton(
                   onPressed: () async {
-                    await Provider.of<AuthProvider>(context, listen: false).signOut();
+                    final prefs = await SharedPreferences.getInstance();
+                    await prefs.remove('pending_verification_email');
+                    if (context.mounted) {
+                      await Provider.of<AuthProvider>(context, listen: false).signOut();
+                    }
                   },
                   child: const Text(
-                    'أدخلت البريد بالخطأ؟ تسجيل الخروج',
+                    'أدخلت البريد بالخطأ؟ تغيير البريد وتسجيل الخروج',
                     style: TextStyle(
                       color: VSPColors.error,
                       decoration: TextDecoration.underline,

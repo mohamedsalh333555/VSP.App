@@ -478,6 +478,9 @@ class SupabaseBookingRepository implements BookingRepository {
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           }).eq('id', bookingId);
 
+          // 🛡️ Squads & Challenges: Disable Automated Client-Side Elo updates
+          // Points/Elo calculation is completely offloaded to Supabase to execute only upon owner verification.
+          /*
           final homeTeamId = booking.playerTeamId;
           final awayTeamId = booking.opponentTeamId;
           if (homeTeamId != null && awayTeamId != null) {
@@ -488,6 +491,7 @@ class SupabaseBookingRepository implements BookingRepository {
               outcome
             );
           }
+          */
           await saveRating();
           return true;
         } else {
@@ -917,7 +921,9 @@ class MockBookingRepository implements BookingRepository {
           resultSubmittedByTeamId: null,
         );
         
-        // ── Update Global Rankings (Mock) ──
+        // 🛡️ Squads & Challenges: Disable Automated Client-Side Elo updates
+        // Points/Elo calculation is completely offloaded to Supabase to execute only upon owner verification.
+        /*
         if (booking.playerTeamId != null && booking.opponentTeamId != null) {
           DatabaseService().updateMatchResult(
             bookingId, 
@@ -926,6 +932,7 @@ class MockBookingRepository implements BookingRepository {
             outcome
           );
         }
+        */
 
         _update();
         return true;

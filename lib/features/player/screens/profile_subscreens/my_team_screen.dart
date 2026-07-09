@@ -149,18 +149,53 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
            ..._teamMembers.map((m) => m.uid)
         ],
         onPlayerAdded: (UserModel user) async {
-          setState(() {
-            if (!_teamMembers.any((m) => m.uid == user.uid)) {
-              _teamMembers.add(user);
-            }
-          });
-
           if (currentTeam != null) {
-            await DatabaseService().addMemberToTeam(
-              currentTeam.id, 
-              user.uid, 
-              user.profileImageUrl ?? ''
-            );
+            try {
+              await DatabaseService().addMemberToTeam(
+                currentTeam.id, 
+                user.uid, 
+                user.profileImageUrl ?? ''
+              );
+              if (mounted) {
+                setState(() {
+                  if (!_teamMembers.any((m) => m.uid == user.uid)) {
+                    _teamMembers.add(user);
+                  }
+                });
+              }
+            } catch (e) {
+              if (mounted) {
+                final errorMsg = e.toString().replaceAll('Exception:', '').trim();
+                ScaffoldMessenger.of(context).showSnackBar(
+                  SnackBar(
+                    content: Row(
+                      children: [
+                        const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 20),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            errorMsg,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                    backgroundColor: VSPColors.surface,
+                    behavior: SnackBarBehavior.floating,
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      side: const BorderSide(color: VSPColors.error, width: 1.5),
+                    ),
+                  ),
+                );
+              }
+            }
+          } else {
+            setState(() {
+              if (!_teamMembers.any((m) => m.uid == user.uid)) {
+                _teamMembers.add(user);
+              }
+            });
           }
         },
       ),
@@ -226,12 +261,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           children: [
             // 1. Stats Grid
             Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildStatCard(team?.points.toString() ?? '0', l10n.points, width: 80),
-                _buildStatCard((1 + _teamMembers.length).toString(), l10n.members, width: 80),
-                _buildStatCard(team?.championshipsWon.toString() ?? '0', l10n.trophies, width: 85),
-                _buildStatCard(team?.wins.toString() ?? '0', l10n.wins, width: 85),
+                Expanded(child: _buildStatCard(team?.points.toString() ?? '0', l10n.points)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildStatCard((1 + _teamMembers.length).toString(), l10n.members)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildStatCard(team?.championshipsWon.toString() ?? '0', l10n.trophies)),
+                const SizedBox(width: 8),
+                Expanded(child: _buildStatCard(team?.wins.toString() ?? '0', l10n.wins)),
               ],
             ),
 
@@ -263,36 +300,34 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(height: VSPSpacing.lg),
 
             // 3. Logo Upload
-            Row(
-              children: [
-                if (_selectedLogo != null)
+            Builder(builder: (_) {
+              final hasLogo = _selectedLogo != null || (team?.logoUrl.isNotEmpty ?? false);
+              final uploadBtn = PrimaryButton(
+                text: l10n.uploadPhoto,
+                height: 45,
+                color: VSPColors.surfaceAlt,
+                textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
+                icon: LucideIcons.uploadCloud,
+                onPressed: !isCaptain ? null : () async {
+                  final picker = ImagePicker();
+                  final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
+                  if (image != null && mounted) setState(() => _selectedLogo = image);
+                },
+              );
+              if (!hasLogo) return SizedBox(width: double.infinity, child: uploadBtn);
+              return Row(
+                children: [
                   ClipRRect(
                     borderRadius: BorderRadius.circular(25),
-                    child: Image.file(File(_selectedLogo!.path), width: 50, height: 50, fit: BoxFit.cover),
-                  )
-                else
-                  ShimmerImage(
-                    imageUrl: team?.logoUrl ?? '',
-                    width: 50, height: 50, borderRadius: 25,
-                    errorWidget: Icon(LucideIcons.users, color: VSPColors.textSecondary),
+                    child: _selectedLogo != null
+                        ? Image.file(File(_selectedLogo!.path), width: 50, height: 50, fit: BoxFit.cover)
+                        : ShimmerImage(imageUrl: team?.logoUrl ?? '', width: 50, height: 50, borderRadius: 25),
                   ),
-                const SizedBox(width: VSPSpacing.md),
-                Expanded(
-                  child: PrimaryButton(
-                    text: l10n.uploadPhoto,
-                    height: 45,
-                    color: VSPColors.surfaceAlt,
-                    textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
-                    icon: LucideIcons.uploadCloud,
-                    onPressed: !isCaptain ? null : () async {
-                      final picker = ImagePicker();
-                      final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-                      if (image != null && mounted) setState(() => _selectedLogo = image);
-                    },
-                  ),
-                ),
-              ],
-            ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(child: uploadBtn),
+                ],
+              );
+            }),
 
             const SizedBox(height: VSPSpacing.lg),
 
@@ -310,30 +345,33 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               ],
             ),
             const SizedBox(height: VSPSpacing.sm),
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
-              child: _isLoadingMembers 
-                ? const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)))
-                : (team == null && _teamMembers.isEmpty)
-                    ? Center(child: Text(l10n.addMembersHint, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.3), fontSize: 12)))
-                    : Wrap(
-                        spacing: 8, runSpacing: 8,
-                        children: [
-                          _buildMemberAvatar(team?.captainImageUrl ?? auth.userModel?.profileImageUrl ?? ''),
-                          ..._teamMembers.map((member) => _buildMemberChip(member, team, isCaptain)),
-                        ],
-                      ),
-            ),
+            if (_isLoadingMembers)
+              const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)))
+            else if (_teamMembers.isNotEmpty || team != null)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
+                child: Wrap(
+                  spacing: 8, runSpacing: 8,
+                  children: [
+                    _buildMemberAvatar(team?.captainImageUrl ?? auth.userModel?.profileImageUrl ?? ''),
+                    ..._teamMembers.map((member) => _buildMemberChip(member, team, isCaptain)),
+                  ],
+                ),
+              )
+            else
+              Padding(
+                padding: const EdgeInsets.symmetric(vertical: 4),
+                child: Text(l10n.addMembersHint, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12)),
+              ),
 
-            const SizedBox(height: VSPSpacing.xl),
+            const SizedBox(height: VSPSpacing.lg),
 
             // 5. Achievements
-            if (team != null) _buildAchievementSection(team) 
-            else Center(child: Padding(padding: const EdgeInsets.all(20), child: Text(l10n.registerTeamPrompt, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontStyle: FontStyle.italic)))),
+            if (team != null) _buildAchievementSection(team),
 
-            const SizedBox(height: VSPSpacing.xxl),
+            const SizedBox(height: VSPSpacing.lg),
 
             // 6. Action Buttons
             if (team == null)
@@ -482,10 +520,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     }
   }
 
-  Widget _buildStatCard(String value, String label, {required double width}) {
+  Widget _buildStatCard(String value, String label) {
     return Container(
-      width: width,
-      padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 4),
+      padding: const EdgeInsets.symmetric(vertical: 16, horizontal: 4),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
@@ -493,8 +530,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       ),
       child: Column(
         children: [
-           Text(value, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 24)),
-           Text(label, textAlign: TextAlign.center, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.8), fontSize: 9.5, fontWeight: FontWeight.bold)),
+          Text(value, style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 26, fontWeight: FontWeight.bold)),
+          const SizedBox(height: 3),
+          Text(label, textAlign: TextAlign.center, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.8), fontSize: 11, fontWeight: FontWeight.bold)),
         ],
       ),
     );
@@ -502,7 +540,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
   Widget _buildTextField(TextEditingController controller, {String? hint, bool readOnly = false}) {
     return Container(
-      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.6)),
+      ),
       child: TextField(
         controller: controller, readOnly: readOnly,
         style: const TextStyle(color: VSPColors.textPrimary),

@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -13,9 +13,17 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
+  // General
   bool _generalNotifications = true;
   bool _soundAlerts = true;
-  bool _pushNotifications = false;
+
+  // Granular Toggles
+  bool _chatNotifications = true;
+  bool _cashBookings = true;
+  bool _teamTransfers = true;
+  bool _matchReminders = true;
+  bool _challengeResults = true;
+
   bool _isLoading = true;
 
   @override
@@ -29,7 +37,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() {
       _generalNotifications = prefs.getBool('notif_general') ?? true;
       _soundAlerts = prefs.getBool('notif_sound') ?? true;
-      _pushNotifications = prefs.getBool('notif_push') ?? false;
+
+      _chatNotifications = prefs.getBool('notif_chat') ?? true;
+      _cashBookings = prefs.getBool('notif_cash_bookings') ?? true;
+      _teamTransfers = prefs.getBool('notif_team_transfers') ?? true;
+      _matchReminders = prefs.getBool('notif_match_reminders') ?? true;
+      _challengeResults = prefs.getBool('notif_challenge_results') ?? true;
+
       _isLoading = false;
     });
   }
@@ -42,6 +56,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
+    final isAr = languageProvider.isArabic;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -53,57 +68,129 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          languageProvider.isArabic ? 'Ø§Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª' : 'Notifications',
+          isAr ? 'إعدادات الإشعارات' : 'Notification Settings',
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
       ),
-      body: _isLoading 
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : Padding(
+          : SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
               padding: const EdgeInsets.all(16),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  // Group 1: General Settings
+                  _buildSectionHeader(isAr ? 'إعدادات عامة' : 'General Settings'),
+                  const SizedBox(height: 12),
                   _buildSwitchTile(
-                    languageProvider.isArabic ? 'Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø¹Ø§Ù…Ø©' : 'General Notifications',
-                    languageProvider.isArabic ? 'Ø§Ø³ØªÙ„Ø§Ù… Ø§Ù„ØªØ­Ø¯ÙŠØ«Ø§Øª ÙˆØ§Ù„Ø¥Ø¹Ù„Ø§Ù†Ø§Øª Ø§Ù„Ù‡Ø§Ù…Ø©' : 'Receive Important Updates And Announcements',
+                    isAr ? 'إشعارات عامة' : 'General Notifications',
+                    isAr ? 'تلقي التحديثات والإعلانات الهامة' : 'Receive important updates and announcements',
                     _generalNotifications,
                     (v) {
                       setState(() => _generalNotifications = v);
                       _saveSetting('notif_general', v);
                     },
                   ),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
                   _buildSwitchTile(
-                    languageProvider.isArabic ? 'ØªÙ†Ø¨ÙŠÙ‡Ø§Øª ØµÙˆØªÙŠØ©' : 'Sound Alerts',
-                    languageProvider.isArabic ? 'ØªÙØ¹ÙŠÙ„ Ø§Ù„ØªÙ†Ø¨ÙŠÙ‡Ø§Øª Ø§Ù„ØµÙˆØªÙŠØ© Ù„Ù„Ø¥Ø´Ø¹Ø§Ø±Ø§Øª' : 'Enable Sound Alerts For Notifications',
+                    isAr ? 'تنبيهات صوتية' : 'Sound Alerts',
+                    isAr ? 'تفعيل التنبيهات الصوتية للإشعارات' : 'Enable sound alerts for notifications',
                     _soundAlerts,
                     (v) {
                       setState(() => _soundAlerts = v);
                       _saveSetting('notif_sound', v);
                     },
                   ),
-                   const SizedBox(height: 24),
-                  // Push notifications toggle is stored locally only.
-                  // FCM token registration is not yet implemented.
-                  // The toggle is disabled and labeled explicitly to avoid misleading the user.
+
+                  const SizedBox(height: 32),
+                  const Divider(color: VSPColors.divider, height: 1),
+                  const SizedBox(height: 24),
+
+                  // Group 2: Specific Alerts
+                  _buildSectionHeader(isAr ? 'تفاصيل التنبيهات' : 'Notification Preferences'),
+                  const SizedBox(height: 12),
                   _buildSwitchTile(
-                    languageProvider.isArabic
-                        ? 'Ø¥Ø´Ø¹Ø§Ø±Ø§Øª Ø§Ù„Ø¯ÙØ¹ (Ù‚Ø±ÙŠØ¨Ù‹Ø§)'
-                        : 'Push Notifications (Coming Soon)',
-                    languageProvider.isArabic
-                        ? 'Ù‡Ø°Ø§ Ø§Ù„Ø¥Ø¹Ø¯Ø§Ø¯ ØºÙŠØ± Ù…ÙØ¹Ù‘Ù„ Ø¨Ø¹Ø¯ Ø¹Ù„Ù‰ Ù…Ø³ØªÙˆÙ‰ Ø§Ù„Ø¬Ù‡Ø§Ø²'
-                        : 'Stored locally only â€” device-level push not yet connected',
-                    _pushNotifications,
-                    null, // null disables the Switch interaction
+                    isAr ? 'إشعارات الدردشة' : 'Chat Notifications',
+                    isAr ? 'تنبيهات عند استلام رسائل جديدة في المحادثات' : 'Alerts when receiving new messages in chat',
+                    _chatNotifications,
+                    _generalNotifications
+                        ? (v) {
+                            setState(() => _chatNotifications = v);
+                            _saveSetting('notif_chat', v);
+                          }
+                        : null,
                   ),
+                  const SizedBox(height: 20),
+                  _buildSwitchTile(
+                    isAr ? 'تأكيدات الحجز النقدي' : 'Cash Booking Confirmations',
+                    isAr ? 'تنبيه عند قبول أو رفض المالك للحجز النقدي' : 'Notification when owner confirms or rejects a cash booking',
+                    _cashBookings,
+                    _generalNotifications
+                        ? (v) {
+                            setState(() => _cashBookings = v);
+                            _saveSetting('notif_cash_bookings', v);
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSwitchTile(
+                    isAr ? 'الانتقالات والفرق' : 'Team & Transfers',
+                    isAr ? 'طلبات الانضمام وتغييرات قائمة الفريق' : 'Join requests and squad roster updates',
+                    _teamTransfers,
+                    _generalNotifications
+                        ? (v) {
+                            setState(() => _teamTransfers = v);
+                            _saveSetting('notif_team_transfers', v);
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSwitchTile(
+                    isAr ? 'تذكيرات المباريات' : 'Match Reminders',
+                    isAr ? 'تذكير تلقائي على جهازك قبل بدء المباراة بساعتين' : 'Automatic reminder on your device 2 hours before kickoff',
+                    _matchReminders,
+                    _generalNotifications
+                        ? (v) {
+                            setState(() => _matchReminders = v);
+                            _saveSetting('notif_match_reminders', v);
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildSwitchTile(
+                    isAr ? 'نتائج التحديات' : 'Challenge Match Results',
+                    isAr ? 'تنبيه عند إرسال نتيجة مباراة أو الاعتراض عليها' : 'Alert when a challenge score is submitted or disputed',
+                    _challengeResults,
+                    _generalNotifications
+                        ? (v) {
+                            setState(() => _challengeResults = v);
+                            _saveSetting('notif_challenge_results', v);
+                          }
+                        : null,
+                  ),
+                  const SizedBox(height: 24),
                 ],
               ),
             ),
     );
   }
 
+  Widget _buildSectionHeader(String title) {
+    return Text(
+      title,
+      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+            color: VSPColors.accent,
+            fontWeight: FontWeight.bold,
+            fontSize: 16,
+          ),
+    );
+  }
+
   Widget _buildSwitchTile(String title, String subtitle, bool value, ValueChanged<bool>? onChanged) {
+    final isEnabled = onChanged != null;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
@@ -111,54 +198,38 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              Row(
-                children: [
-                  Text(
-                    title,
-                    style: const TextStyle(
-                      color: VSPColors.textPrimary,
-                      fontSize: 18,
+              Text(
+                title,
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                      color: isEnabled ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
-                  ),
-                  if (onChanged == null) ...[
-                    const SizedBox(width: 8),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: const Text(
-                        'COMING SOON',
-                        style: TextStyle(
-                          color: VSPColors.accent,
-                          fontSize: 10,
-                          fontWeight: FontWeight.w900,
-                        ),
-                      ),
-                    ),
-                  ],
-                ],
+                overflow: TextOverflow.ellipsis,
+                maxLines: 1,
               ),
-              const SizedBox(height: 8),
+              const SizedBox(height: 6),
               Text(
                 subtitle,
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                      color: isEnabled ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.3),
+                      fontSize: 11.5,
+                      height: 1.3,
+                    ),
               ),
             ],
           ),
         ),
+        const SizedBox(width: 16),
         Switch(
-          value: value,
+          value: isEnabled ? value : false,
           onChanged: onChanged,
           activeColor: VSPColors.accent,
           activeTrackColor: VSPColors.accent.withValues(alpha: 0.3),
-          inactiveThumbColor: Colors.white,
+          inactiveThumbColor: Colors.white.withValues(alpha: 0.8),
           inactiveTrackColor: VSPColors.surfaceAlt,
         ),
       ],
     );
   }
 }
-

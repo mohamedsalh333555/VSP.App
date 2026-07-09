@@ -1,3 +1,4 @@
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/phone_utils.dart';
@@ -193,12 +194,15 @@ class AuthService {
   // Sign In with Google
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
     try {
-      final success = await _supabase.auth.signInWithOAuth(
+      final success = await _supabase.auth.signInWithOAuthSecure(
         OAuthProvider.google,
-        redirectTo: kIsWeb 
-            ? '${Uri.base.origin}/' 
-            : 'io.supabase.fluttervsp://login-callback/',
-        queryParams: {'prompt': 'select_account'},
+        options: SignInWithOAuthOptions(
+          redirectTo: kIsWeb 
+              ? '${Uri.base.origin}/' 
+              : 'io.supabase.fluttervsp://login-callback/',
+          queryParams: const {'prompt': 'select_account'},
+          data: {'role': role ?? 'player'},
+        ),
       );
       if (success) {
         return {'success': true, 'user': _supabase.auth.currentUser};
@@ -213,11 +217,14 @@ class AuthService {
   // Sign In with Apple
   Future<Map<String, dynamic>> signInWithApple({String? role}) async {
     try {
-      final success = await _supabase.auth.signInWithOAuth(
+      final success = await _supabase.auth.signInWithOAuthSecure(
         OAuthProvider.apple,
-        redirectTo: kIsWeb 
-            ? '${Uri.base.origin}/' 
-            : 'io.supabase.fluttervsp://login-callback/',
+        options: SignInWithOAuthOptions(
+          redirectTo: kIsWeb 
+              ? '${Uri.base.origin}/' 
+              : 'io.supabase.fluttervsp://login-callback/',
+          data: {'role': role ?? 'player'},
+        ),
       );
       if (success) {
         return {'success': true, 'user': _supabase.auth.currentUser};
@@ -298,5 +305,40 @@ class AuthService {
       _logSecurityEvent('OTP_VERIFICATION_FAILED', e);
       return false;
     }
+  }
+}
+
+class SignInWithOAuthOptions {
+  final String? redirectTo;
+  final Map<String, String>? queryParams;
+  final Map<String, dynamic>? data;
+
+  const SignInWithOAuthOptions({
+    this.redirectTo,
+    this.queryParams,
+    this.data,
+  });
+}
+
+extension GoTrueClientOAuthSecure on GoTrueClient {
+  Future<bool> signInWithOAuthSecure(
+    OAuthProvider provider, {
+    required SignInWithOAuthOptions options,
+  }) async {
+    final Map<String, String> query = {};
+    if (options.queryParams != null) {
+      query.addAll(options.queryParams!);
+    }
+    if (options.data != null) {
+      query['data'] = jsonEncode(options.data);
+      options.data!.forEach((key, value) {
+        query[key] = value.toString();
+      });
+    }
+    return signInWithOAuth(
+      provider,
+      redirectTo: options.redirectTo,
+      queryParams: query,
+    );
   }
 }

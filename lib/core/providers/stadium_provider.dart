@@ -61,64 +61,70 @@ class StadiumProvider with ChangeNotifier {
     }
 
     try {
-      final result = await _databaseService.getStadiumsPaginated(
-        limit: 10,
-        startAfter: _lastDocument,
-        governorate: _isGeographicFallback ? null : _selectedGovernorate,
-      );
-
-      final List<Stadium> newStadiums = result['items'];
-      _lastDocument = result['lastDoc'];
-
-      // Phase 4: Fallback Logic - If city search is empty during initial refresh, show all stadiums
-      if (newStadiums.isEmpty && _selectedGovernorate != null && isRefresh) {
-        _isGeographicFallback = true;
-        final fallbackResult = await _databaseService.getStadiumsPaginated(
-          limit: 10,
-          governorate: null, // Clear filter to show everything
-        );
-        final List<Stadium> fallbackStadiums = List<Stadium>.from(fallbackResult['items']);
-        
-        Position? userPosition;
-        try {
-          if (await Geolocator.isLocationServiceEnabled()) {
-            LocationPermission permission = await Geolocator.checkPermission();
-            if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-              userPosition = await Geolocator.getLastKnownPosition();
-              userPosition ??= await Geolocator.getCurrentPosition(
-                timeLimit: const Duration(seconds: 4),
-              );
-            }
+      // 🛡️ Discovery and Search Geo-Matching: Database-Level Geodistance Query
+      // Check if user's geographic location is available. If active, immediately fetch
+      // the pre-sorted list from the database RPC instead of client-side loops.
+      Position? userPosition;
+      try {
+        if (await Geolocator.isLocationServiceEnabled()) {
+          LocationPermission permission = await Geolocator.checkPermission();
+          if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+            userPosition = await Geolocator.getLastKnownPosition();
+            userPosition ??= await Geolocator.getCurrentPosition(
+              timeLimit: const Duration(seconds: 2),
+            );
           }
-        } catch (e) {
-          debugPrint('Error getting GPS location for fallback: $e');
         }
+      } catch (e) {
+        debugPrint('Error getting GPS location: $e');
+      }
 
-        if (userPosition != null) {
-          fallbackStadiums.sort((a, b) {
-            if (a.lat == null || a.lng == null) return 1;
-            if (b.lat == null || b.lng == null) return -1;
-            final distA = GeoHelper.calculateDistance(userPosition!.latitude, userPosition.longitude, a.lat!, a.lng!);
-            final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
-            return distA.compareTo(distB);
-          });
-        }
-        
-        _stadiums = fallbackStadiums;
-        _lastDocument = fallbackResult['lastDoc'];
+      if (userPosition != null) {
+        // Fetch pre-sorted list using StadiumRepository().fetchNearbyStadiums
+        final limit = isRefresh ? 10 : _stadiums.length + 10;
+        final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
+          userPosition.latitude,
+          userPosition.longitude,
+          limit: limit,
+        );
+
+        _stadiums = nearbyStadiums;
+        _lastDocument = _stadiums.length;
+        _hasMore = nearbyStadiums.length >= limit;
+        _isGeographicFallback = false;
       } else {
-        if (isRefresh) {
-          _stadiums = newStadiums;
-          _isGeographicFallback = false;
+        final result = await _databaseService.getStadiumsPaginated(
+          limit: 10,
+          startAfter: _lastDocument,
+          governorate: _isGeographicFallback ? null : _selectedGovernorate,
+        );
+
+        final List<Stadium> newStadiums = result['items'];
+        _lastDocument = result['lastDoc'];
+
+        // Fallback Logic - If city search is empty during initial refresh, show all stadiums
+        if (newStadiums.isEmpty && _selectedGovernorate != null && isRefresh) {
+          _isGeographicFallback = true;
+          final fallbackResult = await _databaseService.getStadiumsPaginated(
+            limit: 10,
+            governorate: null, // Clear filter to show everything
+          );
+          _stadiums = List<Stadium>.from(fallbackResult['items']);
+          _lastDocument = fallbackResult['lastDoc'];
         } else {
-          _stadiums.addAll(newStadiums);
+          if (isRefresh) {
+            _stadiums = newStadiums;
+            _isGeographicFallback = false;
+          } else {
+            _stadiums.addAll(newStadiums);
+          }
+        }
+
+        if (_stadiums.length < 10) {
+          _hasMore = false;
         }
       }
 
-      if (_stadiums.length < 10) {
-        _hasMore = false;
-      }
-      
       _errorMessage = null;
       notifyListeners();
     } catch (e) {

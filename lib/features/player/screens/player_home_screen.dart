@@ -461,10 +461,16 @@ class _HomeContent extends StatelessWidget {
           children: [
             Row(
               children: [
-                CircleAvatar(
-                  radius: 25, backgroundColor: VSPColors.surface, 
-                  backgroundImage: auth.userModel?.profileImageUrl != null ? NetworkImage(auth.userModel!.profileImageUrl!) : null, 
-                  child: auth.userModel?.profileImageUrl == null ? const Icon(LucideIcons.user, color: VSPColors.textSecondary) : null
+                GestureDetector(
+                  onTap: () {
+                    HapticFeedback.lightImpact();
+                    onNavigate(4); // Switches the bottom navigation index directly to the Profile Tab (index 4)
+                  },
+                  child: CircleAvatar(
+                    radius: 25, backgroundColor: VSPColors.surface, 
+                    backgroundImage: auth.userModel?.profileImageUrl != null ? NetworkImage(auth.userModel!.profileImageUrl!) : null, 
+                    child: auth.userModel?.profileImageUrl == null ? const Icon(LucideIcons.user, color: VSPColors.textSecondary) : null
+                  ),
                 ),
                 const SizedBox(width: 12),
                 Expanded(
@@ -474,36 +480,21 @@ class _HomeContent extends StatelessWidget {
                       Text('${AppLocalizations.of(context)!.hi} ${auth.userModel?.name?.split(' ').first ?? AppLocalizations.of(context)!.playerDefaultName}', style: Theme.of(context).textTheme.titleLarge),
                       Row(
                         children: [
-                          GestureDetector(
-                            onTap: () => _showLocationPickerHelper(context, auth),
-                            child: Row(
-                              children: [
-                                const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14), 
-                                const SizedBox(width: 4), 
-                                Text(
-                                  auth.userModel?.governorate ?? AppLocalizations.of(context)!.selectLocation, 
-                                  style: const TextStyle(
-                                    color: VSPColors.textSecondary, 
-                                    fontWeight: FontWeight.bold, 
-                                    decoration: TextDecoration.underline
-                                  )
-                                ),
-                              ],
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(4),
+                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                             ),
-                          ),
-                          const SizedBox(width: 8),
-                          InkWell(
-                            onTap: () async {
-                              VSPFeedback.showSuccess(context, 'جاري تحديث الموقع من الـ GPS...');
-                              final success = await auth.updateUserLocation(force: true);
-                              if (!success && context.mounted) {
-                                VSPFeedback.showError(context, 'فشل تحديد الموقع تلقائياً. يرجى الاختيار يدوياً.');
-                                _showLocationPickerHelper(context, auth);
-                              }
-                            },
-                            child: const Padding(
-                              padding: EdgeInsets.all(4.0),
-                              child: Icon(LucideIcons.locate, color: VSPColors.accent, size: 14),
+                            child: Text(
+                              auth.userModel?.position ?? "ST",
+                              style: const TextStyle(
+                                color: VSPColors.accent,
+                                fontSize: 10,
+                                fontWeight: FontWeight.bold,
+                                letterSpacing: 1.0,
+                              ),
                             ),
                           ),
                         ],
@@ -610,7 +601,42 @@ class _HomeContent extends StatelessWidget {
 
   Widget _buildStadiumsList(BuildContext context, StadiumProvider provider) {
     if (provider.stadiums.isEmpty && !provider.isLoading) {
-      final cityName = context.read<AuthProvider>().userModel?.governorate ?? 'منطقتك';
+      final rawCityName = context.read<AuthProvider>().userModel?.governorate ?? 'منطقتك';
+      final isAr = AppLocalizations.of(context)!.localeName == 'ar';
+      final String cityName;
+      if (isAr && rawCityName != 'منطقتك') {
+        final Map<String, String> translations = {
+          'Cairo': 'القاهرة',
+          'Giza': 'الجيزة',
+          'Alexandria': 'الإسكندرية',
+          'Aswan': 'أسوان',
+          'Luxor': 'الأقصر',
+          'Red Sea': 'البحر الأحمر',
+          'Dakahlia': 'الدقهلية',
+          'Sharqia': 'الشرقية',
+          'Gharbia': 'الغربية',
+          'Monufia': 'المنوفية',
+          'Beheira': 'البحيرة',
+          'Suez': 'السويس',
+          'Port Said': 'بورسعيد',
+          'Ismailia': 'الإسماعيلية',
+          'Damietta': 'دمياط',
+          'Faiyum': 'الفيوم',
+          'Beni Suef': 'بني سويف',
+          'Minya': 'المنيا',
+          'Asyut': 'أسيوط',
+          'Sohag': 'سوهاج',
+          'Qena': 'قنا',
+          'South Sinai': 'جنوب سيناء',
+          'North Sinai': 'شمال سيناء',
+          'Matrouh': 'مطروح',
+          'New Valley': 'الوادي الجديد',
+        };
+        cityName = translations[rawCityName] ?? rawCityName;
+      } else {
+        cityName = rawCityName;
+      }
+
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
         margin: const EdgeInsets.symmetric(horizontal: 16),
@@ -628,28 +654,30 @@ class _HomeContent extends StatelessWidget {
             ),
             const SizedBox(height: 16),
             Text(
-              'لم نصل إلى $cityName بعد! 📍',
+              isAr ? 'لم نصل إلى $cityName بعد! 📍' : 'We haven\'t reached $cityName yet! 📍',
               textAlign: TextAlign.center,
-              style: const TextStyle(
+              style: Theme.of(context).textTheme.titleLarge?.copyWith(
                 color: Colors.white,
                 fontWeight: FontWeight.bold,
                 fontSize: 18,
               ),
             ),
             const SizedBox(height: 8),
-            const Text(
-              'ولكننا نتوسع بسرعة في جميع المحافظات.',
+            Text(
+              isAr ? 'ولكننا نتوسع بسرعة في جميع المحافظات.' : 'But we are expanding rapidly to all governorates.',
               textAlign: TextAlign.center,
-              style: TextStyle(
+              style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: VSPColors.textSecondary,
                 fontSize: 13,
               ),
             ),
             const SizedBox(height: 24),
             PrimaryButton(
-              text: 'اقترح ملعباً في منطقتك 🏟️',
+              text: isAr ? 'اقترح ملعباً في منطقتك 🏟️' : 'Suggest a stadium in your area 🏟️',
               onPressed: () async {
-                final message = 'مرحباً VSP، أنا من محافظة $cityName وأريد اقتراح إضافة ملاعب في منطقتي!';
+                final message = isAr 
+                    ? 'مرحباً VSP، أنا من محافظة $cityName وأريد اقتراح إضافة ملاعب في منطقتي!'
+                    : 'Hello VSP, I am from $cityName and I want to suggest adding stadiums in my area!';
                 final encoded = Uri.encodeComponent(message);
                 final whatsappUrl = Uri.parse('https://wa.me/201100229462?text=$encoded');
                 try {

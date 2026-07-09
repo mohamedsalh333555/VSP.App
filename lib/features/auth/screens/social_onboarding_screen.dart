@@ -1,4 +1,5 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/services.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
@@ -9,6 +10,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 
 class SocialOnboardingScreen extends StatefulWidget {
@@ -26,6 +28,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
   bool _isFetchingLocation = false;
+  bool _isLocationFallbackActive = false;
   DateTime? _dateOfBirth;
 
   final List<String> _positions = ['GK', 'CB', 'LB', 'RB', 'MID', 'LW', 'RW', 'ST'];
@@ -58,10 +61,20 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       if (result != null && mounted) {
         setState(() {
           _selectedGovernorate = result;
+          _isLocationFallbackActive = false;
         });
+      } else {
+        setState(() {
+          _isLocationFallbackActive = true;
+        });
+        HapticFeedback.lightImpact();
       }
     } catch (e) {
       debugPrint('Error auto-fetching location: $e');
+      setState(() {
+        _isLocationFallbackActive = true;
+      });
+      HapticFeedback.lightImpact();
     } finally {
       if (mounted) {
         setState(() => _isFetchingLocation = false);
@@ -360,6 +373,27 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                   ],
                 ),
                 const SizedBox(height: 8),
+                if (_isLocationFallbackActive) ...[
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(12),
+                    margin: const EdgeInsets.only(bottom: 8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.error.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.error.withValues(alpha: 0.5)),
+                    ),
+                    child: const Text(
+                      '⚠️ لم نتمكن من تحديد موقعك تلقائياً. يرجى اختيار محافظتك يدوياً لعرض الملاعب المناسبة لك.',
+                      style: TextStyle(
+                        color: VSPColors.error,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
                 _buildGovernorateDropdown(),
 
 
@@ -419,7 +453,26 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 ? 'إتمام وتحقق (وضع التطوير)' 
                 : (isOwner ? 'متابعة لإعداد الملعب' : 'إتمام التسجيل'),
               isLoading: _isLoading,
-              onPressed: _isFormValid ? _handleCompleteRegistration : null,
+              onPressed: () {
+                final firstName = _firstNameController.text.trim();
+                final lastName = _lastNameController.text.trim();
+                final phone = _phoneController.text.trim();
+
+                if (firstName.isEmpty || lastName.isEmpty) {
+                  VSPFeedback.showError(context, 'يرجى إدخال الاسم بالكامل');
+                  return;
+                }
+                if (_dateOfBirth == null) {
+                  VSPFeedback.showError(context, 'يرجى إدخال تاريخ الميلاد 📅');
+                  return;
+                }
+                if (phone.length < 10) {
+                  VSPFeedback.showError(context, 'يرجى إدخال رقم هاتف صحيح 📱');
+                  return;
+                }
+
+                _handleCompleteRegistration();
+              },
             ),
           ),
         ),
@@ -467,7 +520,10 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider),
+        border: Border.all(
+          color: _isLocationFallbackActive ? VSPColors.accent : VSPColors.divider,
+          width: _isLocationFallbackActive ? 2.0 : 1.0,
+        ),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
