@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -56,6 +56,31 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       return hour;
     } catch (e) {
       return 8;
+    }
+  }
+
+  // دالة مساعدة لحساب الدقائق الإجمالية من منتصف الليل لضمان دقة المقارنة وتجنب تداخل الحجوزات
+  int _parseTimeToMinutes(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 0;
+    try {
+      final clean = timeStr.trim();
+      final format = DateFormat('hh:mm a');
+      final parsedTime = format.parse(clean);
+      return parsedTime.hour * 60 + parsedTime.minute;
+    } catch (e) {
+      try {
+        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
+        final match = timeRegex.firstMatch(timeStr);
+        if (match == null) return 0;
+        int hour = int.parse(match.group(1)!);
+        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+        String? period = match.group(3)?.toUpperCase();
+        if (period == 'PM' && hour != 12) hour += 12;
+        if (period == 'AM' && hour == 12) hour = 0;
+        return hour * 60 + minute;
+      } catch (_) {
+        return 0;
+      }
     }
   }
 
@@ -272,8 +297,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   try {
                     final int startH = _parseTimeToHour(selectedStadium.openingTime);
                     final int endH = _parseTimeToHour(selectedStadium.closingTime);
-                    final int breakStartH = selectedStadium.isSplitShift ? _parseTimeToHour(selectedStadium.breakStartTime) : -1;
-                    final int breakEndH = selectedStadium.isSplitShift ? _parseTimeToHour(selectedStadium.breakEndTime) : -1;
+                    final int breakStartMin = selectedStadium.isSplitShift ? _parseTimeToMinutes(selectedStadium.breakStartTime) : -1;
+                    final int breakEndMin = selectedStadium.isSplitShift ? _parseTimeToMinutes(selectedStadium.breakEndTime) : -1;
                     
                     int currentH = startH;
                     int currentM = 0;
@@ -285,11 +310,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
                       
                       bool isBreak = false;
-                      if (selectedStadium.isSplitShift && breakStartH != -1 && breakEndH != -1) {
-                         if (breakStartH < breakEndH) {
-                           isBreak = currentH >= breakStartH && currentH < breakEndH;
+                      if (selectedStadium.isSplitShift && breakStartMin != -1 && breakEndMin != -1) {
+                         final int currentSlotMin = currentH * 60 + currentM;
+                         if (breakStartMin < breakEndMin) {
+                           isBreak = currentSlotMin >= breakStartMin && currentSlotMin < breakEndMin;
                          } else {
-                           isBreak = currentH >= breakStartH || currentH < breakEndH;
+                           isBreak = currentSlotMin >= breakStartMin || currentSlotMin < breakEndMin;
                          }
                       }
 
@@ -658,7 +684,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isArabic ? 'تم تأكيد حضور ولعب المباراة بنجاح 🏆' : 'Match attendance confirmed successfully 🏆'),
+            content: Text(isArabic ? 'تم تأكيد حضور ولعب المباراة بنجاح 🏆' : 'Match attendance confirmed successfully ��'),
             backgroundColor: VSPColors.success,
           ),
         );
@@ -772,11 +798,12 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       return DateTime(date.year, date.month, date.day, parsedTime.hour, parsedTime.minute);
     } catch (e) {
       try {
-        final parts = timeStr.trim().split(' ');
-        final timeParts = parts[0].split(':');
-        int hour = int.parse(timeParts[0]);
-        int minute = timeParts.length > 1 ? int.parse(timeParts[1]) : 0;
-        final period = parts[1].toUpperCase();
+        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
+        final match = timeRegex.firstMatch(timeStr);
+        if (match == null) return date;
+        int hour = int.parse(match.group(1)!);
+        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+        String? period = match.group(3)?.toUpperCase();
         if (period == 'PM' && hour != 12) hour += 12;
         if (period == 'AM' && hour == 12) hour = 0;
         return DateTime(date.year, date.month, date.day, hour, minute);

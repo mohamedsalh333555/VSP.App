@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -63,7 +63,7 @@ class _RootScreenState extends State<RootScreen> {
     });
   }
 
-  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق
+  // دالة استرجاع وتوجيه المستخدم للرابط العميق المعلق بشكل آمن ومتوافق مع جميع الهياكل
   Future<void> _handlePendingDeepLink() async {
     try {
       final prefs = await SharedPreferences.getInstance();
@@ -73,13 +73,35 @@ class _RootScreenState extends State<RootScreen> {
         await prefs.remove('pending_deep_link'); // حذف الرابط فوراً لمنع التكرار
         
         final uri = Uri.parse(pendingLink);
-        if (uri.pathSegments.length >= 2) {
-          final type = uri.pathSegments[0]; // match
-          final id = uri.pathSegments[1];
+        String? type;
+        String? id;
 
-          if (type == 'match' && mounted) {
-            // التوجيه المباشر إلى تفاصيل المباراة
-            GoRouter.of(context).push('/match/$id');
+        if (uri.scheme == 'io.supabase.fluttervsp') {
+          type = uri.host;
+          if (uri.pathSegments.isNotEmpty) {
+            id = uri.pathSegments.first;
+          }
+        } else {
+          if (uri.pathSegments.length >= 2) {
+            type = uri.pathSegments[0]; // match or team
+            id = uri.pathSegments[1];
+          }
+        }
+
+        if (type != null && id != null && id.isNotEmpty) {
+          // التحقق من سلامة وصحة المعرف لمنع الاختراق
+          final bool isValidId = RegExp(r'^[a-zA-Z0-9\-_\s]+$').hasMatch(id);
+          if (!isValidId) {
+            debugPrint('⚠️ Malicious or garbage ID detected in pending deep link: $id. Redirecting to safe fallback.');
+            return;
+          }
+
+          if (mounted) {
+            if (type == 'match') {
+              GoRouter.of(context).push('/match/$id');
+            } else if (type == 'team') {
+              GoRouter.of(context).push('/team/$id');
+            }
           }
         }
       }
@@ -134,8 +156,6 @@ class _RootScreenState extends State<RootScreen> {
     );
   }
 
-
-
   @override
   void dispose() {
     _loadingTimeout?.cancel();
@@ -169,7 +189,7 @@ class _RootScreenState extends State<RootScreen> {
 }
 
 // ─────────────────────────────────────────────
-// 🛠️ Maintenance Mode Screen
+// ��️ Maintenance Mode Screen
 // ─────────────────────────────────────────────
 class MaintenanceScreen extends StatelessWidget {
   const MaintenanceScreen({super.key});
@@ -206,5 +226,3 @@ class MaintenanceScreen extends StatelessWidget {
     );
   }
 }
-
-
