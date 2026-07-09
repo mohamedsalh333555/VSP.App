@@ -1,4 +1,4 @@
-import 'dart:ui';
+﻿import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
@@ -39,6 +39,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -127,34 +128,27 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                       ),
                       const SizedBox(height: 32),
 
-                      // ── Title ──
-                      const Text(
-                        'الاتصال مفقود',
-                        style: TextStyle(
+                      // ── Title Localized ──
+                      Text(
+                        isAr ? 'الاتصال مفقود' : 'Connection Problem',
+                        style: const TextStyle(
                           color: Colors.white,
                           fontSize: 24,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
                         ),
                       ),
-                      const SizedBox(height: 4),
-                      const Text(
-                        'Connection Problem',
-                        style: TextStyle(
-                          color: VSPColors.textSecondary,
-                          fontSize: 14,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
                       const SizedBox(height: 16),
 
-                      // ── Description ──
-                      const Padding(
-                        padding: EdgeInsets.symmetric(horizontal: 8),
+                      // ── Description Localized ──
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
-                          'تعذر تحميل ملفك الشخصي. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.',
+                          isAr 
+                              ? 'تعذر تحميل ملفك الشخصي. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.'
+                              : 'Could not load your profile. Please check your internet connection and try again.',
                           textAlign: TextAlign.center,
-                          style: TextStyle(
+                          style: const TextStyle(
                             color: VSPColors.textSecondary,
                             height: 1.6,
                             fontSize: 14,
@@ -187,9 +181,9 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                                     valueColor: AlwaysStoppedAnimation<Color>(VSPColors.background),
                                   ),
                                 )
-                              : const Text(
-                                  'إعادة المحاولة / Retry',
-                                  style: TextStyle(
+                              : Text(
+                                  isAr ? 'إعادة المحاولة' : 'Retry',
+                                  style: const TextStyle(
                                     fontWeight: FontWeight.bold,
                                     fontSize: 16,
                                     letterSpacing: 0.5,
@@ -209,9 +203,9 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                             borderRadius: BorderRadius.circular(VSPRadius.sm),
                           ),
                         ),
-                        child: const Text(
-                          'تسجيل الخروج / Sign Out',
-                          style: TextStyle(
+                        child: Text(
+                          isAr ? 'تسجيل الخروج' : 'Sign Out',
+                          style: const TextStyle(
                             fontWeight: FontWeight.bold,
                             fontSize: 14,
                           ),

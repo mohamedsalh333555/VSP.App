@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -10,6 +10,7 @@ class SuspendedAccountScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -32,9 +33,9 @@ class SuspendedAccountScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: VSPSpacing.xl),
-              const Text(
-                'Account Suspended',
-                style: TextStyle(
+              Text(
+                isAr ? 'تم تعليق الحساب' : 'Account Suspended',
+                style: const TextStyle(
                   color: Colors.redAccent,
                   fontSize: 22,
                   fontWeight: FontWeight.bold,
@@ -42,12 +43,14 @@ class SuspendedAccountScreen extends StatelessWidget {
                 ),
               ),
               const SizedBox(height: VSPSpacing.sm),
-              const Padding(
-                padding: EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                 child: Text(
-                  'Your account has been temporarily suspended due to administrative review or violation of policies. Please contact support to resolve this issue.',
+                  isAr
+                      ? 'لقد تم إيقاف حسابك مؤقتاً بسبب مراجعة إدارية أو مخالفة سياسات المنصة. يرجى التواصل مع الدعم الفني لحل هذه المشكلة.'
+                      : 'Your account has been temporarily suspended due to administrative review or violation of policies. Please contact support to resolve this issue.',
                   textAlign: TextAlign.center,
-                  style: TextStyle(
+                  style: const TextStyle(
                     color: VSPColors.textSecondary,
                     height: 1.5,
                     fontSize: 14,
@@ -71,9 +74,9 @@ class SuspendedAccountScreen extends StatelessWidget {
                     // Launch WhatsApp or support contact link placeholder
                   },
                   icon: Icon(LucideIcons.headphones, color: VSPColors.background),
-                  label: const Text(
-                    'Contact Support',
-                    style: TextStyle(
+                  label: Text(
+                    isAr ? 'التواصل مع الدعم' : 'Contact Support',
+                    style: const TextStyle(
                       fontWeight: FontWeight.bold,
                       fontSize: 16,
                     ),
@@ -89,9 +92,9 @@ class SuspendedAccountScreen extends StatelessWidget {
                   foregroundColor: VSPColors.textSecondary,
                   padding: const EdgeInsets.symmetric(vertical: VSPSpacing.sm, horizontal: VSPSpacing.lg),
                 ),
-                child: const Text(
-                  'Sign Out',
-                  style: TextStyle(
+                child: Text(
+                  isAr ? 'تسجيل الخروج' : 'Sign Out',
+                  style: const TextStyle(
                     fontWeight: FontWeight.w600,
                     fontSize: 14,
                   ),

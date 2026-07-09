@@ -27,6 +27,7 @@ class VSPPrimaryButton extends StatelessWidget {
     final double h = height ?? 56;
     final bool hasCustomColor = color != null;
     final fontName = GoogleFonts.titilliumWeb().fontFamily;
+    final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
     return Container(
       height: h,
@@ -37,8 +38,8 @@ class VSPPrimaryButton extends StatelessWidget {
             ? null 
             : LinearGradient(
                 colors: gradientColors ?? [
-                  VSPColors.accent,          // Volt/Neon Green
-                  const Color(0xFF02DFD4),   // Electric Cyan
+                  VSPColors.accent,          // Volt Green Solid
+                  VSPColors.accent,          // توحيد الأخضر الفولت الصاخب دون تشظي لوني
                 ],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
@@ -78,6 +79,7 @@ class VSPPrimaryButton extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   fontFamily: fontName,
+                  fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
                   color: textColor ?? Colors.black,
                 ),
               ),

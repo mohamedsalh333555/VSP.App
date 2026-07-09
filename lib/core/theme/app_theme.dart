@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -26,7 +26,8 @@ class AppTheme {
     final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
-    final List<String> fallbackFonts = const ['Tajawal', 'sans-serif'];
+    // توحيد الخط الاحتياطي وتضمين اسم عائلة خط تجوال المستدعى ديناميكياً لضمان تطبيقه
+    final List<String> fallbackFonts = [tajawalFamily ?? 'Tajawal', 'sans-serif'];
 
     // Helper to apply fallback font family to all styles in TextTheme
     TextTheme applyFallback(TextTheme theme) {
@@ -113,7 +114,7 @@ class AppTheme {
       ),
 
       fontFamily: titilliumWebFamily,
-      fontFamilyFallback: const ['Tajawal', 'sans-serif'],
+      fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
 
       textTheme: applyFallback(finalTextTheme),
 
@@ -154,6 +155,8 @@ class AppTheme {
             fontSize: 16,
             fontWeight: FontWeight.bold,
             fontFamily: GoogleFonts.poppins().fontFamily,
+            // دمج خط تجوال كخط احتياطي لأزرار النظام في حال عرض نصوص عربية
+            fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
           ),
         ),
       ),
@@ -181,5 +184,3 @@ class AppTheme {
     );
   }
 }
-
-
