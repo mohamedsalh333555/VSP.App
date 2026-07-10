@@ -14,7 +14,6 @@ import 'booking_success_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
@@ -70,7 +69,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               _isLoading = false;
             });
             _initBookingRealtimeListener(booking.id);
-            _startPaymobCheckout();
           }
         } else {
           final err = bookingProvider.errorMessage;
@@ -109,17 +107,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
-        // When the database status is updated to confirmed or paid
         if (status == 'confirmed' || paymentStatus == 'paid') {
-          // Immediately close/dismiss the active WebView overlay
-          try {
-            await closeInAppWebView();
-          } catch (_) {}
-
-          // Trigger a heavy vibration feedback
           HapticFeedback.heavyImpact();
-
-          // Redirect the player directly and cleanly to BookingSuccessScreen
           if (mounted) {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
@@ -140,43 +129,96 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   Future<void> _startPaymobCheckout() async {
-    if (_booking == null) return;
     setState(() => _isPaymobLoading = true);
-    try {
-      final amount = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0
-          ? widget.bookingDraft.depositPaid
-          : widget.bookingDraft.totalPrice;
+    await Future.delayed(const Duration(seconds: 1)); // Simulate network load
+    setState(() => _isPaymobLoading = false);
 
-      // Invoke Supabase Edge Function to register the transaction and obtain the checkout iframe URL
-      final response = await Supabase.instance.client.functions.invoke(
-        'create-paymob-session',
-        body: {
-          'booking_id': _booking!.id,
-          'amount': amount,
-        },
-      );
+    if (!mounted) return;
+    
+    final amountToPay = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0 
+        ? widget.bookingDraft.depositPaid.toInt() 
+        : widget.bookingDraft.totalPrice.toInt();
 
-      final data = response.data;
-      if (data is Map<String, dynamic> && data.containsKey('iframe_url')) {
-        final iframeUrl = data['iframe_url'] as String;
-        setState(() => _isPaymobLoading = false);
-        // Open a secure in-app WebView pointing directly to this URL
-        await launchUrl(Uri.parse(iframeUrl), mode: LaunchMode.inAppWebView);
-      } else {
-        throw Exception('Invalid response payload from create-paymob-session');
-      }
-    } catch (e) {
-      setState(() => _isPaymobLoading = false);
-      if (mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
-          context,
-          isArabic
-              ? 'فشل تهيئة بوابة الدفع: ${e.toString()}'
-              : 'Failed to initialize payment gateway: ${e.toString()}',
-        );
-      }
-    }
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => Scaffold(
+        backgroundColor: const Color(0xFF0F172A),
+        appBar: AppBar(
+          backgroundColor: const Color(0xFF0F172A),
+          elevation: 0,
+          leading: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
+          title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16)),
+          centerTitle: true,
+        ),
+        body: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(20),
+                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                child: Column(
+                  children: [
+                    const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
+                    const SizedBox(height: 24),
+                    const Text('Total Amount', style: TextStyle(color: Colors.black54, fontSize: 14)),
+                    Text('$amountToPay EGP', style: const TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w900)),
+                    const SizedBox(height: 32),
+                    TextField(
+                      decoration: InputDecoration(labelText: 'Card Number', hintText: '4000 0000 0000 0002', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), prefixIcon: const Icon(Icons.credit_card)),
+                      keyboardType: TextInputType.number,
+                    ),
+                    const SizedBox(height: 16),
+                    Row(
+                      children: [
+                        Expanded(child: TextField(decoration: InputDecoration(labelText: 'Expiry (MM/YY)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
+                        const SizedBox(width: 16),
+                        Expanded(child: TextField(decoration: InputDecoration(labelText: 'CVV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))), obscureText: true)),
+                      ],
+                    ),
+                    const SizedBox(height: 32),
+                    SizedBox(
+                      width: double.infinity, height: 50,
+                      child: ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                        onPressed: () async {
+                          Navigator.pop(ctx);
+                          setState(() => _isPaymobLoading = true);
+                          try {
+                            await Supabase.instance.client.from('bookings').update({
+                              'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
+                            }).eq('id', _booking!.id);
+                            
+                            HapticFeedback.heavyImpact();
+                            if (mounted) {
+                              final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
+                              if (updatedBooking != null && mounted) {
+                                Navigator.pushReplacement(
+                                  context,
+                                  MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
+                                );
+                              }
+                            }
+                          } catch (_) {
+                            setState(() => _isPaymobLoading = false);
+                          }
+                        },
+                        child: const Text('Pay Securely', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 24),
+              const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2))),
+            ],
+          ),
+        ),
+      ),
+    );
   }
 
   void _showCashLimitDialog(String message) {
@@ -268,162 +310,185 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
     final hasDeposit = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
 
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        final cancel = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: VSPColors.surface,
+            title: Text(isArabic ? 'إلغاء الدفع؟' : 'Cancel Payment?', style: const TextStyle(color: Colors.white)),
+            content: Text(isArabic ? 'إذا تراجعت الآن سيتم إلغاء حجزك مؤقتاً.' : 'If you go back now, your temporary booking will be cancelled.', style: const TextStyle(color: VSPColors.textSecondary)),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'استكمال الدفع' : 'Continue Payment', style: const TextStyle(color: VSPColors.accent))),
+              TextButton(
+                onPressed: () async {
+                  if (_booking != null) {
+                    await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
+                  }
+                  if (ctx.mounted) Navigator.pop(ctx, true);
+                },
+                child: Text(isArabic ? 'تراجع وإلغاء' : 'Cancel Booking', style: const TextStyle(color: VSPColors.error))
+              )
+            ]
+          )
+        );
+        if (cancel == true && context.mounted) Navigator.pop(context);
+      },
+      child: Scaffold(
         backgroundColor: VSPColors.background,
-        elevation: 0,
-        leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
-        centerTitle: true,
-        title: Text(l10n.confirmBooking, style: Theme.of(context).textTheme.displaySmall),
-      ),
-      body: Stack(
-        children: [
-          Positioned(
-            top: -100, right: -100,
-            child: Container(
-              width: 300, height: 300,
-              decoration: BoxDecoration(shape: BoxShape.circle, color: VSPColors.accent.withValues(alpha: 0.12)),
-              child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)),
-            ),
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          elevation: 0,
+          leading: IconButton(
+            icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+            onPressed: () async {
+              final cancel = await showDialog<bool>(
+                context: context,
+                builder: (ctx) => AlertDialog(
+                  backgroundColor: VSPColors.surface,
+                  title: Text(isArabic ? 'إلغاء الدفع؟' : 'Cancel Payment?', style: const TextStyle(color: Colors.white)),
+                  content: Text(isArabic ? 'إذا تراجعت الآن سيتم إلغاء حجزك.' : 'If you go back now, your booking will be cancelled.', style: const TextStyle(color: VSPColors.textSecondary)),
+                  actions: [
+                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'استكمال الدفع' : 'Continue Payment', style: const TextStyle(color: VSPColors.accent))),
+                    TextButton(
+                      onPressed: () async {
+                        if (_booking != null) {
+                          await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
+                        }
+                        if (ctx.mounted) Navigator.pop(ctx, true);
+                      },
+                      child: Text(isArabic ? 'إلغاء الحجز' : 'Cancel Booking', style: const TextStyle(color: VSPColors.error))
+                    )
+                  ]
+                )
+              );
+              if (cancel == true && context.mounted) Navigator.pop(context);
+            },
           ),
-          SafeArea(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const Spacer(),
-                  Container(
-                    width: 90,
-                    height: 90,
-                    decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.1),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2),
-                    ),
-                    child: const Icon(
-                      LucideIcons.shieldCheck,
-                      color: VSPColors.accent,
-                      size: 44,
-                    ),
-                  ),
-                  const SizedBox(height: 32),
-                  Text(
-                    hasDeposit 
-                        ? (isArabic ? 'العربون المطلوب دفعه' : 'Required Deposit')
-                        : (isArabic ? 'المبلغ الإجمالي المستحق' : 'Total Amount Due'),
-                    style: const TextStyle(
-                      color: VSPColors.textSecondary,
-                      fontSize: 14,
-                      fontWeight: FontWeight.w500,
-                    ),
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    '${amountToPay.toInt()} ${l10n.egCurrency}',
-                    style: const TextStyle(
-                      color: VSPColors.accent,
-                      fontSize: 40,
-                      fontWeight: FontWeight.w900,
-                      letterSpacing: 0.5,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  Container(
-                    padding: const EdgeInsets.all(16),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.xl),
-                      border: Border.all(color: VSPColors.divider),
-                    ),
-                    child: Column(
-                      children: [
-                        Row(
-                          children: [
-                            const Icon(LucideIcons.building, color: VSPColors.textSecondary, size: 18),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              child: Text(
-                                widget.bookingDraft.stadiumName,
-                                style: const TextStyle(
-                                  color: Colors.white,
-                                  fontWeight: FontWeight.bold,
-                                  fontSize: 16,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 12),
-                        Row(
-                          children: [
-                            const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
-                            const SizedBox(width: 12),
-                            Text(
-                              DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                            ),
-                            const SizedBox(width: 16),
-                            const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 18),
-                            const SizedBox(width: 8),
-                            Text(
-                              DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 40),
-                  if (_isLoading || _isPaymobLoading) ...[
-                    const CircularProgressIndicator(color: VSPColors.accent),
-                    const SizedBox(height: 16),
-                    Text(
-                      isArabic 
-                          ? 'جاري تهيئة بوابة الدفع الآمنة...'
-                          : 'Initializing secure payment gateway...',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                    ),
-                  ] else ...[
-                    const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 16),
-                    const SizedBox(height: 8),
-                    Text(
-                      isArabic 
-                          ? 'سيتم نقلك الآن لصفحة الدفع الآمنة لإتمام حجزك...'
-                          : 'You will be redirected to the secure payment page to complete your booking...',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                        color: VSPColors.textSecondary,
-                        fontSize: 13,
-                        height: 1.5,
-                      ),
-                    ),
-                  ],
-                  const Spacer(),
-                  SizedBox(
-                    width: double.infinity,
-                    height: 56,
-                    child: PrimaryButton(
-                      text: isArabic ? 'ادفع الآن' : 'Pay Now',
-                      isLoading: _isLoading || _isPaymobLoading,
-                      onPressed: (_booking == null) ? null : _startPaymobCheckout,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                ],
+          centerTitle: true,
+          title: Text(l10n.confirmBooking, style: Theme.of(context).textTheme.displaySmall),
+        ),
+        body: Stack(
+          children: [
+            Positioned(
+              top: -100, right: -100,
+              child: Container(
+                width: 300, height: 300,
+                decoration: BoxDecoration(shape: BoxShape.circle, color: VSPColors.accent.withOpacity(0.12)),
+                child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)),
               ),
             ),
-          ),
-        ],
+            SafeArea(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  children: [
+                    const Spacer(),
+                    Container(
+                      width: 90,
+                      height: 90,
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withOpacity(0.1),
+                        shape: BoxShape.circle,
+                        border: Border.all(color: VSPColors.accent.withOpacity(0.3), width: 2),
+                      ),
+                      child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
+                    ),
+                    const SizedBox(height: 32),
+                    Text(
+                      hasDeposit 
+                          ? (isArabic ? 'عربون الحجز' : 'Upfront Deposit')
+                          : (isArabic ? 'المبلغ الإجمالي المستحق' : 'Total Amount Due'),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
+                    ),
+                    const SizedBox(height: 8),
+                    Text(
+                      '${amountToPay.toInt()} ${l10n.egCurrency}',
+                      style: const TextStyle(color: VSPColors.accent, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                    ),
+                    const SizedBox(height: 24),
+                    Container(
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.xl),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Column(
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(LucideIcons.building, color: VSPColors.textSecondary, size: 18),
+                              const SizedBox(width: 12),
+                              Expanded(
+                                child: Text(
+                                  widget.bookingDraft.stadiumName,
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
+                              const SizedBox(width: 12),
+                              Text(
+                                DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                              ),
+                              const SizedBox(width: 16),
+                              const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(height: 40),
+                    if (_isLoading || _isPaymobLoading) ...[
+                      const CircularProgressIndicator(color: VSPColors.accent),
+                      const SizedBox(height: 16),
+                      Text(
+                        isArabic ? 'جاري تهيئة بوابة الدفع الآمنة...' : 'Initializing secure payment gateway...',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      ),
+                    ] else ...[
+                      const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 16),
+                      const SizedBox(height: 8),
+                      Text(
+                        isArabic ? 'سيتم نقلك الآن لصفحة الدفع الآمنة لإتمام حجزك...' : 'You will be redirected to the secure payment page to complete your booking...',
+                        textAlign: TextAlign.center,
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                      ),
+                    ],
+                    const Spacer(),
+                    SizedBox(
+                      width: double.infinity,
+                      height: 56,
+                      child: PrimaryButton(
+                        text: isArabic ? 'ادفع الآن' : 'Pay Now',
+                        isLoading: _isLoading || _isPaymobLoading,
+                        onPressed: (_booking == null) ? null : _startPaymobCheckout,
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                  ],
+                ),
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }

@@ -337,7 +337,7 @@ class SupabaseBookingRepository implements BookingRepository {
       if (booking == null) return false;
 
       // Business Rule: Cannot cancel after match starts
-      if (DateTime.now().isAfter(booking.startTime)) {
+      if (DateTime.now().isAfter(booking.startTime.subtract(const Duration(hours: 2)))) {
         debugPrint('⚠️ Cannot cancel booking after start time: $bookingId');
         return false;
       }

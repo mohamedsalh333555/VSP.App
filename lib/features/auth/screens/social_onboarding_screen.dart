@@ -117,7 +117,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     final phone = _phoneController.text.trim();
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
-    return phone.length >= 10 && firstName.isNotEmpty && lastName.isNotEmpty && _dateOfBirth != null && !_isLoading;
+    return phone.length == 11 && phone.startsWith("01") && firstName.isNotEmpty && lastName.isNotEmpty && _dateOfBirth != null && !_isLoading;
   }
 
   Future<void> _handleCompleteRegistration() async {

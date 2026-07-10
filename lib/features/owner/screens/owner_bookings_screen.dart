@@ -893,7 +893,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           ),
           Switch(
             value: _isManualDepositReceived,
-            onChanged: (val) {
+            onChanged: (widget.slot['booking']?.paymentMethod == 'paymob') ? null : (val) {
               setState(() {
                 _isManualDepositReceived = val;
               });

@@ -1,11 +1,12 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/auth_provider.dart';
-import '../../../../core/providers/stadium_provider.dart';
 import '../../../../shared/widgets/stadium_card.dart';
 import '../../../../shared/widgets/vsp_empty_state.dart';
+import '../../../../data/models.dart';
 import '../stadium_details_screen.dart';
 
 class FavoritesScreen extends StatelessWidget {
@@ -24,8 +25,8 @@ class FavoritesScreen extends StatelessWidget {
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
-      body: Consumer2<AuthProvider, StadiumProvider>(
-        builder: (context, auth, stadiumProvider, child) {
+      body: Consumer<AuthProvider>(
+        builder: (context, auth, child) {
           final favoriteIds = auth.userModel?.favoriteStadiums ?? [];
           
           if (favoriteIds.isEmpty) {
@@ -36,38 +37,47 @@ class FavoritesScreen extends StatelessWidget {
             );
           }
 
-          // Filter all stadiums to show only favorites
-          final favoriteStadiums = stadiumProvider.allStadiums
-              .where((s) => favoriteIds.contains(s.id))
-              .toList();
+          return FutureBuilder<List<Map<String, dynamic>>>(
+            future: Supabase.instance.client
+                .from('stadiums')
+                .select()
+                .inFilter('id', favoriteIds)
+                .then((res) => List<Map<String, dynamic>>.from(res)),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+              }
+              
+              final data = snapshot.data ?? [];
+              
+              if (data.isEmpty) {
+                return const VSPEmptyState(
+                  icon: LucideIcons.search,
+                  title: 'Stadiums Not Found',
+                  subtitle: 'Your favorite stadiums could not be loaded.',
+                );
+              }
 
-          if (favoriteStadiums.isEmpty) {
-            // If they are in the list but not in the provider's current fetch
-            // we could either fetch them or show empty. 
-            // For now, let's assume allStadiums has what we need or show a message.
-            return const VSPEmptyState(
-              icon: LucideIcons.search,
-              title: 'Stadiums Not Found',
-              subtitle: 'Your favorite stadiums could not be loaded right now.',
-            );
-          }
+              final favoriteStadiums = data.map((d) => Stadium.fromFirestore(d, d['id'].toString())).toList();
 
-          return ListView.builder(
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            itemCount: favoriteStadiums.length,
-            itemBuilder: (context, index) {
-              final stadium = favoriteStadiums[index];
-              return Padding(
-                padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-                child: StadiumCard(
-                  stadium: stadium,
-                  onTap: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(
-                      builder: (_) => StadiumDetailsScreen(stadium: stadium),
+              return ListView.builder(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                itemCount: favoriteStadiums.length,
+                itemBuilder: (context, index) {
+                  final stadium = favoriteStadiums[index];
+                  return Padding(
+                    padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+                    child: StadiumCard(
+                      stadium: stadium,
+                      onTap: () => Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (_) => StadiumDetailsScreen(stadium: stadium),
+                        ),
+                      ),
                     ),
-                  ),
-                ),
+                  );
+                },
               );
             },
           );

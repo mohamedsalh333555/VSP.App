@@ -1,4 +1,4 @@
-import 'dart:async';
+﻿import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -405,7 +405,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 ],
               ),
               const SizedBox(height: VSPSpacing.md),
-              SizedBox(
+              if (!isCaptain) SizedBox(
                 width: double.infinity,
                 child: PrimaryButton(
                   text: "مغادرة الفريق",
@@ -755,11 +755,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(width: VSPSpacing.md),
             Expanded(child: PrimaryButton(text: l10n.delete, height: 48, color: VSPColors.error, textColor: VSPColors.background, onPressed: () async {
               Navigator.pop(context);
-              final success = await DatabaseService().deleteTeam(team.id);
-              if (success && mounted) {
-                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.teamDeletedSuccess), backgroundColor: VSPColors.error));
-                Navigator.pop(context); 
-              }
+              try { final success = await DatabaseService().deleteTeam(team.id); if (success && mounted) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.teamDeletedSuccess), backgroundColor: VSPColors.error)); Navigator.pop(context); } } catch(e) { if(mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().contains('team_in_tournament') ? (Localizations.localeOf(context).languageCode == 'ar' ? 'لا يمكن حذف الفريق لمشاركته في بطولة نشطة!' : 'Cannot delete team while active in a tournament!') : 'Error deleting team'), backgroundColor: VSPColors.error)); }
             })),
           ]),
         ],

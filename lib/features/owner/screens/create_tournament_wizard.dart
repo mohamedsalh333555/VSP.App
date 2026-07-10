@@ -1,4 +1,4 @@
-import 'owner_tournament_dashboard_screen.dart';
+﻿import 'owner_tournament_dashboard_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -184,6 +184,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   Future<void> _handleSave() async {
+    if (_endDate.isBefore(_startDate)) { VSPFeedback.showError(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء!' : 'End date cannot be before start date!'); return; }
     setState(() => _isLoading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);

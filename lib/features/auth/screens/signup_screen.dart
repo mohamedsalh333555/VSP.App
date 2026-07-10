@@ -110,7 +110,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (phone.length < 10) {
+    if (phone.length < 11 || !phone.startsWith("01")) {
       VSPFeedback.showError(
         context, 
         AppLocalizations.of(context)!.invalidPhone

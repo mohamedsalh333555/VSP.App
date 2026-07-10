@@ -1,4 +1,4 @@
-import 'package:supabase_flutter/supabase_flutter.dart';
+﻿import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
@@ -49,12 +49,12 @@ class MatchRepository {
                 // Client-side filtering
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
-                final isFuture = b.startTime.isAfter(now);
+                final isFuture = b.endTime.isAfter(now);
                 
                 final totalCapacity = b.totalFieldCapacity;
                 final hasSpace = b.currentPlayers < totalCapacity;
                 
-                return !b.isPrivate && isConfirmed && isFuture && hasSpace;
+                final uid=_supabase.auth.currentUser?.id;final isParticipant=uid!=null&&b.joinedUserIds.contains(uid);return !b.isPrivate&&isConfirmed&&isFuture&&(hasSpace||isParticipant);
               })
               .toList();
               
@@ -307,7 +307,7 @@ class MatchRepository {
           .where((b) {
             final isConfirmed = b.status == BookingStatus.confirmed || 
                                b.status == BookingStatus.upcoming;
-            final isFuture = b.startTime.isAfter(now);
+            final isFuture = b.endTime.isAfter(now);
             final hasSpace = b.currentPlayers < b.totalFieldCapacity;
             final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
             return isConfirmed && isFuture && hasSpace && isRightType;

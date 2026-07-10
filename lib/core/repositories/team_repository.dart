@@ -1,4 +1,4 @@
-import 'package:flutter/foundation.dart';
+﻿import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
@@ -327,6 +327,8 @@ class TeamRepository {
 
   Future<bool> deleteTeam(String teamId) async {
     try {
+      final champs = await _supabase.from('championships').select('id').contains('joined_teams', [teamId]).inFilter('status', ['open', 'ongoing']);
+      if ((champs as List).isNotEmpty) throw Exception('team_in_tournament');
       await _supabase.from('team_members').delete().eq('team_id', teamId);
       await _supabase.from('teams').delete().eq('id', teamId);
       return true;

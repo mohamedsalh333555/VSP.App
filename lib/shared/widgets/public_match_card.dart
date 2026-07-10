@@ -345,8 +345,8 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     required VoidCallback? onTap,
     bool isOutlined = false,
   }) {
-    return GestureDetector(
-      onTap: onTap,
+    return AbsorbPointer(absorbing: _isLoading, child: GestureDetector(
+      onTap: _isLoading ? null : onTap,
       child: Container(
         height: 44.0,
         padding: const EdgeInsets.symmetric(horizontal: 32),
@@ -363,7 +363,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           ],
         ),
         child: Center(
-          child: Text(
+          child: _isLoading ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) : Text(
             label,
             style: TextStyle(
               color: isOutlined ? color : Colors.black,
@@ -374,7 +374,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           ),
         ),
       ),
-    );
+    ));
   }
 
   void _handleShare(Booking booking) {
