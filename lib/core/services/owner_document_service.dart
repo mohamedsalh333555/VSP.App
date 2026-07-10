@@ -1,4 +1,4 @@
-import 'package:image_picker/image_picker.dart' show XFile;
+﻿import 'package:image_picker/image_picker.dart' show XFile;
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'storage_service.dart';
 
@@ -58,7 +58,7 @@ class OwnerDocumentService {
     // 4) تحديث الحقل في جدول users
     await _supabase.from('users').update({
       'additional_data': additionalData,
-      'verificationStatus': 'pending',
+      
       'verification_status': 'pending',
     }).eq('id', uid);
 

@@ -100,33 +100,39 @@ class StadiumCard extends StatelessWidget {
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
                     // LOCATION BADGE (Clickable)
-                    GestureDetector(
-                      onTap: () {
-                        if (stadium.lat != null && stadium.lng != null) {
-                          GeoHelper.openInMaps(stadium.lat!, stadium.lng!, stadium.name);
-                        }
-                      },
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                        decoration: BoxDecoration(
-                          color: VSPColors.background.withValues(alpha: 0.7),
-                          borderRadius: BorderRadius.circular(VSPRadius.xl),
-                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
-                            const SizedBox(width: 4),
-                            Text(
-                              stadium.area.isNotEmpty ? stadium.area : stadium.location,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: VSPColors.textPrimary,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 11,
+                    Flexible(
+                      child: GestureDetector(
+                        onTap: () {
+                          if (stadium.lat != null && stadium.lng != null) {
+                            GeoHelper.openInMaps(stadium.lat!, stadium.lng!, stadium.name);
+                          }
+                        },
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: VSPColors.background.withValues(alpha: 0.7),
+                            borderRadius: BorderRadius.circular(VSPRadius.xl),
+                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                              const SizedBox(width: 4),
+                              Flexible(
+                                child: Text(
+                                  stadium.area.isNotEmpty ? stadium.area : stadium.location,
+                                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: VSPColors.textPrimary,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 11,
+                                  ),
+                                  overflow: TextOverflow.ellipsis,
+                                  maxLines: 1,
+                                ),
                               ),
-                            ),
-                          ],
+                            ],
+                          ),
                         ),
                       ),
                     ),

@@ -118,7 +118,7 @@ class _AccountScreenState extends State<AccountScreen> {
           children: [
             // Stadiums List (Horizontal)
             SizedBox(
-              height: 250,
+              height: 230,
               child: stadiums.isEmpty
                 ? Center(child: Text(isArabic ? 'لم يتم إضافة ملاعب بعد' : 'No stadiums added yet'))
                 : ListView.builder(
@@ -127,10 +127,10 @@ class _AccountScreenState extends State<AccountScreen> {
                     itemBuilder: (context, index) => Padding(
                       padding: const EdgeInsets.only(right: 16),
                       child: SizedBox(
-                        width: 320,
+                        width: 310,
                         child: StadiumCard(
                           stadium: stadiums[index],
-                          isOwnerView: true,
+                          isOwnerView: false,
                           onTap: () {
                             Navigator.push(
                               context,

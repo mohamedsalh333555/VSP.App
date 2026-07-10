@@ -1,4 +1,4 @@
-import '../../../l10n/app_localizations.dart';
+﻿import '../../../l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
@@ -1186,7 +1186,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             return;
           }
           // ✅ IMMEDIATELY set hasStadium flag so app navigation knows
-          await auth.updateProfile({'hasStadium': true});
+          
       }
       
       if (mounted) {
@@ -1195,6 +1195,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         }
         VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.stadiumSubmitSuccess);
         Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
+            if (widget.stadiumId == null) {
+              await auth.updateProfile({'hasStadium': true});
+            }
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);
@@ -1226,7 +1229,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         leading: IconButton(icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary), onPressed: _previousPage),
         title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
-        elevation: 0,
+        elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(LucideIcons.trash2, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
       ),
       body: SafeArea(
         child: Column(
@@ -2063,4 +2066,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       ),
     );
   }
+
+  Future<void> _showDeleteConfirmationDialog() async { final isArabic = Localizations.localeOf(context).languageCode == 'ar'; final confirm = await showDialog<bool>(context: context, builder: (ctx) => AlertDialog(backgroundColor: VSPColors.surface, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)), title: Text(isArabic ? 'إخفاء وحذف الملعب؟ ⚠️' : 'Hide & Delete Stadium? ⚠️', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)), content: Text(isArabic ? 'هل أنت متأكد من رغبتك في إخفاء هذا الملعب؟ سيتم إيقافه وإخفاؤه فوراً عن اللاعبين ولن تظهر حجوزاته، ولن يتم الحذف النهائي من قاعدة البيانات إلا بعد تواصل الإدارة معك لمراجعة السبب والتأكيد.' : 'Are you sure you want to hide this stadium? It will be immediately hidden from players. Permanent deletion will only occur after admin contacts you to confirm.', style: const TextStyle(color: VSPColors.textSecondary, height: 1.5)), actions: [ TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary))), ElevatedButton(onPressed: () => Navigator.pop(ctx, true), style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white, shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md))), child: Text(isArabic ? 'تأكيد الإخفاء' : 'Confirm Hide')) ])); if (confirm == true && mounted) { setState(() => _isSaving = true); try { final success = await _databaseService.updateStadium(widget.stadiumId!, {'is_verified': false, 'is_deleted_by_owner': true}); if (success && mounted) { VSPFeedback.showSuccess(context, isArabic ? 'تم إيقاف وإخفاء الملعب بنجاح وجاري المراجعة! 🛡️' : 'Stadium hidden successfully, pending admin review! 🛡️'); Navigator.pop(context); } } catch (e) { if (mounted) { VSPFeedback.showError(context, 'Error: '); } } finally { if (mounted) setState(() => _isSaving = false); } } }
 }

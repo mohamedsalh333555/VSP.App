@@ -1062,6 +1062,8 @@ class AuthProvider with ChangeNotifier {
     _celebrationController.close();
     super.dispose();
   }
+
+  Future<bool> payRehabilitationFine() async { if (_firebaseUser == null) return false; _isLoading = true; notifyListeners(); try { final response = await Supabase.instance.client.rpc('pay_rehabilitation_fine', params: {'p_user_id': _firebaseUser!.id}); if (response == true) { if (_userModel != null) { _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false); } _isLoading = false; notifyListeners(); return true; } _isLoading = false; notifyListeners(); return false; } catch (e) { _isLoading = false; notifyListeners(); return false; } }
 }
 
 extension SupabaseUserExtension on User {

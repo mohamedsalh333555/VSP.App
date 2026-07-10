@@ -522,4 +522,6 @@ class NotificationHandler {
       await _notificationRepo.sendNotification(uid, notif);
     }
   }
+
+  static Future<bool> disputeWithGeotaggedSelfie({required String bookingId, required String playerId, required String photoUrl, required double imageLat, required double imageLng, required DateTime imageTimestamp, required double stadiumLat, required double stadiumLng}) async { try { final booking = await SupabaseBookingRepository().getBookingById(bookingId); if (booking == null) return false; final diff = imageTimestamp.difference(booking.endTime).inMinutes; if (diff > 60) return false; final dLat = (imageLat - stadiumLat).abs() * 111000; final dLng = (imageLng - stadiumLng).abs() * 111000; if (dLat + dLng > 150.0) return false; await Supabase.instance.client.from('users').update({'no_show_count': 0, 'cash_booking_banned': false}).eq('id', playerId); await Supabase.instance.client.from('bookings').update({'is_dispute_approved': true, 'dispute_photo_url': photoUrl}).eq('id', bookingId); return true; } catch (e) { return false; } }
 }

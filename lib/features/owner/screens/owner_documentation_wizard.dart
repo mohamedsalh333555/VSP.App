@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -281,13 +281,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            autoApprove
-                ? (isArabic
-                    ? AppLocalizations.of(context)!.regCompleteBody
-                    : AppLocalizations.of(context)!.regCompleteBody)
-                : (isArabic
-                    ? 'تم رفع وثائقك بنجاح وهي الآن قيد المراجعة من فريقنا.\n\nيمكنك الآن استكشاف لوحة التحكم وإعداد ملاعبك. ستكون ملاعبك مخفية عن اللاعبين حتى اكتمال التحقق.'
-                    : 'Your documents have been submitted and are now under review by our team.\n\nYou can explore the dashboard and set up your stadiums in the meantime. Stadiums will be hidden from players until your account is verified.'),
+            autoApprove ? (isArabic ? AppLocalizations.of(context)!.regCompleteBody : AppLocalizations.of(context)!.regCompleteBody) : (isArabic ? "لقد تم استلام بياناتك بنجاح! 🎉\n\nنحن الآن نقوم بمراجعتها. يمكنك الانتقال لاستكشاف لوحة التحكم الخاصة بك الآن، ولكن يرجى العلم أن ملاعبك ستظل مخفية عن اللاعبين حتى يتم التوثيق من الإدارة." : "Your data has been successfully received! 🎉\n\nWe are reviewing it now. You can explore your dashboard, but your stadiums will remain hidden from players until verified by admin."),
             style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
               color: VSPColors.textSecondary,
               height: 1.6,

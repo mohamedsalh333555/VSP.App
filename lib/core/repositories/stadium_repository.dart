@@ -83,19 +83,30 @@ class StadiumRepository {
       final features = sanitizedData['features'] ?? {};
       final String sport = features['sportType'] ?? sanitizedData['sportType'] ?? sanitizedData['type'] ?? 'Football';
       final String originalDesc = sanitizedData['description'] ?? sanitizedData['notes'] ?? '';
-      final String descWithSport = '$originalDesc|Sport:$sport';
+      final String descWithSport = "$originalDesc|Sport:$sport";
+      
+      final ppt = sanitizedData['players_per_team'] ?? sanitizedData['seatsCapacity'] ?? 5;
+      final tfc = sanitizedData['total_field_capacity'] ?? (ppt * 2);
+
+      final imagesList = sanitizedData['images'] ?? (sanitizedData['imageUrl'] != null ? [sanitizedData['imageUrl']] : []);
+      final firstImage = (imagesList is List && imagesList.isNotEmpty) ? imagesList.first : null;
 
       final pgData = {
         'name': sanitizedData['name'],
         'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'],
         'description': descWithSport,
+        'notes': sanitizedData['notes'] ?? '',
+        'features': features,
+        'players_per_team': ppt,
+        'total_field_capacity': tfc,
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'city': sanitizedData['area'] ?? sanitizedData['location'] ?? 'Cairo',
         'location': sanitizedData['address'] ?? sanitizedData['location'] ?? '',
         'price_per_hour': price,
         'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
-        'images': sanitizedData['images'] ?? (sanitizedData['imageUrl'] != null ? [sanitizedData['imageUrl']] : []),
-        'is_verified': true, // Auto-verify for testing
+        'images': imagesList,
+        'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
+        'is_verified': true, 
         'is_blocked': false,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
@@ -106,10 +117,11 @@ class StadiumRepository {
           .insert(pgData)
           .select('id')
           .single();
-      
+          
+      VSPLogger.i('✅ Stadium successfully added to Supabase: ${response['id']}');
       return response['id']?.toString();
-    } catch (e) {
-      debugPrint('Error adding stadium: $e');
+    } catch (e, stack) {
+      VSPLogger.e('❌ CRITICAL ERROR IN addStadium', e, stack);
       return null;
     }
   }
@@ -140,6 +152,8 @@ class StadiumRepository {
       if (securedData.containsKey('basePrice')) pgData['base_price'] = securedData['basePrice'];
       if (securedData.containsKey('base_price')) pgData['base_price'] = securedData['base_price'];
       if (securedData.containsKey('images')) pgData['images'] = securedData['images'];
+      if (securedData.containsKey('imageUrl')) pgData['image_url'] = securedData['imageUrl'];
+      if (securedData.containsKey('image_url')) pgData['image_url'] = securedData['image_url'];
       if (securedData.containsKey('isBlocked')) pgData['is_blocked'] = securedData['isBlocked'];
       if (securedData.containsKey('is_blocked')) pgData['is_blocked'] = securedData['is_blocked'];
       if (securedData.containsKey('rating')) pgData['rating'] = securedData['rating'];
@@ -161,7 +175,8 @@ class StadiumRepository {
 
       await _supabase.from('stadiums').update(pgData).eq('id', stadiumId);
       return true;
-    } catch (e) {
+    } catch (e, stack) {
+      VSPLogger.e('❌ CRITICAL ERROR IN updateStadium', e, stack);
       return false;
     }
   }

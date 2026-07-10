@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -192,7 +192,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                             ),
                             const SizedBox(height: 2),
                             Text(
-                              "Your legal documents are currently under review. Your stadiums are hidden from public player search until verified.",
+                              (Localizations.localeOf(context).languageCode == "ar" ? "جاري مراجعة حسابك ⏳\nيمكنك استكشاف لوحة التحكم براحتك، لكن يرجى العلم أن ملاعبك لن تظهر للاعبين ولن تستقبل حجوزات حتى يتم توثيق الأوراق من الإدارة." : "Account Under Review ⏳\nYou can explore the dashboard, but your stadiums are hidden from players and won't receive bookings until admin verification."),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: VSPColors.textSecondary,
                               ),

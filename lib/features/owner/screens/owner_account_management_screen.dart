@@ -1,3 +1,4 @@
+﻿import '../../../shared/widgets/stadium_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -144,16 +145,16 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           children: [
             // 1. Stadium Selector
             SizedBox(
-              height: 200,
+              height: 230,
               child: ListView.builder(
                 padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
                 scrollDirection: Axis.horizontal,
                 itemCount: _stadiums.length,
                 itemBuilder: (context, index) {
                   return Container(
-                    width: 300,
+                    width: 310,
                     margin: const EdgeInsets.only(right: VSPSpacing.md),
-                    child: _buildStadiumCard(_stadiums[index]),
+                    child: GestureDetector(onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: _stadiums[index].id))); }, child: StadiumCard(stadium: _stadiums[index], isOwnerView: false)),
                   );
                 },
               ),
@@ -401,14 +402,14 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
             borderRadius: BorderRadius.circular(VSPRadius.lg),
             child: Image.network(
               stadium.imageUrl,
-              height: 200,
+              height: 230,
               width: double.infinity,
               fit: BoxFit.cover,
             ),
           ),
           // Overlay
           Container(
-            height: 200,
+            height: 230,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(VSPRadius.lg),
               color: Colors.black.withValues(alpha: 0.4),
