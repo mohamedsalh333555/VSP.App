@@ -1,4 +1,4 @@
-import '../core/utils/elo_calculator.dart';
+﻿import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
 class Stadium {
@@ -565,6 +565,7 @@ class Booking {
   final int playersPerTeam;
   final int totalFieldCapacity;
   final List<String> joinedUserIds;
+  final List<String> pendingUserIds;
 
   // Financial Detail (Debt Management)
   final bool isPaid;
@@ -616,6 +617,7 @@ class Booking {
     this.playersPerTeam = 5,
     this.totalFieldCapacity = 10,
     this.joinedUserIds = const [],
+    this.pendingUserIds = const [],
     this.isPaid = false,
     this.paymentStatus = 'pending',
     this.playerPhone,
@@ -708,6 +710,7 @@ class Booking {
       currentPlayers: data['currentPlayers'] ?? data['current_players'] ?? 1,
       playersPerTeam: ppt,
       totalFieldCapacity: tfc,
+      pendingUserIds: (data['pendingUserIds'] ?? data['pending_user_ids']) is List ? ((data['pendingUserIds'] ?? data['pending_user_ids']) as List).map((e) => e.toString()).toList() : [],
       joinedUserIds: (data['joinedUserIds'] ?? data['joined_user_ids']) is List
           ? ((data['joinedUserIds'] ?? data['joined_user_ids']) as List)
               .map((e) => e.toString())
@@ -765,6 +768,7 @@ class Booking {
       'total_field_capacity': totalFieldCapacity,
       'max_players': totalFieldCapacity, // backward compatibility
       'joinedUserIds': joinedUserIds,
+      'pending_user_ids': pendingUserIds,
       'isPaid': isPaid,
       'paymentStatus': paymentStatus,
       'playerPhone': playerPhone,

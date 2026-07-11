@@ -699,6 +699,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                          }
                        } else {
                          final forceFullPayment = !needsDeposit && hasActiveUnpaid;
+                         final amountToPay = needsDeposit ? depositAmount : _totalPrice;
+                         if (amountToPay <= 0) { final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE'); final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid); if (mounted) { setState(() => _isLoading = false); if (booking != null) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking))); } return; }
                          await Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
                          if (mounted) { setState(() => _isLoading = false); }
                        }

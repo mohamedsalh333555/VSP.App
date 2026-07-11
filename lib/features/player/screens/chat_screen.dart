@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -38,7 +38,10 @@ class _ChatScreenState extends State<ChatScreen> {
     });
   }
 
-  void _sendMessage() {
+  bool _isSending = false;
+  void _sendMessage() async {
+    if (_isSending) return;
+    setState(() => _isSending = true);
     if (_messageController.text.trim().isEmpty) return;
 
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -53,9 +56,10 @@ class _ChatScreenState extends State<ChatScreen> {
       timestamp: DateTime.now(),
     );
 
-    ChatRepository().sendMessage(widget.booking.id, message);
+    await ChatRepository().sendMessage(widget.booking.id, message);
     AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
     _messageController.clear();
+    if (mounted) setState(() => _isSending = false);
   }
 
   @override

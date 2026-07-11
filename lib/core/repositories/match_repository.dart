@@ -67,7 +67,7 @@ class MatchRepository {
     try {
       // 🛡️ Public Matchmaking: Atomic RPC Database Lock & Time-Conflict check
       // Offloads calculations from client-side loops to PostgreSQL atomic trigger.
-      await _supabase.rpc('join_public_match', params: {
+      await _supabase.rpc('request_join_public_match', params: {
         'p_booking_id': bookingId,
         'p_user_id': userId,
       });
@@ -138,6 +138,21 @@ class MatchRepository {
       VSPLogger.e('Error joining public match', e, stack);
       rethrow;
     }
+  }
+
+  
+  Future<bool> acceptJoinRequest(String bookingId, String userId) async {
+    try {
+      await _supabase.rpc('accept_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
+      return true;
+    } catch (e) { return false; }
+  }
+
+  Future<bool> rejectJoinRequest(String bookingId, String userId) async {
+    try {
+      await _supabase.rpc('reject_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
+      return true;
+    } catch (e) { return false; }
   }
 
   Future<bool> leavePublicMatch(String bookingId, String userId) async {

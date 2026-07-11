@@ -1042,5 +1042,22 @@
   "welcomePage2Title": "Be the Area Champion",
   "welcomePage2Subtitle": "Form your squad, compete in major tournaments, and climb the leaderboard to be the best in your region.",
   "welcomePage3Title": "Ready to Start?!",
-  "welcomePage3Subtitle": "Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly."
+  "welcomePage3Subtitle": "Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.",
+  "fairPlayBannedTitle": "Banned from Ranked Challenges",
+  "fairPlayBannedSubtitle": "Your team's Fair Play score is {score}/100. Minimum required is 40%.",
+  "@fairPlayBannedSubtitle": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "fairPlayBannedError": "Your team's Fair Play score is below 40%. Cannot participate in ranked challenges.",
+  "createTeamFirstTitle": "Create Team First",
+  "createTeamFirstContent": "You must create your own team to be able to create a booking and request other players to join.",
+  "createTeamNow": "Create Team Now",
+  "findPlayersWarningTitle": "Important Warning",
+  "findPlayersWarningContent": "The platform does not guarantee payment for absent players (No-Show). Full financial responsibility lies with the booking owner.",
+  "completeTeamButton": "Complete Team",
+  "createTeamButton": "Create Team"
 }

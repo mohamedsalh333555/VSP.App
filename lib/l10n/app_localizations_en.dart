@@ -2185,4 +2185,39 @@ class AppLocalizationsEn extends AppLocalizations {
   @override
   String get welcomePage3Subtitle =>
       'Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.';
+
+  @override
+  String get fairPlayBannedTitle => 'Banned from Ranked Challenges';
+
+  @override
+  String fairPlayBannedSubtitle(int score) {
+    return 'Your team\'s Fair Play score is $score/100. Minimum required is 40%.';
+  }
+
+  @override
+  String get fairPlayBannedError =>
+      'Your team\'s Fair Play score is below 40%. Cannot participate in ranked challenges.';
+
+  @override
+  String get createTeamFirstTitle => 'Create Team First';
+
+  @override
+  String get createTeamFirstContent =>
+      'You must create your own team to be able to create a booking and request other players to join.';
+
+  @override
+  String get createTeamNow => 'Create Team Now';
+
+  @override
+  String get findPlayersWarningTitle => 'Important Warning';
+
+  @override
+  String get findPlayersWarningContent =>
+      'The platform does not guarantee payment for absent players (No-Show). Full financial responsibility lies with the booking owner.';
+
+  @override
+  String get completeTeamButton => 'Complete Team';
+
+  @override
+  String get createTeamButton => 'Create Team';
 }

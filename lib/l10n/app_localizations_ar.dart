@@ -2165,4 +2165,39 @@ class AppLocalizationsAr extends AppLocalizations {
   @override
   String get welcomePage3Subtitle =>
       'حدد دورك الآن. انضم كلاعب لخوض التحديات، أو كمالك لزيادة أرباح ملعبك وإدارته بذكاء';
+
+  @override
+  String get fairPlayBannedTitle => 'محظور من التحديات المصنّفة';
+
+  @override
+  String fairPlayBannedSubtitle(int score) {
+    return 'نقاط اللعب النظيف لفريقك هي $score/100. الحد الأدنى المطلوب هو 40%.';
+  }
+
+  @override
+  String get fairPlayBannedError =>
+      'نقاط اللعب النظيف لفريقك أقل من 40%. لا يمكن المشاركة في تحديات الترتيب.';
+
+  @override
+  String get createTeamFirstTitle => 'تكوين فريق أولاً';
+
+  @override
+  String get createTeamFirstContent =>
+      'يجب أن تنشئ فريقك الخاص لتتمكن من إنشاء حجز وطلب انضمام لاعبين آخرين.';
+
+  @override
+  String get createTeamNow => 'إنشاء فريق الآن';
+
+  @override
+  String get findPlayersWarningTitle => 'تنبيه مهم قبل المتابعة';
+
+  @override
+  String get findPlayersWarningContent =>
+      'المنصة لا تضمن دفع حصص اللاعبين الغائبين (No-Show). المسؤولية المالية الكاملة تقع على عاتق صاحب الحجز.';
+
+  @override
+  String get completeTeamButton => 'أكمل الفريق';
+
+  @override
+  String get createTeamButton => 'إنشاء فريق';
 }

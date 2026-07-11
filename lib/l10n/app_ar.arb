@@ -667,5 +667,22 @@
   "welcomePage2Title": "كُن بطل منطقتك",
   "welcomePage2Subtitle": "كوّن فريقك، شارك في أقوى البطولات، وارتقِ في جدول الترتيب لتصبح الأفضل في محافظتك",
   "welcomePage3Title": "جاهز للبداية؟!",
-  "welcomePage3Subtitle": "حدد دورك الآن. انضم كلاعب لخوض التحديات، أو كمالك لزيادة أرباح ملعبك وإدارته بذكاء"
+  "welcomePage3Subtitle": "حدد دورك الآن. انضم كلاعب لخوض التحديات، أو كمالك لزيادة أرباح ملعبك وإدارته بذكاء",
+  "fairPlayBannedTitle": "محظور من التحديات المصنّفة",
+  "fairPlayBannedSubtitle": "نقاط اللعب النظيف لفريقك هي {score}/100. الحد الأدنى المطلوب هو 40%.",
+  "@fairPlayBannedSubtitle": {
+    "placeholders": {
+      "score": {
+        "type": "int"
+      }
+    }
+  },
+  "fairPlayBannedError": "نقاط اللعب النظيف لفريقك أقل من 40%. لا يمكن المشاركة في تحديات الترتيب.",
+  "createTeamFirstTitle": "تكوين فريق أولاً",
+  "createTeamFirstContent": "يجب أن تنشئ فريقك الخاص لتتمكن من إنشاء حجز وطلب انضمام لاعبين آخرين.",
+  "createTeamNow": "إنشاء فريق الآن",
+  "findPlayersWarningTitle": "تنبيه مهم قبل المتابعة",
+  "findPlayersWarningContent": "المنصة لا تضمن دفع حصص اللاعبين الغائبين (No-Show). المسؤولية المالية الكاملة تقع على عاتق صاحب الحجز.",
+  "completeTeamButton": "أكمل الفريق",
+  "createTeamButton": "إنشاء فريق"
 }

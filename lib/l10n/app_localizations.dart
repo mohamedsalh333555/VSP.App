@@ -4111,6 +4111,66 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.'**
   String get welcomePage3Subtitle;
+
+  /// No description provided for @fairPlayBannedTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Banned from Ranked Challenges'**
+  String get fairPlayBannedTitle;
+
+  /// No description provided for @fairPlayBannedSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Your team\'s Fair Play score is {score}/100. Minimum required is 40%.'**
+  String fairPlayBannedSubtitle(int score);
+
+  /// No description provided for @fairPlayBannedError.
+  ///
+  /// In en, this message translates to:
+  /// **'Your team\'s Fair Play score is below 40%. Cannot participate in ranked challenges.'**
+  String get fairPlayBannedError;
+
+  /// No description provided for @createTeamFirstTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Team First'**
+  String get createTeamFirstTitle;
+
+  /// No description provided for @createTeamFirstContent.
+  ///
+  /// In en, this message translates to:
+  /// **'You must create your own team to be able to create a booking and request other players to join.'**
+  String get createTeamFirstContent;
+
+  /// No description provided for @createTeamNow.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Team Now'**
+  String get createTeamNow;
+
+  /// No description provided for @findPlayersWarningTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Important Warning'**
+  String get findPlayersWarningTitle;
+
+  /// No description provided for @findPlayersWarningContent.
+  ///
+  /// In en, this message translates to:
+  /// **'The platform does not guarantee payment for absent players (No-Show). Full financial responsibility lies with the booking owner.'**
+  String get findPlayersWarningContent;
+
+  /// No description provided for @completeTeamButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Team'**
+  String get completeTeamButton;
+
+  /// No description provided for @createTeamButton.
+  ///
+  /// In en, this message translates to:
+  /// **'Create Team'**
+  String get createTeamButton;
 }
 
 class _AppLocalizationsDelegate
