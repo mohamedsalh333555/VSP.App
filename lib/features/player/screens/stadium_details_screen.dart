@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
@@ -75,7 +75,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       gradient: LinearGradient(
                         begin: Alignment.topCenter,
                         end: Alignment.bottomCenter,
-                        colors: [VSPColors.background.withOpacity(0), VSPColors.background],
+                        colors: [VSPColors.background.withValues(alpha: 0), VSPColors.background],
                       ),
                     ),
                   ),
@@ -229,15 +229,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       onTap: onTap,
       child: Container(
         width: 40, height: 40,
-        decoration: BoxDecoration(color: VSPColors.background.withOpacity(0.6), shape: BoxShape.circle),
+        decoration: BoxDecoration(color: VSPColors.background.withValues(alpha: 0.6), shape: BoxShape.circle),
         child: Icon(icon, color: color, size: 20),
       ),
     );
   }
 
-  Widget _buildDot({required bool isActive}) => Container(width: isActive ? 12 : 8, height: 8, decoration: BoxDecoration(color: isActive ? VSPColors.accent : VSPColors.textSecondary.withOpacity(0.5), borderRadius: BorderRadius.circular(4)));
+  Widget _buildDot({required bool isActive}) => Container(width: isActive ? 12 : 8, height: 8, decoration: BoxDecoration(color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(4)));
 
-  Widget _buildVspLogoBackground() => Container(color: VSPColors.surface, child: Center(child: Image.asset('assets/images/logo.png', width: 80, height: 80, color: VSPColors.textPrimary.withOpacity(0.06), colorBlendMode: BlendMode.modulate)));
+  Widget _buildVspLogoBackground() => Container(color: VSPColors.surface, child: Center(child: Image.asset('assets/images/logo.png', width: 80, height: 80, color: VSPColors.textPrimary.withValues(alpha: 0.06), colorBlendMode: BlendMode.modulate)));
 }
 
 class _InformationTab extends StatelessWidget {
@@ -270,7 +270,7 @@ class _InformationTab extends StatelessWidget {
                 children: [
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: VSPColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withOpacity(0.35), width: 1.5)),
+                    decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 1.5)),
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -332,7 +332,7 @@ class _InformationTab extends StatelessWidget {
           if (stadium.hasBall || stadium.ballPrice > 0)
             Container(
               padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withOpacity(0.3))),
+              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3))),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
@@ -357,7 +357,7 @@ class _VerifiedBadge extends StatelessWidget {
       decoration: BoxDecoration(
         gradient: const LinearGradient(colors: [Color(0xFFD4AF37), Color(0xFFFFDF7A), Color(0xFFAC7C11)]),
         borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: const Color(0xFFFFF0B3).withOpacity(0.5)),
+        border: Border.all(color: const Color(0xFFFFF0B3).withValues(alpha: 0.5)),
       ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
@@ -426,13 +426,13 @@ class _FacilityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = item.active ? VSPColors.accent : VSPColors.textSecondary.withOpacity(0.35);
+    final color = item.active ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.35);
     return AnimatedContainer(
       duration: const Duration(milliseconds: 250),
       decoration: BoxDecoration(
-        color: item.active ? VSPColors.accent.withOpacity(0.08) : VSPColors.surface,
+        color: item.active ? VSPColors.accent.withValues(alpha: 0.08) : VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: item.active ? VSPColors.accent.withOpacity(0.4) : VSPColors.divider, width: item.active ? 1.5 : 1),
+        border: Border.all(color: item.active ? VSPColors.accent.withValues(alpha: 0.4) : VSPColors.divider, width: item.active ? 1.5 : 1),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -468,7 +468,7 @@ class _PitchConditionsTab extends StatelessWidget {
         children: [
           Container(
             width: double.infinity, padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withOpacity(0.4))),
+            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4))),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
@@ -607,3 +607,4 @@ class _RatingsTab extends StatelessWidget {
     );
   }
 }
+

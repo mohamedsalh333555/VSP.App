@@ -114,7 +114,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             children: [
               const OwnerDashboardScreen(),
               OwnerCupScreen(onTournamentListChanged: (isEmpty) {
-                _showTournamentFAB.value = true;
+                _showTournamentFAB.value = !isEmpty;
               }),
               const OwnerInboxScreen(), // New Chat tab
               const OwnerBookingsScreen(),

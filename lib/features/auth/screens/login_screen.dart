@@ -330,7 +330,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     padding: const EdgeInsets.symmetric(horizontal: 12),
                     child: Text(
                       AppLocalizations.of(context)!.orContinueWith,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withOpacity(0.6)),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.6)),
                     ),
                   ),
                   const Expanded(child: Divider(color: VSPColors.borderLight, thickness: 1)),
@@ -489,3 +489,4 @@ class _SocialButton extends StatelessWidget {
     );
   }
 }
+

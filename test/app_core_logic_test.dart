@@ -80,7 +80,7 @@ class MockSupabaseHttpClient extends http.BaseClient {
         };
         responseBody = jsonEncode(isSingle ? userMap : [userMap]);
       }
-    } else if (uri.path.contains('rpc/join_public_match')) {
+    } else if (uri.path.contains('rpc/request_join_public_match')) {
       final body = jsonDecode(requestBody);
       final bookingId = body['p_booking_id'];
       final userId = body['p_user_id'];

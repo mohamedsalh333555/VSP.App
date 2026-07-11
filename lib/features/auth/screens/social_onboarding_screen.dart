@@ -24,6 +24,9 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   final _firstNameController = TextEditingController();
   final _lastNameController = TextEditingController();
   final _phoneController = TextEditingController();
+  final _instapayController = TextEditingController();
+  final _vodafoneController = TextEditingController();
+  final _bankController = TextEditingController();
   String _selectedPosition = 'GK';
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
@@ -108,6 +111,9 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     _firstNameController.dispose();
     _lastNameController.dispose();
     _phoneController.dispose();
+    _instapayController.dispose();
+    _vodafoneController.dispose();
+    _bankController.dispose();
     super.dispose();
   }
 
@@ -128,6 +134,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
 
     setState(() => _isLoading = true);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final isOwner = authProvider.isOwner;
 
     final success = await authProvider.completeSocialRegistration(
       phone: phone,
@@ -135,6 +142,9 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       position: authProvider.isPlayer ? _selectedPosition : null,
       governorate: _selectedGovernorate,
       dateOfBirth: _dateOfBirth,
+      p2pInstapay: isOwner ? _instapayController.text.trim() : null,
+      p2pVodafone: isOwner ? _vodafoneController.text.trim() : null,
+      p2pBank: isOwner ? _bankController.text.trim() : null,
     );
 
     if (!mounted) return;
@@ -396,6 +406,30 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 ],
                 _buildGovernorateDropdown(),
 
+                if (isOwner) ...[
+                  const SizedBox(height: 20),
+                  _buildLabel('عنوان انستا باي InstaPay (اختياري)'),
+                  CustomTextField(
+                    controller: _instapayController,
+                    hintText: 'username@instapay',
+                    prefixIcon: LucideIcons.wallet,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildLabel('رقم فودافون كاش (اختياري)'),
+                  CustomTextField(
+                    controller: _vodafoneController,
+                    hintText: '01xxxxxxxxx',
+                    keyboardType: TextInputType.phone,
+                    prefixIcon: LucideIcons.phoneCall,
+                  ),
+                  const SizedBox(height: 20),
+                  _buildLabel('الحساب البنكي (IBAN) (اختياري)'),
+                  CustomTextField(
+                    controller: _bankController,
+                    hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
+                    prefixIcon: LucideIcons.landmark,
+                  ),
+                ],
 
                 if (!isOwner) ...[
                   const SizedBox(height: 20),

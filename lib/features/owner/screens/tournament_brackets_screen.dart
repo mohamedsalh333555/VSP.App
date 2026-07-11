@@ -326,9 +326,9 @@ class TournamentBracketsScreen extends StatelessWidget {
                             Container(
                               padding: const EdgeInsets.all(12),
                               decoration: BoxDecoration(
-                                color: VSPColors.warning.withOpacity(0.1),
+                                color: VSPColors.warning.withValues(alpha: 0.1),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                                border: Border.all(color: VSPColors.warning.withOpacity(0.3)),
+                                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
                               ),
                               child: Column(
                                 crossAxisAlignment: CrossAxisAlignment.start,

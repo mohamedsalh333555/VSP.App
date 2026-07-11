@@ -110,10 +110,10 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                     Container(
                       padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                       decoration: BoxDecoration(
-                        color: isSelectionValid ? VSPColors.accent.withOpacity(0.1) : VSPColors.error.withOpacity(0.1),
+                        color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.error.withValues(alpha: 0.1),
                         borderRadius: BorderRadius.circular(8),
                         border: Border.all(
-                          color: isSelectionValid ? VSPColors.accent.withOpacity(0.3) : VSPColors.error.withOpacity(0.3),
+                          color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.error.withValues(alpha: 0.3),
                         ),
                       ),
                       child: Row(
@@ -770,4 +770,5 @@ class _FavoriteButtonState extends State<_FavoriteButton> {
     );
   }
 }
+
 

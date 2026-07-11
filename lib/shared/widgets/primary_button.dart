@@ -1,18 +1,17 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
-class PrimaryButton extends StatelessWidget {
+class PrimaryButton extends StatefulWidget {
   final String text;
   final VoidCallback? onPressed;
   final bool isLoading;
   final Color? color;
   final Color? textColor;
-
   final double? width;
   final double? height;
   final EdgeInsetsGeometry? padding;
-
   final IconData? icon;
 
   const PrimaryButton({
@@ -29,24 +28,46 @@ class PrimaryButton extends StatelessWidget {
   });
 
   @override
+  State<PrimaryButton> createState() => _PrimaryButtonState();
+}
+
+class _PrimaryButtonState extends State<PrimaryButton> {
+  bool _isDebouncing = false;
+  Timer? _debounceTimer;
+
+  @override
+  void dispose() {
+    _debounceTimer?.cancel();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
+    final bool isButtonDisabled = widget.isLoading || _isDebouncing || widget.onPressed == null;
     return SizedBox(
-      width: width ?? double.infinity,
-      height: height ?? 56,
+      width: widget.width ?? double.infinity,
+      height: widget.height ?? 56,
       child: ElevatedButton(
-        onPressed: isLoading ? null : () {
+        onPressed: isButtonDisabled ? null : () {
           HapticFeedback.mediumImpact();
-          onPressed?.call();
+          setState(() => _isDebouncing = true);
+          widget.onPressed?.call();
+          _debounceTimer?.cancel();
+          _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+            if (mounted) {
+              setState(() => _isDebouncing = false);
+            }
+          });
         },
         style: ElevatedButton.styleFrom(
-          backgroundColor: color ?? VSPColors.accent,
-          foregroundColor: textColor ?? VSPColors.background,
+          backgroundColor: widget.color ?? VSPColors.accent,
+          foregroundColor: widget.textColor ?? VSPColors.background,
           shape: const StadiumBorder(),
           elevation: 0,
           disabledBackgroundColor: VSPColors.surface,
-          padding: padding,
+          padding: widget.padding,
         ),
-        child: isLoading
+        child: widget.isLoading
             ? const SizedBox(
                 height: 24,
                 width: 24,
@@ -61,14 +82,14 @@ class PrimaryButton extends StatelessWidget {
                 mainAxisAlignment: MainAxisAlignment.center,
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  if (icon != null) ...[
-                    Icon(icon, size: 20),
+                  if (widget.icon != null) ...[
+                    Icon(widget.icon, size: 20),
                     const SizedBox(width: 8),
                   ],
                   Text(
-                    text,
+                    widget.text,
                     style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: textColor ?? VSPColors.background,
+                      color: widget.textColor ?? VSPColors.background,
                       fontSize: 16,
                     ),
                   ),

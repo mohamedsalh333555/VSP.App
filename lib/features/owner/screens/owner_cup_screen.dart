@@ -56,13 +56,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   AnimatedAlign(
                     duration: const Duration(milliseconds: 250),
                     curve: Curves.easeInOut,
-                    alignment: Directionality.of(context) == TextDirection.rtl
-                        ? (_selectedTab == 0 
-                            ? Alignment.centerRight 
-                            : (_selectedTab == 1 ? Alignment.center : Alignment.centerLeft))
-                        : (_selectedTab == 0 
-                            ? Alignment.centerLeft 
-                            : (_selectedTab == 1 ? Alignment.center : Alignment.centerRight)),
+                                        alignment: _selectedTab == 0 
+                        ? AlignmentDirectional.centerStart 
+                        : (_selectedTab == 1 ? AlignmentDirectional.center : AlignmentDirectional.centerEnd),
                     child: FractionallySizedBox(
                       widthFactor: 1 / 3,
                       child: Container(
@@ -420,3 +416,4 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     );
   }
 }
+

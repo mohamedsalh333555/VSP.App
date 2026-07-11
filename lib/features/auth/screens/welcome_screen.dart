@@ -1,4 +1,5 @@
 import 'dart:ui';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
@@ -193,7 +194,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                 decoration: BoxDecoration(
                                   color: VSPColors.surface,
                                   borderRadius: BorderRadius.circular(VSPRadius.lg),
-                                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                                 ),
                                 child: Center(
                                   child: Text(
@@ -230,7 +231,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                   borderRadius: BorderRadius.circular(VSPRadius.lg),
                                   boxShadow: [
                                     BoxShadow(
-                                      color: VSPColors.accent.withOpacity(0.2),
+                                      color: VSPColors.accent.withValues(alpha: 0.2),
                                       blurRadius: 10,
                                       offset: const Offset(0, 4),
                                     ),
@@ -312,7 +313,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           height: 6,
           width: isActive ? 24.0 : 8.0,
           decoration: BoxDecoration(
-            color: isActive ? VSPColors.accent : VSPColors.textSecondary.withOpacity(0.4),
+            color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -338,7 +339,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: VSPColors.accent.withOpacity(0.3),
+              color: VSPColors.accent.withValues(alpha: 0.3),
               blurRadius: 12,
               offset: const Offset(0, 4),
             ),
@@ -367,9 +368,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               child: Container(
                 padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withOpacity(0.08),
+                  color: Colors.white.withValues(alpha: 0.08),
                   borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withOpacity(0.12)),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
@@ -447,9 +448,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           child: Container(
                             padding: const EdgeInsets.all(8),
                             decoration: BoxDecoration(
-                              color: Colors.black.withOpacity(0.4),
+                              color: Colors.black.withValues(alpha: 0.4),
                               shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withOpacity(0.08)),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
                             ),
                             child: const Icon(
                               LucideIcons.arrowLeft,
@@ -506,6 +507,8 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
     with SingleTickerProviderStateMixin {
   late AnimationController _controller;
   late Animation<double> _scale;
+  bool _isDebouncing = false;
+  Timer? _debounceTimer;
 
   @override
   void initState() {
@@ -523,6 +526,7 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
   @override
   void dispose() {
     _controller.dispose();
+    _debounceTimer?.cancel();
     super.dispose();
   }
 
@@ -530,15 +534,23 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
   Widget build(BuildContext context) {
     return GestureDetector(
       onTapDown: (_) {
-        if (mounted) _controller.reverse();
+        if (mounted && !_isDebouncing) _controller.reverse();
       },
       onTapUp: (_) {
-        if (mounted) _controller.forward();
+        if (mounted && !_isDebouncing) _controller.forward();
       },
       onTapCancel: () {
-        if (mounted) _controller.forward();
+        if (mounted && !_isDebouncing) _controller.forward();
       },
-      onTap: widget.onPressed,
+      onTap: () {
+        if (_isDebouncing) return;
+        setState(() => _isDebouncing = true);
+        widget.onPressed();
+        _debounceTimer?.cancel();
+        _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+          if (mounted) setState(() => _isDebouncing = false);
+        });
+      },
       child: ScaleTransition(
         scale: _scale,
         child: widget.child,
@@ -546,3 +558,5 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
     );
   }
 }
+
+

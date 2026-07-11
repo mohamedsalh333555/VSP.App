@@ -31,9 +31,17 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   void _rejectRequest(BuildContext context, String? userId) async {
     if (userId == null) return;
     setState(() => _isLoading = true);
-    await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-    if (!mounted) return;
-    setState(() => _isLoading = false);
+    try {
+      await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
   }
 
   void _handleShare(Booking booking) {
@@ -51,26 +59,44 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       return;
     }
     setState(() => _isLoading = true);
-    final success = await MatchRepository().joinPublicMatch(widget.booking.id, userId);
-    if (!context.mounted) return;
-    setState(() => _isLoading = false);
-    if (success) {
-      VSPFeedback.showSuccess(context, "تم إرسال طلب الانضمام للمستضيف بنجاح! 📩");
-    } else {
-      VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
+    try {
+      final success = await MatchRepository().joinPublicMatch(widget.booking.id, userId);
+      if (!context.mounted) return;
+      if (success) {
+        VSPFeedback.showSuccess(context, "تم إرسال طلب الانضمام للمستضيف بنجاح! 📩");
+      } else {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        VSPFeedback.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
   void _handleLeave(BuildContext context, String? userId) async {
     if (userId == null) return;
     setState(() => _isLoading = true);
-    final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
-    if (!context.mounted) return;
-    setState(() => _isLoading = false);
-    if (success) {
-      VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
-    } else {
-      VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+    try {
+      final success = await MatchRepository().leavePublicMatch(widget.booking.id, userId);
+      if (!context.mounted) return;
+      if (success) {
+        VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.leaveSuccess);
+      } else {
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.leaveFailed);
+      }
+    } catch (e) {
+      if (context.mounted) {
+        VSPFeedback.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
     }
   }
 
@@ -94,7 +120,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   Widget _buildTypeBadge(String text) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(color: VSPColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(VSPRadius.xs), border: Border.all(color: VSPColors.accent.withOpacity(0.3))),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.xs),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+      ),
       child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
     );
   }
@@ -102,7 +132,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
   Widget _buildStatusBadge(String text, Color color) {
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color.withOpacity(0.1), borderRadius: BorderRadius.circular(VSPRadius.full), border: Border.all(color: color.withOpacity(0.4))),
+      decoration: BoxDecoration(
+        color: color.withValues(alpha: 0.1),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
+        border: Border.all(color: color.withValues(alpha: 0.4)),
+      ),
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -120,7 +154,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       children: [
         Icon(icon, color: VSPColors.accent, size: 14),
         const SizedBox(width: 6),
-        Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold)),
+        Flexible(
+          child: Text(
+            label,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          ),
+        ),
       ],
     );
   }
@@ -137,9 +178,9 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           padding: const EdgeInsets.symmetric(horizontal: 32),
           decoration: BoxDecoration(
             color: isOutlined ? Colors.transparent : color,
-            borderRadius: BorderRadius.circular(12),
+            borderRadius: BorderRadius.circular(VSPRadius.md),
             border: isOutlined ? Border.all(color: color, width: 2) : null,
-            boxShadow: isOutlined ? null : [BoxShadow(color: color.withOpacity(0.3), blurRadius: 8, offset: const Offset(0, 4))],
+            boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
           ),
           child: Center(
             child: _isLoading 
@@ -165,7 +206,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
             Text(AppLocalizations.of(context)!.spotsLeft.toUpperCase(), style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 10)),
           ],
         ),
-        Text(AppLocalizations.of(context)!.playersJoined(current, total), style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.6), fontSize: 10, fontWeight: FontWeight.w500)),
+        Text(AppLocalizations.of(context)!.playersJoined(current, total), style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.6), fontSize: 10, fontWeight: FontWeight.w500)),
       ],
     );
   }
@@ -242,15 +283,15 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           const SizedBox(height: 12),
           Container(
             padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(color: Colors.black.withOpacity(0.4), borderRadius: BorderRadius.circular(12)),
+            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCompactInfo(LucideIcons.calendar, booking.formattedDate),
+                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.calendar, booking.formattedDate))),
                 _buildDivider(),
-                _buildCompactInfo(LucideIcons.clock, _formatTimeShort(booking.formattedTimeRange)),
+                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.clock, _formatTimeShort(booking.formattedTimeRange)))),
                 _buildDivider(),
-                _buildCompactInfo(LucideIcons.banknote, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"),
+                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.banknote, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"))),
               ],
             ),
           ),
@@ -258,17 +299,16 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildSpotsIndicator(remainingPlayers, booking.currentPlayers, totalFieldCapacity),
+              Expanded(
+                child: _buildSpotsIndicator(remainingPlayers, booking.currentPlayers, totalFieldCapacity),
+              ),
+              const SizedBox(width: 12),
               Builder(builder: (context) {
                 if (_isLoading) return const SizedBox(width: 100, height: 44, child: Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2)));
                 if (isHost) return _buildRawButton(label: AppLocalizations.of(context)!.manage, color: VSPColors.accent, onTap: () => _manageParticipants(context), isOutlined: false);
-                if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: Colors.redAccent, onTap: () => _handleLeave(context, currentUser?.uid), isOutlined: true);
+                if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser?.uid), isOutlined: true);
                 if (isPending) {
-                  return Column(
-                    children: [
-                      _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: Colors.red, onTap: () => _rejectRequest(context, currentUser?.uid), isOutlined: true),
-                    ],
-                  );
+                  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser?.uid), isOutlined: true);
                 }
                 if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
                 return _buildRawButton(label: isArabic ? 'طلب انضمام' : 'Request Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
@@ -290,6 +330,7 @@ class _ManageParticipantsModal extends StatefulWidget {
 
 class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   bool _isLoading = true;
+  bool _isProcessing = false; // click lock state
   List<UserModel> _participants = [];
   List<UserModel> _pending = [];
 
@@ -300,34 +341,96 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   }
 
   Future<void> _fetchUsers() async {
-    final joined = await UserRepository().getUsersByIds(widget.booking.joinedUserIds);
-    final pend = await UserRepository().getUsersByIds(widget.booking.pendingUserIds);
-    if (mounted) {
-      setState(() {
-        _participants = joined;
-        _pending = pend;
-        _isLoading = false;
-      });
+    try {
+      final joined = await UserRepository().getUsersByIds(widget.booking.joinedUserIds);
+      final pend = await UserRepository().getUsersByIds(widget.booking.pendingUserIds);
+      if (mounted) {
+        setState(() {
+          _participants = joined;
+          _pending = pend;
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        VSPFeedback.showError(context, e.toString());
+      }
     }
   }
 
   void _acceptUser(String userId) async {
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
     try {
       await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
-      DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم قبول طلبك! ⚽', body: 'وافق المستضيف على انضمامك للمباراة. استعد!', type: 'info', createdAt: DateTime.now()));
+      await DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم قبول طلبك! ⚽', body: 'وافق المستضيف على انضمامك للمباراة. استعد!', type: 'info', createdAt: DateTime.now()));
       _fetchUsers();
-    } catch(e) { ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().contains('match_is_full') ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد' : 'Error'))); }
+    } catch(e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().contains('match_is_full') ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد' : 'Error')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
   }
 
   void _rejectUser(String userId) async {
-    await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-    DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم رفض الطلب ❌', body: 'عذراً، لم يقبل المستضيف طلب انضمامك للمباراة.', type: 'info', createdAt: DateTime.now()));
-    _fetchUsers();
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    try {
+      await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
+      await DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم رفض الطلب ❌', body: 'عذراً، لم يقبل المستضيف طلب انضمامك للمباراة.', type: 'info', createdAt: DateTime.now()));
+      _fetchUsers();
+    } catch (e) {
+      if (context.mounted) {
+        VSPFeedback.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
   }
 
   void _removeUser(String userId) async {
-    await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
-    _fetchUsers();
+    if (_isProcessing) return;
+    setState(() => _isProcessing = true);
+    try {
+      await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
+      _fetchUsers();
+    } catch (e) {
+      if (context.mounted) {
+        VSPFeedback.showError(context, e.toString());
+      }
+    } finally {
+      if (mounted) {
+        setState(() => _isProcessing = false);
+      }
+    }
+  }
+
+  Widget _buildUserAvatar({required String? profileImageUrl, required double radius, required Color badgeColor}) {
+    return Container(
+      width: radius * 2,
+      height: radius * 2,
+      decoration: const BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        shape: BoxShape.circle,
+      ),
+      child: ClipOval(
+        child: (profileImageUrl != null && profileImageUrl.isNotEmpty)
+            ? CachedNetworkImage(
+                imageUrl: profileImageUrl,
+                fit: BoxFit.cover,
+                errorWidget: (_, __, ___) => Icon(LucideIcons.user, color: badgeColor, size: radius),
+                placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
+              )
+            : Icon(LucideIcons.user, color: badgeColor, size: radius),
+      ),
+    );
   }
 
   @override
@@ -372,21 +475,40 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                             decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.warning)),
                             child: Row(
                               children: [
-                                const CircleAvatar(radius: 16, backgroundColor: VSPColors.surfaceAlt, child: Icon(LucideIcons.user, color: VSPColors.warning, size: 16)),
+                                _buildUserAvatar(profileImageUrl: u.profileImageUrl, radius: 16, badgeColor: VSPColors.warning),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Column(
                                     crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Text(u.name ?? 'Player', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-                                      Text(u.position ?? 'Player', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                                      Text(u.name ?? 'Player', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold), maxLines: 1, overflow: TextOverflow.ellipsis),
+                                      Text(u.position ?? 'Player', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11), maxLines: 1, overflow: TextOverflow.ellipsis),
                                     ],
                                   )
                                 ),
                                 if (u.phone != null && u.phone!.isNotEmpty)
-                                  IconButton(icon: const Icon(LucideIcons.phoneCall, color: Colors.blue), onPressed: () => launchUrl(Uri.parse('tel:${u.phone}'))),
-                                IconButton(icon: const Icon(LucideIcons.checkCircle, color: VSPColors.success), onPressed: () => _acceptUser(u.uid)),
-                                IconButton(icon: const Icon(LucideIcons.xCircle, color: VSPColors.error), onPressed: () => _rejectUser(u.uid)),
+                                  IconButton(
+                                    icon: const Icon(LucideIcons.phoneCall, color: Colors.blue), 
+                                    onPressed: _isProcessing 
+                                        ? null 
+                                        : () async {
+                                            try {
+                                              await launchUrl(Uri.parse('tel:${u.phone}'));
+                                            } catch (_) {
+                                              if (context.mounted) {
+                                                VSPFeedback.showError(context, 'Could not launch dialer');
+                                              }
+                                            }
+                                          },
+                                  ),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.checkCircle, color: VSPColors.success), 
+                                  onPressed: _isProcessing ? null : () => _acceptUser(u.uid),
+                                ),
+                                IconButton(
+                                  icon: const Icon(LucideIcons.xCircle, color: VSPColors.error), 
+                                  onPressed: _isProcessing ? null : () => _rejectUser(u.uid),
+                                ),
                               ],
                             ),
                           )),
@@ -406,7 +528,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                               decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.divider, width: 0.5)),
                               child: Row(
                                 children: [
-                                  const CircleAvatar(radius: 20, backgroundColor: VSPColors.surfaceAlt, child: Icon(LucideIcons.user, color: VSPColors.accent, size: 20)),
+                                  _buildUserAvatar(profileImageUrl: u.profileImageUrl, radius: 20, badgeColor: VSPColors.accent),
                                   const SizedBox(width: 12),
                                   Expanded(
                                     child: Column(
@@ -414,10 +536,28 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                       children: [
                                         Row(
                                           children: [
-                                            Text(u.name ?? AppLocalizations.of(context)!.player, style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold)),
+                                            Flexible(
+                                              child: Text(
+                                                u.name ?? AppLocalizations.of(context)!.player, 
+                                                style: Theme.of(context).textTheme.bodyLarge?.copyWith(fontWeight: FontWeight.bold),
+                                                maxLines: 1,
+                                                overflow: TextOverflow.ellipsis,
+                                              ),
+                                            ),
                                             if (isHost) ...[
                                               const SizedBox(width: 8),
-                                              Container(padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), decoration: BoxDecoration(color: VSPColors.accent.withOpacity(0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: VSPColors.accent, width: 0.5)), child: Text(AppLocalizations.of(context)!.host.toUpperCase(), style: const TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold))),
+                                              Container(
+                                                padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2), 
+                                                decoration: BoxDecoration(
+                                                  color: VSPColors.accent.withValues(alpha: 0.1), 
+                                                  borderRadius: BorderRadius.circular(4), 
+                                                  border: Border.all(color: VSPColors.accent, width: 0.5),
+                                                ), 
+                                                child: Text(
+                                                  AppLocalizations.of(context)!.host.toUpperCase(), 
+                                                  style: const TextStyle(color: VSPColors.accent, fontSize: 8, fontWeight: FontWeight.bold),
+                                                ),
+                                              ),
                                             ],
                                           ],
                                         ),
@@ -426,7 +566,10 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                     ),
                                   ),
                                   if (!isHost)
-                                    IconButton(icon: const Icon(LucideIcons.userMinus, color: VSPColors.error, size: 20), onPressed: () => _removeUser(u.uid)),
+                                    IconButton(
+                                      icon: const Icon(LucideIcons.userMinus, color: VSPColors.error, size: 20), 
+                                      onPressed: _isProcessing ? null : () => _removeUser(u.uid),
+                                    ),
                                 ],
                               ),
                             );
@@ -440,3 +583,4 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
     );
   }
 }
+

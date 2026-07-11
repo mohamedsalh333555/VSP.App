@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -263,7 +263,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     final l10n = AppLocalizations.of(context)!;
     showDialog(
       context: context,
-      barrierColor: VSPColors.background.withOpacity(0.8),
+      barrierColor: VSPColors.background.withValues(alpha: 0.8),
       builder: (context) {
         DateTime tempSelectedDate = _selectedDate;
         DateTime currentMonth = DateTime(_selectedDate.year, _selectedDate.month);
@@ -307,12 +307,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: Icon(LucideIcons.chevronLeft, color: currentMonth.isAfter(todayMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withOpacity(0.25)),
+                          icon: Icon(LucideIcons.chevronLeft, color: currentMonth.isAfter(todayMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
                           onPressed: currentMonth.isAfter(todayMonth) ? () { setModalState(() { currentMonth = DateTime(currentMonth.year, currentMonth.month - 1); }); } : null,
                         ),
                         Text(DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth), style: Theme.of(context).textTheme.titleLarge),
                         IconButton(
-                          icon: Icon(LucideIcons.chevronRight, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withOpacity(0.25)),
+                          icon: Icon(LucideIcons.chevronRight, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
                           onPressed: currentMonth.isBefore(maxMonth) ? () { setModalState(() { currentMonth = DateTime(currentMonth.year, currentMonth.month + 1); }); } : null,
                         ),
                       ],
@@ -346,7 +346,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             child: Container(
                               alignment: Alignment.center,
                               decoration: BoxDecoration(color: isSelected ? VSPColors.accent : (isPastDate ? VSPColors.surfaceAlt : Colors.transparent), shape: BoxShape.circle),
-                              child: Text('$day', style: TextStyle(color: isSelected ? VSPColors.background : (isPastDate ? VSPColors.textSecondary.withOpacity(0.5) : VSPColors.textSecondary), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
+                              child: Text('$day', style: TextStyle(color: isSelected ? VSPColors.background : (isPastDate ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.textSecondary), fontWeight: isSelected ? FontWeight.bold : FontWeight.normal)),
                             ),
                           );
                         },
@@ -480,7 +480,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
-                                color: (isBooked || isPast) ? VSPColors.surface.withOpacity(0.3) : (isSelected ? VSPColors.accentSoft : Colors.transparent),
+                                color: (isBooked || isPast) ? VSPColors.surface.withValues(alpha: 0.3) : (isSelected ? VSPColors.accentSoft : Colors.transparent),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(color: (isBooked || isPast) ? Colors.transparent : (isSelected ? VSPColors.accent : VSPColors.divider), width: isSelected ? 2 : 1),
                               ),
@@ -491,7 +491,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   Text(
                                     slotLabel,
                                     style: TextStyle(
-                                      color: (isBooked || isPast) ? VSPColors.textSecondary.withOpacity(0.3) : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
+                                      color: (isBooked || isPast) ? VSPColors.textSecondary.withValues(alpha: 0.3) : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
                                       fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                                       decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                                     ),
@@ -589,7 +589,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     const SizedBox(height: 12),
                     Container(
                       padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(color: VSPColors.error.withOpacity(0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.error.withOpacity(0.5))),
+                      decoration: BoxDecoration(color: VSPColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.error.withValues(alpha: 0.5))),
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
@@ -719,7 +719,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       width: double.infinity,
-      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withOpacity(0.3))),
+      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3))),
       child: Material(
         color: Colors.transparent,
         child: InkWell(
@@ -773,3 +773,4 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     );
   }
 }
+

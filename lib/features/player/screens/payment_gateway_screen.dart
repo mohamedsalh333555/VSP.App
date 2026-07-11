@@ -379,7 +379,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               top: -100, right: -100,
               child: Container(
                 width: 300, height: 300,
-                decoration: BoxDecoration(shape: BoxShape.circle, color: VSPColors.accent.withOpacity(0.12)),
+                decoration: BoxDecoration(shape: BoxShape.circle, color: VSPColors.accent.withValues(alpha: 0.12)),
                 child: BackdropFilter(filter: ImageFilter.blur(sigmaX: 100, sigmaY: 100), child: Container(color: Colors.transparent)),
               ),
             ),
@@ -394,9 +394,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       width: 90,
                       height: 90,
                       decoration: BoxDecoration(
-                        color: VSPColors.accent.withOpacity(0.1),
+                        color: VSPColors.accent.withValues(alpha: 0.1),
                         shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.accent.withOpacity(0.3), width: 2),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2),
                       ),
                       child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
                     ),
@@ -493,3 +493,4 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 }
+

@@ -135,7 +135,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
               onPressed: () => Navigator.pop(ctx),
               child: Text(
                 noBtn,
-                style: TextStyle(color: VSPColors.textSecondary.withOpacity(0.8), fontWeight: FontWeight.bold),
+                style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.8), fontWeight: FontWeight.bold),
               ),
             ),
             ElevatedButton(
@@ -898,6 +898,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
     }
   );
 }
+
 
 
 

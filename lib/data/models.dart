@@ -1,4 +1,4 @@
-﻿import '../core/utils/elo_calculator.dart';
+import '../core/utils/elo_calculator.dart';
 
 /// Stadium data model
 class Stadium {
@@ -575,6 +575,8 @@ class Booking {
   final String? instapay;
   final String? vodafoneCash;
   final String? binanceId;
+  final String? lastMessage;
+  final DateTime? lastMessageTime;
 
   // Backward compatibility getter
   int get maxPlayers => totalFieldCapacity;
@@ -627,6 +629,8 @@ class Booking {
     this.instapay,
     this.vodafoneCash,
     this.binanceId,
+    this.lastMessage,
+    this.lastMessageTime,
   });
 
   /// Create Booking from Firestore/Supabase document
@@ -725,6 +729,10 @@ class Booking {
       instapay: data['instapay'] ?? data['insta_pay'],
       vodafoneCash: data['vodafoneCash'] ?? data['vodafone_cash'],
       binanceId: data['binanceId'] ?? data['binance_id'],
+      lastMessage: data['last_message'] ?? data['lastMessage'],
+      lastMessageTime: (data['last_message_time'] ?? data['lastMessageTime']) != null 
+          ? DateTime.parse((data['last_message_time'] ?? data['lastMessageTime']).toString())
+          : null,
     );
   }
 
@@ -778,6 +786,8 @@ class Booking {
       'instapay': instapay,
       'vodafoneCash': vodafoneCash,
       'binanceId': binanceId,
+      'last_message': lastMessage,
+      'last_message_time': lastMessageTime?.toUtc().toIso8601String(),
     };
   }
 

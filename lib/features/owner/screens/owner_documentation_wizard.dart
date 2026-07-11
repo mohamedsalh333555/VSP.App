@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -33,11 +33,13 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   // Document upload state
   final Map<String, String?> _uploadedDocUrls = {
     'commercialRegister': null,
+    'taxCard': null,
     'idFront': null,
     'idBack': null,
   };
   final Map<String, bool> _uploadingStatus = {
     'commercialRegister': false,
+    'taxCard': false,
     'idFront': false,
     'idBack': false,
   };
@@ -209,8 +211,23 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         curve: Curves.easeInOut,
       );
       setState(() => _currentStep++);
+    } else if (_currentStep == 1) {
+      // Step 2: tax card is mandatory.
+      if (_uploadedDocUrls['taxCard'] == null) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'يرجى رفع البطاقة الضريبية أولاً.' : 'Please upload the tax card first.',
+        );
+        return;
+      }
+      _pageController.nextPage(
+        duration: const Duration(milliseconds: 300),
+        curve: Curves.easeInOut,
+      );
+      setState(() => _currentStep++);
     } else {
-      // Step 2: both ID sides are mandatory.
+      // Step 3: both ID sides are mandatory.
       if (_uploadedDocUrls['idFront'] == null) {
         VSPFeedback.showError(
           context,
@@ -230,8 +247,6 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   }
   
   /// Finalise onboarding: write flags, then (and ONLY then) show success and navigate.
-  /// If the profile update throws, the catch block shows an error and stops — no dialog,
-  /// no navigation, no loop back into OwnerDocumentationWizard.
   Future<void> _saveDocumentsAndShowReview() async {
     if (_isSaving) return; // guard against double-tap
     setState(() => _isSaving = true);
@@ -358,6 +373,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
                 _buildDot(0),
                 const SizedBox(width: VSPSpacing.xs),
                 _buildDot(1),
+                const SizedBox(width: VSPSpacing.xs),
+                _buildDot(2),
               ],
             ),
             const SizedBox(height: VSPSpacing.md),
@@ -367,7 +384,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
                 physics: const NeverScrollableScrollPhysics(),
                 children: [
                   _buildStep1BusinessDocs(),
-                  _buildStep2PersonalID(),
+                  _buildStep2TaxCard(),
+                  _buildStep3PersonalID(),
                 ],
               ),
             ),
@@ -388,13 +406,82 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     );
   }
 
+  Widget _buildExplanationCard({
+    required String title,
+    required String description,
+    required IconData icon,
+  }) {
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt.withValues(alpha: 0.6),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.1),
+            blurRadius: 10,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Row(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+            ),
+            child: Icon(icon, color: VSPColors.accent, size: 24),
+          ),
+          const SizedBox(width: 14),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  title,
+                  style: const TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontSize: 16,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 6),
+                Text(
+                  description,
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                    height: 1.5,
+                  ),
+                ),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
   Widget _buildStep1BusinessDocs() {
-     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          VSPSectionTitle(AppLocalizations.of(context)!.uploadDocuments),
+          _buildExplanationCard(
+            title: isArabic ? 'مرحلة 1: السجل التجاري' : 'Stage 1: Commercial Register',
+            description: isArabic 
+                ? 'يرجى رفع صورة واضحة أو ملف PDF للسجل التجاري الخاص بملعبك/منشأتك. تأكد من أن المستند ساري المفعول ويحتوي على اسم المالك بشكل مقروء.'
+                : 'Please upload a clear photo or PDF of your commercial register. Ensure the document is valid and clearly shows the owner\'s name.',
+            icon: LucideIcons.fileText,
+          ),
           const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
@@ -426,13 +513,67 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     );
   }
 
-  Widget _buildStep2PersonalID() {
-     return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+  Widget _buildStep2TaxCard() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          VSPSectionTitle(AppLocalizations.of(context)!.uploadNationalIdTitle),
+          _buildExplanationCard(
+            title: isArabic ? 'مرحلة 2: البطاقة الضريبية' : 'Stage 2: Tax Card',
+            description: isArabic 
+                ? 'يرجى رفع صورة واضحة أو ملف PDF للبطاقة الضريبية الخاصة بالمنشأة. يجب أن يظهر الرقم الضريبي بوضوح للمطابقة والتحقق.'
+                : 'Please upload a clear photo or PDF of your facility\'s tax card. The tax number must be clearly visible for verification.',
+            icon: LucideIcons.fileSpreadsheet,
+          ),
+          const SizedBox(height: VSPSpacing.md),
+          
+          VspUploadMainCard(
+            title: isArabic ? 'انقر لرفع البطاقة الضريبية' : 'Click to upload tax card',
+            isLoading: _uploadingStatus['taxCard'] ?? false,
+            onTap: () => _showImageSourceActionSheet(OwnerDocumentType.taxCard, 'taxCard'),
+          ),
+
+          if (_uploadedDocUrls['taxCard'] != null) ...[
+            const SizedBox(height: VSPSpacing.md),
+            VspUploadedItemRow(
+              title: isArabic ? 'البطاقة الضريبية' : 'Tax Card',
+              subtitle: isArabic ? 'تم الرفع بنجاح' : 'Uploaded Successfully',
+              thumbnailUrl: _uploadedDocUrls['taxCard'],
+              onDelete: () => setState(() => _uploadedDocUrls['taxCard'] = null),
+            ),
+          ],
+
+          const SizedBox(height: VSPSpacing.xxl),
+          PrimaryButton(
+            text: _isSaving ? AppLocalizations.of(context)!.saving : AppLocalizations.of(context)!.saveAndContinue,
+            onPressed: (_isSaving || (_uploadingStatus['taxCard'] ?? false))
+                ? null
+                : _nextPage,
+          ),
+          SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildStep3PersonalID() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+      padding: const EdgeInsets.all(VSPSpacing.md),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          _buildExplanationCard(
+            title: isArabic ? 'مرحلة 3: بطاقة الرقم القومي' : 'Stage 3: National ID',
+            description: isArabic 
+                ? 'يرجى رفع صورتين واضحتين للوجهين الأمامي والخلفي لبطاقة الرقم القومي الخاصة بمالك المنشأة لإتمام عملية التحقق من الهوية.'
+                : 'Please upload clear photos of both the front and back of the owner\'s National ID to complete the verification process.',
+            icon: LucideIcons.contact,
+          ),
           const SizedBox(height: VSPSpacing.md),
           
           VspUploadMainCard(
@@ -483,6 +624,4 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       ),
     );
   }
-
-
 }

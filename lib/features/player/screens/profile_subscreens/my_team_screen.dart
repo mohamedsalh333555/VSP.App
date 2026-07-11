@@ -1,4 +1,4 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -389,7 +389,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   Expanded(
                     child: PrimaryButton(
                       text: l10n.deleteTeam,
-                      color: VSPColors.error.withOpacity(0.8),
+                      color: VSPColors.error.withValues(alpha: 0.8),
                       textColor: VSPColors.textPrimary,
                       onPressed: !isCaptain ? null : () => _showDeleteConfirmation(team),
                     ),
@@ -409,7 +409,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 width: double.infinity,
                 child: PrimaryButton(
                   text: "مغادرة الفريق",
-                  color: VSPColors.error.withOpacity(0.15),
+                  color: VSPColors.error.withValues(alpha: 0.15),
                   textColor: VSPColors.error,
                   onPressed: () => _showLeaveConfirmation(team, uid),
                 ),
@@ -763,5 +763,6 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     );
   }
 }
+
 
 

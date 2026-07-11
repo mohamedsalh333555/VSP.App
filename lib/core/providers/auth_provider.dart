@@ -766,6 +766,9 @@ class AuthProvider with ChangeNotifier {
     String? position,
     String? governorate,
     DateTime? dateOfBirth,
+    String? p2pInstapay,
+    String? p2pVodafone,
+    String? p2pBank,
   }) async {
     _isLoading = true;
     _errorMessage = null;
@@ -784,6 +787,9 @@ class AuthProvider with ChangeNotifier {
         'governorate': governorate ?? _governorate,
         'isRegistrationComplete': true,
         'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
+        'p2p_instapay': p2pInstapay,
+        'p2p_vodafone': p2pVodafone,
+        'p2p_bank': p2pBank,
       };
       if (name != null && name.isNotEmpty) {
         updateData['name'] = name;
@@ -800,6 +806,9 @@ class AuthProvider with ChangeNotifier {
           position: position ?? _userModel!.position,
           isRegistrationComplete: true,
           dateOfBirth: dateOfBirth ?? _userModel!.dateOfBirth,
+          p2pInstapay: p2pInstapay ?? _userModel!.p2pInstapay,
+          p2pVodafone: p2pVodafone ?? _userModel!.p2pVodafone,
+          p2pBank: p2pBank ?? _userModel!.p2pBank,
         );
       }
 

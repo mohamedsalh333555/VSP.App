@@ -38,9 +38,6 @@ class AddStadiumWizard extends StatefulWidget {
 class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _ballPriceController = TextEditingController();
   final _depositController = TextEditingController();
-  final _instapayController = TextEditingController();
-  final _vodafoneController = TextEditingController();
-  final _binanceController = TextEditingController();
   final _pageController = PageController();
   int _currentStep = 0;
   bool _isLoadingData = false;
@@ -146,9 +143,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _priceController.text = prefs.getString('temp_stadium_price') ?? '';
         _capacityController.text = prefs.getString('temp_stadium_capacity') ?? '';
         _stadiumPhoneController.text = prefs.getString('temp_stadium_phone') ?? '';
-        _instapayController.text = prefs.getString('temp_stadium_instapay') ?? '';
-        _vodafoneController.text = prefs.getString('temp_stadium_vodafone') ?? '';
-        _binanceController.text = prefs.getString('temp_stadium_binance') ?? '';
         _notesController.text = prefs.getString('temp_stadium_notes') ?? '';
         _lengthController.text = prefs.getString('temp_stadium_length') ?? '';
         _widthController.text = prefs.getString('temp_stadium_width') ?? '';
@@ -179,9 +173,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     _priceController.addListener(() => _saveToPrefs('temp_stadium_price', _priceController.text));
     _capacityController.addListener(() => _saveToPrefs('temp_stadium_capacity', _capacityController.text));
     _stadiumPhoneController.addListener(() => _saveToPrefs('temp_stadium_phone', _stadiumPhoneController.text));
-    _instapayController.addListener(() => _saveToPrefs('temp_stadium_instapay', _instapayController.text));
-    _vodafoneController.addListener(() => _saveToPrefs('temp_stadium_vodafone', _vodafoneController.text));
-    _binanceController.addListener(() => _saveToPrefs('temp_stadium_binance', _binanceController.text));
     _notesController.addListener(() => _saveToPrefs('temp_stadium_notes', _notesController.text));
     _lengthController.addListener(() => _saveToPrefs('temp_stadium_length', _lengthController.text));
     _widthController.addListener(() => _saveToPrefs('temp_stadium_width', _widthController.text));
@@ -199,9 +190,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         'temp_stadium_price',
         'temp_stadium_capacity',
         'temp_stadium_phone',
-        'temp_stadium_instapay',
-        'temp_stadium_vodafone',
-        'temp_stadium_binance',
         'temp_stadium_notes',
         'temp_stadium_length',
         'temp_stadium_width',
@@ -338,9 +326,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         
         final features = data['features'] as Map<String, dynamic>? ?? {};
         _stadiumPhoneController.text = features['stadiumPhone']?.toString() ?? '';
-        _instapayController.text = features['instapay']?.toString() ?? '';
-        _vodafoneController.text = features['vodafoneCash']?.toString() ?? '';
-        _binanceController.text = features['binanceId']?.toString() ?? '';
         _selectedFloorType = features['floorType'];
         _selectedSportType = features['sportType'];
         _selectedBathOption = features['bathOption'];
@@ -426,9 +411,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     _seatsController.dispose();
     _notesController.dispose();
     _stadiumPhoneController.dispose();
-    _instapayController.dispose();
-    _vodafoneController.dispose();
-    _binanceController.dispose();
     _pageController.dispose();
     _ballPriceController.dispose();
     _depositController.dispose();
@@ -1116,9 +1098,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
       final stadiumFeatures = {
         'stadiumPhone': _stadiumPhoneController.text.trim(),
-        'instapay': _instapayController.text.trim(),
-        'vodafoneCash': _vodafoneController.text.trim(),
-        'binanceId': _binanceController.text.trim(),
         'sportType': _selectedSportType,
         'floorType': _selectedFloorType,
         'bathOption': _selectedBathOption,
@@ -1419,32 +1398,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            isArabic ? 'عنوان إنستا باي (اختياري)' : 'InstaPay Address (Optional)',
-            isArabic ? 'اسم الحساب أو رقم الهاتف المسجل' : 'Account handle or registered phone',
-            controller: _instapayController,
-            maxLength: 50,
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            isArabic ? 'رقم فودافون كاش (اختياري)' : 'Vodafone Cash Number (Optional)',
-            '01xxxxxxxxx',
-            controller: _vodafoneController,
-            maxLength: 15,
-            keyboardType: TextInputType.phone,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          ),
-          const SizedBox(height: 16),
-          _buildTextField(
-            isArabic ? 'معرف بينانس Binance Pay ID (اختياري)' : 'Binance Pay ID (Optional)',
-            'Ex: 123456789',
-            controller: _binanceController,
-            maxLength: 25,
-            keyboardType: TextInputType.number,
-            inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-          ),
-          const SizedBox(height: 16),
+
           // Warm payment settings warning
           Container(
             width: double.infinity,

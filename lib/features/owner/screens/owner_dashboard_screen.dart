@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -184,15 +184,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Text(
-                              "Under Review ⏳",
+                              Localizations.localeOf(context).languageCode == "ar" ? "قيد المراجعة ⏳" : "Under Review ⏳",
                               style: Theme.of(context).textTheme.titleMedium?.copyWith(
                                 color: Colors.orange,
                                 fontWeight: FontWeight.bold,
                               ),
                             ),
-                            const SizedBox(height: 2),
+                            const SizedBox(height: 4),
                             Text(
-                              (Localizations.localeOf(context).languageCode == "ar" ? "جاري مراجعة حسابك ⏳\nيمكنك استكشاف لوحة التحكم براحتك، لكن يرجى العلم أن ملاعبك لن تظهر للاعبين ولن تستقبل حجوزات حتى يتم توثيق الأوراق من الإدارة." : "Account Under Review ⏳\nYou can explore the dashboard, but your stadiums are hidden from players and won't receive bookings until admin verification."),
+                              (Localizations.localeOf(context).languageCode == "ar" 
+                                  ? "حسابك قيد المراجعة حالياً. سيتم تفعيل ملاعبك واستقبال الحجوزات فور توثيق أوراقك من الإدارة." 
+                                  : "Your account is under review. Stadiums and bookings will be activated once verified by admin."),
                               style: Theme.of(context).textTheme.bodySmall?.copyWith(
                                 color: VSPColors.textSecondary,
                               ),

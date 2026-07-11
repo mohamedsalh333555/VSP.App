@@ -124,11 +124,19 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                       itemCount: stadiums.length,
                       separatorBuilder: (_, __) => const SizedBox(height: 16),
                       itemBuilder: (context, index) {
-                        return AbsorbPointer( // نمنع الضغط هنا لأنها للمعاينة
-                          child: StadiumCard(
-                            stadium: stadiums[index],
-                            isOwnerView: false, // لكي تظهر بتصميم اللاعبين بالضبط!
-                          ),
+                        return StadiumCard(
+                          stadium: stadiums[index],
+                          isOwnerView: false, // لكي تظهر بتصميم اللاعبين بالضبط!
+                          onTap: () {
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (_) => AddStadiumWizard(
+                                  stadiumId: stadiums[index].id,
+                                ),
+                              ),
+                            );
+                          },
                         );
                       },
                     ),

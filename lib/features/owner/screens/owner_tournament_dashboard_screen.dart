@@ -667,7 +667,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: BoxDecoration(
-                          color: VSPColors.background.withOpacity(0.4),
+                          color: VSPColors.background.withValues(alpha: 0.4),
                           borderRadius: BorderRadius.circular(VSPRadius.md),
                         ),
                         child: Wrap(
@@ -1130,4 +1130,5 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     );
   }
 }
+
 

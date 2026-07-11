@@ -17,7 +17,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -47,10 +47,10 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 20),
+                      const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 20),
                       const SizedBox(width: 8),
                       Text(
-                        isAr ? 'آخر تحديث: يوليو 2025' : 'Last Updated: July 2025',
+                        isAr ? 'آخر تحديث: يوليو 2026' : 'Last Updated: July 2026',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.bold,
@@ -84,24 +84,24 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   : 'We collect data you provide directly when creating your account, including: name, phone number, date of birth, governorate, profile image, and preferred position (Striker / GK / etc.).',
             ),
 
-            // Section 2: Payments via Paymob
+            // Section 2: Payments via Paymob (Updated to 2 Hours)
             _buildSection(
               context,
               icon: LucideIcons.creditCard,
               title: isAr ? '٢. الدفع والمبالغ المستردة' : '2. Payments & Refunds',
               content: isAr
-                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. لا يتم تخزين بيانات البطاقة المصرفية أو المحفظة الرقمية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح، يتم استرداد المبالغ تلقائياً ومباشرةً إلى المحفظة الرقمية أو الحساب البنكي خلال دقائق عبر بروتوكول InstaPay المؤتمت.'
-                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Card or wallet data is never stored on our servers.\n\nUpon eligible cancellation, refunds are automatically credited directly to your digital wallet or bank account within minutes via automated InstaPay protocol.',
+                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. لا يتم تخزين بيانات البطاقة المصرفية أو المحفظة الرقمية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، يتم استرداد المبالغ تلقائياً ومباشرةً إلى المحفظة الرقمية أو الحساب البنكي الخاص بك عبر بروتوكول InstaPay المؤتمت.'
+                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Card or wallet data is never stored on our servers.\n\nUpon eligible cancellation (up to 2 hours before kickoff), refunds are automatically credited directly to your digital wallet or bank account within minutes via automated InstaPay protocol.',
             ),
 
-            // Section 3: No-Show Penalties & GPS
+            // Section 3: No-Show Penalties & GPS (Updated with strict constraints)
             _buildSection(
               context,
               icon: LucideIcons.mapPin,
               title: isAr ? '٣. تتبع الغياب والتحقق الجغرافي' : '3. No-Show Tracking & GPS',
               content: isAr
-                  ? 'في حالة الإبلاغ عن "عدم الحضور" لمباراة تم حجزها، يتحقق النظام من موقعك الجغرافي (GPS) للتثبت من وجودك داخل نطاق الملعب (≤ 150 متر + دقة الـ GPS).\n\nيُسمح بتقديم طعن على حالة الغياب خلال نافذة زمنية مدتها 60 دقيقة فقط من وقت انتهاء المباراة. تُحفظ نتائج التحقق في قاعدة البيانات ولا يمكن الطعن فيها بعد انتهاء الوقت المحدد.'
-                  : 'In case of a reported no-show for a booked match, the system verifies your GPS location to confirm your presence within the stadium perimeter (≤ 150m + GPS accuracy). Disputes can only be filed within a 60-minute window after the match ends. Verification results are stored in the database and are final after the dispute window expires.',
+                  ? 'في حالة الإبلاغ عن "عدم الحضور" لمباراة تم حجزها، يتحقق النظام من موقعك الجغرافي (GPS) للتثبت من وجودك داخل نطاق الملعب (حتى 150 متر + دقة الـ GPS).\n\nيُسمح بتقديم طعن (نزاع) على حالة الغياب خلال نافذة زمنية مدتها 60 دقيقة فقط من وقت انتهاء المباراة، بشرط ألا تتعدى دقة إشارة الـ GPS لجهازك 30 متراً لمنع محاولات التلاعب بالموقع.'
+                  : "In case of a reported no-show for a booked match, the system verifies your GPS location to confirm your presence within the stadium perimeter (up to 150m + GPS accuracy).\n\nDisputes can only be filed within a strict 60-minute window after the match ends, provided that your device's GPS accuracy is under 30 meters to prevent spoofing attempts.",
             ),
 
             // Section 4: Team & Roster Limits
@@ -110,8 +110,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: LucideIcons.users,
               title: isAr ? '٤. قواعد الفرق وحدود التسجيل' : '4. Team & Roster Rules',
               content: isAr
-                  ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً كحد أقصى للقائمة. يمكن لكل لاعب الانضمام إلى 3 فرق كحد أقصى في نفس الوقت.\n\nقائمة الفريق تُتحكم فيها من جانب قاعدة البيانات عبر Row-Level Security (RLS) لمنع أي تجاوزات أو محاولات إضافة غير مصرح بها.'
-                  : 'Each team may register a maximum of 12 players. Each player can join a maximum of 3 teams simultaneously. Roster management is enforced on the database level via Row-Level Security (RLS) to prevent unauthorized additions or roster violations.',
+                  ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً كحد أقصى للقائمة الرسمية. كما يمكن لكل لاعب الانضمام إلى 3 فرق كحد أقصى في نفس الوقت لمنع الاحتكار.\n\nقائمة الفريق يتم التحكم فيها ومطابقتها على مستوى قاعدة البيانات عبر Row-Level Security (RLS) لمنع أي تجاوزات غير مصرح بها.'
+                  : 'Each team may register a maximum of 12 players. Each player can join a maximum of 3 teams simultaneously to prevent monopoly.\n\nRoster management is strictly enforced on the database level via Row-Level Security (RLS) to block any unauthorized additions.',
             ),
 
             // Section 5: Data Sharing
@@ -138,8 +138,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
             Center(
               child: Text(
                 isAr
-                    ? '© جميع الحقوق محفوظة لمنصة VSP الرياضية 2025'
-                    : '© VSP Sports Platform 2025 — All Rights Reserved',
+                    ? '© جميع الحقوق محفوظة لمنصة VSP الرياضية 2026'
+                    : '© VSP Sports Platform 2026 — All Rights Reserved',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: VSPColors.textSecondary.withValues(alpha: 0.5),
                       fontSize: 11,

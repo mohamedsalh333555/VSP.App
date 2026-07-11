@@ -1,10 +1,11 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
 import 'package:intl/intl.dart';
 import '../../../core/models/chat_model.dart';
 import '../../../core/repositories/chat_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -80,18 +81,71 @@ class _ChatScreenState extends State<ChatScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.surface,
         elevation: 0,
-        title: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              widget.booking.stadiumName,
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
-            ),
-            Text(
-              '${widget.booking.playerTeamName ?? "Public Match"} Chat',
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-            ),
-          ],
+        title: Builder(
+          builder: (context) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
+                                 widget.booking.stadiumId == 'chat_thread' || 
+                                 widget.booking.id.startsWith('support_chat_') || 
+                                 widget.booking.id.startsWith('chat_');
+
+            if (!isSpecialChat) {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    widget.booking.stadiumName,
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    '${widget.booking.playerTeamName ?? "Public Match"} Chat',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                  ),
+                ],
+              );
+            }
+
+            final otherUserId = widget.booking.joinedUserIds.firstWhere(
+              (uid) => uid != currentUserId,
+              orElse: () => 'vsp_support_admin',
+            );
+
+            if (otherUserId == 'vsp_support_admin') {
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isArabic ? 'الدعم الفني VSP' : 'VSP Support',
+                    style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                  ),
+                  Text(
+                    isArabic ? 'محادثة الدعم الفني' : 'Support Conversation',
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                  ),
+                ],
+              );
+            }
+
+            return FutureBuilder<Map<String, dynamic>?>(
+              future: UserRepository().getUserData(otherUserId),
+              builder: (context, snap) {
+                final name = snap.data?['name'] ?? (isArabic ? 'مستخدم VSP' : 'VSP User');
+                return Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      name,
+                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    Text(
+                      isArabic ? 'محادثة مباشرة' : 'Direct Conversation',
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                    ),
+                  ],
+                );
+              },
+            );
+          },
         ),
         leading: IconButton(
           icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
@@ -141,8 +195,14 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildMessageInput() {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final now = DateTime.now();
-    final bool isExpired = widget.booking.endTime.isBefore(now);
-    final bool isCancelled = widget.booking.status == BookingStatus.cancelled;
+    
+    final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
+                         widget.booking.stadiumId == 'chat_thread' || 
+                         widget.booking.id.startsWith('support_chat_') || 
+                         widget.booking.id.startsWith('chat_');
+
+    final bool isExpired = !isSpecialChat && widget.booking.endTime.isBefore(now);
+    final bool isCancelled = !isSpecialChat && widget.booking.status == BookingStatus.cancelled;
 
     if (isExpired || isCancelled) {
       return Container(
@@ -221,6 +281,42 @@ class _ChatScreenState extends State<ChatScreen> {
   }
 
   Widget _buildSystemMessage(BuildContext context) {
+    final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
+                         widget.booking.stadiumId == 'chat_thread' || 
+                         widget.booking.id.startsWith('support_chat_') || 
+                         widget.booking.id.startsWith('chat_');
+
+    if (isSpecialChat) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final otherUserId = widget.booking.joinedUserIds.firstWhere(
+        (uid) => uid != Provider.of<AuthProvider>(context, listen: false).currentUser?.uid,
+        orElse: () => 'vsp_support_admin',
+      );
+      final text = otherUserId == 'vsp_support_admin'
+          ? (isArabic
+              ? '👋 مرحباً بك في الدعم الفني لـ VSP. كيف يمكننا مساعدتك اليوم؟'
+              : '👋 Welcome to VSP Support. How can we help you today?')
+          : (isArabic
+              ? '🔒 هذه محادثة مباشرة آمنة ومشفرة.'
+              : '🔒 This is a secure and encrypted direct chat.');
+
+      return Center(
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 16),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          decoration: BoxDecoration(
+            color: VSPColors.surface.withValues(alpha: 0.4),
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+          ),
+          child: Text(
+            text,
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            textAlign: TextAlign.center,
+          ),
+        ),
+      );
+    }
+
     final lang = Provider.of<LanguageProvider>(context, listen: false);
     final text = lang.isArabic
         ? '🏆 تم تأكيد الحجز! الساحة بانتظاركم... من جاهز للتحدي؟ ⚽'
@@ -363,5 +459,3 @@ class _ChatBubble extends StatelessWidget {
     );
   }
 }
-
-
