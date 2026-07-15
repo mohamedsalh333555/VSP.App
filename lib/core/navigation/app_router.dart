@@ -146,7 +146,7 @@ class AppRouter {
 
     // 4. User data loading check
     if (userModel == null) {
-      if (hasDataFetchError) {
+      if (hasDataFetchError || !isInitializing) {
         if (path != '/offline') return '/offline';
         return null;
       }

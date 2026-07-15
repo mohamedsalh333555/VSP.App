@@ -13,7 +13,6 @@ import '../../../data/models.dart';
 import 'booking_success_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/utils/vsp_feedback.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
@@ -139,82 +138,92 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? widget.bookingDraft.depositPaid.toInt() 
         : widget.bookingDraft.totalPrice.toInt();
 
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (ctx) => Scaffold(
-        backgroundColor: const Color(0xFF0F172A),
-        appBar: AppBar(
+    // ✅ FIXED: Pushing a clean, full-screen route instead of calling showDialog with a Scaffold
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (ctx) => Scaffold(
           backgroundColor: const Color(0xFF0F172A),
-          elevation: 0,
-          leading: IconButton(icon: const Icon(Icons.close, color: Colors.white), onPressed: () => Navigator.pop(ctx)),
-          title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16)),
-          centerTitle: true,
-        ),
-        body: Padding(
-          padding: const EdgeInsets.all(24.0),
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(20),
-                decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                child: Column(
-                  children: [
-                    const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
-                    const SizedBox(height: 24),
-                    const Text('Total Amount', style: TextStyle(color: Colors.black54, fontSize: 14)),
-                    Text('$amountToPay EGP', style: const TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w900)),
-                    const SizedBox(height: 32),
-                    TextField(
-                      decoration: InputDecoration(labelText: 'Card Number', hintText: '4000 0000 0000 0002', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), prefixIcon: const Icon(Icons.credit_card)),
-                      keyboardType: TextInputType.number,
-                    ),
-                    const SizedBox(height: 16),
-                    Row(
-                      children: [
-                        Expanded(child: TextField(decoration: InputDecoration(labelText: 'Expiry (MM/YY)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
-                        const SizedBox(width: 16),
-                        Expanded(child: TextField(decoration: InputDecoration(labelText: 'CVV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))), obscureText: true)),
-                      ],
-                    ),
-                    const SizedBox(height: 32),
-                    SizedBox(
-                      width: double.infinity, height: 50,
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                        onPressed: () async {
-                          Navigator.pop(ctx);
-                          setState(() => _isPaymobLoading = true);
-                          try {
-                            await Supabase.instance.client.from('bookings').update({
-                              'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
-                            }).eq('id', _booking!.id);
-                            
-                            HapticFeedback.heavyImpact();
-                            if (mounted) {
-                              final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
-                              if (updatedBooking != null && mounted) {
-                                Navigator.pushReplacement(
-                                  context,
-                                  MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
-                                );
-                              }
-                            }
-                          } catch (_) {
-                            setState(() => _isPaymobLoading = false);
-                          }
-                        },
-                        child: const Text('Pay Securely', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+          appBar: AppBar(
+            backgroundColor: const Color(0xFF0F172A),
+            elevation: 0,
+            leading: IconButton(
+              icon: const Icon(Icons.close, color: Colors.white), 
+              onPressed: () => Navigator.pop(ctx),
+            ),
+            title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16)),
+            centerTitle: true,
+          ),
+          body: Padding(
+            padding: const EdgeInsets.all(24.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Container(
+                  width: double.infinity,
+                  padding: const EdgeInsets.all(20),
+                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
+                  child: Column(
+                    children: [
+                      const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
+                      const SizedBox(height: 24),
+                      const Text('Total Amount', style: TextStyle(color: Colors.black54, fontSize: 14)),
+                      Text('$amountToPay EGP', style: const TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w900)),
+                      const SizedBox(height: 32),
+                      TextField(
+                        decoration: InputDecoration(
+                          labelText: 'Card Number', 
+                          hintText: '4000 0000 0000 0002', 
+                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), 
+                          prefixIcon: const Icon(Icons.credit_card),
+                        ),
+                        keyboardType: TextInputType.number,
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 16),
+                      Row(
+                        children: [
+                          Expanded(child: TextField(decoration: InputDecoration(labelText: 'Expiry (MM/YY)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
+                          const SizedBox(width: 16),
+                          Expanded(child: TextField(decoration: InputDecoration(labelText: 'CVV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))), obscureText: true)),
+                        ],
+                      ),
+                      const SizedBox(height: 32),
+                      SizedBox(
+                        width: double.infinity, height: 50,
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
+                          onPressed: () async {
+                            Navigator.pop(ctx); // Close the checkout page cleanly
+                            setState(() => _isPaymobLoading = true);
+                            try {
+                              await Supabase.instance.client.from('bookings').update({
+                                'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
+                              }).eq('id', _booking!.id);
+                              
+                              HapticFeedback.heavyImpact();
+                              if (mounted) {
+                                final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
+                                if (updatedBooking != null && mounted) {
+                                  Navigator.pushReplacement(
+                                    context,
+                                    MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
+                                  );
+                                }
+                              }
+                            } catch (_) {
+                              setState(() => _isPaymobLoading = false);
+                            }
+                          },
+                          child: const Text('Pay Securely', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-              const SizedBox(height: 24),
-              const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2))),
-            ],
+                const SizedBox(height: 24),
+                const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2))),
+              ],
+            ),
           ),
         ),
       ),

@@ -100,8 +100,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: LucideIcons.mapPin,
               title: isAr ? '٣. تتبع الغياب والتحقق الجغرافي' : '3. No-Show Tracking & GPS',
               content: isAr
-                  ? 'في حالة الإبلاغ عن "عدم الحضور" لمباراة تم حجزها، يتحقق النظام من موقعك الجغرافي (GPS) للتثبت من وجودك داخل نطاق الملعب (حتى 150 متر + دقة الـ GPS).\n\nيُسمح بتقديم طعن (نزاع) على حالة الغياب خلال نافذة زمنية مدتها 60 دقيقة فقط من وقت انتهاء المباراة، بشرط ألا تتعدى دقة إشارة الـ GPS لجهازك 30 متراً لمنع محاولات التلاعب بالموقع.'
-                  : "In case of a reported no-show for a booked match, the system verifies your GPS location to confirm your presence within the stadium perimeter (up to 150m + GPS accuracy).\n\nDisputes can only be filed within a strict 60-minute window after the match ends, provided that your device's GPS accuracy is under 30 meters to prevent spoofing attempts.",
+                  ? 'في حالة الإبلاغ عن "عدم الحضور" لمباراة تم حجزها، يتحقق النظام من موقعك الجغرافي (GPS) للتثبت من وجودك داخل نطاق الملعب (حتى 150 متر + دقة الـ GPS).\n\nيُسمح بتقديم طعن (نزاع) على حالة الغياب خلال نافذة زمنية مدتها 60 دقيقة فقط من وقت انتهاء المباراة، بشرط ألا تتعدى دقة إشارة الـ GPS لجهازك 50 متراً لمنع محاولات التلاعب بالموقع.'
+                  : "In case of a reported no-show for a booked match, the system verifies your GPS location to confirm your presence within the stadium perimeter (up to 150m + GPS accuracy).\n\nDisputes can only be filed within a strict 60-minute window after the match ends, provided that your device's GPS accuracy is under 50 meters to prevent spoofing attempts.",
             ),
 
             // Section 4: Team & Roster Limits

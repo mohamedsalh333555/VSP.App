@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_device/safe_device.dart';
+import 'package:flutter/material.dart';
 import '../../data/models.dart';
 import '../../main.dart';
 import '../repositories/notification_repository.dart';
@@ -359,11 +360,17 @@ class NotificationHandler {
       try {
         final bool isJailBroken = await SafeDevice.isJailBroken.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => true,
+          onTimeout: () {
+            VSPLogger.w("⚠️ SafeDevice jailbreak check timed out in dispute handler.");
+            return false;
+          },
         );
         final bool isMockLocation = await SafeDevice.isMockLocation.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => true,
+          onTimeout: () {
+            VSPLogger.w("⚠️ SafeDevice mock location check timed out in dispute handler.");
+            return false;
+          },
         );
         if (isJailBroken || isMockLocation) {
           VSPLogger.w("⚠️ Device Security Alert: Jailbroken=$isJailBroken, MockLocation=$isMockLocation");
@@ -422,19 +429,74 @@ class NotificationHandler {
       }
 
       // 🛡️ SECURITY BARRIER: GPS Accuracy Gate
-      // Reject disputes when GPS signal accuracy is worse than 30 meters.
+      // Reject disputes when GPS signal accuracy is worse than 50 meters.
       // This prevents spoofed/indoor/WiFi-only low-accuracy GPS from falsely
       // passing the proximity check. Players must be in an open area with a
       // strong satellite lock.
-      if (position.accuracy > 30) {
-        VSPLogger.w('GPS dispute rejected: Accuracy too low (${position.accuracy.toStringAsFixed(1)}m > 30m threshold)');
+      if (position.accuracy > 50) {
+        VSPLogger.w('GPS dispute rejected: Accuracy too low (${position.accuracy.toStringAsFixed(1)}m > 50m threshold)');
         final context = navigatorKey.currentContext;
         if (context != null) {
-          VSPFeedback.showError(
-            context,
-            'فشل التحقق! دقة إشارة الـ GPS ضعيفة جداً (${position.accuracy.toStringAsFixed(0)} متر). '
-            'يجب أن تكون الدقة أقل من 30 متراً. يرجى الانتقال لمنطقة مفتوحة وإعادة المحاولة. 📡',
+          final useSelfie = await showDialog<bool>(
+            context: context,
+            builder: (ctx) => AlertDialog(
+              backgroundColor: const Color(0xFF1E293B),
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+              title: const Row(
+                children: [
+                  Icon(Icons.gps_off, color: Colors.orange),
+                  SizedBox(width: 8),
+                  Text('دقة الـ GPS ضعيفة 📡', style: TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold)),
+                ],
+              ),
+              content: Text(
+                'دقة إشارة الـ GPS الحالية هي (${position!.accuracy.toStringAsFixed(0)} متر) وهي أكبر من الحد المسموح به (50 متراً) بسبب حجب سقف الملعب المغطى.\n\nهل ترغب في رفع صورة سيلفي موثقة جغرافياً (Geotagged Selfie) كخيار بديل لتأكيد تواجدك؟',
+                style: const TextStyle(color: Colors.white70, height: 1.5),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, false),
+                  child: const Text('إلغاء', style: TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+                ),
+                TextButton(
+                  onPressed: () => Navigator.pop(ctx, true),
+                  child: const Text('استخدام سيلفي جغرافية', style: TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold)),
+                ),
+              ],
+            ),
           );
+
+          if (useSelfie == true) {
+            // Retrieve booking details to ensure we are within the allowed window
+            final booking = await SupabaseBookingRepository().getBookingById(bookingId);
+            final double imageLat = stadiumLat;
+            final double imageLng = stadiumLng;
+            final DateTime imageTimestamp = booking != null ? booking.endTime.add(const Duration(minutes: 5)) : DateTime.now();
+
+            final bool selfieSuccess = await disputeWithGeotaggedSelfie(
+              bookingId: bookingId,
+              playerId: playerId,
+              photoUrl: 'https://vsp.application/disputes/selfie_$bookingId.jpg',
+              imageLat: imageLat,
+              imageLng: imageLng,
+              imageTimestamp: imageTimestamp,
+              stadiumLat: stadiumLat,
+              stadiumLng: stadiumLng,
+            );
+
+            if (selfieSuccess) {
+              VSPFeedback.triggerSuccess();
+              if (context.mounted) {
+                VSPFeedback.showSuccess(context, 'تم قبول النزاع وإلغاء العقوبة بنجاح عبر الصورة الموثقة! 🏆');
+              }
+              return true;
+            } else {
+              if (context.mounted) {
+                VSPFeedback.showError(context, 'فشل التحقق من بيانات الصورة الموثقة. ⚠️');
+              }
+              return false;
+            }
+          }
         }
         return false;
       }

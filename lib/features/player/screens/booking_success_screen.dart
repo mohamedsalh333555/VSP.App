@@ -125,169 +125,176 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: Colors.black.withValues(alpha: 0.85),
-      body: Stack(
-        alignment: Alignment.topCenter,
-        children: [
-          // Main Content Centered
-          Center(
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
-              padding: const EdgeInsets.all(VSPSpacing.xl),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
-              ),
-              child: Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  // Animated Icon
-                  ScaleTransition(
-                    scale: _scaleAnimation,
-                    child: Container(
-                      width: 100,
-                      height: 100,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.accent, width: 4),
-                        color: VSPColors.surface,
-                      ),
-                      child: Icon(LucideIcons.check, color: VSPColors.accent, size: 60),
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  
-                  // Title
-                  Text(
-                    AppLocalizations.of(context)!.bookingSuccess,
-                    textAlign: TextAlign.center,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-
-                  const SizedBox(height: 24),
-
-                  // Booking Details Summary
-                  Container(
-                    padding: const EdgeInsets.all(VSPSpacing.md),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                    ),
-                    child: Column(
-                      children: [
-                        _buildDetailRow(LucideIcons.building, widget.booking.stadiumName),
-                        const SizedBox(height: VSPSpacing.md),
-                        _buildDetailRow(LucideIcons.calendar, widget.booking.formattedDate),
-                        const SizedBox(height: VSPSpacing.md),
-                        _buildDetailRow(LucideIcons.clock, widget.booking.formattedTimeRange),
-                        const SizedBox(height: VSPSpacing.md),
-                        _buildDetailRow(
-                          LucideIcons.creditCard, 
-                          '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) {
+        if (didPop) return;
+        Navigator.of(context).popUntil((route) => route.isFirst);
+      },
+      child: Scaffold(
+        backgroundColor: Colors.black.withValues(alpha: 0.85),
+        body: Stack(
+          alignment: Alignment.topCenter,
+          children: [
+            // Main Content Centered
+            Center(
+              child: Container(
+                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
+                padding: const EdgeInsets.all(VSPSpacing.xl),
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.xl),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    // Animated Icon
+                    ScaleTransition(
+                      scale: _scaleAnimation,
+                      child: Container(
+                        width: 100,
+                        height: 100,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          border: Border.all(color: VSPColors.accent, width: 4),
+                          color: VSPColors.surface,
                         ),
-                        if (widget.booking.bookingType == BookingType.challenge) ...[
-                          const SizedBox(height: 12),
+                        child: Icon(LucideIcons.check, color: VSPColors.accent, size: 60),
+                      ),
+                    ),
+                    const SizedBox(height: 24),
+                    
+                    // Title
+                    Text(
+                      AppLocalizations.of(context)!.bookingSuccess,
+                      textAlign: TextAlign.center,
+                      style: Theme.of(context).textTheme.displaySmall,
+                    ),
+  
+                    const SizedBox(height: 24),
+  
+                    // Booking Details Summary
+                    Container(
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                      ),
+                      child: Column(
+                        children: [
+                          _buildDetailRow(LucideIcons.building, widget.booking.stadiumName),
+                          const SizedBox(height: VSPSpacing.md),
+                          _buildDetailRow(LucideIcons.calendar, widget.booking.formattedDate),
+                          const SizedBox(height: VSPSpacing.md),
+                          _buildDetailRow(LucideIcons.clock, widget.booking.formattedTimeRange),
+                          const SizedBox(height: VSPSpacing.md),
                           _buildDetailRow(
-                            LucideIcons.trophy, 
-                            AppLocalizations.of(context)!.vsOpponent(widget.booking.opponentTeamName ?? 'Opponent')
+                            LucideIcons.creditCard, 
+                            '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
+                          ),
+                          if (widget.booking.bookingType == BookingType.challenge) ...[
+                            const SizedBox(height: 12),
+                            _buildDetailRow(
+                              LucideIcons.trophy, 
+                              AppLocalizations.of(context)!.vsOpponent(widget.booking.opponentTeamName ?? 'Opponent')
+                            ),
+                          ],
+                        ],
+                      ),
+                    ),
+  
+                    const SizedBox(height: VSPSpacing.lg),
+  
+                    // Share Link
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: Text(AppLocalizations.of(context)!.bookingReference, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                    ),
+                    const SizedBox(height: VSPSpacing.sm),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(VSPRadius.sm),
+                      ),
+                      child: Row(
+                        children: [
+                          Expanded(
+                            child: Text(
+                              AppLocalizations.of(context)!.refHash(widget.booking.id.toUpperCase()),
+                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
+                                letterSpacing: 1.1,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(width: VSPSpacing.sm),
+                          InkWell(
+                            onTap: _copyLink,
+                            child: Container(
+                              padding: const EdgeInsets.all(6),
+                              decoration: BoxDecoration(
+                                color: VSPColors.accent,
+                                borderRadius: BorderRadius.circular(VSPRadius.xs),
+                              ),
+                              child: Icon(LucideIcons.copy, color: VSPColors.background, size: 18),
+                            ),
                           ),
                         ],
-                      ],
+                      ),
                     ),
-                  ),
-
-                  const SizedBox(height: VSPSpacing.lg),
-
-                  // Share Link
-                  Align(
-                    alignment: Alignment.centerLeft,
-                    child: Text(AppLocalizations.of(context)!.bookingReference, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                  ),
-                  const SizedBox(height: VSPSpacing.sm),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    ),
-                    child: Row(
+  
+                    const SizedBox(height: 24),
+                    // Action Buttons
+                    Row(
                       children: [
                         Expanded(
-                          child: Text(
-                            AppLocalizations.of(context)!.refHash(widget.booking.id.toUpperCase()),
-                            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                              letterSpacing: 1.1,
-                              fontWeight: FontWeight.bold,
-                            ),
+                          child: PrimaryButton(
+                            text: AppLocalizations.of(context)!.myBookings,
+                            color: VSPColors.surfaceAlt,
+                            textColor: VSPColors.textPrimary,
+                            onPressed: () {
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
                           ),
                         ),
-                        const SizedBox(width: VSPSpacing.sm),
-                        InkWell(
-                          onTap: _copyLink,
-                          child: Container(
-                            padding: const EdgeInsets.all(6),
-                            decoration: BoxDecoration(
-                              color: VSPColors.accent,
-                              borderRadius: BorderRadius.circular(VSPRadius.xs),
-                            ),
-                            child: Icon(LucideIcons.copy, color: VSPColors.background, size: 18),
+                        const SizedBox(width: VSPSpacing.md),
+                        Expanded(
+                          child: PrimaryButton(
+                            text: AppLocalizations.of(context)!.home,
+                            onPressed: () {
+                              // Reset to the very first screen (Dashboard)
+                              Navigator.of(context).popUntil((route) => route.isFirst);
+                            },
                           ),
                         ),
                       ],
                     ),
-                  ),
-
-                  const SizedBox(height: 24),
-                  // Action Buttons
-                  Row(
-                    children: [
-                      Expanded(
-                        child: PrimaryButton(
-                          text: AppLocalizations.of(context)!.myBookings,
-                          color: VSPColors.surfaceAlt,
-                          textColor: VSPColors.textPrimary,
-                          onPressed: () {
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          },
-                        ),
-                      ),
-                      const SizedBox(width: VSPSpacing.md),
-                      Expanded(
-                        child: PrimaryButton(
-                          text: AppLocalizations.of(context)!.home,
-                          onPressed: () {
-                            // Reset to the very first screen (Dashboard)
-                            Navigator.of(context).popUntil((route) => route.isFirst);
-                          },
-                        ),
-                      ),
-                    ],
-                  ),
+                  ],
+                ),
+              ),
+            ),
+  
+            // Confetti Animation Overlay
+            RepaintBoundary(
+              child: ConfettiWidget(
+                confettiController: _confettiController,
+                blastDirection: pi / 2, // Down
+                maxBlastForce: 5,
+                minBlastForce: 2,
+                emissionFrequency: 0.05,
+                numberOfParticles: 20,
+                gravity: 0.2,
+                colors: const [
+                  VSPColors.accent,
+                  Colors.yellow,
+                  Colors.white,
+                  Colors.blue,
                 ],
               ),
             ),
-          ),
-
-          // Confetti Animation Overlay
-          RepaintBoundary(
-            child: ConfettiWidget(
-              confettiController: _confettiController,
-              blastDirection: pi / 2, // Down
-              maxBlastForce: 5,
-              minBlastForce: 2,
-              emissionFrequency: 0.05,
-              numberOfParticles: 20,
-              gravity: 0.2,
-              colors: const [
-                VSPColors.accent,
-                Colors.yellow,
-                Colors.white,
-                Colors.blue,
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }

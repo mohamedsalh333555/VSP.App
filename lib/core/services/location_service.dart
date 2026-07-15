@@ -29,11 +29,17 @@ class LocationService {
       try {
         final bool isJailBroken = await SafeDevice.isJailBroken.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => true, // في حال انتهاء المهلة نفترض وجود خطر لمنع التجاوز
+          onTimeout: () {
+            VSPLogger.w("⚠️ SafeDevice jailbreak check timed out. Defaulting to safe state.");
+            return false;
+          },
         );
         final bool isMockLocation = await SafeDevice.isMockLocation.timeout(
           const Duration(seconds: 2),
-          onTimeout: () => true, // في حال انتهاء المهلة نفترض وجود خطر لمنع التجاوز
+          onTimeout: () {
+            VSPLogger.w("⚠️ SafeDevice mock location check timed out. Defaulting to safe state.");
+            return false;
+          },
         );
         if (isJailBroken || isMockLocation) {
           VSPLogger.w("⚠️ Device Security Alert: Jailbroken=$isJailBroken, MockLocation=$isMockLocation");

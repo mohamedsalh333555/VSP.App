@@ -221,7 +221,7 @@ class MatchHandshakeRuler {
     }
 
     // 2. Accuracy constraint check
-    if (accuracy > 30) {
+    if (accuracy > 50) {
       throw Exception('gps_accuracy_too_low');
     }
 
