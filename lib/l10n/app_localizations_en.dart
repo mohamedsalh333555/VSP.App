@@ -183,6 +183,27 @@ class AppLocalizationsEn extends AppLocalizations {
   String get fullName => 'Full Name';
 
   @override
+  String get firstName => 'First Name';
+
+  @override
+  String get lastName => 'Last Name';
+
+  @override
+  String get firstNameHint => 'Mohamed';
+
+  @override
+  String get lastNameHint => 'Ahmed';
+
+  @override
+  String get dateOfBirth => 'Date of Birth';
+
+  @override
+  String get dateOfBirthPlaceholder => 'YYYY-MM-DD';
+
+  @override
+  String get addPersonalPhoneNumber => 'Add Number (Personal Phone Number)';
+
+  @override
   String get enterName => 'Enter your name';
 
   @override
@@ -209,6 +230,9 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get fillAllFields => 'Please fill all fields';
+
+  @override
+  String get pleaseEnterDob => 'Please enter your date of birth';
 
   @override
   String get invalidPhone => 'Please enter a valid phone number';

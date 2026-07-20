@@ -92,7 +92,12 @@ class TournamentBracketsScreen extends StatelessWidget {
               elevation: 0,
               centerTitle: true,
               leading: IconButton(
-                icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+                icon: Icon(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? LucideIcons.chevronRight
+                      : LucideIcons.chevronLeft,
+                  color: VSPColors.textPrimary,
+                ),
                 onPressed: () => Navigator.pop(context),
               ),
               title: Text(l10n.tournamentBrackets, style: Theme.of(context).textTheme.displaySmall),

@@ -59,6 +59,13 @@ android {
                 signingConfig = signingConfigs.getByName("debug")
                 logger.warn("⚠️ RELEASE SIGNING WARNING: key.properties not found. Building with debug keys. This will be REJECTED by Play Store.")
             }
+            // ✅ APK Size Optimizations
+            isMinifyEnabled = true          // R8 code shrinking + obfuscation
+            isShrinkResources = true        // Remove unused resources
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro"
+            )
         }
     }
 }

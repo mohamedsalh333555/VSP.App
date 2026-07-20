@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -95,6 +96,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   void _initBookingRealtimeListener(String bookingId) {
+    if (bookingId.startsWith('mock_')) return;
     _bookingSubscription?.cancel();
     _bookingSubscription = Supabase.instance.client
         .from('bookings')
@@ -196,9 +198,26 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                             Navigator.pop(ctx); // Close the checkout page cleanly
                             setState(() => _isPaymobLoading = true);
                             try {
-                              await Supabase.instance.client.from('bookings').update({
-                                'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
-                              }).eq('id', _booking!.id);
+                              if (_booking!.id.startsWith('mock_')) {
+                                final mockConfirmed = _booking!.copyWith(
+                                  status: BookingStatus.confirmed,
+                                  isPaid: true,
+                                  paymentStatus: 'paid',
+                                  paymentMethod: 'paymob_test',
+                                  paymentTransactionId: 'TEST_${DateTime.now().millisecondsSinceEpoch}',
+                                );
+                                Provider.of<BookingProvider>(context, listen: false).setCurrentBookingForMock(mockConfirmed);
+                              } else {
+                                // 🛡️ Gating Safety: Direct client-side updates are strictly blocked in production.
+                                // Webhook from Paymob handles the booking confirmation safely.
+                                if (kDebugMode) {
+                                  await Supabase.instance.client.from('bookings').update({
+                                    'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
+                                  }).eq('id', _booking!.id);
+                                } else {
+                                  throw Exception("Direct payment confirmation is blocked in production. Webhook required.");
+                                }
+                              }
                               
                               HapticFeedback.heavyImpact();
                               if (mounted) {

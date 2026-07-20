@@ -266,7 +266,15 @@ class BookingProvider with ChangeNotifier {
 
   /// Get a specific booking
   Future<Booking?> getBookingById(String bookingId) async {
+    if (bookingId.startsWith('mock_')) {
+      return _currentBooking;
+    }
     return await _repository.getBookingById(bookingId);
+  }
+
+  void setCurrentBookingForMock(Booking booking) {
+    _currentBooking = booking;
+    notifyListeners();
   }
 
   /// Fetch public matches directly from the unified active stream to avoid pagination mismatch

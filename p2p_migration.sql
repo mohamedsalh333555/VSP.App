@@ -23,7 +23,7 @@ BEGIN
   SET 
     status = 'cancelled',
     updated_at = NOW(),
-    notes = COALESCE(notes, '') || E'\n[SYSTEM: Cancelled due to 15-minute P2P payment timeout]'
+    notes = COALESCE(notes, '') || E'\n[SYSTEM: Cancelled due to 15-minute Paymob payment timeout]'
   WHERE 
     status = 'pending'
     AND created_at <= NOW() - INTERVAL '15 minutes';

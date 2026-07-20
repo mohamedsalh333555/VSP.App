@@ -2,17 +2,20 @@ import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/phone_utils.dart';
+import '../config/app_config.dart';
 import 'logger_service.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  User? _mockUser;
+
   // Get current user
-  User? get currentUser => _supabase.auth.currentUser;
+  User? get currentUser => _mockUser ?? _supabase.auth.currentUser;
 
   // Stream of auth state changes mapped to User?
   Stream<User?> get authStateChanges => 
-      _supabase.auth.onAuthStateChange.map((data) => data.session?.user);
+      _supabase.auth.onAuthStateChange.map((data) => _mockUser ?? data.session?.user);
 
   // Internal logger for security auditing
   void _logSecurityEvent(String event, dynamic error) {
@@ -27,6 +30,55 @@ class AuthService {
     required Map<String, dynamic> userData,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
+
+    if (kDebugMode && AppConfig.useMockOtp) {
+      final mockUserId = role == 'player' ? '8d3d7d65-a167-4138-b36c-85bbdead1b7a' : 'f64e7da9-6af7-47f2-9916-87cc7e6a1739';
+      
+      try {
+        final existing = await _supabase.from('users').select('id').eq('id', mockUserId).maybeSingle();
+        if (existing == null) {
+          await _supabase.from('users').insert({
+            'id': mockUserId,
+            'email': cleanEmail,
+            'role': role,
+            'name': userData['name'] ?? 'Ahmed Player',
+            'phone': PhoneUtils.normalize(userData['phone'] ?? '01033334444'),
+            'is_email_verified': false,
+            'is_registration_complete': false,
+            'governorate': userData['governorate'] ?? 'Cairo',
+            'position': userData['position'] ?? 'GK',
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        } else {
+          await _supabase.from('users').update({
+            'email': cleanEmail,
+            'name': userData['name'] ?? 'Ahmed Player',
+            'phone': PhoneUtils.normalize(userData['phone'] ?? '01033334444'),
+            'is_email_verified': false,
+            'is_registration_complete': false,
+            'governorate': userData['governorate'] ?? 'Cairo',
+            'position': userData['position'] ?? 'GK',
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', mockUserId);
+        }
+      } catch (e) {
+        VSPLogger.e("Mock user DB insertion error: $e");
+      }
+
+      final mockUser = User(
+        id: mockUserId,
+        email: cleanEmail,
+        createdAt: DateTime.now().toIso8601String(),
+        aud: 'authenticated',
+        role: 'authenticated',
+        appMetadata: {},
+        userMetadata: {},
+      );
+      _mockUser = mockUser;
+      VSPLogger.i('Mock Sign Up successful in debug mode for role: $role');
+      return {'success': true, 'user': mockUser};
+    }
     
     // Duplicate Email Check, Role Conflict Guard & Auto Login Fallback
     try {
@@ -105,8 +157,10 @@ class AuthService {
 
       return {'success': true, 'user': user};
     } on AuthException catch (e) {
+      VSPLogger.e("Supabase Sign Up AuthException: ${e.message}", e);
       return {'success': false, 'message': e.message};
     } catch (e) {
+      VSPLogger.e("Supabase Sign Up Exception", e);
       _logSecurityEvent('AUTH_UNKNOWN_ERROR', e);
       return {'success': false, 'message': 'خطأ غير معروف في المصادقة.'};
     }
@@ -117,6 +171,23 @@ class AuthService {
     required String email,
     required String password,
   }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    if (kDebugMode && AppConfig.useMockOtp) {
+      final role = cleanEmail.contains('owner') ? 'owner' : 'player';
+      final mockUserId = role == 'player' ? '8d3d7d65-a167-4138-b36c-85bbdead1b7a' : 'f64e7da9-6af7-47f2-9916-87cc7e6a1739';
+      
+      final mockUser = User(
+        id: mockUserId,
+        email: cleanEmail,
+        createdAt: DateTime.now().toIso8601String(),
+        aud: 'authenticated',
+        role: 'authenticated',
+        appMetadata: {},
+        userMetadata: {},
+      );
+      _mockUser = mockUser;
+      return {'success': true, 'user': mockUser};
+    }
     try {
       final response = await _supabase.auth.signInWithPassword(
         email: email.trim().toLowerCase(),
@@ -142,6 +213,7 @@ class AuthService {
   // Sign Out
   Future<void> signOut() async {
     VSPLogger.i('🚪 Sign-Out Initiated');
+    _mockUser = null;
     try {
       await _supabase.auth.signOut();
     } catch (e) {
@@ -294,6 +366,16 @@ class AuthService {
 
   // Verify OTP via Supabase Auth
   Future<bool> verifyOtp({required String email, required String token}) async {
+    if (kDebugMode && AppConfig.useMockOtp) {
+      if (token == AppConfig.mockOtpCode) {
+        if (_mockUser != null) {
+          try {
+            await verifyEmailManual(_mockUser!.id);
+          } catch (_) {}
+        }
+        return true;
+      }
+    }
     try {
       final response = await _supabase.auth.verifyOTP(
         type: OtpType.signup,

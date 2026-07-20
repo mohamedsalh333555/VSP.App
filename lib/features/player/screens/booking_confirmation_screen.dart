@@ -379,7 +379,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20), onPressed: () => Navigator.pop(context)),
+        leading: IconButton(
+          icon: Icon(
+            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            color: VSPColors.textPrimary,
+            size: 20,
+          ),
+          onPressed: () => Navigator.pop(context),
+        ),
         centerTitle: true,
         title: Text(l10n.bookNow, style: Theme.of(context).textTheme.displaySmall),
       ),

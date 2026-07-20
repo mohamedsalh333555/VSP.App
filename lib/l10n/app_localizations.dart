@@ -440,6 +440,48 @@ abstract class AppLocalizations {
   /// **'Full Name'**
   String get fullName;
 
+  /// No description provided for @firstName.
+  ///
+  /// In en, this message translates to:
+  /// **'First Name'**
+  String get firstName;
+
+  /// No description provided for @lastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Last Name'**
+  String get lastName;
+
+  /// No description provided for @firstNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Mohamed'**
+  String get firstNameHint;
+
+  /// No description provided for @lastNameHint.
+  ///
+  /// In en, this message translates to:
+  /// **'Ahmed'**
+  String get lastNameHint;
+
+  /// No description provided for @dateOfBirth.
+  ///
+  /// In en, this message translates to:
+  /// **'Date of Birth'**
+  String get dateOfBirth;
+
+  /// No description provided for @dateOfBirthPlaceholder.
+  ///
+  /// In en, this message translates to:
+  /// **'YYYY-MM-DD'**
+  String get dateOfBirthPlaceholder;
+
+  /// No description provided for @addPersonalPhoneNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'Add Number (Personal Phone Number)'**
+  String get addPersonalPhoneNumber;
+
   /// No description provided for @enterName.
   ///
   /// In en, this message translates to:
@@ -493,6 +535,12 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Please fill all fields'**
   String get fillAllFields;
+
+  /// No description provided for @pleaseEnterDob.
+  ///
+  /// In en, this message translates to:
+  /// **'Please enter your date of birth'**
+  String get pleaseEnterDob;
 
   /// No description provided for @invalidPhone.
   ///

@@ -148,7 +148,13 @@ class _ChatScreenState extends State<ChatScreen> {
           },
         ),
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? LucideIcons.chevronRight
+                : LucideIcons.chevronLeft,
+            color: VSPColors.textPrimary,
+            size: 20,
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),

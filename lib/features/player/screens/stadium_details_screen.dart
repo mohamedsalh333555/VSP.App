@@ -86,7 +86,12 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCircularIcon(icon: LucideIcons.chevronLeft, onTap: () => Navigator.pop(context)),
+                        _buildCircularIcon(
+                          icon: Localizations.localeOf(context).languageCode == 'ar'
+                              ? LucideIcons.chevronRight
+                              : LucideIcons.chevronLeft,
+                          onTap: () => Navigator.pop(context),
+                        ),
                         Row(
                           children: [
                             _buildCircularIcon(
@@ -442,7 +447,17 @@ class _FacilityTile extends StatelessWidget {
             children: [
               Icon(item.icon, color: color, size: 26),
               const SizedBox(height: 6),
-              Text(item.label, textAlign: TextAlign.center, style: TextStyle(color: color, fontSize: 10, fontWeight: item.active ? FontWeight.bold : FontWeight.normal)),
+              Text(
+                item.label,
+                textAlign: TextAlign.center,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: TextStyle(
+                  color: color,
+                  fontSize: 10,
+                  fontWeight: item.active ? FontWeight.bold : FontWeight.normal,
+                ),
+              ),
             ],
           ),
           if (item.badge != null)

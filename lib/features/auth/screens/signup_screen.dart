@@ -106,7 +106,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
     if (_dateOfBirth == null) {
-      VSPFeedback.showError(context, 'يرجى إدخال تاريخ الميلاد');
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.pleaseEnterDob);
       return;
     }
 
@@ -154,6 +154,8 @@ class _SignupScreenState extends State<SignupScreen> {
       },
     );
 
+    print("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
+
     if (!mounted) return;
 
     if (success) {
@@ -182,6 +184,7 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } else {
       if (mounted) {
+        print("[DEBUG_SIGNUP] Showing error toast: ${authProvider.errorMessage}");
         VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إنشاء الحساب');
       }
     }
@@ -307,10 +310,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('الاسم الأول'),
+                            _buildLabel(AppLocalizations.of(context)!.firstName),
                             CustomTextField(
                               controller: _firstNameController,
-                              hintText: 'محمد',
+                              hintText: AppLocalizations.of(context)!.firstNameHint,
                               prefixIcon: LucideIcons.user,
                               maxLength: 30,
                             ),
@@ -322,10 +325,10 @@ class _SignupScreenState extends State<SignupScreen> {
                         child: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
-                            _buildLabel('الاسم الأخير'),
+                            _buildLabel(AppLocalizations.of(context)!.lastName),
                             CustomTextField(
                               controller: _lastNameController,
-                              hintText: 'أحمد',
+                              hintText: AppLocalizations.of(context)!.lastNameHint,
                               prefixIcon: LucideIcons.user2,
                               maxLength: 30,
                             ),
@@ -337,7 +340,7 @@ class _SignupScreenState extends State<SignupScreen> {
 
                   // Date of Birth
                   const SizedBox(height: 16),
-                  _buildLabel('تاريخ الميلاد'),
+                  _buildLabel(AppLocalizations.of(context)!.dateOfBirth),
                   GestureDetector(
                     onTap: _pickDateOfBirth,
                     child: Container(
@@ -354,7 +357,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           Text(
                             _dateOfBirth != null
                                 ? '${_dateOfBirth!.year}-${_dateOfBirth!.month.toString().padLeft(2, '0')}-${_dateOfBirth!.day.toString().padLeft(2, '0')}'
-                                : 'YYYY-MM-DD',
+                                : AppLocalizations.of(context)!.dateOfBirthPlaceholder,
                             style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                               color: _dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary,
                             ),
@@ -368,7 +371,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   ),
                   
                   const SizedBox(height: 16),
-                  _buildLabel(widget.isOwner ? 'إضافة رقم (رقم الهاتف الشخصي)' : AppLocalizations.of(context)!.phoneNumber),
+                  _buildLabel(widget.isOwner ? AppLocalizations.of(context)!.addPersonalPhoneNumber : AppLocalizations.of(context)!.phoneNumber),
                   CustomTextField(
                     controller: _phoneController,
                     hintText: '01xxxxxxxxx',

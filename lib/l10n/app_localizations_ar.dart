@@ -182,6 +182,27 @@ class AppLocalizationsAr extends AppLocalizations {
   String get fullName => 'الاسم الكامل';
 
   @override
+  String get firstName => 'الاسم الأول';
+
+  @override
+  String get lastName => 'الاسم الأخير';
+
+  @override
+  String get firstNameHint => 'محمد';
+
+  @override
+  String get lastNameHint => 'أحمد';
+
+  @override
+  String get dateOfBirth => 'تاريخ الميلاد';
+
+  @override
+  String get dateOfBirthPlaceholder => 'YYYY-MM-DD';
+
+  @override
+  String get addPersonalPhoneNumber => 'إضافة رقم (رقم الهاتف الشخصي)';
+
+  @override
   String get enterName => 'أدخل اسمك';
 
   @override
@@ -207,6 +228,9 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get fillAllFields => 'يرجى ملء جميع الحقول';
+
+  @override
+  String get pleaseEnterDob => 'يرجى إدخال تاريخ الميلاد';
 
   @override
   String get invalidPhone => 'يرجى إدخال رقم هاتف صحيح';

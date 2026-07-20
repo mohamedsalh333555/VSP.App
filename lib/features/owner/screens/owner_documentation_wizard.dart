@@ -354,7 +354,12 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
+          icon: Icon(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? LucideIcons.arrowRight
+                : LucideIcons.arrowLeft,
+            color: VSPColors.textPrimary,
+          ),
           onPressed: _previousPage,
         ),
         title: Text(

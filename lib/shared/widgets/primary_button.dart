@@ -86,11 +86,16 @@ class _PrimaryButtonState extends State<PrimaryButton> {
                     Icon(widget.icon, size: 20),
                     const SizedBox(width: 8),
                   ],
-                  Text(
-                    widget.text,
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      color: widget.textColor ?? VSPColors.background,
-                      fontSize: 16,
+                  Flexible(
+                    child: FittedBox(
+                      fit: BoxFit.scaleDown,
+                      child: Text(
+                        widget.text,
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                          color: widget.textColor ?? VSPColors.background,
+                          fontSize: 16,
+                        ),
+                      ),
                     ),
                   ),
                 ],

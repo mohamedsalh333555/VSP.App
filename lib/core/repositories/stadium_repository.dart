@@ -106,7 +106,7 @@ class StadiumRepository {
         'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
         'images': imagesList,
         'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
-        'is_verified': true, 
+        'is_verified': kDebugMode, 
         'is_blocked': false,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
