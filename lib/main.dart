@@ -17,7 +17,6 @@ import 'core/providers/booking_provider.dart';
 import 'core/services/notification_service.dart';
 import 'package:flutter_localizations/flutter_localizations.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'core/config/app_config.dart' as app_config;
 import 'core/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_links/app_links.dart';

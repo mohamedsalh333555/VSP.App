@@ -675,4 +675,41 @@ class TournamentRepository {
       debugPrint('Error sending draw notifications: $e');
     }
   }
+
+  /// Fetch player rosters for home and away teams in a championship
+  Future<Map<String, List<String>>> fetchRosters(String championshipId, String homeTeamId, String awayTeamId) async {
+    List<String> homePlayers = [];
+    List<String> awayPlayers = [];
+
+    try {
+      final homeRoster = await _supabase
+          .from('championship_rosters')
+          .select('guest_names')
+          .eq('championship_id', championshipId)
+          .eq('team_id', homeTeamId)
+          .maybeSingle();
+      if (homeRoster != null && homeRoster['guest_names'] != null) {
+        homePlayers = List<String>.from(homeRoster['guest_names']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching home roster: $e');
+    }
+
+    try {
+      final awayRoster = await _supabase
+          .from('championship_rosters')
+          .select('guest_names')
+          .eq('championship_id', championshipId)
+          .eq('team_id', awayTeamId)
+          .maybeSingle();
+      if (awayRoster != null && awayRoster['guest_names'] != null) {
+        awayPlayers = List<String>.from(awayRoster['guest_names']);
+      }
+    } catch (e) {
+      debugPrint('Error fetching away roster: $e');
+    }
+
+    return {'home': homePlayers, 'away': awayPlayers};
+  }
 }
+

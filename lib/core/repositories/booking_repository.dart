@@ -666,18 +666,27 @@ class SupabaseBookingRepository implements BookingRepository {
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 1));
-    
+    final now = DateTime.now();
+
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
         .map((list) {
           return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) =>
-                  b.stadiumId == stadiumId &&
-                  b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
-                  b.startTime.isBefore(endOfDay) &&
-                  b.status != BookingStatus.cancelled)
+              .where((b) {
+                if (b.stadiumId != stadiumId) return false;
+                if (b.status == BookingStatus.cancelled) return false;
+
+                // 🛑 Fix: If booking is pending and older than 15 minutes without payment, ignore it (does not block slot)
+                if (b.status == BookingStatus.pending) {
+                  final isExpired = now.difference(b.createdAt).inMinutes >= 15;
+                  if (isExpired) return false;
+                }
+
+                return b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+                       b.startTime.isBefore(endOfDay);
+              })
               .toList();
         });
   }

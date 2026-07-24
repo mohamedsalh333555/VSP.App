@@ -1,4 +1,4 @@
-﻿import 'package:flutter/foundation.dart';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../repositories/notification_repository.dart';
@@ -203,7 +203,7 @@ class TeamRepository {
   }
 
   Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
-    return {'team1Wins': 0, 'draws': 0, 'team2Wins': 0};
+    return {'teamAWins': 0, 'draws': 0, 'teamBWins': 0, 'totalMatches': 0};
   }
 
   Future<Team?> getTeamByCaptainPhone(String phone) async {

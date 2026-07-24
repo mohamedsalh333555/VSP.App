@@ -14,43 +14,9 @@ class TournamentBracketsScreen extends StatelessWidget {
 
   const TournamentBracketsScreen({super.key, required this.championship, required this.isOwner});
 
-  // دالة لجلب كشف أسماء اللاعبين (أونلاين وأوفلاين) لكلا الفريقين من Supabase
+  // دالة لجلب كشف أسماء اللاعبين (أونلاين وأوفلاين) لكلا الفريقين عبر TournamentRepository
   Future<Map<String, List<String>>> _fetchRosters(String homeTeamId, String awayTeamId) async {
-    final supabase = Supabase.instance.client;
-    List<String> homePlayers = [];
-    List<String> awayPlayers = [];
-
-    try {
-      // جلب كشف الفريق الأول (المستضيف)
-      final homeRoster = await supabase
-          .from('championship_rosters')
-          .select('guest_names')
-          .eq('championship_id', championship.id)
-          .eq('team_id', homeTeamId)
-          .maybeSingle();
-      if (homeRoster != null && homeRoster['guest_names'] != null) {
-        homePlayers = List<String>.from(homeRoster['guest_names']);
-      }
-    } catch (e) {
-      debugPrint('Error fetching home roster: $e');
-    }
-
-    try {
-      // جلب كشف الفريق الثاني (الضيف)
-      final awayRoster = await supabase
-          .from('championship_rosters')
-          .select('guest_names')
-          .eq('championship_id', championship.id)
-          .eq('team_id', awayTeamId)
-          .maybeSingle();
-      if (awayRoster != null && awayRoster['guest_names'] != null) {
-        awayPlayers = List<String>.from(awayRoster['guest_names']);
-      }
-    } catch (e) {
-      debugPrint('Error fetching away roster: $e');
-    }
-
-    return {'home': homePlayers, 'away': awayPlayers};
+    return TournamentRepository().fetchRosters(championship.id, homeTeamId, awayTeamId);
   }
 
   @override
@@ -457,6 +423,8 @@ class TournamentBracketsScreen extends StatelessWidget {
 
                                 if (sheetContext.mounted) {
                                   Navigator.pop(sheetContext);
+                                }
+                                if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(
                                       content: Text(isArabic ? '🏆 تم حفظ النتيجة وتصعيد الفائز تلقائياً!' : '🏆 Score saved and winner advanced!'),
@@ -465,7 +433,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                                   );
                                 }
                               } catch (e) {
-                                if (sheetContext.mounted) {
+                                if (context.mounted) {
                                   ScaffoldMessenger.of(context).showSnackBar(
                                     SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
                                   );

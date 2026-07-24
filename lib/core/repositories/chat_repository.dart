@@ -105,4 +105,94 @@ class ChatRepository {
       VSPLogger.e('Error marking messages as read on Supabase', e);
     }
   }
+
+  /// Get or create a support chat thread for an owner
+  Future<Map<String, dynamic>> getOrCreateSupportChat(String ownerId, bool isArabic) async {
+    final chatId = 'support_chat_$ownerId';
+    final existing = await _supabase
+        .from('bookings')
+        .select()
+        .eq('id', chatId)
+        .maybeSingle();
+
+    if (existing != null) {
+      return existing;
+    }
+
+    final Map<String, dynamic> supportMap = {
+      'id': chatId,
+      'stadium_id': 'support_chat',
+      'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
+      'stadium_image_url': '',
+      'owner_id': ownerId,
+      'start_time': DateTime.now().toUtc().toIso8601String(),
+      'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
+      'booking_type': 'personal',
+      'status': 'confirmed',
+      'created_by_user_id': 'vsp_support_admin',
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      'joined_user_ids': [ownerId, 'vsp_support_admin'],
+      'payment_method': 'cash',
+      'total_price': 0.0,
+      'max_players': 2,
+      'current_players': 2,
+      'is_paid': true,
+      'payment_status': 'paid',
+    };
+
+    await _supabase.from('bookings').insert(supportMap);
+    return supportMap;
+  }
+
+  /// Get or create a direct chat thread between two users
+  Future<Map<String, dynamic>> getOrCreateDirectChat(String currentUserId, String otherUserId, bool isArabic) async {
+    final sortedIds = [currentUserId, otherUserId]..sort();
+    final chatId = 'chat_${sortedIds[0]}_${sortedIds[1]}';
+
+    final existing = await _supabase
+        .from('bookings')
+        .select()
+        .eq('id', chatId)
+        .maybeSingle();
+
+    if (existing != null) {
+      return existing;
+    }
+
+    final Map<String, dynamic> chatMap = {
+      'id': chatId,
+      'stadium_id': 'chat_thread',
+      'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
+      'stadium_image_url': '',
+      'owner_id': currentUserId,
+      'start_time': DateTime.now().toUtc().toIso8601String(),
+      'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
+      'booking_type': 'personal',
+      'status': 'confirmed',
+      'created_by_user_id': currentUserId,
+      'created_at': DateTime.now().toUtc().toIso8601String(),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+      'joined_user_ids': [currentUserId, otherUserId],
+      'payment_method': 'cash',
+      'total_price': 0.0,
+      'max_players': 2,
+      'current_players': 2,
+      'is_paid': true,
+      'payment_status': 'paid',
+    };
+
+    await _supabase.from('bookings').insert(chatMap);
+    return chatMap;
+  }
+
+  /// Stream chats from bookings table
+  Stream<List<Map<String, dynamic>>> streamBookingsChats() {
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .order('last_message_time', ascending: false)
+        .map((list) => list);
+  }
 }
+

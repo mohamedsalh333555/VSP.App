@@ -733,15 +733,18 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         
                         setState(() => _isLoading = true);
                         try {
+                          final auth = Provider.of<AuthProvider>(context, listen: false);
+                          final currentUserId = auth.currentUser?.uid ?? auth.currentUser?.id ?? '';
+
                           // 1. إنشاء الفريق في جدول teams
-                          final teamId = await DatabaseService().createTeam({
+                          final teamId = await TeamRepository().createTeam({
                             'name': teamName,
                             'captainName': AppLocalizations.of(context)!.manualRegistration,
                             'captainImageUrl': '',
                             'logoUrl': '',
                             'sportType': _currentChampionship.sportType,
                             'governorate': _currentChampionship.governorate,
-                            'memberUids': ['manual_entry'],
+                            'memberUids': [currentUserId.isNotEmpty ? currentUserId : '8d3d7d65-a167-4138-b36c-85bbdead1b7a'],
                             'date': 'Upcoming',
                             'primary_color': selectedPrimaryColor,
                             'secondary_color': '#000000',

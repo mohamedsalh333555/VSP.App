@@ -234,9 +234,9 @@ class BookingProvider with ChangeNotifier {
         orElse: () => null,
       );
 
-      if (booking != null && DateTime.now().isAfter(booking.startTime)) {
+      if (booking != null && DateTime.now().isAfter(booking.startTime.subtract(const Duration(hours: 2)))) {
         _errorMessage =
-            "لا يمكن إلغاء الحجز بعد بدء وقت اللعب. تواصل مع صاحب الملعب.";
+            "لا يمكن إلغاء الحجز قبل بدء المباراة بأقل من ساعتين.";
         _cancellingIds.remove(bookingId);
         notifyListeners();
         return false;

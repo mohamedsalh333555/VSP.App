@@ -7,7 +7,6 @@ import 'dart:math';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-import 'bookings_screen.dart';
 
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';

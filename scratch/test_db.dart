@@ -7,12 +7,11 @@ void main() async {
   );
   
   try {
-    final response = await client.from('users').select().limit(1);
-    if (response.isNotEmpty) {
-      print('=== COLUMN DUMP ===');
-      print(response.first.keys.toList());
-    } else {
-      print('=== TABLE IS EMPTY ===');
+    final response = await client.from('users').select('id, email, phone, name, created_at');
+    print('TOTAL_USERS_COUNT: ${response.length}');
+    for (var i = 0; i < response.length && i < 10; i++) {
+      final r = response[i];
+      print('User $i: email=${r['email']}, phone=${r['phone']}, name=${r['name']}');
     }
   } catch (e) {
     print('Error: $e');

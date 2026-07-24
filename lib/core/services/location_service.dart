@@ -47,7 +47,7 @@ class LocationService {
         }
       } catch (e) {
         VSPLogger.e("Error performing safe device checks: $e");
-        return (null, "mock_location_detected"); // الحظر الاحترازي عند حدوث أي خطأ بالفحص
+        return (null, null);
       }
 
       // 🌍 Get Position safely using getLastKnownPosition first or getCurrentPosition with a strict timeLimit

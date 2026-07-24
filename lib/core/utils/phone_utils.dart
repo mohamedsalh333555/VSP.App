@@ -1,26 +1,61 @@
 class PhoneUtils {
   /// Normalizes a phone number to a consistent format for database storage and searching.
-  /// Removes all non-digit characters and ensures common Egyptian formats are handled.
+  /// Standardizes local and international phone formats (E.164 support).
   static String normalize(String phone) {
-    // 1. Remove all non-digit characters
-    String normalized = phone.replaceAll(RegExp(r'\D'), '');
+    if (phone.isEmpty) return '';
 
-    // 2. Handle common Egyptian prefix scenarios
-    // If it starts with '20' and is exactly 12 digits (e.g. 201012345678)
-    if (normalized.startsWith('20') && normalized.length == 12) {
-      normalized = normalized.substring(2);
-    }
-    
-    // Ensure it starts with '0' if it's a 10-digit number and starts with a valid Egyptian operator code (10, 11, 12, 15)
-    if (normalized.length == 10 && normalized.startsWith(RegExp(r'1[0125]'))) {
-      normalized = '0$normalized';
+    // 1. Convert Arabic/Eastern numerals to Western numerals
+    String result = _convertEasternToWesternDigits(phone);
+
+    // 2. Remove all non-digit characters except leading '+' if present
+    final hasPlus = result.trim().startsWith('+');
+    result = result.replaceAll(RegExp(r'\D'), '');
+
+    if (result.isEmpty) return '';
+
+    // 3. Handle Egyptian national vs international formats
+    if (result.startsWith('20') && result.length == 12) {
+      result = '0${result.substring(2)}';
+    } else if (result.length == 10 && result.startsWith(RegExp(r'1[0125]'))) {
+      result = '0$result';
+    } else if (hasPlus) {
+      result = '+$result';
     }
 
-    return normalized;
+    return result;
+  }
+
+  /// Converts a phone number to international E.164 format (e.g. +201012345678)
+  static String toE164(String phone, {String defaultCountryCode = '20'}) {
+    final cleaned = phone.replaceAll(RegExp(r'\D'), '');
+    if (cleaned.isEmpty) return '';
+
+    if (cleaned.startsWith(defaultCountryCode)) {
+      return '+$cleaned';
+    } else if (cleaned.startsWith('0')) {
+      return '+$defaultCountryCode${cleaned.substring(1)}';
+    } else {
+      return '+$defaultCountryCode$cleaned';
+    }
   }
 
   /// Compares two phone numbers after normalization.
   static bool compare(String phone1, String phone2) {
-    return normalize(phone1) == normalize(phone2);
+    if (phone1.isEmpty || phone2.isEmpty) return false;
+    final n1 = normalize(phone1);
+    final n2 = normalize(phone2);
+    return n1 == n2 || toE164(phone1) == toE164(phone2);
+  }
+
+  static String _convertEasternToWesternDigits(String input) {
+    const eastern = ['٠', '١', '٢', '٣', '٤', '٥', '٦', '٧', '٨', '٩'];
+    const western = ['0', '1', '2', '3', '4', '5', '6', '7', '8', '9'];
+
+    String output = input;
+    for (int i = 0; i < eastern.length; i++) {
+      output = output.replaceAll(eastern[i], western[i]);
+    }
+    return output;
   }
 }
+

@@ -1135,7 +1135,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'name': _nameController.text.trim(),
             'location': _locationController.text.trim(),
             'governorate': _governorate, // ✅ Added for filtering
-            'pricePerHour': double.parse(_priceController.text.trim()),
+            'pricePerHour': double.tryParse(_priceController.text.trim()) ?? 0.0,
             'players_per_team': int.tryParse(_capacityController.text.trim()) ?? 5,
             'total_field_capacity': (int.tryParse(_capacityController.text.trim()) ?? 5) * 2,
             'deposit_amount': _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
@@ -1150,7 +1150,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             name: _nameController.text.trim(),
             location: _locationController.text.trim(),
             governorate: _governorate, // ✅ Added for filtering
-            pricePerHour: double.parse(_priceController.text.trim()),
+            pricePerHour: double.tryParse(_priceController.text.trim()) ?? 0.0,
             seatsCapacity: int.tryParse(_capacityController.text.trim()) ?? 5,
             depositAmount: _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
             needsDeposit: _requireDeposit,

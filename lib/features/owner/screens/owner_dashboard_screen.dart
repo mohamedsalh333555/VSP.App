@@ -453,7 +453,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       _selectedStadium = allStadiumsText;
     }
 
-    String dateDisplayText = _isAllTime 
+    String dateDisplayText = (_isAllTime || _selectedDateRange == null) 
                           ? l10n.allTimeFilter 
                           : '${DateFormat('MMM dd').format(_selectedDateRange!.start)} - ${DateFormat('MMM dd').format(_selectedDateRange!.end)}';
 
@@ -561,7 +561,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         matchesStadium = stadium.name == _selectedStadium;
       }
       
-      bool matchesDate = _isAllTime || 
+      bool matchesDate = _isAllTime || _selectedDateRange == null || 
                          (booking.startTime.isAfter(_selectedDateRange!.start) && 
                           booking.startTime.isBefore(_selectedDateRange!.end.add(const Duration(days: 1))));
       

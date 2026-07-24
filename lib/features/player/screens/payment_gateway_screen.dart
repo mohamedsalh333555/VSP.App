@@ -45,6 +45,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   void dispose() {
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
+
+    // 🛑 Automatic cleanup: If user exits payment screen and booking is still pending & unpaid, delete it immediately
+    if (_booking != null && _booking!.status == BookingStatus.pending && !_booking!.isPaid) {
+      if (!_booking!.id.startsWith('mock_')) {
+        Supabase.instance.client
+            .from('bookings')
+            .delete()
+            .eq('id', _booking!.id)
+            .then((_) => debugPrint('Pending booking cleaned up on exit.'))
+            .catchError((e) => debugPrint('Error cleaning up pending booking: $e'));
+      }
+    }
+
     super.dispose();
   }
 

@@ -155,11 +155,14 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
         Icon(icon, color: VSPColors.accent, size: 14),
         const SizedBox(width: 6),
         Flexible(
-          child: Text(
-            label,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          child: Directionality(
+            textDirection: TextDirection.ltr,
+            child: Text(
+              label,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+            ),
           ),
         ),
       ],
@@ -306,9 +309,9 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
               Builder(builder: (context) {
                 if (_isLoading) return const SizedBox(width: 100, height: 44, child: Center(child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2)));
                 if (isHost) return _buildRawButton(label: AppLocalizations.of(context)!.manage, color: VSPColors.accent, onTap: () => _manageParticipants(context), isOutlined: false);
-                if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser?.uid), isOutlined: true);
+                if (hasJoined) return _buildRawButton(label: AppLocalizations.of(context)!.leave, color: VSPColors.error, onTap: () => _handleLeave(context, currentUser.uid), isOutlined: true);
                 if (isPending) {
-                  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser?.uid), isOutlined: true);
+                  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
                 }
                 if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
                 return _buildRawButton(label: isArabic ? 'طلب انضمام' : 'Request Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));

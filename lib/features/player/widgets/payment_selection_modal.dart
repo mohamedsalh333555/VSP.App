@@ -28,7 +28,6 @@ class PaymentSelectionModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final bool isChallengeMode = bookingType == 'Challenge';
     final String timeRange = selectedTimeSlots.isNotEmpty
         ? '${selectedTimeSlots.first} To ${selectedTimeSlots.last}'
         : '';

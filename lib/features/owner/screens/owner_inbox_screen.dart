@@ -21,6 +21,8 @@ class OwnerInboxScreen extends StatefulWidget {
 }
 
 class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
+  final ChatRepository _chatRepository = ChatRepository();
+
   Future<void> _openSupportChat(BuildContext context, String ownerId) async {
     final scaffoldMessenger = ScaffoldMessenger.of(context);
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -33,46 +35,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
     );
 
     try {
-      final supabase = Supabase.instance.client;
-      final chatId = 'support_chat_$ownerId';
-
-      // Check if it exists
-      final existing = await supabase
-          .from('bookings')
-          .select()
-          .eq('id', chatId)
-          .maybeSingle();
-
-      Booking booking;
-      if (existing != null) {
-        booking = Booking.fromFirestore(existing, chatId);
-      } else {
-        // Create new support booking
-        final Map<String, dynamic> supportMap = {
-          'id': chatId,
-          'stadium_id': 'support_chat',
-          'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
-          'stadium_image_url': '',
-          'owner_id': ownerId,
-          'start_time': DateTime.now().toUtc().toIso8601String(),
-          'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
-          'booking_type': BookingType.personal.name,
-          'status': BookingStatus.confirmed.name,
-          'created_by_user_id': 'vsp_support_admin',
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-          'joined_user_ids': [ownerId, 'vsp_support_admin'],
-          'payment_method': 'cash',
-          'total_price': 0.0,
-          'max_players': 2,
-          'current_players': 2,
-          'is_paid': true,
-          'payment_status': 'paid',
-        };
-
-        await supabase.from('bookings').insert(supportMap);
-        booking = Booking.fromFirestore(supportMap, chatId);
-      }
+      final chatData = await _chatRepository.getOrCreateSupportChat(ownerId, isArabic);
+      final chatId = chatData['id'].toString();
+      final booking = Booking.fromFirestore(chatData, chatId);
 
       if (context.mounted) {
         // Close loading dialog
@@ -109,51 +74,10 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
     );
 
     try {
-      final supabase = Supabase.instance.client;
-      
-      // Determine deterministic chatId
-      final sortedIds = [currentUserId, selectedUser.uid]..sort();
-      final chatId = 'chat_${sortedIds[0]}_${sortedIds[1]}';
-
-      // Check if chat booking exists
-      final existing = await supabase
-          .from('bookings')
-          .select()
-          .eq('id', chatId)
-          .maybeSingle();
-
-      Booking booking;
-      if (existing != null) {
-        booking = Booking.fromFirestore(existing, chatId);
-      } else {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        
-        // Create new direct chat booking
-        final Map<String, dynamic> chatMap = {
-          'id': chatId,
-          'stadium_id': 'chat_thread',
-          'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
-          'stadium_image_url': '',
-          'owner_id': currentUserId, 
-          'start_time': DateTime.now().toUtc().toIso8601String(),
-          'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
-          'booking_type': BookingType.personal.name,
-          'status': BookingStatus.confirmed.name,
-          'created_by_user_id': currentUserId,
-          'created_at': DateTime.now().toUtc().toIso8601String(),
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-          'joined_user_ids': [currentUserId, selectedUser.uid],
-          'payment_method': 'cash',
-          'total_price': 0.0,
-          'max_players': 2,
-          'current_players': 2,
-          'is_paid': true,
-          'payment_status': 'paid',
-        };
-
-        await supabase.from('bookings').insert(chatMap);
-        booking = Booking.fromFirestore(chatMap, chatId);
-      }
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final chatData = await _chatRepository.getOrCreateDirectChat(currentUserId, selectedUser.uid, isArabic);
+      final chatId = chatData['id'].toString();
+      final booking = Booking.fromFirestore(chatData, chatId);
 
       if (context.mounted) {
         Navigator.pop(context);
@@ -204,11 +128,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: Supabase.instance.client
-            .from('bookings')
-            .stream(primaryKey: ['id'])
-            .order('last_message_time', ascending: false)
-            .map((list) => list),
+        stream: _chatRepository.streamBookingsChats(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

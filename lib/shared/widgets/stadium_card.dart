@@ -30,7 +30,7 @@ class StadiumCard extends StatelessWidget {
     return GestureDetector(
       onTap: onTap,
       child: Container(
-        height: isOwnerView ? 240 : 210,
+        height: isOwnerView ? 260 : 210,
         decoration: BoxDecoration(
           borderRadius: BorderRadius.circular(VSPRadius.xl),
           border: Border.all(color: VSPColors.divider, width: 1),

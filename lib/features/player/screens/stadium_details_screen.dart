@@ -252,7 +252,6 @@ class _InformationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -579,7 +578,9 @@ class _RatingsTab extends StatelessWidget {
                     name: l10n.player,
                     imageUrl: '',
                     rating: (doc['rating'] as num?)?.toInt() ?? 0,
-                    timeAgo: createdAtStr != null ? timeago.format(DateTime.parse(createdAtStr)) : l10n.recently,
+                    timeAgo: createdAtStr != null 
+                        ? timeago.format(DateTime.parse(createdAtStr), locale: Localizations.localeOf(context).languageCode) 
+                        : l10n.recently,
                     comment: doc['review_text'] as String? ?? '',
                   );
                 },
