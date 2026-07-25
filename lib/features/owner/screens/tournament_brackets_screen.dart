@@ -1,8 +1,9 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -60,9 +61,10 @@ class TournamentBracketsScreen extends StatelessWidget {
               leading: IconButton(
                 icon: Icon(
                   Localizations.localeOf(context).languageCode == 'ar'
-                      ? LucideIcons.chevronRight
-                      : LucideIcons.chevronLeft,
+                      ? FontAwesomeIcons.chevronRight
+                      : FontAwesomeIcons.chevronLeft,
                   color: VSPColors.textPrimary,
+                  size: 18,
                 ),
                 onPressed: () => Navigator.pop(context),
               ),
@@ -160,7 +162,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                         );
                       }
                     },
-                    child: const Icon(LucideIcons.calendarClock, color: Colors.white, size: 18),
+                    child: const Icon(FontAwesomeIcons.calendarCheck, color: Colors.white, size: 16),
                   ),
               ],
             ),
@@ -176,7 +178,7 @@ class TournamentBracketsScreen extends StatelessWidget {
             // أيقونة التعديل تفتح الآن نافذة تسجيل النتيجة وعرض الكشوفات التفاعلية
             trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
               ? IconButton(
-                  icon: const Icon(LucideIcons.pencilLine, color: VSPColors.accent),
+                  icon: const Icon(FontAwesomeIcons.penToSquare, color: VSPColors.accent, size: 18),
                   onPressed: () {
                     if (!hasSchedule) {
                       ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.matchScheduledFor("يجب التحديد أولاً")), backgroundColor: VSPColors.error));
@@ -240,7 +242,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                       children: [
                         Text(isArabic ? 'تسجيل نتيجة المباراة' : 'Submit Match Score', style: Theme.of(context).textTheme.displaySmall),
                         IconButton(
-                          icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
+                          icon: Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ],
@@ -475,7 +477,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle),
-                child: const Icon(LucideIcons.minus, color: Colors.white, size: 16),
+                child: const Icon(FontAwesomeIcons.minus, color: Colors.white, size: 14),
               ),
             ),
             Padding(
@@ -487,7 +489,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                child: const Icon(LucideIcons.plus, color: Colors.black, size: 16),
+                child: const Icon(FontAwesomeIcons.plus, color: Colors.black, size: 14),
               ),
             ),
           ],

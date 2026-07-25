@@ -775,9 +775,13 @@ class Booking {
       'players_per_team': playersPerTeam,
       'total_field_capacity': totalFieldCapacity,
       'max_players': totalFieldCapacity, // backward compatibility
+      'joined_user_ids': joinedUserIds,
       'joinedUserIds': joinedUserIds,
       'pending_user_ids': pendingUserIds,
+      'pendingUserIds': pendingUserIds,
+      'is_paid': isPaid,
       'isPaid': isPaid,
+      'payment_status': paymentStatus,
       'paymentStatus': paymentStatus,
       'playerPhone': playerPhone,
       'notes': notes,

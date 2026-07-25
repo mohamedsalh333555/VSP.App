@@ -1,4 +1,4 @@
-﻿import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -28,6 +28,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0; 
   Stadium? _selectedStadium;
   DateTime _baseDate = DateTime.now();
+  final ScrollController _scrollController = ScrollController();
 
   @override
   void initState() {
@@ -41,6 +42,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _scrollController.dispose();
+    super.dispose();
   }
 
   int _parseTimeToHour(String? timeStr) {
@@ -325,10 +332,18 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         orElse: () => null,
                       );
 
+                      final now = DateTime.now();
+                      final bool isToday = _selectedDayIndex == 0;
+                      final bool isMoreThan10MinsPast = isToday && now.isAfter(slotTime.add(const Duration(minutes: 10)));
+
                       if (isBreak) {
-                        slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break'});
+                        if (!isMoreThan10MinsPast) {
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break', 'slotTime': slotTime});
+                        }
                       } else if (booking == null) {
-                        slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty'});
+                        if (!isMoreThan10MinsPast) {
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty', 'slotTime': slotTime});
+                        }
                       } else {
                         final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
                         slots.add({
@@ -341,6 +356,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           'isManaged': true,
                           'isManual': isManual,
                           'booking': booking,
+                          'slotTime': slotTime,
                         });
                       }
                       
@@ -363,7 +379,29 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     );
                   }
 
-                 return ListView.separated(
+                  // Auto-scroll to current time slot if today is selected
+                  if (_selectedDayIndex == 0) {
+                    WidgetsBinding.instance.addPostFrameCallback((_) {
+                      if (!_scrollController.hasClients) return;
+                      final now = DateTime.now();
+                      int targetIndex = slots.indexWhere((s) {
+                        final DateTime? st = s['slotTime'] as DateTime?;
+                        if (st == null) return false;
+                        return st.isAfter(now.subtract(const Duration(minutes: 30))) || st.isAtSameMomentAs(now);
+                      });
+                      if (targetIndex != -1 && targetIndex > 0) {
+                        final double offset = (targetIndex * 66.0).clamp(0.0, _scrollController.position.maxScrollExtent);
+                        _scrollController.animateTo(
+                          offset,
+                          duration: const Duration(milliseconds: 350),
+                          curve: Curves.easeOutCubic,
+                        );
+                      }
+                    });
+                  }
+
+                  return ListView.separated(
+                    controller: _scrollController,
                     padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: slots.length,
@@ -418,42 +456,69 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
   Widget _buildSlotCard(Map<String, dynamic> slot) {
     final l10n = AppLocalizations.of(context)!;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final now = DateTime.now();
+    final DateTime? slotTime = slot['slotTime'] as DateTime?;
+    final bool isToday = _selectedDayIndex == 0;
+    final bool isPast = isToday && slotTime != null && slotTime.isBefore(now.subtract(const Duration(minutes: 30)));
+    final bool isNowSlot = isToday && slotTime != null &&
+        slotTime.isAfter(now.subtract(const Duration(minutes: 30))) &&
+        slotTime.isBefore(now.add(const Duration(minutes: 30)));
+
     if (slot['type'] == 'empty' || slot['type'] == 'break') {
       final bool isBreak = slot['type'] == 'break';
+      final Color badgeColor = isBreak
+          ? VSPColors.textSecondary
+          : (isNowSlot
+              ? VSPColors.accent
+              : (isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.accent));
+
+      final String badgeText = isBreak
+          ? l10n.closedBadge
+          : (isNowSlot
+              ? (isAr ? '⚡ الآن' : '⚡ NOW')
+              : (isPast ? (isAr ? 'منقضي' : 'Past') : l10n.openBadge));
+
       return Container(
         height: 54,
         padding: const EdgeInsets.symmetric(horizontal: 16),
         decoration: BoxDecoration(
-          color: Colors.transparent,
+          color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : Colors.transparent,
           borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(color: VSPColors.divider, width: 1),
+          border: Border.all(
+            color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.5) : (isPast ? VSPColors.divider.withValues(alpha: 0.3) : VSPColors.divider),
+            width: isNowSlot ? 1.5 : 1,
+          ),
         ),
         child: Row(
           children: [
-            Icon(isBreak ? LucideIcons.ban : LucideIcons.plusCircle, color: VSPColors.textSecondary, size: 24),
+            Icon(
+              isBreak ? LucideIcons.ban : (isPast ? LucideIcons.history : LucideIcons.plusCircle),
+              color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : (isNowSlot ? VSPColors.accent : VSPColors.textSecondary),
+              size: 22,
+            ),
             const SizedBox(width: 12),
             Text(
               isBreak ? l10n.breakTime : l10n.addManualBooking,
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: VSPColors.textSecondary,
-                fontWeight: FontWeight.bold,
+                color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.textSecondary,
+                fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
               ),
             ),
             const Spacer(),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
               decoration: BoxDecoration(
-                color: isBreak 
-                    ? VSPColors.textSecondary.withValues(alpha: 0.1)
-                    : VSPColors.accent.withValues(alpha: 0.1),
+                color: badgeColor.withValues(alpha: isPast ? 0.08 : 0.15),
                 borderRadius: BorderRadius.circular(VSPRadius.sm),
+                border: isNowSlot ? Border.all(color: VSPColors.accent.withValues(alpha: 0.4)) : null,
               ),
               child: Text(
-                isBreak ? l10n.closedBadge : l10n.openBadge,
+                badgeText,
                 style: TextStyle(
-                  color: isBreak ? VSPColors.textSecondary : VSPColors.accent, 
-                  fontSize: 10, 
-                  fontWeight: FontWeight.bold
+                  color: badgeColor,
+                  fontSize: 10,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ),
@@ -464,7 +529,6 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     
     final booking = slot['booking'] as Booking?;
     bool isManual = slot['isManual'] ?? false;
-    final now = DateTime.now();
     final bool isCompleted = booking != null && booking.endTime.isBefore(now);
 
     return Container(

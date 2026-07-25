@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../shared/widgets/primary_button.dart';
@@ -204,7 +204,7 @@ class MaintenanceScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.settings, size: 80, color: VSPColors.accent),
+              Icon(FontAwesomeIcons.gear, size: 80, color: VSPColors.accent),
               const SizedBox(height: VSPSpacing.xl),
               Text(
                 'We’ll be back soon!',

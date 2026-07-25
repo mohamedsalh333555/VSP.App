@@ -56,8 +56,8 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _firebaseUser != null;
-  bool get isPlayer => _userModel?.role == 'player' || _userType == 'player';
-  bool get isOwner => _userModel?.role == 'owner' || _userType == 'owner';
+  bool get isPlayer => _userModel != null ? _userModel!.role == 'player' : _userType == 'player';
+  bool get isOwner => _userModel != null ? _userModel!.role == 'owner' : _userType == 'owner';
   User? get currentUser => _firebaseUser; // Alias for convenience
   Position? get currentPosition => _currentPosition;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;

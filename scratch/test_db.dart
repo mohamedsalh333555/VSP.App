@@ -7,13 +7,19 @@ void main() async {
   );
   
   try {
-    final response = await client.from('users').select('id, email, phone, name, created_at');
-    print('TOTAL_USERS_COUNT: ${response.length}');
-    for (var i = 0; i < response.length && i < 10; i++) {
-      final r = response[i];
-      print('User $i: email=${r['email']}, phone=${r['phone']}, name=${r['name']}');
+    final stadiumId = '02d86d70-741a-48a0-9968-b76ba6f9c191';
+    print("--- UPDATING STADIUM $stadiumId IS_VERIFIED TO FALSE ---");
+    final updateResult = await client
+        .from('stadiums')
+        .update({'is_verified': false})
+        .eq('id', stadiumId)
+        .select();
+    
+    print("Updated stadiums count: ${updateResult.length}");
+    for (var s in updateResult) {
+      print("Stadium ID: ${s['id']}, Name: ${s['name']}, is_verified: ${s['is_verified']}");
     }
   } catch (e) {
-    print('Error: $e');
+    print('Error updating DB: $e');
   }
 }

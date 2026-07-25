@@ -23,12 +23,14 @@ class VSPCard extends StatelessWidget {
     this.width,
     this.height,
     this.borderRadius,
-    this.isGlass = false, // Default to false for solid premium readability
+    this.isGlass = true, // Default to true for full Glassmorphism experience
   });
 
   @override
   Widget build(BuildContext context) {
     final double r = borderRadius ?? VSPRadius.lg;
+    final double sigma = isGlass ? VSPColors.glassBlurSigma : 0.0;
+
     return Container(
       width: width,
       height: height,
@@ -36,23 +38,24 @@ class VSPCard extends StatelessWidget {
       child: ClipRRect(
         borderRadius: BorderRadius.circular(r),
         child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: isGlass ? 16 : 0, sigmaY: isGlass ? 16 : 0),
+          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
           child: Container(
             padding: padding ?? const EdgeInsets.all(16),
             decoration: BoxDecoration(
               color: color ?? (isGlass ? VSPColors.glassSurface : VSPColors.surface),
               borderRadius: BorderRadius.circular(r),
               border: border ?? Border.all(
-                color: isGlass ? VSPColors.accent.withValues(alpha: 0.18) : Colors.white.withValues(alpha: 0.05), // Subtle white stroke
+                color: isGlass ? VSPColors.glassBorder : Colors.white.withValues(alpha: 0.05),
                 width: 1,
               ),
-              boxShadow: isGlass ? [
+              boxShadow: [
                 BoxShadow(
-                  color: VSPColors.accent.withValues(alpha: 0.04),
-                  blurRadius: 14,
-                  spreadRadius: 1,
+                  color: isGlass ? VSPColors.glassGlow : Colors.black.withValues(alpha: 0.2),
+                  blurRadius: 16,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
                 ),
-              ] : [],
+              ],
             ),
             child: child,
           ),

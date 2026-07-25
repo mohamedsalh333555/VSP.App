@@ -10,6 +10,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_native_ad.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -679,7 +680,10 @@ class _HomeContent extends StatelessWidget {
                     ? 'مرحباً VSP، أنا من محافظة $cityName وأريد اقتراح إضافة ملاعب في منطقتي!'
                     : 'Hello VSP, I am from $cityName and I want to suggest adding stadiums in my area!';
                 final encoded = Uri.encodeComponent(message);
-                final whatsappUrl = Uri.parse('https://wa.me/201100229462?text=$encoded');
+                final settings = await AppSettingsRepository().getSettings();
+                final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
+                final phone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
+                final whatsappUrl = Uri.parse('https://wa.me/$phone?text=$encoded');
                 try {
                   if (await canLaunchUrl(whatsappUrl)) {
                     await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);

@@ -574,6 +574,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final now = DateTime.now();
 
     for (var b in filteredBookings) {
+      // Skip cancelled or pending/unpaid bookings that were not completed
+      if (b.status == BookingStatus.cancelled || b.status == BookingStatus.pending) continue;
+      if (!b.isPaid && b.paymentMethod != 'cash') continue;
+
       if (b.paymentMethod == 'cash') {
         cashRevenue += b.totalPrice;
       } else {
@@ -595,7 +599,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     
     String timeStr;
     if (totalMinutes == 0) {
-      timeStr = '0m';
+      timeStr = '0h';
     } else {
       final h = totalMinutes ~/ 60;
       final m = totalMinutes % 60;

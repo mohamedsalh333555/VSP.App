@@ -7,6 +7,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/repositories/chat_repository.dart';
 import '../../../core/models/user_model.dart';
 import '../../../data/models.dart';
 import '../../player/screens/chat_screen.dart';

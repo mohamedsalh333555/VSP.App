@@ -2,8 +2,7 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:google_fonts/google_fonts.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
@@ -14,7 +13,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'create_account_screen.dart';
 import 'login_screen.dart';
 
-/// Welcome Screen - Initial landing page with clean layout and interactive 3-page onboarding welcome flow.
+/// Welcome Screen - State-of-the-Art Glassmorphic Onboarding Experience.
 class WelcomeScreen extends StatefulWidget {
   const WelcomeScreen({super.key});
 
@@ -69,45 +68,45 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
     if (index == 0) {
       title = AppLocalizations.of(context)!.welcomePage1Title;
       subtitle = AppLocalizations.of(context)!.welcomePage1Subtitle;
-      imagePath = "assets/images/welcome_onboarding_3.jpg"; // Kicking ball
+      imagePath = "assets/images/welcome_onboarding_3.jpg";
     } else if (index == 1) {
       title = AppLocalizations.of(context)!.welcomePage2Title;
       subtitle = AppLocalizations.of(context)!.welcomePage2Subtitle;
-      imagePath = "assets/images/welcome_onboarding_2.jpg"; // Stadium
+      imagePath = "assets/images/welcome_onboarding_2.jpg";
     } else {
       title = AppLocalizations.of(context)!.welcomePage3Title;
       subtitle = AppLocalizations.of(context)!.welcomePage3Subtitle;
-      imagePath = "assets/images/welcome_onboarding_1.jpg"; // Goal net
+      imagePath = "assets/images/welcome_onboarding_1.jpg";
     }
+
+    final double imageHeight = (screenHeight * 0.52).clamp(300.0, 480.0);
 
     return Column(
       children: [
-        // Top Image (58% height of the screen)
+        // 1. Hero Stadium Header Image with Gradient Blend
         SizedBox(
-          height: screenHeight * 0.58,
+          height: imageHeight,
           width: double.infinity,
           child: Stack(
+            fit: StackFit.expand,
             children: [
-              Positioned.fill(
-                child: Image.asset(
-                  imagePath,
-                  fit: BoxFit.cover,
-                ),
+              Image.asset(
+                imagePath,
+                fit: BoxFit.cover,
               ),
-              // Smooth gradient mask blending the image into the solid background
-              Positioned.fill(
-                child: Container(
-                  decoration: const BoxDecoration(
-                    gradient: LinearGradient(
-                      begin: Alignment.topCenter,
-                      end: Alignment.bottomCenter,
-                      colors: [
-                        Colors.transparent,
-                        Color(0x80121212),
-                        VSPColors.background,
-                      ],
-                      stops: [0.35, 0.75, 1.0],
-                    ),
+              // Premium Dark Gradient Mask
+              Container(
+                decoration: const BoxDecoration(
+                  gradient: LinearGradient(
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [
+                      Color(0x99000000),
+                      Colors.transparent,
+                      Color(0x8009090B),
+                      VSPColors.background,
+                    ],
+                    stops: [0.0, 0.3, 0.75, 1.0],
                   ),
                 ),
               ),
@@ -115,186 +114,187 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ),
         ),
 
-        // Bottom content starting below the image
+        // 2. Perfectly Centered Onboarding Content (Zero Empty Voids)
         Expanded(
           child: Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 24.0),
             color: VSPColors.background,
-            child: SingleChildScrollView(
-              physics: const BouncingScrollPhysics(),
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.start,
-                  crossAxisAlignment: CrossAxisAlignment.center,
-                  children: [
-                    if (index == 2) ...[
-                      // VSP Logo centered above Page 3 content
-                      Hero(
-                        tag: 'app_logo',
-                        child: Image.asset(
-                          'assets/images/logo.png',
-                          width: 75,
-                          height: 75,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Spacer(flex: 1),
+
+                if (index == 2) ...[
+                  // VSP Logo
+                  Hero(
+                    tag: 'app_logo',
+                    child: Container(
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: VSPColors.glassSurface,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: VSPColors.glassBorder),
+                      ),
+                      child: Image.asset(
+                        'assets/images/logo.png',
+                        width: 54,
+                        height: 54,
+                      ),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                ],
+
+                // Title
+                Text(
+                  title,
+                  style: const TextStyle(
+                    fontSize: 26,
+                    fontWeight: FontWeight.w900,
+                    color: VSPColors.accent,
+                    height: 1.2,
+                    letterSpacing: -0.5,
+                  ),
+                  textAlign: TextAlign.center,
+                ),
+
+                const SizedBox(height: 12),
+
+                // Subtitle
+                Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 12.0),
+                  child: Text(
+                    subtitle,
+                    style: const TextStyle(
+                      fontSize: 14.5,
+                      color: VSPColors.textSecondary,
+                      height: 1.5,
+                      fontWeight: FontWeight.w400,
+                    ),
+                    textAlign: TextAlign.center,
+                  ),
+                ),
+
+                if (index == 2) ...[
+                  const SizedBox(height: 24),
+                  // Dual CTA Action Buttons for Player / Owner
+                  Row(
+                    children: [
+                      // Owner button
+                      Expanded(
+                        child: ScaleAnimatedButton(
+                          onPressed: () {
+                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                            authProvider.setUserType('owner');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateAccountScreen(isOwner: true),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: VSPColors.surface,
+                              borderRadius: BorderRadius.circular(VSPRadius.lg),
+                              border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                            ),
+                            child: Center(
+                              child: Text(
+                                getOwnerButtonText(context),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                            ),
+                          ),
                         ),
                       ),
-                      const SizedBox(height: 12),
-                    ] else ...[
-                      // Spacer to push titles down for Pages 1 & 2
-                      const SizedBox(height: 32),
-                    ],
-
-                    // Page Title
-                    Text(
-                      title,
-                      style: const TextStyle(
-                        fontSize: 32,
-                        fontWeight: FontWeight.bold,
-                        color: VSPColors.accent,
-                        height: 1.1,
-                        letterSpacing: -0.5,
-                        fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    const SizedBox(height: 12),
-
-                    // Page Subtitle
-                    Text(
-                      subtitle,
-                      style: const TextStyle(
-                        fontSize: 14.5,
-                        color: VSPColors.textSecondary,
-                        height: 1.5,
-                        fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                      ),
-                      textAlign: TextAlign.center,
-                    ),
-
-                    if (index == 2) ...[
-                      const SizedBox(height: 24),
-                      // Dual Expanded Buttons for Player / Owner
-                      Row(
-                        children: [
-                          // Owner button (left)
-                          Expanded(
-                            child: ScaleAnimatedButton(
-                              onPressed: () {
-                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                authProvider.setUserType('owner');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CreateAccountScreen(isOwner: true),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: VSPColors.surface,
-                                  borderRadius: BorderRadius.circular(VSPRadius.lg),
-                                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                      const SizedBox(width: 12),
+                      // Player button
+                      Expanded(
+                        child: ScaleAnimatedButton(
+                          onPressed: () {
+                            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                            authProvider.setUserType('player');
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => const CreateAccountScreen(isOwner: false),
+                              ),
+                            );
+                          },
+                          child: Container(
+                            height: 52,
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent,
+                              borderRadius: BorderRadius.circular(VSPRadius.lg),
+                              boxShadow: [
+                                BoxShadow(
+                                  color: VSPColors.accent.withValues(alpha: 0.25),
+                                  blurRadius: 12,
+                                  offset: const Offset(0, 4),
                                 ),
-                                child: Center(
-                                  child: Text(
-                                    getOwnerButtonText(context),
-                                    style: const TextStyle(
-                                      color: Colors.white,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                                    ),
-                                  ),
+                              ],
+                            ),
+                            child: Center(
+                              child: Text(
+                                getPlayerButtonText(context),
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 15,
                                 ),
                               ),
                             ),
                           ),
-                          const SizedBox(width: 16),
-                          // Player button (right)
-                          Expanded(
-                            child: ScaleAnimatedButton(
-                              onPressed: () {
-                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                authProvider.setUserType('player');
-                                Navigator.push(
-                                  context,
-                                  MaterialPageRoute(
-                                    builder: (context) => const CreateAccountScreen(isOwner: false),
-                                  ),
-                                );
-                              },
-                              child: Container(
-                                height: 56,
-                                decoration: BoxDecoration(
-                                  color: VSPColors.accent,
-                                  borderRadius: BorderRadius.circular(VSPRadius.lg),
-                                  boxShadow: [
-                                    BoxShadow(
-                                      color: VSPColors.accent.withValues(alpha: 0.2),
-                                      blurRadius: 10,
-                                      offset: const Offset(0, 4),
-                                    ),
-                                  ],
-                                ),
-                                child: Center(
-                                  child: Text(
-                                    getPlayerButtonText(context),
-                                    style: const TextStyle(
-                                      color: Colors.black,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 16,
-                                      fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                                    ),
-                                  ),
-                                ),
-                              ),
-                            ),
-                          ),
-                        ],
+                        ),
                       ),
-
-                      const SizedBox(height: 18),
-
-                      // Login Link
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(
-                            AppLocalizations.of(context)!.alreadyHaveAccount,
-                            style: const TextStyle(
-                              color: VSPColors.textSecondary,
-                              fontSize: 14.5,
-                              fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                            ),
-                          ),
-                          const SizedBox(width: 6),
-                          GestureDetector(
-                            onTap: () {
-                              Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                  builder: (context) => const LoginScreen(),
-                                ),
-                              );
-                            },
-                            child: Text(
-                              AppLocalizations.of(context)!.login,
-                              style: const TextStyle(
-                                color: VSPColors.accent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 14.5,
-                                fontFamilyFallback: ['Tajawal', 'sans-serif'],
-                            ),
-                          ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 24),
                     ],
-                  ],
-                ),
-              ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // Login Link
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Text(
+                        AppLocalizations.of(context)!.alreadyHaveAccount,
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 14,
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                      GestureDetector(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const LoginScreen(),
+                            ),
+                          );
+                        },
+                        child: Text(
+                          AppLocalizations.of(context)!.login,
+                          style: const TextStyle(
+                            color: VSPColors.accent,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 14,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                ],
+
+                const Spacer(flex: 2),
+              ],
             ),
           ),
         ),
@@ -311,9 +311,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           duration: const Duration(milliseconds: 250),
           margin: const EdgeInsets.symmetric(horizontal: 4.0),
           height: 6,
-          width: isActive ? 24.0 : 8.0,
+          width: isActive ? 28.0 : 8.0,
           decoration: BoxDecoration(
-            color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.4),
+            color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.3),
             borderRadius: BorderRadius.circular(3),
           ),
         );
@@ -332,23 +332,23 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
         }
       },
       child: Container(
-        width: 56,
-        height: 56,
+        width: 54,
+        height: 54,
         decoration: BoxDecoration(
           color: VSPColors.accent,
           shape: BoxShape.circle,
           boxShadow: [
             BoxShadow(
-              color: VSPColors.accent.withValues(alpha: 0.3),
-              blurRadius: 12,
+              color: VSPColors.accent.withValues(alpha: 0.35),
+              blurRadius: 14,
               offset: const Offset(0, 4),
             ),
           ],
         ),
         child: const Icon(
-          LucideIcons.arrowRight,
+          FontAwesomeIcons.arrowRight,
           color: Colors.black,
-          size: 24,
+          size: 18,
         ),
       ),
     );
@@ -362,20 +362,20 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             langProvider.changeLanguage(langProvider.isArabic ? 'en' : 'ar');
           },
           child: ClipRRect(
-            borderRadius: BorderRadius.circular(20),
+            borderRadius: BorderRadius.circular(VSPRadius.full),
             child: BackdropFilter(
-              filter: ImageFilter.blur(sigmaX: 10, sigmaY: 10),
+              filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
               child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: Colors.white.withValues(alpha: 0.08),
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(color: Colors.white.withValues(alpha: 0.12)),
+                  color: VSPColors.glassSurface,
+                  borderRadius: BorderRadius.circular(VSPRadius.full),
+                  border: Border.all(color: VSPColors.glassBorder),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.globe, size: 14, color: Colors.white),
+                    const Icon(FontAwesomeIcons.globe, size: 13, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
                       langProvider.isArabic 
@@ -383,7 +383,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           : AppLocalizations.of(context)!.arabic,
                       style: const TextStyle(
                         color: Colors.white,
-                        fontWeight: FontWeight.w600,
+                        fontWeight: FontWeight.w700,
                         fontSize: 12,
                       ),
                     ),
@@ -428,59 +428,75 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
               ],
             ),
 
-            // 2. Fixed Top Navigation Bar (Language Switcher & Back Arrow)
+            // 2. Fixed Top Safe Bar (Language Switcher & Glass Back Arrow)
             Positioned(
-              top: MediaQuery.of(context).padding.top + 16,
-              left: 24,
-              right: 24,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  // Back Arrow Button (only on pages 2 & 3)
-                  _currentPage > 0
-                      ? ScaleAnimatedButton(
-                          onPressed: () {
-                            _pageController.previousPage(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                            );
-                          },
-                          child: Container(
-                            padding: const EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              color: Colors.black.withValues(alpha: 0.4),
-                              shape: BoxShape.circle,
-                              border: Border.all(color: Colors.white.withValues(alpha: 0.08)),
-                            ),
-                            child: Icon(
-                              Localizations.localeOf(context).languageCode == 'ar'
-                                  ? LucideIcons.arrowRight
-                                  : LucideIcons.arrowLeft,
-                              color: Colors.white,
-                              size: 20,
-                            ),
-                          ),
-                        )
-                      : const SizedBox(width: 36),
+              top: 0,
+              left: 0,
+              right: 0,
+              child: SafeArea(
+                child: Padding(
+                  padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+                  child: Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      // Glass Back Arrow (Only visible when page > 0)
+                      _currentPage > 0
+                          ? ScaleAnimatedButton(
+                              onPressed: () {
+                                _pageController.previousPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              },
+                              child: ClipRRect(
+                                borderRadius: BorderRadius.circular(VSPRadius.full),
+                                child: BackdropFilter(
+                                  filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
+                                  child: Container(
+                                    padding: const EdgeInsets.all(10),
+                                    decoration: BoxDecoration(
+                                      color: VSPColors.glassSurface,
+                                      shape: BoxShape.circle,
+                                      border: Border.all(color: VSPColors.glassBorder),
+                                    ),
+                                    child: Icon(
+                                      Localizations.localeOf(context).languageCode == 'ar'
+                                          ? FontAwesomeIcons.chevronRight
+                                          : FontAwesomeIcons.chevronLeft,
+                                      color: Colors.white,
+                                      size: 15,
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            )
+                          : const SizedBox(width: 40),
 
-                  // Language switch button
-                  _buildLanguageSwitcher(),
-                ],
+                      // Language switch button
+                      _buildLanguageSwitcher(),
+                    ],
+                  ),
+                ),
               ),
             ),
 
-            // 3. Fixed Bottom indicators and FAB (only visible on Pages 1 & 2)
+            // 3. Fixed Bottom indicators & FAB (Only on Pages 0 & 1)
             if (_currentPage < 2)
               Positioned(
-                bottom: MediaQuery.of(context).padding.bottom + 24,
-                left: 24,
-                right: 24,
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    _buildPageIndicator(),
-                    _buildNextFAB(),
-                  ],
+                bottom: 0,
+                left: 0,
+                right: 0,
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildPageIndicator(),
+                        _buildNextFAB(),
+                      ],
+                    ),
+                  ),
                 ),
               ),
           ],
@@ -560,5 +576,3 @@ class _ScaleAnimatedButtonState extends State<ScaleAnimatedButton>
     );
   }
 }
-
-

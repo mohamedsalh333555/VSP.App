@@ -4,6 +4,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
+import '../../../../core/repositories/app_settings_repository.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -114,7 +115,11 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               subtitle: isAr ? 'مساعدة طارئة للحجوزات والمباريات' : 'Emergency help for bookings and matches',
               icon: LucideIcons.phoneCall,
               color: VSPColors.accent,
-              onTap: () => launchUrl(Uri.parse('tel:+201100229462')),
+              onTap: () async {
+                final settings = await AppSettingsRepository().getSettings();
+                final phone = settings.supportPhone.replaceAll('+', '').replaceAll(' ', '');
+                launchUrl(Uri.parse('tel:$phone'));
+              },
             ),
 
             const SizedBox(height: VSPSpacing.xl),
@@ -262,7 +267,9 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         '────────────────\n'
         'وصف المشكلة: ';
 
-    final phone = '201100229462';
+    final settings = await AppSettingsRepository().getSettings();
+    final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
+    final phone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
     final whatsappUrl = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
 
     try {

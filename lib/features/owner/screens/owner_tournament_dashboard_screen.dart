@@ -3,11 +3,15 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
 import 'package:intl/intl.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
+import '../../../core/utils/app_error_handler.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/repositories/team_repository.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 import 'tournament_brackets_screen.dart'; // 🟢 IMPORT
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -101,9 +105,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     } catch (e) {
       setState(() => _isLoading = false);
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
-        );
+        AppErrorHandler.showError(context, e);
       }
     }
   }

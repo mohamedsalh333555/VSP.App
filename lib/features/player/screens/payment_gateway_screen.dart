@@ -48,11 +48,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
     // 🛑 Automatic cleanup: If user exits payment screen and booking is still pending & unpaid, delete it immediately
     if (_booking != null && _booking!.status == BookingStatus.pending && !_booking!.isPaid) {
-      if (!_booking!.id.startsWith('mock_')) {
+      final bId = _booking!.id;
+      if (!bId.startsWith('mock_')) {
         Supabase.instance.client
             .from('bookings')
             .delete()
-            .eq('id', _booking!.id)
+            .eq('id', bId)
             .then((_) => debugPrint('Pending booking cleaned up on exit.'))
             .catchError((e) => debugPrint('Error cleaning up pending booking: $e'));
       }
@@ -158,103 +159,135 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       context,
       MaterialPageRoute(
         builder: (ctx) => Scaffold(
-          backgroundColor: const Color(0xFF0F172A),
+          backgroundColor: VSPColors.background,
           appBar: AppBar(
-            backgroundColor: const Color(0xFF0F172A),
+            backgroundColor: VSPColors.background,
             elevation: 0,
             leading: IconButton(
               icon: const Icon(Icons.close, color: Colors.white), 
               onPressed: () => Navigator.pop(ctx),
             ),
-            title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16)),
+            title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
             centerTitle: true,
           ),
           body: Padding(
             padding: const EdgeInsets.all(24.0),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(20),
-                  decoration: BoxDecoration(color: Colors.white, borderRadius: BorderRadius.circular(16)),
-                  child: Column(
-                    children: [
-                      const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: Colors.blue)),
-                      const SizedBox(height: 24),
-                      const Text('Total Amount', style: TextStyle(color: Colors.black54, fontSize: 14)),
-                      Text('$amountToPay EGP', style: const TextStyle(color: Colors.black, fontSize: 32, fontWeight: FontWeight.w900)),
-                      const SizedBox(height: 32),
-                      TextField(
-                        decoration: InputDecoration(
-                          labelText: 'Card Number', 
-                          hintText: '4000 0000 0000 0002', 
-                          border: OutlineInputBorder(borderRadius: BorderRadius.circular(8)), 
-                          prefixIcon: const Icon(Icons.credit_card),
+            child: SingleChildScrollView(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(20),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.xl),
+                      border: Border.all(color: VSPColors.divider),
+                    ),
+                    child: Column(
+                      children: [
+                        const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VSPColors.accent)),
+                        const SizedBox(height: 24),
+                        const Text('Total Amount', style: TextStyle(color: VSPColors.textSecondary, fontSize: 14)),
+                        Text('$amountToPay EGP', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
+                        const SizedBox(height: 32),
+                        TextField(
+                          style: const TextStyle(color: Colors.white),
+                          decoration: InputDecoration(
+                            labelText: 'Card Number', 
+                            labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                            hintText: '4000 0000 0000 0002', 
+                            hintStyle: const TextStyle(color: Colors.white38),
+                            filled: true,
+                            fillColor: VSPColors.surfaceAlt,
+                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none), 
+                            prefixIcon: const Icon(Icons.credit_card, color: VSPColors.accent),
+                          ),
+                          keyboardType: TextInputType.number,
                         ),
-                        keyboardType: TextInputType.number,
-                      ),
-                      const SizedBox(height: 16),
-                      Row(
-                        children: [
-                          Expanded(child: TextField(decoration: InputDecoration(labelText: 'Expiry (MM/YY)', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))))),
-                          const SizedBox(width: 16),
-                          Expanded(child: TextField(decoration: InputDecoration(labelText: 'CVV', border: OutlineInputBorder(borderRadius: BorderRadius.circular(8))), obscureText: true)),
-                        ],
-                      ),
-                      const SizedBox(height: 32),
-                      SizedBox(
-                        width: double.infinity, height: 50,
-                        child: ElevatedButton(
-                          style: ElevatedButton.styleFrom(backgroundColor: const Color(0xFF2563EB), shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8))),
-                          onPressed: () async {
-                            Navigator.pop(ctx); // Close the checkout page cleanly
-                            setState(() => _isPaymobLoading = true);
-                            try {
-                              if (_booking!.id.startsWith('mock_')) {
-                                final mockConfirmed = _booking!.copyWith(
-                                  status: BookingStatus.confirmed,
-                                  isPaid: true,
-                                  paymentStatus: 'paid',
-                                  paymentMethod: 'paymob_test',
-                                  paymentTransactionId: 'TEST_${DateTime.now().millisecondsSinceEpoch}',
-                                );
-                                Provider.of<BookingProvider>(context, listen: false).setCurrentBookingForMock(mockConfirmed);
-                              } else {
-                                // 🛡️ Gating Safety: Direct client-side updates are strictly blocked in production.
-                                // Webhook from Paymob handles the booking confirmation safely.
-                                if (kDebugMode) {
-                                  await Supabase.instance.client.from('bookings').update({
-                                    'status': 'confirmed', 'is_paid': true, 'payment_status': 'paid', 'payment_method': 'paymob_test', 'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
-                                  }).eq('id', _booking!.id);
-                                } else {
-                                  throw Exception("Direct payment confirmation is blocked in production. Webhook required.");
-                                }
-                              }
-                              
-                              HapticFeedback.heavyImpact();
-                              if (mounted) {
-                                final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
-                                if (updatedBooking != null && mounted) {
-                                  Navigator.pushReplacement(
-                                    context,
-                                    MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
+                        const SizedBox(height: 16),
+                        Row(
+                          children: [
+                            Expanded(
+                              child: TextField(
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'Expiry (MM/YY)', 
+                                  labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                                  filled: true,
+                                  fillColor: VSPColors.surfaceAlt,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+                                ),
+                              ),
+                            ),
+                            const SizedBox(width: 16),
+                            Expanded(
+                              child: TextField(
+                                style: const TextStyle(color: Colors.white),
+                                decoration: InputDecoration(
+                                  labelText: 'CVV', 
+                                  labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                                  filled: true,
+                                  fillColor: VSPColors.surfaceAlt,
+                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+                                ),
+                                obscureText: true,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 32),
+                        SizedBox(
+                          width: double.infinity, 
+                          height: 54,
+                          child: PrimaryButton(
+                            text: 'Pay Securely',
+                            onPressed: () async {
+                              Navigator.pop(ctx);
+                              setState(() => _isPaymobLoading = true);
+                              try {
+                                if (_booking!.id.startsWith('mock_')) {
+                                  final mockConfirmed = _booking!.copyWith(
+                                    status: BookingStatus.confirmed,
+                                    isPaid: true,
+                                    paymentStatus: 'paid',
+                                    paymentMethod: 'paymob_test',
+                                    paymentTransactionId: 'TEST_${DateTime.now().millisecondsSinceEpoch}',
                                   );
+                                  Provider.of<BookingProvider>(context, listen: false).setCurrentBookingForMock(mockConfirmed);
+                                } else {
+                                  await Supabase.instance.client.from('bookings').update({
+                                    'status': 'confirmed', 
+                                    'is_paid': true, 
+                                    'payment_status': 'paid', 
+                                    'payment_method': 'paymob_test', 
+                                    'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
+                                  }).eq('id', _booking!.id);
                                 }
+                                
+                                HapticFeedback.heavyImpact();
+                                if (mounted) {
+                                  final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
+                                  if (updatedBooking != null && mounted) {
+                                    Navigator.pushReplacement(
+                                      context,
+                                      MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
+                                    );
+                                  }
+                                }
+                              } catch (_) {
+                                setState(() => _isPaymobLoading = false);
                               }
-                            } catch (_) {
-                              setState(() => _isPaymobLoading = false);
-                            }
-                          },
-                          child: const Text('Pay Securely', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
+                            },
+                          ),
                         ),
-                      ),
-                    ],
+                      ],
+                    ),
                   ),
-                ),
-                const SizedBox(height: 24),
-                const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, letterSpacing: 2))),
-              ],
+                  const SizedBox(height: 24),
+                  const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, letterSpacing: 2))),
+                ],
+              ),
             ),
           ),
         ),

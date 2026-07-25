@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -264,10 +264,10 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 decoration: BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle, border: Border.all(color: VSPColors.divider, width: 1)),
                 child: ClipOval(
                   child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
-                      ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(LucideIcons.user, color: VSPColors.accent, size: 24), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+                      ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(FontAwesomeIcons.user, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
                       : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
-                          ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(LucideIcons.user, color: VSPColors.accent, size: 24), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
-                          : const Icon(LucideIcons.user, color: VSPColors.accent, size: 24),
+                          ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(FontAwesomeIcons.user, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+                          : const Icon(FontAwesomeIcons.user, color: VSPColors.accent, size: 20),
                 ),
               ),
               const SizedBox(width: 12),
@@ -280,7 +280,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   ],
                 ),
               ),
-              IconButton(visualDensity: VisualDensity.compact, icon: const Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), onPressed: () => _handleShare(booking)),
+              IconButton(visualDensity: VisualDensity.compact, icon: const Icon(FontAwesomeIcons.shareNodes, color: VSPColors.textSecondary, size: 18), onPressed: () => _handleShare(booking)),
             ],
           ),
           const SizedBox(height: 12),
@@ -290,11 +290,11 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.calendar, booking.formattedDate))),
+                Expanded(child: Center(child: _buildCompactInfo(FontAwesomeIcons.calendarDays, booking.formattedDate))),
                 _buildDivider(),
-                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.clock, _formatTimeShort(booking.formattedTimeRange)))),
+                Expanded(child: Center(child: _buildCompactInfo(FontAwesomeIcons.clock, _formatTimeShort(booking.formattedTimeRange)))),
                 _buildDivider(),
-                Expanded(child: Center(child: _buildCompactInfo(LucideIcons.banknote, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"))),
+                Expanded(child: Center(child: _buildCompactInfo(FontAwesomeIcons.moneyBill, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"))),
               ],
             ),
           ),
@@ -428,10 +428,10 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
             ? CachedNetworkImage(
                 imageUrl: profileImageUrl,
                 fit: BoxFit.cover,
-                errorWidget: (_, __, ___) => Icon(LucideIcons.user, color: badgeColor, size: radius),
+                errorWidget: (_, __, ___) => Icon(FontAwesomeIcons.user, color: badgeColor, size: radius),
                 placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),
               )
-            : Icon(LucideIcons.user, color: badgeColor, size: radius),
+            : Icon(FontAwesomeIcons.user, color: badgeColor, size: radius),
       ),
     );
   }
@@ -456,7 +456,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Text(AppLocalizations.of(context)!.manageMatch, style: Theme.of(context).textTheme.displaySmall),
-                IconButton(icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary), onPressed: () => Navigator.pop(context)),
+                IconButton(icon: const Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary), onPressed: () => Navigator.pop(context)),
               ],
             ),
           ),
@@ -491,7 +491,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                 ),
                                 if (u.phone != null && u.phone!.isNotEmpty)
                                   IconButton(
-                                    icon: const Icon(LucideIcons.phoneCall, color: Colors.blue), 
+                                    icon: const Icon(FontAwesomeIcons.phone, color: Colors.blue, size: 16), 
                                     onPressed: _isProcessing 
                                         ? null 
                                         : () async {
@@ -505,11 +505,11 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                           },
                                   ),
                                 IconButton(
-                                  icon: const Icon(LucideIcons.checkCircle, color: VSPColors.success), 
+                                  icon: const Icon(FontAwesomeIcons.circleCheck, color: VSPColors.success, size: 18), 
                                   onPressed: _isProcessing ? null : () => _acceptUser(u.uid),
                                 ),
                                 IconButton(
-                                  icon: const Icon(LucideIcons.xCircle, color: VSPColors.error), 
+                                  icon: const Icon(FontAwesomeIcons.circleXmark, color: VSPColors.error, size: 18), 
                                   onPressed: _isProcessing ? null : () => _rejectUser(u.uid),
                                 ),
                               ],
@@ -570,7 +570,7 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
                                   ),
                                   if (!isHost)
                                     IconButton(
-                                      icon: const Icon(LucideIcons.userMinus, color: VSPColors.error, size: 20), 
+                                      icon: const Icon(FontAwesomeIcons.userMinus, color: VSPColors.error, size: 16), 
                                       onPressed: _isProcessing ? null : () => _removeUser(u.uid),
                                     ),
                                 ],

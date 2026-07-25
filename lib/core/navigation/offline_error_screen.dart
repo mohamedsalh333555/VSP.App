@@ -1,10 +1,12 @@
-﻿import 'dart:ui';
+import 'dart:ui';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import '../ui/components/vsp_card.dart';
+import '../utils/vsp_feedback.dart';
 
 class OfflineErrorScreen extends StatefulWidget {
   const OfflineErrorScreen({super.key});
@@ -45,7 +47,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
       backgroundColor: VSPColors.background,
       body: Stack(
         children: [
-          // ── Beautiful background glows for depth ──
+          // ── Background Glows for Depth ──
           Positioned(
             top: -100,
             right: -100,
@@ -130,37 +132,38 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
 
                       // ── Title Localized ──
                       Text(
-                        isAr ? 'الاتصال مفقود' : 'Connection Problem',
+                        isAr ? 'لا يوجد اتصال بالإنترنت' : 'No Internet Connection',
                         style: const TextStyle(
                           color: Colors.white,
-                          fontSize: 24,
+                          fontSize: 22,
                           fontWeight: FontWeight.bold,
                           letterSpacing: -0.5,
                         ),
+                        textAlign: TextAlign.center,
                       ),
-                      const SizedBox(height: 16),
+                      const SizedBox(height: 12),
 
                       // ── Description Localized ──
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 8),
                         child: Text(
                           isAr 
-                              ? 'تعذر تحميل ملفك الشخصي. يرجى التحقق من اتصالك بالإنترنت وإعادة المحاولة.'
-                              : 'Could not load your profile. Please check your internet connection and try again.',
+                              ? 'تعذر الاتصال بالشبكة. يرجى التحقق من تفعيل الواي فاي أو بيانات الهاتف ثم إعادة المحاولة.'
+                              : 'Unable to connect to the network. Please check your Wi-Fi or mobile data and try again.',
                           textAlign: TextAlign.center,
                           style: const TextStyle(
                             color: VSPColors.textSecondary,
                             height: 1.6,
-                            fontSize: 14,
+                            fontSize: 13.5,
                           ),
                         ),
                       ),
                       const SizedBox(height: 32),
 
-                      // ── Action Buttons ──
+                      // ── Primary Retry Button ──
                       SizedBox(
                         width: double.infinity,
-                        height: 56,
+                        height: 52,
                         child: ElevatedButton(
                           style: ElevatedButton.styleFrom(
                             backgroundColor: VSPColors.accent,
@@ -171,7 +174,10 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                               borderRadius: BorderRadius.circular(VSPRadius.md),
                             ),
                           ),
-                          onPressed: auth.isLoading ? null : () => auth.retryDataFetch(),
+                          onPressed: auth.isLoading ? null : () {
+                            HapticFeedback.lightImpact();
+                            auth.retryDataFetch();
+                          },
                           child: auth.isLoading
                               ? const SizedBox(
                                   width: 24,
@@ -182,33 +188,13 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                                   ),
                                 )
                               : Text(
-                                  isAr ? 'إعادة المحاولة' : 'Retry',
+                                  isAr ? 'إعادة المحاولة 🔄' : 'Retry Connection 🔄',
                                   style: const TextStyle(
                                     fontWeight: FontWeight.bold,
-                                    fontSize: 16,
+                                    fontSize: 15,
                                     letterSpacing: 0.5,
                                   ),
                                 ),
-                        ),
-                      ),
-                      const SizedBox(height: 16),
-                      TextButton(
-                        onPressed: () async {
-                          await auth.signOut();
-                        },
-                        style: TextButton.styleFrom(
-                          foregroundColor: VSPColors.textSecondary.withValues(alpha: 0.8),
-                          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 24),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(VSPRadius.sm),
-                          ),
-                        ),
-                        child: Text(
-                          isAr ? 'تسجيل الخروج' : 'Sign Out',
-                          style: const TextStyle(
-                            fontWeight: FontWeight.bold,
-                            fontSize: 14,
-                          ),
                         ),
                       ),
                     ],

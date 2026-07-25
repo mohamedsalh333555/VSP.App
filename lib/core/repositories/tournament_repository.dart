@@ -362,12 +362,14 @@ class TournamentRepository {
 
       String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
 
+      final List<Map<String, dynamic>> allMatchesToInsert = [];
+
       // 2. Generate Opening Round (R0)
       for (int m = 0; m < numOpeningMatches; m++) {
         String homeId = shuffledIds[m * 2];
         String awayId = shuffledIds[m * 2 + 1];
 
-        final matchData = {
+        allMatchesToInsert.add({
           'id': getMatchId(0, m),
           'championship_id': championshipId,
           'round_index': totalBracketRounds,
@@ -377,8 +379,7 @@ class TournamentRepository {
           'home_team_name': teamMap[homeId],
           'away_team_id': awayId,
           'away_team_name': teamMap[awayId],
-        };
-        await _supabase.from('tournament_matches').insert(matchData);
+        });
       }
 
       // 3. Generate main bracket rounds (R1...Final)
@@ -394,7 +395,6 @@ class TournamentRepository {
             // Home Slot
             int slotH = m * 2;
             if (slotH >= numOpeningMatches) {
-              // This slot is a BYE
               int byeIndex = slotH - numOpeningMatches + numTeamsR0;
               if (byeIndex < shuffledIds.length) {
                 homeId = shuffledIds[byeIndex];
@@ -412,7 +412,7 @@ class TournamentRepository {
             }
           }
 
-          final matchData = {
+          allMatchesToInsert.add({
             'id': getMatchId(r, m),
             'championship_id': championshipId,
             'round_index': totalBracketRounds - r,
@@ -422,9 +422,13 @@ class TournamentRepository {
             'home_team_name': homeName,
             'away_team_id': awayId,
             'away_team_name': awayName,
-          };
-          await _supabase.from('tournament_matches').insert(matchData);
+          });
         }
+      }
+
+      // 🚀 Single bulk batch insert to prevent partial state corruption
+      if (allMatchesToInsert.isNotEmpty) {
+        await _supabase.from('tournament_matches').insert(allMatchesToInsert);
       }
 
       await _supabase
@@ -628,7 +632,9 @@ class TournamentRepository {
           .select()
           .eq('championship_id', championshipId);
       
+      final List<Map<String, dynamic>> notificationsToInsert = [];
       final matchesList = response as List;
+
       for (final matchData in matchesList) {
         final String? homeId = matchData['home_team_id'];
         final String? awayId = matchData['away_team_id'];
@@ -636,40 +642,39 @@ class TournamentRepository {
         final String? awayName = matchData['away_team_name'];
 
         if (homeId != null && homeId.isNotEmpty && awayId != null && awayId.isNotEmpty) {
-          // Send notification to home team members
           final homeTeam = await TeamRepository().getTeam(homeId);
           if (homeTeam != null) {
             for (final uid in homeTeam.memberUids) {
-              await NotificationRepository().sendNotification(
-                uid,
-                AppNotification(
-                  id: '',
-                  title: "🏆 تم إجراء قرعة البطولة!",
-                  body: "فريقك سيواجه فريق ($awayName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
-                  type: "info",
-                  createdAt: DateTime.now(),
-                ),
-              );
+              notificationsToInsert.add({
+                'user_id': uid,
+                'title': "🏆 تم إجراء قرعة البطولة!",
+                'body': "فريقك سيواجه فريق ($awayName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
+                'type': "info",
+                'created_at': DateTime.now().toIso8601String(),
+                'is_read': false,
+              });
             }
           }
 
-          // Send notification to away team members
           final awayTeam = await TeamRepository().getTeam(awayId);
           if (awayTeam != null) {
             for (final uid in awayTeam.memberUids) {
-              await NotificationRepository().sendNotification(
-                uid,
-                AppNotification(
-                  id: '',
-                  title: "🏆 تم إجراء قرعة البطولة!",
-                  body: "فريقك سيواجه فريق ($homeName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
-                  type: "info",
-                  createdAt: DateTime.now(),
-                ),
-              );
+              notificationsToInsert.add({
+                'user_id': uid,
+                'title': "🏆 تم إجراء قرعة البطولة!",
+                'body': "فريقك سيواجه فريق ($homeName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
+                'type': "info",
+                'created_at': DateTime.now().toIso8601String(),
+                'is_read': false,
+              });
             }
           }
         }
+      }
+
+      // 🚀 Bulk insert notifications in a single network query
+      if (notificationsToInsert.isNotEmpty) {
+        await _supabase.from('notifications').insert(notificationsToInsert);
       }
     } catch (e) {
       debugPrint('Error sending draw notifications: $e');

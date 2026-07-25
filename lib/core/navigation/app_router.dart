@@ -146,7 +146,11 @@ class AppRouter {
 
     // 4. User data loading check
     if (userModel == null) {
-      if (hasDataFetchError || !isInitializing) {
+      if (authProvider.isLoading || authProvider.isInitializing) {
+        if (path != '/splash') return '/splash';
+        return null;
+      }
+      if (hasDataFetchError) {
         if (path != '/offline') return '/offline';
         return null;
       }
@@ -211,7 +215,7 @@ class AppRouter {
       }
       
       // Redirect fully onboarded owners to RootScreen
-      if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/verify-email' || path == '/owner') {
+      if (path == '/welcome' || path == '/splash' || path == '/onboarding' || path == '/verify-email' || path == '/owner' || path == '/player' || path == '/offline') {
         return '/';
       }
       return null;

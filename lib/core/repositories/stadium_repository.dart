@@ -12,19 +12,11 @@ class StadiumRepository {
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
     final query = _supabase.from('stadiums').stream(primaryKey: ['id']);
     
-    if (!AppConfig.demoMode) {
-      return query
-          .eq('is_verified', true)
-          .limit(limit)
-          .map((list) => list
-              .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
-              .toList());
-    }
-    
     return query
         .limit(limit)
         .map((list) => list
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
+            .where((stadium) => stadium.isVerified && !stadium.isBlocked)
             .toList());
   }
 
@@ -106,7 +98,7 @@ class StadiumRepository {
         'base_price': sanitizedData['basePrice'] ?? sanitizedData['base_price'] ?? price,
         'images': imagesList,
         'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
-        'is_verified': kDebugMode, 
+        'is_verified': false, 
         'is_blocked': false,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
