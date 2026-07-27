@@ -184,8 +184,12 @@ class _SignupScreenState extends State<SignupScreen> {
       }
     } else {
       if (mounted) {
-        print("[DEBUG_SIGNUP] Showing error toast: ${authProvider.errorMessage}");
-        VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إنشاء الحساب');
+        String errorMsg = authProvider.errorMessage ?? 'فشل إنشاء الحساب';
+        if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
+          errorMsg = 'تعذر إرسال إيميل التأكيد. يرجى التمرير لأسفل في نافذة Email في Supabase وإيقاف خيار (Confirm email).';
+        }
+        print("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
+        VSPFeedback.showError(context, errorMsg);
       }
     }
     

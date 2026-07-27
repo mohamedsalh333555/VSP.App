@@ -1,4 +1,4 @@
-﻿import 'dart:io';
+import 'dart:io';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -251,9 +251,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               // --- Delete Account Button ---
               TextButton(
                 onPressed: () => _showDeleteAccountDialog(context),
-                child: const Text(
-                  'Delete Account',
-                  style: TextStyle(
+                child: Text(
+                  Localizations.localeOf(context).languageCode == 'ar' ? 'حذف الحساب' : 'Delete Account',
+                  style: const TextStyle(
                     color: VSPColors.error,
                     fontWeight: FontWeight.bold,
                     decoration: TextDecoration.underline,
@@ -268,6 +268,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   void _showDeleteAccountDialog(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -275,10 +277,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           return AlertDialog(
             backgroundColor: VSPColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            title: const Text('Delete Account?', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
-            content: const Text(
-              'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
-              style: TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            title: Text(
+              isArabic ? 'حذف الحساب نهائياً؟ ⚠️' : 'Delete Account?', 
+              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              isArabic 
+                  ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وفريقك وتاريخ مبارياتك نهائياً.' 
+                  : 'Are you sure? This action cannot be undone. You will lose all your data, teams, and match history permanently.',
+              style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
             ),
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
@@ -286,7 +293,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 children: [
                   Expanded(
                     child: PrimaryButton(
-                      text: 'Cancel',
+                      text: isArabic ? 'إلغاء' : 'Cancel',
                       height: 48,
                       color: VSPColors.surfaceAlt,
                       textColor: VSPColors.textPrimary,
@@ -296,7 +303,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   const SizedBox(width: VSPSpacing.md),
                   Expanded(
                     child: PrimaryButton(
-                      text: 'Delete',
+                      text: isArabic ? 'حذف' : 'Delete',
                       height: 48,
                       color: VSPColors.error,
                       textColor: VSPColors.background,
@@ -315,7 +322,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                           );
                         } else {
                           setDialogState(() => _isDeleting = false);
-                          VSPFeedback.showError(context, authProvider.errorMessage ?? "Failed to delete account");
+                          VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));
                           Navigator.pop(context);
                         }
                       },

@@ -1544,7 +1544,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             }),
             const SizedBox(height: 12),
             Align(
-              alignment: Alignment.centerLeft,
+              alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
               child: TextButton.icon(
                 onPressed: () {
                   setState(() {
@@ -1552,7 +1552,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   });
                 },
                 icon: Icon(LucideIcons.plus, color: VSPColors.accent, size: 18),
-                label: const Text('+ Add Another Break', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
+                label: Text(
+                  isArabic ? '+ إضافة فترة راحة أخرى' : '+ Add Another Break', 
+                  style: const TextStyle(color: VSPColors.accent, fontSize: 13),
+                ),
               ),
             ),
             if (!_isSplitShiftValid) ...[
@@ -1564,14 +1567,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   borderRadius: BorderRadius.circular(VSPRadius.sm),
                   border: Border.all(color: VSPColors.error.withValues(alpha: 0.3)),
                 ),
-                child: const Row(
+                child: Row(
                   children: [
-                    Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 16),
-                    SizedBox(width: 8),
+                    const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 16),
+                    const SizedBox(width: 8),
                     Expanded(
                       child: Text(
-                        'Break hours must fall strictly inside the opening and closing hours!',
-                        style: TextStyle(color: VSPColors.error, fontSize: 12),
+                        isArabic
+                            ? 'ساعات الراحة يجب أن تكون داخل مواعيد العمل الرسمية للملعب!'
+                            : 'Break hours must fall strictly inside the opening and closing hours!',
+                        style: const TextStyle(color: VSPColors.error, fontSize: 12),
                       ),
                     ),
                   ],
@@ -1582,29 +1587,30 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: _buildTextField('Length', 'm', controller: _lengthController)),
+            Expanded(child: _buildTextField(isArabic ? 'الطول (متر)' : 'Length', 'm', controller: _lengthController)),
             const SizedBox(width: 10),
-            Expanded(child: _buildTextField('Width', 'm', controller: _widthController)),
+            Expanded(child: _buildTextField(isArabic ? 'العرض (متر)' : 'Width', 'm', controller: _widthController)),
           ]),
           
           const SizedBox(height: 16),
           _buildTextField(
-            'Notes', 
-            'Ex: We ensure a professional environment. Please arrive on time...', 
+            isArabic ? 'ملاحظات وتعليمات الملعب' : 'Notes', 
+            isArabic 
+                ? 'مثال: الحضور قبل الموعد بـ 10 دقائق، الحفاظ على أرضية الملعب...' 
+                : 'Ex: We ensure a professional environment. Please arrive on time...', 
             controller: _notesController, 
             maxLines: 3,
             maxLength: 500,
           ),
           const SizedBox(height: 8),
-          SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+          SingleChildScrollView(
+            keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
             scrollDirection: Axis.horizontal,
             child: Row(
-              children: [
-                'Punctuality',
-                'Cleanliness',
-                'No Smoking',
-                'Bring your own ball'
-              ].map((template) => Padding(
+              children: (isArabic 
+                  ? ['الالتزام بالموعد', 'الحفاظ على النظافة', 'ممنوع التدخين', 'إحضار الكرة الخاصة بك']
+                  : ['Punctuality', 'Cleanliness', 'No Smoking', 'Bring your own ball'])
+              .map((template) => Padding(
                 padding: const EdgeInsets.only(right: 8),
                 child: ActionChip(
                   label: Text(template, style: const TextStyle(fontSize: 12)),
@@ -1621,7 +1627,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           ),
 
           const SizedBox(height: 30),
-          _buildPrimaryButton('Continue', _nextPage),
+          _buildPrimaryButton(isArabic ? 'متابعة' : 'Continue', _nextPage),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
@@ -1629,7 +1635,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildStep2Features() {
-    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: EdgeInsets.only(
         left: VSPSpacing.md,
         right: VSPSpacing.md,
@@ -1660,7 +1668,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 20),
           
           Align(
-            alignment: Alignment.centerLeft,
+            alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
             child: Text(AppLocalizations.of(context)!.amenities, style: Theme.of(context).textTheme.titleMedium),
           ),
           const SizedBox(height: 16),
@@ -1668,14 +1676,14 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           
           if (_hasBall == true) ...[
             const SizedBox(height: 16),
-             _buildTextField(
-               'Ball Rental Price (EGP)', 
-               '20.0', 
+            _buildTextField(
+              isArabic ? 'سعر تأجير الكرة (ج.م)' : 'Ball Rental Price (EGP)', 
+              '20.0', 
               controller: _ballPriceController,
-               maxLength: 5,
-               keyboardType: const TextInputType.numberWithOptions(decimal: true),
-               inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-             ),
+              maxLength: 5,
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+              inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+            ),
           ],
           const SizedBox(height: 20),
           const Divider(color: VSPColors.divider),
@@ -1692,7 +1700,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       Icon(LucideIcons.lock, color: VSPColors.accent, size: 18),
                       const SizedBox(width: 8),
                       Text(
-                        'Require Booking Deposit (العربون)',
+                        isArabic ? 'اشتراط عربون حجز' : 'Require Booking Deposit',
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                     ],
@@ -1706,13 +1714,15 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               ),
               const SizedBox(height: 4),
               Text(
-                'Require upfront deposit that cannot exceed 50% of the hourly stadium price.',
+                isArabic 
+                    ? 'اشتراط دفع عربون مسبق لا يتجاوز 50% من سعر الساعة.'
+                    : 'Require upfront deposit that cannot exceed 50% of the hourly stadium price.',
                 style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
               ),
               if (_requireDeposit) ...[
                 const SizedBox(height: 12),
                 _buildTextField(
-                  'Deposit Amount (EGP)',
+                  isArabic ? 'قيمة العربون (ج.م)' : 'Deposit Amount (EGP)',
                   '0',
                   controller: _depositController,
                   maxLength: 7,
@@ -1723,7 +1733,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             ],
           ),
           const SizedBox(height: 40),
-          _buildPrimaryButton('Continue', _nextPage),
+          _buildPrimaryButton(isArabic ? 'متابعة' : 'Continue', _nextPage),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),
@@ -1731,7 +1741,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Widget _buildStep3Images() {
-    return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return SingleChildScrollView(
+      keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
       padding: EdgeInsets.only(
         left: VSPSpacing.md,
         right: VSPSpacing.md,
@@ -1752,7 +1764,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           const SizedBox(height: 24),
           
           VspUploadMainCard(
-            title: 'Add New Photo',
+            title: isArabic ? 'إضافة صورة جديدة' : 'Add New Photo',
+            helper: isArabic ? 'صور JPG, JPEG, PNG أقل من 10 ميجابايت' : 'JPG, JPEG, PNG less than 10MB',
             isLoading: _isUploading,
             onTap: _pickImage,
           ),
@@ -1765,7 +1778,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 final index = entry.key;
                 final img = entry.value;
                 return _buildUploadCard(
-                  title: 'Stadium Photo ${index + 1}',
+                  title: isArabic ? 'صورة الملعب ${index + 1}' : 'Stadium Photo ${index + 1}',
                   fileUrl: img['url'],
                   isUploading: img['isUploading'] ?? false,
                   progress: img['progress'] ?? 0,
@@ -1792,7 +1805,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             ),
 
           const SizedBox(height: 40),
-          _buildPrimaryButton('Submit Stadium', _nextPage, isLoading: _isSaving),
+          _buildPrimaryButton(isArabic ? 'إرسال الملعب' : 'Submit Stadium', _nextPage, isLoading: _isSaving),
           SizedBox(height: MediaQuery.of(context).padding.bottom + 24),
         ],
       ),

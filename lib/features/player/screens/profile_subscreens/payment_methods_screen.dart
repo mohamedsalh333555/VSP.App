@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -14,6 +14,8 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -24,7 +26,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          'Payment Methods',
+          isArabic ? 'وسائل الدفع الإلكتروني' : 'Payment Methods',
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -33,15 +35,15 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
         padding: const EdgeInsets.all(16),
         child: Column(
           children: [
-            _buildPaymentOption(0, 'Insta Pay', 'assets/icons/instapay.png'), // Mock icon logic
+            _buildPaymentOption(0, isArabic ? 'إنستا باي (InstaPay)' : 'Insta Pay', 'assets/icons/instapay.png'),
             const SizedBox(height: 12),
-            _buildPaymentOption(1, 'Etisalat Wallet', 'assets/icons/etisalat.png'),
+            _buildPaymentOption(1, isArabic ? 'محفظة اتصالات' : 'Etisalat Wallet', 'assets/icons/etisalat.png'),
             const SizedBox(height: 12),
-            _buildPaymentOption(2, 'Vodafone Wallet', 'assets/icons/vodafone.png'),
+            _buildPaymentOption(2, isArabic ? 'محفظة فودافون كاش' : 'Vodafone Cash', 'assets/icons/vodafone.png'),
             const SizedBox(height: 12),
-            _buildPaymentOption(3, 'Orange Wallet', 'assets/icons/orange.png'),
+            _buildPaymentOption(3, isArabic ? 'محفظة أورنج كاش' : 'Orange Cash', 'assets/icons/orange.png'),
             const SizedBox(height: 12),
-            _buildPaymentOption(4, 'We Wallet', 'assets/icons/we.png'),
+            _buildPaymentOption(4, isArabic ? 'محفظة وي باي' : 'WE Pay Wallet', 'assets/icons/we.png'),
 
             const Spacer(),
             
@@ -54,7 +56,10 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
                   backgroundColor: VSPColors.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                 ),
-                child: const Text('Add Payment', style: TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold)),
+                child: Text(
+                  isArabic ? 'إضافة وسيلة دفع جديدة' : 'Add Payment Method', 
+                  style: const TextStyle(color: VSPColors.background, fontSize: 16, fontWeight: FontWeight.bold),
+                ),
               ),
             ),
             const SizedBox(height: 20),

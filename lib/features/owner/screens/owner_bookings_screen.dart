@@ -689,6 +689,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
   late final TextEditingController _nameController;
   late final TextEditingController _phoneController;
   late final TextEditingController _noteController;
+  late final TextEditingController _collectedAmountController;
   bool _isSaving = false;
   bool _isDeleting = false;
   int _selectedMinutes = 60;
@@ -703,6 +704,14 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     _nameController = TextEditingController(text: widget.isEdit ? (widget.slot['name'] ?? '') : '');
     _phoneController = TextEditingController(text: widget.isEdit ? (booking?.playerPhone ?? '') : '');
     _noteController = TextEditingController(text: widget.isEdit ? (booking?.notes ?? '') : '');
+
+    double initialAmount = 0.0;
+    if (widget.isEdit && booking != null) {
+      initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
+    } else if (widget.selectedStadium?.needsDeposit == true) {
+      initialAmount = widget.selectedStadium?.depositAmount ?? 0.0;
+    }
+    _collectedAmountController = TextEditingController(text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0));
 
     if (widget.isEdit && booking != null) {
       _selectedMinutes = booking.endTime.difference(booking.startTime).inMinutes;
@@ -748,7 +757,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(
-            content: Text(isArabic ? 'تم تأكيد حضور ولعب المباراة بنجاح 🏆' : 'Match attendance confirmed successfully ��'),
+            content: Text(isArabic ? 'تم تأكيد حضور ولعب المباراة بنجاح 🏆' : 'Match attendance confirmed successfully 🏆'),
             backgroundColor: VSPColors.success,
           ),
         );
@@ -850,6 +859,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     _nameController.dispose();
     _phoneController.dispose();
     _noteController.dispose();
+    _collectedAmountController.dispose();
     super.dispose();
   }
 
@@ -1161,7 +1171,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
                     _buildInputLabel(l10n.timeAndStadium),
-                    _buildPillInput(initialValue: '${widget.slot['time']} - ${widget.selectedStadium?.name ?? "Stadium"}', enabled: false),
+                    _buildPillInput(initialValue: '${widget.slot['time']} - ${widget.selectedStadium?.name ?? (isArabic ? "الجمالية" : "Stadium")}', enabled: false),
                     const SizedBox(height: 15),
 
                     _buildInputLabel(isArabic ? "مدة الحجز" : "Booking Duration"),
@@ -1180,48 +1190,14 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     _buildPillTextField(controller: _noteController, hint: l10n.internalNotesHint),
                     const SizedBox(height: 15),
 
-                    _buildInputLabel(isArabic ? "العربون" : "Deposit"),
-                    _buildDepositToggleCard(),
+                    _buildInputLabel(isArabic ? "المبلغ المحصل (ج.م)" : "Collected Amount (EGP)"),
+                    _buildPillTextField(
+                      controller: _collectedAmountController,
+                      hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار النقدي)" : "Enter amount (0 for unpaid)",
+                      keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    ),
                     const SizedBox(height: 20),
 
-                    Container(
-                      padding: const EdgeInsets.all(VSPSpacing.md),
-                      decoration: BoxDecoration(
-                        color: VSPColors.background,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(color: VSPColors.divider, width: 0.5),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(LucideIcons.banknote, color: VSPColors.accent),
-                          const SizedBox(width: 12),
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(l10n.paymentStatus, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13)),
-                                Text(_isManualDepositReceived ? (isArabic ? 'مدفوع جزئياً' : 'Partially Paid') : (isCompleted ? l10n.collectedStatusAuto : l10n.pendingStatusAuto), style: TextStyle(color: (isCompleted || _isManualDepositReceived) ? VSPColors.success : VSPColors.warning, fontSize: 11)),
-                              ],
-                            ),
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                            decoration: BoxDecoration(
-                              color: (isCompleted || _isManualDepositReceived) ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.warning.withValues(alpha: 0.1),
-                              borderRadius: BorderRadius.circular(VSPRadius.sm),
-                            ),
-                            child: Text(
-                              _isManualDepositReceived ? (isArabic ? 'مدفوع جزئياً' : 'Partially Paid') : (isCompleted ? l10n.collectedSticker : l10n.pendingSticker),
-                              style: TextStyle(
-                                color: (isCompleted || _isManualDepositReceived) ? VSPColors.success : VSPColors.warning,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                     if (widget.isEdit && booking != null && booking.bookingType == BookingType.challenge && isCompleted) ...[
                       const SizedBox(height: 15),
                       if (_isLoadingVerification)
@@ -1366,24 +1342,13 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
 
                       try {
                         final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+                        final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
+                        final uid = authProvider.firebaseUser!.uid;
                         
-                        if (widget.isEdit) {
-                          final success = await bookingProvider.updateManualBooking(
-                            bookingId: booking!.id,
-                            name: _nameController.text.trim(),
-                            phone: PhoneUtils.normalize(_phoneController.text.trim()),
-                            notes: _noteController.text.trim(),
-                            isDepositPaid: _isManualDepositReceived,
-                            depositPaid: _isManualDepositReceived ? (widget.selectedStadium?.depositAmount ?? 0.0) : 0.0,
-                            paymentStatus: _isManualDepositReceived ? 'partially_paid' : 'unpaid',
-                          );
-                          if (!success) throw Exception("Failed to update booking");
-                        } else {
-                          final stadiumProvider = Provider.of<StadiumProvider>(widget.parentContext, listen: false);
-                          final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
-                          final uid = authProvider.firebaseUser!.uid;
-                          final stadium = stadiumProvider.stadiums.firstWhere((s) => s.id == widget.selectedStadium?.id, orElse: () => stadiumProvider.stadiums.first);
+                        final collectedVal = double.tryParse(_collectedAmountController.text.trim()) ?? 0.0;
+                        final stadium = widget.selectedStadium!;
 
+                        if (!widget.isEdit) {
                           final selectedDate = widget.baseDate.add(Duration(days: widget.selectedDayIndex));
                           final startTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, widget.slot['hour'] as int, widget.slot['minute'] as int);
                           final endTime = startTime.add(Duration(minutes: _selectedMinutes));
@@ -1477,7 +1442,11 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     );
   }
 
-  Widget _buildPillTextField({required TextEditingController controller, required String hint}) {
+  Widget _buildPillTextField({
+    required TextEditingController controller,
+    required String hint,
+    TextInputType? keyboardType,
+  }) {
     return Container(
       decoration: BoxDecoration(
         color: VSPColors.background,
@@ -1486,6 +1455,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       ),
       child: TextField(
         controller: controller,
+        keyboardType: keyboardType,
         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,

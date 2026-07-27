@@ -599,16 +599,26 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     
     String timeStr;
     if (totalMinutes == 0) {
-      timeStr = '0h';
+      timeStr = isArabic ? '0س' : '0m';
     } else {
       final h = totalMinutes ~/ 60;
       final m = totalMinutes % 60;
-      if (h > 0 && m > 0) {
-        timeStr = '${h}h ${m}m';
-      } else if (h > 0) {
-        timeStr = '${h}h';
+      if (isArabic) {
+        if (h > 0 && m > 0) {
+          timeStr = '$hس $mد';
+        } else if (h > 0) {
+          timeStr = '$hس';
+        } else {
+          timeStr = '$mد';
+        }
       } else {
-        timeStr = '${m}m';
+        if (h > 0 && m > 0) {
+          timeStr = '${h}h ${m}m';
+        } else if (h > 0) {
+          timeStr = '${h}h';
+        } else {
+          timeStr = '${m}m';
+        }
       }
     }
 
@@ -618,16 +628,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           index: 0,
           child: Container(
             width: double.infinity,
-            padding: const EdgeInsets.all(VSPSpacing.lg),
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
             decoration: BoxDecoration(
               gradient: const LinearGradient(
                 colors: [VSPColors.accent, VSPColors.cardDarkGreen],
                 begin: Alignment.topLeft,
                 end: Alignment.bottomRight,
               ),
-              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
               boxShadow: [
-                BoxShadow(color: Colors.black.withValues(alpha: 0.3), blurRadius: 20, offset: const Offset(0, 10)),
+                BoxShadow(color: Colors.black.withValues(alpha: 0.25), blurRadius: 10, offset: const Offset(0, 4)),
               ],
             ),
             child: Column(
@@ -636,22 +646,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text(l10n.totalCollectedGross, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
+                    Text(l10n.totalCollectedGross, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold)),
                   ],
                 ),
-                const SizedBox(height: 8),
-                Text('$revenueStr ${l10n.egCurrency}', style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 34, color: Colors.white, letterSpacing: -1, fontWeight: FontWeight.bold)),
-                const SizedBox(height: 16),
+                const SizedBox(height: 4),
+                Text('$revenueStr ${l10n.egCurrency}', style: Theme.of(context).textTheme.displayMedium?.copyWith(fontSize: 26, color: Colors.white, letterSpacing: -0.5, fontWeight: FontWeight.bold)),
+                const SizedBox(height: 10),
                 Container(
-                  padding: const EdgeInsets.all(12),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
                   decoration: BoxDecoration(
                     color: Colors.black.withValues(alpha: 0.2),
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
                   ),
                   child: Row(
                     children: [
                       _buildFinanceMetric(isArabic ? 'كاش' : 'Cash', '$cashStr ${l10n.egCurrency}', LucideIcons.banknote, Colors.green),
-                      Container(width: 1, height: 30, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 16)),
+                      Container(width: 1, height: 24, color: Colors.white24, margin: const EdgeInsets.symmetric(horizontal: 12)),
                       _buildFinanceMetric(isArabic ? 'رقمي' : 'Digital', '$digitalStr ${l10n.egCurrency}', LucideIcons.creditCard, Colors.lightBlueAccent),
                     ],
                   ),

@@ -6,9 +6,8 @@ class AppConfig {
   static const bool enableOnlinePayment = false;
 
   // OTP Configuration
-  // 🛡️ SECURITY HARDENING: Bind useMockOtp to kDebugMode so that mock OTP is completely
-  // unavailable in release builds, preventing any accidental production bypass.
-  static const bool useMockOtp = kDebugMode;
+  // 🛡️ Set to false to force real email OTP sending via Supabase/Resend
+  static const bool useMockOtp = false;
   static const String mockOtpCode = "123456";
   static const int otpCountdownSeconds = 60;
 

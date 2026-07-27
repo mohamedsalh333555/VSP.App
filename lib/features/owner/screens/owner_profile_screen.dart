@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -21,6 +21,7 @@ class OwnerProfileScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -30,7 +31,7 @@ class OwnerProfileScreen extends StatelessWidget {
         automaticallyImplyLeading: false,
         centerTitle: true,
         title: Text(
-          l10n.profileSettings, // Assuming profileSettings is available or using hardcoded 'Profile' if not
+          isArabic ? 'ملفي' : 'Profile',
           style: Theme.of(context).textTheme.displayLarge,
         ),
       ),

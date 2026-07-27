@@ -68,6 +68,12 @@ android {
             )
         }
     }
+
+    applicationVariants.all {
+        outputs.forEach { output ->
+            (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "VSP - Sports Platform.apk"
+        }
+    }
 }
 
 flutter {

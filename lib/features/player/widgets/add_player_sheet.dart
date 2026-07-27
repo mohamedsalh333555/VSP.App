@@ -69,6 +69,8 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
@@ -94,7 +96,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                'Add Team Member',
+                isArabic ? 'إضافة لاعب للفريق' : 'Add Team Member',
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               IconButton(
@@ -104,7 +106,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
             ],
           ),
           const SizedBox(height: VSPSpacing.lg),
-          Text('Search by Phone Number', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+          Text(isArabic ? 'البحث برقم الهاتف' : 'Search by Phone Number', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
           const SizedBox(height: VSPSpacing.sm),
           Row(
             children: [
@@ -114,7 +116,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                   keyboardType: TextInputType.phone,
                   style: Theme.of(context).textTheme.bodyMedium,
                   decoration: InputDecoration(
-                    hintText: 'e.g. 01012345678',
+                    hintText: isArabic ? 'مثال: 01012345678' : 'e.g. 01012345678',
                     hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
                     filled: true,
                     fillColor: VSPColors.surface,
@@ -148,7 +150,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
           ),
           const SizedBox(height: VSPSpacing.xl),
           if (_foundUser != null)
-            _buildFoundUserCard()
+            _buildFoundUserCard(isArabic)
           else if (_hasSearched)
             _buildInviteCard(),
           const SizedBox(height: 16),
@@ -159,7 +161,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     );
   }
 
-  Widget _buildFoundUserCard() {
+  Widget _buildFoundUserCard(bool isArabic) {
     return Container(
       padding: const EdgeInsets.all(VSPSpacing.md),
       decoration: BoxDecoration(
@@ -181,7 +183,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  _foundUser!.name ?? 'Player',
+                  _foundUser!.name ?? (isArabic ? 'لاعب' : 'Player'),
                   style: Theme.of(context).textTheme.titleSmall,
                 ),
                 Text(
@@ -202,7 +204,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                 children: [
                    Icon(LucideIcons.check, color: VSPColors.accent, size: 16),
                    const SizedBox(width: 4),
-                   const Text('Joined', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                   Text(isArabic ? 'منضم' : 'Joined', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
               ),
             )
@@ -211,7 +213,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               width: 80,
               height: 40,
               child: PrimaryButton(
-                text: 'Add',
+                text: isArabic ? 'إضافة' : 'Add',
                 onPressed: () {
                   widget.onPlayerAdded(_foundUser!);
                   Navigator.pop(context);

@@ -28,8 +28,9 @@ class PaymentSelectionModal extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final String timeRange = selectedTimeSlots.isNotEmpty
-        ? '${selectedTimeSlots.first} To ${selectedTimeSlots.last}'
+        ? '${selectedTimeSlots.first} ${isArabic ? 'إلى' : 'To'} ${selectedTimeSlots.last}'
         : '';
 
     return Dialog(
@@ -45,7 +46,7 @@ class PaymentSelectionModal extends StatelessWidget {
           children: [
             // Close Button
             Align(
-              alignment: Alignment.topRight,
+              alignment: isArabic ? Alignment.topLeft : Alignment.topRight,
               child: IconButton(
                 icon: Icon(LucideIcons.x, color: VSPColors.textPrimary, size: 24),
                 onPressed: () => Navigator.pop(context),
@@ -72,24 +73,24 @@ class PaymentSelectionModal extends StatelessWidget {
 
             // Title
             Text(
-              'Confirm Your Booking',
+              isArabic ? 'تأكيد حجزك' : 'Confirm Your Booking',
               style: Theme.of(context).textTheme.displaySmall,
             ),
 
             const SizedBox(height: VSPSpacing.lg),
 
             // Booking Details
-            _buildDetailRow(context, 'Date', DateFormat('yyyy/MM/dd').format(selectedDate)),
+            _buildDetailRow(context, isArabic ? 'التاريخ' : 'Date', DateFormat('yyyy/MM/dd').format(selectedDate)),
             const SizedBox(height: VSPSpacing.sm),
-            _buildDetailRow(context, 'Time', timeRange),
+            _buildDetailRow(context, isArabic ? 'الوقت' : 'Time', timeRange),
             const SizedBox(height: VSPSpacing.sm),
-            _buildDetailRow(context, 'Price', '${totalPrice.toInt()} EGP'),
+            _buildDetailRow(context, isArabic ? 'السعر' : 'Price', '${totalPrice.toInt()} ${isArabic ? 'ج.م' : 'EGP'}'),
 
             const SizedBox(height: VSPSpacing.xl),
 
             // Confirm Cash Booking Button
             PrimaryButton(
-              text: 'Confirm Cash Booking',
+              text: isArabic ? 'تأكيد الحجز النقدي' : 'Confirm Cash Booking',
               onPressed: () => _navigateToPayment(context, 'cash'),
             ),
           ],

@@ -1,4 +1,3 @@
-import 'package:flutter/foundation.dart';
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';

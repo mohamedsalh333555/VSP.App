@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
@@ -33,6 +33,8 @@ class _MatchResultModalState extends State<MatchResultModal> {
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Dialog(
       backgroundColor: Colors.transparent,
       insetPadding: const EdgeInsets.symmetric(horizontal: 16),
@@ -42,123 +44,125 @@ class _MatchResultModalState extends State<MatchResultModal> {
           borderRadius: BorderRadius.circular(VSPRadius.xl),
         ),
         padding: const EdgeInsets.all(VSPSpacing.lg),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            // Header
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        'Confirm Match Result',
-                        style: Theme.of(context).textTheme.displaySmall,
-                      ),
-                      const SizedBox(height: VSPSpacing.xs),
-                      Text(
-                        'Please Confirm The Final Match Outcome',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: VSPColors.accent,
-                            ),
-                      ),
-                    ],
-                  ),
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(LucideIcons.x, color: VSPColors.textPrimary),
-                  padding: EdgeInsets.zero,
-                  constraints: const BoxConstraints(),
-                  visualDensity: VisualDensity.compact,
-                ),
-              ],
-            ),
-            const SizedBox(height: VSPSpacing.lg),
-
-            // Match Info Card
-            Container(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              decoration: BoxDecoration(
-                color: VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(VSPRadius.lg),
-              ),
-              child: Column(
+        child: SingleChildScrollView(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Header
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  // Teams 
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceAround,
-                    children: [
-                      _buildTeamDisplay(widget.booking.playerTeamName ?? 'Your Team'),
-                      Text(
-                        'VS',
-                        style: Theme.of(context).textTheme.displayMedium?.copyWith(
-                              color: VSPColors.accent,
-                              fontStyle: FontStyle.italic,
-                            ),
-                      ),
-                      _buildTeamDisplay(widget.booking.opponentTeamName ?? 'Opponent'),
-                    ],
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'تأكيد نتيجة المباراة' : 'Confirm Match Result',
+                          style: Theme.of(context).textTheme.displaySmall,
+                        ),
+                        const SizedBox(height: VSPSpacing.xs),
+                        Text(
+                          isArabic ? 'يرجى تأكيد النتيجة النهائية للمباراة' : 'Please Confirm The Final Match Outcome',
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: VSPColors.accent,
+                              ),
+                        ),
+                      ],
+                    ),
                   ),
-                  const SizedBox(height: VSPSpacing.lg),
-                  const Divider(color: VSPColors.divider, height: 1),
-                  const SizedBox(height: VSPSpacing.md),
-                  // Details
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                    children: [
-                      _buildDetailItem('Date', widget.booking.formattedDate),
-                      _buildDetailItem('Stadium', widget.booking.stadiumName),
-                      _buildDetailItem('Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}'),
-                    ],
+                  IconButton(
+                    onPressed: () => Navigator.pop(context),
+                    icon: Icon(LucideIcons.x, color: VSPColors.textPrimary),
+                    padding: EdgeInsets.zero,
+                    constraints: const BoxConstraints(),
+                    visualDensity: VisualDensity.compact,
                   ),
                 ],
               ),
-            ),
-            const SizedBox(height: 24),
+              const SizedBox(height: VSPSpacing.lg),
 
-            // Selection Options
-            _buildSelectionOption(0, 'We Won', LucideIcons.trophy, VSPColors.warning),
-            const SizedBox(height: 12),
-            _buildSelectionOption(1, 'Draw', LucideIcons.repeat, const Color(0xFF3B82F6)), // Blue is used for Draw specifically, could use a custom token if available
-            const SizedBox(height: 12),
-            _buildSelectionOption(2, 'We Lost', LucideIcons.frown, VSPColors.error),
-
-            const SizedBox(height: VSPSpacing.lg),
-            const Divider(color: VSPColors.divider),
-            const SizedBox(height: VSPSpacing.lg),
-
-            // Rating Section
-            _buildRatingSection(),
-
-            const SizedBox(height: 32),
-            // Actions
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Cancel',
-                    height: 48,
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.textPrimary,
-                    onPressed: () => Navigator.pop(context),
-                  ),
+              // Match Info Card
+              Container(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
                 ),
-                const SizedBox(width: VSPSpacing.md),
-                Expanded(
-                  child: PrimaryButton(
-                    text: 'Submit Result',
-                    height: 48,
-                    onPressed: _selectedIndex == -1 ? null : _handleSubmit,
-                    isLoading: false,
-                  ),
+                child: Column(
+                  children: [
+                    // Teams 
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceAround,
+                      children: [
+                        _buildTeamDisplay(widget.booking.playerTeamName ?? (isArabic ? 'فريقك' : 'Your Team')),
+                        Text(
+                          'VS',
+                          style: Theme.of(context).textTheme.displayMedium?.copyWith(
+                                color: VSPColors.accent,
+                                fontStyle: FontStyle.italic,
+                              ),
+                        ),
+                        _buildTeamDisplay(widget.booking.opponentTeamName ?? (isArabic ? 'المنافس' : 'Opponent')),
+                      ],
+                    ),
+                    const SizedBox(height: VSPSpacing.lg),
+                    const Divider(color: VSPColors.divider, height: 1),
+                    const SizedBox(height: VSPSpacing.md),
+                    // Details
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        _buildDetailItem(isArabic ? 'التاريخ' : 'Date', widget.booking.formattedDate),
+                        _buildDetailItem(isArabic ? 'الملعب' : 'Stadium', widget.booking.stadiumName),
+                        _buildDetailItem(isArabic ? 'السعر' : 'Price', '${widget.booking.totalPrice.toInt()} ${widget.booking.currency}'),
+                      ],
+                    ),
+                  ],
                 ),
-              ],
-            ),
-          ],
+              ),
+              const SizedBox(height: 24),
+
+              // Selection Options
+              _buildSelectionOption(0, isArabic ? 'فزنا بالمباراة 🏆' : 'We Won', LucideIcons.trophy, VSPColors.warning),
+              const SizedBox(height: 12),
+              _buildSelectionOption(1, isArabic ? 'تعادل 🤝' : 'Draw', LucideIcons.repeat, const Color(0xFF3B82F6)),
+              const SizedBox(height: 12),
+              _buildSelectionOption(2, isArabic ? 'خسرنا المباراة' : 'We Lost', LucideIcons.frown, VSPColors.error),
+
+              const SizedBox(height: VSPSpacing.lg),
+              const Divider(color: VSPColors.divider),
+              const SizedBox(height: VSPSpacing.lg),
+
+              // Rating Section
+              _buildRatingSection(isArabic),
+
+              const SizedBox(height: 32),
+              // Actions
+              Row(
+                children: [
+                  Expanded(
+                    child: PrimaryButton(
+                      text: isArabic ? 'إلغاء' : 'Cancel',
+                      height: 48,
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                  const SizedBox(width: VSPSpacing.md),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: isArabic ? 'إرسال النتيجة' : 'Submit Result',
+                      height: 48,
+                      onPressed: _selectedIndex == -1 ? null : _handleSubmit,
+                      isLoading: false,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
         ),
       ),
     );
@@ -187,12 +191,12 @@ class _MatchResultModalState extends State<MatchResultModal> {
     // but for now, we assume the callback handles the outcome and the provider handles the rating)
   }
 
-  Widget _buildRatingSection() {
+  Widget _buildRatingSection(bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          'Rate the Stadium (Optional)',
+          isArabic ? 'تقييم الملعب (اختياري)' : 'Rate the Stadium (Optional)',
           style: Theme.of(context).textTheme.titleSmall,
         ),
         const SizedBox(height: VSPSpacing.sm),
@@ -219,7 +223,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
           style: Theme.of(context).textTheme.bodySmall,
           maxLines: 2,
           decoration: InputDecoration(
-            hintText: 'Write a review...',
+            hintText: isArabic ? 'اكتب تقييمك وانطباعك...' : 'Write a review...',
             hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
             filled: true,
             fillColor: VSPColors.surfaceAlt,

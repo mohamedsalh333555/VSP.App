@@ -1,4 +1,4 @@
-﻿import 'add_stadium_wizard.dart';
+import 'add_stadium_wizard.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
@@ -76,11 +76,11 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     final bank = _bankController.text.trim();
 
     if (name.isEmpty) {
-      VSPFeedback.showError(context, 'Name cannot be empty');
+      VSPFeedback.showError(context, isArabic ? 'اسم المالك لا يمكن أن يكون فارغاً' : 'Name cannot be empty');
       return;
     }
     if (phone.isEmpty) {
-      VSPFeedback.showError(context, 'Phone number cannot be empty');
+      VSPFeedback.showError(context, isArabic ? 'رقم الهاتف لا يمكن أن يكون فارغاً' : 'Phone number cannot be empty');
       return;
     }
     if (instapay.isEmpty && vodafone.isEmpty && bank.isEmpty) {
@@ -110,10 +110,10 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     if (mounted) {
       setState(() => _isLoading = false);
       if (success) {
-        VSPFeedback.showSuccess(context, 'Profile updated successfully');
+        VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث البيانات بنجاح 🛡️' : 'Profile updated successfully');
         Navigator.pop(context);
       } else {
-        VSPFeedback.showError(context, 'Failed to update profile');
+        VSPFeedback.showError(context, isArabic ? 'فشل تحديث البيانات' : 'Failed to update profile');
       }
     }
   }
@@ -139,27 +139,34 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.only(bottom: 100),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // 1. Stadium Selector
-            SizedBox(
-              height: 230,
-              child: ListView.builder(
-                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
-                scrollDirection: Axis.horizontal,
-                itemCount: _stadiums.length,
-                itemBuilder: (context, index) {
-                  return Container(
-                    width: 310,
-                    margin: const EdgeInsets.only(right: VSPSpacing.md),
-                    child: GestureDetector(onTap: () { Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: _stadiums[index].id))); }, child: StadiumCard(stadium: _stadiums[index], isOwnerView: false)),
-                  );
-                },
+            if (_stadiums.isNotEmpty)
+              SizedBox(
+                height: 230,
+                child: ListView.builder(
+                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
+                  scrollDirection: Axis.horizontal,
+                  itemCount: _stadiums.length,
+                  itemBuilder: (context, index) {
+                    return Container(
+                      width: 310,
+                      margin: const EdgeInsets.only(right: VSPSpacing.md),
+                      child: GestureDetector(
+                        onTap: () { 
+                          Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: _stadiums[index].id))); 
+                        }, 
+                        child: StadiumCard(stadium: _stadiums[index], isOwnerView: false),
+                      ),
+                    );
+                  },
+                ),
               ),
-            ),
             
             const SizedBox(height: 20),
 
@@ -178,7 +185,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)), // Email usually not editable here
+                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)),
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'الموقع' : 'Location'),
@@ -349,8 +356,6 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 
-
-
   Widget _buildDocumentCard(String title, String size) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return VSPCard(
@@ -390,103 +395,9 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 
-  // Reuse logic from OwnerStadiumsScreen for visual consistency, simplified for horizontal list
-  Widget _buildStadiumCard(Stadium stadium) {
-    return VSPCard(
-      padding: EdgeInsets.zero,
-      margin: EdgeInsets.zero,
-      border: Border.all(color: VSPColors.accent),
-      child: Stack(
-        children: [
-          // Background Image
-          ClipRRect(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-            child: Image.network(
-              stadium.imageUrl,
-              height: 230,
-              width: double.infinity,
-              fit: BoxFit.cover,
-            ),
-          ),
-          // Overlay
-          Container(
-            height: 230,
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(VSPRadius.lg),
-              color: Colors.black.withValues(alpha: 0.4),
-            ),
-          ),
-          // Top Left: Location Badge
-          Positioned(
-            top: 12,
-            left: 12,
-            child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-              decoration: BoxDecoration(
-                color: Colors.black.withValues(alpha: 0.6),
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
-              ),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 4),
-                  Text(stadium.location, style: Theme.of(context).textTheme.labelSmall),
-                ],
-              ),
-            ),
-          ),
-          
-          // Bottom Info
-          Positioned(
-            bottom: 0,
-            left: 0,
-            right: 0,
-            child: Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                borderRadius: const BorderRadius.only(
-                  bottomLeft: Radius.circular(VSPRadius.lg),
-                  bottomRight: Radius.circular(VSPRadius.lg),
-                ),
-                color: Colors.black.withValues(alpha: 0.7),
-              ),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   Text(stadium.name, style: Theme.of(context).textTheme.titleSmall, maxLines: 1),
-                   const SizedBox(height: 4),
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                     children: [
-                       Row(children: const [
-                         Icon(LucideIcons.mars, color: VSPColors.textPrimary, size: 14),
-                         SizedBox(width: 4),
-                         Icon(LucideIcons.mapPin, color: VSPColors.textPrimary, size: 14),
-                       ]),
-                       Text('Cafeteria', style: Theme.of(context).textTheme.labelSmall),
-                       Text('Seats K${(stadium.seatsCapacity/1000).toStringAsFixed(0)} person', style: Theme.of(context).textTheme.labelSmall),
-                     ],
-                   ),
-                    const SizedBox(height: 4),
-                   Row(
-                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                     children: [
-                        Text('Price ${NumberFormat('#,###').format(stadium.pricePerHour)} eg', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-                        Text(stadium.area, style: Theme.of(context).textTheme.labelSmall),
-                     ],
-                   )
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
-
   void _showDeleteAccountDialog(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     showDialog(
       context: context,
       builder: (context) => StatefulBuilder(
@@ -494,10 +405,15 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
           return AlertDialog(
             backgroundColor: VSPColors.surface,
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            title: const Text('Delete Account?', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
-            content: const Text(
-              'Are you sure? This action cannot be undone. You will lose all your data, stadiums, and match history permanently.',
-              style: TextStyle(color: VSPColors.textSecondary, height: 1.5),
+            title: Text(
+              isArabic ? 'حذف حساب المالك نهائياً؟ ⚠️' : 'Delete Account?', 
+              style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+            ),
+            content: Text(
+              isArabic
+                  ? 'هل أنت متأكد؟ لا يمكن التراجع عن هذا الإجراء وسيتم حذف جميع بياناتك وملاعبك وتاريخ حجوزاتك نهائياً.'
+                  : 'Are you sure? This action cannot be undone. You will lose all your data, stadiums, and match history permanently.',
+              style: const TextStyle(color: VSPColors.textSecondary, height: 1.5),
             ),
             actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
             actions: [
@@ -505,7 +421,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 children: [
                   Expanded(
                     child: PrimaryButton(
-                      text: 'Cancel',
+                      text: isArabic ? 'إلغاء' : 'Cancel',
                       height: 48,
                       color: VSPColors.surfaceAlt,
                       textColor: VSPColors.textPrimary,
@@ -515,7 +431,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                   const SizedBox(width: VSPSpacing.md),
                   Expanded(
                     child: PrimaryButton(
-                      text: 'Delete',
+                      text: isArabic ? 'حذف' : 'Delete',
                       height: 48,
                       color: VSPColors.error,
                       textColor: VSPColors.background,
@@ -534,7 +450,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                            );
                         } else {
                           setDialogState(() => _isDeleting = false);
-                          VSPFeedback.showError(context, authProvider.errorMessage ?? "Failed to delete account");
+                          VSPFeedback.showError(context, authProvider.errorMessage ?? (isArabic ? "فشل حذف الحساب" : "Failed to delete account"));
                           Navigator.pop(context);
                         }
                       },
