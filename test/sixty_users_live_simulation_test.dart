@@ -1,9 +1,6 @@
 import 'dart:async';
-import 'dart:math';
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
-import 'package:vsp_application/core/models/user_model.dart';
-import 'package:vsp_application/core/utils/elo_calculator.dart';
 
 // =========================================================================
 // 🚀 VSP 60-USER LIVE HUMAN SIMULATION & DIVERSIFIED OWNERS CHAOS TEST

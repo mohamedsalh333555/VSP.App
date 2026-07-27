@@ -17,7 +17,6 @@ class BookingProvider with ChangeNotifier {
   StreamSubscription? _bookingSubscription; // ✅ Added tracking
 
   bool _isLoading = false;
-  final bool _isLoadingMoreParticipants = false;
   final bool _isLoadingMoreMatches = false;
   bool _hasMoreMatches = true;
   String? _errorMessage;

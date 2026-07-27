@@ -154,7 +154,7 @@ class _SignupScreenState extends State<SignupScreen> {
       },
     );
 
-    print("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
+    debugPrint("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
 
     if (!mounted) return;
 
@@ -188,7 +188,7 @@ class _SignupScreenState extends State<SignupScreen> {
         if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
           errorMsg = 'تعذر إرسال إيميل التأكيد. يرجى التمرير لأسفل في نافذة Email في Supabase وإيقاف خيار (Confirm email).';
         }
-        print("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
+        debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
         VSPFeedback.showError(context, errorMsg);
       }
     }

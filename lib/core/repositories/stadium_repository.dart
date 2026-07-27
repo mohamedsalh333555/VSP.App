@@ -1,7 +1,5 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
-import '../config/app_config.dart';
 import '../services/logger_service.dart';
 import '../constants/egypt_governorates.dart';
 
@@ -214,7 +212,11 @@ class StadiumRepository {
     String? governorate,
   }) async {
     try {
-      dynamic query = _supabase.from('stadiums').select();
+      dynamic query = _supabase
+          .from('stadiums')
+          .select()
+          .eq('is_verified', true)
+          .neq('is_blocked', true);
       
       // 🛡️ Gating Safety: Rely on Supabase's Row Level Security (RLS) policy
       // Database will silently and securely omit unverified owner facilities from search results based on current user status.

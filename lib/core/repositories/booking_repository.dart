@@ -8,7 +8,6 @@ import '../repositories/user_repository.dart';
 import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
-import '../services/database_service.dart';
 import '../services/notification_handler.dart';
 
 /// Abstract BookingRepository interface

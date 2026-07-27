@@ -51,6 +51,8 @@ void main() async {
     await Supabase.initialize(
       url: supabaseUrl,
       anonKey: supabaseAnonKey,
+      // ignore: deprecated_member_use
+      // Note: publishableKey is the new name — update when package fully migrates
     );
     VSPLogger.i("✅ Supabase initialized successfully");
   } catch (e) {

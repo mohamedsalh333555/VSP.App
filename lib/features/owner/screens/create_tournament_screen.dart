@@ -394,10 +394,6 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
-    return VSPSectionTitle(title);
-  }
-
   Widget _buildInputLabel(String label) {
     return Padding(
       padding: const EdgeInsets.only(bottom: VSPSpacing.xs, left: 4),

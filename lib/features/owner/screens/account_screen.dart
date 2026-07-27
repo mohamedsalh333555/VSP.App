@@ -3,14 +3,12 @@ import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../core/widgets/shimmer_image.dart';
 import 'add_stadium_wizard.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
-import '../../../data/models.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/stadium_card.dart';
 

@@ -521,46 +521,40 @@ class _HomeContent extends StatelessWidget {
   }
 
   Widget _buildSearchBar(BuildContext context) {
+    const double barHeight = 52.0;
+    final borderRadius = BorderRadius.circular(VSPRadius.lg);
+
     return Row(
       children: [
         Expanded(
           child: GestureDetector(
             onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const GlobalSearchScreen())),
             child: Container(
-              height: 54,
-              padding: const EdgeInsets.only(left: 20, right: 6),
+              height: barHeight,
+              padding: const EdgeInsets.symmetric(horizontal: 16),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.full),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 1),
+                borderRadius: borderRadius,
+                border: Border.all(color: VSPColors.divider, width: 1),
                 boxShadow: [
                   BoxShadow(
-                    color: Colors.black.withValues(alpha: 0.2),
-                    blurRadius: 10,
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 12,
                     offset: const Offset(0, 4),
                   ),
                 ],
               ),
               child: Row(
                 children: [
+                  const Icon(LucideIcons.search, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 12),
                   Expanded(
                     child: Text(
                       AppLocalizations.of(context)!.searchStadiums,
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
-                  ),
-                  const SizedBox(width: 12),
-                  Container(
-                    width: 42,
-                    height: 42,
-                    decoration: BoxDecoration(
-                      color: Colors.black.withValues(alpha: 0.6),
-                      shape: BoxShape.circle,
-                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2), width: 1),
-                    ),
-                    child: const Icon(LucideIcons.search, color: VSPColors.accent, size: 22),
                   ),
                 ],
               ),
@@ -568,30 +562,41 @@ class _HomeContent extends StatelessWidget {
           ),
         ),
         const SizedBox(width: 12),
-        InkWell(
-          onTap: () async {
-            final result = await showModalBottomSheet<Map<String, dynamic>>(
-              context: context,
-              backgroundColor: Colors.transparent,
-              isScrollControlled: true,
-              builder: (context) => Padding(
-                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                child: const FilterBottomSheet(),
+        Material(
+          color: Colors.transparent,
+          child: InkWell(
+            borderRadius: borderRadius,
+            onTap: () async {
+              final result = await showModalBottomSheet<Map<String, dynamic>>(
+                context: context,
+                backgroundColor: Colors.transparent,
+                isScrollControlled: true,
+                builder: (context) => Padding(
+                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                  child: const FilterBottomSheet(),
+                ),
+              );
+              if (result != null && context.mounted) {
+                context.read<StadiumProvider>().applyFilters(result);
+              }
+            },
+            child: Container(
+              width: barHeight,
+              height: barHeight,
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: borderRadius,
+                border: Border.all(color: VSPColors.divider, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.15),
+                    blurRadius: 12,
+                    offset: const Offset(0, 4),
+                  ),
+                ],
               ),
-            );
-            if (result != null && context.mounted) {
-              context.read<StadiumProvider>().applyFilters(result);
-            }
-          },
-          child: Container(
-            width: 50,
-            height: 50,
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(12),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+              child: const Icon(LucideIcons.sliders, color: VSPColors.accent, size: 20),
             ),
-            child: const Icon(LucideIcons.sliders, color: VSPColors.accent),
           ),
         ),
       ],

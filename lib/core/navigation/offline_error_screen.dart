@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import '../ui/components/vsp_card.dart';
-import '../utils/vsp_feedback.dart';
 
 class OfflineErrorScreen extends StatefulWidget {
   const OfflineErrorScreen({super.key});

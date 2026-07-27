@@ -206,30 +206,37 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         ),
                         const SizedBox(height: 16),
                         Row(
+                          crossAxisAlignment: CrossAxisAlignment.start,
                           children: [
                             Expanded(
+                              flex: 3,
                               child: TextField(
                                 style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
                                   labelText: 'Expiry (MM/YY)', 
                                   labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                                  isDense: true,
                                   filled: true,
                                   fillColor: VSPColors.surfaceAlt,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
                                 ),
+                                keyboardType: TextInputType.datetime,
                               ),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Expanded(
+                              flex: 2,
                               child: TextField(
                                 style: const TextStyle(color: Colors.white),
                                 decoration: InputDecoration(
                                   labelText: 'CVV', 
                                   labelStyle: const TextStyle(color: VSPColors.textSecondary),
+                                  isDense: true,
                                   filled: true,
                                   fillColor: VSPColors.surfaceAlt,
                                   border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
                                 ),
+                                keyboardType: TextInputType.number,
                                 obscureText: true,
                               ),
                             ),

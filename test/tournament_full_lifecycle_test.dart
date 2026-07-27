@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/data/models.dart';
-import 'dart:math';
 
 void main() {
   group('🏆 VSP Tournament Full Lifecycle & Chaos Integration Test', () {

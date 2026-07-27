@@ -30,8 +30,6 @@ class CreateAccountScreen extends StatelessWidget {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final bool isUserOwner = isOwner;
-    // Google Sign-In only supported on mobile (Android/iOS)
-    final bool isMobile = !kIsWeb && (Platform.isAndroid || Platform.isIOS);
 
     // تحديد النصوص بناءً على نوع المستخدم
     final String greeting = !isUserOwner

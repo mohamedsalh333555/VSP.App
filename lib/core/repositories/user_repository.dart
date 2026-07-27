@@ -143,14 +143,14 @@ class UserRepository {
       }).eq('id', userId);
 
       if (warningMessage != null) {
-        await _supabase.from('notifications').insert({
-          'userId': userId,
-          'title': 'Safety Warning ⚠️',
-          'body': warningMessage,
-          'type': 'warning',
-          'isRead': false,
-          'createdAt': DateTime.now().toUtc().toIso8601String(),
-        });
+      await _supabase.from('notifications').insert({
+        'user_id': userId,
+        'title': 'Safety Warning ⚠️',
+        'body': warningMessage,
+        'type': 'warning',
+        'is_read': false,
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
       }
     } catch (e) {
       VSPLogger.e('Error updating user moderation status', e);

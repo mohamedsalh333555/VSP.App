@@ -2,7 +2,6 @@ import 'add_stadium_wizard.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -87,8 +86,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       VSPFeedback.showError(
         context,
         isArabic
-            ? "يجب إدخال طريقة دفع واحدة على الأقل (محفظة، إنستا باي، أو تحويل بنكي) لحفظ البيانات وتفعيل استقبال الحجوزات ⚠️"
-            : "You must enter at least one payment method (Wallet, InstaPay, or Bank) to save settings ⚠️",
+            ? "يرجى إدخال وسيلة واحدة على الأقل استلام مستحقاتك المالية وتصفية الحسابات من إدارة المنصة (إنستا باي، محفظة إلكترونية، أو حساب بنكي) ⚠️"
+            : "Please enter at least one payout method (InstaPay, Mobile Wallet, or Bank IBAN) to receive your earnings from VSP ⚠️",
       );
       return;
     }
@@ -242,7 +241,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
 
             const SizedBox(height: 24),
 
-            // P2P Receivables Settings
+            // Owner Payout & Settlement Information
             Padding(
               padding: const EdgeInsets.symmetric(horizontal: 20),
               child: VSPCard(
@@ -252,9 +251,24 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.wallet, color: VSPColors.accent, size: 20),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic ? 'بيانات استلام المستحقات والتسويات المالية 🏦' : 'Payout & Settlement Method',
+                            style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.accent),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
                     Text(
-                      isArabic ? 'إعدادات تحصيل مستحقات P2P' : 'P2P Receivables Settings',
-                      style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: VSPColors.accent),
+                      isArabic 
+                          ? 'تستخدم هذه البيانات من قبل إدارة المنصة VSP لتحويل أرباح ومستحقات حجز ملاعبك إليك بشكل دوري.'
+                          : 'This data is used by VSP Admin to disburse your stadium booking payouts.',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
                     ),
                     const SizedBox(height: 16),
                     _buildInputLabel(isArabic ? '📲 عنوان إنستا باي (InstaPay IPN / Phone)' : '📲 InstaPay IPN / Phone'),
@@ -266,17 +280,17 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                         : null,
                     ),
                     const SizedBox(height: 16),
-                    _buildInputLabel(isArabic ? '💵 رقم محفظة فودافون كاش (Vodafone Cash Number)' : '💵 Vodafone Cash Number'),
+                    _buildInputLabel(isArabic ? '💵 رقم المحفظة الإلكترونية (فودافون كاش / اتصالات / أورنج)' : '💵 Mobile Wallet Number'),
                     CustomTextField(
                       controller: _vodafoneController,
-                      hintText: isArabic ? 'أدخل رقم المحفظة' : 'Enter Vodafone Cash number',
+                      hintText: isArabic ? 'أدخل رقم المحفظة' : 'Enter wallet phone number',
                       keyboardType: TextInputType.phone,
                       suffixIcon: _vodafoneController.text.isNotEmpty 
                         ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _vodafoneController.clear()))
                         : null,
                     ),
                     const SizedBox(height: 16),
-                    _buildInputLabel(isArabic ? '🏦 الحساب البنكي / المستفيد (IBAN & Holder)' : '🏦 Bank Account Number/IBAN & Holder Name'),
+                    _buildInputLabel(isArabic ? '🏦 الحساب البنكي / المستفيد (IBAN & Holder)' : '🏦 Bank Account Number / IBAN'),
                     CustomTextField(
                       controller: _bankController,
                       hintText: isArabic ? 'أدخل تفاصيل الحساب واسم المستفيد' : 'Enter Bank Account/IBAN and Holder Name',
@@ -288,6 +302,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 ),
               ),
             ),
+
+
 
             const SizedBox(height: 24),
 

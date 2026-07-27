@@ -103,8 +103,14 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
       ),
       body: _isSearching
           ? const Center(child: CircularProgressIndicator(color: VSPColors.accent))
-          : SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-              padding: const EdgeInsets.all(VSPSpacing.md),
+          : SingleChildScrollView(
+              keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+              padding: EdgeInsets.only(
+                left: VSPSpacing.md,
+                right: VSPSpacing.md,
+                top: VSPSpacing.md,
+                bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [

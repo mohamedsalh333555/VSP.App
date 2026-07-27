@@ -5,7 +5,6 @@ import 'package:flutter/material.dart';
 import '../../data/models.dart';
 import '../../main.dart';
 import '../repositories/notification_repository.dart';
-import '../repositories/user_repository.dart';
 import '../repositories/booking_repository.dart';
 import '../utils/vsp_feedback.dart';
 import 'logger_service.dart';
@@ -13,7 +12,6 @@ import 'logger_service.dart';
 /// Centralized factory for creating and sending notifications based on the VSP Notification Matrix.
 class NotificationHandler {
   static NotificationRepository _notificationRepo = NotificationRepository();
-  static final _userRepo = UserRepository();
 
   static set notificationRepo(NotificationRepository repo) {
     _notificationRepo = repo;

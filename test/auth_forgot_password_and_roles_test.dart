@@ -1,6 +1,5 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/models/user_model.dart';
-import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 
 enum RouteDecision {
   welcome,

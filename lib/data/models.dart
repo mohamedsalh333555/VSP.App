@@ -150,10 +150,8 @@ class Stadium {
     }
 
     final String rawNotes = data['notes'] ?? '';
-    String cleanNotes = rawNotes;
     if (rawNotes.contains('|Sport:')) {
       final parts = rawNotes.split('|Sport:');
-      cleanNotes = parts[0];
       sportType = parts[1];
     }
 

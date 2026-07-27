@@ -8,7 +8,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/utils/app_error_handler.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/providers/auth_provider.dart';

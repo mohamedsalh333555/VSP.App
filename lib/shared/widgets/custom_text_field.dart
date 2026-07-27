@@ -44,6 +44,11 @@ class CustomTextField extends StatelessWidget {
     return TextFormField(
       controller: controller,
       keyboardType: keyboardType,
+      textDirection: (keyboardType == TextInputType.emailAddress ||
+              keyboardType == TextInputType.url ||
+              keyboardType == TextInputType.phone)
+          ? TextDirection.ltr
+          : null,
       obscureText: obscureText,
       maxLines: maxLines,
       validator: validator,

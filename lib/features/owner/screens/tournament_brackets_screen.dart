@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:font_awesome_flutter/font_awesome_flutter.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -83,7 +81,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               children: sortedRounds.map((roundIdx) {
                 final roundMatches = groupedMatches[roundIdx]!;
                 return ListView.builder(
-                  padding: const EdgeInsets.all(16),
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
                   itemCount: roundMatches.length,
                   itemBuilder: (context, index) {
                     final match = roundMatches[index];

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/foundation.dart';
-import 'package:supabase_flutter/supabase_flutter.dart' hide Provider;
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:image_picker/image_picker.dart';
 import '../models/user_model.dart';
@@ -70,7 +70,6 @@ class AuthProvider with ChangeNotifier {
 
   bool get isInitializing => _isInitializing; // 🔥 Exposed for RootScreen gating
 
-  bool _initialStateCaptured = false; // 🔥 To ensure we capture the FIRST auth state
   bool _preserveError = false; // 🔥 Preserve error message across silent sign-outs
 
   AuthProvider() {
@@ -93,8 +92,6 @@ class AuthProvider with ChangeNotifier {
 
     // Listen to subsequent auth state changes
     _authService.authStateChanges.listen((User? user) async {
-      _initialStateCaptured = true;
-      
       // Avoid redundant triggers if user is the same
       if (user?.id == _firebaseUser?.id && _userModel != null) {
          _isInitializing = false;

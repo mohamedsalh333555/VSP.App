@@ -96,31 +96,20 @@ class StadiumProvider with ChangeNotifier {
         final result = await _databaseService.getStadiumsPaginated(
           limit: 10,
           startAfter: _lastDocument,
-          governorate: _isGeographicFallback ? null : _selectedGovernorate,
+          governorate: _selectedGovernorate,
         );
 
         final List<Stadium> newStadiums = result['items'];
         _lastDocument = result['lastDoc'];
 
-        // Fallback Logic - If city search is empty during initial refresh, show all stadiums
-        if (newStadiums.isEmpty && _selectedGovernorate != null && isRefresh) {
-          _isGeographicFallback = true;
-          final fallbackResult = await _databaseService.getStadiumsPaginated(
-            limit: 10,
-            governorate: null, // Clear filter to show everything
-          );
-          _stadiums = List<Stadium>.from(fallbackResult['items']);
-          _lastDocument = fallbackResult['lastDoc'];
+        if (isRefresh) {
+          _stadiums = newStadiums;
+          _isGeographicFallback = false;
         } else {
-          if (isRefresh) {
-            _stadiums = newStadiums;
-            _isGeographicFallback = false;
-          } else {
-            _stadiums.addAll(newStadiums);
-          }
+          _stadiums.addAll(newStadiums);
         }
 
-        if (_stadiums.length < 10) {
+        if (newStadiums.length < 10) {
           _hasMore = false;
         }
       }

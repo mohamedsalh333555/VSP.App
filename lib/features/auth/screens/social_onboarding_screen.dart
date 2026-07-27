@@ -407,30 +407,60 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 _buildGovernorateDropdown(),
 
                 if (isOwner) ...[
-                  const SizedBox(height: 20),
-                  _buildLabel('عنوان انستا باي InstaPay (اختياري)'),
-                  CustomTextField(
-                    controller: _instapayController,
-                    hintText: 'username@instapay',
-                    prefixIcon: LucideIcons.wallet,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLabel('رقم فودافون كاش (اختياري)'),
-                  CustomTextField(
-                    controller: _vodafoneController,
-                    hintText: '01xxxxxxxxx',
-                    keyboardType: TextInputType.phone,
-                    prefixIcon: LucideIcons.phoneCall,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildLabel('الحساب البنكي (IBAN) (اختياري)'),
-                  CustomTextField(
-                    controller: _bankController,
-                    hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
-                    prefixIcon: LucideIcons.landmark,
+                  const SizedBox(height: 24),
+                  Container(
+                    padding: const EdgeInsets.all(16),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        const Row(
+                          children: [
+                            Icon(LucideIcons.wallet, color: VSPColors.accent, size: 20),
+                            SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                'بيانات استلام المستحقات والتسويات المالية 🏦',
+                                style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        const Text(
+                          'يرجى إدخال وسيلة واحدة على الأقل لاستلام أرباح ومستحقات حجز ملاعبك دورياً من إدارة المنصة VSP.',
+                          style: TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
+                        ),
+                        const SizedBox(height: 16),
+                        _buildLabel('عنوان انستا باي InstaPay IPN'),
+                        CustomTextField(
+                          controller: _instapayController,
+                          hintText: 'username@instapay',
+                          prefixIcon: LucideIcons.wallet,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildLabel('رقم المحفظة الإلكترونية (فودافون/اتصالات/أورنج)'),
+                        CustomTextField(
+                          controller: _vodafoneController,
+                          hintText: '01xxxxxxxxx',
+                          keyboardType: TextInputType.phone,
+                          prefixIcon: LucideIcons.phoneCall,
+                        ),
+                        const SizedBox(height: 16),
+                        _buildLabel('الحساب البنكي / IBAN واسم المستفيد'),
+                        CustomTextField(
+                          controller: _bankController,
+                          hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
+                          prefixIcon: LucideIcons.landmark,
+                        ),
+                      ],
+                    ),
                   ),
                 ],
-
                 if (!isOwner) ...[
                   const SizedBox(height: 20),
                   _buildLabel('المركز المفضل'),
@@ -502,6 +532,13 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 }
                 if (phone.length < 10) {
                   VSPFeedback.showError(context, 'يرجى إدخال رقم هاتف صحيح 📱');
+                  return;
+                }
+                if (isOwner &&
+                    _instapayController.text.trim().isEmpty &&
+                    _vodafoneController.text.trim().isEmpty &&
+                    _bankController.text.trim().isEmpty) {
+                  VSPFeedback.showError(context, 'يرجى إدخال وسيلة واحدة على الأقل لاستلام مستحقاتك المالية وتصفية الحسابات من المنصة 🏦');
                   return;
                 }
 

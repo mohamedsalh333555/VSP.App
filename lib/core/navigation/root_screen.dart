@@ -2,18 +2,11 @@ import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../shared/widgets/primary_button.dart';
-import '../../features/auth/screens/splash_screen.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
-import '../../features/auth/screens/welcome_screen.dart';
 import '../../features/owner/screens/owner_main_screen.dart';
 import '../../features/player/screens/player_home_screen.dart';
-import '../../features/auth/screens/social_onboarding_screen.dart';
-import '../../features/owner/screens/facility_onboarding_screen.dart';
-import '../../features/owner/screens/owner_documentation_wizard.dart';
-import 'suspended_account_screen.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
-import '../../features/player/screens/match_details_screen.dart';
 import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -30,8 +23,9 @@ class RootScreen extends StatefulWidget {
 
 class _RootScreenState extends State<RootScreen> {
   Timer? _loadingTimeout;
-  bool _loadingTimedOut = false;
   bool _deepLinkChecked = false;
+  // ignore: unused_field
+  bool _loadingTimedOut = false;
 
   @override
   void initState() {
@@ -165,7 +159,6 @@ class _RootScreenState extends State<RootScreen> {
   @override
   Widget build(BuildContext context) {
     final auth = context.watch<AuthProvider>();
-    final remoteConfig = RemoteConfigService();
 
     // 🔗 Reactive Deep Link recovery safety net
     if (auth.isAuthenticated && auth.userModel != null && !_deepLinkChecked) {

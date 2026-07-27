@@ -1,6 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/services/database_service.dart';
-import 'package:vsp_application/core/services/auth_service.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 

@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 
@@ -64,7 +65,7 @@ class StatsService {
         'matchesPlayed': bookings.length,
       };
     } catch (e) {
-      print('Error calculating stats: $e');
+      debugPrint('Error calculating stats: $e');
       return {
         'winRate': '0.0',
         'favoriteStadium': 'Error',

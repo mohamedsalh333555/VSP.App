@@ -933,53 +933,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     );
   }
 
-  Widget _buildDepositToggleCard() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final depositAmount = widget.selectedStadium?.depositAmount ?? 0.0;
-    
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
-      ),
-      child: Row(
-        children: [
-          Icon(LucideIcons.handshake, color: VSPColors.accent),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(
-                  isArabic ? "تم استلام العربون يدوياً" : "Manual Deposit Received",
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13, color: VSPColors.textPrimary),
-                ),
-                Text(
-                  isArabic
-                      ? "قيمة العربون: ${depositAmount.toInt()} ج.م"
-                      : "Deposit amount: ${depositAmount.toInt()} EGP",
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                ),
-              ],
-            ),
-          ),
-          Switch(
-            value: _isManualDepositReceived,
-            onChanged: (widget.slot['booking']?.paymentMethod == 'paymob') ? null : (val) {
-              setState(() {
-                _isManualDepositReceived = val;
-              });
-            },
-            activeColor: VSPColors.accent,
-            activeTrackColor: VSPColors.accentSoft,
-          ),
-        ],
-      ),
-    );
-  }
-
   Future<void> _showNoShowReportDialog(Booking booking) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
@@ -1283,7 +1236,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                         width: double.infinity,
                         height: 50,
                         child: ElevatedButton.icon(
-                          onPressed: () => _showNoShowReportDialog(booking!),
+                          onPressed: () => _showNoShowReportDialog(booking),
                           icon: const Icon(LucideIcons.userX, color: Colors.white, size: 20),
                           label: Text(
                             isArabic ? 'الإبلاغ عن غياب لاعب' : 'Report No-Show',
@@ -1345,7 +1298,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                         final authProvider = Provider.of<AuthProvider>(widget.parentContext, listen: false);
                         final uid = authProvider.firebaseUser!.uid;
                         
-                        final collectedVal = double.tryParse(_collectedAmountController.text.trim()) ?? 0.0;
                         final stadium = widget.selectedStadium!;
 
                         if (!widget.isEdit) {

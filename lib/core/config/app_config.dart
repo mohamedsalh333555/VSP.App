@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 class AppConfig {
   static const bool bypassOtp = false;
   static const bool demoMode = false;

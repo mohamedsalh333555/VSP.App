@@ -40,7 +40,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final _depositController = TextEditingController();
   final _pageController = PageController();
   int _currentStep = 0;
-  bool _isLoadingData = false;
 
   // Form Controllers
   final _nameController = TextEditingController();
@@ -73,6 +72,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final bool _isUploading = false;
   bool _isLocationLoading = false;
   bool _isSaving = false;
+  // ignore: unused_field
+  bool _isLoadingData = false;
   String? _governorate; // ✅ Extracted via Geocoding for filtering
   bool _requireDeposit = false;
 
@@ -212,33 +213,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
     } catch (e) {
       debugPrint('Error clearing persisted form data: $e');
-    }
-  }
-
-  void _updateGovernorate(String? val) {
-    setState(() {
-      _governorate = val;
-    });
-    if (widget.stadiumId == null) {
-      _saveToPrefs('temp_stadium_governorate', val ?? '');
-    }
-  }
-
-  void _updateSportType(String? val) {
-    setState(() {
-      _selectedSportType = val;
-    });
-    if (widget.stadiumId == null) {
-      _saveToPrefs('temp_stadium_sport_type', val ?? '');
-    }
-  }
-
-  void _updateFloorType(String? val) {
-    setState(() {
-      _selectedFloorType = val;
-    });
-    if (widget.stadiumId == null) {
-      _saveToPrefs('temp_stadium_floor_type', val ?? '');
     }
   }
 
@@ -726,7 +700,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     
                     // Floating GPS button
                     Positioned(
-                      bottom: MediaQuery.of(builderContext).padding.bottom + 85,
+                      bottom: MediaQuery.of(builderContext).padding.bottom + 109,
                       right: 16,
                       child: Container(
                         decoration: BoxDecoration(
@@ -1883,40 +1857,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       ))
                   .toList(),
               onChanged: (val) => setState(() => _selectedSportType = val),
-            ),
-          ),
-        ),
-      ],
-    );
-  }
-
-  Widget _buildGovernorateDropdown() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final List<String> govs = EgyptGovernorates.allGovernorates;
-    final currentVal = govs.contains(_governorate) ? _governorate : null;
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(AppLocalizations.of(context)!.governorate, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary)),
-        const SizedBox(height: VSPSpacing.xs),
-        Container(
-          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-          decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
-          child: DropdownButtonHideUnderline(
-            child: DropdownButton<String>(
-              value: currentVal,
-              hint: Text(
-                isArabic ? 'اختر محافظتك' : 'Select your governorate',
-                style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                  color: VSPColors.textSecondary.withValues(alpha: 0.5),
-                ),
-              ),
-              dropdownColor: VSPColors.surface,
-              isExpanded: true,
-              items: govs.map((e) => DropdownMenuItem(value: e, child: Text(e, style: Theme.of(context).textTheme.bodyMedium))).toList(),
-              onChanged: widget.stadiumId != null
-                  ? null
-                  : (val) => setState(() => _governorate = val),
             ),
           ),
         ),

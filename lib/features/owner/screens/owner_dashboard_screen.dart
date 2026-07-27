@@ -33,7 +33,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   );
   
   bool _isAllTime = false; 
-  final bool _filterPendingOnly = false; 
 
   @override
   void initState() {
@@ -696,14 +695,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
         ),
       ],
-    );
-  }
-
-  Widget _buildMiniBadge(String text, Color color) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-      decoration: BoxDecoration(color: color, borderRadius: BorderRadius.circular(VSPRadius.sm)),
-      child: Text(text, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.w600)),
     );
   }
 
