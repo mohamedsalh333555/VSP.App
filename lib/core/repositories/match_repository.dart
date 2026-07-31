@@ -1,4 +1,4 @@
-﻿import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
@@ -41,12 +41,12 @@ class MatchRepository {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
+        .eq('is_private', false)
         .map<List<Booking>>((list) {
           final now = DateTime.now();
           final matches = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                // Client-side filtering
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
                 final isFuture = b.endTime.isAfter(now);
@@ -54,7 +54,9 @@ class MatchRepository {
                 final totalCapacity = b.totalFieldCapacity;
                 final hasSpace = b.currentPlayers < totalCapacity;
                 
-                final uid=_supabase.auth.currentUser?.id;final isParticipant=uid!=null&&b.joinedUserIds.contains(uid);return !b.isPrivate&&isConfirmed&&isFuture&&(hasSpace||isParticipant);
+                final uid = _supabase.auth.currentUser?.id;
+                final isParticipant = uid != null && b.joinedUserIds.contains(uid);
+                return isConfirmed && isFuture && (hasSpace || isParticipant);
               })
               .toList();
               

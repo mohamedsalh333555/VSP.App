@@ -1,4 +1,4 @@
-﻿import 'owner_tournament_dashboard_screen.dart';
+import 'owner_tournament_dashboard_screen.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -184,7 +184,16 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   Future<void> _handleSave() async {
-    if (_endDate.isBefore(_startDate)) { VSPFeedback.showError(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الانتهاء لا يمكن أن يسبق تاريخ البدء!' : 'End date cannot be before start date!'); return; }
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (!_endDate.isAfter(_startDate)) { 
+      VSPFeedback.showError(context, isAr ? 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء!' : 'End date must be strictly after start date!'); 
+      return; 
+    }
+    final maxTeamsNum = int.tryParse(_selectedTeams) ?? 0;
+    if (maxTeamsNum != 4 && maxTeamsNum != 8 && maxTeamsNum != 16 && maxTeamsNum != 32) {
+      VSPFeedback.showError(context, isAr ? 'عدد الفرق يجب أن يكون (4، 8، 16، 32) فقط!' : 'Number of teams must be a power of 2 (4, 8, 16, 32)!');
+      return;
+    }
     setState(() => _isLoading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);

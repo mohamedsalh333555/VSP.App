@@ -6,6 +6,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class TournamentBracketsScreen extends StatelessWidget {
   final Championship championship;
@@ -176,14 +177,19 @@ class TournamentBracketsScreen extends StatelessWidget {
             // أيقونة التعديل تفتح الآن نافذة تسجيل النتيجة وعرض الكشوفات التفاعلية
             trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
               ? IconButton(
-                  icon: const Icon(FontAwesomeIcons.penToSquare, color: VSPColors.accent, size: 18),
+                  icon: Icon(
+                    FontAwesomeIcons.penToSquare, 
+                    color: (!hasSchedule || !isTimePassed) ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.accent, 
+                    size: 18,
+                  ),
                   onPressed: () {
+                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
                     if (!hasSchedule) {
-                      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.matchScheduledFor("يجب التحديد أولاً")), backgroundColor: VSPColors.error));
+                      VSPFeedback.showError(context, isAr ? 'يجب تحديد موعد المباراة أولاً!' : 'Match must be scheduled first!');
                       return;
                     }
                     if (!isTimePassed) {
-                      ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول! ⚠️', style: TextStyle(fontWeight: FontWeight.bold)), backgroundColor: VSPColors.error));
+                      VSPFeedback.showError(context, isAr ? 'لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول! ⚠️' : 'Cannot enter score before scheduled match time!');
                       return;
                     }
                     // فتح شاشة تسجيل النتيجة التفاعلية
@@ -425,11 +431,9 @@ class TournamentBracketsScreen extends StatelessWidget {
                                   Navigator.pop(sheetContext);
                                 }
                                 if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(
-                                      content: Text(isArabic ? '🏆 تم حفظ النتيجة وتصعيد الفائز تلقائياً!' : '🏆 Score saved and winner advanced!'),
-                                      backgroundColor: VSPColors.success,
-                                    ),
+                                  VSPFeedback.showSuccess(
+                                    context,
+                                    isArabic ? '🏆 تم حفظ النتيجة وتصعيد الفائز تلقائياً!' : '🏆 Score saved and winner advanced!',
                                   );
                                 }
                               } catch (e) {

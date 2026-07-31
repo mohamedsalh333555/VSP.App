@@ -31,16 +31,34 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   bool _isLoadingMembers = true;
   Team? _fetchedTeam;
   bool _isLoadingTeam = false;
+  bool _has1v1Champion = false;
 
   Team get team => widget.team ?? _fetchedTeam!;
 
   @override
   void initState() {
     super.initState();
+    final currentTeamId = widget.team?.id ?? widget.teamId;
+    if (currentTeamId != null) {
+      _check1v1Champion(currentTeamId);
+    }
     if (widget.team != null) {
       _loadMemberDetails();
     } else if (widget.teamId != null) {
       _loadTeamAndMembers();
+    }
+  }
+
+  Future<void> _check1v1Champion(String teamId) async {
+    try {
+      final hasChamp = await TeamRepository().has1v1Champion(teamId);
+      if (mounted) {
+        setState(() {
+          _has1v1Champion = hasChamp;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking 1v1 champion in team profile: $e');
     }
   }
 
@@ -198,6 +216,32 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                       style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
                     ),
                   ),
+                  if (_has1v1Champion) ...[
+                    const SizedBox(height: VSPSpacing.xs),
+                    Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 5),
+                      decoration: BoxDecoration(
+                        color: VSPColors.warning.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: VSPColors.warning, width: 1.5),
+                        boxShadow: [
+                          BoxShadow(
+                            color: VSPColors.warning.withValues(alpha: 0.25),
+                            blurRadius: 10,
+                            spreadRadius: 1,
+                          ),
+                        ],
+                      ),
+                      child: const Text(
+                        '👑 يضم بطل 1 ضد 1',
+                        style: TextStyle(
+                          color: VSPColors.warning,
+                          fontSize: 12,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
                 ],
               ),
             ),

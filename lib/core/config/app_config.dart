@@ -10,5 +10,5 @@ class AppConfig {
   static const int otpCountdownSeconds = 60;
 
   // Sandbox & Verification Configuration
-  static const bool autoApproveOwnerInDebug = true;
+  static const bool autoApproveOwnerInDebug = false;
 }

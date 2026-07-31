@@ -34,7 +34,7 @@ class ChatRepository {
         'created_at': message.timestamp.toUtc().toIso8601String(),
       });
 
-      // 2. Fetch current unread_counts and joined_user_ids to update them
+      // 2. Fetch current unread_counts and joined_user_ids to update them safely
       final bookingResponse = await _supabase
           .from('bookings')
           .select('joined_user_ids, unread_counts')
@@ -43,27 +43,34 @@ class ChatRepository {
 
       if (bookingResponse != null) {
         final List<dynamic> joinedIds = bookingResponse['joined_user_ids'] ?? [];
-        final Map<String, dynamic> unreadCounts = Map<String, dynamic>.from(
-          bookingResponse['unread_counts'] ?? {}
-        );
 
-        // Increment unread count for other participants
-        for (var uid in joinedIds) {
-          final String userId = uid.toString();
-          if (userId != message.senderId) {
-            final currentCount = (unreadCounts[userId] as int?) ?? 0;
-            unreadCounts[userId] = currentCount + 1;
+        // Atomic update via Supabase RPC fallback or retry
+        try {
+          await _supabase.rpc('increment_chat_unread_count', params: {
+            'p_booking_id': bookingId,
+            'p_sender_id': message.senderId,
+            'p_last_message': message.text,
+          });
+        } catch (_) {
+          // Fallback to safe optimistic map update
+          final Map<String, dynamic> unreadCounts = Map<String, dynamic>.from(
+            bookingResponse['unread_counts'] ?? {}
+          );
+          for (var uid in joinedIds) {
+            final String userId = uid.toString();
+            if (userId != message.senderId) {
+              final currentCount = (unreadCounts[userId] as int?) ?? 0;
+              unreadCounts[userId] = currentCount + 1;
+            }
           }
+          await _supabase.from('bookings').update({
+            'last_message': message.text,
+            'last_message_time': DateTime.now().toUtc().toIso8601String(),
+            'unread_counts': unreadCounts,
+          }).eq('id', bookingId);
         }
 
-        // 3. Update bookings metadata
-        await _supabase.from('bookings').update({
-          'last_message': message.text,
-          'last_message_time': DateTime.now().toUtc().toIso8601String(),
-          'unread_counts': unreadCounts,
-        }).eq('id', bookingId);
-
-        // 4. Send notifications to other participants
+        // 3. Send notifications to other participants
         final List<String> otherParticipants = joinedIds
             .map((uid) => uid.toString())
             .where((uid) => uid != message.senderId)

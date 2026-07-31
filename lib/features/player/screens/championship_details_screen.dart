@@ -12,6 +12,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'player_home_screen.dart'; 
 import '../../owner/screens/tournament_brackets_screen.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class ChampionshipDetailsScreen extends StatefulWidget {
   final Championship championship;
@@ -229,6 +230,16 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
                                     final name = guestController.text.trim();
                                     if (name.isEmpty) return;
                                     if (offlineGuestNames.contains(name)) return;
+                                    if (selectedPlayerIds.length + offlineGuestNames.length >= maxPlayers) {
+                                      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                                      VSPFeedback.showError(
+                                        context,
+                                        isAr
+                                            ? 'تجاوزت الحد الأقصى للاعبين في الفريق ($maxPlayers لاعبين)!'
+                                            : 'Maximum limit of $maxPlayers players reached!',
+                                      );
+                                      return;
+                                    }
                                     setSheetState(() {
                                       offlineGuestNames.add(name);
                                       guestController.clear();
@@ -323,13 +334,6 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> {
         return;
       }
 
-      // 2. Check Rule: Min 5 Players
-      if (team.memberUids.length < 5) {
-        if (mounted) {
-           _showErrorDialog(AppLocalizations.of(context)!.minPlayersError);
-        }
-        return;
-      }
 
       // 3. Check if already joined
       if (widget.championship.joinedTeams.contains(team.id)) {

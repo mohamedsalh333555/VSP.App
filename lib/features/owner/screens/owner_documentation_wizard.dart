@@ -261,9 +261,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       final bool autoApprove = AppConfig.autoApproveOwnerInDebug && kDebugMode;
 
-      // Write to Database — if this throws, we skip the success dialog entirely.
+      // Write to Database — verificationStatus defaults to 'pending' for review.
       await authProvider.updateProfile({
-        'isIdentityVerified': autoApprove,
         'verificationStatus': autoApprove ? 'approved' : 'pending',
         'isRegistrationComplete': true,
       });

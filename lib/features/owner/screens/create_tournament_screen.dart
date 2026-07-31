@@ -94,8 +94,21 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   }
 
   Future<void> _handleCreateTournament() async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     if (_nameController.text.trim().isEmpty) {
-      VSPFeedback.showError(context, 'Please enter a tournament name');
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال اسم البطولة' : 'Please enter a tournament name');
+      return;
+    }
+
+    if (!_endDate.isAfter(_startDate)) {
+      VSPFeedback.showError(context, isAr ? 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء!' : 'End date must be strictly after start date!');
+      return;
+    }
+
+    final maxTeamsNum = int.tryParse(_selectedNumTeams) ?? 0;
+    if (maxTeamsNum != 4 && maxTeamsNum != 8 && maxTeamsNum != 16 && maxTeamsNum != 32) {
+      VSPFeedback.showError(context, isAr ? 'عدد الفرق يجب أن يكون (4، 8، 16، 32) فقط!' : 'Number of teams must be a power of 2 (4, 8, 16, 32)!');
       return;
     }
 

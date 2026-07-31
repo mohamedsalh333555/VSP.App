@@ -1,9 +1,10 @@
-﻿import 'dart:async';
+import 'dart:async';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -36,10 +37,25 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
   List<Team> _searchedTeams = [];
   Map<String, int>? _h2hStats;
   bool _isLoadingH2H = false;
+  final Map<String, bool> _championStatusMap = {};
 
   // Real History Teams fetched from bookings
   List<Team> _historyTeams = [];
   bool _isLoadingHistory = true;
+
+  Future<void> _check1v1ChampionForTeam(String teamId) async {
+    if (_championStatusMap.containsKey(teamId)) return;
+    try {
+      final hasChamp = await TeamRepository().has1v1Champion(teamId);
+      if (mounted) {
+        setState(() {
+          _championStatusMap[teamId] = hasChamp;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error checking 1v1 champion for team $teamId: $e');
+    }
+  }
 
   @override
   void initState() {
@@ -300,6 +316,8 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
   Widget _buildTeamCard(Team team) {
     final bool isSelected = _selectedTeam?.id == team.id;
+    _check1v1ChampionForTeam(team.id);
+    final bool hasChampion = _championStatusMap[team.id] ?? false;
 
     return GestureDetector(
       onTap: () async {
@@ -351,11 +369,36 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
-                      Text(
-                        team.name,
-                        style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                        ),
+                      Row(
+                        children: [
+                          Flexible(
+                            child: Text(
+                              team.name,
+                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                          if (hasChampion) ...[
+                            const SizedBox(width: 6),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                              decoration: BoxDecoration(
+                                color: VSPColors.warning.withValues(alpha: 0.15),
+                                borderRadius: BorderRadius.circular(12),
+                                border: Border.all(color: VSPColors.warning, width: 1),
+                              ),
+                              child: const Text(
+                                '👑 يضم بطل 1 ضد 1',
+                                style: TextStyle(
+                                  color: VSPColors.warning,
+                                  fontSize: 10,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ],
                       ),
                       const SizedBox(height: 4),
                       Text(

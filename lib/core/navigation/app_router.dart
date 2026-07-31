@@ -208,10 +208,14 @@ class AppRouter {
         return null;
       }
 
-      // Allow owners with verificationStatus == 'pending' or 'rejected' to bypass the block and access dashboard
-      if (!userModel.isIdentityVerified && userModel.verificationStatus != 'pending' && userModel.verificationStatus != 'rejected') {
-        if (path != '/documentation') return '/documentation';
-        return null;
+      // 🛡️ SECURITY AUDIT FIX: Owner Verification Gate
+      // Unverified owners who have not submitted documents MUST be routed to /documentation.
+      if (!userModel.isIdentityVerified) {
+        final status = userModel.verificationStatus?.toLowerCase();
+        if (status == null || status == 'unsubmitted' || status == 'none' || status.isEmpty) {
+          if (path != '/documentation') return '/documentation';
+          return null;
+        }
       }
       
       // Redirect fully onboarded owners to RootScreen

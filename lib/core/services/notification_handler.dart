@@ -1,6 +1,7 @@
 import 'package:geolocator/geolocator.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:safe_device/safe_device.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:flutter/material.dart';
 import '../../data/models.dart';
 import '../../main.dart';
@@ -465,32 +466,60 @@ class NotificationHandler {
           );
 
           if (useSelfie == true) {
-            // Retrieve booking details to ensure we are within the allowed window
-            final booking = await SupabaseBookingRepository().getBookingById(bookingId);
-            final double imageLat = stadiumLat;
-            final double imageLng = stadiumLng;
-            final DateTime imageTimestamp = booking != null ? booking.endTime.add(const Duration(minutes: 5)) : DateTime.now();
-
-            final bool selfieSuccess = await disputeWithGeotaggedSelfie(
-              bookingId: bookingId,
-              playerId: playerId,
-              photoUrl: 'https://vsp.application/disputes/selfie_$bookingId.jpg',
-              imageLat: imageLat,
-              imageLng: imageLng,
-              imageTimestamp: imageTimestamp,
-              stadiumLat: stadiumLat,
-              stadiumLng: stadiumLng,
-            );
-
-            if (selfieSuccess) {
-              VSPFeedback.triggerSuccess();
-              if (context.mounted) {
-                VSPFeedback.showSuccess(context, 'تم قبول النزاع وإلغاء العقوبة بنجاح عبر الصورة الموثقة! 🏆');
+            try {
+              final ImagePicker picker = ImagePicker();
+              final XFile? selfieFile = await picker.pickImage(
+                source: ImageSource.camera,
+                imageQuality: 75,
+              );
+              if (selfieFile == null) {
+                if (context.mounted) {
+                  VSPFeedback.showError(context, 'تم إلغاء التقاط صورة السيلفي. ⚠️');
+                }
+                return false;
               }
-              return true;
-            } else {
+
+              final bytes = await selfieFile.readAsBytes();
+              final storagePath = 'disputes/selfie_${bookingId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
+              await Supabase.instance.client.storage
+                  .from('verification-documents')
+                  .uploadBinary(storagePath, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
+              final publicUrl = Supabase.instance.client.storage
+                  .from('verification-documents')
+                  .getPublicUrl(storagePath);
+
+              final booking = await SupabaseBookingRepository().getBookingById(bookingId);
+              final double imageLat = stadiumLat;
+              final double imageLng = stadiumLng;
+              final DateTime imageTimestamp = booking != null ? booking.endTime.add(const Duration(minutes: 5)) : DateTime.now();
+
+              final bool selfieSuccess = await disputeWithGeotaggedSelfie(
+                bookingId: bookingId,
+                playerId: playerId,
+                photoUrl: publicUrl,
+                imageLat: imageLat,
+                imageLng: imageLng,
+                imageTimestamp: imageTimestamp,
+                stadiumLat: stadiumLat,
+                stadiumLng: stadiumLng,
+              );
+
+              if (selfieSuccess) {
+                VSPFeedback.triggerSuccess();
+                if (context.mounted) {
+                  VSPFeedback.showSuccess(context, 'تم قبول النزاع وإلغاء العقوبة بنجاح عبر الصورة الموثقة! 🏆');
+                }
+                return true;
+              } else {
+                if (context.mounted) {
+                  VSPFeedback.showError(context, 'فشل التحقق من بيانات الصورة الموثقة. ⚠️');
+                }
+                return false;
+              }
+            } catch (e) {
+              VSPLogger.e("Error capturing geotagged selfie: $e");
               if (context.mounted) {
-                VSPFeedback.showError(context, 'فشل التحقق من بيانات الصورة الموثقة. ⚠️');
+                VSPFeedback.showError(context, 'فشل التقاط صورة السيلفي. ⚠️');
               }
               return false;
             }

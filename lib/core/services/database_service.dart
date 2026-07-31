@@ -165,4 +165,7 @@ class DatabaseService {
 
   @deprecated
   Future<bool> deleteTeam(String teamId) => team.deleteTeam(teamId);
+
+  @Deprecated('Use TeamRepository directly')
+  Future<bool> has1v1Champion(String teamId) => team.has1v1Champion(teamId);
 }

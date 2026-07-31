@@ -88,11 +88,12 @@ class TeamRepository {
       final teamId = response['id'].toString();
 
       final List memberUids = List.from(data['memberUids'] ?? []);
-      for (final uid in memberUids) {
-        await _supabase.from('team_members').insert({
+      if (memberUids.isNotEmpty) {
+        final List<Map<String, dynamic>> memberRows = memberUids.map((uid) => {
           'team_id': teamId,
           'user_id': uid.toString(),
-        });
+        }).toList();
+        await _supabase.from('team_members').insert(memberRows);
       }
 
       // ── Anti-Silent Kidnapping Notification ──
@@ -333,6 +334,19 @@ class TeamRepository {
       await _supabase.from('teams').delete().eq('id', teamId);
       return true;
     } catch (e) {
+      return false;
+    }
+  }
+
+  Future<bool> has1v1Champion(String teamId) async {
+    try {
+      final response = await _supabase.rpc(
+        'check_team_has_1v1_champion',
+        params: {'p_team_id': teamId},
+      );
+      return response == true;
+    } catch (e) {
+      debugPrint('Error checking if team has 1v1 champion: $e');
       return false;
     }
   }

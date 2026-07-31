@@ -12,10 +12,12 @@ class RemoteConfigService {
   bool _isMaintenanceMode = false;
   String _minAppVersion = '1.0.0';
   String _forceUpdateUrl = '';
+  bool _is1v1RegistrationOpen = true;
 
   bool get isMaintenanceMode => _isMaintenanceMode;
   String get minAppVersion => _minAppVersion;
   String get forceUpdateUrl => _forceUpdateUrl;
+  bool get is1v1RegistrationOpen => _is1v1RegistrationOpen;
 
   Future<void> initialize() async {
     try {
@@ -27,10 +29,15 @@ class RemoteConfigService {
         _isMaintenanceMode = response['is_maintenance'] ?? response['isMaintenanceMode'] ?? false;
         _minAppVersion = response['min_version'] ?? response['minAppVersion'] ?? '1.0.0';
         _forceUpdateUrl = response['force_update_url'] ?? response['forceUpdateUrl'] ?? '';
+        _is1v1RegistrationOpen = response['vsp_1v1_is_open'] ?? response['vsp1v1IsOpen'] ?? true;
       }
     } catch (e) {
       debugPrint('Error initializing RemoteConfigService: $e');
     }
+  }
+
+  Future<void> fetchConfig() async {
+    await initialize();
   }
 
   Future<bool> shouldForceUpdate() async {

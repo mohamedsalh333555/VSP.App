@@ -202,6 +202,55 @@ class SupabaseBookingRepository implements BookingRepository {
       final hostName = userDetailsDoc?['name'] ?? 'Player';
       final hostAvatar = userDetailsDoc?['profile_image_url'] ?? '';
 
+      // 🛡️ SECURITY AUDIT FIX: Atomic Booking Creation via PostgreSQL Row Locks
+      try {
+        final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
+          'p_stadium_id': draft.stadiumId,
+          'p_user_id': userId,
+          'p_owner_id': draft.ownerId,
+          'p_start_time': draft.startTime.toUtc().toIso8601String(),
+          'p_end_time': draft.endTime.toUtc().toIso8601String(),
+          'p_booking_type': draft.bookingType.name,
+          'p_total_price': draft.totalPrice,
+          'p_stadium_name': draft.stadiumName,
+          'p_stadium_image_url': draft.stadiumImageUrl,
+          'p_is_private': draft.isPrivate,
+          'p_rent_ball': draft.rentBall,
+          'p_needs_deposit': draft.needsDeposit,
+          'p_deposit_amount': draft.depositAmount,
+          'p_payment_method': draft.paymentMethod,
+          'p_payment_status': draft.paymentStatus,
+          'p_player_team_id': draft.playerTeamId,
+          'p_player_team_name': draft.playerTeamName,
+          'p_opponent_team_id': draft.opponentTeamId,
+          'p_opponent_team_name': draft.opponentTeamName,
+        });
+
+        if (rpcResult is Map && rpcResult['success'] == false) {
+          final errorMsg = rpcResult['message']?.toString() ?? "This slot is already booked!";
+          throw Exception(errorMsg);
+        }
+
+        if (rpcResult is Map && rpcResult['success'] == true && rpcResult['booking_id'] != null) {
+          final bookingId = rpcResult['booking_id'].toString();
+          final created = await getBookingById(bookingId);
+          if (created != null) {
+            if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
+              _sendChallengeNotification(draft);
+            }
+            _sendOwnerNotification(draft, created.id);
+            AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
+            VSPLogger.i('✅ Atomic booking created successfully: ${created.id}');
+            return created;
+          }
+        }
+      } catch (e) {
+        if (e.toString().contains("already booked") || e.toString().contains("double_booking") || e.toString().contains("Double booking")) {
+          rethrow;
+        }
+        VSPLogger.w('Atomic RPC creation skipped/failed, falling back to insert: $e');
+      }
+
       final booking = Booking.fromDraft(
         id: '', // Supabase/Postgres generates the UUID
         draft: draft.copyWith(
@@ -326,35 +375,9 @@ class SupabaseBookingRepository implements BookingRepository {
       if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
         throw Exception("Overlapping slots already booked!");
       }
-      if (kDebugMode) {
-        VSPLogger.w('⚠️ Postgres error creating booking ($e). Returning a mock booking in debug mode.');
-        final mockId = 'mock_${DateTime.now().millisecondsSinceEpoch}';
-        final fallbackStatus = (draft.paymentStatus == 'pending' || draft.paymentStatus == 'awaiting_verification')
-            ? BookingStatus.pending
-            : BookingStatus.confirmed;
-        return Booking.fromDraft(
-          id: mockId,
-          draft: draft,
-          userId: userId,
-          status: fallbackStatus,
-        );
-      }
       VSPLogger.e('❌ Postgres error creating booking', e);
       rethrow;
     } catch (e) {
-      if (kDebugMode) {
-        VSPLogger.w('⚠️ Error creating booking ($e). Returning a mock booking in debug mode.');
-        final mockId = 'mock_${DateTime.now().millisecondsSinceEpoch}';
-        final fallbackStatus = (draft.paymentStatus == 'pending' || draft.paymentStatus == 'awaiting_verification')
-            ? BookingStatus.pending
-            : BookingStatus.confirmed;
-        return Booking.fromDraft(
-          id: mockId,
-          draft: draft,
-          userId: userId,
-          status: fallbackStatus,
-        );
-      }
       VSPLogger.e('❌ Error creating booking', e);
       rethrow;
     }
@@ -664,7 +687,7 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
-    final endOfDay = startOfDay.add(const Duration(days: 1));
+    final endOfDay = startOfDay.add(const Duration(days: 2));
     final now = DateTime.now();
 
     return _supabase

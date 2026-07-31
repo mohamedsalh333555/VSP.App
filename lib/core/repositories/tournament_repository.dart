@@ -185,12 +185,6 @@ class TournamentRepository {
       final team = await TeamRepository().getTeam(teamId);
       if (team == null) throw Exception('المجموعة لا توجد.');
 
-      if (!skipMemberCheck) {
-        if (team.memberUids.length < 5) {
-          throw Exception('يجب أن تضم مجموعتك 5 لاعبين على الأقل للمشاركة.');
-        }
-      }
-
       final champResponse = await _supabase
           .from('championships')
           .select()
@@ -199,6 +193,16 @@ class TournamentRepository {
       if (champResponse == null) throw Exception('البطولة لا توجد.');
 
       final champ = Championship.fromFirestore(champResponse, championshipId);
+
+      if (!skipMemberCheck) {
+        final totalRoster = selectedPlayerIds.length + offlineGuestNames.length;
+        if (totalRoster < champ.minPlayersPerTeam) {
+          throw Exception('يجب أن تضم تشكيلة الفريق ${champ.minPlayersPerTeam} لاعبين على الأقل للمشاركة.');
+        }
+        if (totalRoster > champ.maxPlayersPerTeam) {
+          throw Exception('تجاوزت تشكيلة الفريق الحد الأقصى للاعبين (${champ.maxPlayersPerTeam}).');
+        }
+      }
 
       if (champ.joinedTeams.length >= champ.maxTeams) {
         throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
@@ -338,95 +342,196 @@ class TournamentRepository {
           .select()
           .eq('id', championshipId)
           .maybeSingle();
-      if (champDoc == null) throw 'Championship not found';
+      if (champDoc == null) throw Exception('البطولة لا توجد.');
 
       final List<String> teamIds = List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
-
       int totalTeams = teamIds.length;
-      if (totalTeams < 2) throw 'At least 2 teams are required to start a tournament.';
+      if (totalTeams < 2) throw Exception('يجب وجود فريقين على الأقل لبدء البطولة.');
 
-      // 1. Calculate next power of 2 below N (e.g. N=10 -> P=8)
-      int targetP2 = 1;
-      while (targetP2 * 2 <= totalTeams) {
-        targetP2 *= 2;
+      final int configuredMaxTeams = champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;
+      
+      // Calculate target bracket capacity (must be a power of 2: 4, 8, 16, 32)
+      int bracketCapacity = 4;
+      if (configuredMaxTeams == 4 || configuredMaxTeams == 8 || configuredMaxTeams == 16 || configuredMaxTeams == 32) {
+        if (configuredMaxTeams >= totalTeams) {
+          bracketCapacity = configuredMaxTeams;
+        } else {
+          int p = 4;
+          while (p < totalTeams && p < 32) {
+            p *= 2;
+          }
+          bracketCapacity = p;
+        }
+      } else {
+        int p = 4;
+        while (p < totalTeams && p < 32) {
+          p *= 2;
+        }
+        bracketCapacity = p;
       }
-      int totalBracketRounds = (log(targetP2) / log(2)).round();
 
-      // If N=10, P=8. Matches in R0 = 10 - 8 = 2. Teams in R0 = 4.
-      int numOpeningMatches = totalTeams - targetP2;
-      int numTeamsR0 = numOpeningMatches * 2;
+      // Total rounds calculation for binary tree:
+      // bracketCapacity = 32 -> 5 rounds (4,3,2,1,0)
+      // bracketCapacity = 16 -> 4 rounds (3,2,1,0)
+      // bracketCapacity = 8  -> 3 rounds (2,1,0)
+      // bracketCapacity = 4  -> 2 rounds (1,0)
+      int totalBracketRounds = (log(bracketCapacity) / log(2)).round();
+      int startRoundIndex = totalBracketRounds - 1;
 
       final teams = await getTeamsByIds(teamIds);
       final teamMap = {for (var t in teams) t.id: t.name};
+
       final shuffledIds = List<String>.from(teamIds)..shuffle(Random());
+      
+      // Fill slots array of length bracketCapacity with team IDs (or null for BYEs)
+      final List<String?> slots = List.generate(bracketCapacity, (index) {
+        if (index < shuffledIds.length) {
+          return shuffledIds[index];
+        }
+        return null; // BYE slot
+      });
 
       String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
 
-      final List<Map<String, dynamic>> allMatchesToInsert = [];
+      // Map to store match data for all rounds before bulk insertion
+      final Map<String, Map<String, dynamic>> matchesMap = {};
 
-      // 2. Generate Opening Round (R0)
-      for (int m = 0; m < numOpeningMatches; m++) {
-        String homeId = shuffledIds[m * 2];
-        String awayId = shuffledIds[m * 2 + 1];
-
-        allMatchesToInsert.add({
-          'id': getMatchId(0, m),
-          'championship_id': championshipId,
-          'round_index': totalBracketRounds,
-          'match_index': m,
-          'next_match_id': getMatchId(1, m ~/ 2),
-          'home_team_id': homeId,
-          'home_team_name': teamMap[homeId],
-          'away_team_id': awayId,
-          'away_team_name': teamMap[awayId],
-        });
-      }
-
-      // 3. Generate main bracket rounds (R1...Final)
-      for (int r = 1; r <= totalBracketRounds; r++) {
-        int matchCount = (targetP2 / pow(2, r)).toInt();
+      // 1. Initialize all matches for all rounds (from startRoundIndex down to 0)
+      for (int r = startRoundIndex; r >= 0; r--) {
+        int matchCount = (pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
-          String? nextMatchId = (matchCount > 1) ? getMatchId(r + 1, m ~/ 2) : null;
+          final matchId = getMatchId(r, m);
+          final nextMatchId = (r > 0) ? getMatchId(r - 1, m ~/ 2) : null;
 
-          String? homeId, homeName, awayId, awayName;
-
-          // Filling Round 1 (Power of 2 round)
-          if (r == 1) {
-            // Home Slot
-            int slotH = m * 2;
-            if (slotH >= numOpeningMatches) {
-              int byeIndex = slotH - numOpeningMatches + numTeamsR0;
-              if (byeIndex < shuffledIds.length) {
-                homeId = shuffledIds[byeIndex];
-                homeName = teamMap[homeId];
-              }
-            }
-            // Away Slot
-            int slotA = m * 2 + 1;
-            if (slotA >= numOpeningMatches) {
-              int byeIndex = slotA - numOpeningMatches + numTeamsR0;
-              if (byeIndex < shuffledIds.length) {
-                awayId = shuffledIds[byeIndex];
-                awayName = teamMap[awayId];
-              }
-            }
-          }
-
-          allMatchesToInsert.add({
-            'id': getMatchId(r, m),
+          matchesMap[matchId] = {
+            'id': matchId,
             'championship_id': championshipId,
-            'round_index': totalBracketRounds - r,
+            'round_index': r,
             'match_index': m,
             'next_match_id': nextMatchId,
-            'home_team_id': homeId,
-            'home_team_name': homeName,
-            'away_team_id': awayId,
-            'away_team_name': awayName,
-          });
+            'home_team_id': null,
+            'home_team_name': null,
+            'away_team_id': null,
+            'away_team_name': null,
+            'home_score': null,
+            'away_score': null,
+            'winner_id': null,
+          };
         }
       }
 
-      // 🚀 Single bulk batch insert to prevent partial state corruption
+      // 2. Populate First Round (r = startRoundIndex)
+      int firstRoundMatches = (pow(2, startRoundIndex)).toInt();
+      for (int m = 0; m < firstRoundMatches; m++) {
+        final matchId = getMatchId(startRoundIndex, m);
+        final String? homeId = slots[m * 2];
+        final String? awayId = slots[m * 2 + 1];
+
+        final matchData = matchesMap[matchId]!;
+        matchData['home_team_id'] = homeId;
+        matchData['home_team_name'] = homeId != null ? teamMap[homeId] : null;
+        matchData['away_team_id'] = awayId;
+        matchData['away_team_name'] = awayId != null ? teamMap[awayId] : null;
+
+        // 🛡️ BYE LOGIC handling
+        if (homeId != null && awayId == null) {
+          // Home team automatically advances via BYE
+          matchData['winner_id'] = homeId;
+          matchData['home_score'] = 0;
+          matchData['away_score'] = 0;
+          
+          final nextMatchId = matchData['next_match_id'];
+          if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+            final nextMatch = matchesMap[nextMatchId]!;
+            final isHomeSlot = m % 2 == 0;
+            if (isHomeSlot) {
+              nextMatch['home_team_id'] = homeId;
+              nextMatch['home_team_name'] = teamMap[homeId];
+            } else {
+              nextMatch['away_team_id'] = homeId;
+              nextMatch['away_team_name'] = teamMap[homeId];
+            }
+          }
+        } else if (homeId == null && awayId != null) {
+          // Away team automatically advances via BYE
+          matchData['winner_id'] = awayId;
+          matchData['home_score'] = 0;
+          matchData['away_score'] = 0;
+
+          final nextMatchId = matchData['next_match_id'];
+          if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+            final nextMatch = matchesMap[nextMatchId]!;
+            final isHomeSlot = m % 2 == 0;
+            if (isHomeSlot) {
+              nextMatch['home_team_id'] = awayId;
+              nextMatch['home_team_name'] = teamMap[awayId];
+            } else {
+              nextMatch['away_team_id'] = awayId;
+              nextMatch['away_team_name'] = teamMap[awayId];
+            }
+          }
+        }
+      }
+
+      // 3. Cascade any subsequent BYE auto-advances for rounds r = startRoundIndex - 1 down to 1
+      for (int r = startRoundIndex - 1; r >= 1; r--) {
+        int matchCount = (pow(2, r)).toInt();
+        for (int m = 0; m < matchCount; m++) {
+          final matchId = getMatchId(r, m);
+          final matchData = matchesMap[matchId]!;
+
+          final String? homeId = matchData['home_team_id'];
+          final String? awayId = matchData['away_team_id'];
+
+          final feederHomeMatchId = getMatchId(r + 1, m * 2);
+          final feederAwayMatchId = getMatchId(r + 1, m * 2 + 1);
+
+          final feederHome = matchesMap[feederHomeMatchId];
+          final feederAway = matchesMap[feederAwayMatchId];
+
+          final feederHomeEmpty = feederHome == null || (feederHome['home_team_id'] == null && feederHome['away_team_id'] == null);
+          final feederAwayEmpty = feederAway == null || (feederAway['home_team_id'] == null && feederAway['away_team_id'] == null);
+
+          if (homeId != null && awayId == null && feederAwayEmpty) {
+            matchData['winner_id'] = homeId;
+            matchData['home_score'] = 0;
+            matchData['away_score'] = 0;
+
+            final nextMatchId = matchData['next_match_id'];
+            if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+              final nextMatch = matchesMap[nextMatchId]!;
+              final isHomeSlot = m % 2 == 0;
+              if (isHomeSlot) {
+                nextMatch['home_team_id'] = homeId;
+                nextMatch['home_team_name'] = teamMap[homeId];
+              } else {
+                nextMatch['away_team_id'] = homeId;
+                nextMatch['away_team_name'] = teamMap[homeId];
+              }
+            }
+          } else if (homeId == null && awayId != null && feederHomeEmpty) {
+            matchData['winner_id'] = awayId;
+            matchData['home_score'] = 0;
+            matchData['away_score'] = 0;
+
+            final nextMatchId = matchData['next_match_id'];
+            if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+              final nextMatch = matchesMap[nextMatchId]!;
+              final isHomeSlot = m % 2 == 0;
+              if (isHomeSlot) {
+                nextMatch['home_team_id'] = awayId;
+                nextMatch['home_team_name'] = teamMap[awayId];
+              } else {
+                nextMatch['away_team_id'] = awayId;
+                nextMatch['away_team_name'] = teamMap[awayId];
+              }
+            }
+          }
+        }
+      }
+
+      // 4. Bulk insert matches into database
+      final allMatchesToInsert = matchesMap.values.toList();
       if (allMatchesToInsert.isNotEmpty) {
         await _supabase.from('tournament_matches').insert(allMatchesToInsert);
       }
@@ -435,11 +540,10 @@ class TournamentRepository {
           .from('championships')
           .update({'status': 'ongoing'})
           .eq('id', championshipId);
-          
-      // Trigger notifications silently in the background
+
       _sendDrawNotifications(championshipId);
-          
-      debugPrint('✅ Flexible Bracket Generated for $championshipId: $totalTeams teams');
+
+      debugPrint('✅ Tournament Fixtures generated successfully with BYE logic for $championshipId ($totalTeams teams)');
     } catch (e) {
       debugPrint('Error generating fixtures: $e');
       rethrow;

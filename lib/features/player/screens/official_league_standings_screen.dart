@@ -1,17 +1,131 @@
+import 'dart:async';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/services/remote_config_service.dart';
+import '../../../core/repositories/league_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
-class OfficialLeagueStandingsScreen extends StatelessWidget {
+class OfficialLeagueStandingsScreen extends StatefulWidget {
   const OfficialLeagueStandingsScreen({super.key});
+
+  @override
+  State<OfficialLeagueStandingsScreen> createState() => _OfficialLeagueStandingsScreenState();
+}
+
+class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsScreen> {
+  int _registrationCount = 0;
+  bool _hasUserRegistered = false;
+  bool _isRegistrationOpen = true;
+  bool _isLoadingRegistration = true;
+  bool _isSubmitting = false;
+  StreamSubscription<int>? _registrationsSubscription;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadRegistrationData();
+    _subscribeToRegistrations();
+  }
+
+  void _subscribeToRegistrations() {
+    _registrationsSubscription = LeagueRepository().stream1v1RegistrationsCount().listen((count) {
+      if (mounted) {
+        setState(() {
+          _registrationCount = count;
+        });
+      }
+    });
+  }
+
+  @override
+  void dispose() {
+    _registrationsSubscription?.cancel();
+    super.dispose();
+  }
+
+  Future<void> _loadRegistrationData() async {
+    setState(() => _isLoadingRegistration = true);
+    try {
+      await RemoteConfigService().fetchConfig();
+      final isOpen = RemoteConfigService().is1v1RegistrationOpen;
+
+      final leagueRepo = LeagueRepository();
+      final count = await leagueRepo.get1v1RegistrationsCount();
+      
+      if (!mounted) return;
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userId = auth.currentUser?.uid;
+      
+      bool hasRegistered = false;
+      if (userId != null) {
+        hasRegistered = await leagueRepo.hasUserRegistered1v1(userId);
+      }
+      
+      if (mounted) {
+        setState(() {
+          _isRegistrationOpen = isOpen;
+          _registrationCount = count;
+          _hasUserRegistered = hasRegistered;
+          _isLoadingRegistration = false;
+        });
+      }
+    } catch (e) {
+      debugPrint('Error loading registration data: $e');
+      if (mounted) setState(() => _isLoadingRegistration = false);
+    }
+  }
+
+  Future<void> _handleRegistration() async {
+    HapticFeedback.mediumImpact();
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    if (user == null) {
+      VSPFeedback.showError(context, 'الرجاء تسجيل الدخول أولاً للمتابعة.');
+      return;
+    }
+
+    if (!_isRegistrationOpen) {
+      VSPFeedback.showError(context, 'عذراً، التسجيل مغلق حالياً من قِبل الإدارة.');
+      return;
+    }
+
+    if (_registrationCount >= 32) {
+      VSPFeedback.showError(context, 'عذراً، اكتمل العدد المسموح به لهذه الجولة.');
+      return;
+    }
+
+    setState(() => _isSubmitting = true);
+    try {
+      final success = await LeagueRepository().registerFor1v1(user.uid);
+      if (mounted) {
+        if (success) {
+          setState(() {
+            _hasUserRegistered = true;
+            _registrationCount += 1;
+            _isSubmitting = false;
+          });
+          VSPFeedback.showSuccess(context, 'تم إرسال طلب تسجيلك في بطولة 1ضد1 بنجاح! 🏆');
+        } else {
+          setState(() => _isSubmitting = false);
+          VSPFeedback.showError(context, 'حدث خطأ أثناء التسجيل، يرجى المحاولة لاحقاً.');
+        }
+      }
+    } catch (e) {
+      debugPrint('Error handling registration: $e');
+      if (mounted) {
+        setState(() => _isSubmitting = false);
+        VSPFeedback.showError(context, 'حدث خطأ أثناء التسجيل.');
+      }
+    }
+  }
 
   Future<void> _launchHighlights() async {
     final Uri url = Uri.parse('https://instagram.com/vsp.app');
@@ -20,37 +134,70 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
     }
   }
 
-  Future<void> _joinWhatsAppTournament(BuildContext context) async {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.userModel;
-    if (user == null) {
-      VSPFeedback.showError(context, 'الرجاء تسجيل الدخول أولاً للمتابعة.');
-      return;
-    }
-
+  Widget _buildRegistrationButton(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final uid = user.uid;
-    final name = user.name ?? 'لاعب VSP';
 
-    final String messageText = 
-        'مرحباً كابتن محمد، أود التسجيل في بطولة 1ضد1 القادمة. كود حسابه الخاص بي هو: $uid واسمي الموثق: $name';
-    final String encodedMsg = Uri.encodeComponent(messageText);
-    final Uri waUrl = Uri.parse('https://wa.me/201100229462?text=$encodedMsg');
-
-    try {
-      if (await canLaunchUrl(waUrl)) {
-        await launchUrl(waUrl, mode: LaunchMode.externalApplication);
-      } else {
-        throw 'Could not launch WhatsApp url';
-      }
-    } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(
-          context, 
-          isArabic ? 'فشل فتح تطبيق واتساب. تأكد من تثبيته على جهازك.' : 'Failed to open WhatsApp. Make sure it is installed.'
-        );
-      }
+    if (_isLoadingRegistration) {
+      return const SizedBox(
+        height: 44,
+        child: Center(
+          child: CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2),
+        ),
+      );
     }
+
+    String labelText;
+    IconData iconData;
+    VoidCallback? onPressed;
+    Color buttonColor;
+    Color textColor;
+
+    if (!_isRegistrationOpen) {
+      labelText = isArabic ? 'التسجيل مغلق حالياً 🛑' : 'Registration Closed 🛑';
+      iconData = LucideIcons.slash;
+      onPressed = null;
+      buttonColor = VSPColors.surfaceAlt;
+      textColor = VSPColors.textSecondary;
+    } else if (_hasUserRegistered) {
+      labelText = isArabic ? 'تم إرسال الطلب ⏳' : 'Request Sent ⏳';
+      iconData = LucideIcons.clock;
+      onPressed = null;
+      buttonColor = VSPColors.surfaceAlt;
+      textColor = VSPColors.textSecondary;
+    } else if (_registrationCount >= 32) {
+      labelText = isArabic ? 'اكتمل العدد 🔒' : 'Roster Full 🔒';
+      iconData = LucideIcons.lock;
+      onPressed = null;
+      buttonColor = VSPColors.surfaceAlt;
+      textColor = VSPColors.textSecondary;
+    } else {
+      labelText = isArabic ? 'سجل الآن' : 'Register Now';
+      iconData = LucideIcons.userPlus;
+      onPressed = _isSubmitting ? null : _handleRegistration;
+      buttonColor = VSPColors.accent;
+      textColor = Colors.black;
+    }
+
+    return ElevatedButton.icon(
+      onPressed: onPressed,
+      icon: _isSubmitting
+          ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black))
+          : Icon(iconData, color: textColor, size: 20),
+      label: Text(
+        labelText,
+        style: TextStyle(
+          color: textColor,
+          fontWeight: FontWeight.bold,
+          letterSpacing: 0.5,
+        ),
+      ),
+      style: ElevatedButton.styleFrom(
+        backgroundColor: buttonColor,
+        disabledBackgroundColor: VSPColors.surfaceAlt,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+      ),
+    );
   }
 
   @override
@@ -75,7 +222,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: StreamBuilder<List<VSP1v1Player>>(
-        stream: DatabaseService().get1v1Standings(),
+        stream: LeagueRepository().get1v1Standings(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -104,7 +251,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(
-                        'SEASON 1 â€¢ ROUND 2',
+                        'SEASON 1 • ROUND 2',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.bold,
@@ -126,19 +273,7 @@ class OfficialLeagueStandingsScreen extends StatelessWidget {
                         ),
                       ),
                       const SizedBox(height: 12),
-                      ElevatedButton.icon(
-                        onPressed: () => _joinWhatsAppTournament(context),
-                        icon: Icon(LucideIcons.userPlus, color: Colors.black, size: 20),
-                        label: const Text(
-                          'انضم للبطولة القادمة | JOIN TOURNAMENT',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 0.5),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.accent, // Volt Green
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                      ),
+                      _buildRegistrationButton(context),
                     ],
                   ),
                 ),
