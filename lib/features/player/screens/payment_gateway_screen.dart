@@ -34,6 +34,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
 
+  /// ✅ FIX: Flag set to true when user is successfully navigated to BookingSuccessScreen.
+  /// This prevents dispose() from deleting an already-confirmed booking.
+  bool _paymentCompleted = false;
+
   @override
   void initState() {
     super.initState();
@@ -45,15 +49,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
 
-    // 🛑 Automatic cleanup: If user exits payment screen and booking is still pending & unpaid, delete it immediately
-    if (_booking != null && _booking!.status == BookingStatus.pending && !_booking!.isPaid) {
+    // 🛑 Cleanup: Only delete if payment was NOT completed, booking still pending, and genuinely unpaid.
+    // If _paymentCompleted is true, the booking was already confirmed — do NOT delete it.
+    if (!_paymentCompleted &&
+        _booking != null &&
+        _booking!.status == BookingStatus.pending &&
+        !_booking!.isPaid) {
       final bId = _booking!.id;
       if (!bId.startsWith('mock_')) {
         Supabase.instance.client
             .from('bookings')
             .delete()
             .eq('id', bId)
-            .then((_) => debugPrint('Pending booking cleaned up on exit.'))
+            .then((_) => debugPrint('Abandoned pending booking cleaned up on exit.'))
             .catchError((e) => debugPrint('Error cleaning up pending booking: $e'));
       }
     }
@@ -127,6 +135,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
             if (updatedBooking != null && mounted) {
+              // ✅ Mark payment as completed BEFORE navigating so dispose() doesn't delete the booking
+              _paymentCompleted = true;
               Navigator.pushReplacement(
                 context,
                 MaterialPageRoute(
@@ -275,6 +285,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                                 if (mounted) {
                                   final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
                                   if (updatedBooking != null && mounted) {
+                                    // ✅ Mark payment as completed BEFORE navigating
+                                    _paymentCompleted = true;
                                     Navigator.pushReplacement(
                                       context,
                                       MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),

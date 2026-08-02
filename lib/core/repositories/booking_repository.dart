@@ -217,7 +217,7 @@ class SupabaseBookingRepository implements BookingRepository {
           'p_is_private': draft.isPrivate,
           'p_rent_ball': draft.rentBall,
           'p_needs_deposit': draft.needsDeposit,
-          'p_deposit_amount': draft.depositAmount,
+          'p_deposit_amount': draft.depositPaid,
           'p_payment_method': draft.paymentMethod,
           'p_payment_status': draft.paymentStatus,
           'p_player_team_id': draft.playerTeamId,

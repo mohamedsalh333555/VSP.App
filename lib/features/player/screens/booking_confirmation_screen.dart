@@ -195,7 +195,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   DateTime _getSlotDateTime(String slot) {
     int startMin = _parseTimeToMinutes(slot);
-    int openMin = _parseTimeToMinutes(widget.stadium.openingTime);
+    String openStr = widget.stadium.openingTime;
+    final features = widget.stadium.features;
+    if (openStr.isEmpty && features is Map && features['workingHours'] != null) {
+      openStr = features['workingHours']['start'] ?? '';
+    }
+    int openMin = _parseTimeToMinutes(openStr);
+    
     DateTime date = _selectedDate;
     if (openMin > 12 * 60 && startMin < openMin) {
       date = date.add(const Duration(days: 1));
@@ -667,14 +673,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
              final authProvider = Provider.of<AuthProvider>(context, listen: false);
              final currentUserModel = authProvider.userModel;
              if (currentUserModel == null) { setState(() => _isLoading = false); return; }
-             
+
+             final nav = Navigator.of(context);
+             final messenger = ScaffoldMessenger.of(context);
+             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
              final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
              final firstSlot = sortedSlots.first;
-             int startMin = _parseTimeToMinutes(firstSlot);
-             int openMin = _parseTimeToMinutes(widget.stadium.openingTime);
-             DateTime date = _selectedDate;
-             if (openMin > 12 * 60 && startMin < openMin) { date = date.add(const Duration(days: 1)); }
-             final startTime = DateTime(date.year, date.month, date.day, startMin ~/ 60, startMin % 60);
+             final startTime = _getSlotDateTime(firstSlot);
              final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
 
              BookingType bType;
@@ -700,11 +706,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
              );
 
              final needsDeposit = widget.stadium.needsDeposit;
-             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
              final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(currentUserModel.uid);
              final now = DateTime.now();
              final activeUnpaidBookings = unpaidBookings.where((b) { return b.status != BookingStatus.cancelled && b.status != BookingStatus.completed && b.endTime.isAfter(now) && !b.isPaid && b.paymentMethod == 'cash'; }).toList();
              final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
+
+             if (!mounted) return;
 
              if (!needsDeposit && !hasActiveUnpaid) {
                final cashDraft = draft.copyWith(isPaid: false, isDepositPaid: false, depositPaid: 0.0, paymentStatus: 'unpaid', paymentMethod: 'cash', paymentTransactionId: '_');
@@ -712,16 +719,24 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                if (mounted) {
                  setState(() => _isLoading = false);
                  if (booking != null) {
-                   Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+                   nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
                  } else {
-                   ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to create booking')));
+                   messenger.showSnackBar(SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to create booking')));
                  }
                }
              } else {
                final forceFullPayment = !needsDeposit && hasActiveUnpaid;
                final amountToPay = needsDeposit ? depositAmount : _totalPrice;
-               if (amountToPay <= 0) { final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE'); final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid); if (mounted) { setState(() => _isLoading = false); if (booking != null) Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking))); } return; }
-               await Navigator.push(context, MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
+               if (amountToPay <= 0) {
+                 final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE');
+                 final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid);
+                 if (mounted) {
+                   setState(() => _isLoading = false);
+                   if (booking != null) nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+                 }
+                 return;
+               }
+               await nav.push(MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
                if (mounted) { setState(() => _isLoading = false); }
              }
           },
@@ -742,7 +757,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
             final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 ? '+2$cleanPhone' : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
             final Uri launchUri = Uri(scheme: 'tel', path: path);
-            try { if (await canLaunchUrl(launchUri)) { await launchUrl(launchUri, mode: LaunchMode.externalApplication); } } catch (e) {}
+            try { if (await canLaunchUrl(launchUri)) { await launchUrl(launchUri, mode: LaunchMode.externalApplication); } } catch (e) { debugPrint('Could not launch tel URI: $e'); }
           },
           borderRadius: BorderRadius.circular(VSPRadius.lg),
           child: Padding(

@@ -83,13 +83,12 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       return;
     }
     if (instapay.isEmpty && vodafone.isEmpty && bank.isEmpty) {
-      VSPFeedback.showError(
+      VSPFeedback.showSuccess(
         context,
         isArabic
-            ? "يرجى إدخال وسيلة واحدة على الأقل استلام مستحقاتك المالية وتصفية الحسابات من إدارة المنصة (إنستا باي، محفظة إلكترونية، أو حساب بنكي) ⚠️"
-            : "Please enter at least one payout method (InstaPay, Mobile Wallet, or Bank IBAN) to receive your earnings from VSP ⚠️",
+            ? 'تم حفظ البيانات الشخصية (يرجى إضافة وسيلة تحصيل لاحقاً) 💡'
+            : 'Profile updated (please add a payout method later) 💡',
       );
-      return;
     }
 
     setState(() => _isLoading = true);

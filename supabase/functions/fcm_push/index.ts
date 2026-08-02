@@ -41,7 +41,7 @@ serve(async (req: Request) => {
     }
 
     // 3. Read Firebase Secret JSON
-    const firebaseJsonStr = Deno.env.get("FIREBASE_JSON");
+    const firebaseJsonStr = Deno.env.get("FIREBASE_JSON") || Deno.env.get("FIREBASE_SERVICE_ACCOUNT");
     if (!firebaseJsonStr) {
       throw new Error("FIREBASE_JSON secret is missing");
     }

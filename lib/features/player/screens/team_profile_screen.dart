@@ -11,6 +11,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/services/database_service.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class TeamProfileScreen extends StatefulWidget {
   final Team? team;
@@ -110,9 +111,16 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
 
   void _contactCaptain() async {
     final phone = team.captainPhone;
-    if (phone == null || phone.isEmpty) return;
-
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    
+    if (phone == null || phone.trim().isEmpty) {
+      VSPFeedback.showError(
+        context,
+        isArabic ? 'رقم هاتف كابتن الفريق غير متوفر حالياً 📞' : 'Captain phone number is not available',
+      );
+      return;
+    }
+
     final message = isArabic
         ? 'مرحباً كابتن ${team.captainName}، رأيت فريقك ${team.name} على تطبيق VSP وأود التواصل معك.'
         : 'Hello Captain ${team.captainName}, I saw your team ${team.name} on VSP and would like to contact you.';

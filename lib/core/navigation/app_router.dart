@@ -13,6 +13,7 @@ import '../../features/owner/screens/owner_main_screen.dart';
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/screens/team_profile_screen.dart';
+import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../config/app_config.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
@@ -90,6 +91,10 @@ class AppRouter {
             final teamId = state.pathParameters['teamId'] ?? '';
             return TeamProfileScreen(teamId: teamId);
           },
+        ),
+        GoRoute(
+          path: '/admin',
+          builder: (context, state) => const AdminDashboardScreen(),
         ),
       ],
       redirect: (context, state) => redirectLogic(context, state, authProvider),
@@ -172,6 +177,13 @@ class AppRouter {
     if (!hasPhone) {
       if (path != '/onboarding') return '/onboarding';
       return null;
+    }
+
+    // 6.5 Admin role check
+    final bool isAdmin = userModel.role == 'admin' || userModel.role == 'co_founder';
+    if (isAdmin) {
+      if (path == '/admin') return null;
+      if (path == '/welcome' || path == '/splash' || path == '/onboarding') return '/admin';
     }
 
     if (userModel.isBlocked) {

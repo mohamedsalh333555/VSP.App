@@ -9,6 +9,25 @@
       "client_info": {
         "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
         "android_client_info": {
+          "package_name": "app.vsp.sports"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    },
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+        "android_client_info": {
           "package_name": "com.example.vsp_application"
         }
       },

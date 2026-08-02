@@ -12,7 +12,7 @@ import '../../data/models.dart';
 import '../../core/models/user_model.dart';
 import '../../core/repositories/match_repository.dart';
 import '../../core/repositories/user_repository.dart';
-import '../../core/services/database_service.dart';
+import '../../core/services/notification_handler.dart';
 
 
 class PublicMatchCard extends StatefulWidget {
@@ -34,9 +34,8 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     try {
       await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
     } catch (e) {
-      if (mounted) {
-        VSPFeedback.showError(context, e.toString());
-      }
+      if (!mounted) return;
+      VSPFeedback.showError(this.context, e.toString());
     } finally {
       if (mounted) {
         setState(() => _isLoading = false);
@@ -104,6 +103,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => _ManageParticipantsModal(booking: widget.booking),
     );
@@ -367,12 +367,17 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().acceptJoinRequest(widget.booking.id, userId);
-      await DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم قبول طلبك! ⚽', body: 'وافق المستضيف على انضمامك للمباراة. استعد!', type: 'info', createdAt: DateTime.now()));
+      // ✅ Use NotificationHandler instead of deprecated DatabaseService().sendNotification()
+      await NotificationHandler.notifyPlayerJoinedMatch(
+        hostId: userId,
+        playerName: '',
+        stadiumName: widget.booking.stadiumName,
+        bookingId: widget.booking.id,
+      );
       _fetchUsers();
     } catch(e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().contains('match_is_full') ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد' : 'Error')));
-      }
+      if (!mounted) return;
+      ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(e.toString().contains('match_is_full') ? 'عذراً، اكتمل العدد ولا يمكن قبول المزيد' : 'Error')));
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -385,12 +390,15 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
     setState(() => _isProcessing = true);
     try {
       await MatchRepository().rejectJoinRequest(widget.booking.id, userId);
-      await DatabaseService().sendNotification(userId, AppNotification(id: '', title: 'تم رفض الطلب ❌', body: 'عذراً، لم يقبل المستضيف طلب انضمامك للمباراة.', type: 'info', createdAt: DateTime.now()));
+      // ✅ Use NotificationHandler instead of deprecated DatabaseService().sendNotification()
+      await NotificationHandler.notifyChallengeDeclined(
+        challengerCaptainId: userId,
+        opponentTeamName: widget.booking.playerTeamName ?? widget.booking.stadiumName,
+      );
       _fetchUsers();
     } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(context, e.toString());
-      }
+      if (!mounted) return;
+      VSPFeedback.showError(context, e.toString());
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -405,9 +413,8 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
       await MatchRepository().removeParticipantFromPublicMatch(widget.booking.id, userId);
       _fetchUsers();
     } catch (e) {
-      if (context.mounted) {
-        VSPFeedback.showError(context, e.toString());
-      }
+      if (!mounted) return;
+      VSPFeedback.showError(context, e.toString());
     } finally {
       if (mounted) {
         setState(() => _isProcessing = false);
@@ -439,8 +446,13 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final bottomInset = MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 16;
+    
     return Container(
-      height: MediaQuery.of(context).size.height * 0.8,
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      padding: EdgeInsets.only(bottom: bottomInset),
       decoration: const BoxDecoration(
         color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.only(topLeft: Radius.circular(VSPRadius.xl), topRight: Radius.circular(VSPRadius.xl)),

@@ -4,9 +4,15 @@ import XCTest
 
 class RunnerTests: XCTestCase {
 
-  func testExample() {
-    // If you add code to the Runner application, consider adding tests here.
-    // See https://developer.apple.com/documentation/xctest for more information about using XCTest.
+  func testAppBundleIdentifier() {
+    let bundle = Bundle.main
+    let bundleId = bundle.bundleIdentifier ?? ""
+    XCTAssertFalse(bundleId.isEmpty, "App bundle identifier must be configured.")
   }
 
+  func testAppDisplayName() {
+    let bundle = Bundle.main
+    let displayName = bundle.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String
+    XCTAssertEqual(displayName, "VSP", "App display name must be VSP.")
+  }
 }

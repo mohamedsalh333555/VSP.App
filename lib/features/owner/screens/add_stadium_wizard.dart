@@ -1042,12 +1042,47 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     }
   }
 
-  void _previousPage() {
+  Future<bool> _showDiscardConfirmation() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final shouldLeave = await showDialog<bool>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text(
+          isArabic ? 'تجاهل التغييرات؟ ⚠️' : 'Discard changes? ⚠️',
+          style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isArabic
+              ? 'لديك بيانات وتعديلات غير محفوظة، هل أنت متأكد من الخروج؟'
+              : 'You have unsaved data. Are you sure you want to exit?',
+          style: const TextStyle(color: VSPColors.textSecondary),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, true),
+            child: Text(isArabic ? 'خروج' : 'Exit', style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+    return shouldLeave ?? false;
+  }
+
+  void _previousPage() async {
     if (_currentStep > 0) {
       _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       setState(() => _currentStep--);
     } else {
-      Navigator.pop(context);
+      final shouldLeave = await _showDiscardConfirmation();
+      if (shouldLeave && mounted) {
+        Navigator.pop(context);
+      }
     }
   }
 
@@ -1177,33 +1212,47 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   @override
   Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      appBar: AppBar(
+    return PopScope(
+      canPop: false,
+      onPopInvokedWithResult: (didPop, result) async {
+        if (didPop) return;
+        if (_currentStep > 0) {
+          _previousPage();
+          return;
+        }
+        final shouldLeave = await _showDiscardConfirmation();
+        if (shouldLeave && context.mounted) {
+          Navigator.pop(context);
+        }
+      },
+      child: Scaffold(
         backgroundColor: VSPColors.background,
-        leading: IconButton(icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary), onPressed: _previousPage),
-        title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
-        centerTitle: true,
-        elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(LucideIcons.trash2, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
-      ),
-      body: SafeArea(
-        child: Column(
-          children: [
-            const SizedBox(height: 10),
-            _buildStepIndicator(),
-            const SizedBox(height: 20),
-            Expanded(
-              child: PageView(
-                controller: _pageController,
-                physics: const NeverScrollableScrollPhysics(),
-                children: [
-                  _buildStep1Details(),
-                  _buildStep2Features(),
-                  _buildStep3Images(),
-                ],
+        appBar: AppBar(
+          backgroundColor: VSPColors.background,
+          leading: IconButton(icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary), onPressed: _previousPage),
+          title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
+          centerTitle: true,
+          elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(LucideIcons.trash2, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
+        ),
+        body: SafeArea(
+          child: Column(
+            children: [
+              const SizedBox(height: 10),
+              _buildStepIndicator(),
+              const SizedBox(height: 20),
+              Expanded(
+                child: PageView(
+                  controller: _pageController,
+                  physics: const NeverScrollableScrollPhysics(),
+                  children: [
+                    _buildStep1Details(),
+                    _buildStep2Features(),
+                    _buildStep3Images(),
+                  ],
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

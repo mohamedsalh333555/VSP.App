@@ -328,13 +328,45 @@ class TeamRepository {
 
   Future<bool> deleteTeam(String teamId) async {
     try {
-      final champs = await _supabase.from('championships').select('id').contains('joined_teams', [teamId]).inFilter('status', ['open', 'ongoing']);
+      // 1. Check active tournaments
+      final champs = await _supabase
+          .from('championships')
+          .select('id')
+          .contains('joined_teams', [teamId])
+          .inFilter('status', ['open', 'ongoing']);
       if ((champs as List).isNotEmpty) throw Exception('team_in_tournament');
+
+      // 2. Check active/upcoming match bookings
+      final bookings1 = await _supabase
+          .from('bookings')
+          .select('end_time')
+          .eq('status', 'confirmed')
+          .eq('player_team_id', teamId);
+
+      final bookings2 = await _supabase
+          .from('bookings')
+          .select('end_time')
+          .eq('status', 'confirmed')
+          .eq('opponent_team_id', teamId);
+
+      bool hasActiveMatch = false;
+      for (var doc in [...bookings1 as List, ...bookings2 as List]) {
+        final endTime = DateTime.parse(doc['end_time']);
+        if (endTime.isAfter(DateTime.now())) {
+          hasActiveMatch = true;
+          break;
+        }
+      }
+
+      if (hasActiveMatch) {
+        throw Exception('active_match_or_tournament_error');
+      }
+
       await _supabase.from('team_members').delete().eq('team_id', teamId);
       await _supabase.from('teams').delete().eq('id', teamId);
       return true;
     } catch (e) {
-      return false;
+      rethrow;
     }
   }
 

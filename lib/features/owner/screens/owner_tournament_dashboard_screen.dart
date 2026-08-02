@@ -2,7 +2,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -14,6 +14,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 import 'tournament_brackets_screen.dart'; // 🟢 IMPORT
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 class OwnerTournamentDashboardScreen extends StatefulWidget {
   final Championship championship;
@@ -36,9 +38,20 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
   // 🟢 Fetch teams first and show bracket preview popup
   Future<void> _handleStartTournament() async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     if (_currentChampionship.joinedTeams.isEmpty) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(AppLocalizations.of(context)!.noTeamsFound('')), backgroundColor: VSPColors.error),
+      VSPFeedback.showError(
+        context,
+        isAr ? 'لا توجد فرق مشاركة بعد! أضف فريقاً يدوياً أو انتظر انضمام الفرق.' : 'No teams joined yet!',
+      );
+      return;
+    }
+
+    if (_currentChampionship.joinedTeams.length < 2) {
+      VSPFeedback.showError(
+        context,
+        isAr ? 'يجب وجود فريقين على الأقل لبدء البطولة والقرعة!' : 'At least 2 teams required to start!',
       );
       return;
     }
@@ -502,10 +515,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   }
 
   void _showAddTeamManuallyDialog() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final nameCtrl = TextEditingController();
     final playerInputCtrl = TextEditingController();
-    
-    // قائمة الألوان الأساسية
+
     final List<Map<String, dynamic>> quickColors = [
       {'name': 'أبيض', 'value': '#FFFFFF', 'color': Colors.white},
       {'name': 'أحمر', 'value': '#EF4444', 'color': Colors.red},
@@ -516,291 +529,328 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     ];
 
     String selectedPrimaryColor = '#FFFFFF';
-    List<String> offlinePlayerNames = []; // كشف أسماء لاعبي الفريق
+    List<String> offlinePlayerNames = [];
 
-    showDialog(
+    showModalBottomSheet(
       context: context,
-      barrierDismissible: false,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        surfaceTintColor: Colors.transparent,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Text(AppLocalizations.of(context)!.addTeamManually, style: Theme.of(context).textTheme.titleLarge),
-        content: SizedBox(
-          width: MediaQuery.of(context).size.width * 0.9,
+      isScrollControlled: true,
+      useSafeArea: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetContext) {
+        return Container(
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20,
+            20,
+            20,
+            MediaQuery.of(sheetContext).padding.bottom + MediaQuery.of(sheetContext).viewInsets.bottom + 16,
+          ),
+          decoration: const BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+          ),
           child: StatefulBuilder(
-            builder: (context, setDialogState) {
+            builder: (BuildContext context, StateSetter setDialogState) {
               final totalPlayers = offlinePlayerNames.length;
               final bool isValidRoster = totalPlayers >= 5 && totalPlayers <= 12;
+              final bool canSubmit = nameCtrl.text.trim().isNotEmpty && isValidRoster;
 
-              return SingleChildScrollView(
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      AppLocalizations.of(context)!.manualRegistrationSub,
-                      style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-                    ),
-                    const SizedBox(height: VSPSpacing.md),
-                    
-                    // 1. اسم الفريق
-                    _buildInputLabel('اسم الفريق:'),
-                    TextField(
-                      controller: nameCtrl,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.teamName,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                        filled: true,
-                        fillColor: VSPColors.background,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                          borderSide: BorderSide.none,
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-
-                    // 2. لون قميص الفريق
-                    _buildInputLabel('لون قميص الفريق الأساسي:'),
-                    SizedBox(
-                      height: 40,
-                      child: ListView.builder(
-                        scrollDirection: Axis.horizontal,
-                        itemCount: quickColors.length,
-                        itemBuilder: (context, index) {
-                          final item = quickColors[index];
-                          final isSelected = selectedPrimaryColor == item['value'];
-                          return GestureDetector(
-                            onTap: () {
-                              setDialogState(() {
-                                selectedPrimaryColor = item['value'];
-                              });
-                            },
-                            child: Container(
-                              width: 34,
-                              height: 34,
-                              margin: const EdgeInsets.only(right: 8),
-                              decoration: BoxDecoration(
-                                color: item['color'],
-                                shape: BoxShape.circle,
-                                border: Border.all(
-                                  color: isSelected ? VSPColors.accent : VSPColors.divider,
-                                  width: isSelected ? 3.0 : 1.0,
-                                ),
-                              ),
-                              child: isSelected 
-                                  ? Icon(Icons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 14) 
-                                  : null,
-                            ),
-                          );
-                        },
-                      ),
-                    ),
-                    const SizedBox(height: 20),
-
-                    // 3. إدخال أسماء اللاعبين
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text(
-                          'كشف أسماء اللاعبين (من 5 إلى 12):',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                        Text(
-                          '$totalPlayers / 12',
-                          style: TextStyle(
-                            color: isValidRoster ? VSPColors.accent : Colors.redAccent,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 8),
-                    Row(
-                      children: [
-                        Expanded(
-                          child: TextField(
-                            controller: playerInputCtrl,
-                            style: const TextStyle(color: Colors.white, fontSize: 13),
-                            decoration: InputDecoration(
-                              hintText: 'اكتب اسم اللاعب واضغط إضافة...',
-                              hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                              filled: true,
-                              fillColor: VSPColors.background,
-                              border: OutlineInputBorder(
-                                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                                  borderSide: BorderSide.none,
-                              ),
-                              contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                            ),
-                          ),
-                        ),
-                        const SizedBox(width: 8),
-                        ElevatedButton(
-                          onPressed: () {
-                            final pName = playerInputCtrl.text.trim();
-                            if (pName.isEmpty) return;
-                            if (offlinePlayerNames.contains(pName)) return;
-                            if (offlinePlayerNames.length >= 12) return;
-
-                            setDialogState(() {
-                              offlinePlayerNames.add(pName);
-                              playerInputCtrl.clear();
-                            });
-                          },
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: VSPColors.accent,
-                            foregroundColor: Colors.black,
-                            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                          ),
-                          child: const Icon(Icons.add, size: 20),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 12),
-
-                    // عرض قائمة اللاعبين المضافين على شكل بطاقات صغيرة (Chips) قابلة للحذف
-                    if (offlinePlayerNames.isNotEmpty)
-                      Container(
-                        padding: const EdgeInsets.all(8),
-                        decoration: BoxDecoration(
-                          color: VSPColors.background.withValues(alpha: 0.4),
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                        ),
-                        child: Wrap(
-                          spacing: 6,
-                          runSpacing: 6,
-                          children: offlinePlayerNames.map((name) {
-                            return Chip(
-                              backgroundColor: VSPColors.surfaceAlt,
-                              label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 11)),
-                              deleteIcon: const Icon(Icons.close, size: 12, color: Colors.redAccent),
-                              onDeleted: () {
-                                setDialogState(() {
-                                  offlinePlayerNames.remove(name);
-                                });
-                              },
-                              shape: RoundedRectangleBorder(
-                                borderRadius: BorderRadius.circular(VSPRadius.sm),
-                                side: const BorderSide(color: VSPColors.divider),
-                              ),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    
-                    if (totalPlayers < 5) ...[
-                      const SizedBox(height: 8),
-                      Text(
-                        '⚠️ يجب إضافة ${5 - totalPlayers} لاعبين إضافيين على الأقل لتفعيل خيار الحفظ.',
-                        style: const TextStyle(color: Colors.redAccent, fontSize: 11),
-                      ),
-                    ],
-                  ],
-                ),
-              );
-            }
-          ),
-        ),
-        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-        actions: [
-          StatefulBuilder(
-            builder: (context, setButtonState) {
-              final bool canSave = nameCtrl.text.trim().isNotEmpty && offlinePlayerNames.length >= 5;
-              
-              return Row(
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Expanded(
-                    child: PrimaryButton(
-                      text: AppLocalizations.of(context)!.cancel,
-                      height: 44,
-                      color: VSPColors.surfaceAlt,
-                      textColor: VSPColors.textPrimary,
-                      onPressed: () => Navigator.pop(ctx),
+                  // Handle Bar
+                  Center(
+                    child: Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: VSPColors.divider,
+                        borderRadius: BorderRadius.circular(2),
+                      ),
                     ),
                   ),
-                  const SizedBox(width: VSPSpacing.md),
+                  const SizedBox(height: 16),
+
+                  // Header
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        isArabic ? 'إضافة فريق يدويًا' : 'Add Team Manually',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                              color: Colors.white,
+                              fontWeight: FontWeight.bold,
+                            ),
+                      ),
+                      IconButton(
+                        icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                        onPressed: () => Navigator.pop(sheetContext),
+                      ),
+                    ],
+                  ),
+                  Text(
+                    isArabic ? 'تسجيل فريق اشترك عبر الهاتف أو نقداً بالملعب' : 'Register an in-person or cash team',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 16),
+
                   Expanded(
-                    child: PrimaryButton(
-                      text: AppLocalizations.of(context)!.addMember.split(' ').first,
-                      height: 44,
-                      onPressed: !canSave ? null : () async {
-                        final teamName = nameCtrl.text.trim();
-                        Navigator.pop(ctx);
-                        
-                        setState(() => _isLoading = true);
-                        try {
-                          final auth = Provider.of<AuthProvider>(context, listen: false);
-                          final currentUserId = auth.currentUser?.uid ?? auth.currentUser?.id ?? '';
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // 1. اسم الفريق
+                          _buildInputLabel(isArabic ? 'اسم الفريق:' : 'Team Name:'),
+                          CustomTextField(
+                            controller: nameCtrl,
+                            hintText: isArabic ? 'مثال: الأهلي' : 'e.g. Al Ahly',
+                            onChanged: (_) => setDialogState(() {}),
+                          ),
+                          const SizedBox(height: 16),
 
-                          // 1. إنشاء الفريق في جدول teams
-                          final teamId = await TeamRepository().createTeam({
-                            'name': teamName,
-                            'captainName': AppLocalizations.of(context)!.manualRegistration,
-                            'captainImageUrl': '',
-                            'logoUrl': '',
-                            'sportType': _currentChampionship.sportType,
-                            'governorate': _currentChampionship.governorate,
-                            'memberUids': [currentUserId.isNotEmpty ? currentUserId : '8d3d7d65-a167-4138-b36c-85bbdead1b7a'],
-                            'date': 'Upcoming',
-                            'primary_color': selectedPrimaryColor,
-                            'secondary_color': '#000000',
-                          });
-                          
-                          if (teamId != null) {
-                            // 2. تسجيل انضمام الفريق في جدول البطولة الرئيسي
-                            await TournamentRepository().joinChampionship(
-                              _currentChampionship.id,
-                              teamId,
-                              skipMemberCheck: true,
-                            );
+                          // 2. لون قميص الفريق
+                          _buildInputLabel(isArabic ? 'لون قميص الفريق:' : 'Shirt Color:'),
+                          SizedBox(
+                            height: 40,
+                            child: ListView.builder(
+                              scrollDirection: Axis.horizontal,
+                              itemCount: quickColors.length,
+                              itemBuilder: (context, index) {
+                                final item = quickColors[index];
+                                final isSelected = selectedPrimaryColor == item['value'];
+                                return GestureDetector(
+                                  onTap: () => setDialogState(() => selectedPrimaryColor = item['value']),
+                                  child: Container(
+                                    width: 36,
+                                    height: 36,
+                                    margin: const EdgeInsets.only(right: 8),
+                                    decoration: BoxDecoration(
+                                      color: item['color'],
+                                      shape: BoxShape.circle,
+                                      border: Border.all(
+                                        color: isSelected ? VSPColors.accent : VSPColors.divider,
+                                        width: isSelected ? 3.0 : 1.0,
+                                      ),
+                                    ),
+                                    child: isSelected
+                                        ? Icon(Icons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 16)
+                                        : null,
+                                  ),
+                                );
+                              },
+                            ),
+                          ),
+                          const SizedBox(height: 20),
 
-                            // 3. أتمتة حفظ كشف أسماء اللاعبين المضافين في جدول championship_rosters الخاص بالبطولة
-                            await Supabase.instance.client.from('championship_rosters').insert({
-                              'championship_id': _currentChampionship.id,
-                              'team_id': teamId,
-                              'player_ids': [], // لا يوجد معرفات مستخدمين أونلاين
-                              'guest_names': offlinePlayerNames, // حفظ كشف الأسماء هنا!
-                            });
-
-                            // تحديث الواجهة فوراً
-                            setState(() {
-                              _currentChampionship = _currentChampionship.copyWith(
-                                joinedTeams: [..._currentChampionship.joinedTeams, teamId],
-                              );
-                            });
-
-                            if (mounted) {
-                              ScaffoldMessenger.of(context).showSnackBar(
-                                SnackBar(
-                                  content: Text(AppLocalizations.of(context)!.teamCreatedSuccess),
-                                  backgroundColor: VSPColors.success,
+                          // 3. إدخال أسماء اللاعبين (مع حماية اتجاه الأرقام RTL)
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Text(
+                                isArabic ? 'كشف أسماء اللاعبين (من 5 إلى 12):' : 'Roster (5 to 12 players):',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              ),
+                              // 💡 إصلاح عاكس الأرقام LTR
+                              Directionality(
+                                textDirection: TextDirection.ltr,
+                                child: Text(
+                                  '$totalPlayers / 12',
+                                  style: TextStyle(
+                                    color: isValidRoster ? VSPColors.accent : Colors.redAccent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 13,
+                                  ),
                                 ),
-                              );
-                            }
-                          }
-                        } catch (e) {
-                          if (mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
-                            );
-                          }
-                        } finally {
-                          if (mounted) setState(() => _isLoading = false);
-                        }
-                      },
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 8),
+
+                          Row(
+                            children: [
+                              Expanded(
+                                child: CustomTextField(
+                                  controller: playerInputCtrl,
+                                  hintText: isArabic ? 'اكتب اسم اللاعب واضغط إضافة...' : 'Enter player name...',
+                                  onChanged: (_) => setDialogState(() {}),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              SizedBox(
+                                height: 50,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    final pName = playerInputCtrl.text.trim();
+                                    if (pName.isEmpty) return;
+                                    if (offlinePlayerNames.contains(pName)) return;
+                                    if (offlinePlayerNames.length >= 12) return;
+
+                                    setDialogState(() {
+                                      offlinePlayerNames.add(pName);
+                                      playerInputCtrl.clear();
+                                    });
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: VSPColors.accent,
+                                    foregroundColor: Colors.black,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                                  ),
+                                  child: const Icon(Icons.add, size: 22),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 12),
+
+                          // عرض قايمة اللاعبين
+                          if (offlinePlayerNames.isNotEmpty)
+                            Container(
+                              width: double.infinity,
+                              padding: const EdgeInsets.all(10),
+                              decoration: BoxDecoration(
+                                color: VSPColors.background,
+                                borderRadius: BorderRadius.circular(VSPRadius.md),
+                                border: Border.all(color: VSPColors.divider),
+                              ),
+                              child: Wrap(
+                                spacing: 8,
+                                runSpacing: 8,
+                                children: offlinePlayerNames.map((name) {
+                                  return Chip(
+                                    backgroundColor: VSPColors.surfaceAlt,
+                                    label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
+                                    deleteIcon: const Icon(Icons.close, size: 14, color: Colors.redAccent),
+                                    onDeleted: () {
+                                      setDialogState(() {
+                                        offlinePlayerNames.remove(name);
+                                      });
+                                    },
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                                      side: const BorderSide(color: VSPColors.divider),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+
+                          if (totalPlayers < 5) ...[
+                            const SizedBox(height: 8),
+                            Text(
+                              isArabic
+                                  ? '⚠️ يجب إضافة ${5 - totalPlayers} لاعبين إضافيين لتفعيل خيار التسجيل'
+                                  : '⚠️ Add ${5 - totalPlayers} more players to enable submit',
+                              style: const TextStyle(color: Colors.redAccent, fontSize: 11),
+                            ),
+                          ],
+                        ],
+                      ),
                     ),
+                  ),
+
+                  const SizedBox(height: 16),
+
+                  // 💡 أزرار التحكم النهائية داخل حدود الكارت وبدون طفح
+                  Row(
+                    children: [
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: ElevatedButton(
+                            onPressed: () => Navigator.pop(sheetContext),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: VSPColors.surfaceAlt,
+                              foregroundColor: Colors.white,
+                              elevation: 0,
+                              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                            ),
+                            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: SizedBox(
+                          height: 52,
+                          child: PrimaryButton(
+                            text: isArabic ? 'تأكيد إضافة الفريق 🏆' : 'Confirm Add Team 🏆',
+                            onPressed: !canSubmit
+                                ? null
+                                : () async {
+                                    final teamName = nameCtrl.text.trim();
+                                    Navigator.pop(sheetContext);
+
+                                    setState(() => _isLoading = true);
+                                    try {
+                                      final auth = Provider.of<AuthProvider>(context, listen: false);
+                                      final currentUserId = auth.currentUser?.uid ?? auth.currentUser?.id ?? '';
+
+                                      // 1. إنشاء الفريق
+                                      final teamId = await TeamRepository().createTeam({
+                                        'name': teamName,
+                                        'captainName': isArabic ? 'تسجيل يدوي' : 'Manual Registration',
+                                        'captainImageUrl': '',
+                                        'logoUrl': '',
+                                        'sportType': _currentChampionship.sportType,
+                                        'governorate': _currentChampionship.governorate,
+                                        'memberUids': [currentUserId.isNotEmpty ? currentUserId : '8d3d7d65-a167-4138-b36c-85bbdead1b7a'],
+                                        'date': 'Upcoming',
+                                        'primary_color': selectedPrimaryColor,
+                                        'secondary_color': '#000000',
+                                      });
+
+                                      if (teamId != null) {
+                                        // 2. تسجيل انضمام الفريق للبطولة
+                                        await TournamentRepository().joinChampionship(
+                                          _currentChampionship.id,
+                                          teamId,
+                                          skipMemberCheck: true,
+                                        );
+
+                                        // 3. حفظ كشف الأسماء في الجدول الخاص بالبطولة
+                                        await Supabase.instance.client.from('championship_rosters').insert({
+                                          'championship_id': _currentChampionship.id,
+                                          'team_id': teamId,
+                                          'player_ids': [],
+                                          'guest_names': offlinePlayerNames,
+                                        });
+
+                                        setState(() {
+                                          _currentChampionship = _currentChampionship.copyWith(
+                                            joinedTeams: [..._currentChampionship.joinedTeams, teamId],
+                                          );
+                                        });
+
+                                        if (mounted) {
+                                          VSPFeedback.showSuccess(
+                                            context,
+                                            isArabic ? 'تم إضافة الفريق للبطولة بنجاح! 🏆' : 'Team added to tournament successfully!',
+                                          );
+                                        }
+                                      }
+                                    } catch (e) {
+                                      if (mounted) {
+                                        VSPFeedback.showError(context, e.toString());
+                                      }
+                                    } finally {
+                                      if (mounted) setState(() => _isLoading = false);
+                                    }
+                                  },
+                          ),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               );
-            }
+            },
           ),
-        ],
-      ),
+        );
+      },
     );
   }
 
@@ -856,280 +906,313 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
         centerTitle: true,
       ),
-      body: FutureBuilder<List<Team>>(
-        future: TournamentRepository().getTeamsByIds(_currentChampionship.joinedTeams),
-        builder: (context, snapshot) {
-          final teams = snapshot.data ?? [];
-          
-          return Column(
-            children: [
-              VSPCard(
-                margin: const EdgeInsets.all(VSPSpacing.md),
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoItem(AppLocalizations.of(context)!.statusLabel, _currentChampionship.status.toUpperCase(), 
-                          color: _currentChampionship.status == 'completed' ? VSPColors.error : VSPColors.accent),
-                        _buildInfoItem(AppLocalizations.of(context)!.categoryLabel, _currentChampionship.type),
-                      ],
-                    ),
-                    const Divider(color: VSPColors.divider, height: 32),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        _buildInfoItem(AppLocalizations.of(context)!.datesLabel, '${DateFormat('MMM d').format(_currentChampionship.startDate)} - ${DateFormat('MMM d').format(_currentChampionship.endDate)}'),
-                        _buildInfoItem(AppLocalizations.of(context)!.teamsLabel, '${_currentChampionship.joinedTeams.length} / ${_currentChampionship.maxTeams}'),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: Supabase.instance.client
+            .from('championships')
+            .stream(primaryKey: ['id'])
+            .eq('id', _currentChampionship.id),
+        builder: (context, champSnapshot) {
+          if (champSnapshot.hasData && champSnapshot.data!.isNotEmpty) {
+            _currentChampionship = Championship.fromFirestore(champSnapshot.data!.first, _currentChampionship.id);
+          }
+          final currentChamp = _currentChampionship;
 
-              Padding(
-                padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
-                child: Row(
-                  children: [
-                    Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 18),
-                    const SizedBox(width: 8),
-                    Text(AppLocalizations.of(context)!.joinedTeamsLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                      color: VSPColors.textSecondary, 
-                      fontWeight: FontWeight.bold
-                    )),
-                    const Spacer(),
-                    if (_currentChampionship.status == 'open' && _currentChampionship.joinedTeams.length < _currentChampionship.maxTeams)
-                      GestureDetector(
-                        onTap: () => _showAddTeamManuallyDialog(),
-                        child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                          decoration: BoxDecoration(
-                            color: VSPColors.accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(VSPRadius.full),
-                            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                          ),
-                          child: Row(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 14),
-                              const SizedBox(width: 4),
-                              Text(AppLocalizations.of(context)!.addTeam, style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                                color: VSPColors.accent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 10,
-                              )),
-                            ],
-                          ),
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-
-              Expanded(
-                child: ListView.builder(
-                        padding: const EdgeInsets.symmetric(horizontal: 16),
-                        itemCount: teams.length,
-                        itemBuilder: (context, index) {
-                          final team = teams[index];
-                          final isPaid = _currentChampionship.paidTeams.contains(team.id);
-                          
-                          return Container(
-                            margin: const EdgeInsets.only(bottom: 12),
-                            padding: const EdgeInsets.all(VSPSpacing.sm),
-                            decoration: BoxDecoration(
-                              color: VSPColors.surface,
-                              borderRadius: BorderRadius.circular(VSPRadius.md),
-                              border: Border.all(color: VSPColors.divider),
+          return FutureBuilder<List<Team>>(
+            future: TournamentRepository().getTeamsByIds(currentChamp.joinedTeams),
+            builder: (context, snapshot) {
+              final teams = snapshot.data ?? [];
+              
+              return Column(
+                children: [
+                  VSPCard(
+                    margin: const EdgeInsets.all(VSPSpacing.md),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    child: Column(
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildInfoItem(
+                              AppLocalizations.of(context)!.statusLabel, 
+                              currentChamp.status.toUpperCase(), 
+                              color: currentChamp.status == 'completed' ? VSPColors.error : VSPColors.accent,
                             ),
-                            child: Row(
-                              children: [
-                                CircleAvatar(
-                                  radius: 20,
-                                  backgroundImage: team.captainImageUrl.isNotEmpty
-                                      ? NetworkImage(team.captainImageUrl)
-                                      : null,
-                                  backgroundColor: VSPColors.surfaceAlt,
-                                  child: team.captainImageUrl.isEmpty
-                                      ? Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 20)
-                                      : null,
+                            _buildInfoItem(AppLocalizations.of(context)!.categoryLabel, currentChamp.type),
+                          ],
+                        ),
+                        const Divider(color: VSPColors.divider, height: 32),
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            _buildInfoItem(
+                              AppLocalizations.of(context)!.datesLabel, 
+                              '${DateFormat('MMM d').format(currentChamp.startDate)} - ${DateFormat('MMM d').format(currentChamp.endDate)}',
+                            ),
+                            _buildInfoItem(
+                              AppLocalizations.of(context)!.teamsLabel, 
+                              '${currentChamp.joinedTeams.length} / ${currentChamp.maxTeams}',
+                              isLtr: true,
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
+                    child: Row(
+                      children: [
+                        Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 18),
+                        const SizedBox(width: 8),
+                        Text(AppLocalizations.of(context)!.joinedTeamsLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                          color: VSPColors.textSecondary, 
+                          fontWeight: FontWeight.bold
+                        )),
+                        const Spacer(),
+                        if (currentChamp.status == 'open' && currentChamp.joinedTeams.length < currentChamp.maxTeams)
+                          GestureDetector(
+                            onTap: () => _showAddTeamManuallyDialog(),
+                            child: Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
+                              decoration: BoxDecoration(
+                                color: VSPColors.accent.withValues(alpha: 0.1),
+                                borderRadius: BorderRadius.circular(VSPRadius.full),
+                                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                              ),
+                              child: Row(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 14),
+                                  const SizedBox(width: 4),
+                                  Text(AppLocalizations.of(context)!.addTeam, style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                    color: VSPColors.accent,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 10,
+                                  )),
+                                ],
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
+
+                  Expanded(
+                    child: teams.isEmpty
+                        ? Center(
+                            child: Text(
+                              Localizations.localeOf(context).languageCode == 'ar'
+                                  ? 'لا توجد فرق مشاركة حتى الآن'
+                                  : 'No teams joined yet',
+                              style: const TextStyle(color: VSPColors.textSecondary),
+                            ),
+                          )
+                        : ListView.builder(
+                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            itemCount: teams.length,
+                            itemBuilder: (context, index) {
+                              final team = teams[index];
+                              final isPaid = currentChamp.paidTeams.contains(team.id);
+                              
+                              return Container(
+                                margin: const EdgeInsets.only(bottom: 12),
+                                padding: const EdgeInsets.all(VSPSpacing.sm),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.surface,
+                                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                                  border: Border.all(color: VSPColors.divider),
                                 ),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Column(
-                                    crossAxisAlignment: CrossAxisAlignment.start,
-                                    children: [
-                                      Text(team.name, style: Theme.of(context).textTheme.titleSmall),
-                                      Text(team.captainName, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                                      const SizedBox(height: 8),
-                                      Row(
+                                child: Row(
+                                  children: [
+                                    CircleAvatar(
+                                      radius: 20,
+                                      backgroundImage: team.captainImageUrl.isNotEmpty
+                                          ? NetworkImage(team.captainImageUrl)
+                                          : null,
+                                      backgroundColor: VSPColors.surfaceAlt,
+                                      child: team.captainImageUrl.isEmpty
+                                          ? Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 20)
+                                          : null,
+                                    ),
+                                    const SizedBox(width: 12),
+                                    Expanded(
+                                      child: Column(
+                                        crossAxisAlignment: CrossAxisAlignment.start,
                                         children: [
-                                          // Entry Fee Payment Badge
-                                          GestureDetector(
-                                            onTap: () => _togglePaymentStatus(team.id),
-                                            child: AnimatedContainer(
-                                              duration: const Duration(milliseconds: 250),
-                                              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                                              decoration: BoxDecoration(
-                                                color: isPaid
-                                                    ? VSPColors.success.withValues(alpha: 0.15)
-                                                    : VSPColors.warning.withValues(alpha: 0.15),
-                                                borderRadius: BorderRadius.circular(VSPRadius.full),
-                                                border: Border.all(
-                                                  color: isPaid
-                                                      ? VSPColors.success.withValues(alpha: 0.5)
-                                                      : VSPColors.warning.withValues(alpha: 0.5),
-                                                ),
-                                              ),
-                                              child: Row(
-                                                mainAxisSize: MainAxisSize.min,
-                                                children: [
-                                                  Icon(
-                                                    isPaid ? LucideIcons.checkCircle : LucideIcons.clock,
-                                                    size: 14,
-                                                    color: isPaid ? VSPColors.success : VSPColors.warning,
-                                                  ),
-                                                  const SizedBox(width: 4),
-                                                  Text(
-                                                    isPaid ? AppLocalizations.of(context)!.paid : AppLocalizations.of(context)!.pending,
-                                                    style: TextStyle(
-                                                      color: isPaid ? VSPColors.success : VSPColors.warning,
-                                                      fontSize: 11,
-                                                      fontWeight: FontWeight.bold,
+                                          Text(team.name, style: Theme.of(context).textTheme.titleSmall),
+                                          Text(team.captainName, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                                          const SizedBox(height: 8),
+                                          Row(
+                                            children: [
+                                              // Entry Fee Payment Badge
+                                              GestureDetector(
+                                                onTap: () => _togglePaymentStatus(team.id),
+                                                child: AnimatedContainer(
+                                                  duration: const Duration(milliseconds: 250),
+                                                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                                                  decoration: BoxDecoration(
+                                                    color: isPaid
+                                                        ? VSPColors.success.withValues(alpha: 0.15)
+                                                        : VSPColors.warning.withValues(alpha: 0.15),
+                                                    borderRadius: BorderRadius.circular(VSPRadius.full),
+                                                    border: Border.all(
+                                                      color: isPaid
+                                                          ? VSPColors.success.withValues(alpha: 0.5)
+                                                          : VSPColors.warning.withValues(alpha: 0.5),
                                                     ),
                                                   ),
-                                                ],
-                                              ),
-                                            ),
-                                          ),
-                                          if (_currentChampionship.status == 'open') ...[
-                                            const SizedBox(width: 8),
-                                            IconButton(
-                                              icon: const Icon(LucideIcons.trash2, color: VSPColors.error, size: 18),
-                                              onPressed: () async {
-                                                final confirm = await showDialog<bool>(
-                                                  context: context,
-                                                  builder: (ctx) => AlertDialog(
-                                                    backgroundColor: VSPColors.surface,
-                                                    title: const Text('إلغاء انضمام الفريق', style: TextStyle(color: Colors.white)),
-                                                    content: Text('هل أنت متأكد من إلغاء انضمام فريق ${team.name} للبطولة؟'),
-                                                    actions: [
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, false),
-                                                        child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+                                                  child: Row(
+                                                    mainAxisSize: MainAxisSize.min,
+                                                    children: [
+                                                      Icon(
+                                                        isPaid ? LucideIcons.checkCircle : LucideIcons.clock,
+                                                        size: 14,
+                                                        color: isPaid ? VSPColors.success : VSPColors.warning,
                                                       ),
-                                                      TextButton(
-                                                        onPressed: () => Navigator.pop(ctx, true),
-                                                        child: const Text('تأكيد الحذف', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                                                      const SizedBox(width: 4),
+                                                      Text(
+                                                        isPaid ? AppLocalizations.of(context)!.paid : AppLocalizations.of(context)!.pending,
+                                                        style: TextStyle(
+                                                          color: isPaid ? VSPColors.success : VSPColors.warning,
+                                                          fontSize: 11,
+                                                          fontWeight: FontWeight.bold,
+                                                        ),
                                                       ),
                                                     ],
                                                   ),
-                                                );
-                                                if (confirm == true) {
-                                                  setState(() => _isLoading = true);
-                                                  try {
-                                                    final success = await TournamentRepository().leaveChampionship(_currentChampionship.id, team.id);
-                                                    if (success) {
-                                                      setState(() {
-                                                        final updatedList = List<String>.from(_currentChampionship.joinedTeams)..remove(team.id);
-                                                        final updatedPaid = List<String>.from(_currentChampionship.paidTeams)..remove(team.id);
-                                                        _currentChampionship = _currentChampionship.copyWith(
-                                                          joinedTeams: updatedList,
-                                                          paidTeams: updatedPaid,
-                                                        );
-                                                      });
-                                                      if (mounted) {
-                                                        ScaffoldMessenger.of(context).showSnackBar(
-                                                          const SnackBar(content: Text('تم إلغاء انضمام الفريق بنجاح.'), backgroundColor: VSPColors.success),
-                                                        );
+                                                ),
+                                              ),
+                                              if (currentChamp.status == 'open') ...[
+                                                const SizedBox(width: 8),
+                                                IconButton(
+                                                  icon: const Icon(LucideIcons.trash2, color: VSPColors.error, size: 18),
+                                                  onPressed: () async {
+                                                    final confirm = await showDialog<bool>(
+                                                      context: context,
+                                                      builder: (ctx) => AlertDialog(
+                                                        backgroundColor: VSPColors.surface,
+                                                        title: const Text('إلغاء انضمام الفريق', style: TextStyle(color: Colors.white)),
+                                                        content: Text('هل أنت متأكد من إلغاء انضمام فريق ${team.name} للبطولة؟'),
+                                                        actions: [
+                                                          TextButton(
+                                                            onPressed: () => Navigator.pop(ctx, false),
+                                                            child: const Text('إلغاء', style: TextStyle(color: Colors.white54)),
+                                                          ),
+                                                          TextButton(
+                                                            onPressed: () => Navigator.pop(ctx, true),
+                                                            child: const Text('تأكيد الحذف', style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
+                                                          ),
+                                                        ],
+                                                      ),
+                                                    );
+                                                    if (confirm == true) {
+                                                      setState(() => _isLoading = true);
+                                                      try {
+                                                        final success = await TournamentRepository().leaveChampionship(currentChamp.id, team.id);
+                                                        if (success) {
+                                                          setState(() {
+                                                            final updatedList = List<String>.from(currentChamp.joinedTeams)..remove(team.id);
+                                                            final updatedPaid = List<String>.from(currentChamp.paidTeams)..remove(team.id);
+                                                            _currentChampionship = currentChamp.copyWith(
+                                                              joinedTeams: updatedList,
+                                                              paidTeams: updatedPaid,
+                                                            );
+                                                          });
+                                                          if (mounted) {
+                                                            VSPFeedback.showSuccess(context, 'تم إلغاء انضمام الفريق بنجاح.');
+                                                          }
+                                                        }
+                                                      } catch (e) {
+                                                        if (mounted) {
+                                                          VSPFeedback.showError(context, e.toString());
+                                                        }
+                                                      } finally {
+                                                        if (mounted) setState(() => _isLoading = false);
                                                       }
                                                     }
-                                                  } catch (e) {
-                                                    if (mounted) {
-                                                      ScaffoldMessenger.of(context).showSnackBar(
-                                                        SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
-                                                      );
-                                                    }
-                                                  } finally {
-                                                    if (mounted) setState(() => _isLoading = false);
-                                                  }
-                                                }
-                                              },
-                                            ),
-                                          ],
+                                                  },
+                                                ),
+                                              ],
+                                            ],
+                                          ),
                                         ],
                                       ),
-                                    ],
+                                    ),
+                                  ],
+                                ),
+                              );
+                            },
+                          ),
+                  ),
+
+                  Container(
+                    padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, VSPSpacing.md + MediaQuery.of(context).padding.bottom),
+                    decoration: const BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+                    ),
+                    child: Column(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        if (currentChamp.status == 'open')
+                          PrimaryButton(
+                            text: AppLocalizations.of(context)!.generateDrawStart,
+                            isLoading: _isLoading,
+                            onPressed: _handleStartTournament,
+                          ),
+                        
+                        if (currentChamp.status != 'open')
+                          PrimaryButton(
+                            text: AppLocalizations.of(context)!.viewBrackets.toUpperCase(),
+                            color: VSPColors.accent.withValues(alpha: 0.1),
+                            textColor: VSPColors.accent,
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => TournamentBracketsScreen(
+                                    championship: currentChamp,
+                                    isOwner: true, 
                                   ),
                                 ),
-                              ],
-                            ),
-                          );
-                        },
-                      ),
-              ),
-
-              Container(
-                padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, VSPSpacing.md + MediaQuery.of(context).padding.bottom),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: const BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    if (_currentChampionship.status == 'open')
-                      PrimaryButton(
-                        text: AppLocalizations.of(context)!.generateDrawStart,
-                        isLoading: _isLoading,
-                        onPressed: _handleStartTournament,
-                      ),
-                    
-                    if (_currentChampionship.status != 'open')
-                      PrimaryButton(
-                        text: AppLocalizations.of(context)!.viewBrackets.toUpperCase(),
-                        color: VSPColors.accent.withValues(alpha: 0.1),
-                        textColor: VSPColors.accent,
-                        onPressed: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => TournamentBracketsScreen(
-                                championship: _currentChampionship,
-                                isOwner: true, 
-                              ),
-                            ),
-                          );
-                        },
-                      ),
-                      
-                    if (_currentChampionship.status == 'ongoing') ...[
-                      const SizedBox(height: 12),
-                      PrimaryButton(
-                        text: AppLocalizations.of(context)!.manualCrownChampion,
-                        color: VSPColors.surfaceAlt,
-                        textColor: VSPColors.textSecondary,
-                        onPressed: () => _showWinnerSelectionDialog(teams),
-                      ),
-                    ],
-                  ],
-                ),
-              ),
-            ],
+                              );
+                            },
+                          ),
+                          
+                        if (currentChamp.status == 'ongoing') ...[
+                          const SizedBox(height: 12),
+                          PrimaryButton(
+                            text: AppLocalizations.of(context)!.manualCrownChampion,
+                            color: VSPColors.surfaceAlt,
+                            textColor: VSPColors.textSecondary,
+                            onPressed: () => _showWinnerSelectionDialog(teams),
+                          ),
+                        ],
+                      ],
+                    ),
+                  ),
+                ],
+              );
+            },
           );
-        }
+        },
       ),
     );
   }
 
-  Widget _buildInfoItem(String label, String value, {Color? color}) {
+  Widget _buildInfoItem(String label, String value, {Color? color, bool isLtr = false}) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(label, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, letterSpacing: 1.1)),
         const SizedBox(height: 4),
-        Text(value, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: color ?? VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+        isLtr
+            ? Directionality(
+                textDirection: TextDirection.ltr,
+                child: Text(value, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: color ?? VSPColors.textPrimary, fontWeight: FontWeight.bold)),
+              )
+            : Text(value, style: Theme.of(context).textTheme.titleSmall?.copyWith(color: color ?? VSPColors.textPrimary, fontWeight: FontWeight.bold)),
       ],
     );
   }

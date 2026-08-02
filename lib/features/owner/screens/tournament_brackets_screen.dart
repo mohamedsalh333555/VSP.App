@@ -210,6 +210,7 @@ class TournamentBracketsScreen extends StatelessWidget {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
         int homeScore = 0;
@@ -218,7 +219,9 @@ class TournamentBracketsScreen extends StatelessWidget {
         bool isSubmitting = false;
 
         return Container(
-          height: MediaQuery.of(sheetContext).size.height * 0.85,
+          constraints: BoxConstraints(
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
+          ),
           decoration: const BoxDecoration(
             color: VSPColors.background,
             borderRadius: BorderRadius.only(
@@ -387,7 +390,7 @@ class TournamentBracketsScreen extends StatelessWidget {
 
                   // أزرار التأكيد والإرسال
                   Container(
-                    padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(context).padding.bottom + 16),
+                    padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(sheetContext).padding.bottom + MediaQuery.of(sheetContext).viewInsets.bottom + 16),
                     decoration: const BoxDecoration(
                       border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
                     ),

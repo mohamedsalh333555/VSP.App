@@ -1,15 +1,13 @@
-# Production Key Properties for Android Signing
-# ----------------------------------------------
-# ⚠️ SECURITY WARNING: NEVER commit the real 'key.properties' file to version control.
-# Add 'key.properties' to your .gitignore file.
+# ==============================================================================
+# VSP Android Release Signing Configuration Template
+# ==============================================================================
+# Instructions for Production Release:
+# 1. Generate a production release keystore using keytool:
+#    keytool -genkey -v -keystore android/app/vsp-release-key.jks -keyalg RSA -keysize 2048 -validity 10000 -alias vsp-key
+# 2. Copy this file to "android/key.properties" (do NOT commit key.properties to git).
+# 3. Replace the placeholder credentials below with your actual keystore values:
 
-# 1. Create a file named 'key.properties' in this directory.
-# 2. Add the following fields with your real secrets:
-
-# storePassword=YOUR_SECRET_STORE_PASSWORD
-# keyPassword=YOUR_SECRET_KEY_PASSWORD
-# keyAlias=upload
-# storeFile=upload-keystore.jks
-
-# Note: 'storeFile' should be the path relative to the 'android/app' directory 
-# or an absolute path. If you place the .jks file in 'android/app/', just use the filename.
+storePassword=YOUR_PRODUCTION_STORE_PASSWORD
+keyPassword=YOUR_PRODUCTION_KEY_PASSWORD
+keyAlias=vsp-key
+storeFile=vsp-release-key.jks

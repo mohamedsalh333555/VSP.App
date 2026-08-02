@@ -185,6 +185,18 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   Future<void> _handleSave() async {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    if (_nameController.text.trim().isEmpty) {
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال اسم البطولة' : 'Please enter tournament name');
+      return;
+    }
+    if (_feeController.text.trim().isEmpty) {
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال رسوم الاشتراك في البطولة' : 'Please enter tournament entry fee');
+      return;
+    }
+    if (_prizeController.text.trim().isEmpty) {
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال قيمة الجائزة الكبرى' : 'Please enter grand prize amount');
+      return;
+    }
     if (!_endDate.isAfter(_startDate)) { 
       VSPFeedback.showError(context, isAr ? 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء!' : 'End date must be strictly after start date!'); 
       return; 
@@ -209,8 +221,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         'image': widget.tournament?.imageUrl ?? '',
         'teamsCount': int.parse(_selectedTeams),
         'maxTeams': int.parse(_selectedTeams),
-        'grandPrize': double.tryParse(_prizeController.text) ?? 5000.0,
-        'entryFee': double.tryParse(_feeController.text) ?? 500.0,
+        'grandPrize': double.tryParse(_prizeController.text.trim()) ?? 0.0,
+        'entryFee': double.tryParse(_feeController.text.trim()) ?? 0.0,
         'rules': widget.tournament?.rules ?? '',
         'paymentMethods': widget.tournament?.paymentMethods ?? ['cash'],
         'settings': {

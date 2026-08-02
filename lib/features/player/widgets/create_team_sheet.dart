@@ -125,6 +125,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (context) => AddPlayerSheet(
         onPlayerAdded: (user) {
@@ -141,165 +142,170 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final bottomInset = MediaQuery.of(context).padding.bottom + MediaQuery.of(context).viewInsets.bottom + 16;
     
-    return Padding(
-      padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-      child: Container(
-        padding: const EdgeInsets.only(
-          top: VSPSpacing.lg,
-          left: VSPSpacing.md,
-          right: VSPSpacing.md,
-          bottom: VSPSpacing.lg,
+    return Container(
+      constraints: BoxConstraints(
+        maxHeight: MediaQuery.of(context).size.height * 0.88,
+      ),
+      padding: EdgeInsets.fromLTRB(
+        VSPSpacing.md,
+        VSPSpacing.lg,
+        VSPSpacing.md,
+        bottomInset,
+      ),
+      decoration: const BoxDecoration(
+        color: VSPColors.background,
+        borderRadius: BorderRadius.only(
+          topLeft: Radius.circular(VSPRadius.xl),
+          topRight: Radius.circular(VSPRadius.xl),
         ),
-        decoration: const BoxDecoration(
-          color: VSPColors.background,
-          borderRadius: BorderRadius.only(
-            topLeft: Radius.circular(VSPRadius.xl),
-            topRight: Radius.circular(VSPRadius.xl),
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    l10n.createTeamTitle,
+                    style: Theme.of(context).textTheme.displayMedium,
+                  ),
+                  const SizedBox(height: VSPSpacing.xs),
+                  Text(
+                    l10n.createTeamSubtitle,
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: VSPColors.textSecondary,
+                        ),
+                  ),
+                ],
+              ),
+              IconButton(
+                onPressed: () => Navigator.pop(context),
+                icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
+              ),
+            ],
           ),
-        ),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-              children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      l10n.createTeamTitle,
-                      style: Theme.of(context).textTheme.displayMedium,
-                    ),
-                    const SizedBox(height: VSPSpacing.xs),
-                    Text(
-                      l10n.createTeamSubtitle,
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                            color: VSPColors.textSecondary,
-                          ),
-                    ),
-                  ],
-                ),
-                IconButton(
-                  onPressed: () => Navigator.pop(context),
-                  icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
-                ),
-              ],
-            ),
-            const SizedBox(height: VSPSpacing.lg),
-            Expanded(
-              child: SingleChildScrollView(
-                physics: const BouncingScrollPhysics(),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(l10n.teamNameLabel, style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: VSPSpacing.sm),
-                    TextField(
-                      controller: _nameController,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      decoration: InputDecoration(
-                        hintText: 'e.g. Star Team',
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-                        filled: true,
-                        fillColor: VSPColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                          borderSide: BorderSide.none,
-                        ),
-                        contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-                      ),
-                    ),
-                    const SizedBox(height: VSPSpacing.md),
-                    Text(l10n.sportsType, style: Theme.of(context).textTheme.labelMedium),
-                    const SizedBox(height: VSPSpacing.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surface,
+          const SizedBox(height: VSPSpacing.lg),
+          Expanded(
+            child: SingleChildScrollView(
+              physics: const BouncingScrollPhysics(),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(l10n.teamNameLabel, style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: VSPSpacing.sm),
+                  TextField(
+                    controller: _nameController,
+                    style: Theme.of(context).textTheme.bodyMedium,
+                    decoration: InputDecoration(
+                      hintText: 'e.g. Star Team',
+                      hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+                      filled: true,
+                      fillColor: VSPColors.surface,
+                      border: OutlineInputBorder(
                         borderRadius: BorderRadius.circular(VSPRadius.md),
+                        borderSide: BorderSide.none,
                       ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _selectedSport,
-                          isExpanded: true,
-                          dropdownColor: VSPColors.surface,
-                          items: VSPConstants.sports
-                              .map((s) => DropdownMenuItem(
-                                    value: s,
-                                    child: Text(s, style: Theme.of(context).textTheme.bodyMedium),
-                                  ))
-                              .toList(),
-                          onChanged: (val) => setState(() => _selectedSport = val!),
-                        ),
+                      contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
+                    ),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  Text(l10n.sportsType, style: Theme.of(context).textTheme.labelMedium),
+                  const SizedBox(height: VSPSpacing.sm),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                    ),
+                    child: DropdownButtonHideUnderline(
+                      child: DropdownButton<String>(
+                        value: _selectedSport,
+                        isExpanded: true,
+                        dropdownColor: VSPColors.surface,
+                        items: VSPConstants.sports
+                            .map((s) => DropdownMenuItem(
+                                  value: s,
+                                  child: Text(s, style: Theme.of(context).textTheme.bodyMedium),
+                                ))
+                            .toList(),
+                        onChanged: (val) => setState(() => _selectedSport = val!),
                       ),
                     ),
-                    const SizedBox(height: VSPSpacing.lg),
-                    GestureDetector(
-                      onTap: _pickImage,
-                      child: Row(
-                        children: [
-                          Container(
-                            width: 50,
-                            height: 50,
-                            decoration: BoxDecoration(
-                              color: VSPColors.surface,
-                              borderRadius: BorderRadius.circular(VSPRadius.md),
-                              border: Border.all(color: VSPColors.divider),
-                              image: _selectedLogo != null 
-                                  ? DecorationImage(
-                                      image: FileImage(File(_selectedLogo!.path)),
-                                      fit: BoxFit.cover,
-                                    )
-                                  : null,
-                            ),
-                            child: _selectedLogo == null 
-                                ? Icon(LucideIcons.imagePlus, color: VSPColors.accent)
+                  ),
+                  const SizedBox(height: VSPSpacing.lg),
+                  GestureDetector(
+                    onTap: _pickImage,
+                    child: Row(
+                      children: [
+                        Container(
+                          width: 50,
+                          height: 50,
+                          decoration: BoxDecoration(
+                            color: VSPColors.surface,
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                            border: Border.all(color: VSPColors.divider),
+                            image: _selectedLogo != null 
+                                ? DecorationImage(
+                                    image: FileImage(File(_selectedLogo!.path)),
+                                    fit: BoxFit.cover,
+                                  )
                                 : null,
                           ),
-                          const SizedBox(width: VSPSpacing.md),
-                          Expanded(
-                            child: Container(
-                              height: 50,
-                              decoration: BoxDecoration(
-                                color: VSPColors.accent,
-                                borderRadius: BorderRadius.circular(VSPRadius.md),
-                              ),
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: [
-                                   Icon(LucideIcons.uploadCloud, color: VSPColors.background),
-                                   const SizedBox(width: VSPSpacing.sm),
-                                   Text(
-                                    _selectedLogo == null ? l10n.uploadLogo : l10n.changeLogo,
-                                    style: Theme.of(context).textTheme.labelLarge?.copyWith(
-                                      color: VSPColors.background,
-                                      fontWeight: FontWeight.bold,
-                                    ),
+                          child: _selectedLogo == null 
+                              ? Icon(LucideIcons.imagePlus, color: VSPColors.accent)
+                              : null,
+                        ),
+                        const SizedBox(width: VSPSpacing.md),
+                        Expanded(
+                          child: Container(
+                            height: 50,
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent,
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                 Icon(LucideIcons.uploadCloud, color: VSPColors.background),
+                                 const SizedBox(width: VSPSpacing.sm),
+                                 Text(
+                                  _selectedLogo == null ? l10n.uploadLogo : l10n.changeLogo,
+                                  style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                    color: VSPColors.background,
+                                    fontWeight: FontWeight.bold,
                                   ),
-                                ],
-                              ),
+                                ),
+                              ],
                             ),
                           ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: VSPSpacing.lg),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          l10n.teamMembersHeader(_teamMembers.length + 1, 12),
-                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                        ),
-                        TextButton.icon(
-                          onPressed: _showAddPlayerSheet,
-                          icon: Icon(LucideIcons.plusCircle, size: 18, color: VSPColors.accent),
-                          label: Text(l10n.addMemberBtn, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                         ),
                       ],
                     ),
+                  ),
+                  const SizedBox(height: VSPSpacing.lg),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: Text(
+                          l10n.teamMembersHeader(_teamMembers.length + 1, 12),
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                      TextButton.icon(
+                        onPressed: _showAddPlayerSheet,
+                        icon: Icon(LucideIcons.plusCircle, size: 18, color: VSPColors.accent),
+                        label: Text(l10n.addMemberBtn, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                      ),
+                    ],
+                  ),
                     const SizedBox(height: VSPSpacing.sm),
                     if (_teamMembers.isEmpty)
                       Container(
@@ -394,7 +400,6 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             ),
           ],
         ),
-      ),
-    );
+      );
   }
 }
