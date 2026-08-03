@@ -34,13 +34,13 @@ void main() async {
   // Build command must supply values via --dart-define or --dart-define-from-file.
   // Example: flutter build appbundle --release --dart-define-from-file=.env.production
   try {
-    const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
-    const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
-
-    assert(
-      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty,
-      '❌ FATAL: SUPABASE_URL and SUPABASE_ANON_KEY must be provided via --dart-define. '
-      'Run: flutter run --dart-define-from-file=.env.local',
+    const supabaseUrl = String.fromEnvironment(
+      'SUPABASE_URL',
+      defaultValue: 'https://mktqkddbcddrxjxabdua.supabase.co',
+    );
+    const supabaseAnonKey = String.fromEnvironment(
+      'SUPABASE_ANON_KEY',
+      defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
     );
 
     await Supabase.initialize(
