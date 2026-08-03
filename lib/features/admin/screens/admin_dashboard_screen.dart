@@ -588,10 +588,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Future<void> _blockTargetUser(String userId) async {
     try {
-      await _supabase.from('users').update({'status': 'blocked'}).eq('id', userId);
-      try {
-        await _supabase.from('users').update({'is_blocked': true}).eq('id', userId);
-      } catch (_) {}
+      // 🛡️ BUG FIX: Removed the first update call that used 'status: blocked'
+      // — a non-existent column that caused a silent DB error.
+      // Now uses a single consolidated update with the correct column: is_blocked.
+      await _supabase.from('users').update({
+        'is_blocked': true,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', userId);
       if (mounted) VSPFeedback.showSuccess(context, 'تم حظر المستخدم الهدف من المنصة.');
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, 'فشل حظر المستخدم: $e');

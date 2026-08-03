@@ -336,14 +336,20 @@ class AuthService {
   }
 
   // Duplicate phone check
-  Future<bool> isPhoneRegistered(String phone) async {
+  Future<bool> isPhoneRegistered(String phone, {String? excludeUserId}) async {
     if (phone.isEmpty) return false;
     try {
       final cleanPhone = PhoneUtils.normalize(phone);
-      final response = await _supabase
+      var query = _supabase
           .from('users')
           .select('id')
           .eq('phone', cleanPhone);
+      // 🛡️ BUG FIX: Exclude the current user's own record to prevent false
+      // "phone already registered" errors during social onboarding.
+      if (excludeUserId != null && excludeUserId.isNotEmpty) {
+        query = query.neq('id', excludeUserId);
+      }
+      final response = await query;
       return (response as List).isNotEmpty;
     } catch (e) {
       _logSecurityEvent('PHONE_CHECK_FAILED', e);

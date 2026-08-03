@@ -1,4 +1,5 @@
 import 'dart:io';
+import 'package:flutter/foundation.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -80,16 +81,20 @@ class ShimmerImage extends StatelessWidget {
             );
           }
           try {
-            final filePath = cleanUrl.replaceFirst('file://', '');
-            final file = File(filePath);
-            if (file.existsSync()) {
-              return Image.file(
-                file,
-                width: width,
-                height: height,
-                fit: fit,
-                errorBuilder: (context, error, stackTrace) => errorWidget ?? _buildErrorWidget(),
-              );
+            // 🛡️ BUG FIX: dart:io File APIs throw UnsupportedError on web.
+            // Guard with kIsWeb before any File instantiation.
+            if (!kIsWeb) {
+              final filePath = cleanUrl.replaceFirst('file://', '');
+              final file = File(filePath);
+              if (file.existsSync()) {
+                return Image.file(
+                  file,
+                  width: width,
+                  height: height,
+                  fit: fit,
+                  errorBuilder: (context, error, stackTrace) => errorWidget ?? _buildErrorWidget(),
+                );
+              }
             }
           } catch (_) {}
           return errorWidget ?? _buildErrorWidget();

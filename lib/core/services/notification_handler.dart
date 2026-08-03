@@ -612,5 +612,45 @@ class NotificationHandler {
     }
   }
 
-  static Future<bool> disputeWithGeotaggedSelfie({required String bookingId, required String playerId, required String photoUrl, required double imageLat, required double imageLng, required DateTime imageTimestamp, required double stadiumLat, required double stadiumLng}) async { try { final booking = await SupabaseBookingRepository().getBookingById(bookingId); if (booking == null) return false; final diff = imageTimestamp.difference(booking.endTime).inMinutes; if (diff > 60) return false; final dLat = (imageLat - stadiumLat).abs() * 111000; final dLng = (imageLng - stadiumLng).abs() * 111000; if (dLat + dLng > 150.0) return false; await Supabase.instance.client.from('users').update({'no_show_count': 0, 'cash_booking_banned': false}).eq('id', playerId); await Supabase.instance.client.from('bookings').update({'is_dispute_approved': true, 'dispute_photo_url': photoUrl}).eq('id', bookingId); return true; } catch (e) { return false; } }
+  static Future<bool> disputeWithGeotaggedSelfie({
+    required String bookingId,
+    required String playerId,
+    required String photoUrl,
+    required double imageLat,
+    required double imageLng,
+    required DateTime imageTimestamp,
+    required double stadiumLat,
+    required double stadiumLng,
+  }) async {
+    try {
+      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
+      if (booking == null) return false;
+
+      // Validate selfie was taken within 60 minutes of match end
+      final diff = imageTimestamp.difference(booking.endTime).inMinutes;
+      if (diff > 60) return false;
+
+      // Validate selfie location is within 150m of stadium (approx degrees → meters)
+      final dLat = (imageLat - stadiumLat).abs() * 111000;
+      final dLng = (imageLng - stadiumLng).abs() * 111000;
+      if (dLat + dLng > 150.0) return false;
+
+      // 🛡️ BUG FIX: Removed non-existent column 'cash_booking_banned' which caused
+      // a PostgrestException: column "cash_booking_banned" does not exist — breaking
+      // all selfie dispute submissions silently.
+      await Supabase.instance.client.from('users').update({
+        'no_show_count': 0,
+      }).eq('id', playerId);
+
+      await Supabase.instance.client.from('bookings').update({
+        'is_dispute_approved': true,
+        'dispute_photo_url': photoUrl,
+      }).eq('id', bookingId);
+
+      return true;
+    } catch (e) {
+      VSPLogger.e('disputeWithGeotaggedSelfie error', e);
+      return false;
+    }
+  }
 }

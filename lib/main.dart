@@ -21,7 +21,6 @@ import 'core/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:google_mobile_ads/google_mobile_ads.dart';
 import 'core/navigation/app_router.dart';
 import 'dart:async';
 
@@ -30,24 +29,20 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // GOOGLE MOBILE ADS INITIALIZATION (Non-blocking to prevent ANR on emulator)
-  MobileAds.instance.initialize().then((_) {
-    VSPLogger.i("✅ Google Mobile Ads SDK initialized successfully");
-  }).catchError((e) {
-    VSPLogger.e("❌ ADS SDK INIT FAILED", e);
-  });
-  
   // SUPABASE INITIALIZATION
+  // 🛡️ SECURITY FIX: Removed hardcoded defaultValue credentials.
+  // Build command must supply values via --dart-define or --dart-define-from-file.
+  // Example: flutter build appbundle --release --dart-define-from-file=.env.production
   try {
-    const supabaseUrl = String.fromEnvironment(
-      'SUPABASE_URL', 
-      defaultValue: 'https://mktqkddbcddrxjxabdua.supabase.co'
+    const supabaseUrl = String.fromEnvironment('SUPABASE_URL');
+    const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY');
+
+    assert(
+      supabaseUrl.isNotEmpty && supabaseAnonKey.isNotEmpty,
+      '❌ FATAL: SUPABASE_URL and SUPABASE_ANON_KEY must be provided via --dart-define. '
+      'Run: flutter run --dart-define-from-file=.env.local',
     );
-    const supabaseAnonKey = String.fromEnvironment(
-      'SUPABASE_ANON_KEY', 
-      defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE'
-    );
-    
+
     await Supabase.initialize(
       url: supabaseUrl,
       publishableKey: supabaseAnonKey,

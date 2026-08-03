@@ -646,13 +646,24 @@ class AuthProvider with ChangeNotifier {
 
     final sanitizedData = Map<String, dynamic>.from(data);
     const restrictedFields = [
-      'role', 
-      'points', 
-      'walletBalance', 
-      'isVerified', 
+      'role',
+      'points',
+      'walletBalance',
+      'isVerified',
       'isEmailVerified',
       'lastSeen',
-      'fcmToken'
+      'fcmToken',
+      // 🛡️ SECURITY FIX: Prevent self-unblocking / self-verification
+      'isBlocked',
+      'is_blocked',
+      'noShowCount',
+      'no_show_count',
+      'isIdentityVerified',
+      'is_identity_verified',
+      'verificationStatus',
+      'verification_status',
+      'hasStadium',
+      'has_stadium',
     ];
     for (var field in restrictedFields) {
       sanitizedData.remove(field);
@@ -771,7 +782,11 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     
-    if (await _authService.isPhoneRegistered(phone)) {
+    // 🛡️ BUG FIX: Exclude the current user's own record from the phone check.
+    // Without this, a social user who already has this phone number stored would
+    // get a false "phone already registered" error when re-entering onboarding.
+    final currentUid = _firebaseUser?.id;
+    if (await _authService.isPhoneRegistered(phone, excludeUserId: currentUid)) {
       _errorMessage = 'هذا الرقم مسجل مسبقاً، يرجى استخدام رقم آخر.';
       _isLoading = false;
       notifyListeners();

@@ -109,6 +109,13 @@ class UserRepository {
     }
     securedData.remove('points');
     securedData.remove('wallet_balance');
+    // 🛡️ SECURITY FIX: Also block server-side to prevent privilege escalation
+    // even if AuthProvider's client-side check is bypassed.
+    securedData.remove('is_blocked');
+    securedData.remove('no_show_count');
+    securedData.remove('is_identity_verified');
+    securedData.remove('verification_status');
+    securedData.remove('has_stadium');
     
     // Standardize Governorate
     if (securedData.containsKey('governorate')) {

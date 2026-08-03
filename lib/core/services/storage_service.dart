@@ -130,7 +130,9 @@ class StorageService {
     final ext = p.extension(file.name).toLowerCase();
     return await uploadFile(
       file: file, 
-      bucket: 'verification-documents', 
+      // 🛡️ BLOCKER FIX: Unified bucket name to match the SQL migration.
+      // supabase_atomic_booking.sql creates 'owner_documents', not 'verification-documents'.
+      bucket: 'owner_documents', 
       path: '$ownerId/documents/$documentType$ext'
     );
   }

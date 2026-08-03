@@ -1,3 +1,7 @@
+// 🛡️ FIX: import must precede all block declarations in Kotlin DSL.
+// Having it after plugins{} causes the 17 Java/Kotlin build warnings.
+import java.util.Properties
+
 plugins {
     id("com.android.application")
     id("kotlin-android")
@@ -5,8 +9,6 @@ plugins {
     id("dev.flutter.flutter-gradle-plugin")
     id("com.google.gms.google-services")
 }
-
-import java.util.Properties
 
 val keystorePropertiesFile = rootProject.projectDir.resolve("key.properties")
 val keystoreProperties = Properties()

@@ -743,25 +743,9 @@ class _HomeContent extends StatelessWidget {
               : ListView.builder(
                   scrollDirection: Axis.horizontal, 
                   padding: const EdgeInsets.symmetric(horizontal: 16), 
-                  itemCount: provider.stadiums.length + (provider.stadiums.length ~/ 3), 
+                  itemCount: provider.stadiums.length, 
                   itemBuilder: (context, index) {
-                    final isAd = (index + 1) % 4 == 0;
-                    if (isAd) {
-                      return Container(
-                        width: 300, 
-                        margin: const EdgeInsets.only(right: 12), 
-                        child: const VSPNativeAd(),
-                      );
-                    }
-                    
-                    final adOffset = (index + 1) ~/ 4;
-                    final stadiumIndex = index - adOffset;
-                    
-                    if (stadiumIndex >= provider.stadiums.length) {
-                      return const SizedBox.shrink();
-                    }
-                    
-                    final stadium = provider.stadiums[stadiumIndex];
+                    final stadium = provider.stadiums[index];
                     return Container(
                       width: 300, 
                       margin: const EdgeInsets.only(right: 12), 
