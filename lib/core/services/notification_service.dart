@@ -94,7 +94,7 @@ class NotificationService {
     // 5. Initialize Local Notifications (Mobile Only)
     if (!kIsWeb) {
       const AndroidInitializationSettings initializationSettingsAndroid =
-          AndroidInitializationSettings('ic_notification');
+          AndroidInitializationSettings('@mipmap/ic_launcher');
       
       const DarwinInitializationSettings initializationSettingsDarwin =
           DarwinInitializationSettings(

@@ -493,20 +493,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
                     ),
                     const SizedBox(height: 32),
+                    const SizedBox(height: 20),
                     Text(
                       hasDeposit 
                           ? (isArabic ? 'عربون الحجز' : 'Upfront Deposit')
-                          : (isArabic ? 'المبلغ الإجمالي المستحق' : 'Total Amount Due'),
+                          : (isArabic ? 'المبلغ الإجمالي المدفوع' : 'Total Checkout Amount'),
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
-                    const SizedBox(height: 8),
+                    const SizedBox(height: 4),
                     Text(
-                      '${amountToPay.toInt()} ${l10n.egCurrency}',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 40, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                      '${(amountToPay + (amountToPay * 0.02) + ((amountToPay * 0.0275) + 3.0)).toInt()} ${l10n.egCurrency}',
+                      style: const TextStyle(color: VSPColors.accent, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
+                    // 💰 Itemized Financial Breakdown Card
                     Container(
-                      padding: const EdgeInsets.all(16),
+                      padding: const EdgeInsets.all(14),
                       decoration: BoxDecoration(
                         color: VSPColors.surface,
                         borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -516,38 +518,61 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         children: [
                           Row(
                             children: [
-                              const Icon(LucideIcons.building, color: VSPColors.textSecondary, size: 18),
-                              const SizedBox(width: 12),
+                              const Icon(LucideIcons.building, color: VSPColors.textSecondary, size: 16),
+                              const SizedBox(width: 10),
                               Expanded(
                                 child: Text(
                                   widget.bookingDraft.stadiumName,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                                 ),
                               ),
                             ],
                           ),
-                          const SizedBox(height: 12),
+                          const SizedBox(height: 8),
                           Row(
                             children: [
-                              const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
-                              const SizedBox(width: 12),
-                              Text(
-                                DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
-                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                              ),
-                              const SizedBox(width: 16),
-                              const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 18),
+                              const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
                               const SizedBox(width: 8),
                               Text(
+                                DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                              ),
+                              const SizedBox(width: 14),
+                              const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
+                              const SizedBox(width: 6),
+                              Text(
                                 DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
-                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                               ),
                             ],
+                          ),
+                          const Divider(color: VSPColors.divider, height: 20),
+                          _buildFeeRow(
+                            label: isArabic ? 'سعر حجز الملعب' : 'Stadium Base Rate',
+                            value: '${amountToPay.toInt()} ج.م',
+                          ),
+                          const SizedBox(height: 6),
+                          _buildFeeRow(
+                            label: isArabic ? 'رسوم خدمة التطبيق (2% VSP)' : 'VSP Platform Fee (2%)',
+                            value: '+ ${(amountToPay * 0.02).toStringAsFixed(1)} ج.م',
+                            isSubFee: true,
+                          ),
+                          const SizedBox(height: 6),
+                          _buildFeeRow(
+                            label: isArabic ? 'رسوم معالجة البوابة (Paymob API)' : 'Paymob Gateway Processing Fee',
+                            value: '+ ${((amountToPay * 0.0275) + 3.0).toStringAsFixed(1)} ج.م',
+                            isSubFee: true,
+                          ),
+                          const Divider(color: VSPColors.divider, height: 16),
+                          _buildFeeRow(
+                            label: isArabic ? 'الإجمالي النهائي المطلوب سداده' : 'Total Player Charge',
+                            value: '${(amountToPay + (amountToPay * 0.02) + ((amountToPay * 0.0275) + 3.0)).toInt()} ج.م',
+                            isBold: true,
                           ),
                         ],
                       ),
                     ),
-                    const SizedBox(height: 40),
+                    const SizedBox(height: 24),
                     if (_isLoading || _isPaymobLoading) ...[
                       const CircularProgressIndicator(color: VSPColors.accent),
                       const SizedBox(height: 16),
@@ -584,5 +609,35 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       ),
     );
   }
+
+  Widget _buildFeeRow({
+    required String label,
+    required String value,
+    bool isSubFee = false,
+    bool isBold = false,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Text(
+          label,
+          style: TextStyle(
+            color: isBold ? Colors.white : (isSubFee ? VSPColors.accent : VSPColors.textSecondary),
+            fontSize: isBold ? 13 : 11,
+            fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+          ),
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: isBold ? VSPColors.accent : (isSubFee ? Colors.white70 : Colors.white),
+            fontSize: isBold ? 14 : 11,
+            fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 }
+
 

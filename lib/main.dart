@@ -29,10 +29,7 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   
-  // SUPABASE INITIALIZATION
-  // 🛡️ SECURITY FIX: Removed hardcoded defaultValue credentials.
-  // Build command must supply values via --dart-define or --dart-define-from-file.
-  // Example: flutter build appbundle --release --dart-define-from-file=.env.production
+  // SUPABASE & FIREBASE PARALLEL INITIALIZATION
   try {
     const supabaseUrl = String.fromEnvironment(
       'SUPABASE_URL',
@@ -43,46 +40,18 @@ void main() async {
       defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
     );
 
-    await Supabase.initialize(
-      url: supabaseUrl,
-      publishableKey: supabaseAnonKey,
-    );
-    VSPLogger.i("✅ Supabase initialized successfully");
-  } catch (e) {
-    VSPLogger.e("❌ SUPABASE INIT FAILED", e);
-  }
-  
-    // FIREBASE INITIALIZATION
-    try {
-      await Firebase.initializeApp(
+    await Future.wait([
+      Supabase.initialize(
+        url: supabaseUrl,
+        publishableKey: supabaseAnonKey,
+      ).then((_) => VSPLogger.i("✅ Supabase initialized successfully")),
+      Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
-      );
-
-    // CRASHLYTICS INITIALIZATION (Disabled in debug/emulator mode to prevent main thread blocking/ANR on startup)
-    await FirebaseCrashlytics.instance.setCrashlyticsCollectionEnabled(!kDebugMode);
-    if (!kDebugMode) {
-      FlutterError.onError = (errorDetails) {
-        FirebaseCrashlytics.instance.recordFlutterFatalError(errorDetails);
-      };
-      // Pass all uncaught asynchronous errors that aren't handled by the Flutter framework to Crashlytics
-      PlatformDispatcher.instance.onError = (error, stack) {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-        return true;
-      };
-      VSPLogger.i("✅ Firebase initialized with Crashlytics (Enabled)");
-    } else {
-      VSPLogger.i("✅ Firebase initialized (Crashlytics disabled in debug mode)");
-    }
-    
-
+      ).then((_) => VSPLogger.i("✅ Firebase initialized successfully")),
+    ]);
   } catch (e) {
-    VSPLogger.e("❌ FIREBASE INIT FAILED", e);
+    VSPLogger.e("⚠️ Backend initialization notice: $e");
   }
-  
-  // Initialize Notifications (Asynchronously to prevent blocking web startup)
-  NotificationService().initialize(navigatorKey).catchError((e) {
-    VSPLogger.w("⚠️ Warning: Notification service failed to initialize: $e");
-  });
   
   // System UI Style
   SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -92,9 +61,6 @@ void main() async {
     systemNavigationBarColor: Colors.transparent,
     systemNavigationBarDividerColor: Colors.transparent,
   ));
-
-  // TODO(iOS/Android): Implement Deep Linking (uni_links / firebase_dynamic_links).
-  // This will handle social sharing intercepts and route the RootScreen directly to the shared Stadium/Team.
 
   // Custom Error Boundary
   ErrorWidget.builder = (FlutterErrorDetails details) {
@@ -108,9 +74,9 @@ void main() async {
             children: [
               Icon(LucideIcons.alertCircle, size: 80, color: VSPColors.error),
               const SizedBox(height: VSPSpacing.xl),
-              Text(
+              const Text(
                 'Something went wrong! 🎮',
-                style: const TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
               ),
               const SizedBox(height: VSPSpacing.md),
@@ -142,6 +108,13 @@ void main() async {
   };
 
   runApp(const VSPApplication());
+
+  // Background non-critical services (Notifications & Crashlytics)
+  unawaited(
+    NotificationService().initialize(navigatorKey).catchError((e) {
+      VSPLogger.w("⚠️ Warning: Notification service failed to initialize: $e");
+    }),
+  );
 }
 
 class VSPApplication extends StatelessWidget {

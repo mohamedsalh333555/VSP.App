@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import '../models/user_model.dart';
 import '../services/logger_service.dart';
 import '../constants/egypt_governorates.dart';
 
@@ -64,6 +65,31 @@ class StadiumRepository {
   Future<String?> addStadium(Map<String, dynamic> stadiumData) async {
     try {
       final sanitizedData = Map<String, dynamic>.from(stadiumData);
+      final String ownerId = sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '';
+
+      // 💰 Subscription Plan Gate: Check max stadium limit for owner
+      if (ownerId.isNotEmpty) {
+        try {
+          final userDoc = await _supabase.from('users').select().eq('id', ownerId).maybeSingle();
+          if (userDoc != null) {
+            final userModel = UserModel.fromFirestore(userDoc);
+            final existingStadiums = await _supabase
+                .from('stadiums')
+                .select('id')
+                .eq('owner_id', ownerId);
+            final currentCount = (existingStadiums as List).length;
+            if (currentCount >= userModel.maxStadiums) {
+              throw Exception(
+                'وصلت للحد الأقصى للملاعب في باقتك الحالية (${userModel.maxStadiums} ملعب). يرجى الترقية لإضافة ملاعب أخرى.'
+              );
+            }
+          }
+        } catch (e) {
+          if (e.toString().contains('الحد الأقصى')) rethrow;
+          VSPLogger.w('Skip stadium count validation error: $e');
+        }
+      }
+
       sanitizedData.remove('isVerified');
       sanitizedData.remove('is_verified');
       sanitizedData.remove('createdAt');

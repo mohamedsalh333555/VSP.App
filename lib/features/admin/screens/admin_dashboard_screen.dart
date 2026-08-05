@@ -9,6 +9,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/models/user_model.dart';
 import '../../../data/models.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -25,7 +26,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 4, vsync: this);
+    _tabController = TabController(length: 5, vsync: this);
   }
 
   @override
@@ -67,6 +68,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           labelStyle: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
           tabs: [
             Tab(text: isArabic ? 'توثيق المالكين 📑' : 'Owner Approvals 📑'),
+            Tab(text: isArabic ? 'إدارة الاشتراكات 💎' : 'Owner Subscriptions 💎'),
             Tab(text: isArabic ? 'نزاعات المباريات ⚔️' : 'Disputed Matches ⚔️'),
             Tab(text: isArabic ? 'التسويات المالية 💸' : 'Payout Settlements 💸'),
             Tab(text: isArabic ? 'البلاغات والحظر 🚫' : 'Reports & Bans 🚫'),
@@ -84,6 +86,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
               controller: _tabController,
               children: [
                 _buildOwnerVerificationsTab(isArabic),
+                _buildOwnerSubscriptionsTab(isArabic),
                 _buildDisputedMatchesTab(isArabic),
                 _buildPayoutSettlementsTab(isArabic),
                 _buildReportsAndModerationTab(isArabic),
@@ -246,7 +249,189 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   // ===========================================================================
-  // 2️⃣ TAB 2: Disputed Matches Resolution (نزاعات المباريات)
+  // 💎 TAB 2: Owner Subscriptions Management (إدارة اشتراكات المالكين)
+  // ===========================================================================
+  Widget _buildOwnerSubscriptionsTab(bool isArabic) {
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+
+        final owners = snapshot.data ?? [];
+
+        if (owners.isEmpty) {
+          return VSPEmptyState(
+            icon: LucideIcons.crown,
+            title: isArabic ? 'لا يوجد مالكين مسجلين' : 'No Owners Registered',
+            subtitle: isArabic ? 'سيظهر المالكين هنا عند تسجيلهم.' : 'Owners will appear here once registered.',
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          itemCount: owners.length,
+          itemBuilder: (context, index) {
+            final ownerData = owners[index];
+            final userModel = UserModel.fromFirestore(ownerData);
+
+            final String planLabel = userModel.subscriptionPlanLabel;
+            final bool isPro = userModel.isProPlan;
+            final bool isBasic = userModel.isBasicOrHigher && !isPro;
+
+            return VSPCard(
+              margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      CircleAvatar(
+                        backgroundColor: VSPColors.surfaceAlt,
+                        backgroundImage: userModel.profileImageUrl != null ? NetworkImage(userModel.profileImageUrl!) : null,
+                        child: userModel.profileImageUrl == null ? const Icon(LucideIcons.user, color: Colors.white) : null,
+                      ),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(userModel.name ?? 'Unknown Owner', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15)),
+                            Text('📞 ${userModel.phone ?? 'N/A'} | 📍 ${userModel.governorate ?? 'Cairo'}', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                          ],
+                        ),
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: isPro ? Colors.amber.withValues(alpha: 0.2) : (isBasic ? Colors.blue.withValues(alpha: 0.2) : VSPColors.accent.withValues(alpha: 0.2)),
+                          borderRadius: BorderRadius.circular(12),
+                        ),
+                        child: Text(
+                          planLabel,
+                          style: TextStyle(
+                            color: isPro ? Colors.amber : (isBasic ? Colors.blue : VSPColors.accent),
+                            fontSize: 11,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: VSPColors.divider, height: 20),
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        '${isArabic ? "الملاعب المسموحة:" : "Max Stadiums:"} ${userModel.maxStadiums}',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      ),
+                      Text(
+                        userModel.subscriptionExpiresAt != null
+                            ? '${isArabic ? "ينتهي:" : "Expires:"} ${DateFormat('yyyy/MM/dd').format(userModel.subscriptionExpiresAt!)}'
+                            : (userModel.trialEndsAt != null
+                                ? '${isArabic ? "انتهاء التجربة:" : "Trial Ends:"} ${DateFormat('yyyy/MM/dd').format(userModel.trialEndsAt!)}'
+                                : 'N/A'),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 12),
+                  SizedBox(
+                    width: double.infinity,
+                    height: 40,
+                    child: PrimaryButton(
+                      text: isArabic ? 'تغيير وتحديث الباقة 💎' : 'Modify Subscription Plan 💎',
+                      height: 40,
+                      color: VSPColors.surfaceAlt,
+                      textColor: Colors.white,
+                      onPressed: () => _showChangeSubscriptionDialog(userModel, isArabic),
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  void _showChangeSubscriptionDialog(UserModel owner, bool isArabic) {
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: Text(
+          isArabic ? 'تعديل باقة ${owner.name}' : 'Update Plan for ${owner.name}',
+          style: const TextStyle(color: Colors.white, fontSize: 16),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            ListTile(
+              title: const Text('الفترة التجريبية (3 شهور)', style: TextStyle(color: Colors.white, fontSize: 14)),
+              subtitle: const Text('مجاناً - 1 ملعب', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _updateOwnerPlan(owner.uid, 'free_trial', 90);
+              },
+            ),
+            const Divider(color: VSPColors.divider),
+            ListTile(
+              title: const Text('الباقة الأساسية Basic (500 ج.م)', style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('1 شهر - 1 ملعب', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _updateOwnerPlan(owner.uid, 'basic', 30);
+              },
+            ),
+            const Divider(color: VSPColors.divider),
+            ListTile(
+              title: const Text('الباقة الاحترافية Pro 👑 (1000 ج.م)', style: TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 14)),
+              subtitle: const Text('1 شهر - 5 ملاعب + تحليلات متكاملة', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+              onTap: () {
+                Navigator.pop(ctx);
+                _updateOwnerPlan(owner.uid, 'pro', 30);
+              },
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Future<void> _updateOwnerPlan(String ownerId, String plan, int days) async {
+    try {
+      final now = DateTime.now().toUtc();
+      final expiresAt = now.add(Duration(days: days));
+
+      final Map<String, dynamic> updateData = {
+        'subscription_plan': plan,
+        'updated_at': now.toIso8601String(),
+      };
+
+      if (plan == 'free_trial') {
+        updateData['trial_ends_at'] = expiresAt.toIso8601String();
+        updateData['subscription_expires_at'] = null;
+      } else {
+        updateData['subscription_expires_at'] = expiresAt.toIso8601String();
+      }
+
+      await _supabase.from('users').update(updateData).eq('id', ownerId);
+
+      if (mounted) {
+        VSPFeedback.showSuccess(context, 'تم تحديث باقة المالك بنجاح إلى $plan! 🏆');
+      }
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, 'فشل تحديث الباقة: $e');
+    }
+  }
+
+  // ===========================================================================
+  // 3️⃣ TAB 3: Disputed Matches Resolution (نزاعات المباريات)
   // ===========================================================================
   Widget _buildDisputedMatchesTab(bool isArabic) {
     return StreamBuilder<List<Map<String, dynamic>>>(
@@ -511,16 +696,26 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Future<void> _approveOwner(String ownerId) async {
     try {
+      // 1. Mark owner as verified in users table
       await _supabase.from('users').update({
         'verification_status': 'approved',
       }).eq('id', ownerId);
 
+      // 2. Verify all stadiums belonging to this owner
       try {
         await _supabase.from('stadiums').update({'is_verified': true}).eq('owner_id', ownerId);
       } catch (_) {}
 
+      // 3. 🏆 AUTO-APPROVE: Activate all championships created by this owner so they show to players
+      try {
+        await _supabase
+            .from('championships')
+            .update({'is_approved': true})
+            .eq('owner_id', ownerId);
+      } catch (_) {}
+
       if (mounted) {
-        VSPFeedback.showSuccess(context, 'تم قبول وتوثيق المالك بنجاح! 🏆');
+        VSPFeedback.showSuccess(context, 'تم قبول وتوثيق المالك بنجاح! 🏆\nملاعبه وبطولاته أصبحت ظاهرة للاعبين.');
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, 'فشل قبول المالك: $e');

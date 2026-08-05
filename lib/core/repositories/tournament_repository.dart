@@ -11,16 +11,30 @@ class TournamentRepository {
   // ==================== CHAMPIONSHIPS ====================
   
   // Get all championships
+  // 🛡️ SECURITY: For players (isOwner=false), only show championships where is_approved=true.
+  // Championships become approved automatically when the owner's stadium gets verified by admin.
+  // Owners can always see their own championships regardless of approval status.
   Stream<List<Championship>> getChampionshipsStream({
     String? governorate, 
     String? sportType,
     bool isOwner = false,
+    String? ownerId, // required when isOwner=true to show only that owner's championships
   }) {
     return _supabase
         .from('championships')
         .stream(primaryKey: ['id'])
         .map((list) {
           return list.map((data) {
+            // 🛡️ Approval Gate: Hide unapproved championships from players.
+            // Owners can still see their own championships in their dashboard.
+            final bool isApproved = data['is_approved'] == true;
+            if (!isOwner && !isApproved) return null;
+            if (isOwner && ownerId != null) {
+              // Owner dashboard: only show their own championships
+              final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
+              if (champOwnerId != ownerId) return null;
+            }
+
             if (governorate != null && governorate.isNotEmpty && data['governorate'] != governorate) {
               return null;
             }
@@ -62,6 +76,9 @@ class TournamentRepository {
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
+        // 🛡️ APPROVAL GATE: New championships are hidden from players by default.
+        // They become visible automatically when admin approves the owner's stadium.
+        'is_approved': false,
         'joined_teams': [],
         'paid_teams': [],
         'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],

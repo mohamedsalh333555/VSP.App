@@ -261,6 +261,12 @@ class SupabaseBookingRepository implements BookingRepository {
         status: status,
       );
 
+      // 💰 Platform Fee: 2% commission collected by VSP on digital/online payments (Paymob)
+      final bool isOnlinePayment = booking.paymentMethod == 'paymob' || 
+                                  booking.paymentMethod == 'paymob_test' || 
+                                  booking.paymentMethod == 'card';
+      final double platformFee = isOnlinePayment ? (booking.totalPrice * 0.02) : 0.0;
+
       final bookingMap = {
         'stadium_id': booking.stadiumId,
         'stadium_name': booking.stadiumName,
@@ -280,6 +286,7 @@ class SupabaseBookingRepository implements BookingRepository {
         'is_private': booking.isPrivate,
         'rent_ball': booking.rentBall,
         'total_price': booking.totalPrice,
+        'platform_fee': platformFee,
         'currency': booking.currency,
         'payment_method': booking.paymentMethod,
         'payment_transaction_id': booking.paymentTransactionId,

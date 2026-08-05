@@ -18,7 +18,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "app.vsp.sports"
-    compileSdk = 36
+    compileSdk = 35
     ndkVersion = "27.0.12077973"
 
     compileOptions {
@@ -44,7 +44,7 @@ android {
         // ✅ Production Unique Application ID for Google Play Store
         applicationId = "app.vsp.sports"
         minSdk = 23
-        targetSdk = 36
+        targetSdk = 35
         versionCode = flutter.versionCode
         versionName = flutter.versionName
     }
@@ -59,9 +59,9 @@ android {
                 signingConfig = signingConfigs.getByName("debug")
                 logger.warn("⚠️ RELEASE SIGNING WARNING: key.properties not found. Building with debug keys. This will be REJECTED by Play Store.")
             }
-            // ✅ APK Size Optimizations
-            isMinifyEnabled = true          // R8 code shrinking + obfuscation
-            isShrinkResources = true        // Remove unused resources
+            // ✅ Release Build Settings: Set to false to prevent R8 from stripping native plugin classes on physical devices
+            isMinifyEnabled = false          // Prevent R8 code stripping crashes
+            isShrinkResources = false        // Retain all native resources
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

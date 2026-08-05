@@ -1,4 +1,4 @@
-package com.example.vsp_application
+package app.vsp.sports
 
 import io.flutter.embedding.android.FlutterActivity
 

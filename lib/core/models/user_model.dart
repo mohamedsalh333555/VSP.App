@@ -28,6 +28,12 @@ class UserModel {
   final bool isBlocked; // ✅ Administrative user block
   final int noShowCount; // ✅ No-show count for spam protection
 
+  // 💰 VSP SUBSCRIPTION PLAN (for owners)
+  // Values: 'free_trial' | 'basic' | 'pro'
+  final String subscriptionPlan;
+  final DateTime? trialEndsAt;           // free_trial ends at
+  final DateTime? subscriptionExpiresAt; // paid plan expiry
+
   UserModel({
     required this.uid,
     required this.email,
@@ -51,7 +57,60 @@ class UserModel {
     this.p2pInstapay,
     this.p2pVodafone,
     this.p2pBank,
+    this.subscriptionPlan = 'free_trial',
+    this.trialEndsAt,
+    this.subscriptionExpiresAt,
   });
+
+  // ============================================================
+  // 💰 SUBSCRIPTION COMPUTED GETTERS
+  // ============================================================
+
+  /// هل المالك في فترة تجريبية نشطة؟
+  bool get isInActiveTrial =>
+      subscriptionPlan == 'free_trial' &&
+      trialEndsAt != null &&
+      DateTime.now().isBefore(trialEndsAt!);
+
+  /// هل الاشتراك ساري (تجريبي أو مدفوع)؟
+  bool get hasActiveSubscription =>
+      isInActiveTrial ||
+      (subscriptionExpiresAt != null &&
+       DateTime.now().isBefore(subscriptionExpiresAt!));
+
+  /// هل الباقة Pro وسارية؟
+  bool get isProPlan =>
+      subscriptionPlan == 'pro' &&
+      subscriptionExpiresAt != null &&
+      DateTime.now().isBefore(subscriptionExpiresAt!);
+
+  /// هل الباقة Basic أو أعلى (Pro يشمل Basic)؟
+  bool get isBasicOrHigher =>
+      (subscriptionPlan == 'basic' || subscriptionPlan == 'pro') &&
+      subscriptionExpiresAt != null &&
+      DateTime.now().isBefore(subscriptionExpiresAt!);
+
+  /// هل الاشتراك منتهي؟
+  bool get isPlanExpired => !hasActiveSubscription;
+
+  /// الحد الأقصى لعدد الملاعب المسموح به حسب الباقة
+  int get maxStadiums {
+    if (isProPlan) return 3; // Pro: حتى 3 ملاعب
+    if (isBasicOrHigher) return 1; // Basic: ملعب واحد
+    if (isInActiveTrial) return 1; // Trial: ملعب واحد
+    return 0; // منتهي — لا يقدر يضيف ملاعب جديدة
+  }
+
+  /// نص الباقة الحالية للعرض
+  String get subscriptionPlanLabel {
+    if (isProPlan) return 'Pro';
+    if (isBasicOrHigher) return 'Basic';
+    if (isInActiveTrial) {
+      final remaining = trialEndsAt!.difference(DateTime.now()).inDays;
+      return 'تجريبي ($remaining يوم متبقي)';
+    }
+    return 'منتهي';
+  }
 
   // Create UserModel from Firestore document
   factory UserModel.fromFirestore(Map<String, dynamic> data) {
@@ -94,6 +153,14 @@ class UserModel {
       p2pInstapay: data['p2p_instapay'] ?? data['p2pInstapay'],
       p2pVodafone: data['p2p_vodafone'] ?? data['p2pVodafone'],
       p2pBank: data['p2p_bank'] ?? data['p2pBank'],
+      // 💰 Subscription fields
+      subscriptionPlan: data['subscription_plan'] ?? 'free_trial',
+      trialEndsAt: data['trial_ends_at'] != null
+          ? DateTime.tryParse(data['trial_ends_at'].toString())
+          : null,
+      subscriptionExpiresAt: data['subscription_expires_at'] != null
+          ? DateTime.tryParse(data['subscription_expires_at'].toString())
+          : null,
     );
   }
 
@@ -121,6 +188,9 @@ class UserModel {
       'p2p_instapay': p2pInstapay,
       'p2p_vodafone': p2pVodafone,
       'p2p_bank': p2pBank,
+      'subscription_plan': subscriptionPlan,
+      'trial_ends_at': trialEndsAt?.toUtc().toIso8601String(),
+      'subscription_expires_at': subscriptionExpiresAt?.toUtc().toIso8601String(),
     };
   }
 
@@ -148,6 +218,9 @@ class UserModel {
     String? p2pInstapay,
     String? p2pVodafone,
     String? p2pBank,
+    String? subscriptionPlan,
+    DateTime? trialEndsAt,
+    DateTime? subscriptionExpiresAt,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -172,6 +245,9 @@ class UserModel {
       p2pInstapay: p2pInstapay ?? this.p2pInstapay,
       p2pVodafone: p2pVodafone ?? this.p2pVodafone,
       p2pBank: p2pBank ?? this.p2pBank,
+      subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
+      trialEndsAt: trialEndsAt ?? this.trialEndsAt,
+      subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,
     );
   }
 }

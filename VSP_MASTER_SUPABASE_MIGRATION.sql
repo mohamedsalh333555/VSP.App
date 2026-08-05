@@ -4,6 +4,75 @@
 -- Instructions: Copy all content below, paste into Supabase Dashboard -> SQL Editor, and click RUN.
 -- This script is 100% idempotent (safe to run multiple times without breaking existing data).
 
+-- 0. Championships Approval Gate
+-- Adds is_approved column so championships only appear to players after admin approves the owner.
+-- Existing championships (already created before this fix) are approved by default to avoid disruption.
+ALTER TABLE public.championships
+ADD COLUMN IF NOT EXISTS is_approved BOOLEAN DEFAULT FALSE;
+
+-- Migrate existing championships: mark them approved if the owner is already verified,
+-- otherwise keep them hidden (false) until the owner is approved.
+UPDATE public.championships c
+SET is_approved = TRUE
+WHERE EXISTS (
+  SELECT 1 FROM public.users u
+  WHERE u.id::text = c.owner_id::text
+  AND u.verification_status = 'approved'
+);
+
+-- ==============================================================================
+-- 0.5. VSP OWNER SUBSCRIPTION PLANS & PLATFORM FEE
+-- ==============================================================================
+-- Subscription plans: free_trial (default 3 months) / basic (500 EGP) / pro (1000 EGP)
+
+-- Add subscription columns to users table
+ALTER TABLE public.users
+ADD COLUMN IF NOT EXISTS subscription_plan TEXT DEFAULT 'free_trial',
+ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS total_platform_fees NUMERIC DEFAULT 0;
+
+-- Add platform_fee column to bookings (2% of total_price for online payments)
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS platform_fee NUMERIC DEFAULT 0;
+
+-- Initialize trial period for all existing owners:
+-- Each owner gets a 90-day trial starting from their account creation date.
+UPDATE public.users
+SET
+  trial_ends_at = COALESCE(created_at, NOW()) + INTERVAL '90 days',
+  subscription_plan = 'free_trial'
+WHERE role = 'owner'
+  AND (subscription_plan IS NULL OR subscription_plan = 'free_trial');
+
+-- Convenience view for admin: shows each owner's subscription status
+DROP VIEW IF EXISTS public.owner_subscription_status CASCADE;
+
+CREATE OR REPLACE VIEW public.owner_subscription_status AS
+SELECT
+  u.id,
+  u.name,
+  u.phone,
+  u.verification_status,
+  u.subscription_plan,
+  u.trial_ends_at,
+  u.subscription_expires_at,
+  u.total_platform_fees,
+  CASE
+    WHEN u.subscription_plan IN ('basic', 'pro') AND u.subscription_expires_at > NOW() THEN 'active_paid'
+    WHEN u.subscription_plan = 'free_trial' AND u.trial_ends_at > NOW() THEN 'active_trial'
+    ELSE 'expired'
+  END AS effective_status,
+  CASE
+    WHEN u.subscription_plan = 'pro' THEN 3
+    WHEN u.subscription_plan = 'basic' THEN 1
+    WHEN u.subscription_plan = 'free_trial' AND u.trial_ends_at > NOW() THEN 1
+    ELSE 0
+  END AS max_stadiums_allowed
+FROM public.users u
+WHERE u.role = 'owner';
+
+
 -- 1. Add P2P receivables columns to users table
 ALTER TABLE public.users 
 ADD COLUMN IF NOT EXISTS p2p_instapay TEXT,
