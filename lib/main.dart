@@ -1,11 +1,9 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
-import 'dart:ui';
+import 'package:flutter/foundation.dart' show kReleaseMode;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
-import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'firebase_options.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'core/ui/tokens/vsp_tokens.dart';
@@ -39,6 +37,17 @@ void main() async {
       'SUPABASE_ANON_KEY',
       defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
     );
+
+    // 🔔 RELEASE SAFETY: Warn if falling back to compiled-in keys instead of
+    // build-time --dart-define overrides. In production CI/CD, always pass:
+    //   flutter build apk --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
+    if (kReleaseMode) {
+      const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL_INJECTED', defaultValue: false);
+      if (!urlWasInjected) {
+        VSPLogger.w('⚠️ RELEASE BUILD WARNING: Supabase credentials are using compiled-in defaults. '
+            'Pass --dart-define=SUPABASE_URL and --dart-define=SUPABASE_ANON_KEY at build time for production.');
+      }
+    }
 
     await Future.wait([
       Supabase.initialize(

@@ -189,8 +189,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     if (_enteredCode.length == 6) _verify();
   }
 
-  void _onKeyDown(int index, RawKeyEvent event) {
-    if (event is RawKeyDownEvent &&
+  void _onKeyDown(int index, KeyEvent event) {
+    if (event is KeyDownEvent &&
         event.logicalKey == LogicalKeyboardKey.backspace &&
         _controllers[index].text.isEmpty &&
         index > 0) {
@@ -437,7 +437,7 @@ class _OtpBox extends StatelessWidget {
   final FocusNode focusNode;
   final bool hasError;
   final ValueChanged<String> onChanged;
-  final void Function(RawKeyEvent) onKey;
+  final void Function(KeyEvent) onKey;
 
   const _OtpBox({
     required this.controller,
@@ -472,9 +472,9 @@ class _OtpBox extends StatelessWidget {
               ]
             : [],
       ),
-      child: RawKeyboardListener(
+      child: KeyboardListener(
         focusNode: FocusNode(),
-        onKey: onKey,
+        onKeyEvent: onKey,
         child: TextField(
           controller: controller,
           focusNode: focusNode,

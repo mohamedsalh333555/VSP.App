@@ -29,8 +29,8 @@ class SharingService {
         '📍 Stadium: $stadiumName\n'
         '📅 Date: $date\n\n'
         'Tap to join: $link';
-    
-    await Share.share(text, subject: 'Join Match on VSP');
+
+    await SharePlus.instance.share(ShareParams(text: text, subject: 'Join Match on VSP'));
   }
 
   /// Share championship details
@@ -44,8 +44,8 @@ class SharingService {
         '⚽ Tournament: $name\n'
         '📅 Starts: $date\n\n'
         'View details: $link';
-    
-    await Share.share(text, subject: 'VSP Championship');
+
+    await SharePlus.instance.share(ShareParams(text: text, subject: 'VSP Championship'));
   }
 
   /// Share Team details via native share sheet
@@ -59,8 +59,8 @@ class SharingService {
         '🛡 Team: $teamName\n'
         '📍 Governorate: $governorate\n\n'
         'Tap to view: $link';
-    
-    await Share.share(text, subject: 'View Team on VSP');
+
+    await SharePlus.instance.share(ShareParams(text: text, subject: 'View Team on VSP'));
   }
 
   /// Share Team Link with branding and localized text
@@ -72,12 +72,12 @@ class SharingService {
         '🛡️ Team: $teamName\n\n'
         'رابط الفريق / Team Link:\n'
         '$link';
-    
-    await Share.share(text, subject: 'VSP Sports Team: $teamName');
+
+    await SharePlus.instance.share(ShareParams(text: text, subject: 'VSP Sports Team: $teamName'));
   }
 
   /// Generic text sharing (Fixed for CMO Social Strategy)
   Future<void> shareText(String text, {String? subject}) async {
-    await Share.share(text, subject: subject);
+    await SharePlus.instance.share(ShareParams(text: text, subject: subject));
   }
 }

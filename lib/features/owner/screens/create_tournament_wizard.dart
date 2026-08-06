@@ -286,7 +286,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Icons.arrow_back, color: VSPColors.textPrimary),
+          icon: Icon(Icons.adaptive.arrow_back, color: VSPColors.textPrimary),
           onPressed: _prevStep,
         ),
         centerTitle: true,

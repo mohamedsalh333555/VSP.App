@@ -58,6 +58,6 @@ class DefaultFirebaseOptions {
     messagingSenderId: '860837572098',
     projectId: 'vsp-app-103b1',
     storageBucket: 'vsp-app-103b1.firebasestorage.app',
-    iosBundleId: 'com.example.vspApplication',
+    iosBundleId: 'app.vsp.sports', // ✅ Production Bundle ID (fixed from com.example placeholder)
   );
 }

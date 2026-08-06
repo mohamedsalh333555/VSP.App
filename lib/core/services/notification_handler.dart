@@ -638,8 +638,10 @@ class NotificationHandler {
       // 🛡️ BUG FIX: Removed non-existent column 'cash_booking_banned' which caused
       // a PostgrestException: column "cash_booking_banned" does not exist — breaking
       // all selfie dispute submissions silently.
+      // Also reset is_blocked=false since the approved dispute means the penalty was wrongful.
       await Supabase.instance.client.from('users').update({
         'no_show_count': 0,
+        'is_blocked': false,
       }).eq('id', playerId);
 
       await Supabase.instance.client.from('bookings').update({

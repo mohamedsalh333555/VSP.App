@@ -8,7 +8,7 @@ import 'package:flutter/services.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
-import '../../../shared/widgets/vsp_native_ad.dart';
+
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/repositories/match_repository.dart';

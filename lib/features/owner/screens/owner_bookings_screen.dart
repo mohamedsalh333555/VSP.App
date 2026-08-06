@@ -863,29 +863,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     super.dispose();
   }
 
-  DateTime _parseTimeToDateTime(DateTime date, String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return date;
-    try {
-      final clean = timeStr.trim();
-      final format = DateFormat('hh:mm a');
-      final parsedTime = format.parse(clean);
-      return DateTime(date.year, date.month, date.day, parsedTime.hour, parsedTime.minute);
-    } catch (e) {
-      try {
-        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
-        final match = timeRegex.firstMatch(timeStr);
-        if (match == null) return date;
-        int hour = int.parse(match.group(1)!);
-        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-        String? period = match.group(3)?.toUpperCase();
-        if (period == 'PM' && hour != 12) hour += 12;
-        if (period == 'AM' && hour == 12) hour = 0;
-        return DateTime(date.year, date.month, date.day, hour, minute);
-      } catch (_) {
-        return date;
-      }
-    }
-  }
+
 
   Widget _buildDurationSelector() {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';

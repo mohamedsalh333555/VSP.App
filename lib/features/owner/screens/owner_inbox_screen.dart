@@ -383,7 +383,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: const Icon(Icons.arrow_back),
+      icon: Icon(Icons.adaptive.arrow_back),
       onPressed: () {
         close(context, null);
       },

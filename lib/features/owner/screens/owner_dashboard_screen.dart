@@ -2,7 +2,6 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -91,12 +90,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: VSPSpacing.md),
 
               if (userModel != null) ...[
-                _buildSubscriptionPlanBanner(userModel, isArabic),
-                const SizedBox(height: VSPSpacing.md),
-              ],
-
-              if (auth.userModel?.verificationStatus == 'pending' && !_isPendingBannerDismissed) ...[
-                _buildCompactPendingBanner(isArabic),
+                _buildOwnerStatusBanner(userModel, isArabic),
                 const SizedBox(height: VSPSpacing.md),
               ],
 
@@ -144,6 +138,63 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ],
     );
   }
+
+  // ───────────────────────────────────────────────────────
+  // PRIORITY-DRIVEN STATUS BANNER
+  // Priority 1: Account under review  → suppress all other banners
+  // Priority 2: Subscription expired  → only shown if account is verified
+  // Priority 3: Active / trial         → normal plan info banner
+  // ───────────────────────────────────────────────────────
+  Widget _buildOwnerStatusBanner(dynamic userModel, bool isArabic) {
+    final String? verificationStatus = userModel.verificationStatus as String?;
+    final bool isUnderReview = verificationStatus == 'pending' ||
+        verificationStatus == 'under_review';
+    final bool isRejected = verificationStatus == 'rejected';
+
+    // ⭐ PRIORITY 1: Under review — show ONLY this banner, nothing else.
+    if (isUnderReview && !_isPendingBannerDismissed) {
+      return _buildCompactPendingBanner(isArabic);
+    }
+
+    // ⭐ PRIORITY 2: Rejected — needs re-upload.
+    if (isRejected) {
+      return _buildRejectedBanner(isArabic);
+    }
+
+    // ⭐ PRIORITY 3 & 4: Account verified — show subscription status.
+    // (isExpired / pro / trial / free are all handled inside _buildSubscriptionPlanBanner)
+    return _buildSubscriptionPlanBanner(userModel, isArabic);
+  }
+
+  Widget _buildRejectedBanner(bool isArabic) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: Colors.red.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: Colors.red.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.shieldAlert, color: Colors.redAccent, size: 18),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Text(
+              isArabic
+                  ? 'تم رفض مستنداتك. يرجى إعادة رفع المستندات المطلوبة.'
+                  : 'Your documents were rejected. Please re-upload the required documents.',
+              style: const TextStyle(
+                color: Colors.redAccent,
+                fontSize: 11,
+                fontWeight: FontWeight.bold,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
 
   Widget _buildCompactPendingBanner(bool isArabic) {
     return Container(
@@ -288,14 +339,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   Widget _buildStatsGrid(bool isArabic) {
     final bookingProvider = Provider.of<BookingProvider>(context);
     double grossRev = 0;
-    double platformFees = 0;
 
     for (var b in bookingProvider.userBookings) {
       if (b.status != BookingStatus.cancelled) {
         grossRev += b.totalPrice;
-        if (b.paymentMethod == 'paymob' || b.paymentMethod == 'paymob_test' || b.paymentMethod == 'card') {
-          platformFees += (b.totalPrice * 0.02);
-        }
       }
     }
 

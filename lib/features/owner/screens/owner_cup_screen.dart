@@ -338,7 +338,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                           tournament.grandPrize.toInt(),
                           tournament.entryFee.toInt(),
                         );
-                        Share.share(shareText);
+                        SharePlus.instance.share(ShareParams(text: shareText));
                       },
                       borderRadius: BorderRadius.circular(20),
                       child: Container(

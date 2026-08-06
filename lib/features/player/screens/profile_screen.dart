@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -49,9 +49,11 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
       final xFile = XFile.fromData(pngBytes, mimeType: 'image/png', name: 'vsp_team_card.png');
       
-      await Share.shareXFiles(
-        [xFile], 
-        text: l10n.shareTeamMessage(teamName),
+      await SharePlus.instance.share(
+        ShareParams(
+          files: [xFile],
+          text: l10n.shareTeamMessage(teamName),
+        ),
       );
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, l10n.shareFailedError);

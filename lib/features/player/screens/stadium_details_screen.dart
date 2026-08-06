@@ -96,7 +96,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           children: [
                             _buildCircularIcon(
                               icon: LucideIcons.share2,
-                              onTap: () => Share.share(l10n.shareStadiumText(stadium.name, stadium.location)),
+                              onTap: () => SharePlus.instance.share(ShareParams(text: l10n.shareStadiumText(stadium.name, stadium.location))),
                             ),
                             const SizedBox(width: 16),
                             Consumer<AuthProvider>(

@@ -116,6 +116,9 @@ class UserRepository {
     securedData.remove('is_identity_verified');
     securedData.remove('verification_status');
     securedData.remove('has_stadium');
+    // 🛡️ SECURITY FIX: Prevent direct manipulation of the registration-complete flag
+    // from any client-side update path. This flag is set by trusted server-side triggers only.
+    securedData.remove('is_registration_complete');
     
     // Standardize Governorate
     if (securedData.containsKey('governorate')) {

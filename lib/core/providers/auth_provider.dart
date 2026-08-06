@@ -653,7 +653,7 @@ class AuthProvider with ChangeNotifier {
       'isEmailVerified',
       'lastSeen',
       'fcmToken',
-      // 🛡️ SECURITY FIX: Prevent self-unblocking / self-verification
+      // 🛡️ SECURITY FIX: Prevent self-unblocking / self-verification / self-registration-bypass
       'isBlocked',
       'is_blocked',
       'noShowCount',
@@ -664,6 +664,9 @@ class AuthProvider with ChangeNotifier {
       'verification_status',
       'hasStadium',
       'has_stadium',
+      // 🛡️ SECURITY FIX: Prevent client-side registration-complete flag manipulation
+      'isRegistrationComplete',
+      'is_registration_complete',
     ];
     for (var field in restrictedFields) {
       sanitizedData.remove(field);
