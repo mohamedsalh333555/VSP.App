@@ -1,4 +1,3 @@
-import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../tokens/vsp_tokens.dart';
 
@@ -45,37 +44,31 @@ class VSPCard extends StatelessWidget {
       height: height,
       margin: margin ?? const EdgeInsets.only(bottom: VSPSpacing.md),
       decoration: BoxDecoration(
+        color: effectiveColor ?? VSPColors.surface,
         borderRadius: radius,
+        border: border ?? Border.all(
+          color: useGlowBorder ? VSPColors.borderAccent : VSPColors.borderLight,
+          width: 1.2,
+        ),
         boxShadow: [
           BoxShadow(
             color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 20,
-            offset: const Offset(0, 10),
+            blurRadius: 16,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: ClipRRect(
         borderRadius: radius,
-        child: BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 20, sigmaY: 20), // Frosted Glass
-          child: Container(
-            padding: padding ?? const EdgeInsets.all(VSPSpacing.lg),
-            decoration: BoxDecoration(
-              color: effectiveColor ?? VSPColors.surface,
-              borderRadius: radius,
-              border: border ?? Border.all(
-                color: useGlowBorder ? VSPColors.borderAccent : VSPColors.borderLight,
-                width: 1.2,
-              ),
-            ),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: onTap,
-                splashColor: VSPColors.accent.withValues(alpha: 0.1),
-                highlightColor: Colors.transparent,
-                child: child,
-              ),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: onTap,
+            splashColor: VSPColors.accent.withValues(alpha: 0.1),
+            highlightColor: Colors.transparent,
+            child: Padding(
+              padding: padding ?? const EdgeInsets.all(VSPSpacing.lg),
+              child: child,
             ),
           ),
         ),
