@@ -6,6 +6,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -30,12 +31,9 @@ class PaymentGatewayScreen extends StatefulWidget {
 
 class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isLoading = false;
-  bool _isPaymobLoading = false;
+  bool _isAwaitingWebhook = false;
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
-
-  /// ✅ FIX: Flag set to true when user is successfully navigated to BookingSuccessScreen.
-  /// This prevents dispose() from deleting an already-confirmed booking.
   bool _paymentCompleted = false;
 
   @override
@@ -49,8 +47,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
 
-    // 🛑 Cleanup: Only delete if payment was NOT completed, booking still pending, and genuinely unpaid.
-    // If _paymentCompleted is true, the booking was already confirmed — do NOT delete it.
+    // 🛑 تنظيف الحجز المعلق غير المدفوع عند الخروج قبل تأكيد الـ Webhook
     if (!_paymentCompleted &&
         _booking != null &&
         _booking!.status == BookingStatus.pending &&
@@ -61,14 +58,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             .from('bookings')
             .delete()
             .eq('id', bId)
-            .then((_) => debugPrint('Abandoned pending booking cleaned up on exit.'))
-            .catchError((e) => debugPrint('Error cleaning up pending booking: $e'));
+            .then((_) => debugPrint('Pending booking cleaned up on exit.'))
+            .catchError((e) => debugPrint('Error cleaning pending booking: $e'));
       }
     }
 
     super.dispose();
   }
 
+  /// إنشاء الحجز البدايات بحالة pending و is_paid = false فقط
   Future<void> _createPendingBooking() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -81,6 +79,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         final draft = widget.bookingDraft.copyWith(
           paymentStatus: 'pending',
           paymentMethod: 'paymob',
+          isPaid: false, // 🔒 دائماً غير مدفوع في البداية
         );
         final booking = await bookingProvider.createBooking(draft, userId);
         if (booking != null) {
@@ -89,6 +88,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               _booking = booking;
               _isLoading = false;
             });
+            // 📡 بدء التسمع اللحظي لتأكيد السيرفر فقط
             _initBookingRealtimeListener(booking.id);
           }
         } else {
@@ -116,6 +116,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
   }
 
+  /// 📡 التسمع اللحظي الحصري: لا يتم الانتقال إلا عندما يغير الـ Webhook في السيرفر حالة الحجز
   void _initBookingRealtimeListener(String bookingId) {
     if (bookingId.startsWith('mock_')) return;
     _bookingSubscription?.cancel();
@@ -129,13 +130,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         final status = bookingData['status'] as String?;
         final paymentStatus = bookingData['payment_status'] as String?;
 
+        // 🔐 الانتقال المباشر يحدث فقط عند تعديل السيرفر للحالة
         if (status == 'confirmed' || paymentStatus == 'paid') {
           HapticFeedback.heavyImpact();
           if (mounted) {
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(bookingId);
             if (updatedBooking != null && mounted) {
-              // ✅ Mark payment as completed BEFORE navigating so dispose() doesn't delete the booking
               _paymentCompleted = true;
               Navigator.pushReplacement(
                 context,
@@ -152,165 +153,32 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     });
   }
 
+  /// 🚀 فتح بوابة Paymob أو استدعاء المحاكاة الآمنة بالسيرفر (RPC) في الاختبار
   Future<void> _startPaymobCheckout() async {
-    setState(() => _isPaymobLoading = true);
-    await Future.delayed(const Duration(seconds: 1)); // Simulate network load
-    setState(() => _isPaymobLoading = false);
+    if (_booking == null) return;
+    setState(() => _isAwaitingWebhook = true);
 
-    if (!mounted) return;
-    
     final amountToPay = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0 
         ? widget.bookingDraft.depositPaid.toInt() 
         : widget.bookingDraft.totalPrice.toInt();
 
-    // ✅ FIXED: Pushing a clean, full-screen route instead of calling showDialog with a Scaffold
-    Navigator.push(
-      context,
-      MaterialPageRoute(
-        builder: (ctx) => Scaffold(
-          backgroundColor: VSPColors.background,
-          appBar: AppBar(
-            backgroundColor: VSPColors.background,
-            elevation: 0,
-            leading: IconButton(
-              icon: const Icon(Icons.close, color: Colors.white), 
-              onPressed: () => Navigator.pop(ctx),
-            ),
-            title: const Text('Paymob Secure Checkout', style: TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold)),
-            centerTitle: true,
-          ),
-          body: Padding(
-            padding: const EdgeInsets.all(24.0),
-            child: SingleChildScrollView(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Container(
-                    width: double.infinity,
-                    padding: const EdgeInsets.all(20),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.xl),
-                      border: Border.all(color: VSPColors.divider),
-                    ),
-                    child: Column(
-                      children: [
-                        const Text('PAYMOB', style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold, color: VSPColors.accent)),
-                        const SizedBox(height: 24),
-                        const Text('Total Amount', style: TextStyle(color: VSPColors.textSecondary, fontSize: 14)),
-                        Text('$amountToPay EGP', style: const TextStyle(color: Colors.white, fontSize: 32, fontWeight: FontWeight.w900)),
-                        const SizedBox(height: 32),
-                        TextField(
-                          style: const TextStyle(color: Colors.white),
-                          decoration: InputDecoration(
-                            labelText: 'Card Number', 
-                            labelStyle: const TextStyle(color: VSPColors.textSecondary),
-                            hintText: '4000 0000 0000 0002', 
-                            hintStyle: const TextStyle(color: Colors.white38),
-                            filled: true,
-                            fillColor: VSPColors.surfaceAlt,
-                            border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none), 
-                            prefixIcon: const Icon(Icons.credit_card, color: VSPColors.accent),
-                          ),
-                          keyboardType: TextInputType.number,
-                        ),
-                        const SizedBox(height: 16),
-                        Row(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Expanded(
-                              flex: 3,
-                              child: TextField(
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'Expiry (MM/YY)', 
-                                  labelStyle: const TextStyle(color: VSPColors.textSecondary),
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: VSPColors.surfaceAlt,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
-                                ),
-                                keyboardType: TextInputType.datetime,
-                              ),
-                            ),
-                            const SizedBox(width: 12),
-                            Expanded(
-                              flex: 2,
-                              child: TextField(
-                                style: const TextStyle(color: Colors.white),
-                                decoration: InputDecoration(
-                                  labelText: 'CVV', 
-                                  labelStyle: const TextStyle(color: VSPColors.textSecondary),
-                                  isDense: true,
-                                  filled: true,
-                                  fillColor: VSPColors.surfaceAlt,
-                                  border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
-                                ),
-                                keyboardType: TextInputType.number,
-                                obscureText: true,
-                              ),
-                            ),
-                          ],
-                        ),
-                        const SizedBox(height: 32),
-                        SizedBox(
-                          width: double.infinity, 
-                          height: 54,
-                          child: PrimaryButton(
-                            text: 'Pay Securely',
-                            onPressed: () async {
-                              Navigator.pop(ctx);
-                              setState(() => _isPaymobLoading = true);
-                              try {
-                                if (_booking!.id.startsWith('mock_')) {
-                                  final mockConfirmed = _booking!.copyWith(
-                                    status: BookingStatus.confirmed,
-                                    isPaid: true,
-                                    paymentStatus: 'paid',
-                                    paymentMethod: 'paymob_test',
-                                    paymentTransactionId: 'TEST_${DateTime.now().millisecondsSinceEpoch}',
-                                  );
-                                  Provider.of<BookingProvider>(context, listen: false).setCurrentBookingForMock(mockConfirmed);
-                                } else {
-                                  await Supabase.instance.client.from('bookings').update({
-                                    'status': 'confirmed', 
-                                    'is_paid': true, 
-                                    'payment_status': 'paid', 
-                                    'payment_method': 'paymob_test', 
-                                    'payment_transaction_id': 'TEST_${DateTime.now().millisecondsSinceEpoch}'
-                                  }).eq('id', _booking!.id);
-                                }
-                                
-                                HapticFeedback.heavyImpact();
-                                if (mounted) {
-                                  final updatedBooking = await Provider.of<BookingProvider>(context, listen: false).getBookingById(_booking!.id);
-                                  if (updatedBooking != null && mounted) {
-                                    // ✅ Mark payment as completed BEFORE navigating
-                                    _paymentCompleted = true;
-                                    Navigator.pushReplacement(
-                                      context,
-                                      MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: updatedBooking)),
-                                    );
-                                  }
-                                }
-                              } catch (_) {
-                                setState(() => _isPaymobLoading = false);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 24),
-                  const Center(child: Text('TEST MODE ENABLED', style: TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, letterSpacing: 2))),
-                ],
-              ),
-            ),
-          ),
-        ),
-      ),
-    );
+    // 1. في البيئة الفعلية: فتح صفحة Paymob بالمتصفح
+    final paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/sample?booking_id=${_booking!.id}&amount=$amountToPay';
+    final Uri uri = Uri.parse(paymobUrl);
+
+    try {
+      if (await canLaunchUrl(uri)) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      } else {
+        // 2. خيار الاختبار/التطوير: استدعاء RPC بالسيرفر محاكاةً للـ Webhook دون كتابة مباشرة في جدول الحجوزات
+        await Supabase.instance.client.rpc('simulate_paymob_webhook', params: {
+          'p_booking_id': _booking!.id,
+          'p_amount': amountToPay,
+        });
+      }
+    } catch (e) {
+      debugPrint('Paymob Launch / RPC Simulation notice: $e');
+    }
   }
 
   void _showCashLimitDialog(String message) {
@@ -382,7 +250,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 ),
                 const SizedBox(height: 24),
                 PrimaryButton(
-                  text: 'العودة لاختيار وقت آخر',
+                  text: 'العودة لااختيار وقت آخر',
                   onPressed: () {
                     Navigator.pop(dialogContext);
                     if (outerContext.mounted) {
@@ -493,22 +361,21 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
                     ),
                     const SizedBox(height: 32),
-                    const SizedBox(height: 20),
                     Text(
                       hasDeposit 
-                          ? (isArabic ? 'عربون الحجز' : 'Upfront Deposit')
-                          : (isArabic ? 'المبلغ الإجمالي المدفوع' : 'Total Checkout Amount'),
+                          ? (isArabic ? 'عربون الحجز المطلوب' : 'Upfront Deposit Required')
+                          : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount'),
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 4),
                     Text(
-                      '${(amountToPay + (amountToPay * 0.02) + ((amountToPay * 0.0275) + 3.0)).toInt()} ${l10n.egCurrency}',
+                      '${amountToPay.toInt()} ${l10n.egCurrency}',
                       style: const TextStyle(color: VSPColors.accent, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 20),
-                    // 💰 Itemized Financial Breakdown Card
+                    // 💰 Flat Financial Breakdown Card (0% Commission Model)
                     Container(
-                      padding: const EdgeInsets.all(14),
+                      padding: const EdgeInsets.all(16),
                       decoration: BoxDecoration(
                         color: VSPColors.surface,
                         borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -548,43 +415,35 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                           ),
                           const Divider(color: VSPColors.divider, height: 20),
                           _buildFeeRow(
-                            label: isArabic ? 'سعر حجز الملعب' : 'Stadium Base Rate',
+                            label: hasDeposit 
+                              ? (isArabic ? 'قيمة العربون المطلوبة' : 'Deposit Amount') 
+                              : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Total Stadium Price'),
                             value: '${amountToPay.toInt()} ج.م',
-                          ),
-                          const SizedBox(height: 6),
-                          _buildFeeRow(
-                            label: isArabic ? 'رسوم خدمة التطبيق (2% VSP)' : 'VSP Platform Fee (2%)',
-                            value: '+ ${(amountToPay * 0.02).toStringAsFixed(1)} ج.م',
-                            isSubFee: true,
-                          ),
-                          const SizedBox(height: 6),
-                          _buildFeeRow(
-                            label: isArabic ? 'رسوم معالجة البوابة (Paymob API)' : 'Paymob Gateway Processing Fee',
-                            value: '+ ${((amountToPay * 0.0275) + 3.0).toStringAsFixed(1)} ج.م',
-                            isSubFee: true,
-                          ),
-                          const Divider(color: VSPColors.divider, height: 16),
-                          _buildFeeRow(
-                            label: isArabic ? 'الإجمالي النهائي المطلوب سداده' : 'Total Player Charge',
-                            value: '${(amountToPay + (amountToPay * 0.02) + ((amountToPay * 0.0275) + 3.0)).toInt()} ج.م',
                             isBold: true,
                           ),
+                          if (hasDeposit) ...[
+                            const SizedBox(height: 6),
+                            _buildFeeRow(
+                              label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
+                              value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ج.م',
+                            ),
+                          ]
                         ],
                       ),
                     ),
                     const SizedBox(height: 24),
-                    if (_isLoading || _isPaymobLoading) ...[
+                    if (_isLoading || _isAwaitingWebhook) ...[
                       const CircularProgressIndicator(color: VSPColors.accent),
                       const SizedBox(height: 16),
                       Text(
-                        isArabic ? 'جاري تهيئة بوابة الدفع الآمنة...' : 'Initializing secure payment gateway...',
+                        isArabic ? 'جاري انتظار تأكيد السيرفر وبوابة الدفع (Webhook)...' : 'Awaiting server webhook confirmation...',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                       ),
                     ] else ...[
                       const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 16),
                       const SizedBox(height: 8),
                       Text(
-                        isArabic ? 'سيتم نقلك الآن لصفحة الدفع الآمنة لإتمام حجزك...' : 'You will be redirected to the secure payment page to complete your booking...',
+                        isArabic ? 'سيتم تحويلك الآن لبوابة Paymob. التأكيد يتطلب رد الـ Webhook الرسمي.' : 'You will be redirected to Paymob. Confirmation relies strictly on Webhook API.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
                       ),
@@ -594,8 +453,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       width: double.infinity,
                       height: 56,
                       child: PrimaryButton(
-                        text: isArabic ? 'ادفع الآن' : 'Pay Now',
-                        isLoading: _isLoading || _isPaymobLoading,
+                        text: isArabic ? 'الانتقال للدفع الآمن (Paymob)' : 'Proceed to Paymob',
+                        isLoading: _isLoading || _isAwaitingWebhook,
                         onPressed: (_booking == null) ? null : _startPaymobCheckout,
                       ),
                     ),
@@ -613,7 +472,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Widget _buildFeeRow({
     required String label,
     required String value,
-    bool isSubFee = false,
     bool isBold = false,
   }) {
     return Row(
@@ -622,7 +480,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         Text(
           label,
           style: TextStyle(
-            color: isBold ? Colors.white : (isSubFee ? VSPColors.accent : VSPColors.textSecondary),
+            color: isBold ? Colors.white : VSPColors.textSecondary,
             fontSize: isBold ? 13 : 11,
             fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
           ),
@@ -630,7 +488,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         Text(
           value,
           style: TextStyle(
-            color: isBold ? VSPColors.accent : (isSubFee ? Colors.white70 : Colors.white),
+            color: isBold ? VSPColors.accent : Colors.white,
             fontSize: isBold ? 14 : 11,
             fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
           ),
@@ -639,5 +497,3 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 }
-
-

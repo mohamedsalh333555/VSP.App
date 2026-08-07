@@ -4,7 +4,6 @@ class AppSettings {
   final String supportEmail;
   final String vodafoneCashNumber;
   final String instapayHandle;
-  final String binanceId;
   final bool cashBookingEnabled;
   final bool onlinePaymentEnabled;
 
@@ -14,7 +13,6 @@ class AppSettings {
     this.supportEmail = 'support@vspapp.com',
     this.vodafoneCashNumber = '01000000000',
     this.instapayHandle = 'vsp@instapay',
-    this.binanceId = '',
     this.cashBookingEnabled = true,
     this.onlinePaymentEnabled = true,
   });
@@ -27,7 +25,6 @@ class AppSettings {
       supportEmail: data['support_email'] ?? data['supportEmail'] ?? 'support@vspapp.com',
       vodafoneCashNumber: data['vodafone_cash_number'] ?? data['vodafoneCashNumber'] ?? data['vodafone_cash'] ?? '01000000000',
       instapayHandle: data['instapay_handle'] ?? data['instapayHandle'] ?? data['instapay'] ?? 'vsp@instapay',
-      binanceId: data['binance_id'] ?? data['binanceId'] ?? '',
       cashBookingEnabled: data['cash_booking_enabled'] ?? data['cashBookingEnabled'] ?? true,
       onlinePaymentEnabled: data['online_payment_enabled'] ?? data['onlinePaymentEnabled'] ?? true,
     );
@@ -40,7 +37,6 @@ class AppSettings {
       'support_email': supportEmail,
       'vodafone_cash_number': vodafoneCashNumber,
       'instapay_handle': instapayHandle,
-      'binance_id': binanceId,
       'cash_booking_enabled': cashBookingEnabled,
       'online_payment_enabled': onlinePaymentEnabled,
     };

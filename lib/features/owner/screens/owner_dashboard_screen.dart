@@ -418,7 +418,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 child: Padding(
                   padding: const EdgeInsets.only(right: 8.0),
                   child: Text(
-                    isArabic ? '* رسوم المنصة والمعالجة تُحصل مباشرة من اللاعب' : '* Platform & gateway fees billed to player',
+                    isArabic ? '* تحصيل المالك 100% بدون أي اقتطاعات أو عمولات' : '* 100% Gross revenue kept by pitch owner',
                     textAlign: TextAlign.end,
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9),
                   ),
@@ -444,10 +444,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           children: [
             Expanded(
               child: _buildSingleInsightBadge(
-                title: isArabic ? 'الساعات الميتة' : 'Dead Hours',
-                subtitle: isArabic ? 'تحليل فترات الركود' : 'Analyze quiet slots',
-                icon: LucideIcons.flame,
-                iconColor: Colors.orange,
+                title: isArabic ? 'أوقات الحجز' : 'Booking Hours',
+                subtitle: isArabic ? 'توزيع الساعات والأيام' : 'Hourly & Daily distribution',
+                icon: LucideIcons.clock,
+                iconColor: VSPColors.accent,
                 isPro: isProOwner,
                 onTap: () => _showProUpgradeSheet(context),
               ),
@@ -455,10 +455,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: _buildSingleInsightBadge(
-                title: isArabic ? 'مقارنة الأرباح' : 'Growth Chart',
-                subtitle: isArabic ? 'مقارنة بالمنطقة' : 'Compare performance',
-                icon: LucideIcons.trendingUp,
-                iconColor: VSPColors.accent,
+                title: isArabic ? 'مصدر الحجز' : 'Booking Source',
+                subtitle: isArabic ? 'مباشر vs التحديات' : 'Direct vs Challenge source',
+                icon: LucideIcons.barChart2,
+                iconColor: Colors.blueAccent,
                 isPro: isProOwner,
                 onTap: () => _showProUpgradeSheet(context),
               ),

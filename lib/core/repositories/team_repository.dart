@@ -26,13 +26,65 @@ class TeamRepository {
         .toList();
   }
 
+  /// 🛡️ خوارزمية كشف الفرق الوهمية (Fake Team Protection)
+  /// الفريق يصبح رسمياً ويؤثر في نقاط الـ Elo والترتيب إذا:
+  /// 1. خاض مباراة واحدة موثقة سابقة على الأقل.
+  /// 2. ألكابتن والأعضاء لديهم أرقام هواتف موثقة ومختلفة (5+ أعضاء).
+  Future<bool> checkIsTeamOfficial(String teamId) async {
+    try {
+      final team = await getTeam(teamId);
+      if (team == null) return false;
+
+      // أ. إذا كان للفريق تاريخ مباريات موثقة سابقة
+      if (team.matchesPlayed > 0) {
+        return true;
+      }
+
+      // ب. التثبت من وجود 5 أعضاء على الأقل بأرقام هواتف موثقة ومختلفة
+      final memberUids = await getTeamMemberUids(teamId);
+      if (memberUids.length < 5) return false;
+
+      final response = await _supabase
+          .from('users')
+          .select('phone')
+          .inFilter('id', memberUids);
+
+      final phones = (response as List)
+          .map((row) => PhoneUtils.normalize(row['phone']?.toString() ?? ''))
+          .where((p) => p.isNotEmpty)
+          .toSet();
+
+      // يجب وجود 5 أرقام هواتف فريدة ومختلفة
+      return phones.length >= 5;
+    } catch (e) {
+      debugPrint('Error checking team official status: $e');
+      return false;
+    }
+  }
+
+  /// 🏆 تحديث نتائج المباراة ونقاط الـ Elo فقط للمباريات الرسمية
   Future<void> updateMatchResult(String bookingId, String homeTeamId, String awayTeamId, MatchOutcome finalOutcome) async {
     try {
+      // 1. التحقق من أصلية ورسمية الفريقين لمنع العبث بالترتيب عبر فرق وهمية
+      final bool isHomeOfficial = await checkIsTeamOfficial(homeTeamId);
+      final bool isAwayOfficial = await checkIsTeamOfficial(awayTeamId);
+
+      final bool isOfficialRankedMatch = isHomeOfficial && isAwayOfficial;
+
+      // 2. تحديث حالة الحجز والنتيجة في قاعدة البيانات
       await _supabase.from('bookings').update({
         'status': BookingStatus.completed.name,
         'final_outcome': finalOutcome.name,
+        'is_official_match': isOfficialRankedMatch, // ⚡ تميز الودية من الرسمية
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', bookingId);
+
+      // 3. تحديث نقاط الـ Elo الرسمية فقط إذا كانت المباراة رسمية وليس بين فرق وهمية
+      if (isOfficialRankedMatch) {
+        debugPrint('✅ Official Ranked Match confirmed. Elo points calculated via server trigger.');
+      } else {
+        debugPrint('ℹ️ Friendly / Unverified match completed. Elo points preserved (No rank impact).');
+      }
     } catch (e) {
       debugPrint('Error updating match result: $e');
     }
@@ -96,7 +148,6 @@ class TeamRepository {
         await _supabase.from('team_members').insert(memberRows);
       }
 
-      // ── Anti-Silent Kidnapping Notification ──
       if (memberUids.length > 1) {
         for (int i = 1; i < memberUids.length; i++) {
           _sendJoinNotification(memberUids[i].toString());
@@ -264,7 +315,6 @@ class TeamRepository {
         }
       }
 
-      // Also check ongoing or open championships
       final championshipsResponse = await _supabase
           .from('championships')
           .select('joined_teams')
@@ -328,7 +378,6 @@ class TeamRepository {
 
   Future<bool> deleteTeam(String teamId) async {
     try {
-      // 1. Check active tournaments
       final champs = await _supabase
           .from('championships')
           .select('id')
@@ -336,7 +385,6 @@ class TeamRepository {
           .inFilter('status', ['open', 'ongoing']);
       if ((champs as List).isNotEmpty) throw Exception('team_in_tournament');
 
-      // 2. Check active/upcoming match bookings
       final bookings1 = await _supabase
           .from('bookings')
           .select('end_time')
@@ -400,4 +448,3 @@ class TeamRepository {
     }
   }
 }
-

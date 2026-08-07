@@ -36,12 +36,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         padding: const EdgeInsets.all(VSPSpacing.md),
         child: Column(
           children: [
-            // Current Plan Header Banner
             if (userModel != null) _buildCurrentPlanBanner(userModel, isArabic),
 
             const SizedBox(height: 20),
 
-            // Plan 1: Free Trial Banner Notice (Fixed copy: 1 stadium across all labels)
+            // Plan 1: Free Trial
             _buildPlanCard(
               title: isArabic ? 'الفترة التجريبية' : 'Free Trial',
               priceText: isArabic ? 'مجاناً' : 'Free',
@@ -82,7 +81,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 16),
 
-            // Plan 3: Pro (1000 EGP) - Rebalanced to 3 stadiums + Custom Add-on
+            // Plan 3: Pro (1000 EGP)
             _buildPlanCard(
               title: isArabic ? 'الباقة الاحترافية Pro' : 'Pro Plan',
               priceText: '1000 ج.م',
@@ -95,10 +94,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               features: [
                 isArabic ? 'إضافة حتى 3 ملاعب مختلفة' : 'Add up to 3 Stadiums',
                 isArabic ? 'إمكانية إضافة ملعب إضافي (+200 ج.م/شهرياً)' : 'Custom Stadium Add-on (+200 EGP/mo)',
-                isArabic ? 'داش بورد كامل وشامل للتحليلات' : 'Full Smart Analytics Dashboard',
-                isArabic ? 'تحليل وتعبئة الساعات الميتة تلقائياً' : 'Dead Hours Analytics & Automation',
-                isArabic ? 'رسم بياني لمقارنة النمو شهرياً' : 'Monthly Growth & Revenue Comparison',
-                isArabic ? 'تصدير التقارير المالية والضريبية PDF' : 'Export Financial PDF Reports',
+                isArabic ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & Daily Booking Analytics',
+                isArabic ? 'تقرير مصادر الحجز (مباشر vs تحدي)' : 'Booking Source Report (Direct vs Challenge)',
+                isArabic ? 'بيانات ديموغرافية أساسية للاعبين' : 'Basic Player Demographic Data',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 ج.م)', isArabic),
               isArabic: isArabic,
@@ -265,4 +263,3 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     }
   }
 }
-

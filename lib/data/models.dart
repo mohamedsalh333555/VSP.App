@@ -996,6 +996,8 @@ class Team {
   final int fairPlayScore;   // Season score (0–100), default 100
   final int lastResetYear;   // Year of last annual reset, default 2026
 
+  final bool isOfficial;
+
   Team({
     required this.id,
     required this.name,
@@ -1025,11 +1027,16 @@ class Team {
     this.championshipsWon = 0,
     this.fairPlayScore = 100,
     this.lastResetYear = 2026,
+    this.isOfficial = false,
   });
 
   String get rankTitle => EloCalculator.getRankTitle(points);
 
   factory Team.fromFirestore(Map<String, dynamic> data, String docId) {
+    final matches = data['matchesPlayed'] ?? data['matches_played'] ?? 0;
+    final members = List<String>.from(data['memberUids'] ?? data['member_uids'] ?? []);
+    final bool calculatedOfficial = matches > 0 || members.length >= 5;
+
     return Team(
       id: docId,
       name: data['name'] ?? '',
@@ -1047,7 +1054,7 @@ class Team {
       captainPhone: data['captainPhone'] ?? data['captain_phone'],
       sportType: data['sportType'] ?? data['sport_type'] ?? 'Football',
       governorate: data['governorate'] ?? 'Cairo',
-      matchesPlayed: data['matchesPlayed'] ?? data['matches_played'] ?? 0,
+      matchesPlayed: matches,
       wins: data['wins'] ?? 0,
       draws: data['draws'] ?? 0,
       losses: data['losses'] ?? 0,
@@ -1055,10 +1062,11 @@ class Team {
       beatenOpponents: List<String>.from(data['beatenOpponents'] ?? data['beaten_opponents'] ?? []),
       unlockedBadges: List<String>.from(data['unlockedBadges'] ?? data['unlocked_badges'] ?? []),
       currentWinningStreak: data['currentWinningStreak'] ?? data['current_winning_streak'] ?? 0,
-      memberUids: List<String>.from(data['memberUids'] ?? data['member_uids'] ?? []),
+      memberUids: members,
       championshipsWon: data['championshipsWon'] ?? data['championships_won'] ?? 0,
       fairPlayScore: data['fairPlayScore'] ?? data['fair_play_score'] ?? 100,
       lastResetYear: data['lastResetYear'] ?? data['last_reset_year'] ?? 2026,
+      isOfficial: data['is_official'] ?? data['isOfficial'] ?? calculatedOfficial,
     );
   }
 
