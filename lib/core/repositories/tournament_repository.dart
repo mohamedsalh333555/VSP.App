@@ -666,12 +666,12 @@ class TournamentRepository {
     try {
       final response = await _supabase
           .from('championships')
-          .select('paid_teams, paidTeams')
+          .select('paid_teams')
           .eq('id', championshipId)
           .maybeSingle();
       if (response == null) throw 'Championship not found';
 
-      final paidTeams = List<String>.from(response['paid_teams'] ?? response['paidTeams'] ?? []);
+      final paidTeams = List<String>.from(response['paid_teams'] ?? []);
       if (isPaid) {
         if (!paidTeams.contains(teamId)) {
           paidTeams.add(teamId);

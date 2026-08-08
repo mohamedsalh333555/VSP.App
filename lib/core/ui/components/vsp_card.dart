@@ -1,20 +1,16 @@
+import 'dart:ui';
 import 'package:flutter/material.dart';
 import '../tokens/vsp_tokens.dart';
-
-enum VSPCardVariant { standard, glass, accentGlow, highlight }
 
 class VSPCard extends StatelessWidget {
   final Widget child;
   final EdgeInsetsGeometry? padding;
   final EdgeInsetsGeometry? margin;
-  final VoidCallback? onTap;
-  final bool isGlowBorder;
-  final VSPCardVariant variant;
+  final Color? color;
+  final Border? border;
   final double? width;
   final double? height;
-  final Border? border;
-  final Color? backgroundColor;
-  final Color? color;
+  final double? borderRadius;
   final bool isGlass;
 
   const VSPCard({
@@ -22,54 +18,74 @@ class VSPCard extends StatelessWidget {
     required this.child,
     this.padding,
     this.margin,
-    this.onTap,
-    this.isGlowBorder = false,
-    this.variant = VSPCardVariant.standard,
+    this.color,
+    this.border,
     this.width,
     this.height,
-    this.border,
-    this.backgroundColor,
-    this.color,
-    this.isGlass = false,
+    this.borderRadius,
+    this.isGlass = false, // 🛑 FIX: جعل الافتراضي معتم صلب وليس شفافاً لمنع تسريب خلفية البوب اب
   });
 
   @override
   Widget build(BuildContext context) {
-    final radius = BorderRadius.circular(VSPRadius.lg);
-    final effectiveColor = color ?? backgroundColor;
-    final useGlowBorder = isGlowBorder || variant == VSPCardVariant.accentGlow;
+    final double r = borderRadius ?? VSPRadius.lg;
+    final double sigma = isGlass ? VSPColors.glassBlurSigma : 0.0;
 
+    if (!isGlass) {
+      // 🛡️ كارت معتم صلب 100% بدون أي Blur أو الشفافية
+      return Container(
+        width: width,
+        height: height,
+        margin: margin,
+        padding: padding ?? const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: color ?? VSPColors.surface, // Solid Opaque Zinc 900
+          borderRadius: BorderRadius.circular(r),
+          border: border ?? Border.all(
+            color: Colors.white.withValues(alpha: 0.05),
+            width: 1,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.25),
+              blurRadius: 16,
+              spreadRadius: 0,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: child,
+      );
+    }
+
+    // 🔮 كارت زجاجي شفاف (عند طلبه صراحةً بـ isGlass: true)
     return Container(
       width: width,
       height: height,
-      margin: margin ?? const EdgeInsets.only(bottom: VSPSpacing.md),
-      decoration: BoxDecoration(
-        color: effectiveColor ?? VSPColors.surface,
-        borderRadius: radius,
-        border: border ?? Border.all(
-          color: useGlowBorder ? VSPColors.borderAccent : VSPColors.borderLight,
-          width: 1.2,
-        ),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 16,
-            offset: const Offset(0, 8),
-          ),
-        ],
-      ),
+      margin: margin,
       child: ClipRRect(
-        borderRadius: radius,
-        child: Material(
-          color: Colors.transparent,
-          child: InkWell(
-            onTap: onTap,
-            splashColor: VSPColors.accent.withValues(alpha: 0.1),
-            highlightColor: Colors.transparent,
-            child: Padding(
-              padding: padding ?? const EdgeInsets.all(VSPSpacing.lg),
-              child: child,
+        borderRadius: BorderRadius.circular(r),
+        child: BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: sigma, sigmaY: sigma),
+          child: Container(
+            padding: padding ?? const EdgeInsets.all(16),
+            decoration: BoxDecoration(
+              color: color ?? VSPColors.glassSurface,
+              borderRadius: BorderRadius.circular(r),
+              border: border ?? Border.all(
+                color: VSPColors.glassBorder,
+                width: 1,
+              ),
+              boxShadow: [
+                BoxShadow(
+                  color: VSPColors.glassGlow,
+                  blurRadius: 16,
+                  spreadRadius: 0,
+                  offset: const Offset(0, 4),
+                ),
+              ],
             ),
+            child: child,
           ),
         ),
       ),

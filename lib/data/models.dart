@@ -654,13 +654,13 @@ class Booking {
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
       startTime: startTimeVal != null 
           ? (startTimeVal is DateTime 
-              ? startTimeVal 
-              : DateTime.parse(startTimeVal.toString()))
+              ? startTimeVal.toLocal() 
+              : DateTime.parse(startTimeVal.toString()).toLocal())
           : DateTime.now(),
       endTime: endTimeVal != null 
           ? (endTimeVal is DateTime 
-              ? endTimeVal 
-              : DateTime.parse(endTimeVal.toString()))
+              ? endTimeVal.toLocal() 
+              : DateTime.parse(endTimeVal.toString()).toLocal())
           : DateTime.now(),
       bookingType: BookingType.values.firstWhere(
         (e) => e.name == bookingTypeVal,
@@ -687,13 +687,13 @@ class Booking {
       createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? '',
       createdAt: createdAtVal != null 
           ? (createdAtVal is DateTime 
-              ? createdAtVal 
-              : DateTime.parse(createdAtVal.toString()))
+              ? createdAtVal.toLocal() 
+              : DateTime.parse(createdAtVal.toString()).toLocal())
           : DateTime.now(),
       updatedAt: updatedAtVal != null 
           ? (updatedAtVal is DateTime 
-              ? updatedAtVal 
-              : DateTime.parse(updatedAtVal.toString()))
+              ? updatedAtVal.toLocal() 
+              : DateTime.parse(updatedAtVal.toString()).toLocal())
           : null,
       homeScore: data['homeScore'] ?? data['home_score'],
       awayScore: data['awayScore'] ?? data['away_score'],

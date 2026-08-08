@@ -173,20 +173,23 @@ class SupabaseBookingRepository implements BookingRepository {
         throw Exception("حسابك مقيد بسبب عدم الحضور للمباريات السابقة (No-Show).");
       }
 
-      // Rule 1: Maximum of 1 active "unpaid" booking
-      final unpaidBookings = await getUnpaidBookingsForUser(userId);
-      final now = DateTime.now();
-      final hasActiveUnpaid = unpaidBookings.any((b) => 
-          b.status != BookingStatus.cancelled && 
-          b.status != BookingStatus.completed &&
-          b.endTime.isAfter(now));
+      // Rule 1: Maximum of 1 active "unpaid" booking for PLAYERS (Exempt Stadium Owner Manual Walk-ins!)
+      final bool isManualBooking = draft.paymentTransactionId?.startsWith('MANUAL') == true;
+      if (!isManualBooking) {
+        final unpaidBookings = await getUnpaidBookingsForUser(userId);
+        final now = DateTime.now();
+        final hasActiveUnpaid = unpaidBookings.any((b) => 
+            b.status != BookingStatus.cancelled && 
+            b.status != BookingStatus.completed &&
+            b.endTime.isAfter(now));
 
-      final bool isNewBookingUnpaid = !draft.isPaid && draft.paymentMethod == 'cash';
-      if (hasActiveUnpaid && isNewBookingUnpaid) {
-        throw Exception(
-          "حسابك مقيد بحد أقصى حجز نقدي واحد نشط في نفس الوقت. "
-          "يرجى سداد الحجز الآخر أو الدفع إلكترونياً (أونلاين) لهذا الحجز الجديد للمتابعة."
-        );
+        final bool isNewBookingUnpaid = !draft.isPaid && draft.paymentMethod == 'cash';
+        if (hasActiveUnpaid && isNewBookingUnpaid) {
+          throw Exception(
+            "حسابك مقيد بحد أقصى حجز نقدي واحد نشط في نفس الوقت. "
+            "يرجى سداد الحجز الآخر أو الدفع إلكترونياً (أونلاين) لهذا الحجز الجديد للمتابعة."
+          );
+        }
       }
 
       final status = (draft.paymentStatus == 'pending' || draft.paymentStatus == 'awaiting_verification')
@@ -302,7 +305,7 @@ class SupabaseBookingRepository implements BookingRepository {
         'max_players': booking.maxPlayers,
         'joined_user_ids': [userId],
         'is_paid': booking.isPaid,
-        'payment_status': booking.paymentStatus,
+        'payment_status': (booking.paymentStatus == 'unpaid' || booking.paymentStatus.isEmpty) ? 'pending' : booking.paymentStatus,
         'player_phone': booking.playerPhone,
         'notes': booking.notes,
         'deposit_paid': booking.depositPaid,
@@ -451,18 +454,40 @@ class SupabaseBookingRepository implements BookingRepository {
         });
   }
 
+  Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
+    try {
+      final response = await _supabase.from('bookings').select();
+      final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
+      final bookings = (response as List)
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .where((b) {
+            if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
+              return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
+            }
+            return true;
+          })
+          .toList();
+      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+      VSPLogger.i('⚡ Direct REST fetch returned ${bookings.length} bookings');
+      return bookings;
+    } catch (e) {
+      VSPLogger.e('❌ Error fetching owner bookings directly: $e');
+      return [];
+    }
+  }
+
   @override
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
+    final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('owner_id', ownerId)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                if (stadiumIds != null && stadiumIds.isNotEmpty) {
-                  return stadiumIds.contains(b.stadiumId);
+                if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
+                  return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
                 }
                 return true;
               })
@@ -513,11 +538,13 @@ class SupabaseBookingRepository implements BookingRepository {
       final booking = await getBookingById(bookingId);
       if (booking == null) return false;
 
-      // Business Rule: Cannot cancel after match starts
-      if (DateTime.now().isAfter(booking.startTime.subtract(const Duration(hours: 2)))) {
+      final now = DateTime.now();
+      // Business Rule: NO BOOKING CAN BE CANCELLED ONCE IT HAS STARTED!
+      if (now.isAfter(booking.startTime) || now.isAtSameMomentAs(booking.startTime)) {
         debugPrint('⚠️ Cannot cancel booking after start time: $bookingId');
         return false;
       }
+
 
       await _supabase
           .from('bookings')

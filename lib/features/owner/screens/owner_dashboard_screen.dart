@@ -1,5 +1,6 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -76,7 +77,15 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final userModel = auth.userModel;
     final isProOwner = userModel?.isProPlan == true;
-    final isExpired = userModel?.isPlanExpired == true;
+
+    bool isExpired = false;
+    if (userModel != null) {
+      if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
+        isExpired = false;
+      } else {
+        isExpired = userModel.isPlanExpired;
+      }
+    }
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -86,33 +95,35 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              // 1. الهيدر العلوي
               _buildHeader(auth, isArabic),
               const SizedBox(height: VSPSpacing.md),
 
+              // 2. بانر التنبيه والاشتراك
               if (userModel != null) ...[
-                _buildOwnerStatusBanner(userModel, isArabic),
+                _buildOwnerStatusBanner(userModel, isArabic, isExpired),
                 const SizedBox(height: VSPSpacing.md),
               ],
 
-              // ⚡ Quick Walk-in Action CTA
-              _buildQuickWalkInCTA(isArabic, isExpired),
-              const SizedBox(height: VSPSpacing.md),
-
-              // 📊 1. كارت التحصيلات الأساسي (تعديل الهرمية البصرية ومراعاة الصفر)
+              // 📊 3. كارت الأرباح المالي الموحد (البطل البصري للشاشة)
               _buildStatsGrid(isArabic),
               const SizedBox(height: VSPSpacing.lg),
 
-              // 💡 2. شارات اللمحة التفاعلية (Insight Badges) بدلاً من الكروت الكبيرة المغلقة
+              // 💡 4. شارات اللمحات الذكية (كاملة العرض لمنع قص النصوص)
               _buildInsightBadges(isProOwner, isArabic),
               const SizedBox(height: VSPSpacing.xl),
 
-              // 📋 حجوزات اليوم
+              // 📋 5. حجوزات اليوم
               Text(
                 isArabic ? 'حجوزات اليوم' : "Today's Bookings",
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: VSPSpacing.md),
               _buildBookedTodayList(isArabic),
+              const SizedBox(height: VSPSpacing.md),
+
+              // ⚡ 6. زر الحجز السريع المباشر (موضوع أسفل حجوزات اليوم)
+              _buildQuickWalkInCTA(isArabic, isExpired),
             ],
           ),
         ),
@@ -120,15 +131,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  /// 1. الهيدر الموحد لغوياً
   Widget _buildHeader(AuthProvider auth, bool isArabic) {
+    final firstName = (auth.userModel?.name ?? 'Owner').split(' ').first;
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text('${isArabic ? 'أهلاً' : 'Hi'} ${(auth.userModel?.name ?? 'Owner').split(' ').first}', style: Theme.of(context).textTheme.displayMedium),
-            Text(isArabic ? 'لوحة تحكم الملعب' : 'Facility Dashboard', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+            Text(
+              isArabic ? 'أهلاً $firstName' : 'Hi $firstName', 
+              style: Theme.of(context).textTheme.displayMedium,
+            ),
+            Text(
+              isArabic ? 'لوحة تحكم الملعب' : 'Facility Dashboard', 
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+            ),
           ],
         ),
         IconButton(
@@ -139,31 +158,21 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  // ───────────────────────────────────────────────────────
-  // PRIORITY-DRIVEN STATUS BANNER
-  // Priority 1: Account under review  → suppress all other banners
-  // Priority 2: Subscription expired  → only shown if account is verified
-  // Priority 3: Active / trial         → normal plan info banner
-  // ───────────────────────────────────────────────────────
-  Widget _buildOwnerStatusBanner(dynamic userModel, bool isArabic) {
+  /// 2. البانر الأمني الموحد لغوياً
+  Widget _buildOwnerStatusBanner(dynamic userModel, bool isArabic, bool isExpired) {
     final String? verificationStatus = userModel.verificationStatus as String?;
-    final bool isUnderReview = verificationStatus == 'pending' ||
-        verificationStatus == 'under_review';
+    final bool isUnderReview = verificationStatus == 'pending' || verificationStatus == 'under_review';
     final bool isRejected = verificationStatus == 'rejected';
 
-    // ⭐ PRIORITY 1: Under review — show ONLY this banner, nothing else.
     if (isUnderReview && !_isPendingBannerDismissed) {
       return _buildCompactPendingBanner(isArabic);
     }
 
-    // ⭐ PRIORITY 2: Rejected — needs re-upload.
     if (isRejected) {
       return _buildRejectedBanner(isArabic);
     }
 
-    // ⭐ PRIORITY 3 & 4: Account verified — show subscription status.
-    // (isExpired / pro / trial / free are all handled inside _buildSubscriptionPlanBanner)
-    return _buildSubscriptionPlanBanner(userModel, isArabic);
+    return _buildSubscriptionPlanBanner(userModel, isArabic, isExpired);
   }
 
   Widget _buildRejectedBanner(bool isArabic) {
@@ -195,7 +204,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-
   Widget _buildCompactPendingBanner(bool isArabic) {
     return Container(
       padding: const EdgeInsets.all(10),
@@ -223,92 +231,116 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _buildSubscriptionPlanBanner(userModel, bool isArabic) {
-    final bool isTrial = userModel.isInActiveTrial;
+  Widget _buildSubscriptionPlanBanner(dynamic userModel, bool isArabic, bool isExpired) {
     final bool isPro = userModel.isProPlan;
-    final bool isExpired = userModel.isPlanExpired;
+    final bool isTrial = userModel.isInActiveTrial;
+    final DateTime? trialEnd = userModel.effectiveTrialEndsAt;
+    final int remainingDays = trialEnd != null ? trialEnd.difference(DateTime.now()).inDays : 0;
+    final String trialEndDateStr = trialEnd != null ? DateFormat('yyyy/MM/dd').format(trialEnd) : '';
+
+    final String planLabel = isExpired
+        ? (isArabic ? 'منتهية' : 'Expired')
+        : (isTrial
+            ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم ⏳)' : 'Free Trial ($remainingDays days left ⏳)')
+            : (isArabic 
+                ? (isPro ? 'احترافية (Pro)' : 'أساسية (Basic)')
+                : userModel.subscriptionPlanLabel));
+
+    final String subtitleText = isExpired
+        ? (isArabic ? 'استقبال الحجوزات متوقف حتى التجديد' : 'New bookings paused until renewal')
+        : (isTrial
+            ? (isArabic ? '⏳ ينتهي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : '⏳ Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
+            : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}');
 
     final Color statusColor = isPro
         ? Colors.amber
-        : (isTrial
+        : (!isExpired
             ? VSPColors.accent
-            : (isExpired ? Colors.redAccent : VSPColors.textSecondary));
+            : Colors.redAccent);
 
-    return Container(
-      padding: const EdgeInsets.all(12),
-      decoration: BoxDecoration(
-        color: isExpired
-            ? Colors.red.withValues(alpha: 0.1)
-            : (isPro ? Colors.amber.withValues(alpha: 0.1) : VSPColors.surface),
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(
-          color: isExpired ? Colors.redAccent : (isPro ? Colors.amber : (isTrial ? VSPColors.accent : VSPColors.divider)),
+    return InkWell(
+      onTap: () => _showProUpgradeSheet(context),
+      borderRadius: BorderRadius.circular(VSPRadius.md),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: isExpired
+              ? Colors.red.withValues(alpha: 0.1)
+              : (isPro ? Colors.amber.withValues(alpha: 0.1) : VSPColors.surface),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: isExpired ? Colors.redAccent : (isPro ? Colors.amber : VSPColors.accent),
+          ),
         ),
-      ),
-      child: Row(
-        children: [
-          Icon(
-            isPro ? LucideIcons.crown : (isTrial ? LucideIcons.award : LucideIcons.shieldAlert),
-            color: statusColor,
-            size: 22,
-          ),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  children: [
-                    Text(
-                      '${isArabic ? "حالة الاشتراك:" : "Plan:"} ',
-                      style: const TextStyle(color: Colors.white70, fontSize: 12),
-                    ),
-                    Text(
-                      userModel.subscriptionPlanLabel,
-                      style: TextStyle(
-                        color: statusColor,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 13,
+        child: Row(
+          children: [
+            Icon(
+              isPro ? LucideIcons.crown : (isTrial ? LucideIcons.timer : (!isExpired ? LucideIcons.award : LucideIcons.shieldAlert)),
+              color: statusColor,
+              size: 22,
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Text(
+                        '${isArabic ? "الباقة:" : "Plan:"} ',
+                        style: const TextStyle(color: Colors.white70, fontSize: 12),
                       ),
-                    ),
-                  ],
-                ),
-                Text(
-                  isExpired
-                      ? (isArabic ? 'استقبال الحجوزات متوقف حتى التجديد' : 'New bookings paused until renewal')
-                      : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}',
-                  style: TextStyle(
-                    color: isExpired ? Colors.redAccent : VSPColors.textSecondary,
-                    fontSize: 11,
+                      Expanded(
+                        child: Text(
+                          planLabel,
+                          style: TextStyle(
+                            color: statusColor,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12.5,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                    ],
                   ),
-                ),
-              ],
+                  const SizedBox(height: 2),
+                  Text(
+                    subtitleText,
+                    style: TextStyle(
+                      color: isExpired ? Colors.redAccent : VSPColors.textSecondary,
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
             ),
-          ),
-          ElevatedButton(
-            onPressed: () => _showProUpgradeSheet(context),
-            style: ElevatedButton.styleFrom(
-              backgroundColor: statusColor,
-              foregroundColor: isExpired ? Colors.white : Colors.black,
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-              minimumSize: Size.zero,
-              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+            const SizedBox(width: 6),
+            ElevatedButton(
+              onPressed: () => _showProUpgradeSheet(context),
+              style: ElevatedButton.styleFrom(
+                backgroundColor: statusColor,
+                foregroundColor: Colors.black,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                minimumSize: Size.zero,
+                tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isExpired
+                        ? (isArabic ? 'تجديد الآن' : 'Renew Now')
+                        : (isArabic ? 'عداد / ترقية' : 'Timer / Upgrade'),
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                  ),
+                  const SizedBox(width: 4),
+                  const Icon(LucideIcons.arrowUpRight, size: 14),
+                ],
+              ),
             ),
-            child: Row(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                Text(
-                  isExpired
-                      ? (isArabic ? 'تجديد الآن' : 'Renew Now')
-                      : (isArabic ? 'ترقية / تغيير' : 'Upgrade'),
-                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
-                ),
-                const SizedBox(width: 4),
-                const Icon(LucideIcons.arrowUpRight, size: 14),
-              ],
-            ),
-          ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -336,92 +368,137 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  /// 📊 كارت الأرباح الكبير المصلح والنظيف (Clean Hero Card)
   Widget _buildStatsGrid(bool isArabic) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    double grossRev = 0;
+    final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
 
-    for (var b in bookingProvider.userBookings) {
-      if (b.status != BookingStatus.cancelled) {
-        grossRev += b.totalPrice;
+    double totalRev = 0;
+    int totalHours = 0;
+    int completedBookingsCount = 0;
+
+    final now = DateTime.now();
+
+    for (var b in bookings) {
+      final bool isEnded = b.status == BookingStatus.completed || b.endTime.isBefore(now);
+      if (isEnded) {
+        totalRev += b.totalPrice;
+        final diff = b.endTime.difference(b.startTime).inHours;
+        totalHours += (diff == 0 ? 1 : diff); // الحد الأدنى ساعة
+        completedBookingsCount++;
       }
     }
 
-    final double netRev = grossRev; // 100% of gross stadium revenue goes to owner since fees are collected from player
-
-    final bool isZeroRevenue = grossRev == 0;
+    final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
     return Container(
-      padding: const EdgeInsets.all(16),
+      padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: isZeroRevenue
-            ? null
-            : const LinearGradient(colors: [VSPColors.accent, VSPColors.cardDarkGreen]),
-        color: isZeroRevenue ? VSPColors.surface : null,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: isZeroRevenue ? Border.all(color: VSPColors.divider) : null,
+        gradient: const LinearGradient(
+          colors: [VSPColors.accent, VSPColors.cardDarkGreen],
+          begin: Alignment.topLeft,
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        boxShadow: [
+          BoxShadow(
+            color: VSPColors.accent.withValues(alpha: 0.15),
+            blurRadius: 16,
+            offset: const Offset(0, 6),
+          ),
+        ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // الهيدر + شارة 0% عمولة
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                isArabic ? 'إجمالي تحصيلات الملعب' : 'Total Revenue',
-                style: TextStyle(
-                  color: isZeroRevenue ? VSPColors.textSecondary : Colors.white,
+                isArabic ? 'إجمالي أرباح الملعب' : 'Total Pitch Revenue',
+                style: const TextStyle(
+                  color: Colors.white70,
                   fontWeight: FontWeight.bold,
                   fontSize: 13,
                 ),
               ),
-              Icon(
-                LucideIcons.wallet,
-                color: isZeroRevenue ? VSPColors.textSecondary : Colors.black87,
-                size: 20,
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: Colors.black.withValues(alpha: 0.25),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white24, width: 0.5),
+                ),
+                child: Text(
+                  isArabic ? '0% عمولة ⚡' : '0% Commission ⚡',
+                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
+                ),
               ),
             ],
           ),
-          const SizedBox(height: 4),
+          const SizedBox(height: 10),
+          
+          // الرقم الرئيسي الكبير النظيف
           Text(
-            '${grossRev.toInt()} ج.م',
-            style: TextStyle(
-              color: isZeroRevenue ? Colors.white70 : Colors.white,
-              fontSize: 26,
+            '${totalRev.toInt()} $currencySymbol',
+            style: const TextStyle(
+              color: Colors.white,
+              fontSize: 34,
               fontWeight: FontWeight.w900,
+              letterSpacing: -0.5,
             ),
           ),
-          const Divider(color: Colors.white24, height: 16),
+          
+          const SizedBox(height: 16),
+          const Divider(color: Colors.white24, height: 1),
+          const SizedBox(height: 14),
+
+          // الإحصائيات السريعة النظيفة (الحجوزات والساعات)
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    isArabic ? 'صافي مستحقات المالك (100%)' : 'Net Owner Revenue',
-                    style: TextStyle(
-                      color: isZeroRevenue ? VSPColors.textSecondary : Colors.white70,
-                      fontSize: 11,
-                    ),
-                  ),
-                  Text(
-                    '${netRev.toInt()} ج.م',
-                    style: TextStyle(
-                      color: isZeroRevenue ? Colors.white : Colors.white,
-                      fontWeight: FontWeight.w900,
-                      fontSize: 14,
-                    ),
-                  ),
-                ],
-              ),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8.0),
-                  child: Text(
-                    isArabic ? '* تحصيل المالك 100% بدون أي اقتطاعات أو عمولات' : '* 100% Gross revenue kept by pitch owner',
-                    textAlign: TextAlign.end,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9),
-                  ),
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.calendarCheck, color: Colors.white70, size: 16),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'الحجوزات' : 'Bookings',
+                          style: const TextStyle(color: Colors.white60, fontSize: 10),
+                        ),
+                        Text(
+                          '$completedBookingsCount ${isArabic ? "حجز مكتمل" : "Completed"}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              Container(width: 1, height: 24, color: Colors.white24),
+              const SizedBox(width: 16),
+              Expanded(
+                child: Row(
+                  children: [
+                    const Icon(LucideIcons.clock, color: Colors.white70, size: 16),
+                    const SizedBox(width: 8),
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'ساعات التشغيل' : 'Hours Booked',
+                          style: const TextStyle(color: Colors.white60, fontSize: 10),
+                        ),
+                        Text(
+                          '$totalHours ${isArabic ? "ساعة" : "Hours"}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ],
                 ),
               ),
             ],
@@ -431,73 +508,74 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  /// 💡 كروت اللمحات المصلحة بحجم عريض وبدون قص (_buildInsightBadges)
   Widget _buildInsightBadges(bool isProOwner, bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isArabic ? 'لمحات ذكية وأدوات نمو' : 'Smart Insights',
+          isArabic ? 'لمحات ذكية وأدوات تسويق' : 'Smart Marketing Insights',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
         ),
-        const SizedBox(height: 8),
-        Row(
-          children: [
-            Expanded(
-              child: _buildSingleInsightBadge(
-                title: isArabic ? 'أوقات الحجز' : 'Booking Hours',
-                subtitle: isArabic ? 'توزيع الساعات والأيام' : 'Hourly & Daily distribution',
-                icon: LucideIcons.clock,
-                iconColor: VSPColors.accent,
-                isPro: isProOwner,
-                onTap: () => _showProUpgradeSheet(context),
-              ),
-            ),
-            const SizedBox(width: 10),
-            Expanded(
-              child: _buildSingleInsightBadge(
-                title: isArabic ? 'مصدر الحجز' : 'Booking Source',
-                subtitle: isArabic ? 'مباشر vs التحديات' : 'Direct vs Challenge source',
-                icon: LucideIcons.barChart2,
-                iconColor: Colors.blueAccent,
-                isPro: isProOwner,
-                onTap: () => _showProUpgradeSheet(context),
-              ),
-            ),
-          ],
+        const SizedBox(height: 12),
+        
+        // كارت 1: أوقات الحجز (Full Width)
+        _buildFullWidthInsightCard(
+          title: isArabic ? 'تحليل أوقات الذروة والساعات' : 'Peak Hours & Slots Analytics',
+          subtitle: isArabic ? 'معرفة أكثر الساعات والأيام طلباً لحجز ملعبك' : 'Discover the most requested hours and days',
+          icon: LucideIcons.clock,
+          iconColor: VSPColors.accent,
+          isPro: isProOwner,
+          onTap: () => _showProUpgradeSheet(context),
+          isArabic: isArabic,
+        ),
+        
+        const SizedBox(height: 10),
+
+        // كارت 2: مصدر الحجز (Full Width)
+        _buildFullWidthInsightCard(
+          title: isArabic ? 'تقرير مصادر الحجوزات' : 'Booking Source Report',
+          subtitle: isArabic ? 'نسبة الحجز المباشر مقابل مباريات التحدي بين الفرق' : 'Direct bookings ratio vs Team challenge matches',
+          icon: LucideIcons.barChart3,
+          iconColor: Colors.blueAccent,
+          isPro: isProOwner,
+          onTap: () => _showProUpgradeSheet(context),
+          isArabic: isArabic,
         ),
       ],
     );
   }
 
-  Widget _buildSingleInsightBadge({
+  Widget _buildFullWidthInsightCard({
     required String title,
     required String subtitle,
     required IconData icon,
     required Color iconColor,
     required bool isPro,
     required VoidCallback onTap,
+    required bool isArabic,
   }) {
     return InkWell(
       onTap: onTap,
-      borderRadius: BorderRadius.circular(VSPRadius.md),
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
       child: Container(
-        padding: const EdgeInsets.all(12),
+        padding: const EdgeInsets.all(14),
         decoration: BoxDecoration(
           color: VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
           border: Border.all(color: VSPColors.divider),
         ),
         child: Row(
           children: [
             Container(
-              padding: const EdgeInsets.all(8),
+              padding: const EdgeInsets.all(10),
               decoration: BoxDecoration(
                 color: iconColor.withValues(alpha: 0.12),
                 shape: BoxShape.circle,
               ),
-              child: Icon(icon, color: iconColor, size: 16),
+              child: Icon(icon, color: iconColor, size: 20),
             ),
-            const SizedBox(width: 8),
+            const SizedBox(width: 12),
             Expanded(
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -507,34 +585,40 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       Expanded(
                         child: Text(
                           title,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
+                          maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
                       if (!isPro) ...[
+                        const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
                             color: Colors.amber.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
+                            border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
                           ),
                           child: const Text(
-                            'PRO',
+                            'PRO 👑',
                             style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ],
                   ),
-                  const SizedBox(height: 2),
+                  const SizedBox(height: 4),
                   Text(
                     subtitle,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.3),
+                    maxLines: 1,
                     overflow: TextOverflow.ellipsis,
                   ),
                 ],
               ),
             ),
+            const SizedBox(width: 8),
+            const Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 16),
           ],
         ),
       ),
@@ -543,13 +627,19 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
   Widget _buildBookedTodayList(bool isArabic) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    final bookings = bookingProvider.userBookings;
+    final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
+    final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
     if (bookings.isEmpty) {
       return Container(
         padding: const EdgeInsets.all(20),
         decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        child: Center(child: Text(isArabic ? 'لا توجد حجوزات مسجلة اليوم' : 'No bookings for today', style: const TextStyle(color: VSPColors.textSecondary))),
+        child: Center(
+          child: Text(
+            isArabic ? 'لا توجد حجوزات مسجلة اليوم' : 'No bookings for today', 
+            style: const TextStyle(color: VSPColors.textSecondary),
+          ),
+        ),
       );
     }
 
@@ -557,9 +647,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       children: bookings.take(3).map((b) => ListTile(
         title: Text(b.playerTeamName ?? 'Player', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
         subtitle: Text(b.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
-        trailing: Text('${b.totalPrice.toInt()} ج.م', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+        trailing: Text('${b.totalPrice.toInt()} $currencySymbol', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
       )).toList(),
     );
   }
 }
-

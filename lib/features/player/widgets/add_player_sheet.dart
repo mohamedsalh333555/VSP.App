@@ -227,6 +227,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   }
 
   Widget _buildInviteCard() {
+    final phone = _phoneController.text.trim();
     return Container(
       width: double.infinity,
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -243,45 +244,72 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 24),
               const SizedBox(width: 8),
               Text(
-                "دعوة صديقك عبر واتساب (Invite)",
+                "رقم غير مسجل في VSP",
                 style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
               ),
             ],
           ),
           const SizedBox(height: 8),
           Text(
-            "هذا الرقم غير مسجل في VSP حالياً. يمكنك دعوة صديقك مباشرة للتسجيل في التطبيق والانضمام لفريقك:",
+            "يمكنك إضافة هذا اللاعب كعضو مؤقت في فريقك فوراً، أو إرسال دعوة له على واتساب:",
             style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
           ),
           const SizedBox(height: 16),
-          SizedBox(
-            width: double.infinity,
-            height: 48,
-            child: ElevatedButton.icon(
-              onPressed: () async {
-                const message = 'حمل تطبيق VSP الرياضي وادخل برقمك عشان أضيفك في تشكيلة فريقي ونبدأ نلعب مباريات! ⚽🏆 حمل التطبيق من هنا: https://vsp.app';
-                final encoded = Uri.encodeComponent(message);
-                final whatsappUrl = Uri.parse('https://wa.me/?text=$encoded');
-                try {
-                  if (await canLaunchUrl(whatsappUrl)) {
-                    await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-                  }
-                } catch (e) {
-                  debugPrint('Error launching WhatsApp: $e');
-                }
-              },
-              style: ElevatedButton.styleFrom(
-                backgroundColor: const Color(0xFF25D366),
-                foregroundColor: Colors.white,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                elevation: 0,
+          Row(
+            children: [
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: PrimaryButton(
+                    text: 'إضافة لاعب مؤقت',
+                    onPressed: () {
+                      final guestUser = UserModel(
+                        uid: 'guest_${DateTime.now().millisecondsSinceEpoch}',
+                        email: 'guest_$phone@vsp.app',
+                        name: 'لاعب ($phone)',
+                        phone: phone,
+                        role: 'player',
+                        isRegistrationComplete: true,
+                      );
+                      widget.onPlayerAdded(guestUser);
+                      Navigator.pop(context);
+                    },
+                    height: 48,
+                  ),
+                ),
               ),
-              icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 20),
-              label: const Text(
-                'دعوة صديق عبر واتساب',
-                style: TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
+              const SizedBox(width: 8),
+              Expanded(
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton.icon(
+                    onPressed: () async {
+                      const message = 'حمل تطبيق VSP الرياضي وادخل برقمك عشان أضيفك في تشكيلة فريقي ونبدأ نلعب مباريات! ⚽🏆 حمل التطبيق من هنا: https://vsp.app';
+                      final encoded = Uri.encodeComponent(message);
+                      final whatsappUrl = Uri.parse('https://wa.me/?text=$encoded');
+                      try {
+                        if (await canLaunchUrl(whatsappUrl)) {
+                          await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
+                        }
+                      } catch (e) {
+                        debugPrint('Error launching WhatsApp: $e');
+                      }
+                    },
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF25D366),
+                      foregroundColor: Colors.white,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                      elevation: 0,
+                    ),
+                    icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
+                    label: const Text(
+                      'واتساب',
+                      style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                  ),
+                ),
               ),
-            ),
+            ],
           ),
         ],
       ),

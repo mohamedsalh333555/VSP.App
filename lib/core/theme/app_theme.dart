@@ -1,19 +1,16 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../ui/tokens/vsp_tokens.dart';
 
-/// نظام التصميم الموحد لتطبيق VSP
 class AppTheme {
-  // الألوان والبيانات القديمة (سيتم حذفها تدريجياً لصالح Tokens)
-  static const Color darkBackground = VSPColors.background; // Pitch black background
+  static const Color darkBackground = VSPColors.background;
   static const Color neonGreen = VSPColors.accent;
-  static const Color cardBackground = VSPColors.surface;    // Pitch dark surface
+  static const Color cardBackground = VSPColors.surface;
   static const Color textPrimary = VSPColors.textPrimary;
   static const Color textSecondary = VSPColors.textSecondary;
   static const Color divider = VSPColors.divider;
 
-  // New color definitions based on the instruction's intent
   static const Color background = VSPColors.background;
   static const Color surface = VSPColors.surface;
   static const Color surfaceAlt = VSPColors.surfaceAlt;
@@ -26,10 +23,8 @@ class AppTheme {
     final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
-    // توحيد الخط الاحتياطي وتضمين اسم عائلة خط تجوال المستدعى ديناميكياً لضمان تطبيقه
     final List<String> fallbackFonts = [tajawalFamily ?? 'Tajawal', 'sans-serif'];
 
-    // Helper to apply fallback font family to all styles in TextTheme
     TextTheme applyFallback(TextTheme theme) {
       return theme.copyWith(
         displayLarge: theme.displayLarge?.copyWith(fontFamilyFallback: fallbackFonts),
@@ -53,27 +48,27 @@ class AppTheme {
     final TextTheme finalTextTheme = baseTextTheme.copyWith(
       displayLarge: baseTextTheme.displayLarge?.copyWith(
         fontSize: 40,
-        fontWeight: FontWeight.w900, // Punchy Black
+        fontWeight: FontWeight.w900,
         color: VSPColors.textPrimary,
         letterSpacing: 1.0,
         height: 1.2,
       ),
       displayMedium: baseTextTheme.displayMedium?.copyWith(
         fontSize: 32,
-        fontWeight: FontWeight.w900, // Punchy Black
+        fontWeight: FontWeight.w900,
         color: VSPColors.textPrimary,
         letterSpacing: 0.5,
         height: 1.2,
       ),
       displaySmall: baseTextTheme.displaySmall?.copyWith(
         fontSize: 24,
-        fontWeight: FontWeight.w900, // Punchy Black
+        fontWeight: FontWeight.w900,
         color: VSPColors.textPrimary,
         height: 1.2,
       ),
       titleLarge: baseTextTheme.titleLarge?.copyWith(
         fontSize: 20,
-        fontWeight: FontWeight.w700, // Bold
+        fontWeight: FontWeight.w700,
         color: VSPColors.textPrimary,
         height: 1.2,
       ),
@@ -118,10 +113,27 @@ class AppTheme {
 
       textTheme: applyFallback(finalTextTheme),
 
+      // 🛑 FIX: إعدادات معتمة صلبة 100% للـ BottomSheet والـ Dialog لمنع تسريب خلفية البوب اب
+      bottomSheetTheme: const BottomSheetThemeData(
+        backgroundColor: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        modalBackgroundColor: VSPColors.surface,
+        elevation: 10,
+      ),
+
+      dialogTheme: DialogThemeData(
+        backgroundColor: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        elevation: 10,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+        ),
+      ),
+
       appBarTheme: const AppBarTheme(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        scrolledUnderElevation: 0, // ✅ منع تغيير لون الـ AppBar عند السكرول في كل الشاشات
+        scrolledUnderElevation: 0,
         iconTheme: IconThemeData(color: VSPColors.textPrimary),
         systemOverlayStyle: SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
@@ -150,12 +162,11 @@ class AppTheme {
           backgroundColor: VSPColors.accent,
           foregroundColor: Colors.black,
           elevation: 0,
-          shape: const StadiumBorder(), // Pill-shaped buttons
+          shape: const StadiumBorder(),
           textStyle: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
             fontFamily: GoogleFonts.poppins().fontFamily,
-            // دمج خط تجوال كخط احتياطي لأزرار النظام في حال عرض نصوص عربية
             fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
           ),
         ),

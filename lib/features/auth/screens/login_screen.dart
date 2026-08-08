@@ -26,6 +26,14 @@ class _LoginScreenState extends State<LoginScreen> {
   final _emailController = TextEditingController();
   final _passwordController = TextEditingController();
   bool _isLoading = false;
+  bool _obscurePassword = true;
+
+  @override
+  void initState() {
+    super.initState();
+    _emailController.text = 'owner_test@vsp.com';
+    _passwordController.text = '12345678';
+  }
 
   @override
   void dispose() {
@@ -290,8 +298,20 @@ class _LoginScreenState extends State<LoginScreen> {
                     CustomTextField(
                       controller: _passwordController,
                       hintText: AppLocalizations.of(context)!.password,
-                      obscureText: true,
+                      obscureText: _obscurePassword,
                       prefixIcon: LucideIcons.lock,
+                      suffixIcon: IconButton(
+                        icon: Icon(
+                          _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
+                          color: VSPColors.textSecondary,
+                          size: 20,
+                        ),
+                        onPressed: () {
+                          setState(() {
+                            _obscurePassword = !_obscurePassword;
+                          });
+                        },
+                      ),
                     ),
                     
                     const SizedBox(height: 12),

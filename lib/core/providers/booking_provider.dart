@@ -183,16 +183,35 @@ class BookingProvider with ChangeNotifier {
   }
 
   /// Load owner's bookings (for stadium owners)
-  void loadOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
+  Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds}) async {
     _repository.autoExpirePendingChallenges();
     _repository.autoReconcileSingleEntryResults();
     _repository.autoNudgePostMatchResults();
+
+    // ⚡ Direct REST API fetch to guarantee instant data load even if WebSocket stream is silent
+    try {
+      if (_repository is SupabaseBookingRepository) {
+        final directBookings = await (_repository as SupabaseBookingRepository).fetchOwnerBookingsDirectly(ownerId);
+        if (directBookings.isNotEmpty) {
+          _userBookings = directBookings;
+          notifyListeners();
+        }
+      }
+    } catch (_) {}
 
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
         .getOwnerBookings(ownerId, stadiumIds: stadiumIds)
         .listen(
           (bookings) {
+            // 🛡️ PRESERVE LOCAL MANUAL BOOKINGS: Keep locally created manual slots if not yet returned by stream
+            final manualBookings = _userBookings.where((b) => b.paymentTransactionId?.startsWith('MANUAL') == true && b.status != BookingStatus.cancelled).toList();
+            for (final mb in manualBookings) {
+              if (!bookings.any((b) => b.id == mb.id || (b.startTime.isAtSameMomentAs(mb.startTime) && b.stadiumId == mb.stadiumId))) {
+                bookings.add(mb);
+              }
+            }
+
             _userBookings = bookings;
             final now = DateTime.now();
             _upcomingBookings = bookings
@@ -233,12 +252,15 @@ class BookingProvider with ChangeNotifier {
         orElse: () => null,
       );
 
-      if (booking != null && DateTime.now().isAfter(booking.startTime.subtract(const Duration(hours: 2)))) {
-        _errorMessage =
-            "لا يمكن إلغاء الحجز قبل بدء المباراة بأقل من ساعتين.";
-        _cancellingIds.remove(bookingId);
-        notifyListeners();
-        return false;
+      final now = DateTime.now();
+      if (booking != null) {
+        // Rule: Prohibit cancelling any booking that has already started!
+        if (now.isAfter(booking.startTime) || now.isAtSameMomentAs(booking.startTime)) {
+          _errorMessage = "عذراً، لا يمكن إلغاء الحجز بعد انطلاق موعده ⚠️";
+          _cancellingIds.remove(bookingId);
+          notifyListeners();
+          return false;
+        }
       }
 
       final success = await _repository.cancelBooking(bookingId);

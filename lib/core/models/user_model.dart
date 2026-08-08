@@ -66,11 +66,15 @@ class UserModel {
   // 💰 SUBSCRIPTION COMPUTED GETTERS
   // ============================================================
 
+  /// تاريخ نهاية الفترة التجريبية الفعلي (مع افتراض 90 يوماً من الإنشاء إذا كانت null)
+  DateTime? get effectiveTrialEndsAt =>
+      trialEndsAt ?? (createdAt != null ? createdAt!.add(const Duration(days: 90)) : DateTime.now().add(const Duration(days: 90)));
+
   /// هل المالك في فترة تجريبية نشطة؟
   bool get isInActiveTrial =>
       subscriptionPlan == 'free_trial' &&
-      trialEndsAt != null &&
-      DateTime.now().isBefore(trialEndsAt!);
+      effectiveTrialEndsAt != null &&
+      DateTime.now().isBefore(effectiveTrialEndsAt!);
 
   /// هل الاشتراك ساري (تجريبي أو مدفوع)؟
   bool get hasActiveSubscription =>
@@ -106,7 +110,7 @@ class UserModel {
     if (isProPlan) return 'Pro';
     if (isBasicOrHigher) return 'Basic';
     if (isInActiveTrial) {
-      final remaining = trialEndsAt!.difference(DateTime.now()).inDays;
+      final remaining = effectiveTrialEndsAt!.difference(DateTime.now()).inDays;
       return 'تجريبي ($remaining يوم متبقي)';
     }
     return 'منتهي';

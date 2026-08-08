@@ -13,7 +13,6 @@ class ChatRepository {
         .stream(primaryKey: ['id'])
         .eq('booking_id', bookingId)
         .map((list) {
-          // Map and sort descending (newest first) to match ListView.builder(reverse: true)
           final messages = list
               .map((data) => ChatMessage.fromJson(data, data['id'].toString()))
               .toList();
@@ -44,7 +43,6 @@ class ChatRepository {
       if (bookingResponse != null) {
         final List<dynamic> joinedIds = bookingResponse['joined_user_ids'] ?? [];
 
-        // Atomic update via Supabase RPC fallback or retry
         try {
           await _supabase.rpc('increment_chat_unread_count', params: {
             'p_booking_id': bookingId,
@@ -52,7 +50,6 @@ class ChatRepository {
             'p_last_message': message.text,
           });
         } catch (_) {
-          // Fallback to safe optimistic map update
           final Map<String, dynamic> unreadCounts = Map<String, dynamic>.from(
             bookingResponse['unread_counts'] ?? {}
           );
@@ -70,7 +67,6 @@ class ChatRepository {
           }).eq('id', bookingId);
         }
 
-        // 3. Send notifications to other participants
         final List<String> otherParticipants = joinedIds
             .map((uid) => uid.toString())
             .where((uid) => uid != message.senderId)
@@ -113,13 +109,13 @@ class ChatRepository {
     }
   }
 
-  /// Get or create a support chat thread for an owner
+  /// 🛠️ FIX: Get or create a support chat thread using valid UUID and RLS-compliant fields
   Future<Map<String, dynamic>> getOrCreateSupportChat(String ownerId, bool isArabic) async {
-    final chatId = 'support_chat_$ownerId';
     final existing = await _supabase
         .from('bookings')
         .select()
-        .eq('id', chatId)
+        .eq('stadium_id', 'support_chat')
+        .eq('owner_id', ownerId)
         .maybeSingle();
 
     if (existing != null) {
@@ -127,7 +123,6 @@ class ChatRepository {
     }
 
     final Map<String, dynamic> supportMap = {
-      'id': chatId,
       'stadium_id': 'support_chat',
       'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
       'stadium_image_url': '',
@@ -136,7 +131,7 @@ class ChatRepository {
       'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
       'booking_type': 'personal',
       'status': 'confirmed',
-      'created_by_user_id': 'vsp_support_admin',
+      'created_by_user_id': ownerId, // 🛑 FIX: Must match authenticated ownerId to pass RLS and Foreign Key
       'created_at': DateTime.now().toUtc().toIso8601String(),
       'updated_at': DateTime.now().toUtc().toIso8601String(),
       'joined_user_ids': [ownerId, 'vsp_support_admin'],
@@ -148,19 +143,17 @@ class ChatRepository {
       'payment_status': 'paid',
     };
 
-    await _supabase.from('bookings').insert(supportMap);
-    return supportMap;
+    final response = await _supabase.from('bookings').insert(supportMap).select().single();
+    return response;
   }
 
-  /// Get or create a direct chat thread between two users
+  /// 🛠️ FIX: Get or create a direct chat thread using valid UUID and RLS-compliant fields
   Future<Map<String, dynamic>> getOrCreateDirectChat(String currentUserId, String otherUserId, bool isArabic) async {
-    final sortedIds = [currentUserId, otherUserId]..sort();
-    final chatId = 'chat_${sortedIds[0]}_${sortedIds[1]}';
-
     final existing = await _supabase
         .from('bookings')
         .select()
-        .eq('id', chatId)
+        .eq('stadium_id', 'chat_thread')
+        .contains('joined_user_ids', [currentUserId, otherUserId])
         .maybeSingle();
 
     if (existing != null) {
@@ -168,7 +161,6 @@ class ChatRepository {
     }
 
     final Map<String, dynamic> chatMap = {
-      'id': chatId,
       'stadium_id': 'chat_thread',
       'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
       'stadium_image_url': '',
@@ -177,7 +169,7 @@ class ChatRepository {
       'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
       'booking_type': 'personal',
       'status': 'confirmed',
-      'created_by_user_id': currentUserId,
+      'created_by_user_id': currentUserId, // 🛑 FIX: Authenticated user
       'created_at': DateTime.now().toUtc().toIso8601String(),
       'updated_at': DateTime.now().toUtc().toIso8601String(),
       'joined_user_ids': [currentUserId, otherUserId],
@@ -189,8 +181,8 @@ class ChatRepository {
       'payment_status': 'paid',
     };
 
-    await _supabase.from('bookings').insert(chatMap);
-    return chatMap;
+    final response = await _supabase.from('bookings').insert(chatMap).select().single();
+    return response;
   }
 
   /// Stream chats from bookings table
@@ -202,4 +194,3 @@ class ChatRepository {
         .map((list) => list);
   }
 }
-
