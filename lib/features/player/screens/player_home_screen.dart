@@ -3,12 +3,13 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
-import 'package:intl/intl.dart';
 import 'package:flutter/services.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 
+import '../../../core/utils/app_date_formatter.dart';
+import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/repositories/match_repository.dart';
@@ -70,7 +71,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           final success = await auth.updateUserLocation();
           
           if (success) {
-            final resolvedGov = auth.userModel?.governorate ?? 'Cairo';
+            final resolvedGov = auth.userModel?.governorate ?? 'القاهرة';
             stadiumProvider.applyGovernorateFilter(resolvedGov);
           } else {
             // إذا فشل الـ GPS أو رفض المستخدم الإذن، نفتح له نافذة الاختيار اليدوي كخيار بديل
@@ -305,7 +306,7 @@ class ChampionshipCard extends StatelessWidget {
               ),
               IconButton(
                 icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), 
-                onPressed: () => SharingService.shareChampionship(id: championship.id, name: championship.name, date: DateFormat('MMM d').format(championship.startDate))
+                onPressed: () => SharingService.shareChampionshipObject(context: context, championship: championship),
               ),
             ],
           ),
@@ -316,7 +317,11 @@ class ChampionshipCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                _buildCompactInfo(LucideIcons.calendar, DateFormat('MMM d').format(championship.startDate)),
+                Builder(builder: (context) {
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                  final dateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
+                  return _buildCompactInfo(LucideIcons.calendar, dateStr);
+                }),
                 _buildDivider(),
                 _buildCompactInfo(LucideIcons.trophy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
                 _buildDivider(),
@@ -358,38 +363,43 @@ class ChampionshipCard extends StatelessWidget {
                         ),
                       ],
                     ),
-                    Text(
-                      AppLocalizations.of(context)!.teamsJoined(championship.joinedTeams.length, championship.maxTeams),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                      style: TextStyle(
-                        color: VSPColors.textSecondary.withValues(alpha: 0.6),
-                        fontSize: 10,
-                        fontWeight: FontWeight.w500,
-                      ),
-                    ),
+                    if (championship.status == 'open' && !championship.isFull && championship.startDate.isAfter(DateTime.now())) ...[
+                      const SizedBox(height: 4),
+                      VSPCountdownTimer(targetDate: championship.startDate, isCompact: true),
+                    ],
                   ],
                 ),
               ),
               const SizedBox(width: 12),
               GestureDetector(
                 onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChampionshipDetailsScreen(championship: championship))),
-                child: Container(
-                  height: 44.0, 
-                  padding: const EdgeInsets.symmetric(horizontal: 16),
-                  decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(12)),
-                  child: Center(
-                    child: Text(
-                      AppLocalizations.of(context)!.join,
-                      style: const TextStyle(
-                        color: Colors.black,
-                        fontWeight: FontWeight.w900,
-                        fontSize: 14,
-                        letterSpacing: 1.0,
+                child: Builder(builder: (context) {
+                  final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+                  return Container(
+                    height: 44.0, 
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: isFull ? VSPColors.surfaceAlt : VSPColors.accent, 
+                      borderRadius: BorderRadius.circular(12),
+                      border: isFull ? Border.all(color: VSPColors.divider) : null,
+                    ),
+                    child: Center(
+                      child: Text(
+                        isFull 
+                          ? (isArabic ? 'مكتمل' : 'Full')
+                          : AppLocalizations.of(context)!.join,
+                        style: TextStyle(
+                          color: isFull ? VSPColors.textSecondary : Colors.black,
+                          fontWeight: FontWeight.w900,
+                          fontSize: 14,
+                          letterSpacing: 1.0,
+                        ),
                       ),
                     ),
-                  ),
-                ),
+                  );
+                }),
               ),
             ],
           ),

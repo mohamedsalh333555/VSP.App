@@ -290,3 +290,8 @@ BEGIN
         END IF;
     END LOOP;
 END $$;
+
+-- ⚽ Ensure goal_details column exists on tournament_matches table
+ALTER TABLE public.tournament_matches 
+ADD COLUMN IF NOT EXISTS goal_details jsonb DEFAULT '[]'::jsonb;
+

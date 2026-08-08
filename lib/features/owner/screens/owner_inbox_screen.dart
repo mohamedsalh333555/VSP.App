@@ -13,6 +13,7 @@ import '../../../data/models.dart';
 import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/services/support_service.dart';
 
 class OwnerInboxScreen extends StatefulWidget {
   const OwnerInboxScreen({super.key});
@@ -24,45 +25,17 @@ class OwnerInboxScreen extends StatefulWidget {
 class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
   final ChatRepository _chatRepository = ChatRepository();
 
-  Future<void> _openSupportChat(BuildContext context, String ownerId) async {
-    final scaffoldMessenger = ScaffoldMessenger.of(context);
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    
-    // Show loading dialog
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator(color: VSPColors.accent)),
-    );
-
-    try {
-      final chatData = await _chatRepository.getOrCreateSupportChat(ownerId, isArabic);
-      final chatId = chatData['id'].toString();
-      final booking = Booking.fromFirestore(chatData, chatId);
-
-      if (context.mounted) {
-        // Close loading dialog
-        Navigator.pop(context);
-        // Open ChatScreen
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        Navigator.pop(context);
-        scaffoldMessenger.showSnackBar(
-          SnackBar(content: Text(isArabic ? 'حدث خطأ أثناء الاتصال بالدعم.' : 'Error connecting to support.')),
-        );
-      }
-    }
+  void _openSupportChat(BuildContext context) {
+    SupportService().openSupport(context);
   }
 
   Future<void> _startNewChat(BuildContext context, String currentUserId) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final userRole = auth.userModel?.role ?? auth.userType ?? 'owner';
+
     final selectedUser = await showSearch<UserModel?>(
       context: context,
-      delegate: UserSearchDelegate(currentUserId: currentUserId),
+      delegate: UserSearchDelegate(currentUserId: currentUserId, currentUserRole: userRole),
     );
 
     if (selectedUser == null || !context.mounted) return;
@@ -88,11 +61,12 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         );
       }
     } catch (e) {
+      debugPrint('Error starting direct chat: $e');
       if (context.mounted) {
         Navigator.pop(context);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isArabic ? 'حدث خطأ أثناء فتح المحادثة.' : 'Error opening chat.')),
+          SnackBar(content: Text(isArabic ? 'حدث خطأ أثناء فتح المحادثة: $e' : 'Error opening chat: $e')),
         );
       }
     }
@@ -118,7 +92,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         actions: [
           IconButton(
             icon: Icon(LucideIcons.headset, color: VSPColors.accent),
-            onPressed: () => _openSupportChat(context, ownerId),
+            onPressed: () => _openSupportChat(context),
             tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
           ),
           IconButton(
@@ -170,7 +144,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                   ? 'ستظهر هنا المحادثات الواردة من اللاعبين بخصوص الحجوزات.' 
                   : 'Chats from players regarding bookings will appear here.',
               buttonText: isArabic ? 'تواصل مع الدعم الفني' : 'Contact Support',
-              onButtonPressed: () => _openSupportChat(context, ownerId),
+              onButtonPressed: () => _openSupportChat(context),
             );
           }
 
@@ -197,10 +171,10 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
               if (isSpecialChat) {
                 final otherUserId = booking.joinedUserIds.firstWhere(
                   (uid) => uid != ownerId,
-                  orElse: () => 'vsp_support_admin',
+                  orElse: () => '00000000-0000-0000-0000-000000000001',
                 );
 
-                if (otherUserId == 'vsp_support_admin') {
+                if (otherUserId == '00000000-0000-0000-0000-000000000001' || otherUserId == 'vsp_support_admin') {
                   return VSPFadeInItem(
                     index: index,
                     child: _buildChatRow(
@@ -351,7 +325,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
 class UserSearchDelegate extends SearchDelegate<UserModel?> {
   final String currentUserId;
-  UserSearchDelegate({required this.currentUserId});
+  final String currentUserRole; // 'owner' or 'player'
+
+  UserSearchDelegate({required this.currentUserId, required this.currentUserRole});
 
   @override
   ThemeData appBarTheme(BuildContext context) {
@@ -392,16 +368,16 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
 
   @override
   Widget buildResults(BuildContext context) {
-    return _buildSearchResults();
+    return _buildSearchResults(context);
   }
 
   @override
   Widget buildSuggestions(BuildContext context) {
-    return _buildSearchResults();
+    return _buildSearchResults(context);
   }
 
-  Widget _buildSearchResults() {
-    final isArabic = query.isNotEmpty && RegExp(r'[\u0600-\u06FF]').hasMatch(query);
+  Widget _buildSearchResults(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     
     return FutureBuilder<List<UserModel>>(
       future: _searchUsers(query),
@@ -411,23 +387,34 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
         }
 
         final users = snapshot.data ?? [];
-        if (users.isEmpty) {
+        // 🛡️ GUARANTEED BUSINESS RULE: Stadium Owners can ONLY see and chat with PLAYERS!
+        // Strictly filter out any account with role == 'owner' or hasStadium == true!
+        final filteredUsers = currentUserRole == 'owner'
+            ? users.where((u) => u.role == 'player' && !u.hasStadium && u.uid != currentUserId).toList()
+            : users.where((u) => u.uid != currentUserId).toList();
+
+        if (filteredUsers.isEmpty) {
           return Center(
             child: Text(
               query.isEmpty
-                  ? (isArabic ? 'ابحث بالاسم لبدء المحادثة...' : 'Search by name to start a chat...')
-                  : (isArabic ? 'لم يتم العثور على نتائج' : 'No users found'),
+                  ? (isArabic ? 'ابحث عن لاعبين لبدء المحادثة...' : 'Search for players to start a chat...')
+                  : (isArabic ? 'لم يتم العثور على لاعبين بهذا الاسم' : 'No players found'),
               style: const TextStyle(color: VSPColors.textSecondary),
             ),
           );
         }
 
         return ListView.builder(
-          itemCount: users.length,
+          itemCount: filteredUsers.length,
           itemBuilder: (context, index) {
-            final user = users[index];
+            final user = filteredUsers[index];
+            final roleLabel = user.isOwnerRole
+                ? (isArabic ? 'مالك ملعب' : 'Stadium Owner')
+                : (isArabic ? 'لاعب' : 'Player');
+
             return ListTile(
               leading: CircleAvatar(
+                backgroundColor: VSPColors.surfaceAlt,
                 backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty)
                     ? NetworkImage(user.profileImageUrl!)
                     : null,
@@ -435,8 +422,17 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
                     ? const Icon(Icons.person, color: VSPColors.accent)
                     : null,
               ),
-              title: Text(user.name ?? user.email, style: const TextStyle(color: VSPColors.textPrimary)),
-              subtitle: Text(user.role, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+              title: Text(
+                user.name ?? user.email,
+                style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+              ),
+              subtitle: Text(
+                roleLabel,
+                style: TextStyle(
+                  color: user.isOwnerRole ? VSPColors.accent : VSPColors.textSecondary,
+                  fontSize: 11,
+                ),
+              ),
               onTap: () {
                 close(context, user);
               },
@@ -451,12 +447,17 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
     try {
       final supabase = Supabase.instance.client;
       var dbQuery = supabase.from('users').select().neq('id', currentUserId);
-      
+
+      // 🛡️ Business Rule: Stadium Owners can ONLY search and see players in DB!
+      if (currentUserRole == 'owner') {
+        dbQuery = dbQuery.eq('role', 'player');
+      }
+
       if (query.isNotEmpty) {
         dbQuery = dbQuery.ilike('name', '%$query%');
       }
 
-      final response = await dbQuery.limit(20);
+      final response = await dbQuery.limit(50);
       return (response as List).map((data) => UserModel.fromFirestore(data)).toList();
     } catch (e) {
       debugPrint('Error searching users: $e');

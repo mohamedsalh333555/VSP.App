@@ -1,9 +1,9 @@
-import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import '../repositories/notification_repository.dart';
 import '../repositories/team_repository.dart';
+import '../utils/app_date_formatter.dart';
 import '../../data/models.dart';
 
 class TournamentRepository {
@@ -194,6 +194,7 @@ class TournamentRepository {
     List<String> selectedPlayerIds = const [],
     List<String> offlineGuestNames = const [],
     bool skipMemberCheck = false,
+    bool isPaid = false,
   }) async {
     try {
       final team = await TeamRepository().getTeam(teamId);
@@ -227,10 +228,17 @@ class TournamentRepository {
       }
 
       final updatedJoined = List<String>.from(champ.joinedTeams)..add(teamId);
+      final updatedPaid = List<String>.from(champ.paidTeams);
+      if (isPaid && !updatedPaid.contains(teamId)) {
+        updatedPaid.add(teamId);
+      }
 
       await _supabase
           .from('championships')
-          .update({'joined_teams': updatedJoined})
+          .update({
+            'joined_teams': updatedJoined,
+            'paid_teams': updatedPaid,
+          })
           .eq('id', championshipId);
 
       // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد
@@ -361,6 +369,15 @@ class TournamentRepository {
       final List<String> teamIds = List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
       int totalTeams = teamIds.length;
       if (totalTeams < 2) throw Exception('يجب وجود فريقين على الأقل لبدء البطولة.');
+
+      final String? rawStartDate = champDoc['start_date'] ?? champDoc['startDate'];
+      if (rawStartDate != null) {
+        final startDate = DateTime.parse(rawStartDate);
+        if (DateTime.now().isBefore(startDate)) {
+          final formattedDate = AppDateFormatter.formatFullDate(startDate, 'ar');
+          throw Exception('لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.');
+        }
+      }
 
       final int configuredMaxTeams = champDoc['max_teams'] ?? champDoc['maxTeams'] ?? 16;
       
@@ -586,6 +603,7 @@ class TournamentRepository {
     required int awayScore,
     String? winnerId,
     String? winnerName,
+    List<GoalItem> goalDetails = const [],
   }) async {
     try {
       final response = await _supabase
@@ -599,14 +617,27 @@ class TournamentRepository {
       final int matchIndex = response['match_index'] ?? response['matchIndex'] ?? 0;
       final String championshipId = response['championship_id'] ?? response['championshipId'] ?? '';
 
-      await _supabase
-          .from('tournament_matches')
-          .update({
-            'home_score': homeScore,
-            'away_score': awayScore,
-            'winner_id': winnerId,
-          })
-          .eq('id', matchId);
+      try {
+        await _supabase
+            .from('tournament_matches')
+            .update({
+              'home_score': homeScore,
+              'away_score': awayScore,
+              'winner_id': winnerId,
+              'goal_details': goalDetails.map((g) => g.toMap()).toList(),
+            })
+            .eq('id', matchId);
+      } catch (err) {
+        debugPrint('⚠️ goal_details update fallback (column may be missing in DB): $err');
+        await _supabase
+            .from('tournament_matches')
+            .update({
+              'home_score': homeScore,
+              'away_score': awayScore,
+              'winner_id': winnerId,
+            })
+            .eq('id', matchId);
+      }
 
       if (nextMatchId != null) {
         String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
@@ -823,12 +854,13 @@ class TournamentRepository {
     try {
       final homeRoster = await _supabase
           .from('championship_rosters')
-          .select('guest_names')
+          .select()
           .eq('championship_id', championshipId)
           .eq('team_id', homeTeamId)
           .maybeSingle();
-      if (homeRoster != null && homeRoster['guest_names'] != null) {
-        homePlayers = List<String>.from(homeRoster['guest_names']);
+      if (homeRoster != null) {
+        final raw = homeRoster['guest_names'] ?? homeRoster['player_names'] ?? [];
+        if (raw is List) homePlayers = List<String>.from(raw);
       }
     } catch (e) {
       debugPrint('Error fetching home roster: $e');
@@ -837,12 +869,13 @@ class TournamentRepository {
     try {
       final awayRoster = await _supabase
           .from('championship_rosters')
-          .select('guest_names')
+          .select()
           .eq('championship_id', championshipId)
           .eq('team_id', awayTeamId)
           .maybeSingle();
-      if (awayRoster != null && awayRoster['guest_names'] != null) {
-        awayPlayers = List<String>.from(awayRoster['guest_names']);
+      if (awayRoster != null) {
+        final raw = awayRoster['guest_names'] ?? awayRoster['player_names'] ?? [];
+        if (raw is List) awayPlayers = List<String>.from(raw);
       }
     } catch (e) {
       debugPrint('Error fetching away roster: $e');
@@ -889,6 +922,139 @@ class TournamentRepository {
     } catch (e) {
       debugPrint('Error auto-scheduling round matches: $e');
       return false;
+    }
+  }
+
+  /// 🧹 Clear/reset all scheduled times for matches in a specific round
+  Future<bool> clearRoundMatchSchedules({
+    required String championshipId,
+    required int roundIndex,
+    required List<TournamentMatch> matches,
+  }) async {
+    try {
+      if (matches.isEmpty) return false;
+      for (final match in matches) {
+        await _supabase.from('tournament_matches').update({
+          'scheduled_time': null,
+        }).eq('id', match.id);
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error clearing round match schedules: $e');
+      return false;
+    }
+  }
+
+  /// ⚽ Get top scorers for a championship aggregated from match goal details
+  Future<List<Map<String, dynamic>>> getTopScorersForChampionship(String championshipId) async {
+    try {
+      final response = await _supabase
+          .from('tournament_matches')
+          .select('goal_details, home_team_name, away_team_name')
+          .eq('championship_id', championshipId);
+
+      final Map<String, Map<String, dynamic>> scorerStats = {};
+
+      int totalOwnGoals = 0;
+
+      for (final matchData in (response as List)) {
+        final rawGoals = matchData['goal_details'] as List?;
+        if (rawGoals == null || rawGoals.isEmpty) continue;
+
+        final homeTeamName = matchData['home_team_name']?.toString().trim() ?? '';
+        final awayTeamName = matchData['away_team_name']?.toString().trim() ?? '';
+
+        for (final item in rawGoals) {
+          if (item is Map) {
+            final bool isOwnGoal = item['is_own_goal'] == true || item['isOwnGoal'] == true;
+            final playerName = item['player_name']?.toString().trim() ?? item['playerName']?.toString().trim() ?? '';
+            
+            // 🔄 Aggregate Own Goals under a dedicated category without naming any player
+            if (isOwnGoal || 
+                playerName.contains('عكسي') || 
+                playerName == 'لاعب مجهول' || 
+                playerName.contains('مجهول')) {
+              totalOwnGoals++;
+              continue;
+            }
+
+            if (playerName.isEmpty) continue;
+
+            String teamName = item['team_name']?.toString().trim() ?? item['teamName']?.toString().trim() ?? item['team']?.toString().trim() ?? '';
+            if (teamName.isEmpty || teamName == 'فريق غير محدد') {
+              teamName = homeTeamName.isNotEmpty ? homeTeamName : (awayTeamName.isNotEmpty ? awayTeamName : '');
+            }
+
+            final key = '$playerName@$teamName';
+            if (!scorerStats.containsKey(key)) {
+              scorerStats[key] = {
+                'name': playerName,
+                'team': teamName,
+                'goals': 0,
+                'isOwnGoalCategory': false,
+              };
+            }
+            scorerStats[key]!['goals'] = (scorerStats[key]!['goals'] as int) + 1;
+          }
+        }
+      }
+
+      final list = scorerStats.values.toList();
+      list.sort((a, b) => (b['goals'] as int).compareTo(a['goals'] as int));
+
+      if (totalOwnGoals > 0) {
+        list.add({
+          'name': 'أهداف عكسية',
+          'team': 'إجمالي الأهداف العكسية في البطولة',
+          'goals': totalOwnGoals,
+          'isOwnGoalCategory': true,
+        });
+      }
+
+      return list;
+    } catch (e) {
+      debugPrint('Error getting top scorers: $e');
+      return [];
+    }
+  }
+
+  /// 🧤 Get clean sheet teams/goalkeepers for a championship directly from database match scores
+  Future<List<Map<String, dynamic>>> getCleanSheetsForChampionship(String championshipId) async {
+    try {
+      final response = await _supabase
+          .from('tournament_matches')
+          .select('home_score, away_score, home_team_name, away_team_name, status')
+          .eq('championship_id', championshipId)
+          .eq('status', 'completed');
+
+      final Map<String, int> teamCleanSheets = {};
+
+      for (final matchData in (response as List)) {
+        final homeScore = matchData['home_score'] as int?;
+        final awayScore = matchData['away_score'] as int?;
+        final homeTeam = matchData['home_team_name']?.toString() ?? '';
+        final awayTeam = matchData['away_team_name']?.toString() ?? '';
+
+        if (homeScore != null && awayScore != null) {
+          if (awayScore == 0 && homeTeam.isNotEmpty) {
+            teamCleanSheets[homeTeam] = (teamCleanSheets[homeTeam] ?? 0) + 1;
+          }
+          if (homeScore == 0 && awayTeam.isNotEmpty) {
+            teamCleanSheets[awayTeam] = (teamCleanSheets[awayTeam] ?? 0) + 1;
+          }
+        }
+      }
+
+      final list = teamCleanSheets.entries.map((e) => {
+        'team': e.key,
+        'clean_sheets': e.value,
+      }).toList();
+
+      list.sort((a, b) => (b['clean_sheets'] as int).compareTo(a['clean_sheets'] as int));
+      return list;
+    } catch (e) {
+      debugPrint('Error getting clean sheets: $e');
+      return [];
     }
   }
 }

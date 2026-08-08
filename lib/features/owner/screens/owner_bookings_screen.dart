@@ -619,6 +619,26 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             ),
           ),
           
+          Builder(builder: (context) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            final double rawPrice = booking?.totalPrice ?? 0.0;
+            final double rawDeposit = booking?.depositPaid ?? 0.0;
+            final double cardPrice = rawPrice > 0 ? rawPrice : (rawDeposit > 0 ? rawDeposit : 0.0);
+
+            if (cardPrice <= 0) return const SizedBox.shrink();
+
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8),
+              child: Text(
+                '${cardPrice.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                style: const TextStyle(
+                  color: VSPColors.accent,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 13,
+                ),
+              ),
+            );
+          }),
           Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 14),
         ],
       ),
@@ -1016,7 +1036,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           throw Exception(isArabic ? "هذا الوقت متداخل مع حجز آخر نشط ⚠️" : "Time slot overlaps with another booking ⚠️");
         }
 
-        final totalPrice = stadium.pricePerHour * (_selectedMinutes / 60.0);
+        final double calculatedPrice = stadium.pricePerHour * (_selectedMinutes / 60.0);
+        final double totalPrice = calculatedPrice > 0 ? calculatedPrice : (collectedAmount > 0 ? collectedAmount : stadium.basePrice);
 
         final draft = BookingDraft(
           stadiumId: stadium.id,

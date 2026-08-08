@@ -79,8 +79,9 @@ class StadiumProvider with ChangeNotifier {
         debugPrint('Error getting GPS location: $e');
       }
 
-      if (userPosition != null) {
-        // Fetch pre-sorted list using StadiumRepository().fetchNearbyStadiums
+      // 🛡️ Governorate Filter Priority: If a specific governorate is selected by user,
+      // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
+      if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
         final limit = isRefresh ? 10 : _stadiums.length + 10;
         final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
           userPosition.latitude,

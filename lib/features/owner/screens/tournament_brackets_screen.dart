@@ -8,22 +8,37 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
-class TournamentBracketsScreen extends StatelessWidget {
+class TournamentBracketsScreen extends StatefulWidget {
   final Championship championship;
   final bool isOwner;
 
   const TournamentBracketsScreen({super.key, required this.championship, required this.isOwner});
 
-  // دالة لجلب كشف أسماء اللاعبين (أونلاين وأوفلاين) لكلا الفريقين عبر TournamentRepository
+  @override
+  State<TournamentBracketsScreen> createState() => _TournamentBracketsScreenState();
+}
+
+class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
+  int _refreshKey = 0;
+
   Future<Map<String, List<String>>> _fetchRosters(String homeTeamId, String awayTeamId) async {
-    return TournamentRepository().fetchRosters(championship.id, homeTeamId, awayTeamId);
+    return TournamentRepository().fetchRosters(widget.championship.id, homeTeamId, awayTeamId);
+  }
+
+  void _refreshMatches() {
+    if (mounted) {
+      setState(() {
+        _refreshKey++;
+      });
+    }
   }
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     return StreamBuilder<List<TournamentMatch>>(
-      stream: TournamentRepository().getTournamentMatches(championship.id),
+      key: ValueKey(_refreshKey),
+      stream: TournamentRepository().getTournamentMatches(widget.championship.id),
       builder: (context, snapshot) {
         if (!snapshot.hasData) {
           return const Scaffold(
@@ -84,7 +99,48 @@ class TournamentBracketsScreen extends StatelessWidget {
                 return ListView(
                   padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
                   children: [
-                    if (isOwner) ...[
+                    if (roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null) ...[
+                      Container(
+                        padding: const EdgeInsets.all(16),
+                        margin: const EdgeInsets.only(bottom: 16),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.18),
+                          borderRadius: BorderRadius.circular(VSPRadius.lg),
+                          border: Border.all(color: VSPColors.accent, width: 2),
+                          boxShadow: [
+                            BoxShadow(color: VSPColors.accent.withValues(alpha: 0.25), blurRadius: 12),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            const Icon(FontAwesomeIcons.trophy, color: VSPColors.accent, size: 28),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Column(
+                                crossAxisAlignment: CrossAxisAlignment.start,
+                                children: [
+                                  Text(
+                                    Localizations.localeOf(context).languageCode == 'ar'
+                                        ? '🏆 بطل البطولة النهائي!'
+                                        : '🏆 Final Tournament Champion!',
+                                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                                  ),
+                                  const SizedBox(height: 2),
+                                  Text(
+                                    roundMatches.first.winnerId == roundMatches.first.homeTeamId
+                                        ? (roundMatches.first.homeTeamName ?? 'Winner')
+                                        : (roundMatches.first.awayTeamName ?? 'Winner'),
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                                  ),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                    if (widget.isOwner) ...[
                       _buildAutoScheduleBanner(context, roundIdx, roundMatches, sortedRounds.length),
                       const SizedBox(height: 16),
                     ],
@@ -151,7 +207,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                       : l10n.notScheduled,
                   style: TextStyle(color: hasSchedule ? VSPColors.accent : VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
                 ),
-                if (isOwner)
+                if (widget.isOwner)
                   GestureDetector(
                     onTap: () async {
                       final time = await showTimePicker(context: context, initialTime: TimeOfDay.now());
@@ -161,6 +217,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                           matchId: match.id,
                           scheduledTime: DateTime(dt.year, dt.month, dt.day, time.hour, time.minute),
                         );
+                        _refreshMatches();
                       }
                     },
                     child: const Icon(FontAwesomeIcons.calendarCheck, color: Colors.white, size: 16),
@@ -177,7 +234,7 @@ class TournamentBracketsScreen extends StatelessWidget {
               style: TextStyle(color: match.winnerId != null ? VSPColors.accent : Colors.white54)
             ),
             // أيقونة التعديل تفتح الآن نافذة تسجيل النتيجة وعرض الكشوفات التفاعلية
-            trailing: isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
+            trailing: widget.isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
               ? IconButton(
                   icon: Icon(
                     FontAwesomeIcons.penToSquare, 
@@ -194,7 +251,7 @@ class TournamentBracketsScreen extends StatelessWidget {
                       VSPFeedback.showError(context, isAr ? 'لا يمكن إدخال النتيجة إلا بعد انتهاء وقت المباراة المجدول! ⚠️' : 'Cannot enter score before scheduled match time!');
                       return;
                     }
-                    // فتح شاشة تسجيل النتيجة التفاعلية
+                    // 🕒 واجهة تسجيل النتيجة المتقدمة وتسجيل الهدافين الأونلاين واليدويين
                     _showScoreInputDialog(context, match);
                   },
                 ) 
@@ -205,24 +262,29 @@ class TournamentBracketsScreen extends StatelessWidget {
     );
   }
 
-  // 🕒 واجهة تسجيل النتيجة المتقدمة للبطولة
+  // 🕒 واجهة تسجيل النتيجة المتقدمة وتسجيل الهدافين الأونلاين واليدويين
   void _showScoreInputDialog(BuildContext context, TournamentMatch match) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    List<GoalItem> goalDetails = List.from(match.goalDetails);
     
+    // 🛡️ Cache the Future ONCE so FutureBuilder doesn't re-trigger loading on every setModalState!
+    final Future<Map<String, List<String>>> rostersFuture = _fetchRosters(match.homeTeamId ?? '', match.awayTeamId ?? '');
+
+    // حساب الأهداف الأولية بناءً على الأهداف المسجلة أو نتيجة المباراة الحالية
+    int homeScore = match.homeScore ?? goalDetails.where((g) => g.teamId == match.homeTeamId).length;
+    int awayScore = match.awayScore ?? goalDetails.where((g) => g.teamId == match.awayTeamId).length;
+    String? selectedWinnerId = match.winnerId;
+    bool isSubmitting = false;
+
     showModalBottomSheet(
       context: context,
       isScrollControlled: true,
       useSafeArea: true,
       backgroundColor: Colors.transparent,
       builder: (sheetContext) {
-        int homeScore = 0;
-        int awayScore = 0;
-        String? selectedWinnerId; // لمعالجة التعادل في الكأس
-        bool isSubmitting = false;
-
         return Container(
           constraints: BoxConstraints(
-            maxHeight: MediaQuery.of(sheetContext).size.height * 0.88,
+            maxHeight: MediaQuery.of(sheetContext).size.height * 0.92,
           ),
           decoration: const BoxDecoration(
             color: VSPColors.background,
@@ -231,232 +293,302 @@ class TournamentBracketsScreen extends StatelessWidget {
               topRight: Radius.circular(VSPRadius.xl),
             ),
           ),
-          child: StatefulBuilder(
-            builder: (BuildContext context, StateSetter setModalState) {
-              final isCupAndTied = championship.type == 'Cup' && homeScore == awayScore;
-              final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
+          child: FutureBuilder<Map<String, List<String>>>(
+            future: rostersFuture,
+            builder: (context, rosterSnapshot) {
+              final homeRoster = rosterSnapshot.data?['home'] ?? [];
+              final awayRoster = rosterSnapshot.data?['away'] ?? [];
 
-              return Column(
-                children: [
-                  const SizedBox(height: 12),
-                  Container(
-                    width: 40, height: 4,
-                    decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
-                  ),
-                  const SizedBox(height: 20),
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 20),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(isArabic ? 'تسجيل نتيجة المباراة' : 'Submit Match Score', style: Theme.of(context).textTheme.displaySmall),
-                        IconButton(
-                          icon: Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
-                          onPressed: () => Navigator.pop(sheetContext),
+              return StatefulBuilder(
+                builder: (BuildContext context, StateSetter setModalState) {
+                  final isCupAndTied = widget.championship.type == 'Cup' && homeScore == awayScore;
+                  final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
+
+                  final homeGoals = goalDetails.where((g) => g.teamId == match.homeTeamId).toList();
+                  final awayGoals = goalDetails.where((g) => g.teamId == match.awayTeamId).toList();
+
+                  return Column(
+                    children: [
+                      const SizedBox(height: 12),
+                      Container(
+                        width: 40, height: 4,
+                        decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
+                      ),
+                      const SizedBox(height: 20),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 20),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Text(isArabic ? 'تسجيل نتيجة وهدافي المباراة ⚽' : 'Submit Score & Goal Scorers ⚽', style: Theme.of(context).textTheme.displaySmall),
+                            IconButton(
+                              icon: const Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
+                              onPressed: () => Navigator.pop(sheetContext),
+                            ),
+                          ],
                         ),
-                      ],
-                    ),
-                  ),
-                  const Divider(color: VSPColors.divider),
-                  
-                  Expanded(
-                    child: SingleChildScrollView(
-                      padding: const EdgeInsets.all(20),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          // 🏁 واجهة تسجيل الأهداف التفاعلية لكلا الفريقين
-                          Row(
+                      ),
+                      const Divider(color: VSPColors.divider),
+                      
+                      Expanded(
+                        child: SingleChildScrollView(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
-                              // الفريق الأول (المستضيف)
-                              Expanded(
-                                child: _buildScoreCounterColumn(
-                                  teamName: match.homeTeamName ?? 'Team A',
-                                  score: homeScore,
-                                  onIncrement: () => setModalState(() {
-                                    homeScore++;
-                                    selectedWinnerId = null;
-                                  }),
-                                  onDecrement: () => setModalState(() {
-                                    if (homeScore > 0) homeScore--;
-                                    selectedWinnerId = null;
-                                  }),
-                                ),
+                              // 🏁 واجهة تسجيل الأهداف التفاعلية لكلا الفريقين
+                              Row(
+                                children: [
+                                  // الفريق الأول (المستضيف)
+                                  Expanded(
+                                    child: _buildScoreCounterColumn(
+                                      teamName: match.homeTeamName ?? 'Team A',
+                                      score: homeScore,
+                                      onIncrement: () {
+                                        _openAddGoalModal(
+                                          context,
+                                          teamId: match.homeTeamId ?? 'home',
+                                          teamName: match.homeTeamName ?? 'Team A',
+                                          roster: homeRoster,
+                                          opposingRoster: awayRoster,
+                                          onGoalAdded: (goal) {
+                                            setModalState(() {
+                                              goalDetails.add(goal);
+                                              homeScore++;
+                                              selectedWinnerId = null;
+                                            });
+                                          },
+                                        );
+                                      },
+                                      onDecrement: () => setModalState(() {
+                                        if (homeScore > 0) {
+                                          homeScore--;
+                                          if (homeGoals.isNotEmpty) {
+                                            goalDetails.remove(homeGoals.last);
+                                          }
+                                          selectedWinnerId = null;
+                                        }
+                                      }),
+                                    ),
+                                  ),
+                                  const Text('VS', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 24)),
+                                  // الفريق الثاني (الضيف)
+                                  Expanded(
+                                    child: _buildScoreCounterColumn(
+                                      teamName: match.awayTeamName ?? 'Team B',
+                                      score: awayScore,
+                                      onIncrement: () {
+                                        _openAddGoalModal(
+                                          context,
+                                          teamId: match.awayTeamId ?? 'away',
+                                          teamName: match.awayTeamName ?? 'Team B',
+                                          roster: awayRoster,
+                                          opposingRoster: homeRoster,
+                                          onGoalAdded: (goal) {
+                                            setModalState(() {
+                                              goalDetails.add(goal);
+                                              awayScore++;
+                                              selectedWinnerId = null;
+                                            });
+                                          },
+                                        );
+                                      },
+                                      onDecrement: () => setModalState(() {
+                                        if (awayScore > 0) {
+                                          awayScore--;
+                                          if (awayGoals.isNotEmpty) {
+                                            goalDetails.remove(awayGoals.last);
+                                          }
+                                          selectedWinnerId = null;
+                                        }
+                                      }),
+                                    ),
+                                  ),
+                                ],
                               ),
-                              const Text('VS', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 24)),
-                              // الفريق الثاني (الضيف)
-                              Expanded(
-                                child: _buildScoreCounterColumn(
-                                  teamName: match.awayTeamName ?? 'Team B',
-                                  score: awayScore,
-                                  onIncrement: () => setModalState(() {
-                                    awayScore++;
-                                    selectedWinnerId = null;
-                                  }),
-                                  onDecrement: () => setModalState(() {
-                                    if (awayScore > 0) awayScore--;
-                                    selectedWinnerId = null;
-                                  }),
-                                ),
-                              ),
-                            ],
-                          ),
-                          const SizedBox(height: 24),
+                              const SizedBox(height: 16),
 
-                          // ⚔️ سيناريو التعادل في الكأس (ركلات الترجيح)
-                          if (isCupAndTied) ...[
-                            Container(
-                              padding: const EdgeInsets.all(12),
-                              decoration: BoxDecoration(
-                                color: VSPColors.warning.withValues(alpha: 0.1),
-                                borderRadius: BorderRadius.circular(VSPRadius.md),
-                                border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
-                              ),
-                              child: Column(
+                              // ⚽ قائمة هدافي المباراة المسجلين
+                              Row(
                                 crossAxisAlignment: CrossAxisAlignment.start,
                                 children: [
-                                  Text(
-                                    isArabic 
-                                        ? '⚠️ لا يسمح بالتعادل في مباريات خروج المغلوب' 
-                                        : '⚠️ Draws not allowed in knockout matches',
-                                    style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
+                                  // هدافو الفريق الأول
+                                  Expanded(
+                                    child: _buildGoalScorersList(
+                                      teamName: match.homeTeamName ?? 'Team A',
+                                      goals: homeGoals,
+                                      onRemoveGoal: (goal) {
+                                        setModalState(() {
+                                          goalDetails.remove(goal);
+                                          if (homeScore > 0) homeScore--;
+                                        });
+                                      },
+                                      isArabic: isArabic,
+                                    ),
                                   ),
-                                  const SizedBox(height: 4),
-                                  Text(
-                                    isArabic 
-                                        ? 'يرجى تحديد الفريق الفائز بركلات الترجيح لتصعيده:' 
-                                        : 'Please select the team that won on penalties to advance:',
-                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                  const SizedBox(width: 12),
+                                  // هدافو الفريق الثاني
+                                  Expanded(
+                                    child: _buildGoalScorersList(
+                                      teamName: match.awayTeamName ?? 'Team B',
+                                      goals: awayGoals,
+                                      onRemoveGoal: (goal) {
+                                        setModalState(() {
+                                          goalDetails.remove(goal);
+                                          if (awayScore > 0) awayScore--;
+                                        });
+                                      },
+                                      isArabic: isArabic,
+                                    ),
                                   ),
-                                  const SizedBox(height: 12),
-                                  Row(
+                                ],
+                              ),
+                              const SizedBox(height: 20),
+
+                              // ⚔️ سيناريو التعادل في الكأس (ركلات الترجيح)
+                              if (isCupAndTied) ...[
+                                Container(
+                                  padding: const EdgeInsets.all(12),
+                                  decoration: BoxDecoration(
+                                    color: VSPColors.warning.withValues(alpha: 0.1),
+                                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                                    border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                                  ),
+                                  child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
                                     children: [
-                                      Expanded(
-                                        child: _buildPenaltyWinnerButton(
-                                          label: match.homeTeamName ?? 'Home',
-                                          isSelected: selectedWinnerId == match.homeTeamId,
-                                          onTap: () => setModalState(() => selectedWinnerId = match.homeTeamId),
-                                        ),
+                                      Text(
+                                        isArabic 
+                                            ? '⚠️ لا يسمح بالتعادل في مباريات خروج المغلوب' 
+                                            : '⚠️ Draws not allowed in knockout matches',
+                                        style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
-                                      const SizedBox(width: 8),
-                                      Expanded(
-                                        child: _buildPenaltyWinnerButton(
-                                          label: match.awayTeamName ?? 'Away',
-                                          isSelected: selectedWinnerId == match.awayTeamId,
-                                          onTap: () => setModalState(() => selectedWinnerId = match.awayTeamId),
-                                        ),
+                                      const SizedBox(height: 4),
+                                      Text(
+                                        isArabic 
+                                            ? 'يرجى تحديد الفريق الفائز بركلات الترجيح لتصعيده:' 
+                                            : 'Please select the team that won on penalties to advance:',
+                                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildPenaltyWinnerButton(
+                                              label: match.homeTeamName ?? 'Home',
+                                              isSelected: selectedWinnerId == match.homeTeamId,
+                                              onTap: () => setModalState(() => selectedWinnerId = match.homeTeamId),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: _buildPenaltyWinnerButton(
+                                              label: match.awayTeamName ?? 'Away',
+                                              isSelected: selectedWinnerId == match.awayTeamId,
+                                              onTap: () => setModalState(() => selectedWinnerId = match.awayTeamId),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                     ],
                                   ),
-                                ],
+                                ),
+                                const SizedBox(height: 24),
+                              ],
+
+                              const Divider(color: VSPColors.divider),
+                              const SizedBox(height: 12),
+
+                              // 👥 جلب وعرض كشف أسماء اللاعبين (Roster Viewer)
+                              Text(
+                                isArabic ? '📋 كشف أسماء اللاعبين المشاركين بالبطولة:' : '📋 Championship Team Rosters:',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                              ),
+                              const SizedBox(height: 12),
+                              if (rosterSnapshot.connectionState == ConnectionState.waiting)
+                                const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: VSPColors.accent)))
+                              else
+                                Row(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Expanded(child: _buildRosterListColumn(match.homeTeamName ?? 'Home', homeRoster)),
+                                    const SizedBox(width: 12),
+                                    Expanded(child: _buildRosterListColumn(match.awayTeamName ?? 'Away', awayRoster)),
+                                  ],
+                                ),
+                            ],
+                          ),
+                        ),
+                      ),
+
+                      // أزرار التأكيد والإرسال
+                      Container(
+                        padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(sheetContext).padding.bottom + MediaQuery.of(sheetContext).viewInsets.bottom + 16),
+                        decoration: const BoxDecoration(
+                          border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
+                        ),
+                        child: Row(
+                          children: [
+                            Expanded(
+                              child: PrimaryButton(
+                                text: isArabic ? 'إلغاء' : 'Cancel',
+                                color: VSPColors.surfaceAlt,
+                                textColor: VSPColors.textPrimary,
+                                onPressed: () => Navigator.pop(sheetContext),
                               ),
                             ),
-                            const SizedBox(height: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: PrimaryButton(
+                                text: isArabic ? 'تأكيد النتيجة والهدافين ⚽' : 'Submit & Advance',
+                                isLoading: isSubmitting,
+                                onPressed: !isValidToSubmit ? null : () async {
+                                  setModalState(() => isSubmitting = true);
+                                  try {
+                                    final finalWinnerId = (homeScore == awayScore)
+                                        ? selectedWinnerId
+                                        : (homeScore > awayScore ? match.homeTeamId : match.awayTeamId);
+
+                                    final finalWinnerName = finalWinnerId == match.homeTeamId
+                                        ? match.homeTeamName
+                                        : match.awayTeamName;
+
+                                    await TournamentRepository().updateTournamentMatchScore(
+                                      matchId: match.id,
+                                      homeScore: homeScore,
+                                      awayScore: awayScore,
+                                      winnerId: finalWinnerId,
+                                      winnerName: finalWinnerName,
+                                      goalDetails: goalDetails,
+                                    );
+
+                                    if (sheetContext.mounted) {
+                                      Navigator.pop(sheetContext);
+                                    }
+                                    if (context.mounted) {
+                                      _refreshMatches();
+                                      VSPFeedback.showSuccess(
+                                        context,
+                                        isArabic
+                                            ? '🏆 تم تسجيل نتيجة المباراة وهدافيها وتصعيد $finalWinnerName بنجاح!'
+                                            : '🏆 Match score, goal scorers saved & $finalWinnerName advanced!',
+                                      );
+                                    }
+                                  } catch (e) {
+                                    setModalState(() => isSubmitting = false);
+                                    if (sheetContext.mounted) {
+                                      VSPFeedback.showError(sheetContext, isArabic ? 'حدث خطأ أثناء تسجيل النتيجة' : 'Error submitting score');
+                                    }
+                                  }
+                                },
+                              ),
+                            ),
                           ],
-
-                          const Divider(color: VSPColors.divider),
-                          const SizedBox(height: 12),
-
-                          // 👥 جلب وعرض كشف أسماء اللاعبين (Roster Viewer)
-                          Text(
-                            isArabic ? '📋 كشف أسماء اللاعبين المشاركين بالبطولة:' : '📋 Championship Team Rosters:',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                          const SizedBox(height: 12),
-                          FutureBuilder<Map<String, List<String>>>(
-                            future: _fetchRosters(match.homeTeamId!, match.awayTeamId!),
-                            builder: (context, rosterSnapshot) {
-                              if (rosterSnapshot.connectionState == ConnectionState.waiting) {
-                                return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: VSPColors.accent)));
-                              }
-
-                              final homeRoster = rosterSnapshot.data?['home'] ?? [];
-                              final awayRoster = rosterSnapshot.data?['away'] ?? [];
-
-                              return Row(
-                                crossAxisAlignment: CrossAxisAlignment.start,
-                                children: [
-                                  // كشف الفريق الأول
-                                  Expanded(child: _buildRosterListColumn(match.homeTeamName ?? 'Home', homeRoster)),
-                                  const SizedBox(width: 12),
-                                  // كشف الفريق الثاني
-                                  Expanded(child: _buildRosterListColumn(match.awayTeamName ?? 'Away', awayRoster)),
-                                ],
-                              );
-                            },
-                          ),
-                        ],
+                        ),
                       ),
-                    ),
-                  ),
-
-                  // أزرار التأكيد والإرسال
-                  Container(
-                    padding: EdgeInsets.fromLTRB(20, 12, 20, MediaQuery.of(sheetContext).padding.bottom + MediaQuery.of(sheetContext).viewInsets.bottom + 16),
-                    decoration: const BoxDecoration(
-                      border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-                    ),
-                    child: Row(
-                      children: [
-                        Expanded(
-                          child: PrimaryButton(
-                            text: isArabic ? 'إلغاء' : 'Cancel',
-                            color: VSPColors.surfaceAlt,
-                            textColor: VSPColors.textPrimary,
-                            onPressed: () => Navigator.pop(sheetContext),
-                          ),
-                        ),
-                        const SizedBox(width: 12),
-                        Expanded(
-                          child: PrimaryButton(
-                            text: isArabic ? 'تأكيد النتيجة وتصعيد الفائز' : 'Submit & Advance',
-                            isLoading: isSubmitting,
-                            onPressed: !isValidToSubmit ? null : () async {
-                              setModalState(() => isSubmitting = true);
-                              try {
-                                // حساب الفائز الفعلي بناءً على النتيجة أو ركلات الترجيح
-                                final finalWinnerId = (homeScore == awayScore)
-                                    ? selectedWinnerId
-                                    : (homeScore > awayScore ? match.homeTeamId : match.awayTeamId);
-
-                                final finalWinnerName = finalWinnerId == match.homeTeamId
-                                    ? match.homeTeamName
-                                    : match.awayTeamName;
-
-                                // إرسال النتيجة لجدول ومحرك البطولة
-                                await TournamentRepository().updateTournamentMatchScore(
-                                  matchId: match.id,
-                                  homeScore: homeScore,
-                                  awayScore: awayScore,
-                                  winnerId: finalWinnerId,
-                                  winnerName: finalWinnerName,
-                                );
-
-                                if (sheetContext.mounted) {
-                                  Navigator.pop(sheetContext);
-                                }
-                                if (context.mounted) {
-                                  VSPFeedback.showSuccess(
-                                    context,
-                                    isArabic ? '🏆 تم حفظ النتيجة وتصعيد الفائز تلقائياً!' : '🏆 Score saved and winner advanced!',
-                                  );
-                                }
-                              } catch (e) {
-                                if (context.mounted) {
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    SnackBar(content: Text('Error: $e'), backgroundColor: VSPColors.error),
-                                  );
-                                }
-                              } finally {
-                                setModalState(() => isSubmitting = false);
-                              }
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                    ],
+                  );
+                },
               );
             },
           ),
@@ -502,6 +634,260 @@ class TournamentBracketsScreen extends StatelessWidget {
           ],
         ),
       ],
+    );
+  }
+
+  // ⚽ HELPER: Build Goal Scorers Chip List
+  Widget _buildGoalScorersList({
+    required String teamName,
+    required List<GoalItem> goals,
+    required Function(GoalItem goal) onRemoveGoal,
+    required bool isArabic,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(10),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(FontAwesomeIcons.futbol, color: VSPColors.accent, size: 12),
+              const SizedBox(width: 6),
+              Expanded(
+                child: Text(
+                  isArabic ? 'هدافو $teamName' : '$teamName Scorers',
+                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          if (goals.isEmpty)
+            Text(isArabic ? 'لم يتم تسجيل أهداف بعد' : 'No goals recorded', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10))
+          else
+            Wrap(
+              spacing: 6,
+              runSpacing: 6,
+              children: goals.map((g) {
+                return Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                  decoration: BoxDecoration(
+                    color: g.isOwnGoal ? VSPColors.error.withValues(alpha: 0.2) : VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(color: g.isOwnGoal ? VSPColors.error : VSPColors.accent.withValues(alpha: 0.4)),
+                  ),
+                  child: Row(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Text(
+                        g.isOwnGoal ? '⚽🔴 ${g.playerName} (عكسي)' : '⚽ ${g.playerName}',
+                        style: TextStyle(
+                          color: g.isOwnGoal ? VSPColors.error : Colors.white,
+                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                        ),
+                      ),
+                      const SizedBox(width: 4),
+                      GestureDetector(
+                        onTap: () => onRemoveGoal(g),
+                        child: const Icon(FontAwesomeIcons.xmark, color: Colors.white54, size: 10),
+                      ),
+                    ],
+                  ),
+                );
+              }).toList(),
+            ),
+        ],
+      ),
+    );
+  }
+
+  // ⚽ HELPER: Open Add Goal Modal
+  void _openAddGoalModal(
+    BuildContext context, {
+    required String teamId,
+    required String teamName,
+    required List<String> roster,
+    required List<String> opposingRoster,
+    required Function(GoalItem goal) onGoalAdded,
+  }) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final TextEditingController customNameController = TextEditingController();
+    String? selectedFromRoster;
+    bool isOwnGoal = false;
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) {
+        return StatefulBuilder(
+          builder: (context, setDlgState) {
+            final activeRoster = isOwnGoal ? opposingRoster : roster;
+
+            return AlertDialog(
+              backgroundColor: VSPColors.surface,
+              surfaceTintColor: Colors.transparent,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+              title: Row(
+                children: [
+                  const Icon(FontAwesomeIcons.futbol, color: VSPColors.accent, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isArabic ? 'تسجيل هدف لـ $teamName ⚽' : 'Record Goal for $teamName ⚽',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                    ),
+                  ),
+                ],
+              ),
+              content: SingleChildScrollView(
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    // Own Goal Checkbox
+                    GestureDetector(
+                      onTap: () {
+                        setDlgState(() {
+                          isOwnGoal = !isOwnGoal;
+                          selectedFromRoster = null;
+                        });
+                      },
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                        decoration: BoxDecoration(
+                          color: isOwnGoal ? VSPColors.error.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: isOwnGoal ? VSPColors.error : VSPColors.divider),
+                        ),
+                        child: Row(
+                          children: [
+                            Checkbox(
+                              value: isOwnGoal,
+                              activeColor: VSPColors.error,
+                              onChanged: (val) {
+                                setDlgState(() {
+                                  isOwnGoal = val ?? false;
+                                  selectedFromRoster = null;
+                                });
+                              },
+                            ),
+                            Expanded(
+                              child: Text(
+                                isArabic ? '⚽🔴 هدف عكسي (سجله لاعب المنافس بالخطأ)' : '⚽🔴 Own Goal (By Opponent)',
+                                style: TextStyle(
+                                  color: isOwnGoal ? VSPColors.error : Colors.white70,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 11.5,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+
+                    // Player Selection from Roster
+                    if (activeRoster.isNotEmpty) ...[
+                      Text(
+                        isArabic ? 'اختر اسم الهداف من كشف اللاعبين:' : 'Select scorer from roster:',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                      ),
+                      const SizedBox(height: 6),
+                      Container(
+                        width: double.infinity,
+                        padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider),
+                        ),
+                        child: DropdownButton<String>(
+                          value: selectedFromRoster,
+                          isExpanded: true,
+                          hint: Text(isArabic ? 'اختر لاعباً...' : 'Select a player...', style: const TextStyle(color: Colors.white54, fontSize: 12)),
+                          dropdownColor: VSPColors.surface,
+                          underline: const SizedBox(),
+                          style: const TextStyle(color: Colors.white, fontSize: 12),
+                          items: activeRoster.map((name) {
+                            return DropdownMenuItem<String>(
+                              value: name,
+                              child: Text(name),
+                            );
+                          }).toList(),
+                          onChanged: (val) {
+                            setDlgState(() {
+                              selectedFromRoster = val;
+                              if (val != null) customNameController.text = val;
+                            });
+                          },
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Center(
+                        child: Text(isArabic ? 'أو' : 'OR', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold)),
+                      ),
+                      const SizedBox(height: 10),
+                    ],
+
+                    // Manual Player Name Text Field
+                    Text(
+                      isArabic ? 'ادخل اسم الهداف يدوياً (للقوائم اليدوية):' : 'Enter scorer name manually:',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ),
+                    const SizedBox(height: 6),
+                    TextField(
+                      controller: customNameController,
+                      style: const TextStyle(color: Colors.white, fontSize: 13),
+                      decoration: InputDecoration(
+                        hintText: isArabic ? 'مثال: أحمد حسام / لاعب 1' : 'e.g. Ahmed / Player 1',
+                        hintStyle: const TextStyle(color: Colors.white38, fontSize: 12),
+                        filled: true,
+                        fillColor: VSPColors.surfaceAlt,
+                        contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                        border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: const BorderSide(color: VSPColors.divider)),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.pop(dlgCtx),
+                  child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+                ),
+                ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                  ),
+                  onPressed: () {
+                    final finalName = customNameController.text.trim().isNotEmpty
+                        ? customNameController.text.trim()
+                        : (selectedFromRoster ?? (isArabic ? 'لاعب مجهول' : 'Unknown Player'));
+
+                    onGoalAdded(GoalItem(
+                      id: DateTime.now().millisecondsSinceEpoch.toString(),
+                      teamId: teamId,
+                      playerName: finalName,
+                      isOwnGoal: isOwnGoal,
+                    ));
+                    Navigator.pop(dlgCtx);
+                  },
+                  child: Text(isArabic ? 'حفظ الهدف ⚽' : 'Save Goal ⚽', style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ],
+            );
+          },
+        );
+      },
     );
   }
 
@@ -569,6 +955,51 @@ class TournamentBracketsScreen extends StatelessWidget {
   Widget _buildAutoScheduleBanner(BuildContext context, int roundIdx, List<TournamentMatch> matches, int totalRounds) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final roundName = _getRoundLabel(context, roundIdx, totalRounds);
+    final bool hasScheduledMatches = matches.any((m) => m.scheduledTime != null);
+    final bool isRoundStartedOrFinished = matches.any((m) => m.winnerId != null || m.homeScore != null);
+
+    // 🔒 منع إعادة الجدولة التلقائية أو التصفير بعد بدء أو انتهاء مباريات هذا الدور
+    if (isRoundStartedOrFinished) {
+      return Container(
+        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+        decoration: BoxDecoration(
+          color: VSPColors.surfaceAlt,
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(8),
+              decoration: BoxDecoration(
+                color: Colors.white10,
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(FontAwesomeIcons.lock, color: VSPColors.textSecondary, size: 14),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isArabic ? 'جدول مباريات $roundName (مُغلق 🔒)' : '$roundName Schedule (Locked 🔒)',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic
+                        ? 'تم بدء مباريات هذا الدور وتسجيل نتائجها (لا يمكن إعادة الجدولة التلقائية)'
+                        : 'Matches in this round have started (Auto-scheduling locked)',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
@@ -593,17 +1024,29 @@ class TournamentBracketsScreen extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  isArabic ? 'جدولة تلقائية لمباريات $roundName' : 'Auto-Schedule $roundName',
+                  isArabic
+                      ? (hasScheduledMatches ? 'تعديل جدول $roundName' : 'جدولة تلقائية لمباريات $roundName')
+                      : (hasScheduledMatches ? 'Manage $roundName Schedule' : 'Auto-Schedule $roundName'),
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                 ),
                 const SizedBox(height: 2),
                 Text(
-                  isArabic ? 'توليد المواعيد والتواريخ تلقائياً لـ ${matches.length} مباراة' : 'Auto generate dates for ${matches.length} matches',
+                  isArabic
+                      ? (hasScheduledMatches ? 'تم جدولة مباريات هذا الدور. يمكنك التصفير أو إعادة الجدولة' : 'توليد المواعيد والتواريخ تلقائياً لـ ${matches.length} مباراة')
+                      : (hasScheduledMatches ? 'Matches scheduled. You can reset or re-schedule.' : 'Auto generate dates for ${matches.length} matches'),
                   style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                 ),
               ],
             ),
           ),
+          if (hasScheduledMatches) ...[
+            IconButton(
+              tooltip: isArabic ? 'تصفير الجدول وإلغاء المواعيد 🧹' : 'Reset Round Schedule',
+              icon: const Icon(FontAwesomeIcons.rotateLeft, color: VSPColors.error, size: 16),
+              onPressed: () => _confirmResetRoundSchedule(context, roundIdx, matches, roundName),
+            ),
+            const SizedBox(width: 4),
+          ],
           ElevatedButton(
             style: ElevatedButton.styleFrom(
               backgroundColor: VSPColors.accent,
@@ -613,12 +1056,77 @@ class TournamentBracketsScreen extends StatelessWidget {
             ),
             onPressed: () => _showAutoScheduleDialog(context, roundIdx, matches, roundName),
             child: Text(
-              isArabic ? 'جدولة ⚡' : 'Schedule ⚡',
+              isArabic
+                  ? (hasScheduledMatches ? 'إعادة الجدولة ⚡' : 'جدولة ⚡')
+                  : (hasScheduledMatches ? 'Re-Schedule ⚡' : 'Schedule ⚡'),
               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
             ),
           ),
         ],
       ),
+    );
+  }
+
+  // 🧹 CONFIRMATION: Reset All Match Schedules for Round
+  void _confirmResetRoundSchedule(BuildContext context, int roundIdx, List<TournamentMatch> matches, String roundName) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) {
+        return AlertDialog(
+          backgroundColor: VSPColors.surface,
+          surfaceTintColor: Colors.transparent,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: Row(
+            children: [
+              const Icon(FontAwesomeIcons.rotateLeft, color: VSPColors.warning, size: 18),
+              const SizedBox(width: 8),
+              Text(
+                isArabic ? 'تصفير جدول $roundName' : 'Reset $roundName Schedule',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ],
+          ),
+          content: Text(
+            isArabic
+                ? 'هل أنت تأكد من إلغاء وتصفير مواعيد جميع مباريات ($roundName) وإعادتها إلى "غير مجدول"؟'
+                : 'Are you sure you want to reset all match dates for ($roundName) to unscheduled?',
+            style: const TextStyle(color: Colors.white70, fontSize: 13),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(dialogCtx),
+              child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+            ),
+            ElevatedButton(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: VSPColors.error,
+                foregroundColor: Colors.white,
+              ),
+              onPressed: () async {
+                Navigator.pop(dialogCtx);
+                final success = await TournamentRepository().clearRoundMatchSchedules(
+                  championshipId: widget.championship.id,
+                  roundIndex: roundIdx,
+                  matches: matches,
+                );
+
+                if (success && context.mounted) {
+                  _refreshMatches();
+                  VSPFeedback.showSuccess(
+                    context,
+                    isArabic
+                        ? '🧹 تم تصفير وإلغاء جدول مباريات $roundName بنجاح!'
+                        : '🧹 Reset schedule for $roundName successfully!',
+                  );
+                }
+              },
+              child: Text(isArabic ? 'تأكيد التصفير 🧹' : 'Confirm Reset'),
+            ),
+          ],
+        );
+      },
     );
   }
 
@@ -628,8 +1136,15 @@ class TournamentBracketsScreen extends StatelessWidget {
     int daysCount = 1;
     DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
     TimeOfDay selectedTime = const TimeOfDay(hour: 18, minute: 0);
-    // 🛡️ Read matchDuration directly from pre-configured tournament settings!
-    final int matchDuration = championship.matchDuration;
+    // 🛡️ Default to the exact duration set during tournament creation (e.g. 20 mins)!
+    final int presetDuration = widget.championship.matchDuration;
+    int selectedMatchDuration = presetDuration;
+
+    final List<int> durationOptions = [15, 20, 30, 45, 60, 90];
+    if (!durationOptions.contains(presetDuration)) {
+      durationOptions.add(presetDuration);
+      durationOptions.sort();
+    }
 
     List<int> availableDaysOptions = [1];
     if (matches.length >= 8) {
@@ -834,34 +1349,55 @@ class TournamentBracketsScreen extends StatelessWidget {
                   ),
                   const SizedBox(height: 16),
 
-                  // 3. Match Duration Badge (Read-only from tournament settings)
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                      border: Border.all(color: VSPColors.divider),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(FontAwesomeIcons.stopwatch, color: VSPColors.accent, size: 14),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            isArabic
-                                ? 'مدة المباراة: $matchDuration دقيقة (محددة في إعدادات البطولة)'
-                                : 'Match Duration: $matchDuration mins (configured in settings)',
-                            style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                  // 3. Match Duration Selector (Defaults to tournament setting, fully editable)
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Row(
+                        children: [
+                          const Icon(FontAwesomeIcons.stopwatch, color: VSPColors.accent, size: 14),
+                          const SizedBox(width: 8),
+                          Text(
+                            isArabic ? 'مدة المباراة / الفاصل:' : 'Match Duration:',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                           ),
+                        ],
+                      ),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 0),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider),
                         ),
-                      ],
-                    ),
+                        child: DropdownButton<int>(
+                          value: selectedMatchDuration,
+                          underline: const SizedBox(),
+                          dropdownColor: VSPColors.surface,
+                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                          items: durationOptions.map((mins) {
+                            return DropdownMenuItem<int>(
+                              value: mins,
+                              child: Text(
+                                mins == presetDuration 
+                                    ? '$mins دقيقة (إعدادات البطولة)' 
+                                    : '$mins دقيقة',
+                              ),
+                            );
+                          }).toList(),
+                          onChanged: (v) {
+                            if (v != null) setModalState(() => selectedMatchDuration = v);
+                          },
+                        ),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 16),
 
                   // 4. Summary Preview Box
                   Container(
-                    padding: const EdgeInsets.all(12),
+                    width: double.infinity,
+                    padding: const EdgeInsets.all(14),
                     decoration: BoxDecoration(
                       color: VSPColors.surfaceAlt,
                       borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -870,22 +1406,29 @@ class TournamentBracketsScreen extends StatelessWidget {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        Text(
-                          isArabic ? '📌 ملخص الجدولة التلقائية:' : '📌 Schedule Summary:',
-                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                        Row(
+                          children: [
+                            const Text('📌', style: TextStyle(fontSize: 14)),
+                            const SizedBox(width: 6),
+                            Text(
+                              isArabic ? 'ملخص الجدولة التلقائية:' : 'Schedule Summary:',
+                              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                            ),
+                          ],
                         ),
-                        const SizedBox(height: 6),
+                        const SizedBox(height: 8),
                         Text(
                           isArabic
-                              ? '• سيتم إدراج $matchesPerDay مبارايات يومياً على مدار $daysCount يوم (أيام).'
+                              ? '• سيتم إدراج $matchesPerDay ${matchesPerDay == 1 ? 'مباراة' : 'مباريات'} يومياً على مدار ${daysCount == 1 ? 'يوم واحد' : (daysCount == 2 ? 'يومين' : '$daysCount أيام')}.'
                               : '• $matchesPerDay matches daily over $daysCount day(s).',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                          style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
                         ),
+                        const SizedBox(height: 4),
                         Text(
                           isArabic
-                              ? '• تبدأ المباريات يومياً الساعة ${selectedTime.format(context)} بفاصل $matchDuration دقيقة.'
-                              : '• Matches start at ${selectedTime.format(context)} with $matchDuration min interval.',
-                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                              ? '• تبدأ المباريات يومياً الساعة ${selectedTime.format(context)} بفاصل $selectedMatchDuration دقيقة.'
+                              : '• Matches start at ${selectedTime.format(context)} with $selectedMatchDuration min interval.',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12, height: 1.4),
                         ),
                       ],
                     ),
@@ -900,16 +1443,17 @@ class TournamentBracketsScreen extends StatelessWidget {
                       onPressed: () async {
                         Navigator.pop(modalCtx);
                         final success = await TournamentRepository().autoScheduleRoundMatches(
-                          championshipId: championship.id,
+                          championshipId: widget.championship.id,
                           roundIndex: roundIdx,
                           matches: matches,
                           startDate: selectedDate,
                           startTime: selectedTime,
                           daysCount: daysCount,
-                          matchDurationMinutes: matchDuration,
+                          matchDurationMinutes: selectedMatchDuration,
                         );
 
                         if (success && context.mounted) {
+                          _refreshMatches();
                           VSPFeedback.showSuccess(
                             context,
                             isArabic

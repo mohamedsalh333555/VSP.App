@@ -1266,6 +1266,8 @@ class Championship {
   // Entry Fee Tracking
   final List<String> paidTeams;
 
+  bool get isFull => joinedTeams.length >= maxTeams || status == 'full';
+
   Championship({
     required this.id,
     required this.name,
@@ -1547,6 +1549,39 @@ class AppNotification {
   }
 }
 
+/// GoalItem — represents a single goal event in a match
+class GoalItem {
+  final String id;
+  final String teamId;
+  final String playerName;
+  final bool isOwnGoal;
+
+  GoalItem({
+    required this.id,
+    required this.teamId,
+    required this.playerName,
+    this.isOwnGoal = false,
+  });
+
+  factory GoalItem.fromMap(Map<String, dynamic> map) {
+    return GoalItem(
+      id: map['id']?.toString() ?? DateTime.now().millisecondsSinceEpoch.toString(),
+      teamId: map['team_id']?.toString() ?? map['teamId']?.toString() ?? '',
+      playerName: map['player_name']?.toString() ?? map['playerName']?.toString() ?? 'لاعب مجهول',
+      isOwnGoal: map['is_own_goal'] == true || map['isOwnGoal'] == true,
+    );
+  }
+
+  Map<String, dynamic> toMap() {
+    return {
+      'id': id,
+      'team_id': teamId,
+      'player_name': playerName,
+      'is_own_goal': isOwnGoal,
+    };
+  }
+}
+
 /// Tournament Match — represents a single match in a knockout bracket
 class TournamentMatch {
   final String id;
@@ -1562,6 +1597,7 @@ class TournamentMatch {
   final String? winnerId;
   final String? nextMatchId; // ID of the match the winner advances to
   final DateTime? scheduledTime;
+  final List<GoalItem> goalDetails;
 
   TournamentMatch({
     required this.id,
@@ -1577,6 +1613,7 @@ class TournamentMatch {
     this.winnerId,
     this.nextMatchId,
     this.scheduledTime,
+    this.goalDetails = const [],
   });
 
   bool get isCompleted => winnerId != null;
@@ -1594,6 +1631,11 @@ class TournamentMatch {
 
   factory TournamentMatch.fromFirestore(Map<String, dynamic> data, String id) {
     final scheduledTimeVal = data['scheduledTime'] ?? data['scheduled_time'];
+    final rawGoals = data['goal_details'] ?? data['goalDetails'] ?? [];
+    final List<GoalItem> parsedGoals = (rawGoals is List)
+        ? rawGoals.map((g) => GoalItem.fromMap(Map<String, dynamic>.from(g))).toList()
+        : [];
+
     return TournamentMatch(
       id: id,
       championshipId: data['championshipId'] ?? data['championship_id'] ?? '',
@@ -1609,9 +1651,10 @@ class TournamentMatch {
       nextMatchId: data['nextMatchId'] ?? data['next_match_id'],
       scheduledTime: scheduledTimeVal != null
           ? (scheduledTimeVal is DateTime 
-              ? scheduledTimeVal 
-              : DateTime.tryParse(scheduledTimeVal.toString()))
+              ? scheduledTimeVal.toLocal() 
+              : DateTime.tryParse(scheduledTimeVal.toString())?.toLocal())
           : null,
+      goalDetails: parsedGoals,
     );
   }
 
@@ -1629,6 +1672,7 @@ class TournamentMatch {
       'winnerId': winnerId,
       'nextMatchId': nextMatchId,
       'scheduledTime': scheduledTime?.toIso8601String(),
+      'goal_details': goalDetails.map((g) => g.toMap()).toList(),
     };
   }
 }

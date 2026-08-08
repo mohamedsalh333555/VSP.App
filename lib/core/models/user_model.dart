@@ -62,9 +62,11 @@ class UserModel {
     this.subscriptionExpiresAt,
   });
 
-  // ============================================================
-  // 💰 SUBSCRIPTION COMPUTED GETTERS
-  // ============================================================
+  /// هل المستخدم مالك ملعب (سواء من حقل role أو امتلاك ملعب)؟
+  bool get isOwnerRole => role == 'owner' || hasStadium;
+
+  /// هل المستخدم لاعب فقط؟
+  bool get isPlayerRole => !isOwnerRole;
 
   /// تاريخ نهاية الفترة التجريبية الفعلي (مع افتراض 90 يوماً من الإنشاء إذا كانت null)
   DateTime? get effectiveTrialEndsAt =>

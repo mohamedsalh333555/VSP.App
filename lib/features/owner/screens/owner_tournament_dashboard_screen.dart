@@ -14,6 +14,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 import 'tournament_brackets_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/services/sharing_service.dart';
+import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 
@@ -406,6 +408,20 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
   }
 
   Future<void> _executeStartTournament() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final now = DateTime.now();
+
+    if (now.isBefore(_currentChampionship.startDate)) {
+      final formattedDate = AppDateFormatter.formatFullDate(_currentChampionship.startDate, isArabic ? 'ar' : 'en');
+      VSPFeedback.showError(
+        context,
+        isArabic
+          ? '🛑 لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.'
+          : '🛑 Tournament cannot be started before its official date ($formattedDate).',
+      );
+      return;
+    }
+
     final teamCount = _currentChampionship.joinedTeams.length;
 
     if (teamCount < _currentChampionship.maxTeams) {
@@ -466,86 +482,6 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       if (mounted) {
         VSPFeedback.showError(context, 'Error: $e');
       }
-    } finally {
-      if (mounted) setState(() => _isLoading = false);
-    }
-  }
-
-  void _showWinnerSelectionDialog(List<Team> teams) {
-    String? selectedTeamId;
-    String? selectedTeamName;
-
-    showDialog(
-      context: context,
-      builder: (context) => StatefulBuilder(
-        builder: (context, setModalState) => AlertDialog(
-          backgroundColor: VSPColors.surface,
-          surfaceTintColor: Colors.transparent,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Text(AppLocalizations.of(context)!.selectTournamentWinner, style: Theme.of(context).textTheme.titleLarge),
-          content: teams.isEmpty 
-            ? Text(AppLocalizations.of(context)!.noTeamsFound(''), style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary))
-            : SizedBox(
-                width: double.maxFinite,
-                child: ListView.builder(
-                  shrinkWrap: true,
-                  itemCount: teams.length,
-                  itemBuilder: (context, index) {
-                    final team = teams[index];
-                    return RadioListTile<String>(
-                      value: team.id,
-                      groupValue: selectedTeamId,
-                      activeColor: VSPColors.accent,
-                      title: Text(team.name, style: Theme.of(context).textTheme.bodyMedium),
-                      onChanged: (val) {
-                        setModalState(() {
-                          selectedTeamId = val;
-                          selectedTeamName = team.name;
-                        });
-                      },
-                    );
-                  },
-                ),
-              ),
-          actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
-          actions: [
-            Row(
-              children: [
-                Expanded(
-                  child: PrimaryButton(
-                    text: AppLocalizations.of(context)!.cancel,
-                    height: 48,
-                    color: VSPColors.surfaceAlt,
-                    textColor: VSPColors.textPrimary,
-                    onPressed: () => Navigator.pop(context),
-                  ),
-                ),
-                const SizedBox(width: VSPSpacing.md),
-                Expanded(
-                  child: PrimaryButton(
-                    text: AppLocalizations.of(context)!.confirmSelections,
-                    height: 48,
-                    onPressed: selectedTeamId == null ? null : () {
-                      Navigator.pop(context);
-                      _crownChampion(selectedTeamId!, selectedTeamName!);
-                    },
-                  ),
-                ),
-              ],
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  Future<void> _crownChampion(String teamId, String teamName) async {
-    setState(() => _isLoading = true);
-    try {
-      await TournamentRepository().crownChampion(_currentChampionship.id, teamId, teamName);
-      setState(() {
-         _currentChampionship = _currentChampionship.copyWith(status: 'completed');
-      });
     } finally {
       if (mounted) setState(() => _isLoading = false);
     }
@@ -643,6 +579,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
     String selectedPrimaryColor = '#FFFFFF';
     List<String> offlinePlayerNames = [];
+    bool isPaidOnCreation = true; // 🟢 Default for manual additions: Paid!
 
     showModalBottomSheet(
       context: context,
@@ -736,6 +673,73 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                               ],
                             ),
                           ],
+                          const SizedBox(height: 16),
+
+                          // 2. حالة سداد رسوم الاشتراك
+                          _buildInputLabel(isArabic ? 'حالة سداد رسوم الاشتراك:' : 'Payment Status:'),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => isPaidOnCreation = true),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: isPaidOnCreation ? VSPColors.accent : VSPColors.surfaceAlt,
+                                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                                      border: Border.all(color: isPaidOnCreation ? VSPColors.accent : VSPColors.divider),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.check_circle, color: isPaidOnCreation ? Colors.black : VSPColors.accent, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          isArabic ? 'تم الدفع 🟢' : 'Paid 🟢',
+                                          style: TextStyle(
+                                            color: isPaidOnCreation ? Colors.black : Colors.white,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 10),
+                              Expanded(
+                                child: GestureDetector(
+                                  onTap: () => setDialogState(() => isPaidOnCreation = false),
+                                  child: AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    padding: const EdgeInsets.symmetric(vertical: 12),
+                                    decoration: BoxDecoration(
+                                      color: !isPaidOnCreation ? VSPColors.warning.withValues(alpha: 0.2) : VSPColors.surfaceAlt,
+                                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                                      border: Border.all(color: !isPaidOnCreation ? VSPColors.warning : VSPColors.divider),
+                                    ),
+                                    child: Row(
+                                      mainAxisAlignment: MainAxisAlignment.center,
+                                      children: [
+                                        Icon(Icons.access_time_filled, color: !isPaidOnCreation ? VSPColors.warning : VSPColors.textSecondary, size: 16),
+                                        const SizedBox(width: 6),
+                                        Text(
+                                          isArabic ? 'معلق / غير مدفوع 🕒' : 'Pending 🕒',
+                                          style: TextStyle(
+                                            color: !isPaidOnCreation ? VSPColors.warning : Colors.white70,
+                                            fontWeight: FontWeight.bold,
+                                            fontSize: 12,
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
                           const SizedBox(height: 16),
 
                           // 2. لون قميص الفريق
@@ -941,6 +945,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                     _currentChampionship.id,
                                     teamId,
                                     skipMemberCheck: true,
+                                    isPaid: isPaidOnCreation,
                                   );
 
                                   await Supabase.instance.client.from('championship_rosters').insert({
@@ -1123,6 +1128,34 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
         centerTitle: true,
+        actions: [
+          IconButton(
+            icon: const Icon(LucideIcons.share2, color: VSPColors.accent),
+            onPressed: () {
+              final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+              final String startDateStr = isArabic
+                  ? '${_currentChampionship.startDate.day} ${_getArabicMonth(_currentChampionship.startDate.month)}'
+                  : DateFormat('MMM d').format(_currentChampionship.startDate);
+              final String endDateStr = isArabic
+                  ? '${_currentChampionship.endDate.day} ${_getArabicMonth(_currentChampionship.endDate.month)}'
+                  : DateFormat('MMM d').format(_currentChampionship.endDate);
+
+              SharingService.shareChampionship(
+                id: _currentChampionship.id,
+                name: _currentChampionship.name,
+                startDateStr: startDateStr,
+                endDateStr: endDateStr,
+                grandPrize: _currentChampionship.grandPrize,
+                entryFee: _currentChampionship.entryFee,
+                joinedTeamsCount: _currentChampionship.joinedTeams.length,
+                maxTeams: _currentChampionship.maxTeams,
+                sportType: _currentChampionship.sportType,
+                governorate: _currentChampionship.governorate,
+                isArabic: isArabic,
+              );
+            },
+          ),
+        ],
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
         stream: Supabase.instance.client
@@ -1271,13 +1304,29 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             },
                           ),
                           
-                        if (currentChamp.status == 'ongoing') ...[
+                        if (currentChamp.status == 'completed' || currentChamp.championTeamName != null) ...[
                           const SizedBox(height: 12),
-                          PrimaryButton(
-                            text: AppLocalizations.of(context)!.manualCrownChampion,
-                            color: VSPColors.surfaceAlt,
-                            textColor: VSPColors.textSecondary,
-                            onPressed: () => _showWinnerSelectionDialog(teams),
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(14),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.15),
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: VSPColors.accent, width: 1.5),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: [
+                                const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 24),
+                                const SizedBox(width: 10),
+                                Text(
+                                  Localizations.localeOf(context).languageCode == 'ar'
+                                      ? '🏆 بطل البطولة: ${currentChamp.championTeamName ?? ""}'
+                                      : '🏆 Champion: ${currentChamp.championTeamName ?? ""}',
+                                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 15),
+                                ),
+                              ],
+                            ),
                           ),
                         ],
                       ],
@@ -1290,6 +1339,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         },
       ),
     );
+  }
+
+  String _getArabicMonth(int month) {
+    const months = [
+      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
+      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
+    ];
+    return months[month - 1];
   }
 
   Widget _buildInfoItem(String label, String value, {Color? color, bool isLtr = false}) {

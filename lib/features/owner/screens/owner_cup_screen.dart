@@ -8,9 +8,9 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../core/services/sharing_service.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'create_tournament_wizard.dart';
-import 'package:share_plus/share_plus.dart';
 
 class OwnerCupScreen extends StatefulWidget {
   final Function(bool isEmpty)? onTournamentListChanged;
@@ -254,9 +254,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
   /// 🏆 كارت البطولة المصلح بالكامل
   Widget _buildTournamentCard(Championship tournament, bool isArabic) {
-    final l10n = AppLocalizations.of(context)!;
-    
-    // 🛑 FIX 1: صياغة التاريخ العربي السليمة (اليوم ثم الشهر)
     final String startDateStr = isArabic
         ? '${tournament.startDate.day} ${_getArabicMonth(tournament.startDate.month)}'
         : DateFormat('MMM d').format(tournament.startDate);
@@ -265,7 +262,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         : DateFormat('MMM d').format(tournament.endDate);
     final dateRange = '$startDateStr - $endDateStr';
 
-    // 🛑 FIX 2: ترجمة نوع الرياضة ونوع البطولة
     final String translatedSport = isArabic
         ? (tournament.sportType == 'Football' ? 'كرة القدم' : tournament.sportType)
         : tournament.sportType;
@@ -316,7 +312,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                         style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
                       ),
                       const SizedBox(height: 2),
-                      // 🛑 FIX 2: عرض الرياضة بالعربية
                       Text(
                         '$translatedSport • $translatedCategory',
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
@@ -324,55 +319,34 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     ],
                   ),
                 ),
-                Row(
-                  children: [
-                    InkWell(
-                      onTap: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => CreateTournamentWizard(tournament: tournament),
-                          ),
-                        );
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent.withValues(alpha: 0.1),
-                          shape: BoxShape.circle,
-                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                        ),
-                        child: const Icon(LucideIcons.edit2, color: VSPColors.accent, size: 18),
-                      ),
+                InkWell(
+                  onTap: () {
+                    SharingService.shareChampionship(
+                      id: tournament.id,
+                      name: tournament.name,
+                      startDateStr: startDateStr,
+                      endDateStr: endDateStr,
+                      grandPrize: tournament.grandPrize,
+                      entryFee: tournament.entryFee,
+                      joinedTeamsCount: tournament.joinedTeams.length,
+                      maxTeams: tournament.maxTeams,
+                      sportType: tournament.sportType,
+                      governorate: tournament.governorate,
+                      isArabic: isArabic,
+                    );
+                  },
+                  borderRadius: BorderRadius.circular(20),
+                  child: Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      shape: BoxShape.circle,
+                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                     ),
-                    const SizedBox(width: 8),
-                    InkWell(
-                      onTap: () {
-                        final String shareText = l10n.shareTournamentText(
-                          tournament.name,
-                          startDateStr,
-                          endDateStr,
-                          tournament.grandPrize.toInt(),
-                          tournament.entryFee.toInt(),
-                        );
-                        SharePlus.instance.share(ShareParams(text: shareText));
-                      },
-                      borderRadius: BorderRadius.circular(20),
-                      child: Container(
-                        width: 36,
-                        height: 36,
-                        decoration: BoxDecoration(
-                          color: VSPColors.surfaceAlt,
-                          shape: BoxShape.circle,
-                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
-                        ),
-                        child: const Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 18),
-                      ),
-                    ),
-                  ],
-                )
+                    child: const Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 18),
+                  ),
+                ),
               ],
             ),
             
@@ -381,9 +355,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                _buildInfoColumn(l10n.date, dateRange),
-                _buildInfoColumn(l10n.entryFeeLabel, '${tournament.entryFee.toInt()} ${l10n.egCurrency}'),
-                _buildInfoColumn(l10n.grandPrizeLabel, '${tournament.grandPrize.toInt()} ${l10n.egCurrency}'),
+                _buildInfoColumn(isArabic ? 'التاريخ' : 'DATE', dateRange),
+                _buildInfoColumn(isArabic ? 'رسوم الدخول' : 'ENTRY FEE', '${tournament.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}'),
+                _buildInfoColumn(isArabic ? 'الجائزة الكبرى' : 'GRAND PRIZE', '${tournament.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'),
               ],
             ),
             
@@ -391,7 +365,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
              
             Row(
               children: [
-                // 🛑 FIX 3: استبدال أيقونات الصور التالفة بآفاتار نظيف وأنيق
                 if (tournament.joinedTeams.isNotEmpty) 
                   SizedBox(
                     width: 30 + (tournament.joinedTeams.length.clamp(1, 4) - 1) * 20.0,
@@ -416,7 +389,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   ),
                 if (tournament.joinedTeams.isNotEmpty) const SizedBox(width: 8),
                 
-                // 🛑 FIX 4: ضبط اتجاه الكسر العربي دائماً LTR
                 Directionality(
                   textDirection: TextDirection.ltr,
                   child: Text(
@@ -428,7 +400,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   ),
                 ),
               ],
-            )
+            ),
           ],
         ),
       ),

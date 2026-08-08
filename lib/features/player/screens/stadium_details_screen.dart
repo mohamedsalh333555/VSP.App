@@ -12,6 +12,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_type_screen.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -530,9 +531,147 @@ class _RatingsTab extends StatelessWidget {
   final Stadium stadium;
   const _RatingsTab({required this.stadium});
 
+  Future<void> _showAddReviewSheet(BuildContext context) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    if (!auth.isAuthenticated) {
+      VSPFeedback.showError(context, isArabic ? 'يرجى تسجيل الدخول أولاً لإضافة تقييم' : 'Please login to leave a review');
+      return;
+    }
+
+    int selectedRating = 5;
+    final commentController = TextEditingController();
+    bool isSubmitting = false;
+
+    await showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (sheetCtx) {
+        return StatefulBuilder(
+          builder: (context, setSheetState) {
+            return Padding(
+              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+              child: Container(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: const BoxDecoration(
+                  color: VSPColors.background,
+                  borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+                ),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2))),
+                    const SizedBox(height: 16),
+                    Text(
+                      isArabic ? 'تقييم وإبداء رأيك في الملعب' : 'Rate & Review Stadium',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(height: 16),
+                    // Star Picker
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: List.generate(5, (index) {
+                        final starIndex = index + 1;
+                        return IconButton(
+                          icon: Icon(
+                            LucideIcons.star,
+                            color: starIndex <= selectedRating ? Colors.amber : VSPColors.surfaceAlt,
+                            size: 32,
+                          ),
+                          onPressed: () {
+                            setSheetState(() {
+                              selectedRating = starIndex;
+                            });
+                          },
+                        );
+                      }),
+                    ),
+                    const SizedBox(height: 16),
+                    TextField(
+                      controller: commentController,
+                      style: const TextStyle(color: Colors.white, fontSize: 14),
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        hintText: isArabic ? 'اكتب انطباعك عن جودة الملعب والإضاءة والمعاملة...' : 'Write your feedback...',
+                        hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                        filled: true,
+                        fillColor: VSPColors.surface,
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          borderSide: const BorderSide(color: VSPColors.divider),
+                        ),
+                      ),
+                    ),
+                    const SizedBox(height: 20),
+                    PrimaryButton(
+                      text: isArabic ? 'إرسال التقييم ⭐️' : 'Submit Review',
+                      isLoading: isSubmitting,
+                      onPressed: () async {
+                        final comment = commentController.text.trim();
+                        if (comment.isEmpty) {
+                          VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى كتابة تعليق' : 'Please enter a comment');
+                          return;
+                        }
+                        setSheetState(() => isSubmitting = true);
+                        try {
+                          final user = auth.currentUser;
+                          final userModel = auth.userModel;
+                          final userName = userModel?.name ?? user?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
+                          final userAvatar = userModel?.profileImageUrl ?? '';
+
+                          await Supabase.instance.client.from('reviews').insert({
+                            'stadium_id': stadium.id,
+                            'user_id': user?.uid ?? '',
+                            'user_name': userName,
+                            'user_image_url': userAvatar,
+                            'rating': selectedRating,
+                            'review_text': comment,
+                            'created_at': DateTime.now().toIso8601String(),
+                          });
+
+                          // Update average rating on stadium record safely
+                          final allReviews = await Supabase.instance.client.from('reviews').select('rating').eq('stadium_id', stadium.id);
+                          final count = (allReviews as List).length;
+                          double sum = 0;
+                          for (final r in allReviews) {
+                            sum += (r['rating'] as num?)?.toDouble() ?? 0.0;
+                          }
+                          final newAvg = count > 0 ? (sum / count) : selectedRating.toDouble();
+
+                          await Supabase.instance.client.from('stadiums').update({
+                            'rating': newAvg,
+                            'reviews_count': count,
+                          }).eq('id', stadium.id);
+
+                          if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                          if (context.mounted) {
+                            VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح 🌟' : 'Review submitted successfully!');
+                          }
+                        } catch (e) {
+                          setSheetState(() => isSubmitting = false);
+                          if (sheetCtx.mounted) {
+                            VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
+                          }
+                        }
+                      },
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Column(
       children: [
         Padding(
@@ -556,6 +695,17 @@ class _RatingsTab extends StatelessWidget {
             ),
           ),
         ),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+          child: PrimaryButton(
+            text: isArabic ? 'إضافة تقييمك ورأيك ⭐️' : 'Add Your Review ⭐️',
+            height: 44,
+            color: VSPColors.surfaceAlt,
+            textColor: VSPColors.accent,
+            onPressed: () => _showAddReviewSheet(context),
+          ),
+        ),
+        const SizedBox(height: VSPSpacing.sm),
         Expanded(
           child: StreamBuilder<List<Map<String, dynamic>>>(
             stream: Supabase.instance.client.from('reviews').stream(primaryKey: ['id']).eq('stadium_id', stadium.id).map((list) {
@@ -573,10 +723,13 @@ class _RatingsTab extends StatelessWidget {
                 itemBuilder: (context, index) {
                   final doc = docs[index];
                   final createdAtStr = doc['created_at'] as String?;
+                  final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
+                  final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
+
                   return _buildReviewItem(
                     context,
-                    name: l10n.player,
-                    imageUrl: '',
+                    name: userName,
+                    imageUrl: userImage,
                     rating: (doc['rating'] as num?)?.toInt() ?? 0,
                     timeAgo: createdAtStr != null 
                         ? timeago.format(DateTime.parse(createdAtStr), locale: Localizations.localeOf(context).languageCode) 

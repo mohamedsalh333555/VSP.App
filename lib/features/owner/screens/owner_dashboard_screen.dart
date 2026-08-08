@@ -639,7 +639,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         final bool isEnded = b.status == BookingStatus.completed || b.endTime.isBefore(DateTime.now());
         final String paymentStatus = b.paymentStatus;
         final double depositPaid = b.depositPaid;
-        final double totalPrice = b.totalPrice;
+        final double rawPrice = b.totalPrice;
+        final double totalPrice = rawPrice > 0 ? rawPrice : (depositPaid > 0 ? depositPaid : 0.0);
         final bool isPaidInFull = b.isPaid || paymentStatus == 'paid' || (totalPrice > 0 && depositPaid >= totalPrice);
         final bool isPartiallyPaid = !isPaidInFull && (paymentStatus == 'partially_paid' || b.isDepositPaid || depositPaid > 0);
 
@@ -692,7 +693,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 crossAxisAlignment: CrossAxisAlignment.end,
                 children: [
                   Text(
-                    '${b.totalPrice.toInt()} $currencySymbol',
+                    '${totalPrice.toInt()} $currencySymbol',
                     style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 2),
