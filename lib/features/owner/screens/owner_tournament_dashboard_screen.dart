@@ -206,111 +206,170 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ),
           content: SizedBox(
             width: MediaQuery.of(context).size.width * 0.9,
-            height: 350,
-            child: SingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              physics: const BouncingScrollPhysics(),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  ...rounds.asMap().entries.map((entry) {
-                    int roundIdx = entry.key;
-                    List<Map<String, String>> roundMatches = entry.value;
-                    
-                    Widget roundColumn = SizedBox(
-                      width: 160,
-                      height: 350,
-                      child: Column(
+            height: MediaQuery.of(context).size.height * 0.65,
+            child: ClipRRect(
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              child: InteractiveViewer(
+                constrained: false,
+                scaleEnabled: true,
+                minScale: 0.5,
+                maxScale: 2.0,
+                child: Builder(
+                  builder: (context) {
+                    final int maxOpeningMatches = rounds.first.length;
+                    final double totalBracketHeight = (maxOpeningMatches * 84.0).clamp(450.0, 1600.0);
+
+                    return Container(
+                      padding: const EdgeInsets.all(16),
+                      child: Row(
+                        crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Padding(
-                            padding: const EdgeInsets.symmetric(vertical: 4.0),
-                            child: Text(
-                              roundIdx == 0 && numOpeningMatches > 0
-                                  ? 'جولة تمهيدية'
-                                  : (roundIdx == rounds.length - 1 ? 'النهائي' : 'جولة ${numOpeningMatches > 0 ? roundIdx : roundIdx + 1}'),
-                              style: const TextStyle(
-                                color: VSPColors.accent,
-                                fontWeight: FontWeight.bold,
-                                fontSize: 12,
-                              ),
-                            ),
-                          ),
-                          Expanded(
-                            child: SingleChildScrollView(
-                              physics: const BouncingScrollPhysics(),
+                          ...rounds.asMap().entries.map((entry) {
+                            int roundIdx = entry.key;
+                            List<Map<String, String>> roundMatches = entry.value;
+                            int matchCount = roundMatches.length;
+                            double slotHeight = totalBracketHeight / matchCount;
+
+                            Widget roundColumn = SizedBox(
+                              width: 165,
                               child: Column(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: roundMatches.map((m) {
-                                  return Container(
-                                    width: 160,
-                                    margin: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
-                                    padding: const EdgeInsets.all(10),
-                                    decoration: BoxDecoration(
-                                      color: VSPColors.surfaceAlt,
-                                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                                      border: Border.all(color: VSPColors.divider),
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  Container(
+                                    height: 32,
+                                    alignment: Alignment.center,
+                                    child: Text(
+                                      roundIdx == 0 && numOpeningMatches > 0
+                                          ? 'جولة تمهيدية'
+                                          : (roundIdx == rounds.length - 1 ? 'النهائي' : 'جولة ${numOpeningMatches > 0 ? roundIdx : roundIdx + 1}'),
+                                      style: const TextStyle(
+                                        color: VSPColors.accent,
+                                        fontWeight: FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
                                     ),
+                                  ),
+                                  SizedBox(
+                                    height: totalBracketHeight,
                                     child: Column(
-                                      crossAxisAlignment: CrossAxisAlignment.start,
-                                      children: [
-                                        Text(m['home']!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                        const Divider(height: 10, color: Colors.white10),
-                                        Text(m['away']!, style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold, color: Colors.white), maxLines: 1, overflow: TextOverflow.ellipsis),
-                                      ],
+                                      children: roundMatches.map((m) {
+                                        return SizedBox(
+                                          height: slotHeight,
+                                          child: Center(
+                                            child: Container(
+                                              width: 155,
+                                              margin: const EdgeInsets.symmetric(horizontal: 4),
+                                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                                              decoration: BoxDecoration(
+                                                color: VSPColors.surfaceAlt,
+                                                borderRadius: BorderRadius.circular(VSPRadius.md),
+                                                border: Border.all(color: VSPColors.divider, width: 1),
+                                                boxShadow: [
+                                                  BoxShadow(
+                                                    color: Colors.black.withValues(alpha: 0.3),
+                                                    blurRadius: 4,
+                                                    offset: const Offset(0, 2),
+                                                  )
+                                                ],
+                                              ),
+                                              child: Column(
+                                                mainAxisSize: MainAxisSize.min,
+                                                crossAxisAlignment: CrossAxisAlignment.start,
+                                                children: [
+                                                  Text(
+                                                    m['home']!,
+                                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                  const Divider(height: 8, color: Colors.white12),
+                                                  Text(
+                                                    m['away']!,
+                                                    style: const TextStyle(fontSize: 11.5, fontWeight: FontWeight.bold, color: Colors.white),
+                                                    maxLines: 1,
+                                                    overflow: TextOverflow.ellipsis,
+                                                  ),
+                                                ],
+                                              ),
+                                            ),
+                                          ),
+                                        );
+                                      }).toList(),
                                     ),
-                                  );
-                                }).toList(),
+                                  ),
+                                ],
                               ),
+                            );
+
+                            return Row(
+                              children: [
+                                roundColumn,
+                                SizedBox(
+                                  height: totalBracketHeight + 32,
+                                  child: const Center(
+                                    child: Padding(
+                                      padding: EdgeInsets.symmetric(horizontal: 2),
+                                      child: Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 16),
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            );
+                          }),
+
+                          // Champion Card Column
+                          SizedBox(
+                            width: 155,
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                const SizedBox(height: 32),
+                                SizedBox(
+                                  height: totalBracketHeight,
+                                  child: Center(
+                                    child: Container(
+                                      width: 145,
+                                      padding: const EdgeInsets.all(16),
+                                      decoration: BoxDecoration(
+                                        color: VSPColors.accent.withValues(alpha: 0.12),
+                                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                                        border: Border.all(color: VSPColors.accent, width: 1.5),
+                                        boxShadow: [
+                                          BoxShadow(
+                                            color: VSPColors.accent.withValues(alpha: 0.2),
+                                            blurRadius: 10,
+                                            spreadRadius: 1,
+                                          )
+                                        ],
+                                      ),
+                                      child: const Column(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          Icon(LucideIcons.trophy, color: VSPColors.accent, size: 36),
+                                          SizedBox(height: 8),
+                                          Text(
+                                            '🏆 البطل',
+                                            style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VSPColors.accent),
+                                          ),
+                                          SizedBox(height: 4),
+                                          Text(
+                                            'الفائز بالنهائي',
+                                            textAlign: TextAlign.center,
+                                            style: TextStyle(fontSize: 10, color: Colors.white70),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
+                                  ),
+                                ),
+                              ],
                             ),
                           ),
                         ],
                       ),
                     );
-
-                    return Row(
-                      children: [
-                        roundColumn,
-                        const Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 14),
-                      ],
-                    );
-                  }),
-
-                  SizedBox(
-                    width: 150,
-                    child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Container(
-                          width: 140,
-                          margin: const EdgeInsets.all(8),
-                          padding: const EdgeInsets.all(16),
-                          decoration: BoxDecoration(
-                            color: VSPColors.accent.withValues(alpha: 0.1),
-                            borderRadius: BorderRadius.circular(VSPRadius.lg),
-                            border: Border.all(color: VSPColors.accent, width: 1.5),
-                          ),
-                          child: const Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Icon(LucideIcons.trophy, color: VSPColors.accent, size: 32),
-                              SizedBox(height: 8),
-                              Text(
-                                '🏆 البطل',
-                                style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VSPColors.accent),
-                              ),
-                              SizedBox(height: 6),
-                              Text(
-                                'الفائز بالنهائي',
-                                textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 10, color: Colors.white70),
-                              ),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
+                  },
+                ),
               ),
             ),
           ),

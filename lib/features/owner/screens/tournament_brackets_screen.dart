@@ -81,13 +81,15 @@ class TournamentBracketsScreen extends StatelessWidget {
             body: TabBarView(
               children: sortedRounds.map((roundIdx) {
                 final roundMatches = groupedMatches[roundIdx]!;
-                return ListView.builder(
+                return ListView(
                   padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
-                  itemCount: roundMatches.length,
-                  itemBuilder: (context, index) {
-                    final match = roundMatches[index];
-                    return _buildMatchCard(context, match);
-                  },
+                  children: [
+                    if (isOwner) ...[
+                      _buildAutoScheduleBanner(context, roundIdx, roundMatches, sortedRounds.length),
+                      const SizedBox(height: 16),
+                    ],
+                    ...roundMatches.map((match) => _buildMatchCard(context, match)),
+                  ],
                 );
               }).toList(),
             ),
@@ -560,6 +562,372 @@ class TournamentBracketsScreen extends StatelessWidget {
                 ),
         ),
       ],
+    );
+  }
+
+  // ⚡ BANNER: Auto Schedule Button Banner for Round
+  Widget _buildAutoScheduleBanner(BuildContext context, int roundIdx, List<TournamentMatch> matches, int totalRounds) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final roundName = _getRoundLabel(context, roundIdx, totalRounds);
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+      ),
+      child: Row(
+        children: [
+          Container(
+            padding: const EdgeInsets.all(10),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: VSPColors.accent, size: 16),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic ? 'جدولة تلقائية لمباريات $roundName' : 'Auto-Schedule $roundName',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isArabic ? 'توليد المواعيد والتواريخ تلقائياً لـ ${matches.length} مباراة' : 'Auto generate dates for ${matches.length} matches',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                ),
+              ],
+            ),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.accent,
+              foregroundColor: Colors.black,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+            ),
+            onPressed: () => _showAutoScheduleDialog(context, roundIdx, matches, roundName),
+            child: Text(
+              isArabic ? 'جدولة ⚡' : 'Schedule ⚡',
+              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // ⚡ POPUP MODAL: Auto Schedule Options Popup
+  void _showAutoScheduleDialog(BuildContext context, int roundIdx, List<TournamentMatch> matches, String roundName) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    int daysCount = 1;
+    DateTime selectedDate = DateTime.now().add(const Duration(days: 1));
+    TimeOfDay selectedTime = const TimeOfDay(hour: 18, minute: 0);
+    // 🛡️ Read matchDuration directly from pre-configured tournament settings!
+    final int matchDuration = championship.matchDuration;
+
+    List<int> availableDaysOptions = [1];
+    if (matches.length >= 8) {
+      availableDaysOptions = [1, 2, 4];
+    } else if (matches.length >= 4) {
+      availableDaysOptions = [1, 2];
+    }
+
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      backgroundColor: Colors.transparent,
+      builder: (modalCtx) {
+        return StatefulBuilder(
+          builder: (context, setModalState) {
+            final matchesPerDay = (matches.length / daysCount).ceil();
+
+            return Container(
+              padding: EdgeInsets.fromLTRB(20, 16, 20, MediaQuery.of(modalCtx).padding.bottom + 20),
+              decoration: const BoxDecoration(
+                color: VSPColors.background,
+                borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Center(
+                    child: Container(
+                      width: 40, height: 4,
+                      decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+                  Row(
+                    children: [
+                      Container(
+                        padding: const EdgeInsets.all(8),
+                        decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
+                        child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.black, size: 14),
+                      ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: Text(
+                          isArabic ? 'الجدولة التلقائية ($roundName)' : 'Auto Schedule ($roundName)',
+                          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      IconButton(
+                        icon: const Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
+                        onPressed: () => Navigator.pop(modalCtx),
+                      ),
+                    ],
+                  ),
+                  const Divider(color: VSPColors.divider),
+                  const SizedBox(height: 14),
+
+                  // 1. Days Distribution Options
+                  Text(
+                    isArabic ? 'كيف تريد توزيع مباريات الدور (${matches.length} مباراة)؟' : 'How to divide ${matches.length} matches?',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 12),
+                  Row(
+                    children: availableDaysOptions.map((d) {
+                      final isSelected = daysCount == d;
+                      final mPerD = (matches.length / d).ceil();
+                      
+                      String title = isArabic 
+                          ? (d == 1 ? 'يوم واحد' : (d == 2 ? 'يومان' : '4 أيام'))
+                          : (d == 1 ? '1 Day' : '$d Days');
+                      String subtitle = isArabic ? '$mPerD مباريات/يوم' : '$mPerD matches/day';
+                      if (d == 1) subtitle = isArabic ? '$mPerD مباراة' : '$mPerD matches';
+
+                      return Expanded(
+                        child: GestureDetector(
+                          onTap: () => setModalState(() => daysCount = d),
+                          child: AnimatedContainer(
+                            duration: const Duration(milliseconds: 200),
+                            margin: const EdgeInsets.symmetric(horizontal: 4),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 6),
+                            decoration: BoxDecoration(
+                              color: isSelected ? VSPColors.accent : VSPColors.surface,
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider, width: 1.5),
+                            ),
+                            child: Column(
+                              children: [
+                                Icon(
+                                  d == 1 ? FontAwesomeIcons.calendarDay : (d == 2 ? FontAwesomeIcons.calendarDays : FontAwesomeIcons.calendarWeek),
+                                  color: isSelected ? Colors.black : VSPColors.accent,
+                                  size: 16,
+                                ),
+                                const SizedBox(height: 6),
+                                Text(
+                                  title,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.black : Colors.white,
+                                    fontWeight: FontWeight.bold,
+                                    fontSize: 12,
+                                  ),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  subtitle,
+                                  textAlign: TextAlign.center,
+                                  style: TextStyle(
+                                    color: isSelected ? Colors.black87 : VSPColors.textSecondary,
+                                    fontSize: 10,
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        ),
+                      );
+                    }).toList(),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 2. Start Date & Start Time Pickers
+                  Row(
+                    children: [
+                      // Date Picker
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(isArabic ? 'تاريخ أول مباراة:' : 'Start Date:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 6),
+                            InkWell(
+                              onTap: () async {
+                                final d = await showDatePicker(
+                                  context: context,
+                                  initialDate: selectedDate,
+                                  firstDate: DateTime.now(),
+                                  lastDate: DateTime.now().add(const Duration(days: 90)),
+                                );
+                                if (d != null) setModalState(() => selectedDate = d);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.surface,
+                                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                                  border: Border.all(color: VSPColors.divider),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      DateFormat('yyyy-MM-dd').format(selectedDate),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                    ),
+                                    const Icon(FontAwesomeIcons.calendar, color: VSPColors.accent, size: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 12),
+                      // Time Picker
+                      Expanded(
+                        child: Column(
+                          crossAxisAlignment: CrossAxisAlignment.start,
+                          children: [
+                            Text(isArabic ? 'وقت أول مباراة:' : 'Start Time:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                            const SizedBox(height: 6),
+                            InkWell(
+                              onTap: () async {
+                                final t = await showTimePicker(context: context, initialTime: selectedTime);
+                                if (t != null) setModalState(() => selectedTime = t);
+                              },
+                              child: Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 12),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.surface,
+                                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                                  border: Border.all(color: VSPColors.divider),
+                                ),
+                                child: Row(
+                                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                  children: [
+                                    Text(
+                                      selectedTime.format(context),
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                                    ),
+                                    const Icon(FontAwesomeIcons.clock, color: VSPColors.accent, size: 14),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 3. Match Duration Badge (Read-only from tournament settings)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(FontAwesomeIcons.stopwatch, color: VSPColors.accent, size: 14),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            isArabic
+                                ? 'مدة المباراة: $matchDuration دقيقة (محددة في إعدادات البطولة)'
+                                : 'Match Duration: $matchDuration mins (configured in settings)',
+                            style: const TextStyle(color: Colors.white70, fontSize: 11.5, fontWeight: FontWeight.w600),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 16),
+
+                  // 4. Summary Preview Box
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? '📌 ملخص الجدولة التلقائية:' : '📌 Schedule Summary:',
+                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        const SizedBox(height: 6),
+                        Text(
+                          isArabic
+                              ? '• سيتم إدراج $matchesPerDay مبارايات يومياً على مدار $daysCount يوم (أيام).'
+                              : '• $matchesPerDay matches daily over $daysCount day(s).',
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                        Text(
+                          isArabic
+                              ? '• تبدأ المباريات يومياً الساعة ${selectedTime.format(context)} بفاصل $matchDuration دقيقة.'
+                              : '• Matches start at ${selectedTime.format(context)} with $matchDuration min interval.',
+                          style: const TextStyle(color: Colors.white70, fontSize: 11),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 20),
+
+                  // 5. Confirm Button
+                  SizedBox(
+                    width: double.infinity,
+                    child: PrimaryButton(
+                      text: isArabic ? 'تأكيد وحفظ الجدولة التلقائية ⚡' : 'Save Auto-Schedule ⚡',
+                      onPressed: () async {
+                        Navigator.pop(modalCtx);
+                        final success = await TournamentRepository().autoScheduleRoundMatches(
+                          championshipId: championship.id,
+                          roundIndex: roundIdx,
+                          matches: matches,
+                          startDate: selectedDate,
+                          startTime: selectedTime,
+                          daysCount: daysCount,
+                          matchDurationMinutes: matchDuration,
+                        );
+
+                        if (success && context.mounted) {
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic
+                                ? '⚡ تم جدولة جميع مباريات $roundName تلقائياً بنجاح!'
+                                : '⚡ Auto-scheduled all $roundName matches successfully!',
+                          );
+                        } else if (!success && context.mounted) {
+                          VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء الجدولة التلقائية' : 'Error auto-scheduling matches');
+                        }
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
     );
   }
 }

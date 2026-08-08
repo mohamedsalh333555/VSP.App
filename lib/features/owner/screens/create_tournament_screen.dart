@@ -8,6 +8,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 
@@ -58,9 +59,39 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   bool _fairPlayScoring = false;
   String _selectedPaymentMethod = 'Cash';
   bool _isLoading = false;
+  List<String> _availableSports = ['Football'];
 
   DateTime _startDate = DateTime.now().add(const Duration(days: 7));
   DateTime _endDate = DateTime.now().add(const Duration(days: 37));
+
+  @override
+  void initState() {
+    super.initState();
+    _loadOwnerSports();
+  }
+
+  void _loadOwnerSports() {
+    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+    if (uid != null) {
+      StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
+        if (stadiums.isNotEmpty && mounted) {
+          final sports = stadiums
+              .map((s) => s.sportType)
+              .where((s) => s.isNotEmpty)
+              .toSet()
+              .toList();
+          if (sports.isNotEmpty) {
+            setState(() {
+              _availableSports = sports;
+              if (!_availableSports.contains(_selectedSport)) {
+                _selectedSport = _availableSports.first;
+              }
+            });
+          }
+        }
+      });
+    }
+  }
 
   Future<void> _selectDate(BuildContext context, bool isStart) async {
     final DateTime? picked = await showDatePicker(
@@ -213,7 +244,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               _buildDropdown(['Cup', 'League'], _selectedTypeTournament, (v) => setState(() => _selectedTypeTournament = v!)),
               const SizedBox(height: 16),
               _buildInputLabel('Type Sport'),
-              _buildDropdown(VSPConstants.sports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
+              _buildDropdown(_availableSports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
               const SizedBox(height: 24),
 
               // --- Dates ---

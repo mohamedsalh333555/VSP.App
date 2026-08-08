@@ -1,4 +1,5 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import '../repositories/notification_repository.dart';
@@ -25,9 +26,8 @@ class TournamentRepository {
         .stream(primaryKey: ['id'])
         .map((list) {
           return list.map((data) {
-            // 🛡️ Approval Gate: Hide unapproved championships from players.
-            // Owners can still see their own championships in their dashboard.
-            final bool isApproved = data['is_approved'] == true;
+            // 🛡️ Approval Gate: Hide unapproved championships from players if column exists.
+            final bool isApproved = data.containsKey('is_approved') ? (data['is_approved'] == true) : true;
             if (!isOwner && !isApproved) return null;
             if (isOwner && ownerId != null) {
               // Owner dashboard: only show their own championships
@@ -76,9 +76,6 @@ class TournamentRepository {
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
-        // 🛡️ APPROVAL GATE: New championships are hidden from players by default.
-        // They become visible automatically when admin approves the owner's stadium.
-        'is_approved': false,
         'joined_teams': [],
         'paid_teams': [],
         'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
@@ -408,7 +405,23 @@ class TournamentRepository {
         return null; // BYE slot
       });
 
-      String getMatchId(int r, int m) => '${championshipId}_R${r}_M$m';
+      final Map<String, String> matchUuidMap = {};
+      String getMatchId(int r, int m) {
+        final key = '${r}_$m';
+        if (!matchUuidMap.containsKey(key)) {
+          final rng = Random();
+          final bytes = List<int>.generate(16, (_) => rng.nextInt(256));
+          bytes[6] = (bytes[6] & 0x0f) | 0x40;
+          bytes[8] = (bytes[8] & 0x3f) | 0x80;
+          final buf = StringBuffer();
+          for (int i = 0; i < 16; i++) {
+            if (i == 4 || i == 6 || i == 8 || i == 10) buf.write('-');
+            buf.write(bytes[i].toRadixString(16).padLeft(2, '0'));
+          }
+          matchUuidMap[key] = buf.toString();
+        }
+        return matchUuidMap[key]!;
+      }
 
       // Map to store match data for all rounds before bulk insertion
       final Map<String, Map<String, dynamic>> matchesMap = {};
@@ -836,6 +849,47 @@ class TournamentRepository {
     }
 
     return {'home': homePlayers, 'away': awayPlayers};
+  }
+
+  /// ⚡ Auto-schedule matches in a specific round across 1, 2, or 4 days
+  Future<bool> autoScheduleRoundMatches({
+    required String championshipId,
+    required int roundIndex,
+    required List<TournamentMatch> matches,
+    required DateTime startDate,
+    required TimeOfDay startTime,
+    required int daysCount,
+    required int matchDurationMinutes,
+  }) async {
+    try {
+      if (matches.isEmpty) return false;
+      int totalMatches = matches.length;
+      int matchesPerDay = (totalMatches / daysCount).ceil();
+
+      for (int i = 0; i < totalMatches; i++) {
+        final match = matches[i];
+        int dayOffset = i ~/ matchesPerDay;
+        int matchIndexInDay = i % matchesPerDay;
+
+        final currentDay = startDate.add(Duration(days: dayOffset));
+        final scheduledDateTime = DateTime(
+          currentDay.year,
+          currentDay.month,
+          currentDay.day,
+          startTime.hour,
+          startTime.minute,
+        ).add(Duration(minutes: matchIndexInDay * matchDurationMinutes));
+
+        await updateMatchScheduledTime(
+          matchId: match.id,
+          scheduledTime: scheduledDateTime,
+        );
+      }
+      return true;
+    } catch (e) {
+      debugPrint('Error auto-scheduling round matches: $e');
+      return false;
+    }
   }
 }
 

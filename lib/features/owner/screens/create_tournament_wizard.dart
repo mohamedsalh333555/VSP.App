@@ -7,12 +7,14 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 
 /// Quick Template preset data
 class _TournamentTemplate {
-  final String name;
+  final String nameAr;
+  final String nameEn;
   final String icon;
   final String type;
   final String sport;
@@ -22,7 +24,8 @@ class _TournamentTemplate {
   final int durationMinutes;
 
   const _TournamentTemplate({
-    required this.name,
+    required this.nameAr,
+    required this.nameEn,
     required this.icon,
     required this.type,
     required this.sport,
@@ -31,11 +34,14 @@ class _TournamentTemplate {
     required this.prize,
     required this.durationMinutes,
   });
+
+  String name(bool isAr) => isAr ? nameAr : nameEn;
 }
 
 const _quickTemplates = [
   _TournamentTemplate(
-    name: 'Ramadan Cup',
+    nameAr: 'كأس رمضان',
+    nameEn: 'Ramadan Cup',
     icon: '🌙',
     type: 'Cup',
     sport: 'Football',
@@ -45,7 +51,8 @@ const _quickTemplates = [
     durationMinutes: 25,
   ),
   _TournamentTemplate(
-    name: 'Fast 5s Tournament',
+    nameAr: 'بطولة خماسية سريعة',
+    nameEn: 'Fast 5s Tournament',
     icon: '⚡',
     type: 'Cup',
     sport: 'Football',
@@ -55,13 +62,14 @@ const _quickTemplates = [
     durationMinutes: 20,
   ),
   _TournamentTemplate(
-    name: 'Pro League',
+    nameAr: 'دوري المحترفين',
+    nameEn: 'Pro League',
     icon: '🏆',
     type: 'League',
     sport: 'Football',
     teams: 8,
-    fee: 1000,
-    prize: 10000,
+    fee: 400,
+    prize: 4000,
     durationMinutes: 45,
   ),
 ];
@@ -94,9 +102,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   final _durationController = TextEditingController(text: '30');
   final _prizeController = TextEditingController(text: '5000');
 
+  List<String> _availableSports = ['Football'];
+
   @override
   void initState() {
     super.initState();
+    _loadOwnerSports();
     if (widget.tournament != null) {
       final t = widget.tournament!;
       _nameController.text = t.name;
@@ -111,6 +122,29 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     }
   }
 
+  void _loadOwnerSports() {
+    final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
+    if (uid != null) {
+      StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
+        if (stadiums.isNotEmpty && mounted) {
+          final sports = stadiums
+              .map((s) => s.sportType)
+              .where((s) => s.isNotEmpty)
+              .toSet()
+              .toList();
+          if (sports.isNotEmpty) {
+            setState(() {
+              _availableSports = sports;
+              if (!_availableSports.contains(_selectedSport)) {
+                _selectedSport = _availableSports.first;
+              }
+            });
+          }
+        }
+      });
+    }
+  }
+
   @override
   void dispose() {
     _nameController.dispose();
@@ -121,9 +155,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   }
 
   void _applyTemplate(_TournamentTemplate t) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final name = t.name(isAr);
     setState(() {
-      _selectedTemplateName = t.name;
-      _nameController.text = t.name;
+      _selectedTemplateName = name;
+      _nameController.text = name;
       _selectedSport = t.sport;
       _feeController.text = t.fee.toStringAsFixed(0);
       _selectedType = t.type;
@@ -131,7 +167,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _durationController.text = t.durationMinutes.toString();
       _prizeController.text = t.prize.toStringAsFixed(0);
     });
-    VSPFeedback.showSuccess(context, 'Template applied: ${t.name}');
+    VSPFeedback.showSuccess(context, isAr ? 'تم تطبيق القالب: $name' : 'Template applied: $name');
   }
 
   Future<void> _selectDate(bool isStart) async {
@@ -389,7 +425,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     final isActive = i <= _currentStep;
     final isCurrent = i == _currentStep;
     return SizedBox(
-      width: 70, // Fixed width so text and circle align perfectly and don't push the line
+      width: 75,
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
@@ -398,9 +434,9 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
             height: 28,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: isActive ? VSPColors.accent : VSPColors.surface,
+              color: isActive ? VSPColors.accent : const Color(0xFF1E2620),
               border: Border.all(
-                color: isActive ? VSPColors.accent : VSPColors.divider,
+                color: isActive ? VSPColors.accent : const Color(0xFF3A473E),
                 width: 2,
               ),
             ),
@@ -410,7 +446,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                   : Text(
                       '${i + 1}',
                       style: TextStyle(
-                        color: isActive ? Colors.black : VSPColors.textSecondary,
+                        color: isActive ? Colors.black : Colors.white70,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
                       ),
@@ -421,11 +457,13 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           Text(
             label,
             textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                  color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
-                  fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                  fontSize: 10,
-                ),
+            style: TextStyle(
+              color: isCurrent
+                  ? VSPColors.accent
+                  : (isActive ? Colors.white70 : const Color(0xFFB0BEC5)),
+              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
+              fontSize: 11,
+            ),
           ),
         ],
       ),
@@ -435,7 +473,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   Widget _buildStepLine(int nextStepIndex) {
     final isActive = nextStepIndex <= _currentStep;
     return Container(
-      margin: const EdgeInsets.only(bottom: 20), // Center vertically with the circle
+      margin: const EdgeInsets.only(bottom: 20),
       height: 2,
       color: isActive ? VSPColors.accent : VSPColors.divider,
     );
@@ -444,59 +482,90 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   // ── STEP 1: Basics ──────────────────────────────
   Widget _buildStep1() {
     final l10n = AppLocalizations.of(context)!;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       key: const ValueKey('step1'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         // Quick Templates
         Text(l10n.quickTemplates, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-        Text(l10n.choosePresetSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary)),
+        Text(l10n.choosePresetSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
         const SizedBox(height: VSPSpacing.md),
         SizedBox(
-          height: 80,
+          height: 90,
           child: ListView.separated(
             scrollDirection: Axis.horizontal,
+            padding: const EdgeInsets.symmetric(horizontal: 2),
             itemCount: _quickTemplates.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            separatorBuilder: (_, __) => const SizedBox(width: 12),
             itemBuilder: (context, i) {
               final t = _quickTemplates[i];
-              final isSelected = _selectedTemplateName == t.name;
+              final tName = t.name(isAr);
+              final isSelected = _selectedTemplateName == tName;
               return GestureDetector(
                 onTap: () => _applyTemplate(t),
                 child: AnimatedContainer(
                   duration: const Duration(milliseconds: 200),
-                  width: 145,
+                  width: 155,
                   padding: const EdgeInsets.all(VSPSpacing.sm),
                   decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surface,
+                    color: isSelected ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
                     borderRadius: BorderRadius.circular(VSPRadius.md),
                     border: Border.all(
-                      color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.3),
+                      color: isSelected ? VSPColors.accent : VSPColors.divider,
                       width: isSelected ? 2 : 1,
                     ),
+                    boxShadow: isSelected
+                        ? [
+                            BoxShadow(
+                              color: VSPColors.accent.withValues(alpha: 0.25),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            )
+                          ]
+                        : [],
                   ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisAlignment: MainAxisAlignment.center,
+                  child: Stack(
                     children: [
-                      Text(t.icon, style: const TextStyle(fontSize: 20)),
-                      const SizedBox(height: 4),
-                      Text(
-                        t.name,
-                        style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                          fontWeight: FontWeight.bold,
-                          color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
-                        ),
-                        maxLines: 1,
-                        overflow: TextOverflow.ellipsis,
+                      Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(t.icon, style: const TextStyle(fontSize: 22)),
+                          const SizedBox(height: 4),
+                          Text(
+                            tName,
+                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
+                              fontWeight: FontWeight.bold,
+                              color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                            ),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: isSelected ? VSPColors.accent.withValues(alpha: 0.9) : Colors.white60, 
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
                       ),
-                      Text(
-                        '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${l10n.egCurrency}',
-                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isSelected ? VSPColors.accent.withValues(alpha: 0.7) : VSPColors.textSecondary, 
-                          fontSize: 9,
+                      if (isSelected)
+                        Positioned(
+                          top: 0,
+                          right: isAr ? null : 0,
+                          left: isAr ? 0 : null,
+                          child: Container(
+                            padding: const EdgeInsets.all(2),
+                            decoration: const BoxDecoration(
+                              color: VSPColors.accent,
+                              shape: BoxShape.circle,
+                            ),
+                            child: const Icon(Icons.check, size: 10, color: Colors.black),
+                          ),
                         ),
-                      ),
                     ],
                   ),
                 ),
@@ -504,18 +573,23 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
             },
           ),
         ),
-        const SizedBox(height: VSPSpacing.xl),
+        const SizedBox(height: 28),
 
         _buildLabel(l10n.tournamentNameLabel),
-        _buildTextField(_nameController, hint: 'e.g. Star Cup', autofocus: widget.tournament == null),
+        _buildTextField(_nameController, hint: isAr ? 'مثال: كأس الأبطال' : 'e.g. Star Cup', autofocus: widget.tournament == null),
         const SizedBox(height: VSPSpacing.md),
 
         _buildLabel(l10n.sportTypeLabel),
-        _buildDropdown(VSPConstants.sports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
+        _buildDropdown(_availableSports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
         const SizedBox(height: VSPSpacing.md),
 
         _buildLabel(l10n.entryFeeLabel),
-        _buildTextField(_feeController, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+        _buildTextField(
+          _feeController,
+          keyboardType: TextInputType.number,
+          inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+          suffixText: isAr ? 'ج.م' : 'EGP',
+        ),
         const SizedBox(height: 80),
       ],
     );
@@ -618,11 +692,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Text('${date.day}/${date.month}/${date.year}', style: Theme.of(context).textTheme.bodyMedium),
+          Text('${date.day}/${date.month}/${date.year}', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600)),
           const Icon(Icons.calendar_today, color: VSPColors.accent, size: 18),
         ],
       ),
@@ -642,45 +717,76 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
     bool autofocus = false,
+    String? suffixText,
   }) {
     return Container(
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         autofocus: autofocus,
-        style: Theme.of(context).textTheme.bodyMedium,
+        style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
           border: InputBorder.none,
           counterText: '',
           contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
           isDense: true,
           hintText: hint,
-          hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+          hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+          suffixIcon: suffixText != null
+              ? UnconstrainedBox(
+                  child: Container(
+                    margin: const EdgeInsets.symmetric(horizontal: 10),
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 0.5),
+                    ),
+                    child: Text(
+                      suffixText,
+                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                )
+              : null,
         ),
       ),
     );
   }
 
   Widget _buildDropdown(List<String> items, String value, Function(String?) onChanged) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.textSecondary),
+          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
           isExpanded: true,
-          style: Theme.of(context).textTheme.bodyMedium,
-          items: items.map((item) => DropdownMenuItem(value: item, child: Text(item))).toList(),
+          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
+          items: items.map((item) {
+            String label = item;
+            if (isAr) {
+              if (item == 'Football') label = 'كرة القدم';
+              else if (item == 'Basketball') label = 'كرة السلة';
+              else if (item == 'Padel') label = 'بادل';
+              else if (item == 'Volleyball') label = 'كرة الطائرة';
+              else if (item == 'Tennis') label = 'تنس';
+            }
+            return DropdownMenuItem(value: item, child: Text(label));
+          }).toList(),
           onChanged: onChanged,
         ),
       ),

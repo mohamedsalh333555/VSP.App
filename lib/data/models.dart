@@ -8,6 +8,7 @@ class Stadium {
   final String imageUrl;
   final List<String> images;
   final String type; // Football, Basketball, etc.
+  String get sportType => type;
   final String size; // 11 VS 11, 5 VS 5, etc.
   final int baths;
   final int cafeteria;
