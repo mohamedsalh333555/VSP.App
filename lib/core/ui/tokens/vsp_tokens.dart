@@ -80,3 +80,18 @@ class VSPShadow {
 class VSPConstants {
   static const List<String> sports = ['Football', 'Basketball', 'Volleyball', 'Padel', 'Handball'];
 }
+
+class VSPScrollPadding {
+  /// Calculates bottom padding for scroll views to scroll past floating navbar or bottom action bars cleanly.
+  static double bottom(BuildContext context, {bool hasFloatingNavBar = false, double extra = 20.0}) {
+    final double safeBottom = MediaQuery.of(context).padding.bottom;
+    if (hasFloatingNavBar) {
+      return 68.0 + 12.0 + safeBottom + extra; // 68 nav height + 12 margin + safeArea + extra (~114-120px)
+    }
+    return safeBottom + extra;
+  }
+
+  static EdgeInsets forList(BuildContext context, {bool hasFloatingNavBar = false, double horizontal = 16.0, double top = 16.0}) {
+    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom(context, hasFloatingNavBar: hasFloatingNavBar));
+  }
+}

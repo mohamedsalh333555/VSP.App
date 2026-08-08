@@ -204,8 +204,12 @@ class BookingProvider with ChangeNotifier {
         .getOwnerBookings(ownerId, stadiumIds: stadiumIds)
         .listen(
           (bookings) {
-            // 🛡️ PRESERVE LOCAL MANUAL BOOKINGS: Keep locally created manual slots if not yet returned by stream
-            final manualBookings = _userBookings.where((b) => b.paymentTransactionId?.startsWith('MANUAL') == true && b.status != BookingStatus.cancelled).toList();
+            // 🛡️ PRESERVE LOCAL MANUAL BOOKINGS: Keep locally created manual slots ONLY if not cancelled/deleted
+            final manualBookings = _userBookings.where((b) => 
+              b.paymentTransactionId?.startsWith('MANUAL') == true && 
+              b.status != BookingStatus.cancelled &&
+              !_cancellingIds.contains(b.id)
+            ).toList();
             for (final mb in manualBookings) {
               if (!bookings.any((b) => b.id == mb.id || (b.startTime.isAtSameMomentAs(mb.startTime) && b.stadiumId == mb.stadiumId))) {
                 bookings.add(mb);
@@ -246,40 +250,21 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      // Find the booking in local state to check time early for UI feedback
-      final booking = _userBookings.cast<Booking?>().firstWhere(
-        (b) => b?.id == bookingId,
-        orElse: () => null,
-      );
-
-      final now = DateTime.now();
-      if (booking != null) {
-        // Rule: Prohibit cancelling any booking that has already started!
-        if (now.isAfter(booking.startTime) || now.isAtSameMomentAs(booking.startTime)) {
-          _errorMessage = "عذراً، لا يمكن إلغاء الحجز بعد انطلاق موعده ⚠️";
-          _cancellingIds.remove(bookingId);
-          notifyListeners();
-          return false;
-        }
-      }
-
       final success = await _repository.cancelBooking(bookingId);
       if (success) {
         _upcomingBookings.removeWhere((b) => b.id == bookingId);
         _userBookings.removeWhere((b) => b.id == bookingId);
         _historyBookings.removeWhere((b) => b.id == bookingId);
-        // Keep in set for a moment to allow Firestore to sync.
-        await Future.delayed(const Duration(seconds: 1));
+        await Future.delayed(const Duration(milliseconds: 300));
       } else {
-        _errorMessage =
-            'لا يمكن إلغاء الحجز في الوقت الحالي. قد يكون وقت المباراة قد بدأ بالفعل.';
+        _errorMessage = 'عذراً، تعذر إلغاء الحجز في الوقت الحالي.';
       }
       _cancellingIds.remove(bookingId);
       notifyListeners();
       return success;
     } catch (e) {
-      _errorMessage = 'فشل في إلغاء الحجز: $e';
       _cancellingIds.remove(bookingId);
+      _errorMessage = 'فشل إلغاء الحجز: $e';
       notifyListeners();
       return false;
     }

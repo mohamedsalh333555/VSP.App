@@ -304,7 +304,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               
-              SizedBox(height: MediaQuery.of(context).padding.bottom + 110),
+              SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
             ],
           ),
         ),

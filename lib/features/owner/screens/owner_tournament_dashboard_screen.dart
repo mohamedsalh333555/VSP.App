@@ -1168,7 +1168,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             ),
                           )
                         : ListView.builder(
-                            padding: const EdgeInsets.symmetric(horizontal: 16),
+                            padding: const EdgeInsets.fromLTRB(16, 0, 16, 16),
                             itemCount: teams.length,
                             itemBuilder: (context, index) {
                               final team = teams[index];

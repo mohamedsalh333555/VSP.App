@@ -201,8 +201,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
           if (isExpired) ...[
             Text(
               isArabic 
-                  ? 'انتهت فترة التجربة المجانية والاشتراك 🔴'
-                  : 'Free trial and subscription period expired 🔴',
+                  ? 'انتهت فترة التجربة المجانية والاشتراك'
+                  : 'Free trial and subscription period expired',
               style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold, fontSize: 15),
             ),
             const SizedBox(height: 4),

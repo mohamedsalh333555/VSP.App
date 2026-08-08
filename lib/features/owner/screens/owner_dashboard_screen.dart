@@ -91,7 +91,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       backgroundColor: VSPColors.background,
       body: SafeArea(
         child: SingleChildScrollView(
-          padding: const EdgeInsets.all(VSPSpacing.md),
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
@@ -239,7 +239,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String trialEndDateStr = trialEnd != null ? DateFormat('yyyy/MM/dd').format(trialEnd) : '';
 
     final String planLabel = isExpired
-        ? (isArabic ? 'منتهية' : 'Expired')
+        ? (isArabic ? 'انتهت المدة - ادفع الآن' : 'Period Expired - Pay Now')
         : (isTrial
             ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم ⏳)' : 'Free Trial ($remainingDays days left ⏳)')
             : (isArabic 
@@ -247,10 +247,14 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 : userModel.subscriptionPlanLabel));
 
     final String subtitleText = isExpired
-        ? (isArabic ? 'استقبال الحجوزات متوقف حتى التجديد' : 'New bookings paused until renewal')
+        ? (isArabic ? 'انتهت الفترة التجريبية. يرجى الاشتراك لتفعيل الحجوزات.' : 'Free trial ended. Subscribe to resume bookings.')
         : (isTrial
-            ? (isArabic ? '⏳ ينتهي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : '⏳ Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
+            ? (isArabic ? '⏳ ينتهي التجريبي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : '⏳ Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
             : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}');
+
+    final String buttonLabel = isExpired
+        ? (isArabic ? 'ادفع الآن' : 'Pay Now')
+        : (isArabic ? 'ترقية' : 'Upgrade');
 
     final Color statusColor = isPro
         ? Colors.amber
@@ -265,11 +269,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         padding: const EdgeInsets.all(12),
         decoration: BoxDecoration(
           color: isExpired
-              ? Colors.red.withValues(alpha: 0.1)
+              ? Colors.red.withValues(alpha: 0.15)
               : (isPro ? Colors.amber.withValues(alpha: 0.1) : VSPColors.surface),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
             color: isExpired ? Colors.redAccent : (isPro ? Colors.amber : VSPColors.accent),
+            width: isExpired ? 1.5 : 1.0,
           ),
         ),
         child: Row(
@@ -286,10 +291,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      Text(
-                        '${isArabic ? "الباقة:" : "Plan:"} ',
-                        style: const TextStyle(color: Colors.white70, fontSize: 12),
-                      ),
+                      if (!isExpired)
+                        Text(
+                          '${isArabic ? "الباقة:" : "Plan:"} ',
+                          style: const TextStyle(color: Colors.white70, fontSize: 12),
+                        ),
                       Expanded(
                         child: Text(
                           planLabel,
@@ -321,7 +327,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               style: ElevatedButton.styleFrom(
                 backgroundColor: statusColor,
                 foregroundColor: Colors.black,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
                 minimumSize: Size.zero,
                 tapTargetSize: MaterialTapTargetSize.shrinkWrap,
               ),
@@ -329,9 +335,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isExpired
-                        ? (isArabic ? 'تجديد الآن' : 'Renew Now')
-                        : (isArabic ? 'عداد / ترقية' : 'Timer / Upgrade'),
+                    buttonLabel,
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                   const SizedBox(width: 4),
@@ -353,8 +357,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         onPressed: () => _navigateToWalkInBooking(context, isExpired),
         icon: const Icon(LucideIcons.plusCircle, size: 18),
         label: Text(
-          isArabic ? 'إضافة حجز نقدي / يدوي (Quick Walk-in)' : 'Quick Walk-in Booking',
-          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+          isArabic ? 'إضافة حجز يدوي' : 'Add Manual Booking',
+          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
         ),
         style: ElevatedButton.styleFrom(
           backgroundColor: isExpired ? VSPColors.surfaceAlt : VSPColors.accent,
@@ -386,6 +390,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         final diff = b.endTime.difference(b.startTime).inHours;
         totalHours += (diff == 0 ? 1 : diff); // الحد الأدنى ساعة
         completedBookingsCount++;
+      } else if (b.depositPaid > 0) {
+        totalRev += b.depositPaid;
+      } else if (b.isPaid) {
+        totalRev += b.totalPrice;
       }
     }
 
@@ -412,30 +420,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           // الهيدر + شارة 0% عمولة
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Text(
-                isArabic ? 'إجمالي أرباح الملعب' : 'Total Pitch Revenue',
-                style: const TextStyle(
-                  color: Colors.white70,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 13,
-                ),
-              ),
-              Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                decoration: BoxDecoration(
-                  color: Colors.black.withValues(alpha: 0.25),
-                  borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: Colors.white24, width: 0.5),
-                ),
-                child: Text(
-                  isArabic ? '0% عمولة ⚡' : '0% Commission ⚡',
-                  style: const TextStyle(color: Colors.white, fontSize: 10, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
+          Text(
+            isArabic ? 'إجمالي أرباح الملعب' : 'Total Pitch Revenue',
+            style: const TextStyle(
+              color: Colors.white70,
+              fontWeight: FontWeight.bold,
+              fontSize: 13,
+            ),
           ),
           const SizedBox(height: 10),
           
@@ -644,11 +635,84 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }
 
     return Column(
-      children: bookings.take(3).map((b) => ListTile(
-        title: Text(b.playerTeamName ?? 'Player', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
-        subtitle: Text(b.stadiumName, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
-        trailing: Text('${b.totalPrice.toInt()} $currencySymbol', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-      )).toList(),
+      children: bookings.take(3).map((b) {
+        final bool isEnded = b.status == BookingStatus.completed || b.endTime.isBefore(DateTime.now());
+        final String paymentStatus = b.paymentStatus;
+        final double depositPaid = b.depositPaid;
+        final double totalPrice = b.totalPrice;
+        final bool isPaidInFull = b.isPaid || paymentStatus == 'paid' || (totalPrice > 0 && depositPaid >= totalPrice);
+        final bool isPartiallyPaid = !isPaidInFull && (paymentStatus == 'partially_paid' || b.isDepositPaid || depositPaid > 0);
+
+        final double remaining = totalPrice - depositPaid;
+        final String badgeLabel;
+        final Color badgeColor;
+        if (isPaidInFull) {
+          badgeLabel = isArabic ? 'تم الدفع' : 'Paid';
+          badgeColor = VSPColors.success;
+        } else if (isEnded) {
+          badgeLabel = isArabic ? 'محصل' : 'Collected';
+          badgeColor = VSPColors.success;
+        } else if (isPartiallyPaid) {
+          badgeLabel = isArabic 
+              ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م' 
+              : 'Remaining ${remaining.toStringAsFixed(0)} EGP';
+          badgeColor = Colors.amber;
+        } else {
+          badgeLabel = isArabic ? 'غير مدفوع' : 'Unpaid';
+          badgeColor = VSPColors.warning;
+        }
+
+        return Container(
+          margin: const EdgeInsets.only(bottom: 8),
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            border: Border.all(color: VSPColors.divider, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      b.playerTeamName ?? (isArabic ? 'عميل' : 'Customer'),
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      '${b.stadiumName} • ${DateFormat('hh:mm a').format(b.startTime)}',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
+                  ],
+                ),
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    '${b.totalPrice.toInt()} $currencySymbol',
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                  const SizedBox(height: 2),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.12),
+                      borderRadius: BorderRadius.circular(4),
+                    ),
+                    child: Text(
+                      badgeLabel,
+                      style: TextStyle(color: badgeColor, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+        );
+      }).toList(),
     );
   }
 }

@@ -432,7 +432,7 @@ class _HomeContent extends StatelessWidget {
             child: SingleChildScrollView(
               keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
               physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
-              padding: const EdgeInsets.only(bottom: 120),
+              padding: EdgeInsets.only(bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
               child: Column(
                 children: [
                   const SizedBox(height: 16),

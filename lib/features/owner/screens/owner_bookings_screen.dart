@@ -8,7 +8,6 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/phone_utils.dart';
@@ -290,14 +289,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                  }
 
                  final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
-                 final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-                 final endOfDay = startOfDay.add(const Duration(days: 1));
-
-                 final dayBookings = bookingProvider.userBookings.where((b) =>
-                   b.stadiumId.toLowerCase().trim() == selectedStadium.id.toLowerCase().trim() &&
-                   b.status != BookingStatus.cancelled &&
-                   !b.startTime.isBefore(startOfDay) && b.startTime.isBefore(endOfDay)
-                 ).toList();
+                 
+                 final dayBookings = bookingProvider.userBookings.where((b) {
+                    final bStartLocal = b.startTime.toLocal();
+                    return b.stadiumId.toLowerCase().trim() == selectedStadium.id.toLowerCase().trim() &&
+                           b.status != BookingStatus.cancelled &&
+                           bStartLocal.year == selectedDate.year &&
+                           bStartLocal.month == selectedDate.month &&
+                           bStartLocal.day == selectedDate.day;
+                  }).toList();
 
                   List<Map<String, dynamic>> slots = [];
                   try {
@@ -326,8 +326,17 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       }
 
                       final slotTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, currentH, currentM);
+                      final currentSlotMin = currentH * 60 + currentM;
+
                       final booking = dayBookings.cast<Booking?>().firstWhere(
-                        (b) => b != null && (slotTime.isAtSameMomentAs(b.startTime) || (slotTime.isAfter(b.startTime) && slotTime.isBefore(b.endTime))),
+                        (b) {
+                          if (b == null) return false;
+                          final bStart = b.startTime.toLocal();
+                          final bEnd = b.endTime.toLocal();
+                          final bStartMin = bStart.hour * 60 + bStart.minute;
+                          final bEndMin = bEnd.hour * 60 + bEnd.minute;
+                          return currentSlotMin >= bStartMin && currentSlotMin < bEndMin;
+                        },
                         orElse: () => null,
                       );
 
@@ -380,7 +389,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                   return ListView.separated(
                     controller: _scrollController,
-                    padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 110),
+                    padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
                     physics: const AlwaysScrollableScrollPhysics(),
                     itemCount: slots.length,
                     separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
@@ -561,21 +570,49 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       ),
                     ),
                     const SizedBox(width: 10),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                      decoration: BoxDecoration(
-                        color: isCompleted ? VSPColors.success.withValues(alpha: 0.1) : VSPColors.warning.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(4),
-                      ),
-                      child: Text(
-                        isCompleted ? l10n.collectedSticker : l10n.pendingSticker,
-                        style: TextStyle(
-                          color: isCompleted ? VSPColors.success : VSPColors.warning,
-                          fontSize: 9,
-                          fontWeight: FontWeight.bold,
+                    Builder(builder: (context) {
+                      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                      final String paymentStatus = booking?.paymentStatus ?? 'pending';
+                      final double depositPaid = booking?.depositPaid ?? 0.0;
+                      final double totalPrice = booking?.totalPrice ?? 0.0;
+                      final bool isPaidInFull = (booking?.isPaid ?? false) || paymentStatus == 'paid' || (totalPrice > 0 && depositPaid >= totalPrice);
+                      final bool isPartiallyPaid = !isPaidInFull && (paymentStatus == 'partially_paid' || (booking?.isDepositPaid ?? false) || depositPaid > 0);
+
+                      final double remaining = totalPrice - depositPaid;
+                      final String badgeLabel;
+                      final Color badgeColor;
+                      if (isPaidInFull) {
+                        badgeLabel = isArabic ? 'تم الدفع' : 'Paid';
+                        badgeColor = VSPColors.success;
+                      } else if (isCompleted) {
+                        badgeLabel = isArabic ? 'محصل' : 'Collected';
+                        badgeColor = VSPColors.success;
+                      } else if (isPartiallyPaid) {
+                        badgeLabel = isArabic 
+                            ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م' 
+                            : 'Remaining ${remaining.toStringAsFixed(0)} EGP';
+                        badgeColor = Colors.amber;
+                      } else {
+                        badgeLabel = isArabic ? 'غير مدفوع' : 'Unpaid';
+                        badgeColor = VSPColors.warning;
+                      }
+
+                      return Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: badgeColor.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
                         ),
-                      ),
-                    ),
+                        child: Text(
+                          badgeLabel,
+                          style: TextStyle(
+                            color: badgeColor,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      );
+                    }),
                   ],
                 ),
               ],
@@ -599,9 +636,6 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           data: ThemeData.dark().copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPColors.accent,
-              onPrimary: VSPColors.background,
-              surface: VSPColors.surface,
-              onSurface: VSPColors.textPrimary,
             ),
           ),
           child: child!,
@@ -609,10 +643,10 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       },
     );
     if (picked != null) {
-      setState(() {
-        _baseDate = DateTime(picked.year, picked.month, picked.day);
-        _selectedDayIndex = 0;
-      });
+      final difference = picked.difference(_baseDate).inDays;
+      if (difference >= 0 && difference < 7) {
+        setState(() => _selectedDayIndex = difference);
+      }
     }
   }
 
@@ -633,7 +667,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           parentContext: context,
         ),
       ),
-    );
+    ).then((_) {
+      if (mounted) setState(() {});
+    });
   }
 }
 
@@ -788,15 +824,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 IconButton(
                   icon: const Icon(LucideIcons.trash2, color: VSPColors.error),
                   onPressed: _isDeleting ? null : () async {
-                    final now = DateTime.now();
-                    if (booking != null && (now.isAfter(booking!.startTime) || now.isAtSameMomentAs(booking!.startTime))) {
-                      VSPFeedback.showError(
-                        context,
-                        isArabic ? 'عذراً، لا يمكن إلغاء الحجز بعد انطلاق موعده ⚠️' : 'Cannot cancel booking after it has started ⚠️',
-                      );
-                      return;
-                    }
-
                     final parentCtx = widget.parentContext;
                     final nav = Navigator.of(context);
                     final confirm = await showDialog<bool>(
@@ -820,9 +847,10 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                         final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking!.id);
                         if (!success) {
                           if (mounted) {
+                            final err = Provider.of<BookingProvider>(parentCtx, listen: false).errorMessage;
                             VSPFeedback.showError(
                               context,
-                              isArabic ? 'عذراً، لا يمكن إلغاء الحجز بعد انطلاق موعده ⚠️' : 'Cannot cancel booking after it has started ⚠️',
+                              err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ⚠️' : 'Failed to cancel booking ⚠️'),
                             );
                           }
                           return;
@@ -859,7 +887,11 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   const SizedBox(height: 14),
 
                   _buildInputLabel(l10n.customerName),
-                  _buildPillTextField(controller: _nameController, hint: isArabic ? 'أدخل اسم العميل' : 'Enter customer name'),
+                  _buildPillTextField(
+                    controller: _nameController, 
+                    hint: isArabic ? 'أدخل اسم العميل' : 'Enter customer name',
+                    keyboardType: TextInputType.name,
+                  ),
                   const SizedBox(height: 14),
 
                   _buildInputLabel(l10n.phoneNumber),
@@ -874,6 +906,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   _buildPillTextField(
                     controller: _noteController, 
                     hint: isArabic ? 'أدخل أي ملاحظات إضافية عن الحجز...' : 'Enter internal notes...',
+                    keyboardType: TextInputType.text,
                   ),
                   const SizedBox(height: 14),
 
@@ -932,7 +965,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
   Future<void> _handleConfirmBooking(AppLocalizations l10n, bool isArabic) async {
     final String customerName = _nameController.text.trim().isNotEmpty 
         ? _nameController.text.trim() 
-        : (isArabic ? 'حجز يدوي (Walk-in)' : 'Quick Walk-in');
+        : (isArabic ? 'حجز يدوي' : 'Manual Booking');
 
     setState(() => _isSaving = true);
 
@@ -961,17 +994,20 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
         );
         final endTime = startTime.add(Duration(minutes: _selectedMinutes));
 
-        final startOfDay = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-        final endOfDay = startOfDay.add(const Duration(days: 1));
-        final bookings = bookingProvider.userBookings.where((b) => 
-          b.stadiumId == stadium.id &&
-          b.status != BookingStatus.cancelled &&
-          !b.startTime.isBefore(startOfDay) && b.startTime.isBefore(endOfDay)
-        ).toList();
+        final bookings = bookingProvider.userBookings.where((b) {
+          final bStartLocal = b.startTime.toLocal();
+          return b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
+                 b.status != BookingStatus.cancelled &&
+                 bStartLocal.year == selectedDate.year &&
+                 bStartLocal.month == selectedDate.month &&
+                 bStartLocal.day == selectedDate.day;
+        }).toList();
 
         bool hasOverlap = false;
         for (final b in bookings) {
-          if (startTime.isBefore(b.endTime) && endTime.isAfter(b.startTime)) {
+          final bStartLocal = b.startTime.toLocal();
+          final bEndLocal = b.endTime.toLocal();
+          if (startTime.isBefore(bEndLocal) && endTime.isAfter(bStartLocal)) {
             hasOverlap = true;
             break;
           }
@@ -1005,7 +1041,11 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           needsDeposit: false,
         );
 
-        await bookingProvider.createBooking(draft, uid);
+        final createdBooking = await bookingProvider.createBooking(draft, uid);
+        if (createdBooking == null) {
+          final errMsg = bookingProvider.errorMessage ?? (isArabic ? 'عذراً، فشل حفظ الحجز في قاعدة البيانات' : 'Failed to save booking');
+          throw Exception(errMsg);
+        }
         await bookingProvider.loadOwnerBookings(uid);
       }
 
@@ -1022,8 +1062,17 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       }
     } catch (e) {
       if (mounted) {
-        final cleanErr = e.toString().replaceAll('Exception:', '').trim();
-        VSPFeedback.showError(context, cleanErr);
+        String cleanErr = e.toString();
+        final lower = cleanErr.toLowerCase();
+        if (lower.contains('prevent_double_booking') || lower.contains('duplicate key value')) {
+          cleanErr = isArabic ? '⚠️ هذا الموعد محجوز بالفعل على الملعب! يرجى اختيار موعد آخر.' : '⚠️ Time slot is already booked on this stadium!';
+        } else if (lower.contains('overlap')) {
+          cleanErr = isArabic ? '⚠️ مدة الحجز تتداخل مع حجز آخر نشط على الملعب! يرجى تقليل المدة أو اختيار موعد آخر.' : '⚠️ Booking duration overlaps with another active booking!';
+        } else {
+          cleanErr = cleanErr.replaceAll('Exception:', '').replaceAll('PostgrestException', '').replaceAll('(message:', '').replaceAll('Failed to create booking:', '').trim();
+        }
+        final targetCtx = widget.parentContext.mounted ? widget.parentContext : context;
+        VSPFeedback.showError(targetCtx, cleanErr);
       }
     } finally {
       if (mounted) {

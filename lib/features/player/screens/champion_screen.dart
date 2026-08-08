@@ -1,4 +1,4 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/egypt_governorates.dart';
@@ -336,7 +336,7 @@ class ChampionScreenState extends State<ChampionScreen>
         if (players.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noOneVsOneRanked, style: const TextStyle(color: VSPColors.textSecondary)));
 
         return ListView.builder(
-          padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 110),
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 8),
           physics: const BouncingScrollPhysics(),
           itemCount: players.length,
           itemBuilder: (context, index) {
@@ -429,7 +429,7 @@ class ChampionScreenState extends State<ChampionScreen>
         }
 
         return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-          padding: EdgeInsets.fromLTRB(16, 0, 16, MediaQuery.of(context).padding.bottom + 110),
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 0),
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
@@ -831,7 +831,7 @@ class ChampionScreenState extends State<ChampionScreen>
         }
 
         return ListView.builder(
-          padding: EdgeInsets.fromLTRB(0, 16, 0, MediaQuery.of(context).padding.bottom + 110),
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, horizontal: 0, top: 16),
           physics: const BouncingScrollPhysics(),
           itemCount: championships.length,
           itemBuilder: (context, index) {

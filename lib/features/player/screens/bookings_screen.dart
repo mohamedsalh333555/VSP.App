@@ -121,7 +121,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
               backgroundColor: VSPColors.surface,
               child: ListView(
                 physics: const AlwaysScrollableScrollPhysics(),
-                padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 110),
+                padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
                 children: [
                 if (data.upcoming.isNotEmpty) ...[
                   Text(

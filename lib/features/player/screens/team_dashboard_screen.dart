@@ -125,12 +125,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
             }
   
             return ListView.builder(
-              padding: EdgeInsets.fromLTRB(
-                16,
-                VSPSpacing.md,
-                16,
-                MediaQuery.of(context).padding.bottom + 110,
-              ),
+              padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
               itemCount: bookings.length,
               itemBuilder: (context, index) {
                 return Padding(

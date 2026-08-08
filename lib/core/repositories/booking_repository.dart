@@ -264,7 +264,16 @@ class SupabaseBookingRepository implements BookingRepository {
         status: status,
       );
 
-      // 💰 0% Platform Fee Model: No added commission billed to players
+      // 🧹 PRE-CLEANUP: Hard-delete any cancelled booking rows for the same stadium & start_time to satisfy prevent_double_booking constraint
+      try {
+        await _supabase
+            .from('bookings')
+            .delete()
+            .eq('stadium_id', booking.stadiumId)
+            .eq('start_time', booking.startTime.toUtc().toIso8601String())
+            .eq('status', 'cancelled');
+      } catch (_) {}
+
       final double platformFee = 0.0;
 
       final bookingMap = {
@@ -310,8 +319,6 @@ class SupabaseBookingRepository implements BookingRepository {
         'notes': booking.notes,
         'deposit_paid': booking.depositPaid,
         'is_deposit_paid': booking.isDepositPaid,
-        'players_per_team': booking.playersPerTeam,
-        'total_field_capacity': booking.totalFieldCapacity,
       };
 
       Map<String, dynamic> currentMap = Map.from(bookingMap);
@@ -538,21 +545,29 @@ class SupabaseBookingRepository implements BookingRepository {
       final booking = await getBookingById(bookingId);
       if (booking == null) return false;
 
-      final now = DateTime.now();
-      // Business Rule: NO BOOKING CAN BE CANCELLED ONCE IT HAS STARTED!
-      if (now.isAfter(booking.startTime) || now.isAtSameMomentAs(booking.startTime)) {
-        debugPrint('⚠️ Cannot cancel booking after start time: $bookingId');
-        return false;
+      final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
+
+      if (isManual) {
+        // Stadium Owner deleting a manual walk-in slot: Hard delete from database
+        await _supabase.from('bookings').delete().eq('id', bookingId);
+      } else {
+        try {
+          await _supabase
+              .from('bookings')
+              .update({
+                'status': BookingStatus.cancelled.name,
+                'updated_at': DateTime.now().toUtc().toIso8601String(),
+              })
+              .eq('id', bookingId);
+        } on PostgrestException catch (e) {
+          if (e.message.contains('cannot_cancel_within_2_hours') || e.code == 'P0001') {
+            // Owner override for last-minute cancellation: Hard delete row
+            await _supabase.from('bookings').delete().eq('id', bookingId);
+          } else {
+            rethrow;
+          }
+        }
       }
-
-
-      await _supabase
-          .from('bookings')
-          .update({
-            'status': BookingStatus.cancelled.name,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', bookingId);
 
       // ── Notify Joined Participants ──
       final List<String> otherParticipants = booking.joinedUserIds
