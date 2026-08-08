@@ -4,7 +4,6 @@ import '../utils/app_date_formatter.dart';
 
 class SharingService {
   // Base URL for deep linking
-  // In production, this would be your verified domain
   static const String _baseUrl = 'https://vsp.app';
 
   /// Generate a link for a specific match/booking
@@ -26,9 +25,9 @@ class SharingService {
   }) async {
     final link = getMatchLink(bookingId);
     final text = 'Join our match at VSP!\n\n'
-        '🏆 Team: $teamName\n'
-        '📍 Stadium: $stadiumName\n'
-        '📅 Date: $date\n\n'
+        'Team: $teamName\n'
+        'Stadium: $stadiumName\n'
+        'Date: $date\n\n'
         'Tap to join: $link';
 
     await SharePlus.instance.share(ShareParams(text: text, subject: 'Join Match on VSP'));
@@ -59,28 +58,31 @@ class SharingService {
     final dateDisplay = end.isNotEmpty ? 'من $start إلى $end' : start;
 
     final String text = isArabic
-        ? '🏆 *دعوة للمشاركة في بطولة VSP الرياضية!*\n\n'
-          '⚽ *اسم البطولة:* $name\n'
-          '📍 *المحافظة:* ${governorate.isNotEmpty ? governorate : "مصر"}\n'
-          '🏟️ *الرياضة:* $translatedSport\n'
-          '📅 *الموعد:* $dateDisplay\n'
-          '💰 *الجائزة الكبرى:* ${grandPrize.toInt()} ج.م\n'
-          '🎟️ *رسوم الدخول:* ${entryFee.toInt()} ج.م\n'
-          '👥 *الفرق المسجلة:* $joinedTeamsCount / $maxTeams فريق\n\n'
-          '📲 انضم إلى البطولة وسجّل فريقك الآن عبر تطبيق VSP:\n'
+        ? '*دعوة للمشاركة في بطولة VSP الرياضية!*\n\n'
+          '*اسم البطولة:* $name\n'
+          '*المحافظة:* ${governorate.isNotEmpty ? governorate : "مصر"}\n'
+          '*الرياضة:* $translatedSport\n'
+          '*الموعد:* $dateDisplay\n'
+          '*الجائزة الكبرى:* ${grandPrize.toInt()} ج.م\n'
+          '*رسوم الدخول:* ${entryFee.toInt()} ج.م\n'
+          '*الفرق المسجلة:* $joinedTeamsCount / $maxTeams فريق\n\n'
+          'انضم إلى البطولة وسجّل فريقك الآن عبر تطبيق VSP:\n'
           '$link'
-        : '🏆 *VSP Tournament Invitation!*\n\n'
-          '⚽ *Tournament:* $name\n'
-          '📍 *Governorate:* ${governorate.isNotEmpty ? governorate : "Egypt"}\n'
-          '🏟️ *Sport:* $translatedSport\n'
-          '📅 *Dates:* ${end.isNotEmpty ? "$start to $end" : start}\n'
-          '💰 *Grand Prize:* ${grandPrize.toInt()} EGP\n'
-          '🎟️ *Entry Fee:* ${entryFee.toInt()} EGP\n'
-          '👥 *Teams Registered:* $joinedTeamsCount / $maxTeams Teams\n\n'
-          '📲 Join the tournament & register your team now on VSP:\n'
+        : '*VSP Tournament Invitation!*\n\n'
+          '*Tournament:* $name\n'
+          '*Governorate:* ${governorate.isNotEmpty ? governorate : "Egypt"}\n'
+          '*Sport:* $translatedSport\n'
+          '*Dates:* ${end.isNotEmpty ? "$start to $end" : start}\n'
+          '*Grand Prize:* ${grandPrize.toInt()} EGP\n'
+          '*Entry Fee:* ${entryFee.toInt()} EGP\n'
+          '*Teams Registered:* $joinedTeamsCount / $maxTeams Teams\n\n'
+          'Join the tournament & register your team now on VSP:\n'
           '$link';
 
-    await SharePlus.instance.share(ShareParams(text: text, subject: isArabic ? 'دعوة بطولة: $name' : 'Tournament Invite: $name'));
+    await SharePlus.instance.share(ShareParams(
+      text: text,
+      subject: isArabic ? 'دعوة بطولة: $name' : 'Tournament Invite: $name',
+    ));
   }
 
   /// Share championship using a Championship object directly with exact database numbers
@@ -89,7 +91,13 @@ class SharingService {
     required dynamic championship,
   }) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final startDateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
+
+    // Use effective start date: if tournament has already started, show today's date
+    final now = DateTime.now();
+    final rawStart = championship.startDate as DateTime;
+    final effectiveStart = now.isAfter(rawStart) ? now : rawStart;
+
+    final startDateStr = AppDateFormatter.formatDayMonth(effectiveStart, isArabic ? 'ar' : 'en');
     final endDateStr = AppDateFormatter.formatDayMonth(championship.endDate, isArabic ? 'ar' : 'en');
 
     await shareChampionship(
@@ -115,8 +123,8 @@ class SharingService {
   }) async {
     final link = getTeamLink(teamId);
     final text = 'Checkout this team on VSP!\n\n'
-        '🛡 Team: $teamName\n'
-        '📍 Governorate: $governorate\n\n'
+        'Team: $teamName\n'
+        'Governorate: $governorate\n\n'
         'Tap to view: $link';
 
     await SharePlus.instance.share(ShareParams(text: text, subject: 'View Team on VSP'));
@@ -125,17 +133,17 @@ class SharingService {
   /// Share Team Link with branding and localized text
   static Future<void> shareTeamLink(String teamId, String teamName) async {
     final link = getTeamLink(teamId);
-    final text = 'انضم إلى مجموعتنا الرياضية على VSP! ⚽\n'
+    final text = 'انضم إلى مجموعتنا الرياضية على VSP!\n'
         'Check out our sports team on VSP!\n\n'
-        '🛡️ فريق: $teamName\n'
-        '🛡️ Team: $teamName\n\n'
+        'فريق: $teamName\n'
+        'Team: $teamName\n\n'
         'رابط الفريق / Team Link:\n'
         '$link';
 
     await SharePlus.instance.share(ShareParams(text: text, subject: 'VSP Sports Team: $teamName'));
   }
 
-  /// Generic text sharing (Fixed for CMO Social Strategy)
+  /// Generic text sharing
   Future<void> shareText(String text, {String? subject}) async {
     await SharePlus.instance.share(ShareParams(text: text, subject: subject));
   }

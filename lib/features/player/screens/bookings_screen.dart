@@ -54,13 +54,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        centerTitle: true,
-        leading: Navigator.canPop(context) 
-            ? IconButton(
-                icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
+        automaticallyImplyLeading: false,
         title: Text(
           l10n.bookedTitle,
           style: Theme.of(context).textTheme.displayMedium,

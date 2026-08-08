@@ -91,7 +91,11 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           icon: Localizations.localeOf(context).languageCode == 'ar'
                               ? LucideIcons.chevronRight
                               : LucideIcons.chevronLeft,
-                          onTap: () => Navigator.pop(context),
+                          onTap: () {
+                            if (Navigator.canPop(context)) {
+                              Navigator.pop(context);
+                            }
+                          },
                         ),
                         Row(
                           children: [
@@ -647,7 +651,7 @@ class _RatingsTab extends StatelessWidget {
 
                           if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                           if (context.mounted) {
-                            VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح 🌟' : 'Review submitted successfully!');
+                            VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
                           }
                         } catch (e) {
                           setSheetState(() => isSubmitting = false);
@@ -698,7 +702,7 @@ class _RatingsTab extends StatelessWidget {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
           child: PrimaryButton(
-            text: isArabic ? 'إضافة تقييمك ورأيك ⭐️' : 'Add Your Review ⭐️',
+            text: isArabic ? 'إضافة تقييمك ورأيك' : 'Add Your Review',
             height: 44,
             color: VSPColors.surfaceAlt,
             textColor: VSPColors.accent,

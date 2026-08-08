@@ -254,156 +254,172 @@ class ChampionshipCard extends StatelessWidget {
   Widget build(BuildContext context) {
     final int remainingTeams = (championship.maxTeams - championship.joinedTeams.length).clamp(0, championship.maxTeams);
 
-    return Container(
-      width: width ?? (MediaQuery.sizeOf(context).width - 32).clamp(250.0, 320.0),
-      padding: const EdgeInsets.all(16),
-      margin: margin ?? EdgeInsets.zero,
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(
-          color: VSPColors.divider,
-          width: 1,
+    return GestureDetector(
+      onTap: () => Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => ChampionshipDetailsScreen(championship: championship),
         ),
       ),
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              _buildTypeBadge(AppLocalizations.of(context)!.tournament),
-              _buildStatusBadge(
-                championship.status == 'open' 
-                    ? AppLocalizations.of(context)!.open.toUpperCase() 
-                    : AppLocalizations.of(context)!.full.toUpperCase(), 
-                championship.status == 'open' ? Colors.green : VSPColors.accent
-              ),
-            ],
+      child: Container(
+        width: width ?? (MediaQuery.sizeOf(context).width - 32).clamp(250.0, 320.0),
+        padding: const EdgeInsets.all(16),
+        margin: margin ?? EdgeInsets.zero,
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(
+            color: VSPColors.divider,
+            width: 1,
           ),
-          const SizedBox(height: 12),
-          Row(
-            children: [
-              Container(
-                width: 52, height: 52,
-                decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2)),
-                child: ClipOval(
-                  child: championship.logoUrl.isNotEmpty
-                      ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(LucideIcons.trophy, color: VSPColors.accent))
-                      : Icon(LucideIcons.trophy, color: VSPColors.accent, size: 28),
-                ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(championship.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
-                    Text(championship.type, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12)),
-                  ],
-                ),
-              ),
-              IconButton(
-                icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), 
-                onPressed: () => SharingService.shareChampionshipObject(context: context, championship: championship),
-              ),
-            ],
-          ),
-          const SizedBox(height: 12),
-          Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
-            decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.spaceAround,
+        ),
+        child: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                Builder(builder: (context) {
-                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                  final dateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
-                  return _buildCompactInfo(LucideIcons.calendar, dateStr);
-                }),
-                _buildDivider(),
-                _buildCompactInfo(LucideIcons.trophy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
-                _buildDivider(),
-                _buildCompactInfo(LucideIcons.banknote, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                _buildTypeBadge(AppLocalizations.of(context)!.tournament),
+                _buildStatusBadge(
+                  championship.status == 'open' 
+                      ? AppLocalizations.of(context)!.open.toUpperCase() 
+                      : AppLocalizations.of(context)!.full.toUpperCase(), 
+                  championship.status == 'open' ? Colors.green : VSPColors.accent
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 12),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      mainAxisSize: MainAxisSize.min,
-                      crossAxisAlignment: CrossAxisAlignment.baseline,
-                      textBaseline: TextBaseline.alphabetic,
-                      children: [
-                        Text(
-                          "$remainingTeams",
-                          style: const TextStyle(
-                            color: VSPColors.accent,
-                            fontWeight: FontWeight.w900,
-                            fontSize: 20,
-                          ),
-                        ),
-                        const SizedBox(width: 4),
-                        Text(
-                          AppLocalizations.of(context)!.spotsLeft,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: const TextStyle(
-                            color: VSPColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 10,
-                          ),
-                        ),
-                      ],
-                    ),
-                    if (championship.status == 'open' && !championship.isFull && championship.startDate.isAfter(DateTime.now())) ...[
-                      const SizedBox(height: 4),
-                      VSPCountdownTimer(targetDate: championship.startDate, isCompact: true),
-                    ],
-                  ],
+            const SizedBox(height: 12),
+            Row(
+              children: [
+                Container(
+                  width: 52, height: 52,
+                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2)),
+                  child: ClipOval(
+                    child: championship.logoUrl.isNotEmpty
+                        ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(LucideIcons.trophy, color: VSPColors.accent))
+                        : Icon(LucideIcons.trophy, color: VSPColors.accent, size: 28),
+                  ),
                 ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(championship.name, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18, letterSpacing: 0.5), maxLines: 1, overflow: TextOverflow.ellipsis),
+                      Text(championship.type, style: const TextStyle(color: VSPColors.textSecondary, fontWeight: FontWeight.bold, fontSize: 12)),
+                    ],
+                  ),
+                ),
+                IconButton(
+                  icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), 
+                  onPressed: () => SharingService.shareChampionshipObject(context: context, championship: championship),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Container(
+              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceAround,
+                children: [
+                  Builder(builder: (context) {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    final dateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
+                    return _buildCompactInfo(LucideIcons.calendar, dateStr);
+                  }),
+                  _buildDivider(),
+                  _buildCompactInfo(LucideIcons.trophy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                  _buildDivider(),
+                  _buildCompactInfo(LucideIcons.banknote, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                ],
               ),
-              const SizedBox(width: 12),
-              GestureDetector(
-                onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => ChampionshipDetailsScreen(championship: championship))),
-                child: Builder(builder: (context) {
+            ),
+            const SizedBox(height: 12),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Row(
+                        mainAxisSize: MainAxisSize.min,
+                        crossAxisAlignment: CrossAxisAlignment.baseline,
+                        textBaseline: TextBaseline.alphabetic,
+                        children: [
+                          Text(
+                            "$remainingTeams",
+                            style: const TextStyle(
+                              color: VSPColors.accent,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 20,
+                            ),
+                          ),
+                          const SizedBox(width: 4),
+                          Text(
+                            AppLocalizations.of(context)!.spotsLeft,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 10,
+                            ),
+                          ),
+                        ],
+                      ),
+                      if (championship.status == 'open' && !championship.isFull && championship.startDate.isAfter(DateTime.now())) ...[
+                        const SizedBox(height: 4),
+                        VSPCountdownTimer(targetDate: championship.startDate, isCompact: true),
+                      ],
+                    ],
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Builder(builder: (context) {
                   final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   return Container(
-                    height: 44.0, 
-                    padding: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 42.0, 
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: isFull ? VSPColors.surfaceAlt : VSPColors.accent, 
+                      color: isFull ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.accent, 
                       borderRadius: BorderRadius.circular(12),
-                      border: isFull ? Border.all(color: VSPColors.divider) : null,
+                      border: isFull ? Border.all(color: VSPColors.accent, width: 1.5) : null,
                     ),
                     child: Center(
-                      child: Text(
-                        isFull 
-                          ? (isArabic ? 'مكتمل' : 'Full')
-                          : AppLocalizations.of(context)!.join,
-                        style: TextStyle(
-                          color: isFull ? VSPColors.textSecondary : Colors.black,
-                          fontWeight: FontWeight.w900,
-                          fontSize: 14,
-                          letterSpacing: 1.0,
-                        ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          Text(
+                            isFull 
+                              ? (isArabic ? 'عرض البطولة' : 'View Tournament')
+                              : AppLocalizations.of(context)!.join,
+                            style: TextStyle(
+                              color: isFull ? VSPColors.accent : Colors.black,
+                              fontWeight: FontWeight.w900,
+                              fontSize: 13,
+                              letterSpacing: 0.5,
+                            ),
+                          ),
+                          const SizedBox(width: 6),
+                          Icon(
+                            isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                            size: 16,
+                            color: isFull ? VSPColors.accent : Colors.black,
+                          ),
+                        ],
                       ),
                     ),
                   );
                 }),
-              ),
-            ],
-          ),
-        ],
+              ],
+            ),
+          ],
+        ),
       ),
     );
   }

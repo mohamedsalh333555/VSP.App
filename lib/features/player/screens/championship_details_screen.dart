@@ -476,8 +476,11 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     final championship = widget.championship;
     final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
 
-    final startDateDisplay = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
-    final endDateDisplay = AppDateFormatter.formatDayMonth(championship.endDate, isArabic ? 'ar' : 'en');
+    final DateTime effectiveStartDate = (championship.status == 'ongoing' || DateTime.now().isAfter(championship.startDate)) 
+        ? DateTime.now() 
+        : championship.startDate;
+    final startDateDisplay = AppDateFormatter.formatDayMonth(effectiveStartDate, isArabic ? 'ar' : 'en');
+
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -670,7 +673,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               controller: _tabController,
               children: [
                 // 📅 TAB 1: Timeline & Brackets
-                _buildTimelineAndBracketsTab(isArabic, startDateDisplay, endDateDisplay),
+                _buildTimelineAndBracketsTab(isArabic),
 
                 // ⚽ TAB 2: Top Scorers Leaderboard
                 _buildTopScorersTab(isArabic),
@@ -805,56 +808,242 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
-  Widget _buildTimelineAndBracketsTab(bool isArabic, String startDateDisplay, String endDateDisplay) {
+  Widget _buildTimelineAndBracketsTab(bool isArabic) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(VSPRadius.lg),
-              border: Border.all(color: VSPColors.divider, width: 0.5),
-            ),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isArabic ? 'الجدول الزمني للبطولة' : 'Tournament Schedule',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                    ),
-                    TextButton.icon(
-                      onPressed: () {
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (_) => TournamentBracketsScreen(
-                              championship: widget.championship,
-                              isOwner: false,
-                            ),
-                          ),
-                        );
-                      },
-                      icon: const Icon(LucideIcons.trophy, size: 14, color: VSPColors.accent),
-                      label: Text(
-                        isArabic ? 'عرض القرعة' : 'View Brackets',
-                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
-                      ),
-                    ),
-                  ],
+          // Brackets Button
+          PrimaryButton(
+            text: isArabic ? 'عرض شجرة القرعة والمواجهات' : 'View Tournament Brackets',
+            height: 48,
+            color: VSPColors.accent,
+            textColor: Colors.black,
+            onPressed: () {
+              Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (_) => TournamentBracketsScreen(
+                    championship: widget.championship,
+                    isOwner: false,
+                  ),
                 ),
-                const SizedBox(height: 12),
-                _buildTimelineStep(startDateDisplay, isArabic ? 'تاريخ البدء وانطلاق البطولة' : 'Tournament Start Date', true, true),
-                _buildTimelineStep(isArabic ? 'اليوم الأول للمباريات' : 'Match Day 1', isArabic ? 'دور المجموعات والتصفيات' : 'Group Stage & Qualifiers', true, true),
-                _buildTimelineStep(isArabic ? 'اليوم الثاني للمباريات' : 'Match Day 2', isArabic ? 'ربع النهائي ونصف النهائي' : 'Quarter & Semi Finals', false, true),
-                _buildTimelineStep(endDateDisplay, isArabic ? 'المباراة النهائية والتتويج' : 'Final Match & Coronation', false, false),
-              ],
-            ),
+              );
+            },
+          ),
+          const SizedBox(height: VSPSpacing.lg),
+
+          // Live Match Fixtures Stream
+          StreamBuilder<List<TournamentMatch>>(
+            stream: TournamentRepository().getTournamentMatches(widget.championship.id),
+            builder: (context, snapshot) {
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                return Container(
+                  padding: const EdgeInsets.all(VSPSpacing.xl),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.lg),
+                    border: Border.all(color: VSPColors.divider, width: 0.5),
+                  ),
+                  child: Column(
+                    children: [
+                      const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 36),
+                      const SizedBox(height: 12),
+                      Text(
+                        isArabic ? 'لم يتم إعداد المباريات بعد' : 'No matches scheduled yet',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                        textAlign: TextAlign.center,
+                      ),
+                    ],
+                  ),
+                );
+              }
+
+              final matches = snapshot.data!;
+
+              // Helper: Arabic round label
+              String roundLabelAr(int roundIndex) {
+                switch (roundIndex) {
+                  case 0: return 'المباراة النهائية';
+                  case 1: return 'نصف النهائي';
+                  case 2: return 'ربع النهائي';
+                  case 3: return 'دور الـ 16';
+                  case 4: return 'دور الـ 32';
+                  case 5: return 'دور الـ 64';
+                  default: return 'الجولة ${roundIndex + 1}';
+                }
+              }
+
+              // Group matches by roundIndex (highest roundIndex = earliest round)
+              final rounds = <int>{};
+              for (final m in matches) { rounds.add(m.roundIndex); }
+              final sortedRounds = rounds.toList()..sort((a, b) => b.compareTo(a));
+
+              return Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    isArabic ? 'المباريات والمواجهات' : 'Match Fixtures',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 15),
+                  ),
+                  const SizedBox(height: VSPSpacing.md),
+                  ...sortedRounds.map((roundIdx) {
+                    final roundMatches = matches.where((m) => m.roundIndex == roundIdx).toList()
+                      ..sort((a, b) => a.matchIndex.compareTo(b.matchIndex));
+                    final roundLabel = isArabic ? roundLabelAr(roundIdx) : roundMatches.first.roundLabel;
+
+                    return Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        // Round Header
+                        Padding(
+                          padding: const EdgeInsets.only(top: 8, bottom: 8),
+                          child: Row(
+                            children: [
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.accent.withValues(alpha: 0.15),
+                                  borderRadius: BorderRadius.circular(20),
+                                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                                ),
+                                child: Text(
+                                  roundLabel,
+                                  style: const TextStyle(
+                                    color: VSPColors.accent,
+                                    fontSize: 11,
+                                    fontWeight: FontWeight.w800,
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Divider(color: VSPColors.divider.withValues(alpha: 0.4), height: 1),
+                              ),
+                            ],
+                          ),
+                        ),
+                        // Matches in this round
+                        ...roundMatches.map((m) {
+                          final homeName = m.homeTeamName ?? '';
+                          final awayName = m.awayTeamName ?? '';
+                          final matchNum = m.matchIndex + 1;
+
+                          // Format scheduled time
+                          String? scheduledLabel;
+                          if (m.scheduledTime != null) {
+                            final t = m.scheduledTime!;
+                            scheduledLabel = '${t.day}/${t.month}  ${t.hour.toString().padLeft(2,'0')}:${t.minute.toString().padLeft(2,'0')}';
+                          }
+
+                          return Container(
+                            margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
+                            decoration: BoxDecoration(
+                              color: VSPColors.surface,
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(
+                                color: m.isCompleted
+                                    ? VSPColors.accent.withValues(alpha: 0.3)
+                                    : VSPColors.divider.withValues(alpha: 0.4),
+                              ),
+                            ),
+                            child: Column(
+                              children: [
+                                // Match meta: match number + date
+                                Container(
+                                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 6),
+                                  decoration: BoxDecoration(
+                                    color: VSPColors.surfaceAlt,
+                                    borderRadius: const BorderRadius.only(
+                                      topLeft: Radius.circular(VSPRadius.md),
+                                      topRight: Radius.circular(VSPRadius.md),
+                                    ),
+                                  ),
+                                  child: Row(
+                                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                    children: [
+                                      Text(
+                                        isArabic ? 'مباراة $matchNum' : 'Match $matchNum',
+                                        style: const TextStyle(
+                                          color: VSPColors.textSecondary,
+                                          fontSize: 11,
+                                          fontWeight: FontWeight.w600,
+                                        ),
+                                      ),
+                                      if (scheduledLabel != null)
+                                        Row(
+                                          children: [
+                                            const Icon(LucideIcons.calendarDays, size: 11, color: VSPColors.textSecondary),
+                                            const SizedBox(width: 4),
+                                            Text(
+                                              scheduledLabel,
+                                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                            ),
+                                          ],
+                                        )
+                                      else
+                                        Text(
+                                          isArabic ? 'لم يحدد التاريخ' : 'TBD',
+                                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                        ),
+                                    ],
+                                  ),
+                                ),
+                                // Teams + Score/VS
+                                Padding(
+                                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 12),
+                                  child: Row(
+                                    children: [
+                                      Expanded(
+                                        child: Text(
+                                          homeName.isNotEmpty ? homeName : (isArabic ? 'فريق 1' : 'Team 1'),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                      Container(
+                                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 5),
+                                        decoration: BoxDecoration(
+                                          color: m.isCompleted
+                                              ? VSPColors.accent.withValues(alpha: 0.15)
+                                              : VSPColors.background,
+                                          borderRadius: BorderRadius.circular(20),
+                                        ),
+                                        child: Text(
+                                          m.isCompleted ? '${m.homeScore} - ${m.awayScore}' : 'VS',
+                                          style: TextStyle(
+                                            color: m.isCompleted ? VSPColors.accent : VSPColors.textSecondary,
+                                            fontWeight: FontWeight.w900,
+                                            fontSize: 13,
+                                          ),
+                                        ),
+                                      ),
+                                      Expanded(
+                                        child: Text(
+                                          awayName.isNotEmpty ? awayName : (isArabic ? 'فريق 2' : 'Team 2'),
+                                          textAlign: TextAlign.center,
+                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                                          maxLines: 1,
+                                          overflow: TextOverflow.ellipsis,
+                                        ),
+                                      ),
+                                    ],
+                                  ),
+                                ),
+                              ],
+                            ),
+                          );
+                        }),
+                        const SizedBox(height: 4),
+                      ],
+                    );
+                  }),
+                ],
+              );
+            },
           ),
         ],
       ),
@@ -1061,59 +1250,4 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
-  Widget _buildTimelineStep(String date, String title, bool isActive, bool hasNext) {
-    return IntrinsicHeight(
-      child: Row(
-        crossAxisAlignment: CrossAxisAlignment.start,
-        children: [
-          SizedBox(
-            width: 20,
-            child: Column(
-              children: [
-                Container(
-                  width: 10,
-                  height: 10,
-                  decoration: BoxDecoration(
-                    color: isActive ? VSPColors.accent : VSPColors.divider.withValues(alpha: 0.2),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                if (hasNext)
-                  Expanded(
-                    child: Container(
-                      width: 2,
-                      color: VSPColors.divider.withValues(alpha: 0.2),
-                    ),
-                  ),
-              ],
-            ),
-          ),
-          const SizedBox(width: 12),
-          Expanded(
-            child: Padding(
-              padding: const EdgeInsets.only(bottom: 20.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    date,
-                    style: TextStyle(
-                      color: isActive ? Colors.white : VSPColors.textSecondary,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 13,
-                    ),
-                  ),
-                  const SizedBox(height: 2),
-                  Text(
-                    title,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                  ),
-                ],
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
 }
