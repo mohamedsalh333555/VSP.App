@@ -1258,6 +1258,11 @@ class Championship {
   final bool redCardSuspension;
   final bool fairPlayScoring;
 
+  // ⚡ New Fields for Groups & League Systems
+  final int numberOfGroups;
+  final int qualifyingPerGroup;
+  final bool isTwoLegs;
+
   // TOURNAMENT Lifecycle
   final String status; // 'open', 'ongoing', 'completed'
   final String? championTeamId;
@@ -1294,6 +1299,9 @@ class Championship {
     this.trophyMedals = true,
     this.redCardSuspension = true,
     this.fairPlayScoring = false,
+    this.numberOfGroups = 1,
+    this.qualifyingPerGroup = 2,
+    this.isTwoLegs = false,
     this.status = 'open',
     this.championTeamId,
     this.championTeamName,
@@ -1319,11 +1327,11 @@ class Championship {
         entryFee: double.tryParse((data['entry_fee'] ?? data['entryFee'] ?? 0).toString()) ?? 0.0,
         grandPrize: double.tryParse((data['grand_prize'] ?? data['grandPrize'] ?? 0).toString()) ?? 0.0,
         maxTeams: int.tryParse((data['max_teams'] ?? data['maxTeams'] ?? 16).toString()) ?? 16,
-        joinedTeams: List<String>.from(data['joined_teams'] ?? data['joinedTeams'] ?? []),
-        ownerId: data['owner_id'] ?? data['ownerId']?.toString() ?? '',
+        joinedTeams: (data['joined_teams'] as List? ?? data['joinedTeams'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+        ownerId: (data['owner_id'] ?? data['ownerId'] ?? '')?.toString() ?? '',
         governorate: data['governorate']?.toString() ?? 'Cairo',
         rules: data['rules']?.toString() ?? '',
-        paymentMethods: List<String>.from(data['payment_methods'] ?? data['paymentMethods'] ?? ['cash']),
+        paymentMethods: (data['payment_methods'] as List? ?? data['paymentMethods'] as List?)?.map((e) => e.toString()).toList() ?? <String>['cash'],
         // ⚡ قراءة الإعدادات من أعمدتها المسطحة مباشرة مع خيار السقوط الخلفي للـ settings
         maxPlayersPerTeam: int.tryParse((data['max_players_per_team'] ?? settings['maxPlayers'] ?? settings['max_players'] ?? data['maxPlayersPerTeam'] ?? 11).toString()) ?? 11,
         minPlayersPerTeam: int.tryParse((data['min_players_per_team'] ?? settings['minPlayers'] ?? settings['min_players'] ?? data['minPlayersPerTeam'] ?? 5).toString()) ?? 5,
@@ -1335,10 +1343,13 @@ class Championship {
         trophyMedals: data['trophy_medals'] != false && settings['trophyMedals'] != false && settings['trophy_medals'] != false && data['trophyMedals'] != false,
         redCardSuspension: data['red_card_suspension'] != false && settings['redCardSuspension'] != false && settings['red_card_suspension'] != false && data['redCardSuspension'] != false,
         fairPlayScoring: data['fair_play_scoring'] == true || settings['fairPlayScoring'] == true || settings['fair_play_scoring'] == true || data['fairPlayScoring'] == true,
+        numberOfGroups: int.tryParse((data['number_of_groups'] ?? data['numberOfGroups'] ?? 1).toString()) ?? 1,
+        qualifyingPerGroup: int.tryParse((data['qualifying_per_group'] ?? data['qualifyingPerGroup'] ?? 2).toString()) ?? 2,
+        isTwoLegs: data['is_two_legs'] == true || data['isTwoLegs'] == true,
         status: data['status']?.toString() ?? 'open',
         championTeamId: data['champion_team_id'] ?? data['championTeamId']?.toString(),
         championTeamName: data['champion_team_name'] ?? data['championTeamName']?.toString(),
-        paidTeams: List<String>.from(data['paid_teams'] ?? data['paidTeams'] ?? []),
+        paidTeams: (data['paid_teams'] as List? ?? data['paidTeams'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
       );
     } catch (e) {
       // كود أمان احتياطي لمنع انهيار التطبيق في حال وجود بيانات تالفة
@@ -1386,6 +1397,9 @@ class Championship {
     bool? trophyMedals,
     bool? redCardSuspension,
     bool? fairPlayScoring,
+    int? numberOfGroups,
+    int? qualifyingPerGroup,
+    bool? isTwoLegs,
     String? status,
     String? championTeamId,
     String? championTeamName,
@@ -1417,6 +1431,9 @@ class Championship {
       trophyMedals: trophyMedals ?? this.trophyMedals,
       redCardSuspension: redCardSuspension ?? this.redCardSuspension,
       fairPlayScoring: fairPlayScoring ?? this.fairPlayScoring,
+      numberOfGroups: numberOfGroups ?? this.numberOfGroups,
+      qualifyingPerGroup: qualifyingPerGroup ?? this.qualifyingPerGroup,
+      isTwoLegs: isTwoLegs ?? this.isTwoLegs,
       status: status ?? this.status,
       championTeamId: championTeamId ?? this.championTeamId,
       championTeamName: championTeamName ?? this.championTeamName,
@@ -1463,6 +1480,9 @@ class Championship {
       'trophy_medals': trophyMedals,
       'red_card_suspension': redCardSuspension,
       'fair_play_scoring': fairPlayScoring,
+      'number_of_groups': numberOfGroups,
+      'qualifying_per_group': qualifyingPerGroup,
+      'is_two_legs': isTwoLegs,
       
       // Legacy settings field
       'settings': {
@@ -1599,6 +1619,11 @@ class TournamentMatch {
   final DateTime? scheduledTime;
   final List<GoalItem> goalDetails;
 
+  // ⚡ New Fields for Groups & League
+  final String? groupName; // 'A', 'B', 'C', 'D'...
+  final int? weekNumber;   // 1, 2, 3...
+  final String stage;      // 'group_stage', 'knockout', 'league'
+
   TournamentMatch({
     required this.id,
     required this.championshipId,
@@ -1614,12 +1639,17 @@ class TournamentMatch {
     this.nextMatchId,
     this.scheduledTime,
     this.goalDetails = const [],
+    this.groupName,
+    this.weekNumber,
+    this.stage = 'knockout',
   });
 
-  bool get isCompleted => winnerId != null;
+  bool get isCompleted => winnerId != null || (homeScore != null && awayScore != null);
   bool get isReady => homeTeamId != null && awayTeamId != null;
 
   String get roundLabel {
+    if (stage == 'group_stage') return 'المجموعة ${groupName ?? "A"} - الأسبوع ${weekNumber ?? 1}';
+    if (stage == 'league') return 'الأسبوع ${weekNumber ?? 1}';
     switch (roundIndex) {
       case 0: return 'Final';
       case 1: return 'Semi-Finals';
@@ -1655,6 +1685,9 @@ class TournamentMatch {
               : DateTime.tryParse(scheduledTimeVal.toString())?.toLocal())
           : null,
       goalDetails: parsedGoals,
+      groupName: data['group_name'] ?? data['groupName'],
+      weekNumber: data['week_number'] ?? data['weekNumber'],
+      stage: data['stage'] ?? 'knockout',
     );
   }
 
@@ -1673,6 +1706,9 @@ class TournamentMatch {
       'nextMatchId': nextMatchId,
       'scheduledTime': scheduledTime?.toIso8601String(),
       'goal_details': goalDetails.map((g) => g.toMap()).toList(),
+      'group_name': groupName,
+      'week_number': weekNumber,
+      'stage': stage,
     };
   }
 }

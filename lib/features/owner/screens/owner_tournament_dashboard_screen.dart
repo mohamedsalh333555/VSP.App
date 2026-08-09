@@ -470,7 +470,13 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
 
     setState(() => _isLoading = true);
     try {
-      await TournamentRepository().generateFixtures(_currentChampionship.id);
+      if (_currentChampionship.type == 'League') {
+        await TournamentRepository().generateLeagueFixtures(_currentChampionship.id);
+      } else if (_currentChampionship.type == 'GroupsAndKnockout') {
+        await TournamentRepository().generateGroupsFixtures(_currentChampionship.id);
+      } else {
+        await TournamentRepository().generateFixtures(_currentChampionship.id);
+      }
       
       setState(() {
         _currentChampionship = _currentChampionship.copyWith(status: 'ongoing');

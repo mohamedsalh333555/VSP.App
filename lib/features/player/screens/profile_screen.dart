@@ -26,6 +26,8 @@ import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/constants/egypt_governorates.dart';
+import '../../../core/providers/stadium_provider.dart';
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -60,6 +62,84 @@ class _ProfileScreenState extends State<ProfileScreen> {
     } finally {
       if (mounted) setState(() => _isSharing = false);
     }
+  }
+
+  void _showLocationPicker(BuildContext context, AuthProvider auth) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final governorates = EgyptGovernorates.allGovernorates;
+    final currentGov = auth.userModel?.governorate ?? 'Aswan';
+
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VSPColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (sheetContext) {
+        return Container(
+          padding: const EdgeInsets.all(16),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 40, height: 4,
+                decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isArabic ? 'تحديد المحافظة والموقع 📍' : 'Select Location / Governorate 📍',
+                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 8),
+              Text(
+                isArabic ? 'اختر محافظتك لعرض الملاعب والبطولات المتاحة:' : 'Choose your governorate to display available stadiums & tournaments:',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 16),
+              Expanded(
+                child: ListView.builder(
+                  physics: const BouncingScrollPhysics(),
+                  itemCount: governorates.length,
+                  itemBuilder: (context, index) {
+                    final gov = governorates[index];
+                    final String displayGovName = isArabic 
+                        ? (gov == 'Aswan' ? 'أسوان' : (gov == 'Cairo' ? 'القاهرة' : gov))
+                        : gov;
+                    final isSelected = currentGov == gov || currentGov == displayGovName;
+
+                    return ListTile(
+                      leading: Icon(
+                        LucideIcons.mapPin,
+                        color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                      ),
+                      title: Text(
+                        displayGovName,
+                        style: TextStyle(
+                          color: isSelected ? VSPColors.accent : Colors.white,
+                          fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                        ),
+                      ),
+                      trailing: isSelected ? const Icon(LucideIcons.check, color: VSPColors.accent) : null,
+                      onTap: () async {
+                        await auth.updateProfile({'governorate': gov});
+                        if (context.mounted) {
+                          context.read<StadiumProvider>().applyGovernorateFilter(gov);
+                          Navigator.pop(sheetContext);
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic ? 'تم تغيير موقعك إلى $displayGovName بنجاح 📍' : 'Location changed to $gov successfully 📍',
+                          );
+                        }
+                      },
+                    );
+                  },
+                ),
+              ),
+            ],
+          ),
+        );
+      },
+    );
   }
 
   @override
@@ -253,6 +333,25 @@ class _ProfileScreenState extends State<ProfileScreen> {
               const SizedBox(height: VSPSpacing.sm),
               VSPFadeInItem(
                 index: 4,
+                child: Builder(builder: (context) {
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                  final govName = auth.userModel?.governorate ?? (isArabic ? 'أسوان' : 'Aswan');
+                  final displayGov = isArabic
+                      ? (govName == 'Aswan' ? 'أسوان' : (govName == 'Cairo' ? 'القاهرة' : govName))
+                      : govName;
+
+                  return VSPMenuItem(
+                    icon: LucideIcons.mapPin,
+                    title: isArabic ? 'الموقع والمحافظة' : 'Location & Governorate',
+                    subtitle: isArabic
+                        ? 'المحافظة الحالية: $displayGov (اضغط للتغيير)'
+                        : 'Current: $displayGov (Tap to change)',
+                    onTap: () => _showLocationPicker(context, auth),
+                  );
+                }),
+              ),
+              VSPFadeInItem(
+                index: 5,
                 child: VSPMenuItem(
                   icon: LucideIcons.bell,
                   title: l10n.notifications,
@@ -261,7 +360,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               VSPFadeInItem(
-                index: 5,
+                index: 6,
                 child: VSPMenuItem(
                   icon: LucideIcons.shieldCheck,
                   title: l10n.privacy,
@@ -270,7 +369,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               VSPFadeInItem(
-                index: 6,
+                index: 7,
                 child: VSPMenuItem(
                   icon: LucideIcons.globe,
                   title: l10n.language,
@@ -279,7 +378,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 ),
               ),
               VSPFadeInItem(
-                index: 7,
+                index: 8,
                 child: VSPMenuItem(
                   icon: LucideIcons.helpCircle,
                   title: l10n.helpCenter,
@@ -292,7 +391,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
               // 4. Danger Zone
               VSPFadeInItem(
-                index: 8,
+                index: 9,
                 child: VSPMenuItem(
                   icon: LucideIcons.logOut,
                   title: l10n.logout,

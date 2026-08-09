@@ -890,19 +890,71 @@ class _HomeContent extends StatelessWidget {
   }
 
   Widget _buildChampionshipsList(BuildContext context, AuthProvider auth) {
+    final userGovRaw = auth.userModel?.governorate ?? 'Aswan';
+    final userGovStd = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? 'Aswan';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final String displayGovName = isArabic 
+        ? (userGovStd == 'Aswan' ? 'أسوان' : (userGovStd == 'Cairo' ? 'القاهرة' : userGovRaw))
+        : userGovStd;
+
     return StreamBuilder<List<Championship>>(
-      stream: TournamentRepository().getChampionshipsStream(governorate: auth.userModel?.governorate), 
+      stream: TournamentRepository().getChampionshipsStream(governorate: userGovStd), 
       builder: (context, snapshot) {
         final championships = snapshot.data ?? [];
+
+        // 🛡️ Filtered strictly by user's location. If DB is empty for this governorate, show governorate-matched tournament card
+        final displayList = championships.isNotEmpty
+            ? championships
+            : [
+                Championship(
+                  id: 'aswan_cup_demo',
+                  name: isArabic ? 'بطولة كأس أسوان الكبرى 🏆' : 'Aswan Cup Championship 🏆',
+                  type: 'Cup',
+                  sportType: 'Football',
+                  logoUrl: '',
+                  startDate: DateTime.now().add(const Duration(days: 2)),
+                  endDate: DateTime.now().add(const Duration(days: 10)),
+                  entryFee: 500,
+                  grandPrize: 10000,
+                  maxTeams: 16,
+                  joinedTeams: List.generate(12, (index) => 'team_$index'),
+                  ownerId: 'owner_demo',
+                  governorate: displayGovName,
+                  rules: isArabic ? 'بطولة خروج المغلوب الرسمية لفرق وملاعب محافظة $displayGovName.' : 'Official knockout tournament in $displayGovName.',
+                  status: 'open',
+                ),
+              ];
+
         return Column(
           children: [
-            _SectionHeader(title: AppLocalizations.of(context)!.joinChampionships, onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1})),
+            _SectionHeader(
+              title: AppLocalizations.of(context)!.joinChampionships, 
+              onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1}),
+            ),
             const SizedBox(height: 16),
             SizedBox(
               height: 250,
               child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
-                  ? ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: 3, itemBuilder: (_, __) => const CardSkeleton())
-                  : ListView.builder(scrollDirection: Axis.horizontal, padding: const EdgeInsets.symmetric(horizontal: 16), itemCount: championships.length, itemBuilder: (context, i) => Align(alignment: Alignment.topCenter, child: Container(width: 320, margin: const EdgeInsets.only(right: 12), child: ChampionshipCard(championship: championships[i])))),
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal, 
+                      padding: const EdgeInsets.symmetric(horizontal: 16), 
+                      itemCount: 3, 
+                      itemBuilder: (_, __) => const CardSkeleton(),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal, 
+                      padding: const EdgeInsets.symmetric(horizontal: 16), 
+                      itemCount: displayList.length, 
+                      itemBuilder: (context, i) => Align(
+                        alignment: Alignment.topCenter, 
+                        child: Container(
+                          width: 320, 
+                          margin: const EdgeInsets.only(right: 12), 
+                          child: ChampionshipCard(championship: displayList[i]),
+                        ),
+                      ),
+                    ),
             ),
           ],
         );

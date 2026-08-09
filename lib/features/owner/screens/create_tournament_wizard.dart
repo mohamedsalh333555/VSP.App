@@ -1,4 +1,5 @@
 import 'owner_tournament_dashboard_screen.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -93,8 +94,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   String? _selectedTemplateName;
 
   // Step 2: System
-  String _selectedType = 'Cup'; // Cup, League
+  String _selectedType = 'Cup'; // Cup, League, GroupsAndKnockout
   String _selectedTeams = '8';
+  int _numberOfGroups = 2;
+  int _qualifyingPerGroup = 2;
+  bool _isTwoLegs = false;
 
   // Step 3: Scheduling
   DateTime _startDate = DateTime.now().add(const Duration(days: 7));
@@ -115,6 +119,9 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _feeController.text = t.entryFee.toInt().toString();
       _selectedType = t.type;
       _selectedTeams = t.maxTeams.toString();
+      _numberOfGroups = t.numberOfGroups;
+      _qualifyingPerGroup = t.qualifyingPerGroup;
+      _isTwoLegs = t.isTwoLegs;
       _startDate = t.startDate;
       _endDate = t.endDate;
       _durationController.text = t.matchDuration.toString();
@@ -259,6 +266,12 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         'maxTeams': int.parse(_selectedTeams),
         'grandPrize': double.tryParse(_prizeController.text.trim()) ?? 0.0,
         'entryFee': double.tryParse(_feeController.text.trim()) ?? 0.0,
+        'number_of_groups': _numberOfGroups,
+        'numberOfGroups': _numberOfGroups,
+        'qualifying_per_group': _qualifyingPerGroup,
+        'qualifyingPerGroup': _qualifyingPerGroup,
+        'is_two_legs': _isTwoLegs,
+        'isTwoLegs': _isTwoLegs,
         'rules': widget.tournament?.rules ?? '',
         'paymentMethods': widget.tournament?.paymentMethods ?? ['cash'],
         'settings': {
@@ -597,58 +610,116 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   // ── STEP 2: Tournament System ───────────────────
   Widget _buildStep2() {
-    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       key: const ValueKey('step2'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        _buildLabel(l10n.tournamentSystemLabel),
-        const SizedBox(height: VSPSpacing.sm),
-        Row(
-          children: [
-            _buildSystemOption('Cup', l10n.knockoutType, Icons.emoji_events_outlined),
-            const SizedBox(width: VSPSpacing.md),
-            _buildSystemOption('League', l10n.leagueType, Icons.leaderboard_outlined),
-          ],
+        Text(
+          isArabic ? 'اختر نظام البطولة 🏆' : 'Choose Tournament Format 🏆',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: VSPSpacing.xl),
+        const SizedBox(height: 12),
+        
+        // 1. خروج المغلوب (Cup)
+        _buildFormatOptionCard(
+          type: 'Cup',
+          title: isArabic ? 'خروج المغلوب (الكأس)' : 'Knockout (Cup)',
+          subtitle: isArabic ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
+          icon: LucideIcons.trophy,
+        ),
+        const SizedBox(height: 10),
 
-        _buildLabel(l10n.maxTeamsLabel),
+        // 2. دوري كامل (League)
+        _buildFormatOptionCard(
+          type: 'League',
+          title: isArabic ? 'دوري نقاط كامل (League)' : 'Full League (Points)',
+          subtitle: isArabic ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
+          icon: LucideIcons.award,
+        ),
+        const SizedBox(height: 10),
+
+        // 3. مجموعات وتصفيات (Groups + Knockout)
+        _buildFormatOptionCard(
+          type: 'GroupsAndKnockout',
+          title: isArabic ? 'مجموعات ثم تصفيات (كأس العالم)' : 'Groups + Knockout',
+          subtitle: isArabic ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
+          icon: LucideIcons.shieldCheck,
+        ),
+
+        const SizedBox(height: 20),
+
+        _buildLabel(AppLocalizations.of(context)!.maxTeamsLabel),
         _buildDropdown(['4', '8', '16', '32'], _selectedTeams, (v) => setState(() => _selectedTeams = v!)),
+        const SizedBox(height: 16),
+
+        // إعدادات خاصة بالمجموعات والدوري
+        if (_selectedType == 'GroupsAndKnockout') ...[
+          _buildLabel(isArabic ? 'عدد المجموعات:' : 'Number of Groups:'),
+          _buildDropdown(['2', '4', '8'], _numberOfGroups.toString(), (v) => setState(() => _numberOfGroups = int.parse(v!))),
+          const SizedBox(height: 12),
+          _buildLabel(isArabic ? 'المتأهلين من كل مجموعة:' : 'Qualifiers per Group:'),
+          _buildDropdown(['1', '2'], _qualifyingPerGroup.toString(), (v) => setState(() => _qualifyingPerGroup = int.parse(v!))),
+          const SizedBox(height: 12),
+        ],
+
+        if (_selectedType == 'League') ...[
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(isArabic ? 'ذهاب وإياد (دورين)' : 'Home & Away (Two Legs)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Switch.adaptive(
+                value: _isTwoLegs,
+                onChanged: (v) => setState(() => _isTwoLegs = v),
+                activeColor: VSPColors.accent,
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+        ],
         const SizedBox(height: 80),
       ],
     );
   }
 
-  Widget _buildSystemOption(String value, String label, IconData icon) {
-    final isSelected = _selectedType == value;
-    return Expanded(
-      child: GestureDetector(
-        onTap: () => setState(() => _selectedType = value),
-        child: AnimatedContainer(
-          duration: const Duration(milliseconds: 200),
-          padding: const EdgeInsets.all(VSPSpacing.md),
-          decoration: BoxDecoration(
-            color: isSelected ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-            border: Border.all(
-              color: isSelected ? VSPColors.accent : VSPColors.divider,
-              width: isSelected ? 2 : 1,
-            ),
+  Widget _buildFormatOptionCard({
+    required String type,
+    required String title,
+    required String subtitle,
+    required IconData icon,
+  }) {
+    final isSelected = _selectedType == type;
+    return InkWell(
+      onTap: () => setState(() => _selectedType = type),
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 200),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(
+            color: isSelected ? VSPColors.accent : VSPColors.divider,
+            width: isSelected ? 2 : 1,
           ),
-          child: Column(
-            children: [
-              Icon(icon, color: isSelected ? VSPColors.accent : VSPColors.textSecondary, size: 32),
-              const SizedBox(height: VSPSpacing.sm),
-              Text(
-                label,
-                style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                      fontWeight: FontWeight.bold,
-                      color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
-                    ),
+        ),
+        child: Row(
+          children: [
+            Icon(icon, color: isSelected ? VSPColors.accent : VSPColors.textSecondary, size: 24),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title, style: TextStyle(color: isSelected ? VSPColors.accent : Colors.white, fontWeight: FontWeight.bold, fontSize: 14)),
+                  const SizedBox(height: 2),
+                  Text(subtitle, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11)),
+                ],
               ),
-            ],
-          ),
+            ),
+            if (isSelected)
+              const Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 18),
+          ],
         ),
       ),
     );

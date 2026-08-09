@@ -27,6 +27,7 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
+  int _statsSubIndex = 0; // 0: Top Scorers, 1: Clean Sheets
 
   @override
   void initState() {
@@ -810,12 +811,131 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
+  Widget _buildStandingsSection(bool isArabic) {
+    final isGroupOrLeague = widget.championship.type == 'League' || widget.championship.type == 'GroupsAndKnockout';
+    if (!isGroupOrLeague) return const SizedBox.shrink();
+
+    final isGroups = widget.championship.type == 'GroupsAndKnockout';
+    final numGroups = widget.championship.numberOfGroups;
+    final groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(LucideIcons.award, color: VSPColors.accent, size: 20),
+            const SizedBox(width: 8),
+            Text(
+              isArabic ? 'جدول الترتيب الحي' : 'Live Standings Table',
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 16),
+            ),
+          ],
+        ),
+        const SizedBox(height: 12),
+        if (isGroups) ...[
+          for (int g = 0; g < numGroups; g++) ...[
+            Padding(
+              padding: const EdgeInsets.only(top: 8, bottom: 6),
+              child: Text(
+                isArabic ? 'المجموعة ${groupNames[g]}' : 'Group ${groupNames[g]}',
+                style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
+              ),
+            ),
+            _buildStandingsTableWidget(context, widget.championship.id, groupName: groupNames[g]),
+            const SizedBox(height: 12),
+          ],
+        ] else ...[
+          _buildStandingsTableWidget(context, widget.championship.id),
+        ],
+        const SizedBox(height: 20),
+      ],
+    );
+  }
+
+  Widget _buildStandingsTableWidget(BuildContext context, String championshipId, {String? groupName}) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: TournamentRepository().getChampionshipStandings(championshipId, groupName: groupName),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: Padding(padding: EdgeInsets.all(20), child: CircularProgressIndicator(color: VSPColors.accent)));
+        }
+
+        final rows = snapshot.data ?? [];
+        if (rows.isEmpty) {
+          return Container(
+            padding: const EdgeInsets.all(16),
+            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(12)),
+            child: Center(
+              child: Text(
+                isArabic ? 'لا توجد مباريات مسجلة بعد' : 'No recorded matches yet',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              ),
+            ),
+          );
+        }
+
+        return Container(
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            border: Border.all(color: VSPColors.divider),
+          ),
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            child: DataTable(
+              columnSpacing: 14,
+              headingRowHeight: 40,
+              dataRowMaxHeight: 44,
+              columns: [
+                DataColumn(label: Text(isArabic ? '#' : '#', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isArabic ? 'الفريق' : 'Team', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                DataColumn(label: Text(isArabic ? 'لعب' : 'P', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'فاز' : 'W', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'تعادل' : 'D', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'خسر' : 'L', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'له' : 'GF', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'عليه' : 'GA', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? '+/-' : 'GD', style: const TextStyle(color: Colors.white70))),
+                DataColumn(label: Text(isArabic ? 'النقاط' : 'PTS', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))),
+              ],
+              rows: rows.asMap().entries.map((entry) {
+                final rank = entry.key + 1;
+                final r = entry.value;
+
+                return DataRow(
+                  cells: [
+                    DataCell(Text('$rank', style: TextStyle(color: rank <= 2 ? VSPColors.accent : Colors.white, fontWeight: FontWeight.bold))),
+                    DataCell(Text(r['team_name']?.toString() ?? 'Team', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold))),
+                    DataCell(Text('${r['played'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['won'] ?? 0}', style: const TextStyle(color: Colors.green))),
+                    DataCell(Text('${r['drawn'] ?? 0}', style: const TextStyle(color: Colors.orange))),
+                    DataCell(Text('${r['lost'] ?? 0}', style: const TextStyle(color: Colors.red))),
+                    DataCell(Text('${r['goals_for'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['goals_against'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['goal_difference'] ?? 0}', style: const TextStyle(color: Colors.white70))),
+                    DataCell(Text('${r['points'] ?? 0}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14))),
+                  ],
+                );
+              }).toList(),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
   Widget _buildTimelineAndBracketsTab(bool isArabic) {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // 🏆 Live Standings Table (For League & Group Systems)
+          _buildStandingsSection(isArabic),
+
           // Brackets Button
           PrimaryButton(
             text: isArabic ? 'عرض شجرة القرعة والمواجهات' : 'View Tournament Brackets',
@@ -1053,6 +1173,87 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   }
 
   Widget _buildTopScorersTab(bool isArabic) {
+    return Column(
+      children: [
+        // Sub-switcher for Scorers vs Clean Sheets
+        Container(
+          margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 4),
+          padding: const EdgeInsets.all(4),
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+            border: Border.all(color: VSPColors.divider, width: 0.5),
+          ),
+          child: Row(
+            children: [
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _statsSubIndex = 0),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _statsSubIndex == 0 ? VSPColors.accent : Colors.transparent,
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.trophy, size: 14, color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          isArabic ? 'ترتيب الهدافين' : 'Top Scorers',
+                          style: TextStyle(
+                            color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+              Expanded(
+                child: GestureDetector(
+                  onTap: () => setState(() => _statsSubIndex = 1),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(vertical: 8),
+                    decoration: BoxDecoration(
+                      color: _statsSubIndex == 1 ? VSPColors.accent : Colors.transparent,
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Icon(LucideIcons.shieldCheck, size: 14, color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary),
+                        const SizedBox(width: 6),
+                        Text(
+                          isArabic ? 'أقوى دفاع (كلين شيت)' : 'Clean Sheets',
+                          style: TextStyle(
+                            color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary,
+                            fontWeight: FontWeight.bold,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+
+        Expanded(
+          child: _statsSubIndex == 0
+              ? _buildScorersList(isArabic)
+              : _buildCleanSheetsList(isArabic),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildScorersList(bool isArabic) {
     return FutureBuilder<List<Map<String, dynamic>>>(
       future: TournamentRepository().getTopScorersForChampionship(widget.championship.id),
       builder: (context, snapshot) {
@@ -1170,6 +1371,119 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                         Text(
                           '$goals ${isArabic ? "أهداف" : "goals"}',
                           style: TextStyle(color: isOwnGoalCategory ? VSPColors.error : VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+            );
+          },
+        );
+      },
+    );
+  }
+
+  Widget _buildCleanSheetsList(bool isArabic) {
+    return FutureBuilder<List<Map<String, dynamic>>>(
+      future: TournamentRepository().getCleanSheetsForChampionship(widget.championship.id),
+      builder: (context, snapshot) {
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+
+        final cleanSheets = snapshot.data ?? [];
+        if (cleanSheets.isEmpty) {
+          return Center(
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(LucideIcons.shieldCheck, color: VSPColors.textSecondary, size: 40),
+                const SizedBox(height: 12),
+                Text(
+                  isArabic ? 'لم يتم تسجيل مباريات بشباك نظيفة بعد' : 'No clean sheets recorded yet',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                ),
+              ],
+            ),
+          );
+        }
+
+        return ListView.builder(
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          itemCount: cleanSheets.length,
+          itemBuilder: (context, index) {
+            final item = cleanSheets[index];
+            final rank = index + 1;
+            final String team = item['team'] ?? '';
+            final int count = item['clean_sheets'] as int? ?? 0;
+
+            Color rankColor = VSPColors.surfaceAlt;
+            String rankEmoji = '#$rank';
+            if (rank == 1) {
+              rankColor = VSPColors.accent;
+              rankEmoji = '🥇';
+            } else if (rank == 2) {
+              rankColor = VSPColors.accent.withValues(alpha: 0.7);
+              rankEmoji = '🥈';
+            } else if (rank == 3) {
+              rankColor = VSPColors.accent.withValues(alpha: 0.5);
+              rankEmoji = '🥉';
+            }
+
+            return Container(
+              margin: const EdgeInsets.only(bottom: 8),
+              padding: const EdgeInsets.all(12),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
+              child: Row(
+                children: [
+                  Container(
+                    width: 36,
+                    height: 36,
+                    decoration: BoxDecoration(
+                      color: rankColor.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Center(
+                      child: Text(
+                        rankEmoji,
+                        style: TextStyle(
+                          color: rank <= 3 ? rankColor : VSPColors.textSecondary,
+                          fontWeight: FontWeight.bold,
+                          fontSize: rank <= 3 ? 16 : 12,
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      team,
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 14,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          '$count ${isArabic ? "مباراة نظيفة" : "clean sheets"}',
+                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
                         ),
                       ],
                     ),

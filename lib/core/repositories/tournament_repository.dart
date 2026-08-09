@@ -1,9 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
+import 'package:uuid/uuid.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/team_repository.dart';
 import '../utils/app_date_formatter.dart';
+import '../constants/egypt_governorates.dart';
 import '../../data/models.dart';
 
 class TournamentRepository {
@@ -19,38 +21,68 @@ class TournamentRepository {
     String? governorate, 
     String? sportType,
     bool isOwner = false,
-    String? ownerId, // required when isOwner=true to show only that owner's championships
-  }) {
-    return _supabase
+    String? ownerId,
+  }) async* {
+    // 1. ⚡ Emit immediate results via REST API query so UI never stays empty or waits for WebSocket connection
+    try {
+      final List<dynamic> response = await _supabase.from('championships').select();
+      final items = _parseChampionshipsList(
+        response,
+        governorate: governorate,
+        sportType: sportType,
+        isOwner: isOwner,
+        ownerId: ownerId,
+      );
+      yield items;
+    } catch (e) {
+      debugPrint('Error fetching initial championships via REST: $e');
+    }
+
+    // 2. 📡 Listen to Real-time Stream for updates
+    yield* _supabase
         .from('championships')
         .stream(primaryKey: ['id'])
         .map((list) {
-          return list.map((data) {
-            // 🛡️ Approval Gate: Hide unapproved championships from players if column exists.
-            final bool isApproved = data.containsKey('is_approved') ? (data['is_approved'] == true) : true;
-            if (!isOwner && !isApproved) return null;
-            if (isOwner && ownerId != null) {
-              // Owner dashboard: only show their own championships
-              final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
-              if (champOwnerId != ownerId) return null;
-            }
-
-            if (governorate != null && governorate.isNotEmpty && data['governorate'] != governorate) {
-              return null;
-            }
-            if (sportType != null && sportType.isNotEmpty && (data['sport_type'] ?? data['sportType']) != sportType) {
-              return null;
-            }
-            final champ = Championship.fromFirestore(data, data['id'].toString());
-            if (!isOwner && champ.status == 'completed') {
-              final daysSinceEnd = DateTime.now().difference(champ.endDate).inDays;
-              if (daysSinceEnd > 5) {
-                return null;
-              }
-            }
-            return champ;
-          }).whereType<Championship>().toList();
+          return _parseChampionshipsList(
+            list,
+            governorate: governorate,
+            sportType: sportType,
+            isOwner: isOwner,
+            ownerId: ownerId,
+          );
         });
+  }
+
+  List<Championship> _parseChampionshipsList(
+    List<dynamic> list, {
+    String? governorate,
+    String? sportType,
+    bool isOwner = false,
+    String? ownerId,
+  }) {
+    return list.map((data) {
+      if (data is! Map<String, dynamic>) return null;
+      final bool isApproved = data['is_approved'] == null ? true : (data['is_approved'] == true);
+      if (!isOwner && !isApproved) return null;
+      if (isOwner && ownerId != null) {
+        final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
+        if (champOwnerId != ownerId) return null;
+      }
+      if (governorate != null && governorate.isNotEmpty) {
+        final String champGov = data['governorate']?.toString() ?? '';
+        final stdGov1 = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate.trim().toLowerCase();
+        final stdGov2 = EgyptGovernorates.resolveGoogleName(champGov) ?? champGov.trim().toLowerCase();
+        if (stdGov1 != stdGov2) {
+          return null;
+        }
+      }
+      try {
+        return Championship.fromFirestore(data, data['id'].toString());
+      } catch (e) {
+        debugPrint('Error parsing championship: $e');
+        return null;
+      }
+    }).whereType<Championship>().toList();
   }
 
   Future<String?> createChampionship(Map<String, dynamic> data) async {
@@ -1055,6 +1087,295 @@ class TournamentRepository {
     } catch (e) {
       debugPrint('Error getting clean sheets: $e');
       return [];
+    }
+  }
+
+  // ─── 1. جلب جدول ترتيب الدوري أو المجموعات أوتوماتيكياً من Supabase ───
+  Future<List<Map<String, dynamic>>> getChampionshipStandings(String championshipId, {String? groupName}) async {
+    try {
+      final response = await _supabase.rpc('get_championship_standings', params: {
+        'p_championship_id': championshipId,
+        'p_group_name': groupName,
+      });
+      return List<Map<String, dynamic>>.from(response as List? ?? []);
+    } catch (e) {
+      debugPrint('Error fetching standings: $e');
+      return [];
+    }
+  }
+
+  // ─── 2. توليد مباريات الدوري الكامل (Round-Robin Algorithm) ───
+  Future<void> generateLeagueFixtures(String championshipId) async {
+    try {
+      final champDoc = await _supabase.from('championships').select().eq('id', championshipId).maybeSingle();
+      if (champDoc == null) throw Exception('البطولة غير موجودة');
+
+      final List<String> teamIds = (champDoc['joined_teams'] as List? ?? champDoc['joinedTeams'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      if (teamIds.length < 2) throw Exception('يجب وجود فريقين على الأقل لإنشاء الدوري');
+
+      final teams = await getTeamsByIds(teamIds);
+      final teamMap = {for (var t in teams) t.id: t.name};
+
+      final isTwoLegs = champDoc['is_two_legs'] == true || champDoc['isTwoLegs'] == true;
+
+      final List<String?> teamList = List.from(teamIds);
+      if (teamList.length % 2 != 0) {
+        teamList.add(null);
+      }
+
+      final int numTeams = teamList.length;
+      final int numWeeks = numTeams - 1;
+      final int matchesPerWeek = numTeams ~/ 2;
+
+      List<Map<String, dynamic>> matchesToInsert = [];
+
+      for (int week = 0; week < numWeeks; week++) {
+        for (int match = 0; match < matchesPerWeek; match++) {
+          final homeIdx = (week + match) % (numTeams - 1);
+          var awayIdx = (numTeams - 1 - match + week) % (numTeams - 1);
+
+          if (match == 0) {
+            awayIdx = numTeams - 1;
+          }
+
+          final homeId = teamList[homeIdx];
+          final awayId = teamList[awayIdx];
+
+          if (homeId != null && awayId != null) {
+            final matchUuid = const Uuid().v4();
+            matchesToInsert.add({
+              'id': matchUuid,
+              'championship_id': championshipId,
+              'championshipId': championshipId,
+              'round_index': 0,
+              'roundIndex': 0,
+              'match_index': matchesToInsert.length,
+              'matchIndex': matchesToInsert.length,
+              'week_number': week + 1,
+              'weekNumber': week + 1,
+              'stage': 'league',
+              'home_team_id': homeId,
+              'homeTeamId': homeId,
+              'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
+              'homeTeamName': teamMap[homeId] ?? 'فريق $homeId',
+              'away_team_id': awayId,
+              'awayTeamId': awayId,
+              'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
+              'awayTeamName': teamMap[awayId] ?? 'فريق $awayId',
+            });
+          }
+        }
+      }
+
+      if (isTwoLegs) {
+        final int firstLegWeeks = numWeeks;
+        final int firstLegMatchesCount = matchesToInsert.length;
+
+        for (int i = 0; i < firstLegMatchesCount; i++) {
+          final m = matchesToInsert[i];
+          final matchUuid = const Uuid().v4();
+          matchesToInsert.add({
+            'id': matchUuid,
+            'championship_id': championshipId,
+            'championshipId': championshipId,
+            'round_index': 0,
+            'roundIndex': 0,
+            'match_index': matchesToInsert.length,
+            'matchIndex': matchesToInsert.length,
+            'week_number': (m['week_number'] as int) + firstLegWeeks,
+            'weekNumber': (m['week_number'] as int) + firstLegWeeks,
+            'stage': 'league',
+            'home_team_id': m['away_team_id'],
+            'homeTeamId': m['away_team_id'],
+            'home_team_name': m['away_team_name'],
+            'homeTeamName': m['away_team_name'],
+            'away_team_id': m['home_team_id'],
+            'awayTeamId': m['home_team_id'],
+            'away_team_name': m['home_team_name'],
+            'awayTeamName': m['home_team_name'],
+          });
+        }
+      }
+
+      if (matchesToInsert.isNotEmpty) {
+        await _supabase.from('tournament_matches').insert(matchesToInsert);
+      }
+
+      await _supabase.from('championships').update({'status': 'ongoing'}).eq('id', championshipId);
+      debugPrint('✅ League Fixtures generated successfully (${matchesToInsert.length} matches)');
+    } catch (e) {
+      debugPrint('Error generating league fixtures: $e');
+      rethrow;
+    }
+  }
+
+  // ─── 3. توليد مباريات المجموعات ثم التصفيات (Groups + Knockout) ───
+  Future<void> generateGroupsFixtures(String championshipId) async {
+    try {
+      final champDoc = await _supabase.from('championships').select().eq('id', championshipId).maybeSingle();
+      if (champDoc == null) throw Exception('البطولة غير موجودة');
+
+      final List<String> teamIds = (champDoc['joined_teams'] as List? ?? champDoc['joinedTeams'] as List?)?.map((e) => e.toString()).toList() ?? [];
+      final int numGroups = int.tryParse((champDoc['number_of_groups'] ?? champDoc['numberOfGroups'] ?? 2).toString()) ?? 2;
+
+      if (teamIds.length < numGroups * 2) {
+        throw Exception('عدد الفرق غير كافٍ لتقسيمهم على $numGroups مجموعات');
+      }
+
+      final teams = await getTeamsByIds(teamIds);
+      final teamMap = {for (var t in teams) t.id: t.name};
+
+      final shuffled = List<String>.from(teamIds)..shuffle(Random());
+      final List<String> groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+      List<Map<String, dynamic>> matchesToInsert = [];
+
+      for (int g = 0; g < numGroups; g++) {
+        final String groupName = groupNames[g];
+        final List<String> groupTeamIds = [];
+
+        for (int i = 0; i < shuffled.length; i++) {
+          if (i % numGroups == g) {
+            groupTeamIds.add(shuffled[i]);
+          }
+        }
+
+        final List<String?> teamList = List.from(groupTeamIds);
+        if (teamList.length % 2 != 0) teamList.add(null);
+
+        final int numTeams = teamList.length;
+        final int numWeeks = numTeams - 1;
+        final int matchesPerWeek = numTeams ~/ 2;
+
+        for (int week = 0; week < numWeeks; week++) {
+          for (int match = 0; match < matchesPerWeek; match++) {
+            final homeIdx = (week + match) % (numTeams - 1);
+            var awayIdx = (numTeams - 1 - match + week) % (numTeams - 1);
+            if (match == 0) awayIdx = numTeams - 1;
+
+            final homeId = teamList[homeIdx];
+            final awayId = teamList[awayIdx];
+
+            if (homeId != null && awayId != null) {
+              matchesToInsert.add({
+                'id': const Uuid().v4(),
+                'championship_id': championshipId,
+                'championshipId': championshipId,
+                'round_index': 99,
+                'roundIndex': 99,
+                'match_index': matchesToInsert.length,
+                'matchIndex': matchesToInsert.length,
+                'group_name': groupName,
+                'groupName': groupName,
+                'week_number': week + 1,
+                'weekNumber': week + 1,
+                'stage': 'group_stage',
+                'home_team_id': homeId,
+                'homeTeamId': homeId,
+                'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
+                'homeTeamName': teamMap[homeId] ?? 'فريق $homeId',
+                'away_team_id': awayId,
+                'awayTeamId': awayId,
+                'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
+                'awayTeamName': teamMap[awayId] ?? 'فريق $awayId',
+              });
+            }
+          }
+        }
+      }
+
+      if (matchesToInsert.isNotEmpty) {
+        await _supabase.from('tournament_matches').insert(matchesToInsert);
+      }
+
+      await _supabase.from('championships').update({'status': 'ongoing'}).eq('id', championshipId);
+      debugPrint('✅ Group Stage Fixtures generated successfully');
+    } catch (e) {
+      debugPrint('Error generating groups fixtures: $e');
+      rethrow;
+    }
+  }
+
+  // ─── 4. التصعيد التلقائي من المجموعات إلى شجرة الإقصائيات (Advance Groups to Knockout) ───
+  Future<void> advanceGroupsToKnockout(String championshipId) async {
+    try {
+      final champDoc = await _supabase.from('championships').select().eq('id', championshipId).maybeSingle();
+      if (champDoc == null) return;
+
+      final int numGroups = int.tryParse((champDoc['number_of_groups'] ?? champDoc['numberOfGroups'] ?? 2).toString()) ?? 2;
+      final int qualifyingPerGroup = int.tryParse((champDoc['qualifying_per_group'] ?? champDoc['qualifyingPerGroup'] ?? 2).toString()) ?? 2;
+      final List<String> groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
+
+      List<Map<String, String>> qualifiedTeams = [];
+
+      for (int g = 0; g < numGroups; g++) {
+        final groupName = groupNames[g];
+        final standings = await getChampionshipStandings(championshipId, groupName: groupName);
+
+        for (int i = 0; i < min(qualifyingPerGroup, standings.length); i++) {
+          final row = standings[i];
+          qualifiedTeams.add({
+            'id': row['team_id'].toString(),
+            'name': row['team_name'].toString(),
+            'group': groupName,
+          });
+        }
+      }
+
+      if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
+
+      int totalKnockoutTeams = qualifiedTeams.length;
+      int targetCapacity = 2;
+      while (targetCapacity < totalKnockoutTeams) {
+        targetCapacity *= 2;
+      }
+
+      int totalRounds = (log(targetCapacity) / log(2)).round();
+      int startRoundIndex = totalRounds - 1;
+
+      List<Map<String, dynamic>> knockoutMatches = [];
+
+      for (int r = startRoundIndex; r >= 0; r--) {
+        int matchCount = (pow(2, r)).toInt();
+        for (int m = 0; m < matchCount; m++) {
+          final matchId = const Uuid().v4();
+          knockoutMatches.add({
+            'id': matchId,
+            'championship_id': championshipId,
+            'championshipId': championshipId,
+            'round_index': r,
+            'roundIndex': r,
+            'match_index': m,
+            'matchIndex': m,
+            'stage': 'knockout',
+          });
+        }
+      }
+
+      int firstRoundMatchesCount = (pow(2, startRoundIndex)).toInt();
+      for (int m = 0; m < firstRoundMatchesCount; m++) {
+        if (m * 2 < qualifiedTeams.length) {
+          knockoutMatches[m]['home_team_id'] = qualifiedTeams[m * 2]['id'];
+          knockoutMatches[m]['homeTeamId'] = qualifiedTeams[m * 2]['id'];
+          knockoutMatches[m]['home_team_name'] = qualifiedTeams[m * 2]['name'];
+          knockoutMatches[m]['homeTeamName'] = qualifiedTeams[m * 2]['name'];
+        }
+        if (m * 2 + 1 < qualifiedTeams.length) {
+          knockoutMatches[m]['away_team_id'] = qualifiedTeams[m * 2 + 1]['id'];
+          knockoutMatches[m]['awayTeamId'] = qualifiedTeams[m * 2 + 1]['id'];
+          knockoutMatches[m]['away_team_name'] = qualifiedTeams[m * 2 + 1]['name'];
+          knockoutMatches[m]['awayTeamName'] = qualifiedTeams[m * 2 + 1]['name'];
+        }
+      }
+
+      if (knockoutMatches.isNotEmpty) {
+        await _supabase.from('tournament_matches').insert(knockoutMatches);
+      }
+
+      debugPrint('🚀 Successfully advanced group winners to Knockout stage!');
+    } catch (e) {
+      debugPrint('Error advancing groups to knockout: $e');
+      rethrow;
     }
   }
 }
