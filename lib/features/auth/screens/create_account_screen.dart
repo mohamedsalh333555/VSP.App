@@ -2,6 +2,7 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -17,7 +18,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 /// شاشة إنشاء حساب جديد - تظهر بعد اختيار الدور
-class CreateAccountScreen extends StatelessWidget {
+class CreateAccountScreen extends StatefulWidget {
   final bool isOwner;
 
   const CreateAccountScreen({
@@ -26,10 +27,36 @@ class CreateAccountScreen extends StatelessWidget {
   });
 
   @override
+  State<CreateAccountScreen> createState() => _CreateAccountScreenState();
+}
+
+class _CreateAccountScreenState extends State<CreateAccountScreen> {
+  late TapGestureRecognizer _termsRecognizer;
+  late TapGestureRecognizer _privacyRecognizer;
+
+  @override
+  void initState() {
+    super.initState();
+    _termsRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
+    _privacyRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
+  }
+
+  void _onTermsOrPrivacyTap() {
+    _showTermsAndPrivacyModal(context);
+  }
+
+  @override
+  void dispose() {
+    _termsRecognizer.dispose();
+    _privacyRecognizer.dispose();
+    super.dispose();
+  }
+
+  @override
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final bool isUserOwner = isOwner;
+    final bool isUserOwner = widget.isOwner;
 
     // تحديد النصوص بناءً على نوع المستخدم
     final String greeting = !isUserOwner
@@ -284,6 +311,7 @@ class CreateAccountScreen extends StatelessWidget {
                                 TextSpan(text: AppLocalizations.of(context)!.byUsingVsp),
                                 TextSpan(
                                   text: AppLocalizations.of(context)!.termsOfService,
+                                  recognizer: _termsRecognizer,
                                   style: const TextStyle(
                                     color: VSPColors.accent,
                                     fontWeight: FontWeight.bold,
@@ -293,6 +321,7 @@ class CreateAccountScreen extends StatelessWidget {
                                 TextSpan(text: AppLocalizations.of(context)!.and),
                                 TextSpan(
                                   text: AppLocalizations.of(context)!.privacyPolicy,
+                                  recognizer: _privacyRecognizer,
                                   style: const TextStyle(
                                     color: VSPColors.accent,
                                     fontWeight: FontWeight.bold,
@@ -327,6 +356,236 @@ class CreateAccountScreen extends StatelessWidget {
           border: Border.all(color: VSPColors.borderLight),
         ),
         child: Icon(icon, color: VSPColors.textPrimary, size: 20),
+      ),
+    );
+  }
+
+  /// pop-up Modal (Dialog) displaying Terms of Service & Privacy Policy matching VSP design system
+  void _showTermsAndPrivacyModal(BuildContext context) {
+    showDialog(
+      context: context,
+      barrierColor: Colors.black.withValues(alpha: 0.75),
+      builder: (dialogContext) {
+        final isAr = Localizations.localeOf(dialogContext).languageCode == 'ar';
+        final titleText = isAr ? 'الشروط وأحكام الخصوصية' : 'Terms & Privacy Policy';
+        final buttonText = isAr ? 'موافق' : 'I Understand';
+
+        return BackdropFilter(
+          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
+          child: Dialog(
+            backgroundColor: Colors.transparent,
+            insetPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 24),
+            child: Container(
+              constraints: BoxConstraints(
+                maxHeight: MediaQuery.of(dialogContext).size.height * 0.85,
+              ),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
+                border: Border.all(color: VSPColors.divider, width: 1),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.black.withValues(alpha: 0.5),
+                    blurRadius: 20,
+                    offset: const Offset(0, 10),
+                  ),
+                ],
+              ),
+              child: Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  // Header
+                  Padding(
+                    padding: const EdgeInsets.fromLTRB(20, 16, 16, 14),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(8),
+                          decoration: BoxDecoration(
+                            color: VSPColors.accent.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(
+                            LucideIcons.shieldCheck,
+                            color: VSPColors.accent,
+                            size: 20,
+                          ),
+                        ),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            titleText,
+                            style: Theme.of(dialogContext).textTheme.titleMedium?.copyWith(
+                              color: VSPColors.textPrimary,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 16,
+                            ),
+                          ),
+                        ),
+                        IconButton(
+                          onPressed: () => Navigator.pop(dialogContext),
+                          icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 20),
+                          padding: EdgeInsets.zero,
+                          constraints: const BoxConstraints(),
+                          splashRadius: 20,
+                        ),
+                      ],
+                    ),
+                  ),
+                  const Divider(color: VSPColors.divider, height: 1),
+
+                  // Content Body
+                  Flexible(
+                    child: SingleChildScrollView(
+                      physics: const BouncingScrollPhysics(),
+                      padding: const EdgeInsets.all(20),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          // Header Badge
+                          Container(
+                            width: double.infinity,
+                            padding: const EdgeInsets.all(12),
+                            margin: const EdgeInsets.only(bottom: 16),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.08),
+                              borderRadius: BorderRadius.circular(VSPRadius.lg),
+                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
+                            ),
+                            child: Row(
+                              children: [
+                                const Icon(LucideIcons.info, color: VSPColors.accent, size: 18),
+                                const SizedBox(width: 10),
+                                Expanded(
+                                  child: Text(
+                                    isAr
+                                        ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
+                                        : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                                    style: Theme.of(dialogContext).textTheme.bodySmall?.copyWith(
+                                      color: VSPColors.accent,
+                                      fontWeight: FontWeight.w600,
+                                      fontSize: 12,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+
+                          _buildModalSectionCard(
+                            dialogContext,
+                            icon: LucideIcons.fileText,
+                            title: isAr ? '١. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
+                            content: isAr
+                                ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.'
+                                : 'VSP platform acts as a digital intermediary to organize football pitch bookings and team challenges. Players and captains must adhere to scheduled times and mutual respect. Cancellations follow stadium policy.',
+                          ),
+                          const SizedBox(height: 12),
+
+                          _buildModalSectionCard(
+                            dialogContext,
+                            icon: LucideIcons.lock,
+                            title: isAr ? '٢. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
+                            content: isAr
+                                ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
+                                : 'In accordance with the Egyptian Personal Data Protection Law (PDPL 2020), basic data (name, phone, governorate) is processed strictly for match organization. VSP does not sell or share user data with external third parties.',
+                          ),
+                          const SizedBox(height: 12),
+
+                          _buildModalSectionCard(
+                            dialogContext,
+                            icon: LucideIcons.creditCard,
+                            title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
+                            content: isAr
+                                ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ تلقائياً إلى محفظتك.'
+                                : 'All digital payments are securely processed through Paymob. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded.',
+                          ),
+                          const SizedBox(height: 12),
+
+                          _buildModalSectionCard(
+                            dialogContext,
+                            icon: LucideIcons.trophy,
+                            title: isAr ? '٤. قواعد الفرق ونظام Elo' : '4. Team Rules & Elo Rating System',
+                            content: isAr
+                                ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً، ولكل لاعب الانضمام إلى 3 فرق كحد أقصى. تُعتمد نتائج التحديات تلقائياً بعد 24 ساعة ما لم يُقدَّم اعتراض رسمي.'
+                                : 'Teams can register up to 12 players, and players may join up to 3 teams max. Match results and Elo rating updates become final 24 hours post-match unless an official dispute is raised.',
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                  // Action Button Footer
+                  const Divider(color: VSPColors.divider, height: 1),
+                  Padding(
+                    padding: const EdgeInsets.all(16),
+                    child: SizedBox(
+                      width: double.infinity,
+                      child: PrimaryButton(
+                        text: buttonText,
+                        onPressed: () => Navigator.pop(dialogContext),
+                        height: 50,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildModalSectionCard(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String content,
+  }) {
+    return Container(
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(6),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Icon(icon, color: VSPColors.accent, size: 16),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: VSPColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+          Text(
+            content,
+            style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+              color: VSPColors.textSecondary,
+              fontSize: 12.5,
+              height: 1.5,
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -398,4 +657,5 @@ class _SocialButton extends StatelessWidget {
     );
   }
 }
+
 

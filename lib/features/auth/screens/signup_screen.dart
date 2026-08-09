@@ -318,6 +318,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             CustomTextField(
                               controller: _firstNameController,
                               hintText: AppLocalizations.of(context)!.firstNameHint,
+                              textInputAction: TextInputAction.next,
                               prefixIcon: LucideIcons.user,
                               maxLength: 30,
                             ),
@@ -333,6 +334,7 @@ class _SignupScreenState extends State<SignupScreen> {
                             CustomTextField(
                               controller: _lastNameController,
                               hintText: AppLocalizations.of(context)!.lastNameHint,
+                              textInputAction: TextInputAction.next,
                               prefixIcon: LucideIcons.user2,
                               maxLength: 30,
                             ),
@@ -422,6 +424,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _emailController,
                     hintText: 'example@email.com',
                     keyboardType: TextInputType.emailAddress,
+                    textInputAction: TextInputAction.next,
                     prefixIcon: LucideIcons.mail,
                   ),
                   
@@ -431,6 +434,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _passwordController,
                     hintText: '********',
                     obscureText: _obscurePassword,
+                    textInputAction: TextInputAction.next,
                     prefixIcon: LucideIcons.lock,
                     onChanged: (val) => setState(() {}),
                     suffixIcon: IconButton(
@@ -450,6 +454,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     controller: _confirmPasswordController,
                     hintText: '********',
                     obscureText: _obscureConfirmPassword,
+                    textInputAction: TextInputAction.done,
+                    onFieldSubmitted: (_) {
+                      if (!_isLoading) _handleSignup();
+                    },
                     prefixIcon: LucideIcons.lock,
                     suffixIcon: IconButton(
                       icon: Icon(_obscureConfirmPassword ? LucideIcons.eyeOff : LucideIcons.eye, color: VSPColors.textSecondary),

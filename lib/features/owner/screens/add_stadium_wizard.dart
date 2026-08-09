@@ -1811,7 +1811,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   fileUrl: img['url'],
                   isUploading: img['isUploading'] ?? false,
                   progress: img['progress'] ?? 0,
-                  onTap: () {}, 
+                  onTap: _pickImage, 
                   onDelete: () async {
                     if (img['url'] != null) {
                       await _storageService.deleteFile(img['url']!);

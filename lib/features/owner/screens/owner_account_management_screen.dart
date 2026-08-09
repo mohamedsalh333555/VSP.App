@@ -1,4 +1,5 @@
 import 'add_stadium_wizard.dart';
+import 'dart:ui';
 import '../../../shared/widgets/stadium_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
@@ -391,7 +392,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                  const SizedBox(height: 4),
                  GestureDetector(
                    onTap: () {
-                     // View logic
+                     _showDocumentPreviewDialog(context, title);
                    },
                    child: Text(
                      isArabic ? 'اضغط للعرض' : 'Click to view',
@@ -406,6 +407,63 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
              ),
            )
         ],
+      ),
+    );
+  }
+
+  void _showDocumentPreviewDialog(BuildContext context, String title) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      builder: (ctx) => BackdropFilter(
+        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
+        child: AlertDialog(
+          backgroundColor: VSPColors.surface,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+          title: Row(
+            children: [
+              const Icon(LucideIcons.fileCheck, color: VSPColors.accent, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  title,
+                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ],
+          ),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                height: 160,
+                width: double.infinity,
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.divider),
+                ),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
+                    const SizedBox(height: 10),
+                    Text(
+                      isArabic ? 'مستند موثق ومشفر لدى المنصة 🛡️' : 'Verified & Encrypted Document 🛡️',
+                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(ctx),
+              child: Text(isArabic ? 'إغلاق' : 'Close', style: const TextStyle(color: VSPColors.accent)),
+            ),
+          ],
+        ),
       ),
     );
   }

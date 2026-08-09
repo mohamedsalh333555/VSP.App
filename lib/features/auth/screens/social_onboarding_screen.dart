@@ -297,6 +297,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           CustomTextField(
                             controller: _firstNameController,
                             hintText: 'محمد',
+                            textInputAction: TextInputAction.next,
                             prefixIcon: LucideIcons.user,
                           ),
                         ],
@@ -311,6 +312,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           CustomTextField(
                             controller: _lastNameController,
                             hintText: 'أحمد',
+                            textInputAction: TextInputAction.next,
                             prefixIcon: LucideIcons.user2,
                           ),
                         ],
@@ -359,6 +361,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                   controller: _phoneController,
                   hintText: '01xxxxxxxxx',
                   keyboardType: TextInputType.phone,
+                  textInputAction: TextInputAction.next,
                   prefixIcon: LucideIcons.phone,
                 ),
                            const SizedBox(height: 20),
@@ -440,6 +443,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                         CustomTextField(
                           controller: _instapayController,
                           hintText: 'username@instapay',
+                          textInputAction: TextInputAction.next,
                           prefixIcon: LucideIcons.wallet,
                         ),
                         const SizedBox(height: 16),
@@ -448,6 +452,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           controller: _vodafoneController,
                           hintText: '01xxxxxxxxx',
                           keyboardType: TextInputType.phone,
+                          textInputAction: TextInputAction.next,
                           prefixIcon: LucideIcons.phoneCall,
                         ),
                         const SizedBox(height: 16),
@@ -455,6 +460,10 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                         CustomTextField(
                           controller: _bankController,
                           hintText: 'EGxxxxxxxxxxxxxxxxxxxxxx',
+                          textInputAction: TextInputAction.done,
+                          onFieldSubmitted: (_) {
+                            if (!_isLoading) _handleCompleteRegistration();
+                          },
                           prefixIcon: LucideIcons.landmark,
                         ),
                       ],

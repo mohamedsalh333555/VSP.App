@@ -292,6 +292,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _emailController,
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
+                      textInputAction: TextInputAction.next,
                       prefixIcon: LucideIcons.mail,
                     ),
                     const SizedBox(height: 16),
@@ -299,6 +300,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       controller: _passwordController,
                       hintText: AppLocalizations.of(context)!.password,
                       obscureText: _obscurePassword,
+                      textInputAction: TextInputAction.done,
+                      onFieldSubmitted: (_) {
+                        if (!_isLoading) _handleLogin();
+                      },
                       prefixIcon: LucideIcons.lock,
                       suffixIcon: IconButton(
                         icon: Icon(

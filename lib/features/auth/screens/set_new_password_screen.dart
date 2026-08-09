@@ -167,6 +167,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   controller: _newPassController,
                   hint: 'Enter new password',
                   obscure: !_showNew,
+                  textInputAction: TextInputAction.next,
                   onToggle: () => setState(() => _showNew = !_showNew),
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
@@ -214,6 +215,10 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                   controller: _confirmPassController,
                   hint: 'Repeat your password',
                   obscure: !_showConfirm,
+                  textInputAction: TextInputAction.done,
+                  onFieldSubmitted: (_) {
+                    if (!_isLoading) _save();
+                  },
                   onToggle: () => setState(() => _showConfirm = !_showConfirm),
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
@@ -328,6 +333,8 @@ class _PasswordField extends StatelessWidget {
   final VoidCallback onToggle;
   final ValueChanged<String> onChanged;
   final FormFieldValidator<String>? validator;
+  final TextInputAction? textInputAction;
+  final ValueChanged<String>? onFieldSubmitted;
 
   const _PasswordField({
     required this.controller,
@@ -336,6 +343,8 @@ class _PasswordField extends StatelessWidget {
     required this.onToggle,
     required this.onChanged,
     this.validator,
+    this.textInputAction,
+    this.onFieldSubmitted,
   });
 
   @override
@@ -345,6 +354,8 @@ class _PasswordField extends StatelessWidget {
       obscureText: obscure,
       onChanged: onChanged,
       validator: validator,
+      textInputAction: textInputAction,
+      onFieldSubmitted: onFieldSubmitted,
       style: const TextStyle(color: VSPColors.textPrimary),
       decoration: InputDecoration(
         hintText: hint,
