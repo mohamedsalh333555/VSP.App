@@ -24,7 +24,7 @@ class OwnerBookingsScreen extends StatefulWidget {
 class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0; 
   Stadium? _selectedStadium;
-  DateTime _baseDate = DateTime.now();
+  final DateTime _baseDate = DateTime.now();
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -863,22 +863,21 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     );
                     if (confirm == true && mounted) {
                       setState(() => _isDeleting = true);
-                      if (parentCtx.mounted) {
-                        final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking!.id);
-                        if (!success) {
-                          if (mounted) {
-                            final err = Provider.of<BookingProvider>(parentCtx, listen: false).errorMessage;
-                            VSPFeedback.showError(
-                              context,
-                              err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ⚠️' : 'Failed to cancel booking ⚠️'),
-                            );
-                          }
-                          return;
-                        }
-                        final uid = Provider.of<AuthProvider>(parentCtx, listen: false).currentUser?.uid;
-                        if (uid != null) {
-                          await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid);
-                        }
+                      if (!parentCtx.mounted) return;
+                      final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking!.id);
+                      if (!success) {
+                        if (!context.mounted) return;
+                        final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
+                        VSPFeedback.showError(
+                          context,
+                          err ?? (isArabic ? 'عذراً، تعذر إلغاء الحجز ⚠️' : 'Failed to cancel booking ⚠️'),
+                        );
+                        return;
+                      }
+                      if (!parentCtx.mounted) return;
+                      final uid = Provider.of<AuthProvider>(parentCtx, listen: false).currentUser?.uid;
+                      if (uid != null) {
+                        await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid);
                       }
                       if (mounted) nav.pop();
                     }
@@ -1092,6 +1091,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
         } else {
           cleanErr = cleanErr.replaceAll('Exception:', '').replaceAll('PostgrestException', '').replaceAll('(message:', '').replaceAll('Failed to create booking:', '').trim();
         }
+        if (!context.mounted) return;
         final targetCtx = widget.parentContext.mounted ? widget.parentContext : context;
         VSPFeedback.showError(targetCtx, cleanErr);
       }

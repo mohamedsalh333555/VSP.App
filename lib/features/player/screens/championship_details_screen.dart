@@ -65,6 +65,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       }
     }
 
+    if (!mounted) return null;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final currentUserId = auth.currentUser?.uid;
 
@@ -78,6 +79,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     List<String> offlineGuestNames = [];
     final guestController = TextEditingController();
 
+    if (!mounted) return null;
     return showModalBottomSheet<Map<String, dynamic>>(
       context: context,
       isScrollControlled: true,

@@ -45,19 +45,19 @@ class DatabaseService {
   // --- Redirection methods for backward compatibility ---
   // Note: These will be removed once all callers are migrated.
 
-  @deprecated
+  @Deprecated('Use UserRepository.getUserByPhone() directly')
   Future<dynamic> getUserByPhone(String p) => user.getUserByPhone(p);
   
-  @deprecated
+  @Deprecated('Use TeamRepository.getUserTeam() directly')
   Future<Team?> getUserTeam(String uid) => team.getUserTeam(uid);
 
-  @deprecated
+  @Deprecated('Use MatchRepository.getPublicMatches() directly')
   Stream<List<dynamic>> getPublicMatches() => match.getPublicMatches();
 
-  @deprecated
+  @Deprecated('Use StadiumRepository.getPromotionsStream() directly')
   Stream<List<dynamic>> getPromotionsStream() => stadium.getPromotionsStream();
 
-  @deprecated
+  @Deprecated('Use ReportRepository.reportEntity() directly')
   Future<bool> reportEntity({
     required String reporterId,
     required String targetId,
@@ -70,40 +70,40 @@ class DatabaseService {
     reason: reason
   );
 
-  @deprecated
+  @Deprecated('Use SearchRepository.globalUnifiedSearch() directly')
   Future<Map<String, List<dynamic>>> globalUnifiedSearch(String q) => search.globalUnifiedSearch(q);
 
-  @deprecated
+  @Deprecated('Use MatchRepository.joinPublicMatch() directly')
   Future<bool> joinPublicMatch(String bookingId, String userId) => match.joinPublicMatch(bookingId, userId);
 
-  @deprecated
+  @Deprecated('Use MatchRepository.leavePublicMatch() directly')
   Future<bool> leavePublicMatch(String bookingId, String userId) => match.leavePublicMatch(bookingId, userId);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.getTeam() directly')
   Future<Team?> getTeam(String id) => team.getTeam(id);
 
-  @deprecated
+  @Deprecated('Use NotificationRepository.sendNotification() directly')
   Future<void> sendNotification(String uid, AppNotification n) => notification.sendNotification(uid, n);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.getTeams() directly')
   Stream<List<Team>> getTeams({String? governorate}) => team.getTeams(governorate: governorate);
 
-  @deprecated
+  @Deprecated('Use NotificationRepository.getUnreadNotificationCount() directly')
   Stream<int> getUnreadNotificationCount(String userId) => notification.getUnreadNotificationCount(userId);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.updateMatchResult() directly')
   Future<void> updateMatchResult(String b, String h, String a, MatchOutcome o) => team.updateMatchResult(b, h, a, o);
 
-  @deprecated
+  @Deprecated('Use MatchRepository.joinMatch() directly')
   Future<bool> joinMatch(String mid, String uid) => match.joinMatch(mid, uid);
 
-  @deprecated
+  @Deprecated('Use MatchRepository.leaveMatch() directly')
   Future<bool> leaveMatch(String mid, String uid) => match.leaveMatch(mid, uid);
 
-  @deprecated
+  @Deprecated('Use TournamentRepository.generateFixtures() directly')
   Future<void> generateFixtures(String cid) => tournament.generateFixtures(cid);
 
-  @deprecated
+  @Deprecated('Use TournamentRepository.updateTournamentMatchScore() directly')
   Future<void> updateTournamentMatchScore({
     required String matchId,
     required int homeScore,
@@ -118,52 +118,52 @@ class DatabaseService {
     winnerName: winnerName
   );
 
-  @deprecated
+  @Deprecated('Use ReportRepository.getReportsStream() directly')
   Stream<List<Map<String, dynamic>>> getReportsStream() => report.getReportsStream();
 
-  @deprecated
+  @Deprecated('Use UserRepository.updateUserModerationStatus() directly')
   Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) => user.updateUserModerationStatus(userId, isBlocked: isBlocked, warningMessage: warningMessage);
 
-  @deprecated
+  @Deprecated('Use OwnerRepository.calculateOwnerRevenue() directly')
   Future<double> calculateOwnerRevenue(String id) => owner.calculateOwnerRevenue(id);
 
-  @deprecated
+  @Deprecated('Use OwnerRepository.calculateBookedHours() directly')
   Future<int> calculateBookedHours(String id) => owner.calculateBookedHours(id);
 
-  @deprecated
+  @Deprecated('Use OwnerRepository.getOwnerStadiums() directly')
   Stream<List<Stadium>> getOwnerStadiums(String id) => owner.getOwnerStadiums(id);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.createTeam() directly')
   Future<String?> createTeam(Map<String, dynamic> data) => team.createTeam(data);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.searchOpponentTeams() directly')
   Future<List<Team>> searchOpponentTeams(String q) => team.searchOpponentTeams(q);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.getPreviousOpponents() directly')
   Future<List<Team>> getPreviousOpponents(String tid) => team.getPreviousOpponents(tid);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.getHeadToHeadStats() directly')
   Future<Map<String, int>> getHeadToHeadStats(String t1, String t2) => team.getHeadToHeadStats(t1, t2);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.getTeamByCaptainPhone() directly')
   Future<Team?> getTeamByCaptainPhone(String p) => team.getTeamByCaptainPhone(p);
 
-  @deprecated
+  @Deprecated('Use LeagueRepository.get1v1Standings() directly')
   Stream<List<VSP1v1Player>> get1v1Standings() => league.get1v1Standings();
 
-  @deprecated
+  @Deprecated('Use UserRepository.getUsersByIds() directly')
   Future<List<UserModel>> getUsersByIds(List<String> ids) => user.getUsersByIds(ids);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.addMemberToTeam() directly')
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) => team.addMemberToTeam(teamId, userId, imageUrl);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.removeMemberFromTeam() directly')
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) => team.removeMemberFromTeam(teamId, userId, imageUrl);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.updateTeam() directly')
   Future<bool> updateTeam(String teamId, Map<String, dynamic> data) => team.updateTeam(teamId, data);
 
-  @deprecated
+  @Deprecated('Use TeamRepository.deleteTeam() directly')
   Future<bool> deleteTeam(String teamId) => team.deleteTeam(teamId);
 
   @Deprecated('Use TeamRepository directly')

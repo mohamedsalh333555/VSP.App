@@ -779,11 +779,17 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           items: items.map((item) {
             String label = item;
             if (isAr) {
-              if (item == 'Football') label = 'كرة القدم';
-              else if (item == 'Basketball') label = 'كرة السلة';
-              else if (item == 'Padel') label = 'بادل';
-              else if (item == 'Volleyball') label = 'كرة الطائرة';
-              else if (item == 'Tennis') label = 'تنس';
+              if (item == 'Football') {
+                label = 'كرة القدم';
+              } else if (item == 'Basketball') {
+                label = 'كرة السلة';
+              } else if (item == 'Padel') {
+                label = 'بادل';
+              } else if (item == 'Volleyball') {
+                label = 'كرة الطائرة';
+              } else if (item == 'Tennis') {
+                label = 'تنس';
+              }
             }
             return DropdownMenuItem(value: item, child: Text(label));
           }).toList(),

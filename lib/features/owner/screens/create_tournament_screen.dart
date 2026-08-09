@@ -151,8 +151,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       List<String> payments = [];
       if (_selectedPaymentMethod == 'Cash') {
         payments = ['cash'];
-      } else if (_selectedPaymentMethod == 'Online') payments = ['online'];
-      else payments = ['cash', 'online'];
+      } else if (_selectedPaymentMethod == 'Online') {
+        payments = ['online'];
+      } else {
+        payments = ['cash', 'online'];
+      }
 
       final champData = {
         'name': _nameController.text.trim(),

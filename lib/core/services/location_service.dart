@@ -55,9 +55,11 @@ class LocationService {
       try {
         position = await Geolocator.getLastKnownPosition();
         position ??= await Geolocator.getCurrentPosition(
-            locationSettings: const LocationSettings(accuracy: LocationAccuracy.low),
-            timeLimit: const Duration(seconds: 4),
-          );
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.low,
+            timeLimit: Duration(seconds: 4),
+          ),
+        );
       } catch (e) {
         VSPLogger.w("Could not obtain current GPS position: $e");
       }

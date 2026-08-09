@@ -1,3 +1,4 @@
+import 'package:flutter/foundation.dart';
 import 'package:logger/logger.dart';
 
 class VSPLogger {
@@ -15,7 +16,7 @@ class VSPLogger {
     try {
       _logger.d(message);
     } catch (e) {
-      print('[DEBUG] $message');
+      debugPrint('[DEBUG] $message');
     }
   }
 
@@ -23,9 +24,9 @@ class VSPLogger {
     try {
       _logger.e(message, error: error, stackTrace: stackTrace);
     } catch (e) {
-      print('[ERROR] $message: $error');
+      debugPrint('[ERROR] $message: $error');
       if (stackTrace != null) {
-        print(stackTrace);
+        debugPrint(stackTrace.toString());
       }
     }
   }
@@ -34,7 +35,7 @@ class VSPLogger {
     try {
       _logger.i(message);
     } catch (e) {
-      print('[INFO] $message');
+      debugPrint('[INFO] $message');
     }
   }
 
@@ -42,7 +43,7 @@ class VSPLogger {
     try {
       _logger.w(message);
     } catch (e) {
-      print('[WARN] $message');
+      debugPrint('[WARN] $message');
     }
   }
 }

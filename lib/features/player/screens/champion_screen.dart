@@ -5,15 +5,14 @@ import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
-import '../../../core/services/database_service.dart';
+import '../../../core/repositories/league_repository.dart';
+import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import 'championship_details_screen.dart';
 import 'player_home_screen.dart'; // For ChampionshipCard
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
-import 'official_league_standings_screen.dart';
 
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
@@ -329,7 +328,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _build1v1PlayersRanking() {
     return StreamBuilder<List<VSP1v1Player>>(
-      stream: DatabaseService().get1v1Standings(),
+      stream: LeagueRepository().get1v1Standings(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         final players = snapshot.data ?? [];
@@ -389,7 +388,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _buildTeamsRankingStream() {
     return StreamBuilder<List<Team>>(
-      stream: DatabaseService().getTeams(governorate: _selectedLocation),
+      stream: TeamRepository().getTeams(governorate: _selectedLocation),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -428,153 +427,91 @@ class ChampionScreenState extends State<ChampionScreen>
           );
         }
 
-        return SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 0),
+        return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 12),
           physics: const BouncingScrollPhysics(),
           child: Column(
             children: [
-              // 🟢 NEW: VSP OFFICIAL 1v1 BANNER
-              GestureDetector(
-                onTap: () {
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (context) => const OfficialLeagueStandingsScreen()),
-                  );
-                },
-                child: Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.all(VSPSpacing.lg),
-                  margin: const EdgeInsets.only(bottom: VSPSpacing.xl), // Spacing before regular podium
-                  decoration: BoxDecoration(
-                    gradient: LinearGradient(
-                      colors: [VSPColors.accent.withValues(alpha: 0.15), VSPColors.surface],
-                      begin: Alignment.topLeft,
-                      end: Alignment.bottomRight,
-                    ),
-                    borderRadius: BorderRadius.circular(VSPRadius.lg),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
-                  ),
-                  child: Row(
-                    children: [
-                      Container(
-                        padding: const EdgeInsets.all(12),
-                        decoration: BoxDecoration(
-                          color: VSPColors.accent.withValues(alpha: 0.2),
-                          shape: BoxShape.circle,
-                        ),
-                        child: Icon(LucideIcons.zap, color: VSPColors.accent, size: 32),
-                      ),
-                      const SizedBox(width: 16),
-                      Expanded(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              AppLocalizations.of(context)!.vspOfficialLeague,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                    fontWeight: FontWeight.w900,
-                                    letterSpacing: 1.0,
-                                  ),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              AppLocalizations.of(context)!.watchHighlights,
-                              style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                            ),
-                          ],
-                        ),
-                      ),
-                      Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 16),
-                    ],
-                  ),
-                ),
-              ),
-
-              // Podium
+              // Premium Podium
               SizedBox(
-                height: 280, 
+                height: 290,
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.end,
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                     // Rank 2 - Left
-                     Expanded(
-                       flex: 1,
-                       child: VSPFadeInItem(
-                         index: 1,
-                         child: _buildTopRankItem(
-                           rank: 2,
-                           name: top3[1].name, 
-                           logo: top3[1].logoUrl.isNotEmpty ? top3[1].logoUrl : top3[1].captainImageUrl,
-                           points: top3[1].points,
-                           isCenter: false,
-                           color: VSPColors.surface,
-                           playerImages: top3[1].playerImages,
-                         ),
-                       ),
-                     ),
-                     
-                     const SizedBox(width: 8),
-
-                     // Rank 1 - Center
-                     Expanded(
-                       flex: 1, 
-                       child: VSPFadeInItem(
-                         index: 0,
-                         child: _buildTopRankItem(
-                           rank: 1,
-                           name: top3[0].name,
-                           logo: top3[0].logoUrl.isNotEmpty ? top3[0].logoUrl : top3[0].captainImageUrl, 
-                           points: top3[0].points,
-                           isCenter: true,
-                           color: VSPColors.accent,
-                           playerImages: top3[0].playerImages,
-                         ),
-                       ),
-                     ),
-
-                     const SizedBox(width: 8),
-
-                     // Rank 3 - Right
-                     Expanded(
-                       flex: 1, 
-                       child: VSPFadeInItem(
-                         index: 2,
-                         child: _buildTopRankItem(
-                           rank: 3,
-                           name: top3[2].name, 
-                           logo: top3[2].logoUrl.isNotEmpty ? top3[2].logoUrl : top3[2].captainImageUrl,
-                           points: top3[2].points,
-                           isCenter: false,
-                           color: VSPColors.surface,
-                           playerImages: top3[2].playerImages,
-                         ),
-                       ),
-                     ),
+                    // Rank 2 - Left (Silver)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 1,
+                        child: _buildTopRankItem(
+                          rank: 2,
+                          name: top3[1].name,
+                          logo: top3[1].logoUrl.isNotEmpty ? top3[1].logoUrl : top3[1].captainImageUrl,
+                          points: top3[1].points,
+                          badgeIcon: '🥈',
+                          borderColor: const Color(0xFFC0C0C0),
+                          bgColor: VSPColors.surface,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Rank 1 - Center (Gold)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 0,
+                        child: _buildTopRankItem(
+                          rank: 1,
+                          name: top3[0].name,
+                          logo: top3[0].logoUrl.isNotEmpty ? top3[0].logoUrl : top3[0].captainImageUrl,
+                          points: top3[0].points,
+                          badgeIcon: '👑',
+                          borderColor: VSPColors.accent,
+                          bgColor: const Color(0xFF1E2614),
+                          isCenter: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Rank 3 - Right (Bronze)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 2,
+                        child: _buildTopRankItem(
+                          rank: 3,
+                          name: top3[2].name,
+                          logo: top3[2].logoUrl.isNotEmpty ? top3[2].logoUrl : top3[2].captainImageUrl,
+                          points: top3[2].points,
+                          badgeIcon: '🥉',
+                          borderColor: const Color(0xFFCD7F32),
+                          bgColor: VSPColors.surface,
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-              
-              const SizedBox(height: 32),
-              
-              // Expanded Ranking List
+
+              const SizedBox(height: 28),
+
+              // Expanded Ranking List (#4, #5...)
               ...List.generate(rest.length, (index) {
-                 final team = rest[index];
-                 final rank = index + 4;
-                 return VSPFadeInItem(
-                   index: index + 3,
-                   child: Padding(
-                     padding: const EdgeInsets.only(bottom: 12),
-                     child: _buildRankListItem(team, rank, totalTeams: totalTeams),
-                   ),
-                 );
+                final team = rest[index];
+                final rank = index + 4;
+                return VSPFadeInItem(
+                  index: index + 3,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _buildRankListItem(team, rank, totalTeams: totalTeams),
+                  ),
+                );
               }),
 
               const SizedBox(height: 20),
             ],
           ),
         );
-      }
+      },
     );
   }
 
@@ -582,217 +519,214 @@ class ChampionScreenState extends State<ChampionScreen>
     required int rank,
     required String name,
     required String logo,
-    required int points, 
-    required bool isCenter,
-    required Color color,
-    required List<String> playerImages,
+    required int points,
+    required String badgeIcon,
+    required Color borderColor,
+    required Color bgColor,
+    bool isCenter = false,
   }) {
-    // Widened/Taller Rank 1 Logic
-    // Height adjustments to fix overflow: 
-    // Center was 220, Keep it. Rank 2/3 was 165, reduce slightly or keep but adjust internal padding.
-    // Let's optimize heights to be sure.
-    final height = isCenter ? 230.0 : 170.0; 
-    final textColor = isCenter ? VSPColors.background : VSPColors.textPrimary;
+    final height = isCenter ? 260.0 : 210.0;
+    final initialLetter = name.trim().isNotEmpty ? name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'V';
 
     return Container(
       height: height,
-      padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 8),
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 12),
       decoration: BoxDecoration(
-        color: color,
-        borderRadius: BorderRadius.circular(VSPRadius.lg), 
+        color: bgColor,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: borderColor.withValues(alpha: isCenter ? 0.9 : 0.4), width: isCenter ? 2 : 1),
+        boxShadow: isCenter
+            ? [
+                BoxShadow(
+                  color: VSPColors.accent.withValues(alpha: 0.25),
+                  blurRadius: 16,
+                  spreadRadius: 1,
+                  offset: const Offset(0, 4),
+                )
+              ]
+            : [],
       ),
       child: Column(
-        mainAxisAlignment: MainAxisAlignment.end,
+        mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          // Logo (Circular)
+          // Top Crown / Medal Icon
+          Text(badgeIcon, style: TextStyle(fontSize: isCenter ? 26 : 20)),
+
+          // Team Logo / Initial Avatar
           Container(
-            width: isCenter ? 65 : 45,
-            height: isCenter ? 65 : 45,
+            width: isCenter ? 62 : 48,
+            height: isCenter ? 62 : 48,
             decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: VSPColors.surfaceAlt,
+              border: Border.all(color: borderColor, width: 2),
             ),
-            padding: const EdgeInsets.all(4),
             child: ClipOval(
-              child: ShimmerImage(
-                imageUrl: logo,
-                width: isCenter ? 57 : 37,
-                height: isCenter ? 57 : 37,
-                fit: BoxFit.contain,
-              ),
-            ),
-          ),
-          SizedBox(height: isCenter ? 8 : 4), // Dynamic Spacing
-          
-          // Name
-          Text(
-            name,
-            textAlign: TextAlign.center,
-            maxLines: 1,
-            overflow: TextOverflow.ellipsis,
-            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-              color: textColor,
-              fontWeight: FontWeight.w600,
-            ),
-          ),
-           
-           // Dynamic Spacing
-           SizedBox(height: isCenter ? 6 : 4),
-           
-           // Real Avatars Stack (No generic icons)
-            SizedBox(
-              width: 60,
-              height: 24, 
-              child: Stack(
-                alignment: Alignment.center,
-                children: List.generate(3, (index) {
-                  final String imgUrl = (playerImages.length > index) ? playerImages[index] : '';
-                  return Positioned(
-                    left: index * 12.0, 
-                    child: Container(
-                      width: 24,
-                      height: 24,
-                      decoration: BoxDecoration(
-                        border: Border.all(color: color, width: 1.5),
-                        shape: BoxShape.circle,
-                      ),
-                      child: ClipRRect(
-                        borderRadius: BorderRadius.circular(12),
-                        child: CachedNetworkImage(
-                          imageUrl: imgUrl, 
-                          fit: BoxFit.cover,
-                          placeholder: (context, url) => Container(color: VSPColors.surfaceAlt),
-                          errorWidget: (context, url, error) => Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 16), 
-                        ),
-                      ),
+              child: logo.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: logo,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _buildInitialBadge(initialLetter, borderColor),
                     )
-                  );
-                }),
+                  : _buildInitialBadge(initialLetter, borderColor),
+            ),
+          ),
+
+          // Team Name
+          Padding(
+            padding: const EdgeInsets.symmetric(horizontal: 2),
+            child: Text(
+              name,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                    color: Colors.white,
+                    fontWeight: FontWeight.bold,
+                    fontSize: isCenter ? 13 : 11,
+                  ),
+            ),
+          ),
+
+          // Points Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+            decoration: BoxDecoration(
+              color: borderColor.withValues(alpha: 0.15),
+              borderRadius: BorderRadius.circular(VSPRadius.sm),
+            ),
+            child: Text(
+              '$points ${AppLocalizations.of(context)!.pts}',
+              style: TextStyle(
+                color: isCenter ? VSPColors.accent : Colors.white70,
+                fontSize: 10,
+                fontWeight: FontWeight.bold,
               ),
             ),
-            
-             // Rank Number
-             if (isCenter) ...[
-                const Spacer(),
-                Text(
-                  '$rank',
-                  style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                    color: textColor,
-                    fontSize: 48,
-                    fontWeight: FontWeight.w900,
-                    height: 1.0,
-                  ),
-                ),
-             ] else ...[
-                 const SizedBox(height: 8), 
-                 Row(
-                   mainAxisAlignment: MainAxisAlignment.center,
-                   children: [
-                     Icon(
-                       LucideIcons.minus, // Neutral fallback for nonexistent trend data
-                        color: VSPColors.textSecondary,
-                       size: 16,
-                     ),
-                     Text(
-                       '$rank',
-                       style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                         color: textColor,
-                         fontWeight: FontWeight.bold,
-                       ),
-                     )
-                   ],
-                 )
-             ]
+          ),
+
+          // Rank Pill Badge at Bottom
+          Container(
+            width: isCenter ? 36 : 28,
+            height: isCenter ? 36 : 28,
+            decoration: BoxDecoration(
+              color: isCenter ? VSPColors.accent : VSPColors.surfaceAlt,
+              shape: BoxShape.circle,
+            ),
+            alignment: Alignment.center,
+            child: Text(
+              '$rank',
+              style: TextStyle(
+                color: isCenter ? Colors.black : Colors.white,
+                fontWeight: FontWeight.w900,
+                fontSize: isCenter ? 18 : 13,
+              ),
+            ),
+          ),
         ],
       ),
     );
   }
 
+  Widget _buildInitialBadge(String letter, Color accentColor) {
+    return Container(
+      color: VSPColors.surfaceAlt,
+      alignment: Alignment.center,
+      child: Text(
+        letter,
+        style: TextStyle(
+          color: accentColor,
+          fontWeight: FontWeight.w900,
+          fontSize: 18,
+        ),
+      ),
+    );
+  }
+
   Widget _buildRankListItem(Team team, int rank, {bool isMyTeam = false, int totalTeams = 10}) {
-    // Promotion/Relegation status color code
-    Color? statusColor;
-    if (rank <= 3) statusColor = VSPColors.accent.withValues(alpha: 0.08); // Promotion zone
-    if (rank >= totalTeams - 2 && totalTeams > 5) statusColor = VSPColors.error.withValues(alpha: 0.08); // Relegation zone
+    final initialLetter = team.name.trim().isNotEmpty ? team.name.trim().split(' ').last.substring(0, 1).toUpperCase() : 'T';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: statusColor ?? VSPColors.surface,
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: isMyTeam ? Border.all(color: VSPColors.accent.withValues(alpha: 0.5)) : null,
+        border: isMyTeam ? Border.all(color: VSPColors.accent.withValues(alpha: 0.6)) : Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
       ),
       child: Row(
         children: [
-          // Visual Indicator Line for Promotion/Relegation
-          if (statusColor != null)
-            Container(
-              width: 3,
-              height: 25,
-              margin: const EdgeInsets.only(right: 12),
-              decoration: BoxDecoration(
-                color: rank <= 3 ? VSPColors.accent : VSPColors.error,
-                borderRadius: BorderRadius.circular(2),
-              ),
+          // Rank Number
+          SizedBox(
+            width: 28,
+            child: Text(
+              '#$rank',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
             ),
+          ),
 
+          // Team Logo / Initial Avatar
           Container(
-            width: 40,
-            height: 40,
-            decoration: const BoxDecoration(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
               shape: BoxShape.circle,
-              color: Colors.white,
+              color: VSPColors.surfaceAlt,
+              border: Border.all(color: VSPColors.divider, width: 1),
             ),
-            padding: const EdgeInsets.all(3),
             child: ClipOval(
-              child: ShimmerImage(
-                imageUrl: team.logoUrl.isNotEmpty ? team.logoUrl : team.captainImageUrl,
-                width: 34,
-                height: 34,
-                fit: BoxFit.contain,
-              ),
+              child: team.logoUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: team.logoUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _buildInitialBadge(initialLetter, VSPColors.accent),
+                    )
+                  : _buildInitialBadge(initialLetter, VSPColors.accent),
             ),
           ),
           const SizedBox(width: 12),
+
+          // Team Name & Match Stats
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
                   team.name,
-                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                    fontWeight: FontWeight.bold,
-                  ),
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
+                const SizedBox(height: 2),
                 Text(
                   AppLocalizations.of(context)!.teamStats(team.matchesPlayed, team.wins, team.draws, team.losses),
-                  style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                    color: VSPColors.textSecondary.withValues(alpha: 0.7),
-                  ),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                 ),
               ],
             ),
           ),
-          
-          // Small Trend Arrow
-          Icon(LucideIcons.minus, // Neutral fallback for nonexistent trend data
-             color: VSPColors.textSecondary, 
-             size: 16
-          ),
-          const SizedBox(width: 4),
-          Column(
-              crossAxisAlignment: CrossAxisAlignment.end,
-              children: [
-                   Text(
-                    '$rank', // Pos
-                    style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    AppLocalizations.of(context)!.pointsCount(team.points),
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
-                  ),
-              ],
+          // Points Column
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+            ),
+            child: Text(
+              AppLocalizations.of(context)!.pointsCount(team.points),
+              style: const TextStyle(
+                color: VSPColors.accent,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+            ),
           ),
         ],
       ),

@@ -281,12 +281,27 @@ class ChampionshipCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 _buildTypeBadge(AppLocalizations.of(context)!.tournament),
-                _buildStatusBadge(
-                  championship.status == 'open' 
-                      ? AppLocalizations.of(context)!.open.toUpperCase() 
-                      : AppLocalizations.of(context)!.full.toUpperCase(), 
-                  championship.status == 'open' ? Colors.green : VSPColors.accent
-                ),
+                Builder(builder: (context) {
+                  final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
+                  final isCompleted = championship.status == 'completed';
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+                  String badgeText;
+                  Color badgeColor;
+
+                  if (isCompleted) {
+                    badgeText = isArabic ? 'مكتملة' : 'COMPLETED';
+                    badgeColor = VSPColors.accent;
+                  } else if (isFull) {
+                    badgeText = AppLocalizations.of(context)!.full.toUpperCase();
+                    badgeColor = Colors.orange;
+                  } else {
+                    badgeText = AppLocalizations.of(context)!.open.toUpperCase();
+                    badgeColor = Colors.green;
+                  }
+
+                  return _buildStatusBadge(badgeText, badgeColor);
+                }),
               ],
             ),
             const SizedBox(height: 12),
@@ -341,65 +356,98 @@ class ChampionshipCard extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
                 Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisSize: MainAxisSize.min,
-                        crossAxisAlignment: CrossAxisAlignment.baseline,
-                        textBaseline: TextBaseline.alphabetic,
+                  child: Builder(builder: (context) {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    final isCompleted = championship.status == 'completed';
+                    final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
+
+                    if (isCompleted) {
+                      final hasWinner = championship.championTeamName != null && championship.championTeamName!.isNotEmpty;
+                      return Row(
                         children: [
-                          Text(
-                            "$remainingTeams",
-                            style: const TextStyle(
-                              color: VSPColors.accent,
-                              fontWeight: FontWeight.w900,
-                              fontSize: 20,
-                            ),
-                          ),
-                          const SizedBox(width: 4),
-                          Text(
-                            AppLocalizations.of(context)!.spotsLeft,
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                            style: const TextStyle(
-                              color: VSPColors.textSecondary,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 10,
+                          const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 16),
+                          const SizedBox(width: 6),
+                          Expanded(
+                            child: Text(
+                              hasWinner
+                                  ? (isArabic ? 'البطل: ${championship.championTeamName}' : 'Champion: ${championship.championTeamName}')
+                                  : (isArabic ? 'البطولة مكتملة 🏆' : 'Tournament Completed 🏆'),
+                              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                             ),
                           ),
                         ],
-                      ),
-                      if (championship.status == 'open' && !championship.isFull && championship.startDate.isAfter(DateTime.now())) ...[
-                        const SizedBox(height: 4),
-                        VSPCountdownTimer(targetDate: championship.startDate, isCompact: true),
-                      ],
-                    ],
-                  ),
+                      );
+                    } else if (isFull) {
+                      return Text(
+                        isArabic ? 'البطولة مكتملة العدد 🍊' : 'Tournament Full 🍊',
+                        style: const TextStyle(color: Colors.orange, fontWeight: FontWeight.bold, fontSize: 12),
+                      );
+                    } else {
+                      return Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisSize: MainAxisSize.min,
+                            crossAxisAlignment: CrossAxisAlignment.baseline,
+                            textBaseline: TextBaseline.alphabetic,
+                            children: [
+                              Text(
+                                "$remainingTeams",
+                                style: const TextStyle(
+                                  color: VSPColors.accent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 20,
+                                ),
+                              ),
+                              const SizedBox(width: 4),
+                              Text(
+                                AppLocalizations.of(context)!.spotsLeft,
+                                maxLines: 1,
+                                overflow: TextOverflow.ellipsis,
+                                style: const TextStyle(
+                                  color: VSPColors.textSecondary,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 10,
+                                ),
+                              ),
+                            ],
+                          ),
+                          if (championship.status == 'open' && championship.startDate.isAfter(DateTime.now())) ...[
+                            const SizedBox(height: 4),
+                            VSPCountdownTimer(targetDate: championship.startDate, isCompact: true),
+                          ],
+                        ],
+                      );
+                    }
+                  }),
                 ),
                 const SizedBox(width: 8),
                 Builder(builder: (context) {
                   final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
+                  final isCompleted = championship.status == 'completed';
+                  final isClosed = isFull || isCompleted;
                   final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
                   return Container(
                     height: 42.0, 
                     padding: const EdgeInsets.symmetric(horizontal: 14),
                     decoration: BoxDecoration(
-                      color: isFull ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.accent, 
+                      color: isClosed ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.accent, 
                       borderRadius: BorderRadius.circular(12),
-                      border: isFull ? Border.all(color: VSPColors.accent, width: 1.5) : null,
+                      border: isClosed ? Border.all(color: VSPColors.accent, width: 1.5) : null,
                     ),
                     child: Center(
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
                         children: [
                           Text(
-                            isFull 
+                            isClosed 
                               ? (isArabic ? 'عرض البطولة' : 'View Tournament')
                               : AppLocalizations.of(context)!.join,
                             style: TextStyle(
-                              color: isFull ? VSPColors.accent : Colors.black,
+                              color: isClosed ? VSPColors.accent : Colors.black,
                               fontWeight: FontWeight.w900,
                               fontSize: 13,
                               letterSpacing: 0.5,
@@ -409,7 +457,7 @@ class ChampionshipCard extends StatelessWidget {
                           Icon(
                             isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
                             size: 16,
-                            color: isFull ? VSPColors.accent : Colors.black,
+                            color: isClosed ? VSPColors.accent : Colors.black,
                           ),
                         ],
                       ),

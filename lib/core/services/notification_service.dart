@@ -15,7 +15,7 @@ import '../services/logger_service.dart';
 
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
-import '../services/database_service.dart';
+import '../repositories/notification_repository.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class NotificationService {
@@ -291,7 +291,7 @@ class NotificationService {
         isRead: false,
       );
       try {
-        await DatabaseService().sendNotification(uid, appNotif);
+        await NotificationRepository().sendNotification(uid, appNotif);
       } catch (e) {
         VSPLogger.e('Error saving FCM to Supabase', e);
       }
@@ -352,7 +352,7 @@ class NotificationService {
         isRead: false,
       );
       try {
-        await DatabaseService().sendNotification(uid, appNotif);
+        await NotificationRepository().sendNotification(uid, appNotif);
       } catch (e) {
         VSPLogger.e('Error saving booking confirmation to Supabase', e);
       }

@@ -10,7 +10,6 @@ import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../../core/providers/booking_provider.dart';
-import '../../../../core/services/database_service.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 
@@ -67,9 +66,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.uid;
     if (uid != null) {
-      final team = await DatabaseService().getUserTeam(uid);
+      final team = await TeamRepository().getUserTeam(uid);
       if (team != null) {
-        final history = await DatabaseService().getPreviousOpponents(team.id);
+        final history = await TeamRepository().getPreviousOpponents(team.id);
         if (mounted) {
           setState(() {
             _historyTeams = history;
@@ -103,7 +102,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       setState(() => _isSearching = true);
       
       final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
-      final results = await DatabaseService().searchOpponentTeams(query);
+      final results = await TeamRepository().searchOpponentTeams(query);
       
       if (mounted) {
         setState(() {
@@ -277,7 +276,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
                         final uid = auth.currentUser?.uid;
                         if (uid != null) {
-                          final team = await DatabaseService().getUserTeam(uid);
+                          final team = await TeamRepository().getUserTeam(uid);
                           if (team != null && context.mounted) {
                             // Save opponent and player team to draft
                             context.read<BookingProvider>().updateDraft(
@@ -331,7 +330,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
         final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
         if (myTeamId != null) {
-          final stats = await DatabaseService().getHeadToHeadStats(myTeamId, team.id);
+          final stats = await TeamRepository().getHeadToHeadStats(myTeamId, team.id);
           if (mounted) {
             setState(() {
               _h2hStats = stats;

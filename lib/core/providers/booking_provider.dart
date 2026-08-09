@@ -2,7 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
-import '../services/database_service.dart';
+import '../repositories/match_repository.dart';
 
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
@@ -190,8 +190,9 @@ class BookingProvider with ChangeNotifier {
 
     // ⚡ Direct REST API fetch to guarantee instant data load even if WebSocket stream is silent
     try {
-      if (_repository is SupabaseBookingRepository) {
-        final directBookings = await (_repository as SupabaseBookingRepository).fetchOwnerBookingsDirectly(ownerId);
+      final repo = _repository;
+      if (repo is SupabaseBookingRepository) {
+        final directBookings = await repo.fetchOwnerBookingsDirectly(ownerId);
         if (directBookings.isNotEmpty) {
           _userBookings = directBookings;
           notifyListeners();
@@ -293,7 +294,7 @@ class BookingProvider with ChangeNotifier {
 
     try {
       // Use the exact same stream function as the Home view for 100% consistency
-      final stream = DatabaseService().getPublicMatches();
+      final stream = MatchRepository().getPublicMatches();
       final matches = await stream.first;
 
       _publicMatches = List<Booking>.from(matches);
@@ -319,7 +320,7 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final success = await DatabaseService().joinPublicMatch(
+      final success = await MatchRepository().joinPublicMatch(
         bookingId,
         userId,
       );
@@ -349,7 +350,7 @@ class BookingProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      final success = await DatabaseService().leavePublicMatch(
+      final success = await MatchRepository().leavePublicMatch(
         bookingId,
         userId,
       );

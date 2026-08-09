@@ -71,7 +71,7 @@ class StadiumProvider with ChangeNotifier {
           if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
             userPosition = await Geolocator.getLastKnownPosition();
             userPosition ??= await Geolocator.getCurrentPosition(
-              timeLimit: const Duration(seconds: 2),
+              locationSettings: const LocationSettings(timeLimit: Duration(seconds: 2)),
             );
           }
         }

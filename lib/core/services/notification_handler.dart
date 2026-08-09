@@ -374,7 +374,7 @@ class NotificationHandler {
         if (isJailBroken || isMockLocation) {
           VSPLogger.w("⚠️ Device Security Alert: Jailbroken=$isJailBroken, MockLocation=$isMockLocation");
           final context = navigatorKey.currentContext;
-          if (context != null) {
+          if (context != null && context.mounted) {
             VSPFeedback.showError(context, 'فشل التحقق: تم كشف التلاعب بالموقع الجغرافي! ⚠️');
           }
           return false;
@@ -382,7 +382,7 @@ class NotificationHandler {
       } catch (e) {
         VSPLogger.e("Error performing safe device checks: $e");
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           VSPFeedback.showError(context, 'فشل التحقق بسبب خطأ أمني! ⚠️');
         }
         return false;
@@ -394,7 +394,7 @@ class NotificationHandler {
         permission = await Geolocator.requestPermission();
         if (permission == LocationPermission.denied) {
           final context = navigatorKey.currentContext;
-          if (context != null) {
+          if (context != null && context.mounted) {
             VSPFeedback.showError(context, 'يرجى إعطاء صلاحية الموقع الجغرافي لتقديم النزاع. 📍');
           }
           return false;
@@ -402,7 +402,7 @@ class NotificationHandler {
       }
       if (permission == LocationPermission.deniedForever) {
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           VSPFeedback.showError(context, 'صلاحية الموقع الجغرافي معطلة تماماً. يرجى تفعيلها من الإعدادات. ⚙️');
         }
         return false;
@@ -412,8 +412,10 @@ class NotificationHandler {
       try {
         position = await Geolocator.getLastKnownPosition();
         position ??= await Geolocator.getCurrentPosition(
-          locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
-          timeLimit: const Duration(seconds: 5),
+          locationSettings: const LocationSettings(
+            accuracy: LocationAccuracy.high,
+            timeLimit: Duration(seconds: 5),
+          ),
         );
       } catch (e) {
         VSPLogger.w('Failed to get current position for no-show dispute: $e');
@@ -421,7 +423,7 @@ class NotificationHandler {
 
       if (position == null) {
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           VSPFeedback.showError(context, 'تعذر تحديد موقعك الحالي. يرجى التحقق من اتصال الـ GPS. 📡');
         }
         return false;
@@ -435,7 +437,7 @@ class NotificationHandler {
       if (position.accuracy > 50) {
         VSPLogger.w('GPS dispute rejected: Accuracy too low (${position.accuracy.toStringAsFixed(1)}m > 50m threshold)');
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           final useSelfie = await showDialog<bool>(
             context: context,
             builder: (ctx) => AlertDialog(
@@ -541,7 +543,7 @@ class NotificationHandler {
         if (success) {
           VSPLogger.i('No-show penalty successfully dismissed via GPS database verification.');
           final context = navigatorKey.currentContext;
-          if (context != null) {
+          if (context != null && context.mounted) {
             VSPFeedback.triggerSuccess();
             const msgAr = 'تم قبول النزاع وإلغاء العقوبة بنجاح! 🏆';
             VSPFeedback.showSuccess(context, msgAr);
@@ -549,7 +551,7 @@ class NotificationHandler {
           return true;
         } else {
           final context = navigatorKey.currentContext;
-          if (context != null) {
+          if (context != null && context.mounted) {
             const msgAr = 'فشل النزاع: لم يتم التحقق من موقعك.';
             VSPFeedback.showError(context, msgAr);
           }
@@ -558,7 +560,7 @@ class NotificationHandler {
       } on PostgrestException catch (e) {
         VSPLogger.e('Database error during GPS dispute: ${e.message}');
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           final String errorMsg = e.message.toLowerCase();
           if (errorMsg.contains('dispute_window_expired')) {
             VSPFeedback.showError(
@@ -583,7 +585,7 @@ class NotificationHandler {
       } catch (e) {
         VSPLogger.e('Unexpected error during GPS dispute: $e');
         final context = navigatorKey.currentContext;
-        if (context != null) {
+        if (context != null && context.mounted) {
           VSPFeedback.showError(context, e.toString());
         }
         return false;

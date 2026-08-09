@@ -10,9 +10,11 @@ class SupportService {
   factory SupportService() => _instance;
   SupportService._internal();
 
-  /// Opens the support channel (Silicon Valley Strategy: Organized Support)
   Future<void> openSupport(BuildContext context, {String? category}) async {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isOwner = auth.isOwner;
+
     showModalBottomSheet(
       context: context,
       backgroundColor: VSPColors.surface,
@@ -35,8 +37,10 @@ class SupportService {
             _buildSupportOption(
               context,
               LucideIcons.shieldCheck,
-              isArabic ? "التوثيق وتفعيل الحساب" : "Document Verification & Profile",
-              isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.",
+              isArabic ? "تفعيل وحماية الحساب" : "Profile & Account Security",
+              isOwner 
+                  ? (isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.")
+                  : (isArabic ? "مشاكل تسجيل الدخول، كلمة المرور أو البيانات الشخصية" : "Login, password, or account profile issues."),
             ),
             _buildSupportOption(
               context,
@@ -46,14 +50,18 @@ class SupportService {
             ),
             _buildSupportOption(
               context,
-              LucideIcons.bug,
-              isArabic ? "مشكلة تقنية بالبطولات" : "Championships & Technical Issues",
-              isArabic ? "الإبلاغ عن أعطال تقنية أو في لوحة المتصدرين" : "Report bugs or leaderboard/brackets issues.",
+              LucideIcons.helpCircle,
+              isOwner ? (isArabic ? "دعم البطولات والتحصيل" : "Tournaments & Revenue Support") : (isArabic ? "مساعدة بالحجوزات والتقييمات" : "Bookings & Review Support"),
+              isOwner
+                  ? (isArabic ? "استفسارات تنظيم البطولات، المحفظة والتحصيل" : "Tournament organizing and payout inquiries.")
+                  : (isArabic ? "استفسارات الحجز، التقييم، أو إلغاء الحجز" : "Inquiries about bookings, reviews, or cancellations."),
             ),
             const SizedBox(height: VSPSpacing.xl),
             Center(
               child: Text(
-                isArabic ? 'متواجدون 24/7 لشركاء VSP' : 'Available 24/7 for VSP Partners',
+                isOwner
+                    ? (isArabic ? 'متواجدون 24/7 لشركاء VSP' : 'Available 24/7 for VSP Partners')
+                    : (isArabic ? 'فريق دعم VSP متواجد لمساعدتك 24/7' : 'VSP Support Team is available 24/7'),
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
               ),
             ),

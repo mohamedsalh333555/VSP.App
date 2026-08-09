@@ -8,9 +8,9 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/copyable_phone_text.dart';
 import '../../../data/models.dart';
 import '../../../core/models/user_model.dart';
-import '../../../core/services/database_service.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 class TeamProfileScreen extends StatefulWidget {
@@ -92,7 +92,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
     if (team.memberUids.length > 1) {
       final memberIds = team.memberUids.sublist(1);
       try {
-        final members = await DatabaseService().getUsersByIds(memberIds);
+        final members = await UserRepository().getUsersByIds(memberIds);
         if (mounted) {
           setState(() {
             _teamMembers.clear();

@@ -263,69 +263,87 @@ class _InformationTab extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
+          // Header: Stadium Name & Single Clean Rating Badge
           Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Expanded(
+                child: Text(
+                  stadium.name,
+                  style: Theme.of(context).textTheme.displaySmall?.copyWith(
+                        fontWeight: FontWeight.w900,
+                      ),
+                  maxLines: 2,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              const SizedBox(width: 12),
+              // Single Clean Rating Badge
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+                ),
                 child: Row(
-                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
                   children: [
-                    Flexible(child: Text(stadium.name, style: Theme.of(context).textTheme.displaySmall)),
-                    if (stadium.isVerified) ...[const SizedBox(width: 8), _VerifiedBadge()],
+                    const Icon(LucideIcons.star, color: VSPColors.accent, size: 14),
+                    const SizedBox(width: 5),
+                    Text(
+                      stadium.rating.toStringAsFixed(1),
+                      style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                    ),
+                    const SizedBox(width: 4),
+                    Text(
+                      '(${stadium.reviewsCount})',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                    ),
                   ],
                 ),
               ),
-              Row(
+            ],
+          ),
+          const SizedBox(height: VSPSpacing.md),
+          // Location Badge: Guaranteed working maps launch (lat/lng or text query fallback)
+          GestureDetector(
+            onTap: () async {
+              try {
+                final String query = (stadium.lat != null && stadium.lng != null)
+                    ? '${stadium.lat},${stadium.lng}'
+                    : Uri.encodeComponent('${stadium.name} ${stadium.location} ${stadium.governorate ?? ''}'.trim());
+                final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=$query');
+                await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication);
+              } catch (e) {
+                debugPrint('Error launching maps: $e');
+              }
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                mainAxisSize: MainAxisSize.min,
                 children: [
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                    decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 1.5)),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(LucideIcons.star, color: VSPColors.accent, size: 16),
-                        const SizedBox(width: 6),
-                        Text(stadium.rating.toStringAsFixed(1), style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900)),
-                      ],
+                  const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                  const SizedBox(width: 6),
+                  Flexible(
+                    child: Text(
+                      stadium.location.isNotEmpty ? stadium.location : (stadium.address.isNotEmpty ? stadium.address : l10n.na),
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
                     ),
                   ),
                   const SizedBox(width: 8),
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(children: List.generate(5, (i) => Icon(LucideIcons.star, color: i < stadium.rating.round() ? VSPColors.accent : VSPColors.surfaceAlt, size: 10))),
-                      const SizedBox(height: 2),
-                      Text(l10n.reviews(stadium.reviewsCount), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
+                  const Icon(LucideIcons.externalLink, color: VSPColors.textSecondary, size: 12),
                 ],
               ),
-            ],
-          ),
-          const SizedBox(height: VSPSpacing.sm),
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Expanded(child: Text(stadium.address.isNotEmpty ? stadium.address : '', style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary))),
-              const SizedBox(width: VSPSpacing.sm),
-              GestureDetector(
-                onTap: () async {
-                  final googleMapsUrl = Uri.parse('https://www.google.com/maps/search/?api=1&query=${stadium.lat},${stadium.lng}');
-                  try { await launchUrl(googleMapsUrl, mode: LaunchMode.externalApplication); } catch (e) {}
-                },
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                  decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                  child: Row(
-                    children: [
-                      const Icon(LucideIcons.mapPin, color: VSPColors.background, size: 16),
-                      const SizedBox(width: 4),
-                      Text(stadium.location.isNotEmpty ? stadium.location : l10n.na, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold)),
-                    ],
-                  ),
-                ),
-              ),
-            ],
+            ),
           ),
           const SizedBox(height: VSPSpacing.lg),
           Text(l10n.informationStadium, style: Theme.of(context).textTheme.titleLarge),
@@ -352,28 +370,6 @@ class _InformationTab extends StatelessWidget {
               ),
             ),
           const SizedBox(height: VSPSpacing.xxl),
-        ],
-      ),
-    );
-  }
-}
-
-class _VerifiedBadge extends StatelessWidget {
-  @override
-  Widget build(BuildContext context) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        gradient: const LinearGradient(colors: [Color(0xFFD4AF37), Color(0xFFFFDF7A), Color(0xFFAC7C11)]),
-        borderRadius: BorderRadius.circular(VSPRadius.xl),
-        border: Border.all(color: const Color(0xFFFFF0B3).withValues(alpha: 0.5)),
-      ),
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: const [
-          Icon(LucideIcons.badgeCheck, color: VSPColors.background, size: 12),
-          SizedBox(width: 4),
-          Text('VERIFIED', style: TextStyle(color: VSPColors.background, fontSize: 9, fontWeight: FontWeight.w900)),
         ],
       ),
     );
@@ -620,14 +616,20 @@ class _RatingsTab extends StatelessWidget {
                         }
                         setSheetState(() => isSubmitting = true);
                         try {
-                          final user = auth.currentUser;
                           final userModel = auth.userModel;
-                          final userName = userModel?.name ?? user?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
+                          final userId = userModel?.uid ?? auth.currentUser?.id;
+                          if (userId == null || userId.isEmpty) {
+                            VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى تسجيل الدخول أولاً لإضافة تقييم' : 'Please log in to submit a review');
+                            setSheetState(() => isSubmitting = false);
+                            return;
+                          }
+
+                          final userName = userModel?.name ?? auth.currentUser?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
                           final userAvatar = userModel?.profileImageUrl ?? '';
 
                           await Supabase.instance.client.from('reviews').insert({
                             'stadium_id': stadium.id,
-                            'user_id': user?.uid ?? '',
+                            'user_id': userId,
                             'user_name': userName,
                             'user_image_url': userAvatar,
                             'rating': selectedRating,
@@ -653,7 +655,8 @@ class _RatingsTab extends StatelessWidget {
                           if (context.mounted) {
                             VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
                           }
-                        } catch (e) {
+                        } catch (e, stack) {
+                          debugPrint('❌ Error saving review: $e\n$stack');
                           setSheetState(() => isSubmitting = false);
                           if (sheetCtx.mounted) {
                             VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
