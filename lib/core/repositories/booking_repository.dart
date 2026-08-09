@@ -881,8 +881,8 @@ class SupabaseBookingRepository implements BookingRepository {
         final booking = Booking.fromFirestore(doc, doc['id'].toString());
         final updatedAt = booking.updatedAt ?? booking.createdAt;
 
-        // 🕒 5-Day Threshold (120 Hours)
-        if (now.difference(updatedAt).inHours >= 120) {
+        // 🕒 24-Hour Threshold (Product Manager & User Approved)
+        if (now.difference(updatedAt).inHours >= 24) {
           final outcome = booking.pendingOutcome ?? MatchOutcome.draw;
           final homeTeamId = booking.playerTeamId;
           final awayTeamId = booking.opponentTeamId;

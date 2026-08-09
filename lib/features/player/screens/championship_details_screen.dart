@@ -1,7 +1,6 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -10,10 +9,10 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/utils/app_date_formatter.dart';
-import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../data/models.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
+import 'championship_checkout_screen.dart';
 
 class ChampionshipDetailsScreen extends StatefulWidget {
   final Championship championship;
@@ -41,290 +40,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     super.dispose();
   }
 
-  Future<Map<String, dynamic>?> _showRosterSelectionSheet(Team team) async {
-    final maxPlayers = widget.championship.maxPlayersPerTeam;
-    final minPlayers = widget.championship.minPlayersPerTeam;
 
-    List<Map<String, dynamic>> members = [];
-    try {
-      final response = await Supabase.instance.client
-          .from('users')
-          .select('id, name, profile_image_url')
-          .inFilter('id', team.memberUids);
-      members = List<Map<String, dynamic>>.from(response);
-    } catch (e) {
-      debugPrint('Error fetching team members details: $e');
-    }
-
-    for (final uid in team.memberUids) {
-      if (!members.any((m) => m['id'] == uid)) {
-        members.add({
-          'id': uid,
-          'name': uid == team.captainName ? team.captainName : 'لاعب ${members.length + 1}',
-          'profile_image_url': '',
-        });
-      }
-    }
-
-    if (!mounted) return null;
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final currentUserId = auth.currentUser?.uid;
-
-    List<String> selectedPlayerIds = [];
-    if (team.memberUids.contains(currentUserId)) {
-      selectedPlayerIds.add(currentUserId!);
-    } else if (team.memberUids.isNotEmpty) {
-      selectedPlayerIds.add(team.memberUids.first);
-    }
-
-    List<String> offlineGuestNames = [];
-    final guestController = TextEditingController();
-
-    if (!mounted) return null;
-    return showModalBottomSheet<Map<String, dynamic>>(
-      context: context,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetContext) {
-        return StatefulBuilder(
-          builder: (BuildContext context, StateSetter setSheetState) {
-            final totalCount = selectedPlayerIds.length + offlineGuestNames.length;
-            final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
-
-            return Container(
-              height: MediaQuery.of(context).size.height * 0.85,
-              decoration: const BoxDecoration(
-                color: VSPColors.background,
-                borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Center(
-                      child: Container(
-                        width: 40,
-                        height: 4,
-                        decoration: BoxDecoration(
-                          color: VSPColors.divider,
-                          borderRadius: BorderRadius.circular(2),
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Text(
-                      'تشكيلة الفريق للبطولة',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 4),
-                    Text(
-                      'الحد الأدنى: $minPlayers لاعبين | الحد الأقصى: $maxPlayers لاعبين',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                    ),
-                    const SizedBox(height: 12),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                      decoration: BoxDecoration(
-                        color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.error.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(8),
-                        border: Border.all(
-                          color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.error.withValues(alpha: 0.3),
-                        ),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            'تم اختيار: $totalCount لاعبين',
-                            style: TextStyle(
-                              color: isSelectionValid ? VSPColors.accent : VSPColors.error,
-                              fontWeight: FontWeight.bold,
-                              fontSize: 14,
-                            ),
-                          ),
-                          if (totalCount < minPlayers)
-                            Text(
-                              'متبقي ${minPlayers - totalCount} لاعبين على الأقل',
-                              style: const TextStyle(color: VSPColors.error, fontSize: 12),
-                            )
-                          else if (totalCount > maxPlayers)
-                            const Text(
-                              'تجاوزت الحد الأقصى!',
-                              style: TextStyle(color: VSPColors.error, fontSize: 12),
-                            )
-                          else
-                            const Text(
-                              'العدد مكتمل ومناسب للبطولة ✓',
-                              style: TextStyle(color: VSPColors.accent, fontSize: 12),
-                            ),
-                        ],
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    Expanded(
-                      child: SingleChildScrollView(
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            const Text(
-                              'لاعبو الفريق:',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            const SizedBox(height: 8),
-                            ListView.builder(
-                              shrinkWrap: true,
-                              physics: const NeverScrollableScrollPhysics(),
-                              itemCount: members.length,
-                              itemBuilder: (context, index) {
-                                final member = members[index];
-                                final isSelected = selectedPlayerIds.contains(member['id']);
-                                final isCaptain = member['id'] == currentUserId;
-
-                                return CheckboxListTile(
-                                  value: isSelected,
-                                  activeColor: VSPColors.accent,
-                                  title: Text(
-                                    member['name'] ?? '',
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                                  ),
-                                  subtitle: isCaptain
-                                    ? const Text('قائد الفريق (إجباري)', style: TextStyle(color: VSPColors.accent, fontSize: 11))
-                                    : null,
-                                  secondary: CircleAvatar(
-                                    radius: 18,
-                                    backgroundImage: (member['profile_image_url'] != null && member['profile_image_url'].toString().isNotEmpty)
-                                      ? NetworkImage(member['profile_image_url'])
-                                      : null,
-                                    backgroundColor: VSPColors.surfaceAlt,
-                                    child: (member['profile_image_url'] == null || member['profile_image_url'].toString().isEmpty)
-                                      ? const Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 18)
-                                      : null,
-                                  ),
-                                  onChanged: isCaptain
-                                    ? null
-                                    : (val) {
-                                        setSheetState(() {
-                                          if (val == true) {
-                                            selectedPlayerIds.add(member['id']);
-                                          } else {
-                                            selectedPlayerIds.remove(member['id']);
-                                          }
-                                        });
-                                      },
-                                );
-                              },
-                            ),
-                            const SizedBox(height: 24),
-                            const Text(
-                              'إضافة أصدقاء من خارج التطبيق:',
-                              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                            ),
-                            const SizedBox(height: 8),
-                            Row(
-                              children: [
-                                Expanded(
-                                  child: TextField(
-                                    controller: guestController,
-                                    style: const TextStyle(color: Colors.white, fontSize: 14),
-                                    decoration: InputDecoration(
-                                      hintText: 'اسم الصديق (مثال: محمد أحمد)',
-                                      hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                                      filled: true,
-                                      fillColor: VSPColors.surface,
-                                      border: OutlineInputBorder(
-                                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                                        borderSide: BorderSide.none,
-                                      ),
-                                    ),
-                                  ),
-                                ),
-                                const SizedBox(width: 8),
-                                ElevatedButton(
-                                  onPressed: () {
-                                    final name = guestController.text.trim();
-                                    if (name.isEmpty) return;
-                                    if (offlineGuestNames.contains(name)) return;
-                                    if (selectedPlayerIds.length + offlineGuestNames.length >= maxPlayers) {
-                                      final isAr = Localizations.localeOf(context).languageCode == 'ar';
-                                      VSPFeedback.showError(
-                                        context,
-                                        isAr
-                                            ? 'تجاوزت الحد الأقصى للاعبين في الفريق ($maxPlayers لاعبين)!'
-                                            : 'Maximum limit of $maxPlayers players reached!',
-                                      );
-                                      return;
-                                    }
-                                    setSheetState(() {
-                                      offlineGuestNames.add(name);
-                                      guestController.clear();
-                                    });
-                                  },
-                                  style: ElevatedButton.styleFrom(
-                                    backgroundColor: VSPColors.accent,
-                                    foregroundColor: Colors.black,
-                                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                                    ),
-                                  ),
-                                  child: const Text('إضافة', style: TextStyle(fontWeight: FontWeight.bold)),
-                                ),
-                              ],
-                            ),
-                            const SizedBox(height: 16),
-                            if (offlineGuestNames.isNotEmpty) ...[
-                              const Text(
-                                'الأصدقاء المضافون:',
-                                style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                              ),
-                              const SizedBox(height: 8),
-                              Wrap(
-                                spacing: 8,
-                                runSpacing: 8,
-                                children: offlineGuestNames.map((name) {
-                                  return Chip(
-                                    backgroundColor: VSPColors.surface,
-                                    label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                                    deleteIcon: const Icon(LucideIcons.x, size: 14, color: Colors.red),
-                                    onDeleted: () {
-                                      setSheetState(() {
-                                        offlineGuestNames.remove(name);
-                                      });
-                                    },
-                                    shape: RoundedRectangleBorder(
-                                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                                      side: const BorderSide(color: VSPColors.divider),
-                                    ),
-                                  );
-                                }).toList(),
-                              ),
-                            ],
-                          ],
-                        ),
-                      ),
-                    ),
-                    const SizedBox(height: 16),
-                    PrimaryButton(
-                      text: 'تأكيد التشكيلة والانتقال للدفع',
-                      onPressed: isSelectionValid
-                        ? () {
-                            Navigator.pop(sheetContext, {
-                              'selectedPlayerIds': selectedPlayerIds,
-                              'offlineGuestNames': offlineGuestNames,
-                            });
-                          }
-                        : null,
-                    ),
-                  ],
-                ),
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   Future<void> _handleJoin() async {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -355,26 +71,18 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       }
 
       if (!mounted) return;
-      final roster = await _showRosterSelectionSheet(team);
-      if (roster == null) return;
+      final result = await Navigator.push<bool>(
+        context,
+        MaterialPageRoute(
+          builder: (context) => ChampionshipCheckoutScreen(
+            championship: widget.championship,
+            team: team,
+          ),
+        ),
+      );
 
-      final List<String> selectedPlayerIds = roster['selectedPlayerIds'] ?? [];
-      final List<String> offlineGuestNames = roster['offlineGuestNames'] ?? [];
-
-      if (mounted) {
-        final confirmed = await _showPaymentDialog(team);
-        if (confirmed == true) {
-          final success = await TournamentRepository().joinChampionship(
-            widget.championship.id,
-            team.id,
-            selectedPlayerIds: selectedPlayerIds,
-            offlineGuestNames: offlineGuestNames,
-          );
-          if (success && mounted) {
-            _showSuccessSnackBar(AppLocalizations.of(context)!.tournamentJoinSuccess(team.name));
-            Navigator.pop(context);
-          }
-        }
+      if (result == true && mounted) {
+        Navigator.pop(context);
       }
     } catch (e) {
       if (mounted) {
@@ -404,74 +112,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
-  Future<bool?> _showPaymentDialog(Team team) async {
-    return showDialog<bool>(
-      context: context,
-      builder: (context) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Column(
-          children: [
-            const Icon(LucideIcons.creditCard, color: VSPColors.accent, size: 48),
-            const SizedBox(height: VSPSpacing.md),
-            Text(
-              AppLocalizations.of(context)!.joinConfirmation,
-              style: Theme.of(context).textTheme.titleLarge,
-            ),
-          ],
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-             Text(
-              AppLocalizations.of(context)!.entryFee(widget.championship.entryFee.toInt(), AppLocalizations.of(context)!.egCurrency),
-              style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent),
-            ),
-            const SizedBox(height: VSPSpacing.md),
-            Text(
-              AppLocalizations.of(context)!.tournamentPaymentDesc,
-              textAlign: TextAlign.center,
-              style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-            ),
-          ],
-        ),
-        actionsPadding: const EdgeInsets.all(VSPSpacing.md),
-        actions: [
-          Row(
-            children: [
-              Expanded(
-                child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.cancel,
-                  height: 48,
-                  color: VSPColors.surfaceAlt,
-                  textColor: VSPColors.textPrimary,
-                  onPressed: () => Navigator.pop(context, false),
-                ),
-              ),
-              const SizedBox(width: VSPSpacing.md),
-              Expanded(
-                child: PrimaryButton(
-                  text: AppLocalizations.of(context)!.confirmAndPay,
-                  height: 48,
-                  onPressed: () => Navigator.pop(context, true),
-                ),
-              ),
-            ],
-          ),
-        ],
-      ),
-    );
-  }
 
-  void _showSuccessSnackBar(String message) {
-    ScaffoldMessenger.of(context).showSnackBar(
-      SnackBar(
-        content: Text(message, style: Theme.of(context).textTheme.labelLarge?.copyWith(color: VSPColors.background, fontWeight: FontWeight.bold)),
-        backgroundColor: VSPColors.accent,
-        behavior: SnackBarBehavior.floating,
-      ),
-    );
-  }
 
   @override
   Widget build(BuildContext context) {

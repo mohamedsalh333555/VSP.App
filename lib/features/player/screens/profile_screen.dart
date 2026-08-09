@@ -11,9 +11,9 @@ import 'package:vsp_application/core/ui/components/vsp_section_title.dart';
 import 'profile_subscreens/my_team_screen.dart';
 import 'profile_subscreens/payment_methods_screen.dart';
 import 'profile_subscreens/notifications_screen.dart';
-import 'profile_subscreens/privacy_policy_screen.dart';
+import 'terms_and_privacy_screen.dart';
+import 'faq_and_support_screen.dart';
 import 'profile_subscreens/language_screen.dart';
-import 'profile_subscreens/help_center_screen.dart';
 import 'profile_subscreens/edit_profile_screen.dart';
 import 'profile_subscreens/favorites_screen.dart';
 import 'package:provider/provider.dart';
@@ -145,6 +145,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final auth = context.watch<AuthProvider>();
     final String? userProfileUrl = auth.userModel?.profileImageUrl;
     final String userName = auth.userModel?.name ?? l10n.player;
@@ -271,8 +272,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           PrimaryButton(
                             text: l10n.buildYourSquad,
                             height: 48,
-                            onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+                            onPressed: () async {
+                              await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+                              if (mounted) setState(() {});
                             },
                           ),
                         ],
@@ -302,7 +304,10 @@ class _ProfileScreenState extends State<ProfileScreen> {
                   icon: LucideIcons.users,
                   title: l10n.myTeam,
                   subtitle: l10n.manageTeamInfo,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen())),
+                  onTap: () async {
+                    await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+                    if (mounted) setState(() {});
+                  },
                 ),
               ),
               VSPFadeInItem(
@@ -364,8 +369,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: VSPMenuItem(
                   icon: LucideIcons.shieldCheck,
                   title: l10n.privacy,
-                  subtitle: l10n.privacyPolicy,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PrivacyPolicyScreen())),
+                  subtitle: isArabic ? 'الشروط والأحكام وسياسة الخصوصية (PDPL 2020)' : l10n.privacyPolicy,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsAndPrivacyScreen())),
                 ),
               ),
               VSPFadeInItem(
@@ -382,8 +387,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 child: VSPMenuItem(
                   icon: LucideIcons.helpCircle,
                   title: l10n.helpCenter,
-                  subtitle: l10n.getHelpSupport,
-                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const HelpCenterScreen())),
+                  subtitle: isArabic ? 'الأسئلة الشائعة وتواصل مع فريق الدعم' : l10n.getHelpSupport,
+                  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FAQAndSupportScreen())),
                 ),
               ),
 

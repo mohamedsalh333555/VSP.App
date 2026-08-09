@@ -3,6 +3,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -14,6 +15,7 @@ import '../../../data/models.dart';
 import 'booking_success_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/config/app_config.dart';
 
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
@@ -162,19 +164,21 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? widget.bookingDraft.depositPaid.toInt() 
         : widget.bookingDraft.totalPrice.toInt();
 
-    // 1. في البيئة الفعلية: فتح صفحة Paymob بالمتصفح
-    final paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/sample?booking_id=${_booking!.id}&amount=$amountToPay';
+    // 1. في البيئة الفعلية: فتح صفحة Paymob بـ Iframe ID الصحيح من AppConfig
+    final paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=${_booking!.id}';
     final Uri uri = Uri.parse(paymobUrl);
 
     try {
       if (await canLaunchUrl(uri)) {
         await launchUrl(uri, mode: LaunchMode.externalApplication);
-      } else {
-        // 2. خيار الاختبار/التطوير: استدعاء RPC بالسيرفر محاكاةً للـ Webhook دون كتابة مباشرة في جدول الحجوزات
+      } else if (kDebugMode) {
+        // 🔒 خيار الاختبار فقط في وضع التطوير (kDebugMode): محاكاة الـ Webhook بالسيرفر
         await Supabase.instance.client.rpc('simulate_paymob_webhook', params: {
           'p_booking_id': _booking!.id,
           'p_amount': amountToPay,
         });
+      } else {
+        debugPrint('Paymob URL launch failed in production mode.');
       }
     } catch (e) {
       debugPrint('Paymob Launch / RPC Simulation notice: $e');
@@ -270,8 +274,21 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final isChampionship = widget.bookingDraft.stadiumName.contains('بطولة:');
     final hasDeposit = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0;
     final amountToPay = hasDeposit ? widget.bookingDraft.depositPaid : widget.bookingDraft.totalPrice;
+
+    final dialogTitle = isChampionship 
+        ? (isArabic ? 'التراجع عن التسجيل في البطولة؟' : 'Cancel Championship Registration?')
+        : (isArabic ? 'التراجع عن عملية الحجز؟' : 'Cancel Booking Checkout?');
+
+    final dialogContent = isChampionship
+        ? (isArabic ? 'إذا تراجعت الآن، لن يتم استكمال التسجيل في البطولة وسيمكنك العودة في أي وقت.' : 'If you go back now, your tournament registration will not be completed.')
+        : (isArabic ? 'إذا تراجعت الآن، لن يتم خصم أي مبالغ وسيمكنك مراجعة حجزك وتعديله في أي وقت.' : 'If you go back now, no charges will be made and you can review your checkout anytime.');
+
+    final dialogContinueText = isChampionship
+        ? (isArabic ? 'متابعة التسجيل' : 'Continue Registration')
+        : (isArabic ? 'متابعة الدفع' : 'Continue Checkout');
 
     return PopScope(
       canPop: false,
@@ -281,18 +298,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           context: context,
           builder: (ctx) => AlertDialog(
             backgroundColor: VSPColors.surface,
-            title: Text(isArabic ? 'إلغاء الدفع؟' : 'Cancel Payment?', style: const TextStyle(color: Colors.white)),
-            content: Text(isArabic ? 'إذا تراجعت الآن سيتم إلغاء حجزك مؤقتاً.' : 'If you go back now, your temporary booking will be cancelled.', style: const TextStyle(color: VSPColors.textSecondary)),
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+            title: Text(dialogTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+            content: Text(dialogContent, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5)),
             actions: [
-              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'استكمال الدفع' : 'Continue Payment', style: const TextStyle(color: VSPColors.accent))),
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false), 
+                child: Text(dialogContinueText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))
+              ),
               TextButton(
                 onPressed: () async {
-                  if (_booking != null) {
+                  if (_booking != null && !_booking!.id.startsWith('mock_')) {
                     await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
                   }
                   if (ctx.mounted) Navigator.pop(ctx, true);
                 },
-                child: Text(isArabic ? 'تراجع وإلغاء' : 'Cancel Booking', style: const TextStyle(color: VSPColors.error))
+                child: Text(isArabic ? 'الرجوع للخلف' : 'Go Back', style: const TextStyle(color: VSPColors.error))
               )
             ]
           )
@@ -305,24 +326,28 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           backgroundColor: VSPColors.background,
           elevation: 0,
           leading: IconButton(
-            icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+            icon: Icon(isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
             onPressed: () async {
               final cancel = await showDialog<bool>(
                 context: context,
                 builder: (ctx) => AlertDialog(
                   backgroundColor: VSPColors.surface,
-                  title: Text(isArabic ? 'إلغاء الدفع؟' : 'Cancel Payment?', style: const TextStyle(color: Colors.white)),
-                  content: Text(isArabic ? 'إذا تراجعت الآن سيتم إلغاء حجزك.' : 'If you go back now, your booking will be cancelled.', style: const TextStyle(color: VSPColors.textSecondary)),
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+                  title: Text(dialogTitle, style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+                  content: Text(dialogContent, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5)),
                   actions: [
-                    TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'استكمال الدفع' : 'Continue Payment', style: const TextStyle(color: VSPColors.accent))),
+                    TextButton(
+                      onPressed: () => Navigator.pop(ctx, false), 
+                      child: Text(dialogContinueText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))
+                    ),
                     TextButton(
                       onPressed: () async {
-                        if (_booking != null) {
+                        if (_booking != null && !_booking!.id.startsWith('mock_')) {
                           await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
                         }
                         if (ctx.mounted) Navigator.pop(ctx, true);
                       },
-                      child: Text(isArabic ? 'إلغاء الحجز' : 'Cancel Booking', style: const TextStyle(color: VSPColors.error))
+                      child: Text(isArabic ? 'الرجوع للخلف' : 'Go Back', style: const TextStyle(color: VSPColors.error))
                     )
                   ]
                 )
@@ -331,7 +356,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             },
           ),
           centerTitle: true,
-          title: Text(l10n.confirmBooking, style: Theme.of(context).textTheme.displaySmall),
+          title: Text(
+            isChampionship 
+                ? (isArabic ? 'تأكيد اشتراك البطولة' : 'Championship Payment')
+                : l10n.confirmBooking, 
+            style: Theme.of(context).textTheme.displaySmall,
+          ),
         ),
         body: Stack(
           children: [
@@ -358,13 +388,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2),
                       ),
-                      child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
+                      child: Icon(
+                        isChampionship ? LucideIcons.trophy : LucideIcons.shieldCheck, 
+                        color: VSPColors.accent, 
+                        size: 44,
+                      ),
                     ),
                     const SizedBox(height: 32),
                     Text(
-                      hasDeposit 
-                          ? (isArabic ? 'عربون الحجز المطلوب' : 'Upfront Deposit Required')
-                          : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount'),
+                      isChampionship
+                          ? (isArabic ? 'رسوم الاشتراك المطلوبة' : 'Entry Fee Required')
+                          : (hasDeposit 
+                              ? (isArabic ? 'عربون الحجز المطلوب' : 'Upfront Deposit Required')
+                              : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount')),
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
                     ),
                     const SizedBox(height: 4),
@@ -373,63 +409,83 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       style: const TextStyle(color: VSPColors.accent, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 20),
-                    // 💰 Flat Financial Breakdown Card (0% Commission Model)
-                    Container(
-                      padding: const EdgeInsets.all(16),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.xl),
-                        border: Border.all(color: VSPColors.divider),
-                      ),
-                      child: Column(
-                        children: [
-                          Row(
+                    // 💰 Financial Breakdown Card (3% Net VSP App Commission Model)
+                    Builder(
+                      builder: (context) {
+                        final double netCommission = amountToPay * 0.03;
+                        final double totalWithCommission = amountToPay + netCommission;
+                        return Container(
+                          padding: const EdgeInsets.all(16),
+                          decoration: BoxDecoration(
+                            color: VSPColors.surface,
+                            borderRadius: BorderRadius.circular(VSPRadius.xl),
+                            border: Border.all(color: VSPColors.divider),
+                          ),
+                          child: Column(
                             children: [
-                              const Icon(LucideIcons.building, color: VSPColors.textSecondary, size: 16),
-                              const SizedBox(width: 10),
-                              Expanded(
-                                child: Text(
-                                  widget.bookingDraft.stadiumName,
-                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                              Row(
+                                children: [
+                                  Icon(isChampionship ? LucideIcons.trophy : LucideIcons.building, color: VSPColors.textSecondary, size: 16),
+                                  const SizedBox(width: 10),
+                                  Expanded(
+                                    child: Text(
+                                      widget.bookingDraft.stadiumName,
+                                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              const SizedBox(height: 8),
+                              Row(
+                                children: [
+                                  const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                  ),
+                                  const SizedBox(width: 14),
+                                  const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
+                                  const SizedBox(width: 6),
+                                  Text(
+                                    DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                  ),
+                                ],
+                              ),
+                              const Divider(color: VSPColors.divider, height: 20),
+                              _buildFeeRow(
+                                label: isChampionship
+                                  ? (isArabic ? 'قيمة رسوم اشتراك البطولة' : 'Championship Entry Fee')
+                                  : (hasDeposit 
+                                      ? (isArabic ? 'قيمة العربون المطلوبة للملعب' : 'Stadium Deposit') 
+                                      : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
+                                value: '${amountToPay.toInt()} ج.م',
+                                isBold: false,
+                              ),
+                              const SizedBox(height: 6),
+                              _buildFeeRow(
+                                label: isArabic ? 'رسوم خدمة المنصة والتشغيل (3%)' : 'Platform Service Fee (3%)',
+                                value: '${netCommission.toStringAsFixed(1)} ج.م',
+                                isBold: false,
+                              ),
+                              const SizedBox(height: 6),
+                              _buildFeeRow(
+                                label: isArabic ? 'المبلغ الإجمالي للسداد أونلاين' : 'Total Checkout Amount',
+                                value: '${totalWithCommission.toStringAsFixed(1)} ج.م',
+                                isBold: true,
+                              ),
+                              if (hasDeposit) ...[
+                                const SizedBox(height: 6),
+                                _buildFeeRow(
+                                  label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
+                                  value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ج.م',
                                 ),
-                              ),
+                              ]
                             ],
                           ),
-                          const SizedBox(height: 8),
-                          Row(
-                            children: [
-                              const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
-                              const SizedBox(width: 8),
-                              Text(
-                                DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
-                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                              ),
-                              const SizedBox(width: 14),
-                              const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
-                              const SizedBox(width: 6),
-                              Text(
-                                DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
-                                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                              ),
-                            ],
-                          ),
-                          const Divider(color: VSPColors.divider, height: 20),
-                          _buildFeeRow(
-                            label: hasDeposit 
-                              ? (isArabic ? 'قيمة العربون المطلوبة' : 'Deposit Amount') 
-                              : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Total Stadium Price'),
-                            value: '${amountToPay.toInt()} ج.م',
-                            isBold: true,
-                          ),
-                          if (hasDeposit) ...[
-                            const SizedBox(height: 6),
-                            _buildFeeRow(
-                              label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-                              value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ج.م',
-                            ),
-                          ]
-                        ],
-                      ),
+                        );
+                      },
                     ),
                     const SizedBox(height: 24),
                     if (_isLoading || _isAwaitingWebhook) ...[

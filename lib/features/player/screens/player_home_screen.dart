@@ -908,7 +908,7 @@ class _HomeContent extends StatelessWidget {
             ? championships
             : [
                 Championship(
-                  id: 'aswan_cup_demo',
+                  id: '00000000-0000-0000-0000-000000000001',
                   name: isArabic ? 'بطولة كأس أسوان الكبرى 🏆' : 'Aswan Cup Championship 🏆',
                   type: 'Cup',
                   sportType: 'Football',
@@ -919,7 +919,7 @@ class _HomeContent extends StatelessWidget {
                   grandPrize: 10000,
                   maxTeams: 16,
                   joinedTeams: List.generate(12, (index) => 'team_$index'),
-                  ownerId: 'owner_demo',
+                  ownerId: '00000000-0000-0000-0000-000000000002',
                   governorate: displayGovName,
                   rules: isArabic ? 'بطولة خروج المغلوب الرسمية لفرق وملاعب محافظة $displayGovName.' : 'Official knockout tournament in $displayGovName.',
                   status: 'open',

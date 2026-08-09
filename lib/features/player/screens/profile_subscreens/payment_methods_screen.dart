@@ -51,7 +51,16 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
               width: double.infinity,
               height: 56,
               child: ElevatedButton(
-                onPressed: () {},
+                onPressed: () {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(isArabic ? 'ميزة إضافة وسائل دفع قادمة قريباً! 🚀' : 'Add Payment Method coming soon! 🚀'),
+                      backgroundColor: VSPColors.accent,
+                      behavior: SnackBarBehavior.floating,
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+                    ),
+                  );
+                },
                 style: ElevatedButton.styleFrom(
                   backgroundColor: VSPColors.accent,
                   shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),

@@ -5,9 +5,9 @@ import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_section_title.dart';
 import '../../player/screens/profile_subscreens/notifications_screen.dart';
-import '../../player/screens/profile_subscreens/privacy_policy_screen.dart';
+import '../../player/screens/terms_and_privacy_screen.dart';
+import '../../player/screens/faq_and_support_screen.dart';
 import '../../player/screens/profile_subscreens/language_screen.dart';
-import '../../player/screens/profile_subscreens/help_center_screen.dart';
 import '../../player/screens/profile_subscreens/payment_methods_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'owner_account_management_screen.dart';
@@ -109,7 +109,7 @@ class OwnerProfileScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const PrivacyPolicyScreen()),
+                        builder: (context) => const TermsAndPrivacyScreen()),
                   );
                 },
               ),
@@ -145,7 +145,7 @@ class OwnerProfileScreen extends StatelessWidget {
                   Navigator.push(
                     context,
                     MaterialPageRoute(
-                        builder: (context) => const HelpCenterScreen()),
+                        builder: (context) => const FAQAndSupportScreen()),
                   );
                 },
               ),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
+import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/ui/components/vsp_stat_card.dart';
@@ -811,7 +812,12 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
       label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 11)),
       backgroundColor: VSPColors.surfaceAlt,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),
-      onPressed: () {},
+      onPressed: () async {
+        final uri = Uri.tryParse(url);
+        if (uri != null && await canLaunchUrl(uri)) {
+          await launchUrl(uri, mode: LaunchMode.externalApplication);
+        }
+      },
     );
   }
 

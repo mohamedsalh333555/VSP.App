@@ -105,6 +105,8 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             backgroundColor: VSPColors.accent,
           ),
         );
+      } else if (mounted) {
+        VSPFeedback.showError(context, 'فشل إنشاء الفريق، يرجى إعادة المحاولة.');
       }
     } catch (e) {
       if (mounted) {

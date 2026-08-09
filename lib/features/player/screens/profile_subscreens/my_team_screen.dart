@@ -19,6 +19,7 @@ import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/utils/phone_utils.dart';
+import '../../../../core/utils/vsp_feedback.dart';
 
 class MyTeamScreen extends StatefulWidget {
   const MyTeamScreen({super.key});
@@ -206,6 +207,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.uid;
 
@@ -263,7 +265,27 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             // 1. Stats Grid
             Row(
               children: [
-                Expanded(child: _buildStatCard(team?.points.toString() ?? '0', l10n.points)),
+                Expanded(
+                  child: GestureDetector(
+                    onTap: _showEloInfoDialog,
+                    child: Container(
+                      decoration: BoxDecoration(
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
+                      ),
+                      child: Stack(
+                        children: [
+                          _buildStatCard(team?.points.toString() ?? '0', isArabic ? 'نقاط الدوري' : l10n.points),
+                          const Positioned(
+                            top: 6,
+                            left: 6,
+                            child: Icon(LucideIcons.info, size: 12, color: VSPColors.accent),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
                 const SizedBox(width: 8),
                 Expanded(child: _buildStatCard((1 + _teamMembers.length).toString(), l10n.members)),
                 const SizedBox(width: 8),
@@ -449,7 +471,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         finalImages.add(member.profileImageUrl ?? '');
       }
 
-      await TeamRepository().createTeam({
+      final teamId = await TeamRepository().createTeam({
         'name': _teamNameController.text.trim(),
         'sportType': _selectedSport,
         'captainName': user.name ?? 'Captain',
@@ -469,8 +491,13 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         'currentWinningStreak': 0,
       });
 
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.teamCreatedSuccess), backgroundColor: VSPColors.accent));
+      if (teamId != null && mounted) {
+        await _initialLoad();
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.teamCreatedSuccess), backgroundColor: VSPColors.accent));
+        }
+      } else if (mounted) {
+        VSPFeedback.showError(context, 'فشل إنشاء الفريق. يرجى إعادة المحاولة.');
       }
     } catch (e) {
       if (mounted) ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(l10n.errorOccurred(e.toString())), backgroundColor: VSPColors.error));
@@ -675,6 +702,41 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  void _showEloInfoDialog() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isArabic ? 'ترتيب فريقك الرسمي (Elo Rating)' : 'Official Elo Rating',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isArabic
+              ? 'نقاط الـ Elo تعبر عن الترتيب الرسمي لفريقك بين كل فرق المحافظة. ترتفع النقاط وتتقدم في جدول الدوري عند الفوز في التحديات والبطولات.'
+              : 'Elo Rating reflects your official team standing across the governorate. Earn points and climb the leaderboard by winning challenges.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(context),
+            child: Text(isArabic ? 'حسناً، فهمت' : 'Got it', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
     );
   }
 

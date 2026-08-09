@@ -11,4 +11,9 @@ class AppConfig {
 
   // Sandbox & Verification Configuration
   static const bool autoApproveOwnerInDebug = false;
+
+  // 💳 Paymob Payment Gateway Configuration
+  // ⚠️ استبدل هذا الرقم بـ Iframe ID الحقيقي من لوحة تحكم Paymob
+  // https://accept.paymob.com > Settings > Payment Integrations
+  static const String paymobIframeId = 'YOUR_REAL_IFRAME_ID';
 }
