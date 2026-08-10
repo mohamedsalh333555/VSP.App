@@ -261,13 +261,21 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
       final bool autoApprove = AppConfig.autoApproveOwnerInDebug && kDebugMode;
 
-      // Write to Database — verificationStatus defaults to 'pending' for review.
-      await authProvider.updateProfile({
-        'verificationStatus': autoApprove ? 'approved' : 'pending',
-        'isRegistrationComplete': true,
-      });
+      // ✅ Use completeOwnerRegistration — writes verificationStatus &
+      // isRegistrationComplete directly via Supabase, bypassing the
+      // client-side security filter that previously blocked these fields.
+      final bool saved = await authProvider.completeOwnerRegistration(
+        verificationStatus: autoApprove ? 'approved' : 'pending',
+      );
 
-      // Only reached when updateProfile succeeds without throwing.
+      if (!saved) {
+        if (!mounted || !context.mounted) return;
+        setState(() => _isSaving = false);
+        VSPFeedback.showError(context, AppLocalizations.of(context)!.saveInfoFailed);
+        return;
+      }
+
+      // Only reached when completeOwnerRegistration succeeds without throwing.
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
 
@@ -294,7 +302,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             textAlign: TextAlign.center,
           ),
           content: Text(
-            autoApprove ? (isArabic ? AppLocalizations.of(context)!.regCompleteBody : AppLocalizations.of(context)!.regCompleteBody) : (isArabic ? "لقد تم استلام بياناتك بنجاح! 🎉\n\nنحن الآن نقوم بمراجعتها. يمكنك الانتقال لاستكشاف لوحة التحكم الخاصة بك الآن، ولكن يرجى العلم أن ملاعبك ستظل مخفية عن اللاعبين حتى يتم التوثيق من الإدارة." : "Your data has been successfully received! 🎉\n\nWe are reviewing it now. You can explore your dashboard, but your stadiums will remain hidden from players until verified by admin."),
+            autoApprove
+                ? (isArabic ? AppLocalizations.of(context)!.regCompleteBody : AppLocalizations.of(context)!.regCompleteBody)
+                : (isArabic
+                    ? "لقد تم استلام بياناتك بنجاح! 🎉\n\nنحن الآن نقوم بمراجعتها. يمكنك الانتقال لاستكشاف لوحة التحكم الخاصة بك الآن، ولكن يرجى العلم أن ملاعبك ستظل مخفية عن اللاعبين حتى يتم التوثيق من الإدارة."
+                    : "Your data has been successfully received! 🎉\n\nWe are reviewing it now. You can explore your dashboard, but your stadiums will remain hidden from players until verified by admin."),
             style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
               color: VSPColors.textSecondary,
               height: 1.6,
@@ -320,7 +332,6 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         context.go('/owner');
       }
     } catch (e) {
-      // updateProfile failed — show error, do NOT navigate, do NOT loop.
       if (!mounted || !context.mounted) return;
       setState(() => _isSaving = false);
       VSPFeedback.showError(
@@ -329,6 +340,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       );
     }
   }
+
 
   void _previousPage() {
     if (_currentStep > 0) {

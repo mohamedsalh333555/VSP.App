@@ -720,6 +720,43 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
+  /// ✅ Trusted method — completes owner onboarding registration.
+  /// Writes [verificationStatus], [isRegistrationComplete], [hasStadium], and
+  /// [isOnboardingConfirmed] directly via Supabase (bypassing the client-side
+  /// security filter in [updateProfile]) and updates the local [userModel]
+  /// so GoRouter can redirect immediately to the owner dashboard (/owner).
+  Future<bool> completeOwnerRegistration({required String verificationStatus}) async {
+    if (_firebaseUser == null || _userModel == null) return false;
+
+    try {
+      final updatedAdditional = Map<String, dynamic>.from(
+        _userModel!.additionalData ?? {},
+      )..['isOnboardingConfirmed'] = true;
+
+      await Supabase.instance.client.from('users').update({
+        'verification_status': verificationStatus,
+        'is_registration_complete': true,
+        'has_stadium': true,
+        'additional_data': updatedAdditional,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', _firebaseUser!.id);
+
+      // ✅ Update local model immediately so GoRouter sees all required flags
+      _userModel = _userModel!.copyWith(
+        verificationStatus: verificationStatus,
+        isRegistrationComplete: true,
+        hasStadium: true,
+        additionalData: updatedAdditional,
+      );
+      notifyListeners();
+      return true;
+    } catch (e) {
+      VSPLogger.e('❌ completeOwnerRegistration failed', e);
+      return false;
+    }
+  }
+
+
   Future<void> toggleFavoriteStadium(String stadiumId) async {
     if (_userModel == null) return;
 

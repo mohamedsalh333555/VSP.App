@@ -20,28 +20,28 @@ class OwnerBottomNavBar extends StatelessWidget {
       onItemTapped: onTap,
       items: [
         VspNavItem(
-          activeIcon: Iconsax.element_4,
-          inactiveIcon: Iconsax.element_4,
+          activeIcon: Iconsax.element_4_copy,
+          inactiveIcon: Iconsax.element_4_copy,
           label: AppLocalizations.of(context)!.home,
         ),
         VspNavItem(
-          activeIcon: Iconsax.cup,
-          inactiveIcon: Iconsax.cup,
+          activeIcon: Iconsax.cup_copy,
+          inactiveIcon: Iconsax.cup_copy,
           label: AppLocalizations.of(context)!.tournamentsTab,
         ),
         VspNavItem(
-          activeIcon: Iconsax.messages_3,
-          inactiveIcon: Iconsax.messages_3,
+          activeIcon: Iconsax.messages_3_copy,
+          inactiveIcon: Iconsax.messages_3_copy,
           label: AppLocalizations.of(context)!.chat,
         ),
         VspNavItem(
-          activeIcon: Iconsax.calendar_1,
-          inactiveIcon: Iconsax.calendar_1,
+          activeIcon: Iconsax.calendar_1_copy,
+          inactiveIcon: Iconsax.calendar_1_copy,
           label: AppLocalizations.of(context)!.bookedTab,
         ),
         VspNavItem(
-          activeIcon: Iconsax.user,
-          inactiveIcon: Iconsax.user,
+          activeIcon: Iconsax.user_copy,
+          inactiveIcon: Iconsax.user_copy,
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],

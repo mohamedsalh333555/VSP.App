@@ -202,7 +202,7 @@ class StadiumCard extends StatelessWidget {
                     if (isOwnerView) ...[
                       // Owner view details
                       Text(
-                        '${stadium.name}  ${stadium.size} • ${stadium.type}',
+                        '${stadium.name}  ${_localizeSizeAndType(stadium.size, stadium.type, context)}',
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: VSPColors.textPrimary,
                           fontWeight: FontWeight.w900,
@@ -214,7 +214,9 @@ class StadiumCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       // Seats
                       Text(
-                        'Seats ${stadium.seatsCapacity} person',
+                        Localizations.localeOf(context).languageCode == 'ar'
+                            ? 'المقاعد: ${stadium.seatsCapacity} مقعد'
+                            : 'Seats ${stadium.seatsCapacity} person',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
                           color: Colors.white70,
                           fontWeight: FontWeight.bold,
@@ -224,6 +226,7 @@ class StadiumCard extends StatelessWidget {
                       const SizedBox(height: 6),
                       // Amenities (Baths, Cafeteria, Garage, etc.)
                       Builder(builder: (context) {
+                        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                         final List<String> featuresList = stadium.features is List 
                             ? List<String>.from(stadium.features)
                             : Stadium.parseFeatures(stadium.features);
@@ -237,20 +240,20 @@ class StadiumCard extends StatelessWidget {
                             if (hasBaths) ...[
                               Icon(LucideIcons.showerHead, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
-                              const Text('Baths 🚻  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                              Text(isArabic ? 'حمامات 🚻  ' : 'Baths 🚻  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasCafe) ...[
                               Icon(LucideIcons.coffee, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
-                              const Text('Cafeteria  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                              Text(isArabic ? 'كافتيريا ☕  ' : 'Cafeteria ☕  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasGarage) ...[
                               Icon(LucideIcons.car, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
-                              const Text('Garage  ', style: TextStyle(color: Colors.white70, fontSize: 11)),
+                              Text(isArabic ? 'جراج 🅿️  ' : 'Garage 🅿️  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (!hasBaths && !hasCafe && !hasGarage)
-                              const Text('No amenities listed  ', style: TextStyle(color: Colors.white38, fontSize: 11)),
+                              Text(isArabic ? 'لا توجد خدمات مضافة  ' : 'No amenities listed  ', style: const TextStyle(color: Colors.white38, fontSize: 11)),
                           ],
                         );
                       }),
@@ -260,7 +263,9 @@ class StadiumCard extends StatelessWidget {
                         mainAxisAlignment: MainAxisAlignment.spaceBetween,
                         children: [
                           Text(
-                            'Price ${stadium.pricePerHour.toInt()} EGP',
+                            Localizations.localeOf(context).languageCode == 'ar'
+                                ? 'السعر ${stadium.pricePerHour.toInt()} ج.م'
+                                : 'Price ${stadium.pricePerHour.toInt()} EGP',
                             style: Theme.of(context).textTheme.titleMedium?.copyWith(
                               color: VSPColors.accent,
                               fontWeight: FontWeight.w900,
@@ -299,7 +304,7 @@ class StadiumCard extends StatelessWidget {
                               borderRadius: BorderRadius.circular(4),
                             ),
                             child: Text(
-                              '${stadium.size} • ${stadium.type}',
+                              _localizeSizeAndType(stadium.size, stadium.type, context),
                               style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: Colors.white70,
                                 fontWeight: FontWeight.w600,
@@ -377,6 +382,45 @@ class StadiumCard extends StatelessWidget {
         ],
       ),
     );
+  }
+
+  String _localizeSizeAndType(String size, String type, BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    if (!isArabic) {
+      final s = size.isNotEmpty ? size : '';
+      final t = type.isNotEmpty ? type : '';
+      if (s.isEmpty) return t;
+      if (t.isEmpty) return s;
+      return '$s • $t';
+    }
+
+    // Localize size (e.g., 'VS 5' -> '5 ضد 5', '5' -> '5 ضد 5')
+    String locSize = size;
+    final digits = RegExp(r'\d+').firstMatch(size)?.group(0);
+    if (digits != null) {
+      locSize = '$digits ضد $digits';
+    }
+
+    // Localize sport type
+    String locType = type;
+    final lowerType = type.toLowerCase();
+    if (lowerType.contains('foot') || lowerType.contains('قدم')) {
+      locType = 'كرة القدم';
+    } else if (lowerType.contains('basket') || lowerType.contains('سلة')) {
+      locType = 'كرة السلة';
+    } else if (lowerType.contains('volley') || lowerType.contains('طائرة')) {
+      locType = 'الكرة الطائرة';
+    } else if (lowerType.contains('padel') || lowerType.contains('بادل')) {
+      locType = 'بادل';
+    } else if (lowerType.contains('hand') || lowerType.contains('يد')) {
+      locType = 'كرة اليد';
+    } else if (lowerType.contains('tennis') || lowerType.contains('تنس')) {
+      locType = 'تنس';
+    }
+
+    if (locSize.isEmpty) return locType;
+    if (locType.isEmpty) return locSize;
+    return '$locSize • $locType';
   }
 
   Widget _buildVspLogoBackground() {

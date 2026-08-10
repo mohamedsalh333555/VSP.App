@@ -121,6 +121,7 @@ class VspUploadedItemRow extends StatelessWidget {
                             : const AssetImage('assets/images/logo.png'))
                         as ImageProvider,
                 fit: BoxFit.cover,
+                onError: (exception, stackTrace) {},
               ),
             ),
           ),

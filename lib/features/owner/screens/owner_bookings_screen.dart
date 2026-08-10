@@ -1,6 +1,7 @@
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import 'dart:ui';
@@ -87,9 +88,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     }
   }
 
-  String _formatHourMin(int h, int m) {
+  String _formatHourMin(int h, int m, bool isArabic) {
     final hour = hour12(h);
-    final period = h >= 12 ? 'PM' : 'AM';
+    final period = isArabic ? (h >= 12 ? 'م' : 'ص') : (h >= 12 ? 'PM' : 'AM');
     final minute = m.toString().padLeft(2, '0');
     return '$hour:$minute $period';
   }
@@ -311,8 +312,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     int safeguard = 0;
                     bool is24h = (startH == endH && safeguard == 0);
                     
+                    final isArSlot = Localizations.localeOf(context).languageCode == 'ar';
                     while (safeguard < 48) { 
-                      final timeStr = _formatHourMin(currentH, currentM);
+                      final timeStr = _formatHourMin(currentH, currentM, isArSlot);
                       if (safeguard > 0 && currentH == endH && currentM == 0 && !is24h) break;
                       
                       bool isBreak = false;
@@ -484,7 +486,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             ),
             const SizedBox(width: 12),
             Text(
-              isBreak ? l10n.breakTime : l10n.addManualBooking,
+              isBreak ? l10n.breakTime : (isAr ? 'متاح للحجز' : 'Available'),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
                 color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.textSecondary,
                 fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
@@ -744,49 +746,226 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     }
   }
 
+  int _parseTimeToMinutes(String? timeStr) {
+    if (timeStr == null || timeStr.isEmpty) return 0;
+    try {
+      final clean = timeStr.trim();
+      final format = DateFormat('hh:mm a');
+      final parsedTime = format.parse(clean);
+      return parsedTime.hour * 60 + parsedTime.minute;
+    } catch (e) {
+      try {
+        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
+        final match = timeRegex.firstMatch(timeStr);
+        if (match == null) return 0;
+        int hour = int.parse(match.group(1)!);
+        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+        String? period = match.group(3)?.toUpperCase();
+        if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
+        if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
+        return hour * 60 + minute;
+      } catch (_) {
+        return 0;
+      }
+    }
+  }
+
+  int _getMaxAvailableMinutes() {
+    final stadium = widget.selectedStadium;
+    final slotTime = widget.slot['slotTime'] as DateTime?;
+    if (slotTime == null) return 720; // 12 hours max
+
+    final int slotMin = slotTime.hour * 60 + slotTime.minute;
+    int maxMins = 720;
+
+    // 1. Closing time constraint
+    final int closingMin = _parseTimeToMinutes(stadium.closingTime);
+    final int openingMin = _parseTimeToMinutes(stadium.openingTime);
+    if (openingMin != closingMin) {
+      int minsToClosing;
+      if (closingMin > slotMin) {
+        minsToClosing = closingMin - slotMin;
+      } else {
+        minsToClosing = (closingMin + 24 * 60) - slotMin;
+      }
+      if (minsToClosing > 0 && minsToClosing < maxMins) {
+        maxMins = minsToClosing;
+      }
+    }
+
+    // 2. Break time constraint
+    if (stadium.isSplitShift) {
+      final int bStartMin = _parseTimeToMinutes(stadium.breakStartTime);
+      final int bEndMin = _parseTimeToMinutes(stadium.breakEndTime);
+      if (bStartMin != bEndMin) {
+        int minsToBreak;
+        if (bStartMin > slotMin) {
+          minsToBreak = bStartMin - slotMin;
+        } else {
+          minsToBreak = (bStartMin + 24 * 60) - slotMin;
+        }
+        if (minsToBreak > 0 && minsToBreak < maxMins) {
+          maxMins = minsToBreak;
+        }
+      }
+    }
+
+    // 3. Existing active bookings constraint
+    try {
+      final bookingProvider = Provider.of<BookingProvider>(widget.parentContext, listen: false);
+      final bookings = bookingProvider.userBookings.where((b) {
+        final bStartLocal = b.startTime.toLocal();
+        return b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
+               b.status != BookingStatus.cancelled &&
+               bStartLocal.year == slotTime.year &&
+               bStartLocal.month == slotTime.month &&
+               bStartLocal.day == slotTime.day;
+      }).toList();
+
+      for (final b in bookings) {
+        if (widget.isEdit && b.id == (widget.slot['booking'] as Booking?)?.id) continue;
+        final bStartLocal = b.startTime.toLocal();
+        final int bStartMin = bStartLocal.hour * 60 + bStartLocal.minute;
+        if (bStartMin > slotMin) {
+          final minsToBooking = bStartMin - slotMin;
+          if (minsToBooking < maxMins) {
+            maxMins = minsToBooking;
+          }
+        }
+      }
+    } catch (_) {}
+
+    return maxMins.clamp(30, 720);
+  }
+
+  void _updateDuration(int newMins) {
+    setState(() {
+      _selectedMinutes = newMins;
+      final stadium = widget.selectedStadium;
+      final double calculatedPrice = stadium.pricePerHour * (newMins / 60.0);
+      _collectedAmountController.text = calculatedPrice.toStringAsFixed(0);
+    });
+  }
+
+  String _formatDurationLabel(int mins, bool isArabic) {
+    final double hours = mins / 60.0;
+    if (hours == 0.5) return isArabic ? '30 دقيقة' : '30 Mins';
+    if (hours == 1.0) return isArabic ? 'ساعة واحدة' : '1 Hour';
+    if (hours == 1.5) return isArabic ? 'ساعة ونصف' : '1.5 Hours';
+    if (hours == 2.0) return isArabic ? 'ساعتين' : '2 Hours';
+    if (hours == 2.5) return isArabic ? 'ساعتين ونصف' : '2.5 Hours';
+    if (hours == 3.0) return isArabic ? '3 ساعات' : '3 Hours';
+    if (hours == 4.0) return isArabic ? '4 ساعات' : '4 Hours';
+    if (hours.remainder(1.0) == 0) {
+      return isArabic ? '${hours.toInt()} ساعات' : '${hours.toInt()} Hours';
+    }
+    return isArabic ? '${hours.toStringAsFixed(1)} ساعة' : '$hours Hours';
+  }
+
   Widget _buildDurationSelector() {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final options = [
-      {'label': isArabic ? 'ساعة' : '1 Hour', 'value': 60},
-      {'label': isArabic ? 'ساعة ونصف' : '1.5 Hours', 'value': 90},
-      {'label': isArabic ? 'ساعتين' : '2 Hours', 'value': 120},
+    final int maxMins = _getMaxAvailableMinutes();
+
+    final allOptions = [
+      {'label': isArabic ? 'ساعة' : '1 Hr', 'value': 60},
+      {'label': isArabic ? 'ساعة ونصف' : '1.5 Hrs', 'value': 90},
+      {'label': isArabic ? 'ساعتين' : '2 Hrs', 'value': 120},
+      {'label': isArabic ? 'ساعتين ونصف' : '2.5 Hrs', 'value': 150},
+      {'label': isArabic ? '3 ساعات' : '3 Hrs', 'value': 180},
+      {'label': isArabic ? '4 ساعات' : '4 Hrs', 'value': 240},
     ];
 
-    return Row(
-      children: options.map((opt) {
-        final isSelected = _selectedMinutes == opt['value'];
-        return Expanded(
-          child: GestureDetector(
-            onTap: widget.isEdit ? null : () {
-              setState(() {
-                _selectedMinutes = opt['value'] as int;
-              });
-            },
-            child: Container(
-              margin: const EdgeInsets.symmetric(horizontal: 4),
-              padding: const EdgeInsets.symmetric(vertical: 10),
-              decoration: BoxDecoration(
-                color: isSelected ? VSPColors.accent : VSPColors.surfaceAlt,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(
-                  color: isSelected ? VSPColors.accent : VSPColors.divider,
-                  width: 1,
-                ),
-              ),
-              child: Center(
-                child: Text(
-                  opt['label'] as String,
-                  style: TextStyle(
-                    color: isSelected ? VSPColors.background : VSPColors.textPrimary,
+    final availableOptions = allOptions.where((opt) => (opt['value'] as int) <= maxMins).toList();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        // 1. Scrollable Chips
+        SingleChildScrollView(
+          scrollDirection: Axis.horizontal,
+          physics: const BouncingScrollPhysics(),
+          child: Row(
+            children: availableOptions.map((opt) {
+              final val = opt['value'] as int;
+              final isSelected = _selectedMinutes == val;
+              return Padding(
+                padding: const EdgeInsets.only(right: 8),
+                child: ChoiceChip(
+                  label: Text(opt['label'] as String),
+                  selected: isSelected,
+                  onSelected: widget.isEdit ? null : (_) {
+                    _updateDuration(val);
+                  },
+                  selectedColor: VSPColors.accent,
+                  labelStyle: TextStyle(
+                    color: isSelected ? Colors.black : VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
                     fontSize: 12,
                   ),
+                  backgroundColor: VSPColors.surfaceAlt,
+                  shape: const StadiumBorder(),
                 ),
+              );
+            }).toList(),
+          ),
+        ),
+        const SizedBox(height: 10),
+
+        // 2. Custom Duration Stepper (+ / - 30 mins)
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(
+              isArabic ? 'مدة مخصصة:' : 'Custom Duration:',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+            Container(
+              decoration: BoxDecoration(
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
+              child: Row(
+                children: [
+                  IconButton(
+                    icon: const Icon(LucideIcons.minus, size: 16, color: VSPColors.textPrimary),
+                    onPressed: (widget.isEdit || _selectedMinutes <= 30) ? null : () {
+                      _updateDuration(_selectedMinutes - 30);
+                    },
+                  ),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 10),
+                    child: Text(
+                      _formatDurationLabel(_selectedMinutes, isArabic),
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontWeight: FontWeight.w900,
+                        fontSize: 13,
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(LucideIcons.plus, size: 16, color: VSPColors.textPrimary),
+                    onPressed: (widget.isEdit || _selectedMinutes + 30 > maxMins) ? null : () {
+                      _updateDuration(_selectedMinutes + 30);
+                    },
+                  ),
+                ],
               ),
             ),
+          ],
+        ),
+
+        if (maxMins < 720) ...[
+          const SizedBox(height: 6),
+          Text(
+            isArabic
+                ? '⚠️ الحد الأقصى المتاح حتى الموعد القادم/الإغلاق: ${_formatDurationLabel(maxMins, isArabic)}'
+                : '⚠️ Max available until next booking/closing: ${_formatDurationLabel(maxMins, isArabic)}',
+            style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
           ),
-        );
-      }).toList(),
+        ],
+      ],
     );
   }
 
@@ -918,6 +1097,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     controller: _phoneController,
                     hint: isArabic ? 'رقم الهاتف (اختياري)' : 'Phone Number (Optional)',
                     keyboardType: TextInputType.phone,
+                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
                   const SizedBox(height: 14),
 
@@ -934,6 +1114,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     controller: _collectedAmountController,
                     hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار غير المدفوع)" : "Enter amount (0 for unpaid)",
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
+                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -1106,6 +1287,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     required TextEditingController controller,
     required String hint,
     TextInputType? keyboardType,
+    List<TextInputFormatter>? inputFormatters,
   }) {
     return Container(
       decoration: BoxDecoration(
@@ -1116,6 +1298,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        inputFormatters: inputFormatters,
         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
         decoration: InputDecoration(
           hintText: hint,

@@ -257,6 +257,41 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     }
   }
 
+  String _localizeSport(String key, bool isArabic) {
+    if (!isArabic) return key;
+    switch (key) {
+      case 'Football': return 'كرة القدم';
+      case 'Basketball': return 'كرة السلة';
+      case 'Padel': return 'بادل';
+      case 'Volleyball': return 'الكرة الطائرة';
+      case 'Handball': return 'كرة اليد';
+      default: return key;
+    }
+  }
+
+  String _localizeSize(String key, bool isArabic) {
+    if (!isArabic) return key;
+    switch (key) {
+      case '5 VS 5': return '5 ضد 5';
+      case '7 VS 7': return '7 ضد 7';
+      case '11 VS 11': return '11 ضد 11';
+      default: return key;
+    }
+  }
+
+  String _localizeAmenity(String key, bool isArabic) {
+    if (!isArabic) return key;
+    switch (key) {
+      case 'Professional Lighting': return 'إضاءة احترافية';
+      case 'Spectator Seats': return 'مدرجات الجمهور';
+      case 'Ball Provided': return 'كرة متوفرة';
+      case 'Cafeteria': return 'كافتيريا';
+      case 'Changing Rooms': return 'غرف تغيير ملابس';
+      case 'Garage': return 'جراج سيارات';
+      default: return key;
+    }
+  }
+
   Widget _buildSportsContent(bool isArabic, AppLocalizations l10n) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -272,7 +307,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           children: _sportsFilters.entries.map((entry) {
             final isSelected = entry.value;
             return ChoiceChip(
-              label: Text(entry.key),
+              label: Text(_localizeSport(entry.key, isArabic)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
@@ -362,7 +397,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           children: _sizeFilters.entries.map((entry) {
             final isSelected = entry.value;
             return ChoiceChip(
-              label: Text(entry.key),
+              label: Text(_localizeSize(entry.key, isArabic)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {
@@ -437,7 +472,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
           children: _amenitiesFilters.entries.map((entry) {
             final isSelected = entry.value;
             return FilterChip(
-              label: Text(entry.key),
+              label: Text(_localizeAmenity(entry.key, isArabic)),
               selected: isSelected,
               onSelected: (selected) {
                 setState(() {

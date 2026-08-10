@@ -967,22 +967,43 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
 
   void _nextPage() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     if (_currentStep == 0) {
-      if (_nameController.text.isEmpty || _selectedSportType == null || _priceController.text.isEmpty || _startTime == null || _endTime == null) {
-        _showError(AppLocalizations.of(context)!.basicInfoError);
+      if (_locationController.text.trim().isEmpty) {
+        _showError(isArabic ? 'يرجى تحديد موقع الملعب على الخريطة أولاً' : 'Please select stadium location on map first');
+        return;
+      }
+
+      if (_nameController.text.trim().isEmpty) {
+        _showError(isArabic ? 'يرجى إدخال اسم الملعب' : 'Please enter stadium name');
         return;
       }
 
       if (_stadiumPhoneController.text.trim().isEmpty) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         _showError(isArabic ? 'يرجى إدخال رقم هاتف الملعب' : 'Please enter stadium phone number');
+        return;
+      }
+
+      if (_selectedSportType == null || _selectedSportType!.trim().isEmpty) {
+        _showError(isArabic ? 'يرجى اختيار نوع الرياضة' : 'Please select sport type');
+        return;
+      }
+
+      if (_priceController.text.trim().isEmpty) {
+        _showError(isArabic ? 'يرجى إدخال سعر حجز الملعب للساعة' : 'Please enter stadium hourly price');
+        return;
+      }
+
+      if (_startTime == null || _endTime == null) {
+        _showError(isArabic ? 'يرجى تحديد مواعيد العمل (البداية والنهاية)' : 'Please select working hours (start and end)');
         return;
       }
 
       // ── Split-Shift (Break Time) Validation ──
       if (_isSplitShift) {
         if (_breakTimes.isEmpty) {
-          _showError("Please add at least one break time.");
+          _showError(isArabic ? "يرجى إضافة فترة راحة واحدة على الأقل عند تفعيل الراحة." : "Please add at least one break time.");
           return;
         }
 
@@ -990,7 +1011,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           final bStart = _breakTimes[i]['start'];
           final bEnd = _breakTimes[i]['end'];
           if (bStart == null || bEnd == null) {
-            _showError("Please set start and end times for Break ${i + 1}.");
+            _showError(isArabic ? "يرجى تحديد وقت البداية والنهاية لفترة الراحة ${i + 1}." : "Please set start and end times for Break ${i + 1}.");
             return;
           }
 
@@ -1007,7 +1028,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           bool isBreakInHours = normBStart >= start && normBEnd <= normEnd && normBStart < normBEnd;
 
           if (!isBreakInHours) {
-            _showError("Break ${i + 1} must be within opening hours (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')}).");
+            _showError(isArabic 
+                ? "فترة الراحة ${i + 1} يجب أن تكون داخل مواعيد العمل الرسمية (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')})."
+                : "Break ${i + 1} must be within opening hours (${_formatTime(_startTime, '')} - ${_formatTime(_endTime, '')}).");
             return;
           }
         }
@@ -1028,11 +1051,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         final deposit = double.tryParse(_depositController.text.trim()) ?? 0.0;
         final price = double.tryParse(_priceController.text.trim()) ?? 0.0;
         if (deposit <= 0) {
-          _showError("Please set a valid deposit amount.");
+          _showError(isArabic ? "يرجى إدخال مبلغ عربون صحيح." : "Please set a valid deposit amount.");
           return;
         }
         if (deposit > (price * 0.5)) {
-          _showError("Deposit amount cannot exceed 50% of the hourly price (${price * 0.5} EGP).");
+          _showError(isArabic 
+              ? "مبلغ العربون لا يمكن أن يتجاوز 50% من سعر الساعة (${(price * 0.5).toStringAsFixed(0)} ج.م)."
+              : "Deposit amount cannot exceed 50% of the hourly price (${price * 0.5} EGP).");
           return;
         }
       }
