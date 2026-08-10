@@ -19,8 +19,8 @@ class AppTheme {
   static const Color accentSoft = VSPColors.accentSoft;
 
   static ThemeData get darkTheme {
-    final baseTextTheme = GoogleFonts.titilliumWebTextTheme(ThemeData.dark().textTheme);
-    final titilliumWebFamily = GoogleFonts.titilliumWeb().fontFamily;
+    final baseTextTheme = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
+    final poppinsFamily = GoogleFonts.poppins().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
     final List<String> fallbackFonts = [tajawalFamily ?? 'Tajawal', 'sans-serif'];
@@ -108,7 +108,7 @@ class AppTheme {
         surface: VSPColors.surface,
       ),
 
-      fontFamily: titilliumWebFamily,
+      fontFamily: poppinsFamily,
       fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
 
       textTheme: applyFallback(finalTextTheme),

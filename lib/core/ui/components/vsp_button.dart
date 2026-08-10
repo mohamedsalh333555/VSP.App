@@ -26,7 +26,7 @@ class VSPPrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final double h = height ?? 56;
     final bool hasCustomColor = color != null;
-    final fontName = GoogleFonts.titilliumWeb().fontFamily;
+    final fontName = GoogleFonts.poppins().fontFamily;
     final tajawalFamily = GoogleFonts.tajawal().fontFamily;
     
     return Container(

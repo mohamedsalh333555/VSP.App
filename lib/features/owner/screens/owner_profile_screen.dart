@@ -168,7 +168,7 @@ class OwnerProfileScreen extends StatelessWidget {
               ),
             ),
 
-            SizedBox(height: MediaQuery.of(context).padding.bottom + 110),
+            SizedBox(height: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
           ],
         ),
       ),

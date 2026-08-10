@@ -1,4 +1,4 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -117,7 +117,7 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
   Widget _buildBottomButtons() {
     final l10n = AppLocalizations.of(context)!;
     return Padding(
-      padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + 100),
+      padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
       child: Column(
         children: [
           PrimaryButton(

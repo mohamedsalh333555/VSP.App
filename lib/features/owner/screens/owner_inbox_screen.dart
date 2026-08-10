@@ -153,7 +153,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
               VSPSpacing.md, 
               VSPSpacing.md, 
               VSPSpacing.md, 
-              MediaQuery.of(context).padding.bottom + 110
+              VSPScrollPadding.bottom(context, hasFloatingNavBar: true)
             ),
             itemCount: bookings.length,
             itemBuilder: (context, index) {

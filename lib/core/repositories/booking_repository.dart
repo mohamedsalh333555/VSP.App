@@ -118,6 +118,21 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     try {
+      // 🛡️ Mandatory Security Gate: Verify stadium approval status in DB before creating any booking
+      final stadiumCheck = await _supabase
+          .from('stadiums')
+          .select('is_verified, is_blocked')
+          .eq('id', draft.stadiumId)
+          .maybeSingle();
+
+      if (stadiumCheck != null) {
+        final bool isVerified = stadiumCheck['is_verified'] ?? false;
+        final bool isBlocked = stadiumCheck['is_blocked'] ?? false;
+        if (!isVerified || isBlocked) {
+          throw Exception("عذراً، هذا الملعب غير متاح حالياً أو قيد المراجعة والتوثيق من قِبل إدارة التطبيق.");
+        }
+      }
+
       // 🛡️ Gating Safety: Check if booking falls inside stadium break hours
       try {
         final stadiumDoc = await _supabase

@@ -120,6 +120,13 @@ class AuthProvider with ChangeNotifier {
     });
   }
 
+  /// Public method to force refresh user profile data from Supabase DB
+  Future<void> refreshProfile() async {
+    if (_firebaseUser != null) {
+      await _fetchUserData(_firebaseUser!);
+    }
+  }
+
 
 
   /// Internal helper to fetch data without redundant notifyListeners

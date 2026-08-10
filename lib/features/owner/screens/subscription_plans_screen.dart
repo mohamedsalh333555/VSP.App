@@ -89,7 +89,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             // 2. 💳 كارت الباقة الأساسية (500 ج.م - متضمنة التجربة المجانية)
             _buildPlanCard(
-              title: isArabic ? 'الباقة الأساسية (Basic)' : 'Basic Plan',
+              title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isArabic ? '500 ج.م' : '500 EGP',
               periodText: isArabic ? 'شهرياً (مجاناً لأول 3 شهور)' : 'Monthly (Free 1st 3 months)',
               stadiumsCount: 1,
@@ -110,7 +110,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             // 3. 👑 كارت الباقة الاحترافية (1000 ج.م - المجمعات)
             _buildPlanCard(
-              title: isArabic ? 'الباقة الاحترافية (Pro)' : 'Pro Plan',
+              title: isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
               priceText: isArabic ? '1000 ج.م' : '1000 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               stadiumsCount: 3,
@@ -122,7 +122,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 isArabic ? 'إضافة وتشغيل حتى 3 ملاعب مختلفة' : 'Operate up to 3 Stadiums',
                 isArabic ? 'إمكانية إضافة ملعب إضافي (+200 ج.م/شهرياً)' : 'Extra Stadium Add-on (+200 EGP/mo)',
                 isArabic ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & Daily Booking Analytics',
-                isArabic ? 'تقرير مصادر الحجز (مباشر vs تحديات)' : 'Booking Source Report (Direct vs Challenge)',
+                isArabic ? 'تقرير مصادر الحجز (مباشر مقابل تحديات)' : 'Booking Source Report (Direct vs Challenge)',
                 isArabic ? 'دعم فني وتفعيل أولوية أجهزة المالك' : 'Priority Owner Support',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
@@ -147,7 +147,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     final seconds = _remainingTime.inSeconds % 60;
 
     final String planLabelText = isArabic 
-        ? (isProOwnerLabel(user) ? 'احترافية (Pro)' : (isTrial ? 'فترة تجريبية' : 'أساسية (Basic)'))
+        ? (isProOwnerLabel(user) ? 'الباقة الاحترافية' : (isTrial ? 'فترة تجريبية' : 'الباقة الأساسية'))
         : (user.subscriptionPlanLabel);
 
     return Container(

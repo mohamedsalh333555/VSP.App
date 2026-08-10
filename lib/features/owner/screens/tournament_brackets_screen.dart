@@ -97,7 +97,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               children: sortedRounds.map((roundIdx) {
                 final roundMatches = groupedMatches[roundIdx]!;
                 return ListView(
-                  padding: EdgeInsets.fromLTRB(16, 16, 16, MediaQuery.of(context).padding.bottom + 110),
+                  padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
                   children: [
                     if (roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null) ...[
                       Container(

@@ -673,26 +673,64 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   }
 
   void _showBookingModal({required bool isEdit, required Map<String, dynamic> slot, required Stadium stadium}) {
-    showModalBottomSheet(
+    if (!isEdit) {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final status = auth.userModel?.verificationStatus;
+      final isUnderReview = status == 'pending' || status == 'under_review';
+      final isRejected = status == 'rejected';
+
+      if (isUnderReview || isRejected) {
+        VSPFeedback.showError(
+          context,
+          Localizations.localeOf(context).languageCode == 'ar'
+              ? 'عذراً، حسابك قيد المراجعة والتوثيق من قِبل إدارة التطبيق. لا يمكن إضافة حجز جديد حتى يتم الاعتماد والتفعيل!'
+              : 'Sorry, your account is under review. Bookings are disabled until admin approval!',
+        );
+        return;
+      }
+    }
+
+    showOwnerBookingModal(
       context: context,
-      isScrollControlled: true,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (modalContext) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: _BookingSheetContent(
-          isEdit: isEdit,
-          slot: slot,
-          selectedStadium: stadium,
-          baseDate: _baseDate,
-          selectedDayIndex: _selectedDayIndex,
-          parentContext: context,
-        ),
-      ),
+      isEdit: isEdit,
+      slot: slot,
+      selectedStadium: stadium,
+      baseDate: _baseDate,
+      selectedDayIndex: _selectedDayIndex,
+      parentContext: context,
     ).then((_) {
       if (mounted) setState(() {});
     });
   }
+}
+
+Future<void> showOwnerBookingModal({
+  required BuildContext context,
+  required bool isEdit,
+  required Map<String, dynamic> slot,
+  required Stadium selectedStadium,
+  DateTime? baseDate,
+  int? selectedDayIndex,
+  required BuildContext parentContext,
+}) {
+  final now = DateTime.now();
+  return showModalBottomSheet(
+    context: context,
+    isScrollControlled: true,
+    useSafeArea: true,
+    backgroundColor: Colors.transparent,
+    builder: (modalContext) => BackdropFilter(
+      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
+      child: _BookingSheetContent(
+        isEdit: isEdit,
+        slot: slot,
+        selectedStadium: selectedStadium,
+        baseDate: baseDate ?? now,
+        selectedDayIndex: selectedDayIndex ?? 0,
+        parentContext: parentContext,
+      ),
+    ),
+  );
 }
 
 class _BookingSheetContent extends StatefulWidget {
@@ -736,8 +774,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     double initialAmount = 0.0;
     if (widget.isEdit && booking != null) {
       initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
-    } else if (widget.selectedStadium.needsDeposit) {
-      initialAmount = widget.selectedStadium.depositAmount;
     }
     _collectedAmountController = TextEditingController(text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0));
 
@@ -841,9 +877,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
   void _updateDuration(int newMins) {
     setState(() {
       _selectedMinutes = newMins;
-      final stadium = widget.selectedStadium;
-      final double calculatedPrice = stadium.pricePerHour * (newMins / 60.0);
-      _collectedAmountController.text = calculatedPrice.toStringAsFixed(0);
     });
   }
 

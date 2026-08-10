@@ -303,7 +303,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                 ),
               ),
               
-              const SliverToBoxAdapter(child: SizedBox(height: 120)),
+              const SliverToBoxAdapter(child: SizedBox(height: 32)),
             ],
           );
         },

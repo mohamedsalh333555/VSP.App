@@ -100,15 +100,15 @@ class VSPConstants {
 
 class VSPScrollPadding {
   /// Calculates bottom padding for scroll views to scroll past floating navbar or bottom action bars cleanly.
-  static double bottom(BuildContext context, {bool hasFloatingNavBar = false, double extra = 20.0}) {
-    final double safeBottom = MediaQuery.of(context).padding.bottom;
+  static double bottom(BuildContext context, {bool hasFloatingNavBar = false, double extra = 8.0}) {
     if (hasFloatingNavBar) {
-      return 68.0 + 12.0 + safeBottom + extra; // 68 nav height + 12 margin + safeArea + extra (~114-120px)
+      return 64.0 + 12.0 + extra; // 64 navbar height + 12 bottom margin + 8 extra padding
     }
+    final double safeBottom = MediaQuery.of(context).padding.bottom;
     return safeBottom + extra;
   }
 
   static EdgeInsets forList(BuildContext context, {bool hasFloatingNavBar = false, double horizontal = 16.0, double top = 16.0}) {
-    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom(context, hasFloatingNavBar: hasFloatingNavBar));
+    return EdgeInsets.fromLTRB(horizontal, top, horizontal, bottom(context, hasFloatingNavBar: hasFloatingNavBar, extra: 8.0));
   }
 }
