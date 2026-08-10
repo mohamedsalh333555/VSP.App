@@ -60,6 +60,15 @@ class VSPRadius {
   static const double lg = 24.0; 
   static const double xl = 32.0; 
   static const double full = 999.0;
+
+  /// 🎯 Centralized Component Tokens
+  /// Modifying any token below instantly updates all matching components across the entire app!
+  static const double button = full;        // All primary, secondary, and social buttons
+  static const double card = lg;            // All stadium cards, team cards, match cards, containers
+  static const double input = md;           // All text fields and input boxes
+  static const double chip = sm;            // All filter chips, tags, position badges
+  static const double dialog = xl;          // All popup dialogs and modals
+  static const double bottomSheet = xl;     // All bottom sheets
 }
 
 class VSPSpacing {

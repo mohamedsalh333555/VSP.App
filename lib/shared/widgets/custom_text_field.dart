@@ -79,25 +79,25 @@ class CustomTextField extends StatelessWidget {
             : null,
         suffixIcon: suffixIcon,
         border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: BorderSide.none,
         ),
         enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: BorderSide(
             color: VSPColors.accent.withValues(alpha: 0.1),
             width: 1,
           ),
         ),
         focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: const BorderSide(
             color: VSPColors.accent,
             width: 1.5,
           ),
         ),
         errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
+          borderRadius: BorderRadius.circular(VSPRadius.input),
           borderSide: const BorderSide(
             color: VSPColors.error,
             width: 1,

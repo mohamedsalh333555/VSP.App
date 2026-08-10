@@ -33,7 +33,7 @@ class VSPPrimaryButton extends StatelessWidget {
       height: h,
       width: double.infinity,
       decoration: BoxDecoration(
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        borderRadius: BorderRadius.circular(VSPRadius.full),
         gradient: hasCustomColor 
             ? null 
             : LinearGradient(
@@ -60,9 +60,7 @@ class VSPPrimaryButton extends StatelessWidget {
           foregroundColor: textColor ?? Colors.black,
           elevation: 0,
           shadowColor: Colors.transparent,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-          ),
+          shape: const StadiumBorder(),
         ),
         child: isLoading
             ? SizedBox(

@@ -28,7 +28,7 @@ class VSPCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final double r = borderRadius ?? VSPRadius.lg;
+    final double r = borderRadius ?? VSPRadius.card;
     final double sigma = isGlass ? VSPColors.glassBlurSigma : 0.0;
 
     if (!isGlass) {

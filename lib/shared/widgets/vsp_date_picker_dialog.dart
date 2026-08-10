@@ -107,7 +107,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
           ),
           decoration: BoxDecoration(
             color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.xl),
+            borderRadius: BorderRadius.circular(VSPRadius.dialog),
             border: Border.all(color: VSPColors.divider, width: 1.5),
             boxShadow: [
               BoxShadow(
