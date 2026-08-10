@@ -71,6 +71,14 @@ class VSPRadius {
   static const double bottomSheet = xl;     // All bottom sheets
 }
 
+class VSPSize {
+  /// Standard Unified Height (56.0px) for All Single-Line Input Fields
+  static const double inputHeight = 56.0;
+
+  /// Standard Unified Height (56.0px) for All Primary, Secondary & Social Buttons
+  static const double buttonHeight = 56.0;
+}
+
 class VSPSpacing {
   static const double xs = 4.0;
   static const double sm = 8.0;

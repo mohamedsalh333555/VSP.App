@@ -43,7 +43,7 @@ class CustomTextField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    final fieldWidget = TextFormField(
       controller: controller,
       keyboardType: keyboardType,
       textDirection: (keyboardType == TextInputType.emailAddress ||
@@ -63,6 +63,7 @@ class CustomTextField extends StatelessWidget {
       autofocus: autofocus,
       style: Theme.of(context).textTheme.bodyLarge,
       decoration: InputDecoration(
+        isDense: true,
         hintText: hintText,
         errorText: errorText,
         hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -75,6 +76,7 @@ class CustomTextField extends StatelessWidget {
             ? Icon(
                 prefixIcon,
                 color: VSPColors.textSecondary,
+                size: 20,
               )
             : null,
         suffixIcon: suffixIcon,
@@ -104,10 +106,19 @@ class CustomTextField extends StatelessWidget {
           ),
         ),
         contentPadding: const EdgeInsets.symmetric(
-          horizontal: VSPSpacing.md,
-          vertical: VSPSpacing.md,
+          horizontal: 16,
+          vertical: 16,
         ),
       ),
+    );
+
+    if (maxLines != null && maxLines! > 1) {
+      return fieldWidget;
+    }
+
+    return SizedBox(
+      height: VSPSize.inputHeight,
+      child: fieldWidget,
     );
   }
 }

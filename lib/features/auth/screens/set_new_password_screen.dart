@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/custom_text_field.dart';
 
 /// Screen shown when the user clicks a password-reset deep link.
 /// Supabase has already established the recovery session before this screen
@@ -349,45 +350,22 @@ class _PasswordField extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    return TextFormField(
+    return CustomTextField(
       controller: controller,
       obscureText: obscure,
       onChanged: onChanged,
       validator: validator,
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
-      style: const TextStyle(color: VSPColors.textPrimary),
-      decoration: InputDecoration(
-        hintText: hint,
-        hintStyle: const TextStyle(color: VSPColors.textSecondary),
-        filled: true,
-        fillColor: VSPColors.surface,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          borderSide: BorderSide.none,
+      hintText: hint,
+      prefixIcon: LucideIcons.lock,
+      suffixIcon: IconButton(
+        icon: Icon(
+          obscure ? LucideIcons.eyeOff : LucideIcons.eye,
+          color: VSPColors.textSecondary,
+          size: 20,
         ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          borderSide: const BorderSide(color: VSPColors.divider),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          borderSide: const BorderSide(color: VSPColors.accent, width: 2),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          borderSide: const BorderSide(color: VSPColors.error),
-        ),
-        prefixIcon: Icon(LucideIcons.lock,
-            color: VSPColors.textSecondary, size: 20),
-        suffixIcon: IconButton(
-          icon: Icon(
-            obscure ? LucideIcons.eyeOff : LucideIcons.eye,
-            color: VSPColors.textSecondary,
-            size: 20,
-          ),
-          onPressed: onToggle,
-        ),
+        onPressed: onToggle,
       ),
     );
   }

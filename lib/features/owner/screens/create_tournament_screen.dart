@@ -468,10 +468,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
   Widget _buildDropdown(List<String> items, String value, Function(String?) onChanged) {
     return Container(
+      height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
@@ -494,10 +496,12 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
   Widget _buildDateDisplay(DateTime date) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      height: VSPSize.inputHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
       ),
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,

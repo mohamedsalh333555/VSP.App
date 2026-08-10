@@ -138,15 +138,25 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     if (widget.stadiumId != null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
+      final savedName = prefs.getString('temp_stadium_name') ?? '';
+      final savedPhone = prefs.getString('temp_stadium_phone') ?? '';
+      final savedWidth = prefs.getString('temp_stadium_width') ?? '';
+
+      // Clear legacy mock test data if present
+      if (savedName == 'Al_Champions_Stadium' || savedName.contains('Stadium') || savedPhone == '01011112222' || savedWidth == '350') {
+        await _clearPersistedForm();
+        return;
+      }
+
       setState(() {
-        _nameController.text = prefs.getString('temp_stadium_name') ?? '';
+        _nameController.text = savedName;
         _locationController.text = prefs.getString('temp_stadium_location') ?? '';
         _priceController.text = prefs.getString('temp_stadium_price') ?? '';
         _capacityController.text = prefs.getString('temp_stadium_capacity') ?? '';
-        _stadiumPhoneController.text = prefs.getString('temp_stadium_phone') ?? '';
+        _stadiumPhoneController.text = savedPhone;
         _notesController.text = prefs.getString('temp_stadium_notes') ?? '';
         _lengthController.text = prefs.getString('temp_stadium_length') ?? '';
-        _widthController.text = prefs.getString('temp_stadium_width') ?? '';
+        _widthController.text = savedWidth;
         _seatsController.text = prefs.getString('temp_stadium_seats') ?? '';
         _ballPriceController.text = prefs.getString('temp_stadium_ball_price') ?? '';
         _depositController.text = prefs.getString('temp_stadium_deposit') ?? '';
@@ -366,8 +376,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       int hour = int.parse(timeParts[0]);
       int minute = int.parse(timeParts[1]);
       final period = parts[1].toUpperCase();
-      if (period == 'PM' && hour != 12) hour += 12;
-      if (period == 'AM' && hour == 12) hour = 0;
+      if ((period == 'PM' || period == 'م' || period == 'مساءً') && hour != 12) hour += 12;
+      if ((period == 'AM' || period == 'ص' || period == 'صباحاً') && hour == 12) hour = 0;
       return TimeOfDay(hour: hour, minute: minute);
     } catch (e) {
       return null;
@@ -1209,8 +1219,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   String _formatTime(TimeOfDay? time, String defaultText) {
     if (time == null) return defaultText;
     final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
-    final period = time.period == DayPeriod.am ? 'AM' : 'PM';
     final minute = time.minute.toString().padLeft(2, '0');
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final period = time.period == DayPeriod.am
+        ? (isArabic ? 'ص' : 'AM')
+        : (isArabic ? 'م' : 'PM');
     return '$hour:$minute $period';
   }
 
@@ -1362,62 +1375,66 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          _buildTextField(AppLocalizations.of(context)!.location, AppLocalizations.of(context)!.tapToFetch, controller: _locationController, readOnly: true),
-          const SizedBox(height: 8),
-          if (widget.stadiumId != null) ...[
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
+          // Single Unified Interactive Location Selector Field
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                AppLocalizations.of(context)!.location,
+                style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.textSecondary),
               ),
-              child: Row(
-                children: [
-                  Icon(LucideIcons.lock, color: VSPColors.accent, size: 18),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isArabic
-                          ? 'الموقع الجغرافي للملعب ثابت ولا يمكن تعديله بعد التسجيل.'
-                          : 'The geographical location of the stadium is fixed and cannot be changed.',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                    ),
+              const SizedBox(height: VSPSpacing.xs),
+              GestureDetector(
+                onTap: (widget.stadiumId != null || _isLocationLoading) ? null : _openMapPicker,
+                child: Container(
+                  width: double.infinity,
+                  height: VSPSize.inputHeight,
+                  padding: const EdgeInsets.symmetric(horizontal: 16),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.input),
+                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 16),
-          ] else ...[
-            _isLocationLoading
-                ? const Center(
-                    child: Padding(
-                      padding: EdgeInsets.symmetric(vertical: 12),
-                      child: CircularProgressIndicator(color: VSPColors.accent),
-                    ),
-                  )
-                : SizedBox(
-                    width: double.infinity,
-                    child: ElevatedButton.icon(
-                      onPressed: _openMapPicker,
-                      icon: Icon(LucideIcons.map, color: Colors.black),
-                      label: Text(
-                        isArabic ? 'تحديد موقع الملعب على الخريطة 🗺️' : 'Select Stadium Location on Map 🗺️',
-                        style: const TextStyle(fontWeight: FontWeight.bold),
+                  child: Row(
+                    children: [
+                      Icon(
+                        widget.stadiumId != null ? LucideIcons.lock : LucideIcons.mapPin,
+                        color: VSPColors.accent,
+                        size: 20,
                       ),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: VSPColors.accent,
-                        foregroundColor: Colors.black,
-                        padding: const EdgeInsets.symmetric(vertical: 14),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                      const SizedBox(width: 12),
+                      Expanded(
+                        child: Text(
+                          _locationController.text.isNotEmpty
+                              ? _locationController.text
+                              : (isArabic ? 'اضغط لتحديد موقع الملعب على الخريطة 🗺️' : 'Tap to select stadium location on map 🗺️'),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: TextStyle(
+                            color: _locationController.text.isNotEmpty ? Colors.white : VSPColors.textSecondary,
+                            fontSize: 13,
+                            fontWeight: _locationController.text.isNotEmpty ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
                       ),
-                    ),
+                      if (_isLocationLoading)
+                        const SizedBox(
+                          width: 18,
+                          height: 18,
+                          child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+                        )
+                      else if (_locationController.text.isNotEmpty)
+                        const Icon(LucideIcons.checkCircle2, color: VSPColors.accent, size: 18)
+                      else
+                        Icon(isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 18),
+                    ],
                   ),
-            const SizedBox(height: 16),
-          ],
-          _buildTextField(AppLocalizations.of(context)!.stadiumName, 'Ex: Anfield', controller: _nameController, maxLength: 50),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+          _buildTextField(AppLocalizations.of(context)!.stadiumName, isArabic ? 'أدخل اسم ملعبك' : 'Enter Stadium Name', controller: _nameController, maxLength: 50),
           const SizedBox(height: 16),
           _buildTextField(
             isArabic ? 'رقم هاتف الملعب' : 'Stadium Phone Number',
@@ -1427,37 +1444,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             keyboardType: TextInputType.phone,
             inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           ),
-
-          // Warm payment settings warning
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.all(12),
-            margin: const EdgeInsets.only(bottom: 16),
-            decoration: BoxDecoration(
-              color: VSPColors.warning.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                Icon(LucideIcons.info, color: VSPColors.warning, size: 20),
-                const SizedBox(width: 10),
-                Expanded(
-                  child: Text(
-                    isArabic
-                        ? "تنبيه: يمكنك استكمال إعدادات التحصيل والربط المالي لاحقاً من شاشة إدارة الحساب لتفعيل استقبال المدفوعات."
-                        : "Note: You can complete collection settings and financial linking later from the account management screen to activate payment reception.",
-                    style: TextStyle(
-                      color: VSPColors.warning,
-                      fontSize: 12,
-                      fontWeight: FontWeight.w500,
-                      height: 1.4,
-                    ),
-                  ),
-                ),
-              ],
-            ),
-          ),
+          const SizedBox(height: 16),
           _buildSportDropdown(),
           const SizedBox(height: 16),
           _buildTextField(
@@ -1582,7 +1569,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 },
                 icon: Icon(LucideIcons.plus, color: VSPColors.accent, size: 18),
                 label: Text(
-                  isArabic ? '+ إضافة فترة راحة أخرى' : '+ Add Another Break', 
+                  isArabic ? 'إضافة فترة راحة أخرى' : 'Add Another Break', 
                   style: const TextStyle(color: VSPColors.accent, fontSize: 13),
                 ),
               ),
@@ -1616,9 +1603,21 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           
           const SizedBox(height: 16),
           Row(children: [
-            Expanded(child: _buildTextField(isArabic ? 'الطول (متر)' : 'Length', 'm', controller: _lengthController)),
+            Expanded(child: _buildTextField(
+              isArabic ? 'الطول (متر)' : 'Length', 
+              isArabic ? 'متر' : 'm', 
+              controller: _lengthController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            )),
             const SizedBox(width: 10),
-            Expanded(child: _buildTextField(isArabic ? 'العرض (متر)' : 'Width', 'm', controller: _widthController)),
+            Expanded(child: _buildTextField(
+              isArabic ? 'العرض (متر)' : 'Width', 
+              isArabic ? 'متر' : 'm', 
+              controller: _widthController,
+              keyboardType: TextInputType.number,
+              inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+            )),
           ]),
           
           const SizedBox(height: 16),
@@ -1707,7 +1706,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             const SizedBox(height: 16),
             _buildTextField(
               isArabic ? 'سعر تأجير الكرة (ج.م)' : 'Ball Rental Price (EGP)', 
-              '20.0', 
+              '0.0', 
               controller: _ballPriceController,
               maxLength: 5,
               keyboardType: const TextInputType.numberWithOptions(decimal: true),
@@ -1877,7 +1876,28 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     );
   }
 
+  String _getLocalizedSport(String sport, bool isAr) {
+    if (!isAr) return sport;
+    switch (sport) {
+      case 'Football':
+        return 'كرة القدم';
+      case 'Basketball':
+        return 'كرة السلة';
+      case 'Volleyball':
+        return 'الكرة الطائرة';
+      case 'Padel':
+        return 'بادل';
+      case 'Handball':
+        return 'كرة اليد';
+      case 'Tennis':
+        return 'تنس';
+      default:
+        return sport;
+    }
+  }
+
   Widget _buildSportDropdown() {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
@@ -1889,10 +1909,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         ),
         const SizedBox(height: VSPSpacing.xs),
         Container(
+          height: VSPSize.inputHeight,
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
           decoration: BoxDecoration(
             color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
+            borderRadius: BorderRadius.circular(VSPRadius.input),
+            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -1908,7 +1930,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               items: VSPConstants.sports
                   .map((e) => DropdownMenuItem(
                         value: e,
-                        child: Text(e, style: Theme.of(context).textTheme.bodyMedium),
+                        child: Text(_getLocalizedSport(e, isAr), style: Theme.of(context).textTheme.bodyMedium),
                       ))
                   .toList(),
               onChanged: (val) => setState(() => _selectedSportType = val),
@@ -1921,11 +1943,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Widget _buildTimeBox(String text, {bool isSelected = false}) {
     return Container(
-      padding: const EdgeInsets.symmetric(vertical: 14),
+      height: VSPSize.inputHeight,
       decoration: BoxDecoration(
         color: isSelected ? VSPColors.accentSoft : VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: isSelected ? VSPColors.accent : Colors.transparent),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
+        border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.1)),
       ),
       child: Center(child: Text(text, style: TextStyle(color: isSelected ? VSPColors.accent : VSPColors.textPrimary))),
     );

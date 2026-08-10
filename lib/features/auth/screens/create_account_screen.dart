@@ -215,7 +215,26 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             Expanded(
                               child: _SocialButton(
                                 height: 56,
-                                icon: LucideIcons.apple,
+                                iconWidget: Row(
+                                  mainAxisSize: MainAxisSize.min,
+                                  mainAxisAlignment: MainAxisAlignment.center,
+                                  children: [
+                                    Image.asset(
+                                      'assets/images/apple_logo.png',
+                                      width: 20,
+                                      height: 20,
+                                      color: VSPColors.textPrimary,
+                                    ),
+                                    const SizedBox(width: 10),
+                                    Text(
+                                      'Apple',
+                                      style: Theme.of(context).textTheme.labelLarge?.copyWith(
+                                        fontWeight: FontWeight.bold,
+                                        color: VSPColors.textPrimary,
+                                      ),
+                                    ),
+                                  ],
+                                ),
                                 onPressed: () async {
                                   authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                                   final success = await authProvider.signInWithApple();
@@ -240,25 +259,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 mainAxisSize: MainAxisSize.min,
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  Container(
-                                    width: 24,
-                                    height: 24,
-                                    decoration: const BoxDecoration(
-                                      color: VSPColors.textPrimary,
-                                      shape: BoxShape.circle,
-                                    ),
-                                    child: const Center(
-                                      child: Text(
-                                        'G', 
-                                        style: TextStyle(
-                                          color: VSPColors.background, 
-                                          fontWeight: FontWeight.w900, 
-                                          fontSize: 14
-                                        )
-                                      )
-                                    ),
+                                  Image.asset(
+                                    'assets/images/google_logo.png',
+                                    width: 22,
+                                    height: 22,
                                   ),
-                                  const SizedBox(width: 12),
+                                  const SizedBox(width: 10),
                                   Text(
                                     AppLocalizations.of(context)!.google,
                                     style: Theme.of(context).textTheme.labelLarge?.copyWith(
@@ -606,14 +612,12 @@ class _NeonButton extends StatelessWidget {
 
 /// زر تسجيل دخول اجتماعي مع إطار متدرج وخلفية أسطح داكنة
 class _SocialButton extends StatelessWidget {
-  final IconData? icon;
-  final Widget? iconWidget;
+  final Widget iconWidget;
   final VoidCallback? onPressed; // nullable: null = disabled
   final double? height;
 
   const _SocialButton({
-    this.icon,
-    this.iconWidget,
+    required this.iconWidget,
     required this.onPressed,
     this.height,
   });
@@ -649,12 +653,7 @@ class _SocialButton extends StatelessWidget {
           child: Center(
             child: Padding(
               padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: iconWidget ??
-                  Icon(
-                    icon,
-                    color: VSPColors.textPrimary,
-                    size: 24,
-                  ),
+              child: iconWidget,
             ),
           ),
         ),

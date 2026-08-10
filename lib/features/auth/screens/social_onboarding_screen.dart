@@ -284,7 +284,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           _buildLabel('الاسم الأول'),
                           CustomTextField(
                             controller: _firstNameController,
-                            hintText: 'محمد',
+                            hintText: 'أدخل الاسم الأول',
                             textInputAction: TextInputAction.next,
                             prefixIcon: LucideIcons.user,
                           ),
@@ -299,7 +299,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           _buildLabel('الاسم الثاني'),
                           CustomTextField(
                             controller: _lastNameController,
-                            hintText: 'أحمد',
+                            hintText: 'أدخل الاسم الثاني',
                             textInputAction: TextInputAction.next,
                             prefixIcon: LucideIcons.user2,
                           ),
@@ -315,11 +315,12 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 GestureDetector(
                   onTap: _pickDateOfBirth,
                   child: Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                    height: VSPSize.inputHeight,
+                    padding: const EdgeInsets.symmetric(horizontal: 16),
                     decoration: BoxDecoration(
                       color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                      border: Border.all(color: VSPColors.borderLight),
+                      borderRadius: BorderRadius.circular(VSPRadius.input),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
                     ),
                     child: Row(
                       children: [
@@ -384,9 +385,11 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                       borderRadius: BorderRadius.circular(VSPRadius.md),
                       border: Border.all(color: VSPColors.error.withValues(alpha: 0.5)),
                     ),
-                    child: const Text(
-                      '⚠️ لم نتمكن من تحديد موقعك تلقائياً. يرجى اختيار محافظتك يدوياً لعرض الملاعب المناسبة لك.',
-                      style: TextStyle(
+                    child: Text(
+                      isOwner
+                          ? '⚠️ لم نتمكن من تحديد موقعك تلقائياً. يرجى اختيار محافظتك يدوياً لربط وإدارة ملعبك بها.'
+                          : '⚠️ لم نتمكن من تحديد موقعك تلقائياً. يرجى اختيار محافظتك يدوياً لعرض الملاعب في منطقتك.',
+                      style: const TextStyle(
                         color: VSPColors.error,
                         fontSize: 12,
                         fontWeight: FontWeight.bold,
@@ -571,11 +574,13 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         _buildLabel(label),
         Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+          height: VSPSize.inputHeight,
+          alignment: Alignment.centerLeft,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: VSPColors.surface.withValues(alpha: 0.5),
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(color: VSPColors.divider),
+            borderRadius: BorderRadius.circular(VSPRadius.input),
+            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
           ),
           child: Text(
             value.isEmpty ? 'N/A' : value,
@@ -600,12 +605,13 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     final govs = EgyptGovernorates.allGovernorates;
     
     return Container(
+      height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
         border: Border.all(
-          color: _isLocationFallbackActive ? VSPColors.accent : VSPColors.divider,
+          color: _isLocationFallbackActive ? VSPColors.accent : VSPColors.accent.withValues(alpha: 0.1),
           width: _isLocationFallbackActive ? 2.0 : 1.0,
         ),
       ),

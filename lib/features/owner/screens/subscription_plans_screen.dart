@@ -370,7 +370,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Future<void> _contactAdminForUpgrade(BuildContext context, String planName, bool isArabic) async {
-    final Uri whatsappUri = Uri.parse('https://wa.me/201000000000?text=${Uri.encodeComponent(isArabic ? 'أهلاً إدارة VSP، يرغب مالك الملعب في الاشتراك / ترقية حسابه إلى باقة $planName.' : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.')}');
+    final Uri whatsappUri = Uri.parse('https://wa.me/201100229462?text=${Uri.encodeComponent(isArabic ? 'أهلاً إدارة VSP، يرغب مالك الملعب في الاشتراك / ترقية حسابه إلى باقة $planName.' : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.')}');
     try {
       if (await canLaunchUrl(whatsappUri)) {
         await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);

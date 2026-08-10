@@ -346,11 +346,12 @@ class _SignupScreenState extends State<SignupScreen> {
                   GestureDetector(
                     onTap: _pickDateOfBirth,
                     child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
+                      height: VSPSize.inputHeight,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
                       decoration: BoxDecoration(
                         color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(color: VSPColors.borderLight),
+                        borderRadius: BorderRadius.circular(VSPRadius.input),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
                       ),
                       child: Row(
                         children: [

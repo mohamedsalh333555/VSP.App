@@ -759,10 +759,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   Widget _buildDateChip(DateTime date) {
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
+      height: VSPSize.inputHeight,
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: Row(
@@ -791,9 +792,10 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     String? suffixText,
   }) {
     return Container(
+      height: VSPSize.inputHeight,
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: TextField(
@@ -834,10 +836,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   Widget _buildDropdown(List<String> items, String value, Function(String?) onChanged) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Container(
+      height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.input),
         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
       ),
       child: DropdownButtonHideUnderline(

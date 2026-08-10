@@ -12,14 +12,14 @@ class FAQAndSupportScreen extends StatefulWidget {
 
 class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   Future<void> _launchWhatsApp() async {
-    final Uri url = Uri.parse('https://wa.me/201000000000?text=${Uri.encodeComponent('أهلاً دعم VSP، أحتاج مساعدة بشأن التطبيق/الحجوزات.')}');
+    final Uri url = Uri.parse('https://wa.me/201100229462?text=${Uri.encodeComponent('أهلاً دعم VSP، أحتاج مساعدة بشأن التطبيق/الحجوزات.')}');
     if (await canLaunchUrl(url)) {
       await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
   Future<void> _launchPhoneCall() async {
-    final Uri url = Uri.parse('tel:+201000000000');
+    final Uri url = Uri.parse('tel:+201100229462');
     if (await canLaunchUrl(url)) {
       await launchUrl(url);
     }
