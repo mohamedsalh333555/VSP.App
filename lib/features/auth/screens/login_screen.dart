@@ -489,7 +489,7 @@ class _SocialButton extends StatelessWidget {
       child: CustomPaint(
         painter: _GradientBorderPainter(
           strokeWidth: 1.5,
-          radius: VSPRadius.md,
+          radius: 100,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -506,7 +506,7 @@ class _SocialButton extends StatelessWidget {
           height: height ?? 56,
           decoration: BoxDecoration(
             color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
+            borderRadius: BorderRadius.circular(100),
           ),
           child: Center(
             child: Padding(

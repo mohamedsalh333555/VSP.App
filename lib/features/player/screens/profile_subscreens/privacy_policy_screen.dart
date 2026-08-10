@@ -90,8 +90,8 @@ class PrivacyPolicyScreen extends StatelessWidget {
               icon: LucideIcons.creditCard,
               title: isAr ? '٢. الدفع والمبالغ المستردة' : '2. Payments & Refunds',
               content: isAr
-                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. لا يتم تخزين بيانات البطاقة المصرفية أو المحفظة الرقمية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، يتم استرداد المبالغ تلقائياً ومباشرةً إلى المحفظة الرقمية أو الحساب البنكي الخاص بك عبر بروتوكول InstaPay المؤتمت.'
-                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Card or wallet data is never stored on our servers.\n\nUpon eligible cancellation (up to 2 hours before kickoff), refunds are automatically credited directly to your digital wallet or bank account within minutes via automated InstaPay protocol.',
+                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. تُحسب وتظهر رسوم خدمة المنصة ورسوم بوابة الدفع بوضوح في تفاصيل الفاتورة قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، يتم استرداد المبالغ المستحقة تلقائياً ومباشرةً إلى وسيلة الدفع الأصلية التي تم الدفع منها (الحساب البنكي / المحفظة الإلكترونية / انستا باي).'
+                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Applicable platform service fees and gateway processing charges are clearly displayed before payment confirmation. Card or account credentials are never stored on our servers.\n\nUpon eligible cancellation (up to 2 hours before kickoff), refunds are automatically credited directly to your original payment method (Bank Account / E-Wallet / InstaPay).',
             ),
 
             // Section 3: No-Show Penalties & GPS (Updated with strict constraints)

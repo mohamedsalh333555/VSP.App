@@ -150,22 +150,15 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                     const SizedBox(height: 24),
 
-                    // Subtitle - With glass container
+                    // Subtitle - Clean text under title
                     VSPFadeInItem(
                       index: 2,
-                      child: Container(
-                        padding: const EdgeInsets.all(VSPSpacing.md),
-                        decoration: BoxDecoration(
-                          color: VSPColors.glassSurface,
-                          borderRadius: BorderRadius.circular(VSPRadius.lg),
-                          border: Border.all(color: VSPColors.borderLight),
-                        ),
-                        child: Text(
-                          subtitle,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                            color: VSPColors.textSecondary,
-                            height: 1.5,
-                          ),
+                      child: Text(
+                        subtitle,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.textSecondary,
+                          height: 1.5,
+                          fontSize: 15,
                         ),
                       ),
                     ),
@@ -497,8 +490,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             icon: LucideIcons.creditCard,
                             title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
                             content: isAr
-                                ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ تلقائياً إلى محفظتك.'
-                                : 'All digital payments are securely processed through Paymob. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded.',
+                                ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ المستحق تلقائياً إلى وسيلة الدفع الأصلية التي استخدمتها.'
+                                : 'All digital payments are processed securely through licensed Paymob gateway. Applicable platform service fees and gateway processing charges are clearly displayed before checkout. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded to your original payment method.',
                           ),
                           const SizedBox(height: 12),
 
@@ -632,7 +625,7 @@ class _SocialButton extends StatelessWidget {
       child: CustomPaint(
         painter: _GradientBorderPainter(
           strokeWidth: 1.5,
-          radius: VSPRadius.md,
+          radius: 100,
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
@@ -651,7 +644,7 @@ class _SocialButton extends StatelessWidget {
           height: height ?? 56,
           decoration: BoxDecoration(
             color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
+            borderRadius: BorderRadius.circular(100),
           ),
           child: Center(
             child: Padding(
