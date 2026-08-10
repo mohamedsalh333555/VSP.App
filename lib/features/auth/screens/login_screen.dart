@@ -1,3 +1,4 @@
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'dart:io' show Platform;
@@ -77,7 +78,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     decoration: InputDecoration(
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       hintStyle: const TextStyle(color: VSPColors.textSecondary),
-                      prefixIcon: Icon(LucideIcons.mail, color: VSPColors.textSecondary, size: 20),
+                      prefixIcon: Icon(Iconsax.sms, color: VSPColors.textSecondary, size: 20),
                       filled: true,
                       fillColor: VSPColors.surfaceAlt,
                       border: OutlineInputBorder(
@@ -163,10 +164,6 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-        // ✅ RootScreen handles all navigation gates:
-        // - isRegistrationComplete → VerifyEmailScreen (OTP)
-        // - hasStadium, isIdentityVerified → Owner onboarding
-        // - phone check → SocialOnboardingScreen
         if (mounted) {
           context.go('/');
         }
@@ -232,7 +229,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
+                          icon: languageProvider.isArabic ? Iconsax.arrow_right_3 : Iconsax.arrow_left_1,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -293,7 +290,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      prefixIcon: LucideIcons.mail,
+                      prefixIcon: Iconsax.sms,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -304,10 +301,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onFieldSubmitted: (_) {
                         if (!_isLoading) _handleLogin();
                       },
-                      prefixIcon: LucideIcons.lock,
+                      prefixIcon: Iconsax.lock,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? LucideIcons.eye : LucideIcons.eyeOff,
+                          _obscurePassword ? Iconsax.eye : Iconsax.eye_slash,
                           color: VSPColors.textSecondary,
                           size: 20,
                         ),
@@ -318,6 +315,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         },
                       ),
                     ),
+
                     
                     const SizedBox(height: 12),
                     Align(
@@ -470,7 +468,7 @@ class _LoginScreenState extends State<LoginScreen> {
   }
 } // end _LoginScreenState
 
-/// زر تسجيل دخول اجتماعي موحد
+/// زر تسجيل دخول اجتماعي موحد مع إطار متدرج وخلفية أسطح داكنة
 class _SocialButton extends StatelessWidget {
   final IconData? icon;
   final Widget? iconWidget;
@@ -488,30 +486,74 @@ class _SocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onPressed,
-      child: Container(
-        width: double.infinity,
-        height: height ?? 56,
-        decoration: BoxDecoration(
-          color: VSPColors.background.withValues(alpha: 0),
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(
-            color: VSPColors.borderLight,
-            width: 1.5,
+      child: CustomPaint(
+        painter: _GradientBorderPainter(
+          strokeWidth: 1.5,
+          radius: VSPRadius.md,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.30),
+              Colors.transparent,
+              Colors.white.withValues(alpha: 0.30),
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: iconWidget ??
-                Icon(
-                  icon,
-                  color: VSPColors.textPrimary,
-                  size: 24,
-                ),
+        child: Container(
+          width: double.infinity,
+          height: height ?? 56,
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: iconWidget ??
+                  Icon(
+                    icon,
+                    color: VSPColors.textPrimary,
+                    size: 24,
+                  ),
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+/// رسام الإطار المتدرج الاحترافي للأزرار والأسطح
+class _GradientBorderPainter extends CustomPainter {
+  final double strokeWidth;
+  final double radius;
+  final Gradient gradient;
+
+  _GradientBorderPainter({
+    required this.strokeWidth,
+    required this.radius,
+    required this.gradient,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(strokeWidth / 2),
+      Radius.circular(radius - strokeWidth / 2),
+    );
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GradientBorderPainter oldDelegate) => false;
+}
+
 

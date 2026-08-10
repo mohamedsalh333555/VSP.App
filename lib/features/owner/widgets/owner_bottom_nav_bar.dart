@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
@@ -20,34 +20,35 @@ class OwnerBottomNavBar extends StatelessWidget {
       onItemTapped: onTap,
       items: [
         VspNavItem(
-          activeIcon: LucideIcons.layoutDashboard,
-          inactiveIcon: LucideIcons.layoutDashboard,
+          activeIcon: Iconsax.element_4,
+          inactiveIcon: Iconsax.element_4,
           label: AppLocalizations.of(context)!.home,
         ),
         VspNavItem(
-          activeIcon: LucideIcons.trophy,
-          inactiveIcon: LucideIcons.trophy,
+          activeIcon: Iconsax.cup,
+          inactiveIcon: Iconsax.cup,
           label: AppLocalizations.of(context)!.tournamentsTab,
         ),
         VspNavItem(
-          activeIcon: LucideIcons.messageSquare,
-          inactiveIcon: LucideIcons.messageSquare,
+          activeIcon: Iconsax.messages_3,
+          inactiveIcon: Iconsax.messages_3,
           label: AppLocalizations.of(context)!.chat,
         ),
         VspNavItem(
-          activeIcon: LucideIcons.calendar,
-          inactiveIcon: LucideIcons.calendar,
+          activeIcon: Iconsax.calendar_1,
+          inactiveIcon: Iconsax.calendar_1,
           label: AppLocalizations.of(context)!.bookedTab,
         ),
         VspNavItem(
-          activeIcon: LucideIcons.user,
-          inactiveIcon: LucideIcons.user,
+          activeIcon: Iconsax.user,
+          inactiveIcon: Iconsax.user,
           label: AppLocalizations.of(context)!.profileTab,
         ),
       ],
     );
   }
 }
+
 
 
 

@@ -11,6 +11,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
 
 class SocialOnboardingScreen extends StatefulWidget {
@@ -27,14 +28,12 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   final _instapayController = TextEditingController();
   final _vodafoneController = TextEditingController();
   final _bankController = TextEditingController();
-  String _selectedPosition = 'GK';
+  String? _selectedPosition;
   String _selectedGovernorate = 'Cairo';
   bool _isLoading = false;
   bool _isFetchingLocation = false;
   bool _isLocationFallbackActive = false;
   DateTime? _dateOfBirth;
-
-  final List<String> _positions = ['GK', 'CB', 'LB', 'RB', 'MID', 'LW', 'RW', 'ST'];
 
   @override
   void initState() {
@@ -86,22 +85,11 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
   }
 
   Future<void> _pickDateOfBirth() async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await showVSPDatePicker(
+      context,
       initialDate: _dateOfBirth ?? DateTime(2000),
-      firstDate: DateTime(1930),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: VSPColors.accent,
-            onPrimary: VSPColors.background,
-            surface: VSPColors.surface,
-            onSurface: VSPColors.textPrimary,
-          ),
-        ),
-        child: child!,
-      ),
+      minYear: 1940,
+      maxYear: DateTime.now().year - 10,
     );
     if (picked != null) setState(() => _dateOfBirth = picked);
   }
@@ -308,7 +296,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildLabel('الاسم الأخير'),
+                          _buildLabel('الاسم الثاني'),
                           CustomTextField(
                             controller: _lastNameController,
                             hintText: 'أحمد',
@@ -473,40 +461,52 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 if (!isOwner) ...[
                   const SizedBox(height: 20),
                   _buildLabel('المركز المفضل'),
-                  SingleChildScrollView(
-                    keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-                    scrollDirection: Axis.horizontal,
-                    physics: const BouncingScrollPhysics(),
-                    child: Row(
-                      children: _positions.map((pos) {
-                        final isSelected = _selectedPosition == pos;
-                        return Padding(
-                          padding: const EdgeInsets.only(right: 8.0),
-                          child: ChoiceChip(
-                            label: Text(pos),
-                            selected: isSelected,
-                            onSelected: (selected) {
-                              if (selected) setState(() => _selectedPosition = pos);
-                            },
-                            selectedColor: VSPColors.accent,
-                            backgroundColor: VSPColors.surface,
-                            showCheckmark: false,
-                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
-                            labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: isSelected ? VSPColors.background : VSPColors.textPrimary,
-                              fontWeight: FontWeight.bold,
-                            ),
-                            shape: RoundedRectangleBorder(
-                              borderRadius: BorderRadius.circular(VSPRadius.sm),
-                              side: BorderSide(
-                                color: isSelected ? VSPColors.accent : VSPColors.divider,
+                  Builder(builder: (context) {
+                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                    final positions = [
+                      {'code': 'GK', 'label': isAr ? 'حارس' : 'GK'},
+                      {'code': 'DF', 'label': isAr ? 'مدافع' : 'DF'},
+                      {'code': 'MF', 'label': isAr ? 'خط وسط' : 'MF'},
+                      {'code': 'FW', 'label': isAr ? 'مهاجم' : 'FW'},
+                    ];
+
+                    return Row(
+                      children: positions.map((pos) {
+                        final code = pos['code']!;
+                        final label = pos['label']!;
+                        final isSelected = _selectedPosition == code;
+                        return Expanded(
+                          child: Padding(
+                            padding: const EdgeInsets.symmetric(horizontal: 4.0),
+                            child: ChoiceChip(
+                              label: FittedBox(
+                                fit: BoxFit.scaleDown,
+                                child: Text(label, textAlign: TextAlign.center),
+                              ),
+                              selected: isSelected,
+                              onSelected: (selected) {
+                                if (selected) setState(() => _selectedPosition = code);
+                              },
+                              selectedColor: VSPColors.accent,
+                              backgroundColor: VSPColors.surface,
+                              showCheckmark: false,
+                              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
+                              labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
+                                color: isSelected ? VSPColors.background : VSPColors.textPrimary,
+                                fontWeight: FontWeight.bold,
+                              ),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                                side: BorderSide(
+                                  color: isSelected ? VSPColors.accent : VSPColors.divider,
+                                ),
                               ),
                             ),
                           ),
                         );
                       }).toList(),
-                    ),
-                  ),
+                    );
+                  }),
                 ],
               ],
             ),
@@ -537,6 +537,10 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 }
                 if (_dateOfBirth == null) {
                   VSPFeedback.showError(context, 'يرجى إدخال تاريخ الميلاد 📅');
+                  return;
+                }
+                if (!isOwner && _selectedPosition == null) {
+                  VSPFeedback.showError(context, 'يرجى اختيار مركزك المفضل ⚽');
                   return;
                 }
                 if (phone.length < 10) {

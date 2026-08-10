@@ -14,6 +14,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
+import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -32,7 +33,7 @@ class _SignupScreenState extends State<SignupScreen> {
   final _passwordController = TextEditingController();
   final _confirmPasswordController = TextEditingController();
   
-  String _selectedPosition = 'GK'; // Only for players
+  String? _selectedPosition; // Only for players
   bool _obscurePassword = true;
   bool _obscureConfirmPassword = true;
   bool _isLoading = false;
@@ -59,22 +60,11 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Future<void> _pickDateOfBirth() async {
-    final picked = await showDatePicker(
-      context: context,
+    final picked = await showVSPDatePicker(
+      context,
       initialDate: _dateOfBirth ?? DateTime(2000),
-      firstDate: DateTime(1930),
-      lastDate: DateTime.now().subtract(const Duration(days: 365 * 10)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
-          colorScheme: const ColorScheme.dark(
-            primary: VSPColors.accent,
-            onPrimary: VSPColors.background,
-            surface: VSPColors.surface,
-            onSurface: VSPColors.textPrimary,
-          ),
-        ),
-        child: child!,
-      ),
+      minYear: 1940,
+      maxYear: DateTime.now().year - 10,
     );
     if (picked != null) setState(() => _dateOfBirth = picked);
   }
@@ -107,6 +97,12 @@ class _SignupScreenState extends State<SignupScreen> {
     }
     if (_dateOfBirth == null) {
       VSPFeedback.showError(context, AppLocalizations.of(context)!.pleaseEnterDob);
+      return;
+    }
+
+    if (!widget.isOwner && _selectedPosition == null) {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(context, isAr ? 'يرجى اختيار مركزك المفضل ⚽' : 'Please select your preferred position ⚽');
       return;
     }
 
@@ -500,30 +496,38 @@ class _SignupScreenState extends State<SignupScreen> {
   }
 
   Widget _buildPositionSelector(LanguageProvider languageProvider) {
-    final positions = ['GK', 'CB', 'RB', 'LB', 'CDM', 'CM', 'CAM', 'RW', 'LW', 'ST'];
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final positions = [
+      {'code': 'GK', 'label': isAr ? 'حارس' : 'GK'},
+      {'code': 'DF', 'label': isAr ? 'مدافع' : 'DF'},
+      {'code': 'MF', 'label': isAr ? 'خط وسط' : 'MF'},
+      {'code': 'FW', 'label': isAr ? 'مهاجم' : 'FW'},
+    ];
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(AppLocalizations.of(context)!.preferredPosition),
-        SingleChildScrollView(
-          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
-          scrollDirection: Axis.horizontal,
-          physics: const BouncingScrollPhysics(),
-          child: Row(
-            children: positions.map((pos) {
-              final isSelected = _selectedPosition == pos;
-              return Padding(
-                padding: const EdgeInsets.only(right: 8.0),
+        Row(
+          children: positions.map((pos) {
+            final code = pos['code']!;
+            final label = pos['label']!;
+            final isSelected = _selectedPosition == code;
+            return Expanded(
+              child: Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 4.0),
                 child: ChoiceChip(
-                  label: Text(pos),
+                  label: FittedBox(
+                    fit: BoxFit.scaleDown,
+                    child: Text(label, textAlign: TextAlign.center),
+                  ),
                   selected: isSelected,
                   onSelected: (selected) {
-                    if (selected) setState(() => _selectedPosition = pos);
+                    if (selected) setState(() => _selectedPosition = code);
                   },
                   selectedColor: VSPColors.accent,
                   backgroundColor: VSPColors.surface,
                   showCheckmark: false,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
                   labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
                     color: isSelected ? VSPColors.background : VSPColors.textPrimary,
                     fontWeight: FontWeight.bold,
@@ -535,9 +539,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     ),
                   ),
                 ),
-              );
-            }).toList(),
-          ),
+              ),
+            );
+          }).toList(),
         ),
       ],
     );

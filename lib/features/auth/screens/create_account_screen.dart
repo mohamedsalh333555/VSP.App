@@ -611,7 +611,7 @@ class _NeonButton extends StatelessWidget {
   }
 }
 
-/// زر تسجيل دخول اجتماعي
+/// زر تسجيل دخول اجتماعي مع إطار متدرج وخلفية أسطح داكنة
 class _SocialButton extends StatelessWidget {
   final IconData? icon;
   final Widget? iconWidget;
@@ -629,33 +629,77 @@ class _SocialButton extends StatelessWidget {
   Widget build(BuildContext context) {
     return GestureDetector(
       onTap: onPressed,
-      child: Container(
-        // No hardcoded width — let the Expanded parent (in the Row) control the width.
-        // This prevents RenderFlex overflow on smaller devices.
-        width: double.infinity,
-        height: height ?? 56,
-        decoration: BoxDecoration(
-          color: VSPColors.background.withValues(alpha: 0),
-          borderRadius: BorderRadius.circular(VSPRadius.md),
-          border: Border.all(
-            color: VSPColors.borderLight,
-            width: 1.5,
+      child: CustomPaint(
+        painter: _GradientBorderPainter(
+          strokeWidth: 1.5,
+          radius: VSPRadius.md,
+          gradient: LinearGradient(
+            begin: Alignment.topLeft,
+            end: Alignment.bottomRight,
+            colors: [
+              Colors.white.withValues(alpha: 0.30),
+              Colors.transparent,
+              Colors.white.withValues(alpha: 0.30),
+            ],
+            stops: const [0.0, 0.5, 1.0],
           ),
         ),
-        child: Center(
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16.0),
-            child: iconWidget ??
-                Icon(
-                  icon,
-                  color: VSPColors.textPrimary,
-                  size: 24,
-                ),
+        child: Container(
+          // No hardcoded width — let the Expanded parent (in the Row) control the width.
+          // This prevents RenderFlex overflow on smaller devices.
+          width: double.infinity,
+          height: height ?? 56,
+          decoration: BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.circular(VSPRadius.md),
+          ),
+          child: Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0),
+              child: iconWidget ??
+                  Icon(
+                    icon,
+                    color: VSPColors.textPrimary,
+                    size: 24,
+                  ),
+            ),
           ),
         ),
       ),
     );
   }
 }
+
+/// رسام الإطار المتدرج الاحترافي للأزرار والأسطح
+class _GradientBorderPainter extends CustomPainter {
+  final double strokeWidth;
+  final double radius;
+  final Gradient gradient;
+
+  _GradientBorderPainter({
+    required this.strokeWidth,
+    required this.radius,
+    required this.gradient,
+  });
+
+  @override
+  void paint(Canvas canvas, Size size) {
+    final rect = Offset.zero & size;
+    final rrect = RRect.fromRectAndRadius(
+      rect.deflate(strokeWidth / 2),
+      Radius.circular(radius - strokeWidth / 2),
+    );
+    final paint = Paint()
+      ..shader = gradient.createShader(rect)
+      ..style = PaintingStyle.stroke
+      ..strokeWidth = strokeWidth;
+
+    canvas.drawRRect(rrect, paint);
+  }
+
+  @override
+  bool shouldRepaint(covariant _GradientBorderPainter oldDelegate) => false;
+}
+
 
 

@@ -185,7 +185,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get firstName => 'الاسم الأول';
 
   @override
-  String get lastName => 'الاسم الأخير';
+  String get lastName => 'الاسم الثاني';
 
   @override
   String get firstNameHint => 'محمد';

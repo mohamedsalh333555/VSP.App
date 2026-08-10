@@ -1,3 +1,4 @@
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
@@ -120,7 +121,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
+              Icon(Iconsax.location, color: VSPColors.accent, size: 28),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -204,11 +205,11 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
         selectedIndex: _selectedIndex,
         onItemTapped: (index) => setState(() => _selectedIndex = index),
         items: [
-          VspNavItem(activeIcon: LucideIcons.home, inactiveIcon: LucideIcons.home, label: AppLocalizations.of(context)!.homeNav),
-          VspNavItem(activeIcon: LucideIcons.users, inactiveIcon: LucideIcons.users, label: AppLocalizations.of(context)!.matchesNav),
-          VspNavItem(activeIcon: LucideIcons.trophy, inactiveIcon: LucideIcons.trophy, label: AppLocalizations.of(context)!.championNav),
-          VspNavItem(activeIcon: LucideIcons.bookmark, inactiveIcon: LucideIcons.bookmark, label: AppLocalizations.of(context)!.bookedNav),
-          VspNavItem(activeIcon: LucideIcons.user, inactiveIcon: LucideIcons.user, label: AppLocalizations.of(context)!.profileNav),
+          VspNavItem(activeIcon: Iconsax.home_1, inactiveIcon: Iconsax.home_1, label: AppLocalizations.of(context)!.homeNav),
+          VspNavItem(activeIcon: Iconsax.people, inactiveIcon: Iconsax.people, label: AppLocalizations.of(context)!.matchesNav),
+          VspNavItem(activeIcon: Iconsax.cup, inactiveIcon: Iconsax.cup, label: AppLocalizations.of(context)!.championNav),
+          VspNavItem(activeIcon: Iconsax.calendar_1, inactiveIcon: Iconsax.calendar_1, label: AppLocalizations.of(context)!.bookedNav),
+          VspNavItem(activeIcon: Iconsax.user, inactiveIcon: Iconsax.user, label: AppLocalizations.of(context)!.profileNav),
         ],
       ),
     );
