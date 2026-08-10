@@ -13,7 +13,7 @@ class VSPColors {
   static const textSecondary = Color(0xFFA1A1AA);
   static const textMuted = Color(0xFF6B7280);
   static const divider = Color(0xFF262626);
-  static const inputFill = Color(0xFF232A23);
+  static const inputFill = Color(0xFF1E1E22);
   static const error = Color(0xFFEF4444);
   static const success = Color(0xFF22C55E);
   static const warning = Color(0xFFF59E0B);

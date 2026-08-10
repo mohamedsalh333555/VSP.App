@@ -471,44 +471,85 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             ),
                           ),
 
-                          _buildModalSectionCard(
-                            dialogContext,
-                            icon: LucideIcons.fileText,
-                            title: isAr ? '١. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
-                            content: isAr
-                                ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.'
-                                : 'VSP platform acts as a digital intermediary to organize football pitch bookings and team challenges. Players and captains must adhere to scheduled times and mutual respect. Cancellations follow stadium policy.',
-                          ),
-                          const SizedBox(height: 12),
+                          if (widget.isOwner) ...[
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.building,
+                              title: isAr ? '١. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
+                              content: isAr
+                                  ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
+                                  : 'Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots. VSP manages technical dispatching to prevent conflicts.',
+                            ),
+                            const SizedBox(height: 12),
 
-                          _buildModalSectionCard(
-                            dialogContext,
-                            icon: LucideIcons.lock,
-                            title: isAr ? '٢. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
-                            content: isAr
-                                ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
-                                : 'In accordance with the Egyptian Personal Data Protection Law (PDPL 2020), basic data (name, phone, governorate) is processed strictly for match organization. VSP does not sell or share user data with external third parties.',
-                          ),
-                          const SizedBox(height: 12),
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.lock,
+                              title: isAr ? '٢. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
+                              content: isAr
+                                  ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
+                                  : 'Under Egyptian Law PDPL 2020, owners agree to keep player phone numbers strictly confidential and use them only for booking communication.',
+                            ),
+                            const SizedBox(height: 12),
 
-                          _buildModalSectionCard(
-                            dialogContext,
-                            icon: LucideIcons.creditCard,
-                            title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
-                            content: isAr
-                                ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ المستحق تلقائياً إلى وسيلة الدفع الأصلية التي استخدمتها.'
-                                : 'All digital payments are processed securely through licensed Paymob gateway. Applicable platform service fees and gateway processing charges are clearly displayed before checkout. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded to your original payment method.',
-                          ),
-                          const SizedBox(height: 12),
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.wallet,
+                              title: isAr ? '٣. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
+                              content: isAr
+                                  ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
+                                  : 'Owners must verify and honor direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer, maintaining fixed rates.',
+                            ),
+                            const SizedBox(height: 12),
 
-                          _buildModalSectionCard(
-                            dialogContext,
-                            icon: LucideIcons.trophy,
-                            title: isAr ? '٤. قواعد الفرق ونظام Elo' : '4. Team Rules & Elo Rating System',
-                            content: isAr
-                                ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً، ولكل لاعب الانضمام إلى 3 فرق كحد أقصى. تُعتمد نتائج التحديات تلقائياً بعد 24 ساعة ما لم يُقدَّم اعتراض رسمي.'
-                                : 'Teams can register up to 12 players, and players may join up to 3 teams max. Match results and Elo rating updates become final 24 hours post-match unless an official dispute is raised.',
-                          ),
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.trophy,
+                              title: isAr ? '٤. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
+                              content: isAr
+                                  ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
+                                  : 'Owners hosting tournaments commit to fair refereeing, prompt score confirmation, and timely prize distribution to winning teams.',
+                            ),
+                          ] else ...[
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.fileText,
+                              title: isAr ? '١. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
+                              content: isAr
+                                  ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.'
+                                  : 'VSP platform acts as a digital intermediary to organize football pitch bookings and team challenges. Players and captains must adhere to scheduled times and mutual respect. Cancellations follow stadium policy.',
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.lock,
+                              title: isAr ? '٢. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
+                              content: isAr
+                                  ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
+                                  : 'In accordance with the Egyptian Personal Data Protection Law (PDPL 2020), basic data (name, phone, governorate) is processed strictly for match organization. VSP does not sell or share user data with external third parties.',
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.creditCard,
+                              title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
+                              content: isAr
+                                  ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ المستحق تلقائياً إلى وسيلة الدفع الأصلية التي استخدمتها.'
+                                  : 'All digital payments are processed securely through licensed Paymob gateway. Applicable platform service fees and gateway processing charges are clearly displayed before checkout. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded to your original payment method.',
+                            ),
+                            const SizedBox(height: 12),
+
+                            _buildModalSectionCard(
+                              dialogContext,
+                              icon: LucideIcons.trophy,
+                              title: isAr ? '٤. قواعد الفرق ونظام الترتيب' : '4. Team Rules & Elo Rating System',
+                              content: isAr
+                                  ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً، ولكل لاعب الانضمام إلى 3 فرق كحد أقصى. تُعتمد نتائج التحديات تلقائياً بعد 24 ساعة ما لم يُقدَّم اعتراض رسمي.'
+                                  : 'Teams can register up to 12 players, and players may join up to 3 teams max. Match results and Elo rating updates become final 24 hours post-match unless an official dispute is raised.',
+                            ),
+                          ],
                         ],
                       ),
                     ),

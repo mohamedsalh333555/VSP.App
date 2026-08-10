@@ -1,8 +1,8 @@
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
@@ -345,8 +345,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
             ),
           ],
         ),
-        child: const Icon(
-          FontAwesomeIcons.arrowRight,
+        child: Icon(
+          Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.arrowLeft : LucideIcons.arrowRight,
           color: Colors.black,
           size: 18,
         ),
@@ -375,7 +375,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(FontAwesomeIcons.globe, size: 13, color: Colors.white),
+                    const Icon(LucideIcons.globe, size: 14, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
                       langProvider.isArabic 
@@ -461,8 +461,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     ),
                                     child: Icon(
                                       Localizations.localeOf(context).languageCode == 'ar'
-                                          ? FontAwesomeIcons.chevronRight
-                                          : FontAwesomeIcons.chevronLeft,
+                                          ? LucideIcons.chevronRight
+                                          : LucideIcons.chevronLeft,
                                       color: Colors.white,
                                       size: 15,
                                     ),

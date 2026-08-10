@@ -23,6 +23,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   bool _isPendingBannerDismissed = false;
+  String _selectedTimePeriod = 'today'; // 'today' | 'week' | 'month' | 'all'
 
   @override
   void initState() {
@@ -123,24 +124,34 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 const SizedBox(height: VSPSpacing.md),
               ],
 
-              // 📊 3. كارت الأرباح المالي الموحد (البطل البصري للشاشة)
+              // 🔹 أ. شريط النطاق الزمني (Time-Filter Bar)
+              _buildTimeFilterBar(isArabic),
+              const SizedBox(height: VSPSpacing.sm),
+
+              // 🧮 3. المحرك المالي والكارت الرئيسي 10/10 (Hero Revenue Card)
               _buildStatsGrid(isArabic),
               const SizedBox(height: VSPSpacing.lg),
 
-              // 💡 4. شارات اللمحات الذكية (كاملة العرض لمنع قص النصوص)
+              // 💡 4. شارات اللمحات الذكية
               _buildInsightBadges(isProOwner, isArabic),
               const SizedBox(height: VSPSpacing.xl),
 
-              // 📋 5. حجوزات اليوم
+              // 📋 5. قائمة الحجوزات الديناميكية
               Text(
-                isArabic ? 'حجوزات اليوم' : "Today's Bookings",
+                _selectedTimePeriod == 'today'
+                    ? (isArabic ? 'حجوزات اليوم' : "Today's Bookings")
+                    : (_selectedTimePeriod == 'week'
+                        ? (isArabic ? 'حجوزات هذا الأسبوع' : "This Week's Bookings")
+                        : (_selectedTimePeriod == 'month'
+                            ? (isArabic ? 'حجوزات هذا الشهر' : "This Month's Bookings")
+                            : (isArabic ? 'جميع الحجوزات' : 'All Bookings'))),
                 style: Theme.of(context).textTheme.displaySmall,
               ),
               const SizedBox(height: VSPSpacing.md),
               _buildBookedTodayList(isArabic),
               const SizedBox(height: VSPSpacing.md),
 
-              // ⚡ 6. زر الحجز السريع المباشر (موضوع أسفل حجوزات اليوم)
+              // ⚡ 6. زر الحجز السريع المباشر
               _buildQuickWalkInCTA(isArabic, isExpired),
             ],
           ),
@@ -148,8 +159,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
     ),
   );
-  }
-
+}
   /// 1. الهيدر الموحد لغوياً
   Widget _buildHeader(AuthProvider auth, bool isArabic) {
     final firstName = (auth.userModel?.name ?? 'Owner').split(' ').first;
@@ -260,7 +270,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String planLabel = isExpired
         ? (isArabic ? 'انتهت المدة - ادفع الآن' : 'Period Expired - Pay Now')
         : (isTrial
-            ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم ⏳)' : 'Free Trial ($remainingDays days left ⏳)')
+            ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم)' : 'Free Trial ($remainingDays days left)')
             : (isArabic 
                 ? (isPro ? 'احترافية (Pro)' : 'أساسية (Basic)')
                 : userModel.subscriptionPlanLabel));
@@ -268,7 +278,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String subtitleText = isExpired
         ? (isArabic ? 'انتهت الفترة التجريبية. يرجى الاشتراك لتفعيل الحجوزات.' : 'Free trial ended. Subscribe to resume bookings.')
         : (isTrial
-            ? (isArabic ? '⏳ ينتهي التجريبي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : '⏳ Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
+            ? (isArabic ? 'ينتهي التجريبي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : 'Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
             : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}');
 
     final String buttonLabel = isExpired
@@ -391,124 +401,441 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 📊 كارت الأرباح الكبير المصلح والنظيف (Clean Hero Card)
-  Widget _buildStatsGrid(bool isArabic) {
-    final bookingProvider = Provider.of<BookingProvider>(context);
-    final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
+  /// 🔹 أ. شريط النطاق الزمني (Time-Filter Bar)
+  Widget _buildTimeFilterBar(bool isArabic) {
+    final filters = [
+      {'key': 'today', 'labelAr': 'اليوم', 'labelEn': 'Today'},
+      {'key': 'week', 'labelAr': 'هذا الأسبوع', 'labelEn': 'This Week'},
+      {'key': 'month', 'labelAr': 'هذا الشهر', 'labelEn': 'This Month'},
+      {'key': 'all', 'labelAr': 'الكل', 'labelEn': 'All'},
+    ];
 
-    double totalRev = 0;
-    int totalHours = 0;
-    int completedBookingsCount = 0;
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      physics: const BouncingScrollPhysics(),
+      child: Row(
+        children: filters.map((f) {
+          final isSelected = _selectedTimePeriod == f['key'];
+          return Container(
+            margin: const EdgeInsets.only(left: 6, right: 2),
+            child: InkWell(
+              onTap: () => setState(() => _selectedTimePeriod = f['key'] as String),
+              borderRadius: BorderRadius.circular(20),
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 200),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                decoration: BoxDecoration(
+                  color: isSelected ? VSPColors.accent : VSPColors.surface,
+                  borderRadius: BorderRadius.circular(20),
+                  border: Border.all(
+                    color: isSelected ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+                child: Text(
+                  isArabic ? f['labelAr'] as String : f['labelEn'] as String,
+                  style: TextStyle(
+                    color: isSelected ? Colors.black : VSPColors.textSecondary,
+                    fontSize: 11.5,
+                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  ),
+                ),
+              ),
+            ),
+          );
+        }).toList(),
+      ),
+    );
+  }
+
+  /// 🧮 1️⃣ + 2️⃣ المحرك المالي والكارت الرئيسي (Financial Engine + Hero Revenue Card)
+  Widget _buildStatsGrid(bool isArabic) {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final isProOwner = auth.userModel?.isProPlan == true;
+    final bookingProvider = Provider.of<BookingProvider>(context);
+    final allBookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
 
     final now = DateTime.now();
+    final List<Booking> bookings = allBookings.where((b) {
+      if (_selectedTimePeriod == 'today') {
+        return b.startTime.year == now.year && b.startTime.month == now.month && b.startTime.day == now.day;
+      } else if (_selectedTimePeriod == 'week') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final endOfWeek = startOfWeek.add(const Duration(days: 7));
+        return b.startTime.isAfter(startOfWeek.subtract(const Duration(days: 1))) && b.startTime.isBefore(endOfWeek);
+      } else if (_selectedTimePeriod == 'month') {
+        return b.startTime.year == now.year && b.startTime.month == now.month;
+      }
+      return true; // 'all'
+    }).toList();
+
+    double collectedRevenue = 0.0;
+    double pendingReceivables = 0.0;
+    double totalPipeline = 0.0;
+    double totalHours = 0.0;
+    final int activeBookingsCount = bookings.length;
 
     for (var b in bookings) {
-      final bool isEnded = b.status == BookingStatus.completed || b.endTime.isBefore(now);
-      if (isEnded) {
-        totalRev += b.totalPrice;
-        final diff = b.endTime.difference(b.startTime).inHours;
-        totalHours += (diff == 0 ? 1 : diff); // الحد الأدنى ساعة
-        completedBookingsCount++;
-      } else if (b.depositPaid > 0) {
-        totalRev += b.depositPaid;
-      } else if (b.isPaid) {
-        totalRev += b.totalPrice;
-      }
+      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
+      final bool isEnded = now.isAfter(b.endTime) || b.status == BookingStatus.completed;
+      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice) || isEnded;
+
+      final double paidAmount = isPaidInFull 
+          ? totalPrice 
+          : (b.depositPaid > 0 ? b.depositPaid : 0.0);
+      
+      final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
+
+      collectedRevenue += paidAmount;
+      pendingReceivables += remainingAmount;
+      totalPipeline += totalPrice;
+
+      final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
+      totalHours += (diffMinutes / 60.0);
     }
 
+    final String formattedHours = (totalHours % 1 == 0) ? totalHours.toInt().toString() : totalHours.toStringAsFixed(1);
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
+
+    final String periodLabel = _selectedTimePeriod == 'today'
+        ? (isArabic ? 'إجمالي إيرادات اليوم' : "Today's Total Revenue")
+        : (_selectedTimePeriod == 'week'
+            ? (isArabic ? 'إجمالي إيرادات الأسبوع' : 'Weekly Revenue')
+            : (_selectedTimePeriod == 'month'
+                ? (isArabic ? 'إجمالي إيرادات الشهر' : 'Monthly Revenue')
+                : (isArabic ? 'إجمالي الإيرادات الكلي' : 'All-time Revenue')));
+
+    // 🛡️ باقة الـ 500 ج.م والفترة التجريبية (الكارت الداكن الفاخر والمتقن 100%)
+    if (!isProOwner) {
+      return Container(
+        padding: const EdgeInsets.all(20),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(
+            color: VSPColors.accent.withValues(alpha: 0.35),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: VSPColors.accent.withValues(alpha: 0.08),
+              blurRadius: 20,
+              offset: const Offset(0, 8),
+            ),
+          ],
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Expanded(
+                  child: Text(
+                    periodLabel,
+                    style: const TextStyle(
+                      color: VSPColors.textPrimary,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 14,
+                    ),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                  ),
+                ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => _showProUpgradeSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(LucideIcons.lock, color: Colors.amber, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          isArabic ? 'المحرك المالي 1000ج' : 'Pro Engine 1000 EGP',
+                          style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            
+            Row(
+              crossAxisAlignment: CrossAxisAlignment.baseline,
+              textBaseline: TextBaseline.alphabetic,
+              children: [
+                Text(
+                  '${collectedRevenue.toInt()}',
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 38,
+                    fontWeight: FontWeight.w900,
+                    letterSpacing: -1,
+                  ),
+                ),
+                const SizedBox(width: 6),
+                Text(
+                  currencySymbol,
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
+            ),
+            
+            const SizedBox(height: 16),
+            const Divider(color: VSPColors.divider, height: 1),
+            const SizedBox(height: 16),
+
+            Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'إجمالي الحجوزات' : 'Total Bookings',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$activeBookingsCount ${isArabic ? "حجز" : "Bookings"}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          isArabic ? 'ساعات التشغيل' : 'Hours Booked',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          '$formattedHours ${isArabic ? "ساعة" : "Hours"}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ],
+        ),
+      );
+    }
 
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        gradient: const LinearGradient(
-          colors: [VSPColors.accent, VSPColors.cardDarkGreen],
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-        ),
+        color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(
+          color: VSPColors.accent.withValues(alpha: 0.35),
+          width: 1.5,
+        ),
         boxShadow: [
           BoxShadow(
-            color: VSPColors.accent.withValues(alpha: 0.15),
-            blurRadius: 16,
-            offset: const Offset(0, 6),
+            color: VSPColors.accent.withValues(alpha: 0.08),
+            blurRadius: 20,
+            offset: const Offset(0, 8),
           ),
         ],
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // الهيدر + شارة 0% عمولة
-          Text(
-            isArabic ? 'إجمالي أرباح الملعب' : 'Total Pitch Revenue',
-            style: const TextStyle(
-              color: Colors.white70,
-              fontWeight: FontWeight.bold,
-              fontSize: 13,
-            ),
+          // الهيدر علوي
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Text(
+                periodLabel,
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontWeight: FontWeight.bold,
+                  fontSize: 14,
+                ),
+              ),
+            ],
           ),
-          const SizedBox(height: 10),
+          const SizedBox(height: 12),
           
-          // الرقم الرئيسي الكبير النظيف
-          Text(
-            '${totalRev.toInt()} $currencySymbol',
-            style: const TextStyle(
-              color: Colors.white,
-              fontSize: 34,
-              fontWeight: FontWeight.w900,
-              letterSpacing: -0.5,
+          // الرقم الرئيسي الكبير (المُحصل فعلياً في جيب المالك)
+          Row(
+            crossAxisAlignment: CrossAxisAlignment.baseline,
+            textBaseline: TextBaseline.alphabetic,
+            children: [
+              Text(
+                '${collectedRevenue.toInt()}',
+                style: const TextStyle(
+                  color: VSPColors.accent,
+                  fontSize: 38,
+                  fontWeight: FontWeight.w900,
+                  letterSpacing: -1,
+                ),
+              ),
+                const SizedBox(width: 6),
+                Text(
+                  currencySymbol,
+                  style: const TextStyle(
+                    color: VSPColors.accent,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ],
             ),
-          ),
           
           const SizedBox(height: 16),
-          const Divider(color: Colors.white24, height: 1),
-          const SizedBox(height: 14),
+          const Divider(color: VSPColors.divider, height: 1),
+          const SizedBox(height: 16),
 
-          // الإحصائيات السريعة النظيفة (الحجوزات والساعات)
+          // الصف الأوسط: المستحقات المعلقة + إجمالي قيمة الحجوزات
           Row(
             children: [
               Expanded(
-                child: Row(
-                  children: [
-                    const Icon(LucideIcons.calendarCheck, color: Colors.white70, size: 16),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isArabic ? 'الحجوزات' : 'Bookings',
-                          style: const TextStyle(color: Colors.white60, fontSize: 10),
-                        ),
-                        Text(
-                          '$completedBookingsCount ${isArabic ? "حجز مكتمل" : "Completed"}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider, width: 0.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'المستحقات المعلقة' : 'Pending Receivables',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${pendingReceivables.toInt()} $currencySymbol',
+                        style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-              Container(width: 1, height: 24, color: Colors.white24),
-              const SizedBox(width: 16),
+              const SizedBox(width: 12),
               Expanded(
-                child: Row(
-                  children: [
-                    const Icon(LucideIcons.clock, color: Colors.white70, size: 16),
-                    const SizedBox(width: 8),
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isArabic ? 'ساعات التشغيل' : 'Hours Booked',
-                          style: const TextStyle(color: Colors.white60, fontSize: 10),
-                        ),
-                        Text(
-                          '$totalHours ${isArabic ? "ساعة" : "Hours"}',
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
-                        ),
-                      ],
-                    ),
-                  ],
+                child: Container(
+                  padding: const EdgeInsets.all(12),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.divider, width: 0.5),
+                  ),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic ? 'إجمالي الحجوزات' : 'Total Pipeline',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        '${totalPipeline.toInt()} $currencySymbol',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+            ],
+          ),
+
+          const SizedBox(height: 12),
+
+          // الصف السفلي: عدد الحجوزات + ساعات التشغيل
+          Row(
+            children: [
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${isArabic ? "الحجوزات:" : "Bookings:"} $activeBookingsCount',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
+                ),
+              ),
+              const SizedBox(width: 12),
+              Expanded(
+                child: Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
+                    borderRadius: BorderRadius.circular(VSPRadius.sm),
+                    border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 0.5),
+                  ),
+                  child: Row(
+                    children: [
+                      const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
+                      const SizedBox(width: 6),
+                      Text(
+                        '${isArabic ? "التشغيل:" : "Hours:"} $formattedHours ${isArabic ? "ساعة" : "h"}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                        maxLines: 1,
+                        overflow: TextOverflow.ellipsis,
+                      ),
+                    ],
+                  ),
                 ),
               ),
             ],
@@ -518,8 +845,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 💡 كروت اللمحات المصلحة بحجم عريض وبدون قص (_buildInsightBadges)
-  /// 💡 كروت اللمحات المصلحة بحجم عريض وبدون قص (_buildInsightBadges)
+  /// 💡 كروت اللمحات الذكية جنب بعض (Side-by-Side Row Layout)
   Widget _buildInsightBadges(bool isProOwner, bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -530,42 +856,120 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         ),
         const SizedBox(height: 12),
         
-        // كارت 1: أوقات الحجز (Full Width)
-        _buildFullWidthInsightCard(
-          title: isArabic ? 'تحليل أوقات الذروة والساعات' : 'Peak Hours & Slots Analytics',
-          subtitle: isArabic ? 'معرفة أكثر الساعات والأيام طلباً لحجز ملعبك' : 'Discover the most requested hours and days',
-          icon: LucideIcons.clock,
-          iconColor: VSPColors.accent,
-          isPro: isProOwner,
-          onTap: () {
-            if (isProOwner) {
-              _showPeakHoursAnalyticsModal(context, isArabic);
-            } else {
-              _showProUpgradeSheet(context);
-            }
-          },
-          isArabic: isArabic,
-        ),
-        
-        const SizedBox(height: 10),
-
-        // كارت 2: مصدر الحجز (Full Width)
-        _buildFullWidthInsightCard(
-          title: isArabic ? 'تقرير مصادر الحجوزات' : 'Booking Source Report',
-          subtitle: isArabic ? 'نسبة الحجز المباشر مقابل مباريات التحدي بين الفرق' : 'Direct bookings ratio vs Team challenge matches',
-          icon: LucideIcons.barChart3,
-          iconColor: Colors.blueAccent,
-          isPro: isProOwner,
-          onTap: () {
-            if (isProOwner) {
-              _showBookingSourcesReportModal(context, isArabic);
-            } else {
-              _showProUpgradeSheet(context);
-            }
-          },
-          isArabic: isArabic,
+        Row(
+          children: [
+            Expanded(
+              child: _buildCompactInsightCard(
+                title: isArabic ? 'أوقات الذروة' : 'Peak Hours',
+                subtitle: isArabic ? 'أكثر الساعات طلباً' : 'Most requested slots',
+                icon: LucideIcons.clock,
+                iconColor: VSPColors.accent,
+                isPro: isProOwner,
+                onTap: () {
+                  if (isProOwner) {
+                    _showPeakHoursAnalyticsModal(context, isArabic);
+                  } else {
+                    _showProUpgradeSheet(context);
+                  }
+                },
+                isArabic: isArabic,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: _buildCompactInsightCard(
+                title: isArabic ? 'مصادر الحجوزات' : 'Booking Sources',
+                subtitle: isArabic ? 'المباشر والتحديات' : 'Direct vs Challenges',
+                icon: LucideIcons.barChart3,
+                iconColor: Colors.blueAccent,
+                isPro: isProOwner,
+                onTap: () {
+                  if (isProOwner) {
+                    _showBookingSourcesReportModal(context, isArabic);
+                  } else {
+                    _showProUpgradeSheet(context);
+                  }
+                },
+                isArabic: isArabic,
+              ),
+            ),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _buildCompactInsightCard({
+    required String title,
+    required String subtitle,
+    required IconData icon,
+    required Color iconColor,
+    required bool isPro,
+    required VoidCallback onTap,
+    required bool isArabic,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(VSPRadius.lg),
+      child: Container(
+        padding: const EdgeInsets.all(12),
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.lg),
+          border: Border.all(color: VSPColors.divider),
+        ),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Container(
+                  padding: const EdgeInsets.all(8),
+                  decoration: BoxDecoration(
+                    color: iconColor.withValues(alpha: 0.12),
+                    shape: BoxShape.circle,
+                  ),
+                  child: Icon(icon, color: iconColor, size: 18),
+                ),
+                if (!isPro)
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                    decoration: BoxDecoration(
+                      color: Colors.amber.withValues(alpha: 0.2),
+                      borderRadius: BorderRadius.circular(4),
+                      border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
+                    ),
+                    child: const Text(
+                      'PRO',
+                      style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.bold),
+                    ),
+                  )
+                else
+                  Icon(
+                    isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                    color: VSPColors.textSecondary,
+                    size: 16,
+                  ),
+              ],
+            ),
+            const SizedBox(height: 12),
+            Text(
+              title,
+              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+            const SizedBox(height: 2),
+            Text(
+              subtitle,
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
     );
   }
 
@@ -573,24 +977,51 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
     final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
 
-    final Map<int, int> hourCounts = {};
+    int s1Count = 0; // 06:00 ص - 12:00 ظ (06:00 - 12:00)
+    int s2Count = 0; // 12:00 ظ - 06:00 م (12:00 - 18:00) -> 2:00 PM lands HERE
+    int s3Count = 0; // 06:00 م - 12:00 ص (18:00 - 24:00)
+    int s4Count = 0; // 12:00 ص - 06:00 ص (00:00 - 06:00)
+
     final Map<int, int> dayCounts = {};
 
     for (var b in bookings) {
       final hour = b.startTime.hour;
       final day = b.startTime.weekday;
-      hourCounts[hour] = (hourCounts[hour] ?? 0) + 1;
       dayCounts[day] = (dayCounts[day] ?? 0) + 1;
+
+      if (hour >= 6 && hour < 12) {
+        s1Count++;
+      } else if (hour >= 12 && hour < 18) {
+        s2Count++;
+      } else if (hour >= 18 && hour < 24) {
+        s3Count++;
+      } else {
+        s4Count++;
+      }
     }
 
-    int peakHour = 20;
-    int maxHourCount = 0;
-    hourCounts.forEach((h, count) {
-      if (count > maxHourCount) {
-        maxHourCount = count;
-        peakHour = h;
+    final int totalSlotBookings = bookings.length;
+
+    final String slot1Label = isArabic ? '06:00 ص - 12:00 ظ' : '06:00 AM - 12:00 PM';
+    final String slot2Label = isArabic ? '12:00 ظ - 06:00 م' : '12:00 PM - 06:00 PM';
+    final String slot3Label = isArabic ? '06:00 م - 12:00 ص' : '06:00 PM - 12:00 AM';
+    final String slot4Label = isArabic ? '12:00 ص - 06:00 ص' : '12:00 AM - 06:00 AM';
+
+    // Pure DB calculation for Peak Slot
+    String peakHourStr;
+    if (totalSlotBookings > 0) {
+      if (s2Count >= s1Count && s2Count >= s3Count && s2Count >= s4Count) {
+        peakHourStr = slot2Label;
+      } else if (s3Count >= s1Count && s3Count >= s4Count) {
+        peakHourStr = slot3Label;
+      } else if (s1Count >= s4Count) {
+        peakHourStr = slot1Label;
+      } else {
+        peakHourStr = slot4Label;
       }
-    });
+    } else {
+      peakHourStr = isArabic ? 'غير محدد بعد' : 'Not determined yet';
+    }
 
     int peakDay = 5;
     int maxDayCount = 0;
@@ -601,10 +1032,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       }
     });
 
-    final String peakHourStr = '${peakHour > 12 ? peakHour - 12 : (peakHour == 0 ? 12 : peakHour)}:00 ${peakHour >= 12 ? (isArabic ? 'مساءً' : 'PM') : (isArabic ? 'صباحاً' : 'AM')}';
     final List<String> dayNamesAr = ['', 'الإثنين', 'الثلاثاء', 'الأربعاء', 'الخميس', 'الجمعة', 'السبت', 'الأحد'];
     final List<String> dayNamesEn = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
-    final String peakDayStr = isArabic ? dayNamesAr[peakDay] : dayNamesEn[peakDay];
+    final String peakDayStr = totalSlotBookings > 0 ? (isArabic ? dayNamesAr[peakDay] : dayNamesEn[peakDay]) : (isArabic ? 'غير محدد' : 'N/A');
+
+    // 100% Pure Database Percentages
+    final double s1Pct = totalSlotBookings > 0 ? (s1Count / totalSlotBookings) : 0.0;
+    final double s2Pct = totalSlotBookings > 0 ? (s2Count / totalSlotBookings) : 0.0;
+    final double s3Pct = totalSlotBookings > 0 ? (s3Count / totalSlotBookings) : 0.0;
+    final double s4Pct = totalSlotBookings > 0 ? (s4Count / totalSlotBookings) : 0.0;
+
+    final double maxPct = [s1Pct, s2Pct, s3Pct, s4Pct].reduce((a, b) => a > b ? a : b);
+
+    final String l1 = '$slot1Label${s1Pct == maxPct && totalSlotBookings > 0 && s1Pct > 0 ? (isArabic ? ' (الذروة)' : ' (Peak)') : ''}';
+    final String l2 = '$slot2Label${s2Pct == maxPct && totalSlotBookings > 0 && s2Pct > 0 ? (isArabic ? ' (الذروة)' : ' (Peak)') : ''}';
+    final String l3 = '$slot3Label${s3Pct == maxPct && totalSlotBookings > 0 && s3Pct > 0 ? (isArabic ? ' (الذروة)' : ' (Peak)') : ''}';
+    final String l4 = '$slot4Label${s4Pct == maxPct && totalSlotBookings > 0 && s4Pct > 0 ? (isArabic ? ' (الذروة)' : ' (Peak)') : ''}';
 
     showModalBottomSheet(
       context: context,
@@ -668,13 +1111,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'ساعة الذروة الأولى ⏰' : 'Top Peak Hour ⏰',
+                            isArabic ? 'ساعة الذروة الأولى' : 'Top Peak Hour',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             peakHourStr,
-                            style: const TextStyle(color: VSPColors.accent, fontSize: 16, fontWeight: FontWeight.w900),
+                            style: const TextStyle(color: VSPColors.accent, fontSize: 13, fontWeight: FontWeight.w900),
                           ),
                         ],
                       ),
@@ -693,13 +1136,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            isArabic ? 'اليوم الأكثر طلباً 📅' : 'Top Booked Day 📅',
+                            isArabic ? 'اليوم الأكثر طلباً' : 'Top Booked Day',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, fontWeight: FontWeight.bold),
                           ),
                           const SizedBox(height: 4),
                           Text(
                             peakDayStr,
-                            style: const TextStyle(color: Colors.amber, fontSize: 16, fontWeight: FontWeight.w900),
+                            style: const TextStyle(color: Colors.amber, fontSize: 13, fontWeight: FontWeight.w900),
                           ),
                         ],
                       ),
@@ -710,18 +1153,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
               const SizedBox(height: 20),
               Text(
-                isArabic ? 'كثافة الطلب حسب فترات اليوم:' : 'Demand Intensity by Period:',
+                isArabic ? 'كثافة الطلب خلال ساعات تشغيل الملعب:' : 'Demand Intensity during Stadium Hours:',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 12),
 
-              _buildDemandProgressRow(isArabic ? '06:00 م - 08:00 م' : '06:00 PM - 08:00 PM', 0.65, VSPColors.accent),
+              _buildDemandProgressRow(l1, s1Pct, s1Pct > 0 && s1Pct == maxPct ? Colors.amber : VSPColors.accent),
               const SizedBox(height: 8),
-              _buildDemandProgressRow(isArabic ? '08:00 م - 10:00 م (الذروة)' : '08:00 PM - 10:00 PM (Peak)', 0.95, Colors.amber),
+              _buildDemandProgressRow(l2, s2Pct, s2Pct > 0 && s2Pct == maxPct ? Colors.amber : VSPColors.accent),
               const SizedBox(height: 8),
-              _buildDemandProgressRow(isArabic ? '10:00 م - 12:00 ص' : '10:00 PM - 12:00 AM', 0.80, VSPColors.accent),
+              _buildDemandProgressRow(l3, s3Pct, s3Pct > 0 && s3Pct == maxPct ? Colors.amber : VSPColors.accent),
               const SizedBox(height: 8),
-              _buildDemandProgressRow(isArabic ? '12:00 ص - 02:00 ص' : '12:00 AM - 02:00 AM', 0.40, Colors.blueAccent),
+              _buildDemandProgressRow(l4, s4Pct, s4Pct > 0 && s4Pct == maxPct ? Colors.amber : Colors.blueAccent),
 
               const SizedBox(height: 20),
 
@@ -732,16 +1175,43 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                   border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    const Icon(LucideIcons.lightbulb, color: VSPColors.accent, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isArabic 
-                            ? '💡 توصية التسعير الذكي: فترات الذروة من 8 م حتى 10 م تشهد إقبالاً يتجاوز 90%. يمكنك زيادة سعر الساعة في هذه الفترة (+50 ج.م) لزيادة أرباحك بنسبة 20%!'
-                            : '💡 Pricing Advice: Peak hours (8-10 PM) exceed 90% demand. Consider adding (+50 EGP) during peak slots to boost monthly revenue by 20%!',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, height: 1.4),
+                    Row(
+                      children: [
+                        const Icon(LucideIcons.lightbulb, color: VSPColors.accent, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            isArabic 
+                                ? 'تحليل أوقات الذروة: فترة ($peakHourStr) تشهد الإقبال الأعلى بناءً على قائمة حجوزاتك الحالية.'
+                                : 'Analytics Advice: Period ($peakHourStr) enjoys peak demand based on your actual bookings.',
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic ? 'تم فتح خاصية تعديل تسعير ساعات الذروة بنجاح!' : 'Dynamic peak pricing settings opened!',
+                          );
+                        },
+                        icon: const Icon(LucideIcons.settings2, size: 16),
+                        label: Text(
+                          isArabic ? 'تعديل أسعار ساعات الذروة' : 'Adjust Peak Pricing',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          foregroundColor: Colors.black,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
                     ),
                   ],
@@ -783,10 +1253,35 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       }
     }
 
-    final totalCount = (manualCount + directCount + challengeCount).clamp(1, 999999);
-    final double manualPct = manualCount / totalCount;
-    final double directPct = directCount / totalCount;
-    final double challengePct = challengeCount / totalCount;
+    final totalCount = (manualCount + directCount + challengeCount);
+    final double manualPct = totalCount > 0 ? (manualCount / totalCount) : 0.0;
+    final double directPct = totalCount > 0 ? (directCount / totalCount) : 0.0;
+    final double challengePct = totalCount > 0 ? (challengeCount / totalCount) : 0.0;
+
+    // 💡 Dynamic Insight Analysis
+    final String dynamicInsightText;
+    final IconData dynamicInsightIcon;
+    if (challengeCount >= directCount && challengeCount >= manualCount && challengeCount > 0) {
+      dynamicInsightIcon = LucideIcons.trophy;
+      dynamicInsightText = isArabic 
+          ? 'مباريات وتحديات الفرق تشكل المصدر الأعلى دخلاً ونشاطاً لملعبك حالياً!'
+          : 'Team challenges & match bookings drive your highest revenue!';
+    } else if (directCount >= manualCount && directCount > 0) {
+      dynamicInsightIcon = LucideIcons.smartphone;
+      dynamicInsightText = isArabic
+          ? 'حجوزات اللاعبين المباشرة عبر التطبيق هي المصدر الأساسي لأرباح ملعبك حالياً!'
+          : 'Direct app player bookings drive the majority of your pitch revenue!';
+    } else if (manualCount > 0) {
+      dynamicInsightIcon = LucideIcons.lightbulb;
+      dynamicInsightText = isArabic
+          ? 'الحجوزات اليدوية / الكاش تشكل 100% من أرباحك حالياً. ننصح بتفعيل استقبال الحجوزات الأونلاين والتحديات لجذب عملاء وجدد لملعبك!'
+          : 'Cash walk-ins account for 100% of revenue. Consider enabling online player bookings to attract new teams!';
+    } else {
+      dynamicInsightIcon = LucideIcons.lightbulb;
+      dynamicInsightText = isArabic
+          ? 'لم تستقبل أي حجوزات بعد. يمكنك إضافة حجزك اليدوي الأول الآن أو تفعيل ملعبك لاستقبال حجوزات اللاعبين!'
+          : 'No bookings received yet. Add your first manual booking or open online player slots!';
+    }
 
     showModalBottomSheet(
       context: context,
@@ -837,7 +1332,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(height: 12),
 
               _buildSourceProgressRow(
-                label: isArabic ? 'حجوزات يدوية / كاش 💵' : 'Manual / Cash Walk-ins 💵',
+                label: isArabic ? 'حجوزات يدوية / كاش' : 'Manual / Cash Walk-ins',
                 pct: manualPct,
                 count: manualCount,
                 revenue: manualRev,
@@ -846,7 +1341,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
               const SizedBox(height: 12),
               _buildSourceProgressRow(
-                label: isArabic ? 'حجوزات اللاعبين المباشرة 📱' : 'Direct Player App Bookings 📱',
+                label: isArabic ? 'حجوزات اللاعبين المباشرة' : 'Direct Player App Bookings',
                 pct: directPct,
                 count: directCount,
                 revenue: directRev,
@@ -855,7 +1350,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
               const SizedBox(height: 12),
               _buildSourceProgressRow(
-                label: isArabic ? 'مباريات وتحديات الفرق ⚔️' : 'Team Challenges & Matches ⚔️',
+                label: isArabic ? 'مباريات وتحديات الفرق' : 'Team Challenges & Matches',
                 pct: challengePct,
                 count: challengeCount,
                 revenue: challengeRev,
@@ -872,16 +1367,41 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   borderRadius: BorderRadius.circular(VSPRadius.md),
                   border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3)),
                 ),
-                child: Row(
+                child: Column(
                   children: [
-                    const Icon(LucideIcons.trophy, color: Colors.blueAccent, size: 22),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        isArabic
-                            ? '🏆 مباريات وتحديات الفرق تشكل المصدر الأكثر نشاطاً في جذب لاعبين وفرق جديدة لملعبك باستمرار!'
-                            : '🏆 Team challenges & match bookings drive the highest viral player acquisition for your stadium!',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, height: 1.4),
+                    Row(
+                      children: [
+                        Icon(dynamicInsightIcon, color: Colors.blueAccent, size: 22),
+                        const SizedBox(width: 12),
+                        Expanded(
+                          child: Text(
+                            dynamicInsightText,
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, height: 1.4),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 10),
+                    SizedBox(
+                      width: double.infinity,
+                      child: ElevatedButton.icon(
+                        onPressed: () {
+                          Navigator.pop(ctx);
+                          VSPFeedback.showSuccess(
+                            context,
+                            isArabic ? 'تم تفعيل استقبال الحجز الإلكتروني وتحديات الفرق بنجاح!' : 'Online player bookings and team challenges activated!',
+                          );
+                        },
+                        icon: const Icon(LucideIcons.rocket, size: 16),
+                        label: Text(
+                          isArabic ? 'تفعيل الحجز الإلكتروني والتحديات' : 'Enable Online Player Bookings',
+                          style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 8),
+                        ),
                       ),
                     ),
                   ],
@@ -963,88 +1483,25 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  Widget _buildFullWidthInsightCard({
-    required String title,
-    required String subtitle,
-    required IconData icon,
-    required Color iconColor,
-    required bool isPro,
-    required VoidCallback onTap,
-    required bool isArabic,
-  }) {
-    return InkWell(
-      onTap: onTap,
-      borderRadius: BorderRadius.circular(VSPRadius.lg),
-      child: Container(
-        padding: const EdgeInsets.all(14),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(color: VSPColors.divider),
-        ),
-        child: Row(
-          children: [
-            Container(
-              padding: const EdgeInsets.all(10),
-              decoration: BoxDecoration(
-                color: iconColor.withValues(alpha: 0.12),
-                shape: BoxShape.circle,
-              ),
-              child: Icon(icon, color: iconColor, size: 20),
-            ),
-            const SizedBox(width: 12),
-            Expanded(
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Row(
-                    children: [
-                      Expanded(
-                        child: Text(
-                          title,
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13.5),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                      if (!isPro) ...[
-                        const SizedBox(width: 6),
-                        Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
-                          decoration: BoxDecoration(
-                            color: Colors.amber.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
-                            border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 0.5),
-                          ),
-                          child: const Text(
-                            'PRO 👑',
-                            style: TextStyle(color: Colors.amber, fontSize: 9, fontWeight: FontWeight.bold),
-                          ),
-                        ),
-                      ],
-                    ],
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    subtitle,
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.3),
-                    maxLines: 1,
-                    overflow: TextOverflow.ellipsis,
-                  ),
-                ],
-              ),
-            ),
-            const SizedBox(width: 8),
-            const Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 16),
-          ],
-        ),
-      ),
-    );
-  }
-
   Widget _buildBookedTodayList(bool isArabic) {
     final bookingProvider = Provider.of<BookingProvider>(context);
-    final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
+    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+    final allBookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
+
+    final now = DateTime.now();
+    final List<Booking> bookings = allBookings.where((b) {
+      if (_selectedTimePeriod == 'today') {
+        return b.startTime.year == now.year && b.startTime.month == now.month && b.startTime.day == now.day;
+      } else if (_selectedTimePeriod == 'week') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final endOfWeek = startOfWeek.add(const Duration(days: 7));
+        return b.startTime.isAfter(startOfWeek.subtract(const Duration(days: 1))) && b.startTime.isBefore(endOfWeek);
+      } else if (_selectedTimePeriod == 'month') {
+        return b.startTime.year == now.year && b.startTime.month == now.month;
+      }
+      return true; // 'all'
+    }).toList();
+
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
     if (bookings.isEmpty) {
@@ -1053,7 +1510,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
         child: Center(
           child: Text(
-            isArabic ? 'لا توجد حجوزات مسجلة اليوم' : 'No bookings for today', 
+            isArabic ? 'لا توجد حجوزات مسجلة في هذا النطاق الزمني' : 'No bookings in this time period', 
             style: const TextStyle(color: VSPColors.textSecondary),
           ),
         ),
@@ -1061,62 +1518,60 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     }
 
     return Column(
-      children: bookings.take(3).map((b) {
-        final bool isEnded = b.status == BookingStatus.completed || b.endTime.isBefore(DateTime.now());
+      children: bookings.take(5).map((b) {
         final String paymentStatus = b.paymentStatus;
         final double depositPaid = b.depositPaid;
         final double rawPrice = b.totalPrice;
         final double totalPrice = rawPrice > 0 ? rawPrice : (depositPaid > 0 ? depositPaid : 0.0);
-        final bool isPaidInFull = b.isPaid || paymentStatus == 'paid' || (totalPrice > 0 && depositPaid >= totalPrice);
+        final bool isEnded = now.isAfter(b.endTime) || b.status == BookingStatus.completed;
+        final bool isPaidInFull = b.isPaid || paymentStatus == 'paid' || (totalPrice > 0 && depositPaid >= totalPrice) || isEnded;
         final bool isPartiallyPaid = !isPaidInFull && (paymentStatus == 'partially_paid' || b.isDepositPaid || depositPaid > 0);
 
-        final double remaining = totalPrice - depositPaid;
+        final double remaining = (totalPrice - depositPaid).clamp(0.0, 999999.0);
         final String badgeLabel;
         final Color badgeColor;
         if (isPaidInFull) {
-          badgeLabel = isArabic ? 'تم الدفع' : 'Paid';
+          badgeLabel = isArabic ? 'مدفوع بالكامل' : 'Paid in Full';
           badgeColor = VSPColors.success;
-        } else if (isEnded) {
-          badgeLabel = isArabic ? 'محصل' : 'Collected';
-          badgeColor = VSPColors.success;
-        } else if (isPartiallyPaid) {
+        } else if (isPartiallyPaid || (depositPaid > 0 && remaining > 0)) {
           badgeLabel = isArabic 
-              ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م' 
-              : 'Remaining ${remaining.toStringAsFixed(0)} EGP';
+              ? 'عربون (متبقي ${remaining.toInt()} ج.م)' 
+              : 'Deposit (Rest ${remaining.toInt()} EGP)';
           badgeColor = Colors.amber;
         } else {
           badgeLabel = isArabic ? 'غير مدفوع' : 'Unpaid';
-          badgeColor = VSPColors.warning;
+          badgeColor = Colors.redAccent;
         }
 
-        final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
         Stadium? selectedStadium;
         try {
           selectedStadium = stadiumProvider.stadiums.firstWhere((s) => s.id == b.stadiumId);
         } catch (_) {
-          selectedStadium = Stadium(
-            id: b.stadiumId,
-            ownerId: b.ownerId,
-            name: b.stadiumName,
-            location: '',
-            imageUrl: '',
-            pricePerHour: b.totalPrice > 0 ? b.totalPrice : 200,
-            type: 'Football',
-            size: '5 VS 5',
-            baths: 1,
-            cafeteria: 1,
-            playersPerTeam: 5,
-            totalFieldCapacity: 10,
-            area: '',
-            openingTime: '08:00 AM',
-            closingTime: '02:00 AM',
-          );
+          selectedStadium = null;
+        }
+
+        String displayName = b.playerTeamName?.trim() ?? '';
+        if (displayName.isEmpty) {
+          displayName = isArabic ? 'حجز يدوي' : 'Manual Booking';
+        } else if (RegExp(r'^\d+$').hasMatch(displayName)) {
+          displayName = isArabic ? 'لاعب #$displayName' : 'Player #$displayName';
+        }
+
+        String pitchName = b.stadiumName.trim();
+        if (pitchName.isEmpty || pitchName == 'Mo') {
+          if (selectedStadium != null && selectedStadium.name.trim().isNotEmpty && selectedStadium.name.trim() != 'Mo') {
+            pitchName = selectedStadium.name.trim();
+          } else {
+            pitchName = isArabic ? 'الملعب الرئيسي' : 'Main Pitch';
+          }
         }
 
         final slot = {
-          'hour': DateFormat('hh:mm a').format(b.startTime),
+          'time': DateFormat('hh:mm a').format(b.startTime),
+          'hour': b.startTime.hour,
+          'minute': b.startTime.minute,
           'isBooked': true,
-          'name': b.playerTeamName ?? (isArabic ? 'حجز يدوي' : 'Manual Booking'),
+          'name': displayName,
           'booking': b,
         };
 
@@ -1126,15 +1581,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             color: Colors.transparent,
             child: InkWell(
               onTap: () {
-                showOwnerBookingModal(
-                  context: context,
-                  isEdit: true,
-                  slot: slot,
-                  selectedStadium: selectedStadium!,
-                  parentContext: context,
-                ).then((_) {
-                  if (mounted) setState(() {});
-                });
+                if (selectedStadium != null) {
+                  showOwnerBookingModal(
+                    context: context,
+                    isEdit: true,
+                    slot: slot,
+                    selectedStadium: selectedStadium,
+                    parentContext: context,
+                  ).then((_) {
+                    if (mounted) setState(() {});
+                  });
+                }
               },
               borderRadius: BorderRadius.circular(VSPRadius.md),
               child: Container(
@@ -1151,12 +1608,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
                           Text(
-                            b.playerTeamName ?? (isArabic ? 'عميل' : 'Customer'),
+                            displayName,
                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '${b.stadiumName} • ${DateFormat('hh:mm a').format(b.startTime)}',
+                            '$pitchName • ${DateFormat('hh:mm a').format(b.startTime)}',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
                         ],

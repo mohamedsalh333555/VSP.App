@@ -94,9 +94,15 @@ class TournamentRepository {
       sanitizedData.remove('creatorId');
       sanitizedData.remove('creator_id');
 
+      String rawType = (sanitizedData['type'] ?? 'Cup').toString();
+      String dbType = rawType;
+      if (rawType == 'GroupsAndKnockout' || rawType == 'groups_and_knockout') {
+        dbType = 'Groups';
+      }
+
       final pgData = {
         'name': sanitizedData['name'],
-        'type': sanitizedData['type'] ?? 'Cup',
+        'type': dbType,
         'sport_type': sanitizedData['sportType'] ?? sanitizedData['sport_type'] ?? 'Football',
         'logo_url': sanitizedData['logoUrl'] ?? sanitizedData['logo_url'] ?? '',
         'start_date': sanitizedData['startDate'] ?? sanitizedData['start_date'],
@@ -104,7 +110,11 @@ class TournamentRepository {
         'entry_fee': sanitizedData['entryFee'] ?? sanitizedData['entry_fee'] ?? 0.0,
         'grand_prize': sanitizedData['grandPrize'] ?? sanitizedData['grand_prize'] ?? 0.0,
         'max_teams': sanitizedData['maxTeams'] ?? sanitizedData['max_teams'] ?? 16,
-        'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'] ?? '',
+        'owner_id': (sanitizedData['ownerId'] != null && sanitizedData['ownerId'].toString().isNotEmpty)
+            ? sanitizedData['ownerId']
+            : (sanitizedData['owner_id'] != null && sanitizedData['owner_id'].toString().isNotEmpty
+                ? sanitizedData['owner_id']
+                : (_supabase.auth.currentUser?.id ?? '')),
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
@@ -125,15 +135,28 @@ class TournamentRepository {
         'fair_play_scoring': sanitizedData['fairPlayScoring'] ?? sanitizedData['fair_play_scoring'] ?? false,
       };
 
-      final response = await _supabase
-          .from('championships')
-          .insert(pgData)
-          .select('id')
-          .single();
-      return response['id']?.toString();
+      try {
+        final response = await _supabase
+            .from('championships')
+            .insert(pgData)
+            .select('id')
+            .single();
+        return response['id']?.toString();
+      } on PostgrestException catch (pe) {
+        if (pe.message.contains('championships_type_check')) {
+          pgData['type'] = 'Cup';
+          final response = await _supabase
+              .from('championships')
+              .insert(pgData)
+              .select('id')
+              .single();
+          return response['id']?.toString();
+        }
+        rethrow;
+      }
     } catch (e) {
       debugPrint('Error creating championship: $e');
-      return null;
+      rethrow;
     }
   }
 

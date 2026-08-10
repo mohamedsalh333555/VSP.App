@@ -349,9 +349,33 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           });
         }
 
-        final allImages = List<String>.from(features['allImages'] ?? []);
-        if (allImages.isEmpty && data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty) {
-           allImages.add(data['imageUrl']);
+        final allImages = <String>[];
+        if (data['images'] is List) {
+          for (var img in (data['images'] as List)) {
+            if (img != null && img.toString().isNotEmpty) {
+              allImages.add(img.toString());
+            }
+          }
+        }
+        if (features['allImages'] is List) {
+          for (var img in (features['allImages'] as List)) {
+            final str = img.toString();
+            if (str.isNotEmpty && !allImages.contains(str)) {
+              allImages.add(str);
+            }
+          }
+        }
+        if (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty) {
+          final str = data['imageUrl'].toString();
+          if (!allImages.contains(str)) {
+            allImages.insert(0, str);
+          }
+        }
+        if (data['image_url'] != null && data['image_url'].toString().isNotEmpty) {
+          final str = data['image_url'].toString();
+          if (!allImages.contains(str)) {
+            allImages.insert(0, str);
+          }
         }
 
         for (var url in allImages) {
@@ -802,7 +826,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   Future<void> _selectTime(BuildContext context, bool isMainStart) async {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
-      initialTime: TimeOfDay.now(),
+      initialTime: isMainStart
+          ? (_startTime ?? const TimeOfDay(hour: 16, minute: 0))
+          : (_endTime ?? const TimeOfDay(hour: 23, minute: 0)),
       builder: (context, child) => MediaQuery(
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
         child: Theme(
@@ -906,16 +932,25 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Future<void> _pickImage() async {
-    Timer? progressTimer;
-    final XFile? pickedFile = await _imagePicker.pickImage(source: ImageSource.gallery, imageQuality: 80);
-    if (pickedFile == null) return;
+    try {
+      final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(imageQuality: 80);
+      if (pickedFiles.isEmpty) return;
 
+      for (final pickedFile in pickedFiles) {
+        _uploadSinglePickedFile(pickedFile);
+      }
+    } catch (e) {
+      debugPrint('Error picking images: $e');
+    }
+  }
+
+  Future<void> _uploadSinglePickedFile(XFile pickedFile) async {
+    Timer? progressTimer;
     final imageFile = File(pickedFile.path);
     final imageEntry = {'file': imageFile, 'url': null, 'isUploading': true, 'progress': 0};
     setState(() => _images.add(imageEntry));
     
     try {
-      // Start simulated progress ticking
       progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
         if (!mounted || imageEntry['isUploading'] != true) {
           timer.cancel();
@@ -929,11 +964,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         });
       });
 
-      // Upload
       final url = await _storageService.uploadFile(
         file: XFile(imageFile.path),
         bucket: 'stadium-images',
-        path: 'stadiums/images/std_${DateTime.now().millisecondsSinceEpoch}.jpg',
+        path: 'stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
       );
 
       progressTimer.cancel();
@@ -958,7 +992,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         setState(() {
           imageEntry['isUploading'] = false;
           _images.remove(imageEntry);
-          VSPFeedback.showError(context, 'Upload failed');
         });
       }
     }
@@ -1158,8 +1191,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         'hasBall': _hasBall ?? false,
         'ballPrice': (_hasBall == true) ? (double.tryParse(_ballPriceController.text) ?? 0.0) : 0.0,
         'workingHours': {
-          'start': _formatTime(_startTime, '08:00 AM'),
-          'end': _formatTime(_endTime, '12:00 AM'),
+          'start': _formatTime(_startTime, '04:00 PM'),
+          'end': _formatTime(_endTime, '11:00 PM'),
         },
         'isSplitShift': _isSplitShift,
         'breakTimes': _isSplitShift 
@@ -1189,6 +1222,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'deposit_amount': _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
             'needs_deposit': _requireDeposit,
             'imageUrl': uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
+            'images': uploadedUrls,
             'notes': _notesController.text.trim(),
             'features': stadiumFeatures,
           });
@@ -1203,6 +1237,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             depositAmount: _requireDeposit ? (double.tryParse(_depositController.text.trim()) ?? 0.0) : 0.0,
             needsDeposit: _requireDeposit,
             imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
+            images: uploadedUrls,
             ownerId: user.uid,
             notes: _notesController.text.trim().isEmpty 
               ? "We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time."

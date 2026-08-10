@@ -72,9 +72,10 @@ class UserModel {
   DateTime? get effectiveTrialEndsAt =>
       trialEndsAt ?? (createdAt != null ? createdAt!.add(const Duration(days: 90)) : DateTime.now().add(const Duration(days: 90)));
 
-  /// هل المالك في فترة تجريبية نشطة؟
+  /// هل المالك في فترة تجريبية نشطة؟ (يشترط عدم وجود أي اشتراك مدفوع مسبقاً)
   bool get isInActiveTrial =>
       subscriptionPlan == 'free_trial' &&
+      subscriptionExpiresAt == null &&
       effectiveTrialEndsAt != null &&
       DateTime.now().isBefore(effectiveTrialEndsAt!);
 
@@ -89,6 +90,9 @@ class UserModel {
       subscriptionPlan == 'pro' &&
       subscriptionExpiresAt != null &&
       DateTime.now().isBefore(subscriptionExpiresAt!);
+
+  /// هل يسمح للمالك بإنشاء وإدارة البطولات الاحترافية؟ (حصرياً لمشتركي الباقة الاحترافية Pro 1000ج)
+  bool get canCreateTournaments => isProPlan;
 
   /// هل الباقة Basic أو أعلى (Pro يشمل Basic)؟
   bool get isBasicOrHigher =>

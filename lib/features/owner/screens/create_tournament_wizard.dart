@@ -1,9 +1,11 @@
+import 'subscription_plans_screen.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -12,72 +14,76 @@ import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 
-/// Quick Template preset data
-class _TournamentTemplate {
-  final String nameAr;
-  final String nameEn;
-  final String icon;
-  final String type;
-  final String sport;
-  final int teams;
-  final double fee;
-  final double prize;
-  final int durationMinutes;
-
-  const _TournamentTemplate({
-    required this.nameAr,
-    required this.nameEn,
-    required this.icon,
-    required this.type,
-    required this.sport,
-    required this.teams,
-    required this.fee,
-    required this.prize,
-    required this.durationMinutes,
-  });
-
-  String name(bool isAr) => isAr ? nameAr : nameEn;
-}
-
-const _quickTemplates = [
-  _TournamentTemplate(
-    nameAr: 'كأس رمضان',
-    nameEn: 'Ramadan Cup',
-    icon: '🌙',
-    type: 'Cup',
-    sport: 'Football',
-    teams: 16,
-    fee: 500,
-    prize: 5000,
-    durationMinutes: 25,
-  ),
-  _TournamentTemplate(
-    nameAr: 'بطولة خماسية سريعة',
-    nameEn: 'Fast 5s Tournament',
-    icon: '⚡',
-    type: 'Cup',
-    sport: 'Football',
-    teams: 8,
-    fee: 300,
-    prize: 3000,
-    durationMinutes: 20,
-  ),
-  _TournamentTemplate(
-    nameAr: 'دوري المحترفين',
-    nameEn: 'Pro League',
-    icon: '🏆',
-    type: 'League',
-    sport: 'Football',
-    teams: 8,
-    fee: 400,
-    prize: 4000,
-    durationMinutes: 45,
-  ),
-];
-
 class CreateTournamentWizard extends StatefulWidget {
   final Championship? tournament;
   const CreateTournamentWizard({super.key, this.tournament});
+
+  /// 🔒 Gatekeeper: Checks if owner is on Pro Plan (1000 EGP).
+  /// Pro Plan owners -> Open Wizard.
+  /// Basic / Trial / Expired owners -> Show upgrade dialog & redirect to SubscriptionPlansScreen.
+  static void open(BuildContext context, {Championship? tournament}) {
+    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    // If editing existing tournament OR owner is Pro Plan -> Allow
+    if (tournament != null || (user != null && user.canCreateTournaments)) {
+      Navigator.push(
+        context,
+        MaterialPageRoute(builder: (context) => CreateTournamentWizard(tournament: tournament)),
+      );
+      return;
+    }
+
+    // 🔒 Non-Pro Plan -> Show dialog & redirect to SubscriptionPlansScreen
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(LucideIcons.crown, color: Colors.amber, size: 24),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isArabic ? 'ميزة الباقة الاحترافية' : 'Pro Plan Feature',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isArabic
+              ? 'عذراً! ميزة إنشاء وتنظيم البطولات الاحترافية متاحة حصرياً لمشتركي الباقة الاحترافية (1000 ج.م).\n\nيرجى ترقية باقتك الآن لتنظيم بطولاتك الخاصة وجذب الفرق واللاعبين!'
+              : 'Tournament creation is exclusively available for Pro Plan subscribers (1000 EGP).\n\nUpgrade your subscription now to host unlimited tournaments!',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textMuted)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(
+              backgroundColor: Colors.amber,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+            onPressed: () {
+              Navigator.pop(ctx);
+              Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+              );
+            },
+            child: Text(
+              isArabic ? 'عرض الباقات والترقية' : 'Upgrade Plan Now',
+              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 
   @override
   State<CreateTournamentWizard> createState() => _CreateTournamentWizardState();
@@ -90,8 +96,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   // Step 1: Basics
   final _nameController = TextEditingController();
   String _selectedSport = 'Football';
-  final _feeController = TextEditingController(text: '500');
-  String? _selectedTemplateName;
+  final _feeController = TextEditingController();
 
   // Step 2: System
   String _selectedType = 'Cup'; // Cup, League, GroupsAndKnockout
@@ -161,21 +166,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     super.dispose();
   }
 
-  void _applyTemplate(_TournamentTemplate t) {
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final name = t.name(isAr);
-    setState(() {
-      _selectedTemplateName = name;
-      _nameController.text = name;
-      _selectedSport = t.sport;
-      _feeController.text = t.fee.toStringAsFixed(0);
-      _selectedType = t.type;
-      _selectedTeams = t.teams.toString();
-      _durationController.text = t.durationMinutes.toString();
-      _prizeController.text = t.prize.toStringAsFixed(0);
-    });
-    VSPFeedback.showSuccess(context, isAr ? 'تم تطبيق القالب: $name' : 'Template applied: $name');
-  }
+
 
   Future<void> _selectDate(bool isStart) async {
     final picked = await showDatePicker(
@@ -252,6 +243,10 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     setState(() => _isLoading = true);
     try {
       final auth = Provider.of<AuthProvider>(context, listen: false);
+      final currentUid = auth.currentUser?.uid ?? auth.firebaseUser?.uid ?? auth.userModel?.uid ?? Supabase.instance.client.auth.currentUser?.id ?? '';
+      final currentGov = auth.governorate.trim().isNotEmpty 
+          ? auth.governorate 
+          : (auth.userModel?.governorate ?? 'القاهرة');
 
       final champData = {
         'name': _nameController.text.trim(),
@@ -259,8 +254,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         'sportType': _selectedSport,
         'startDate': _startDate.toIso8601String(),
         'endDate': _endDate.toIso8601String(),
-        'governorate': auth.governorate,
-        'ownerId': auth.userModel?.uid,
+        'governorate': currentGov,
+        'ownerId': currentUid,
         'image': widget.tournament?.imageUrl ?? '',
         'teamsCount': int.parse(_selectedTeams),
         'maxTeams': int.parse(_selectedTeams),
@@ -416,194 +411,144 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       l10n.schedulingStep,
     ];
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.md),
-      child: Row(
+      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
+      child: Stack(
         children: [
-          // Step 1
-          _buildStepNode(0, labels[0]),
-          // Line 1-2
-          Expanded(child: _buildStepLine(1)),
-          // Step 2
-          _buildStepNode(1, labels[1]),
-          // Line 2-3
-          Expanded(child: _buildStepLine(2)),
-          // Step 3
-          _buildStepNode(2, labels[2]),
-        ],
-      ),
-    );
-  }
-
-  Widget _buildStepNode(int i, String label) {
-    final isActive = i <= _currentStep;
-    final isCurrent = i == _currentStep;
-    return SizedBox(
-      width: 75,
-      child: Column(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Container(
-            width: 28,
-            height: 28,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isActive ? VSPColors.accent : const Color(0xFF1E2620),
-              border: Border.all(
-                color: isActive ? VSPColors.accent : const Color(0xFF3A473E),
-                width: 2,
-              ),
+          // Background Connecting Lines
+          Positioned(
+            left: 28 / 2 + 12,
+            right: 28 / 2 + 12,
+            top: 28 / 2 - 1,
+            child: Row(
+              children: [
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: _currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+                Expanded(
+                  child: Container(
+                    height: 2,
+                    color: _currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+              ],
             ),
-            child: Center(
-              child: i < _currentStep
-                  ? const Icon(Icons.check, color: Colors.black, size: 16)
-                  : Text(
-                      '${i + 1}',
-                      style: TextStyle(
-                        color: isActive ? Colors.black : Colors.white70,
-                        fontSize: 12,
-                        fontWeight: FontWeight.bold,
+          ),
+          // Stepper Circles and Text
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: List.generate(3, (i) {
+              final isActive = i <= _currentStep;
+              final isCurrent = i == _currentStep;
+              return Column(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Container(
+                    width: 28,
+                    height: 28,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: isActive ? VSPColors.accent : VSPColors.surface,
+                      border: Border.all(
+                        color: isActive ? VSPColors.accent : VSPColors.divider,
+                        width: 2,
                       ),
                     ),
-            ),
-          ),
-          const SizedBox(height: 6),
-          Text(
-            label,
-            textAlign: TextAlign.center,
-            style: TextStyle(
-              color: isCurrent
-                  ? VSPColors.accent
-                  : (isActive ? Colors.white70 : const Color(0xFFB0BEC5)),
-              fontWeight: isCurrent ? FontWeight.bold : FontWeight.w500,
-              fontSize: 11,
-            ),
+                    child: Center(
+                      child: i < _currentStep
+                          ? const Icon(LucideIcons.check, color: Colors.black, size: 16)
+                          : Text(
+                              '${i + 1}',
+                              style: TextStyle(
+                                color: isActive ? Colors.black : VSPColors.textSecondary,
+                                fontSize: 12,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                    ),
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    labels[i],
+                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                          color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                          fontSize: 10,
+                        ),
+                  ),
+                ],
+              );
+            }),
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildStepLine(int nextStepIndex) {
-    final isActive = nextStepIndex <= _currentStep;
-    return Container(
-      margin: const EdgeInsets.only(bottom: 20),
-      height: 2,
-      color: isActive ? VSPColors.accent : VSPColors.divider,
     );
   }
 
   // ── STEP 1: Basics ──────────────────────────────
   Widget _buildStep1() {
-    final l10n = AppLocalizations.of(context)!;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
     return Column(
       key: const ValueKey('step1'),
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        // Quick Templates
-        Text(l10n.quickTemplates, style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold)),
-        Text(l10n.choosePresetSubtitle, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: Colors.white70)),
-        const SizedBox(height: VSPSpacing.md),
-        SizedBox(
-          height: 90,
-          child: ListView.separated(
-            scrollDirection: Axis.horizontal,
-            padding: const EdgeInsets.symmetric(horizontal: 2),
-            itemCount: _quickTemplates.length,
-            separatorBuilder: (_, __) => const SizedBox(width: 12),
-            itemBuilder: (context, i) {
-              final t = _quickTemplates[i];
-              final tName = t.name(isAr);
-              final isSelected = _selectedTemplateName == tName;
-              return GestureDetector(
-                onTap: () => _applyTemplate(t),
-                child: AnimatedContainer(
-                  duration: const Duration(milliseconds: 200),
-                  width: 155,
-                  padding: const EdgeInsets.all(VSPSpacing.sm),
-                  decoration: BoxDecoration(
-                    color: isSelected ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(
-                      color: isSelected ? VSPColors.accent : VSPColors.divider,
-                      width: isSelected ? 2 : 1,
-                    ),
-                    boxShadow: isSelected
-                        ? [
-                            BoxShadow(
-                              color: VSPColors.accent.withValues(alpha: 0.25),
-                              blurRadius: 8,
-                              spreadRadius: 1,
-                            )
-                          ]
-                        : [],
-                  ),
-                  child: Stack(
-                    children: [
-                      Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Text(t.icon, style: const TextStyle(fontSize: 22)),
-                          const SizedBox(height: 4),
-                          Text(
-                            tName,
-                            style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                              fontWeight: FontWeight.bold,
-                              color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
-                            ),
-                            maxLines: 1,
-                            overflow: TextOverflow.ellipsis,
-                          ),
-                          const SizedBox(height: 2),
-                          Text(
-                            '${t.teams} ${l10n.teams} • ${t.fee.toStringAsFixed(0)} ${isAr ? 'ج.م' : 'EGP'}',
-                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                              color: isSelected ? VSPColors.accent.withValues(alpha: 0.9) : Colors.white60, 
-                              fontSize: 10,
-                            ),
-                          ),
-                        ],
-                      ),
-                      if (isSelected)
-                        Positioned(
-                          top: 0,
-                          right: isAr ? null : 0,
-                          left: isAr ? 0 : null,
-                          child: Container(
-                            padding: const EdgeInsets.all(2),
-                            decoration: const BoxDecoration(
-                              color: VSPColors.accent,
-                              shape: BoxShape.circle,
-                            ),
-                            child: const Icon(Icons.check, size: 10, color: Colors.black),
-                          ),
-                        ),
-                    ],
-                  ),
-                ),
-              );
-            },
-          ),
+        // 1. اختيار نظام البطولة (أول شيء في الصفحة)
+        Text(
+          isAr ? 'اختر نظام البطولة 🏆' : 'Choose Tournament Format 🏆',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 28),
+        const SizedBox(height: 12),
+        
+        // خروج المغلوب (Cup)
+        _buildFormatOptionCard(
+          type: 'Cup',
+          title: isAr ? 'خروج المغلوب' : 'Knockout',
+          subtitle: isAr ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
+          icon: LucideIcons.trophy,
+        ),
+        const SizedBox(height: 10),
 
-        _buildLabel(l10n.tournamentNameLabel),
+        // دوري كامل (League)
+        _buildFormatOptionCard(
+          type: 'League',
+          title: isAr ? 'دوري نقاط كامل' : 'Full League',
+          subtitle: isAr ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
+          icon: LucideIcons.award,
+        ),
+        const SizedBox(height: 10),
+
+        // مجموعات وتصفيات (Groups + Knockout)
+        _buildFormatOptionCard(
+          type: 'GroupsAndKnockout',
+          title: isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout',
+          subtitle: isAr ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
+          icon: LucideIcons.shieldCheck,
+        ),
+
+        const SizedBox(height: 24),
+        const Divider(color: VSPColors.divider, height: 1),
+        const SizedBox(height: 20),
+
+        // 2. البيانات الأساسية للبطولة
+        _buildLabel(isAr ? 'اسم البطولة' : 'Tournament Name'),
         _buildTextField(_nameController, hint: isAr ? 'مثال: كأس الأبطال' : 'e.g. Star Cup', autofocus: widget.tournament == null),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel(l10n.sportTypeLabel),
+        _buildLabel(isAr ? 'نوع الرياضة' : 'Sport Type'),
         _buildDropdown(_availableSports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
         const SizedBox(height: VSPSpacing.md),
 
-        _buildLabel(l10n.entryFeeLabel),
+        _buildLabel(isAr ? 'رسوم الاشتراك (ج.م)' : 'Entry Fee (EGP)'),
         _buildTextField(
           _feeController,
+          hint: isAr ? 'أدخل رسوم الاشتراك (مثال: 300)' : 'Enter entry fee (e.g. 300)',
           keyboardType: TextInputType.number,
           inputFormatters: [FilteringTextInputFormatter.digitsOnly],
           suffixText: isAr ? 'ج.م' : 'EGP',
         ),
-        const SizedBox(height: 80),
+        const SizedBox(height: 40),
       ],
     );
   }
@@ -616,38 +561,10 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         Text(
-          isArabic ? 'اختر نظام البطولة 🏆' : 'Choose Tournament Format 🏆',
+          isArabic ? 'إعدادات وقواعد البطولة ⚙️' : 'Tournament Rules & Format ⚙️',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
-        const SizedBox(height: 12),
-        
-        // 1. خروج المغلوب (Cup)
-        _buildFormatOptionCard(
-          type: 'Cup',
-          title: isArabic ? 'خروج المغلوب (الكأس)' : 'Knockout (Cup)',
-          subtitle: isArabic ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
-          icon: LucideIcons.trophy,
-        ),
-        const SizedBox(height: 10),
-
-        // 2. دوري كامل (League)
-        _buildFormatOptionCard(
-          type: 'League',
-          title: isArabic ? 'دوري نقاط كامل (League)' : 'Full League (Points)',
-          subtitle: isArabic ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
-          icon: LucideIcons.award,
-        ),
-        const SizedBox(height: 10),
-
-        // 3. مجموعات وتصفيات (Groups + Knockout)
-        _buildFormatOptionCard(
-          type: 'GroupsAndKnockout',
-          title: isArabic ? 'مجموعات ثم تصفيات (كأس العالم)' : 'Groups + Knockout',
-          subtitle: isArabic ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
-          icon: LucideIcons.shieldCheck,
-        ),
-
-        const SizedBox(height: 20),
+        const SizedBox(height: 16),
 
         _buildLabel(AppLocalizations.of(context)!.maxTeamsLabel),
         _buildDropdown(['4', '8', '16', '32'], _selectedTeams, (v) => setState(() => _selectedTeams = v!)),
@@ -667,7 +584,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(isArabic ? 'ذهاب وإياد (دورين)' : 'Home & Away (Two Legs)', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
+              Text(isArabic ? 'ذهاب وإياب' : 'Home & Away', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
               Switch.adaptive(
                 value: _isTwoLegs,
                 onChanged: (v) => setState(() => _isTwoLegs = v),
@@ -677,7 +594,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           ),
           const SizedBox(height: 12),
         ],
-        const SizedBox(height: 80),
+        const SizedBox(height: 40),
       ],
     );
   }
@@ -791,39 +708,38 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     bool autofocus = false,
     String? suffixText,
   }) {
-    return Container(
+    return SizedBox(
       height: VSPSize.inputHeight,
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.input),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
-      ),
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
         autofocus: autofocus,
+        cursorColor: VSPColors.accent,
         style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.bold),
         decoration: InputDecoration(
-          border: InputBorder.none,
+          filled: true,
+          fillColor: VSPColors.surface,
+          contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 16),
           counterText: '',
-          contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
           isDense: true,
           hintText: hint,
-          hintStyle: const TextStyle(color: Colors.white54, fontSize: 13),
+          hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+          enabledBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            borderSide: const BorderSide(color: VSPColors.divider, width: 0.5),
+          ),
+          focusedBorder: OutlineInputBorder(
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            borderSide: const BorderSide(color: VSPColors.accent, width: 1.0),
+          ),
           suffixIcon: suffixText != null
               ? UnconstrainedBox(
-                  child: Container(
-                    margin: const EdgeInsets.symmetric(horizontal: 10),
-                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(6),
-                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 0.5),
-                    ),
+                  child: Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 14),
                     child: Text(
                       suffixText,
-                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
+                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
                     ),
                   ),
                 )
@@ -840,14 +756,14 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       padding: const EdgeInsets.symmetric(horizontal: 16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.input),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.15), width: 1),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(Icons.keyboard_arrow_down, color: VSPColors.accent),
+          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
           items: items.map((item) {

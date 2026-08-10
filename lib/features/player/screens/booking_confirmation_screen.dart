@@ -107,16 +107,17 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
 
   int _parseTimeToMinutes(String timeStr) {
-    if (timeStr.isEmpty) return 0;
+    if (timeStr.trim().isEmpty) return 0;
     try {
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(timeStr);
+      final clean = timeStr.trim();
+      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
+      final match = timeRegex.firstMatch(clean);
       if (match == null) return 0;
       int hour = int.parse(match.group(1)!);
       int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
       String? period = match.group(3)?.toUpperCase();
-      if (period == 'PM' && hour != 12) hour += 12;
-      if (period == 'AM' && hour == 12) hour = 0;
+      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
+      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
       return hour * 60 + minute;
     } catch (e) {
       return 0;
@@ -135,13 +136,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   void _generateDynamicTimeSlots() {
     try {
       final features = widget.stadium.features;
-      String startStr = '03:00 PM'; 
-      String endStr = '03:00 AM';   
+      String startStr = widget.stadium.openingTime; 
+      String endStr = widget.stadium.closingTime;   
 
-      if (features is Map && features['workingHours'] != null) {
-        startStr = features['workingHours']['start'] ?? startStr;
-        endStr = features['workingHours']['end'] ?? endStr;
+      if ((startStr.isEmpty || endStr.isEmpty) && features is Map && features['workingHours'] != null) {
+        startStr = startStr.isNotEmpty ? startStr : (features['workingHours']['start'] ?? '04:00 PM');
+        endStr = endStr.isNotEmpty ? endStr : (features['workingHours']['end'] ?? '03:00 AM');
       }
+      if (startStr.isEmpty) startStr = '04:00 PM';
+      if (endStr.isEmpty) endStr = '03:00 AM';
 
       int startMinutes = _parseTimeToMinutes(startStr);
       int endMinutes = _parseTimeToMinutes(endStr);

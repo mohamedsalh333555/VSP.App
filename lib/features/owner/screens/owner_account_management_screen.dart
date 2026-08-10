@@ -1,5 +1,5 @@
 import 'add_stadium_wizard.dart';
-import 'dart:ui';
+import 'subscription_plans_screen.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:flutter/material.dart';
@@ -9,10 +9,10 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/stadium_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../auth/screens/welcome_screen.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import '../../../core/repositories/stadium_repository.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
   const OwnerAccountManagementScreen({super.key});
@@ -33,7 +33,6 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   bool _isLoading = false;
   bool _isDeleting = false;
   bool _isLocating = false;
-  List<Stadium> _stadiums = [];
 
   @override
   void initState() {
@@ -48,9 +47,6 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     _instapayController = TextEditingController(text: userModel?.p2pInstapay ?? '');
     _vodafoneController = TextEditingController(text: userModel?.p2pVodafone ?? '');
     _bankController = TextEditingController(text: userModel?.p2pBank ?? '');
-    
-    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
-    _stadiums = stadiumProvider.stadiums;
   }
 
   @override
@@ -144,28 +140,63 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Stadium Selector
-            if (_stadiums.isNotEmpty)
-              SizedBox(
-                height: 230,
-                child: ListView.builder(
-                  padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
-                  scrollDirection: Axis.horizontal,
-                  itemCount: _stadiums.length,
-                  itemBuilder: (context, index) {
-                    return Container(
-                      width: 310,
-                      margin: const EdgeInsets.only(right: VSPSpacing.md),
-                      child: GestureDetector(
-                        onTap: () { 
-                          Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: _stadiums[index].id))); 
-                        }, 
-                        child: StadiumCard(stadium: _stadiums[index], isOwnerView: false),
-                      ),
+            // 1. Stadium Selector & Fawry-style Add Stadium Plus Card
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20),
+              child: Text(
+                isArabic ? 'الملاعب المسجلة' : 'My Stadiums',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                  color: Colors.white,
+                  fontWeight: FontWeight.bold,
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            Builder(builder: (context) {
+              final currentUid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid ?? '';
+              return SizedBox(
+                height: 215,
+                child: StreamBuilder<List<Stadium>>(
+                  stream: currentUid.isNotEmpty
+                      ? StadiumRepository().getOwnerStadiums(currentUid)
+                      : Stream.value([]),
+                  builder: (context, snapshot) {
+                    final stadiums = snapshot.data ?? [];
+                    return ListView.builder(
+                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 0),
+                      scrollDirection: Axis.horizontal,
+                      physics: const BouncingScrollPhysics(),
+                      itemCount: stadiums.length + 1,
+                      itemBuilder: (context, index) {
+                        if (index < stadiums.length) {
+                          return Container(
+                            width: 260,
+                            margin: const EdgeInsets.only(right: VSPSpacing.md),
+                            child: StadiumCard(
+                              stadium: stadiums[index],
+                              isOwnerView: true,
+                              onTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id)));
+                              },
+                              onEditTap: () {
+                                Navigator.push(context, MaterialPageRoute(builder: (_) => AddStadiumWizard(stadiumId: stadiums[index].id)));
+                              },
+                            ),
+                          );
+                        } else {
+                          return Container(
+                            width: 240,
+                            margin: const EdgeInsets.only(right: VSPSpacing.md),
+                            child: _buildAddStadiumCard(context, stadiums.length),
+                          );
+                        }
+                      },
                     );
                   },
                 ),
-              ),
+              );
+            }),
             
             const SizedBox(height: 20),
 
@@ -303,48 +334,20 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               ),
             ),
 
+            const SizedBox(height: 32),
 
-
-            const SizedBox(height: 24),
-
-            // 3. Documents
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 20),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                   _buildInputLabel(isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front'),
-                   _buildDocumentCard(isArabic ? 'الجهة الأمامية للبطاقة الشخصية' : 'National ID Front', '500 KB'),
-                   const SizedBox(height: 16),
-                   
-                   _buildInputLabel(isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back'),
-                   _buildDocumentCard(isArabic ? 'الجهة الخلفية للبطاقة الشخصية' : 'National ID Back', '500 KB'),
-                   const SizedBox(height: 16),
-                   
-                   _buildInputLabel(isArabic ? 'البطاقة الضريبية' : 'Tax Card'),
-                   _buildDocumentCard(isArabic ? 'البطاقة الضريبية' : 'Tax Card', '300 KB'),
-                   const SizedBox(height: 16),
-                   
-                   _buildInputLabel(isArabic ? 'السجل التجاري' : 'Commercial Register'),
-                   _buildDocumentCard(isArabic ? 'السجل التجاري' : 'Commercial Register', '200 KB'),
-
-                   const SizedBox(height: 40),
-
-                   // --- Delete Account Button ---
-                   Center(
-                      child: TextButton(
-                        onPressed: () => _showDeleteAccountDialog(context),
-                        child: Text(
-                          isArabic ? 'حذف الحساب' : 'Delete Account',
-                          style: const TextStyle(
-                            color: VSPColors.error,
-                            fontWeight: FontWeight.bold,
-                            decoration: TextDecoration.underline,
-                          ),
-                        ),
-                      ),
-                    ),
-                ],
+            // --- Delete Account Button ---
+            Center(
+              child: TextButton(
+                onPressed: () => _showDeleteAccountDialog(context),
+                child: Text(
+                  isArabic ? 'حذف الحساب' : 'Delete Account',
+                  style: const TextStyle(
+                    color: VSPColors.error,
+                    fontWeight: FontWeight.bold,
+                    decoration: TextDecoration.underline,
+                  ),
+                ),
               ),
             ),
           ],
@@ -372,97 +375,156 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
     );
   }
 
-  Widget _buildDocumentCard(String title, String size) {
+  void _handleAddStadiumTap(BuildContext context, int currentCount) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    return VSPCard(
-      padding: const EdgeInsets.all(VSPSpacing.md),
-      margin: EdgeInsets.zero,
-      color: VSPColors.accent.withValues(alpha: 0.05),
-      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.2)),
-      child: Row(
-        children: [
-           Icon(LucideIcons.image, color: VSPColors.textPrimary, size: 24),
-           const SizedBox(width: VSPSpacing.md),
-           Expanded(
-             child: Column(
-               crossAxisAlignment: CrossAxisAlignment.start,
-               children: [
-                 Text(title, style: Theme.of(context).textTheme.titleSmall),
-                 Text(size, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                 const SizedBox(height: 4),
-                 GestureDetector(
-                   onTap: () {
-                     _showDocumentPreviewDialog(context, title);
-                   },
-                   child: Text(
-                     isArabic ? 'اضغط للعرض' : 'Click to view',
-                     style: Theme.of(context).textTheme.labelMedium?.copyWith(
-                       color: VSPColors.accent,
-                       fontWeight: FontWeight.bold,
-                       decoration: TextDecoration.underline,
-                     ),
-                   ),
-                 ),
-               ],
-             ),
-           )
-        ],
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+
+    final isPro = user?.isProPlan == true;
+    final canAddMore = isPro ? currentCount < 3 : currentCount < 1;
+
+    if (canAddMore || currentCount == 0) {
+      // Open Add Stadium Wizard
+      Navigator.push(
+        context,
+        MaterialPageRoute(
+          builder: (_) => const AddStadiumWizard(),
+        ),
+      );
+    } else if (!isPro) {
+      // Show Fawry-style Upgrade Modal to Pro Plan (1000 EGP)
+      _showUpgradePlanModal(context, isArabic);
+    } else {
+      // Reached max 3 stadiums for Pro plan
+      VSPFeedback.showSuccess(
+        context,
+        isArabic
+            ? 'وصلت للحد الأقصى المسموح (3 ملاعب). لتخصيص خطة أعلى تواصل مع الدعم.'
+            : 'Maximum 3 stadiums limit reached. Contact support for enterprise plans.',
+      );
+    }
+  }
+
+  /// ➕ Fawry Wallet-Style Add Stadium Plus Card
+  Widget _buildAddStadiumCard(BuildContext context, int currentCount) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return GestureDetector(
+      onTap: () => _handleAddStadiumTap(context, currentCount),
+      child: Container(
+        width: 240,
+        decoration: BoxDecoration(
+          color: VSPColors.surface,
+          borderRadius: BorderRadius.circular(VSPRadius.xl),
+          border: Border.all(
+            color: VSPColors.accent.withValues(alpha: 0.5),
+            width: 1.5,
+          ),
+          boxShadow: [
+            BoxShadow(
+              color: VSPColors.accent.withValues(alpha: 0.12),
+              blurRadius: 16,
+              offset: const Offset(0, 4),
+            ),
+          ],
+        ),
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            // Plus Circle Icon with Fawry Glow
+            Container(
+              width: 56,
+              height: 56,
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+                border: Border.all(color: VSPColors.accent, width: 2),
+                boxShadow: [
+                  BoxShadow(
+                    color: VSPColors.accent.withValues(alpha: 0.35),
+                    blurRadius: 12,
+                    spreadRadius: 2,
+                  ),
+                ],
+              ),
+              child: const Icon(
+                LucideIcons.plus,
+                color: VSPColors.accent,
+                size: 28,
+              ),
+            ),
+            const SizedBox(height: 14),
+            Text(
+              isArabic ? 'إضافة ملعب آخر' : 'Add Another Stadium',
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 16,
+              ),
+            ),
+          ],
+        ),
       ),
     );
   }
 
-  void _showDocumentPreviewDialog(BuildContext context, String title) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  /// 💎 Fawry Upgrade Modal
+  void _showUpgradePlanModal(BuildContext context, bool isArabic) {
     showDialog(
       context: context,
-      builder: (ctx) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: VSPColors.surface,
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Row(
-            children: [
-              const Icon(LucideIcons.fileCheck, color: VSPColors.accent, size: 20),
-              const SizedBox(width: 8),
-              Expanded(
-                child: Text(
-                  title,
-                  style: Theme.of(ctx).textTheme.titleMedium?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
-                ),
-              ),
-            ],
-          ),
-          content: Column(
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
               Container(
-                height: 160,
-                width: double.infinity,
+                width: 60,
+                height: 60,
                 decoration: BoxDecoration(
-                  color: VSPColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.divider),
+                  color: Colors.amber.withValues(alpha: 0.15),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.amber, width: 2),
                 ),
-                child: Column(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: [
-                    const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 44),
-                    const SizedBox(height: 10),
-                    Text(
-                      isArabic ? 'مستند موثق ومشفر لدى المنصة 🛡️' : 'Verified & Encrypted Document 🛡️',
-                      style: Theme.of(ctx).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-                    ),
-                  ],
+                child: const Icon(LucideIcons.crown, color: Colors.amber, size: 30),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isArabic ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 10),
+              Text(
+                isArabic
+                    ? 'الباقة الأساسية (500 ج.م / 3 شهور مجاناً) تتيح تشغيل ملعب واحد فقط.\n\nترقية حسابك للباقة الاحترافية (1000 ج.م) لإضافة حتى 3 ملاعب كاملة وإدارتها من مكان واحد!'
+                    : 'Basic Plan allows 1 stadium only.\n\nUpgrade to Pro Plan (1000 EGP) to add up to 3 stadiums and manage your full multi-pitch complex!',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 24),
+              PrimaryButton(
+                text: isArabic ? 'ترقية إلى باقة 1000 ج.م 🚀' : 'Upgrade to Pro 1000 EGP 🚀',
+                onPressed: () {
+                  Navigator.pop(dialogCtx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: Text(
+                  isArabic ? 'إلغاء' : 'Cancel',
+                  style: const TextStyle(color: VSPColors.textSecondary),
                 ),
               ),
             ],
           ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(ctx),
-              child: Text(isArabic ? 'إغلاق' : 'Close', style: const TextStyle(color: VSPColors.accent)),
-            ),
-          ],
         ),
       ),
     );

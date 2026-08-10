@@ -86,39 +86,33 @@ class ChampionScreenState extends State<ChampionScreen>
           children: [
             Container(
               margin: const EdgeInsets.symmetric(horizontal: 16),
-            height: 50,
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: BorderRadius.circular(VSPRadius.full), // Pill Shape
-            ),
-            child: Stack(
-              children: [
-                // Animated background pill
-                AnimatedAlign(
-                  duration: const Duration(milliseconds: 250),
-                  curve: Curves.easeInOut,
-                  alignment: Directionality.of(context) == TextDirection.rtl 
-                      ? (_selectedTabIndex == 0 ? Alignment.centerRight : Alignment.centerLeft) 
-                      : (_selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight),
-                  child: FractionallySizedBox(
-                    widthFactor: 0.5,
-                    child: Container(
-                      height: 44,
-                      margin: const EdgeInsets.symmetric(horizontal: 3),
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent,
-                        borderRadius: BorderRadius.circular(VSPRadius.full),
-                        boxShadow: [
-                          BoxShadow(
-                            color: VSPColors.accent.withValues(alpha: 0.3),
-                            blurRadius: 8,
-                            offset: const Offset(0, 2),
-                          ),
-                        ],
+              height: 48,
+              padding: const EdgeInsets.all(3),
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.full),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
+              child: Stack(
+                children: [
+                  // Animated background pill
+                  AnimatedAlign(
+                    duration: const Duration(milliseconds: 220),
+                    curve: Curves.easeInOut,
+                    alignment: Directionality.of(context) == TextDirection.rtl 
+                        ? (_selectedTabIndex == 0 ? Alignment.centerRight : Alignment.centerLeft) 
+                        : (_selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight),
+                    child: FractionallySizedBox(
+                      widthFactor: 0.5,
+                      child: Container(
+                        height: 42,
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent,
+                          borderRadius: BorderRadius.circular(VSPRadius.full),
+                        ),
                       ),
                     ),
                   ),
-                ),
                 Row(
                   children: [
                     Expanded(
@@ -267,18 +261,18 @@ class ChampionScreenState extends State<ChampionScreen>
     final effectiveValue = items.contains(value) ? value : items.first;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 10),
+      height: 44,
       decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider, width: 0.5),
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: effectiveValue,
-          icon: Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 20),
-          dropdownColor: VSPColors.surfaceAlt,
+          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+          dropdownColor: VSPColors.surface,
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
             fontWeight: FontWeight.w500,

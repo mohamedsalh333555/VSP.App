@@ -75,7 +75,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         centerTitle: true,
         title: Text(
           isArabic ? 'باقات اشتراك المالكين' : 'Subscription Plans',
-          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+          style: Theme.of(context).appBarTheme.titleTextStyle ?? const TextStyle(
+            color: Colors.white,
+            fontWeight: FontWeight.bold,
+            fontSize: 18,
+          ),
         ),
       ),
       body: SingleChildScrollView(
@@ -120,6 +124,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               isCurrentPlan: userModel?.isProPlan == true,
               features: [
                 isArabic ? 'إضافة وتشغيل حتى 3 ملاعب مختلفة' : 'Operate up to 3 Stadiums',
+                isArabic ? 'إنشاء وتنظيم عدد غير محدود من البطولات الاحترافية' : 'Host & organize unlimited tournaments',
                 isArabic ? 'إمكانية إضافة ملعب إضافي (+200 ج.م/شهرياً)' : 'Extra Stadium Add-on (+200 EGP/mo)',
                 isArabic ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & Daily Booking Analytics',
                 isArabic ? 'تقرير مصادر الحجز (مباشر مقابل تحديات)' : 'Booking Source Report (Direct vs Challenge)',

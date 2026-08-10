@@ -1,4 +1,4 @@
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'dart:ui';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -7,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/language_provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../shared/widgets/custom_text_field.dart';
@@ -31,8 +30,6 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
-    _emailController.text = 'owner_test@vsp.com';
-    _passwordController.text = '12345678';
   }
 
   @override
@@ -74,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: resetEmailController,
                     keyboardType: TextInputType.emailAddress,
                     hintText: AppLocalizations.of(context)!.emailAddress,
-                    prefixIcon: Iconsax.sms,
+                    prefixIcon: LucideIcons.mail,
                   ),
                 ],
               ),
@@ -165,8 +162,6 @@ class _LoginScreenState extends State<LoginScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-
     return AnnotatedRegion<SystemUiOverlayStyle>(
       value: SystemUiOverlayStyle(
         statusBarColor: Colors.transparent,
@@ -217,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? Iconsax.arrow_right_3 : Iconsax.arrow_left_1,
+                          icon: Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -278,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      prefixIcon: Iconsax.sms,
+                      prefixIcon: LucideIcons.mail,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -289,10 +284,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onFieldSubmitted: (_) {
                         if (!_isLoading) _handleLogin();
                       },
-                      prefixIcon: Iconsax.lock,
+                      prefixIcon: LucideIcons.lock,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? Iconsax.eye : Iconsax.eye_slash,
+                          _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
                           color: VSPColors.textSecondary,
                           size: 20,
                         ),

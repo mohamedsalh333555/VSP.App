@@ -245,7 +245,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
+                          icon: Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -508,35 +508,63 @@ class _SignupScreenState extends State<SignupScreen> {
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         _buildLabel(AppLocalizations.of(context)!.preferredPosition),
+        const SizedBox(height: 4),
         Row(
           children: positions.map((pos) {
-            final code = pos['code']!;
-            final label = pos['label']!;
+            final code = pos['code'] as String;
+            final label = pos['label'] as String;
             final isSelected = _selectedPosition == code;
+
             return Expanded(
               child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 4.0),
-                child: ChoiceChip(
-                  label: FittedBox(
-                    fit: BoxFit.scaleDown,
-                    child: Text(label, textAlign: TextAlign.center),
-                  ),
-                  selected: isSelected,
-                  onSelected: (selected) {
-                    if (selected) setState(() => _selectedPosition = code);
-                  },
-                  selectedColor: VSPColors.accent,
-                  backgroundColor: VSPColors.surface,
-                  showCheckmark: false,
-                  padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 4),
-                  labelStyle: Theme.of(context).textTheme.labelSmall?.copyWith(
-                    color: isSelected ? VSPColors.background : VSPColors.textPrimary,
-                    fontWeight: FontWeight.bold,
-                  ),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    side: BorderSide(
-                      color: isSelected ? VSPColors.accent : VSPColors.borderLight,
+                padding: const EdgeInsets.symmetric(horizontal: 3.0),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 200),
+                  curve: Curves.easeOutCubic,
+                  child: Material(
+                    color: Colors.transparent,
+                    child: InkWell(
+                      onTap: () {
+                        HapticFeedback.selectionClick();
+                        setState(() => _selectedPosition = code);
+                      },
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? VSPColors.accent.withValues(alpha: 0.15)
+                              : VSPColors.surface,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(
+                            color: isSelected ? VSPColors.accent : VSPColors.borderLight,
+                            width: isSelected ? 1.8 : 1.0,
+                          ),
+                          boxShadow: isSelected
+                              ? [
+                                  BoxShadow(
+                                    color: VSPColors.accent.withValues(alpha: 0.25),
+                                    blurRadius: 10,
+                                    offset: const Offset(0, 3),
+                                  ),
+                                ]
+                              : [],
+                        ),
+                        child: Center(
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              label,
+                              textAlign: TextAlign.center,
+                              style: TextStyle(
+                                color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
+                                fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                                fontSize: 13,
+                              ),
+                            ),
+                          ),
+                        ),
+                      ),
                     ),
                   ),
                 ),

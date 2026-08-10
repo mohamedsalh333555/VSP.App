@@ -130,22 +130,24 @@ class AppTheme {
         ),
       ),
 
-      appBarTheme: const AppBarTheme(
+      appBarTheme: AppBarTheme(
         backgroundColor: VSPColors.background,
         elevation: 0,
         scrolledUnderElevation: 0,
-        iconTheme: IconThemeData(color: VSPColors.textPrimary),
-        systemOverlayStyle: SystemUiOverlayStyle(
+        iconTheme: const IconThemeData(color: VSPColors.textPrimary),
+        systemOverlayStyle: const SystemUiOverlayStyle(
           statusBarColor: Colors.transparent,
           statusBarIconBrightness: Brightness.light,
           systemNavigationBarColor: VSPColors.background,
           systemNavigationBarIconBrightness: Brightness.light,
         ),
         titleTextStyle: TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.w600,
+          fontSize: 18,
+          fontWeight: FontWeight.bold,
           color: VSPColors.textPrimary,
           height: 1.2,
+          fontFamily: poppinsFamily,
+          fontFamilyFallback: fallbackFonts,
         ),
       ),
 

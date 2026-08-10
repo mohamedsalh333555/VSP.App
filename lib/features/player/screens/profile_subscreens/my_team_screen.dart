@@ -308,12 +308,18 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(height: VSPSpacing.sm),
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
-              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md)),
+              height: 44,
+              decoration: BoxDecoration(
+                color: VSPColors.surface, 
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
+              ),
               child: DropdownButtonHideUnderline(
                 child: DropdownButton<String>(
                   value: _selectedSport,
                   isExpanded: true,
                   dropdownColor: VSPColors.surface,
+                  icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
                   items: VSPConstants.sports.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)))).toList(),
                   onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
                 ),
@@ -718,7 +724,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(width: 10),
             Expanded(
               child: Text(
-                isArabic ? 'ترتيب فريقك الرسمي (Elo Rating)' : 'Official Elo Rating',
+                isArabic ? 'ترتيب فريقك الرسمي' : 'Official Elo Rating',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
               ),
             ),
@@ -726,7 +732,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         ),
         content: Text(
           isArabic
-              ? 'نقاط الـ Elo تعبر عن الترتيب الرسمي لفريقك بين كل فرق المحافظة. ترتفع النقاط وتتقدم في جدول الدوري عند الفوز في التحديات والبطولات.'
+              ? 'نقاط الترتيب تعبر عن الموقع الرسمي لفريقك بين كل فرق المحافظة. ترتفع النقاط وتتقدم في جدول الدوري عند الفوز في التحديات والبطولات.'
               : 'Elo Rating reflects your official team standing across the governorate. Earn points and climb the leaderboard by winning challenges.',
           style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
         ),

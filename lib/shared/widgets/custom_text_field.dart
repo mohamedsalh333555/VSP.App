@@ -70,7 +70,7 @@ class CustomTextField extends StatelessWidget {
               color: VSPColors.textSecondary.withValues(alpha: 0.5),
             ),
         filled: true,
-        fillColor: VSPColors.surface,
+        fillColor: VSPColors.surfaceAlt,
         counterText: "",
         prefixIcon: prefixIcon != null
             ? Icon(
@@ -86,8 +86,8 @@ class CustomTextField extends StatelessWidget {
         ),
         enabledBorder: OutlineInputBorder(
           borderRadius: BorderRadius.circular(VSPRadius.input),
-          borderSide: BorderSide(
-            color: VSPColors.accent.withValues(alpha: 0.1),
+          borderSide: const BorderSide(
+            color: VSPColors.divider,
             width: 1,
           ),
         ),

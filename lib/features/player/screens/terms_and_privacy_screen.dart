@@ -1,6 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/providers/auth_provider.dart';
 
 class TermsAndPrivacyScreen extends StatelessWidget {
   const TermsAndPrivacyScreen({super.key});
@@ -8,6 +10,8 @@ class TermsAndPrivacyScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final auth = Provider.of<AuthProvider>(context);
+    final isOwner = auth.isOwner;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -23,7 +27,9 @@ class TermsAndPrivacyScreen extends StatelessWidget {
         ),
         centerTitle: true,
         title: Text(
-          'الشروط والأحكام وسياسة الخصوصية',
+          isOwner
+              ? (isArabic ? 'شروط وسياسة أصحاب الملاعب' : 'Stadium Owner Policy & Terms')
+              : (isArabic ? 'الشروط والأحكام وسياسة الخصوصية' : 'Terms of Service & Privacy Policy'),
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
@@ -53,18 +59,22 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                     child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 28),
                   ),
                   const SizedBox(width: 14),
-                  const Expanded(
+                  Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'اتفاقية الاستخدام وحماية البيانات',
-                          style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                          isOwner 
+                              ? (isArabic ? 'اتفاقية تشغيل وحماية أصحاب الملاعب' : 'Stadium Operator & Data Agreement')
+                              : (isArabic ? 'اتفاقية الاستخدام وحماية البيانات' : 'Terms of Use & Data Agreement'),
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                         ),
-                        SizedBox(height: 4),
+                        const SizedBox(height: 4),
                         Text(
-                          'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)',
-                          style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          isArabic 
+                              ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
+                              : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                         ),
                       ],
                     ),
@@ -75,43 +85,96 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
             const SizedBox(height: VSPSpacing.lg),
 
-            // Section 1: Terms of Use
-            _buildSectionCard(
-              context,
-              icon: LucideIcons.fileText,
-              title: '1. شروط استخدام منصة VSP',
-              content: 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.',
-            ),
+            if (isOwner) ...[
+              // Section 1: Stadium Operation Terms
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.building,
+                title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
+                content: isArabic
+                    ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
+                    : 'Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots. VSP manages technical dispatching to prevent conflicts.',
+              ),
 
-            const SizedBox(height: VSPSpacing.md),
+              const SizedBox(height: VSPSpacing.md),
 
-            // Section 2: Privacy Policy (PDPL 2020)
-            _buildSectionCard(
-              context,
-              icon: LucideIcons.lock,
-              title: '2. سياسة حماية البيانات والخصوصية',
-              content: 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.',
-            ),
+              // Section 2: Privacy & Player Data Protection
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.lock,
+                title: isArabic ? '2. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
+                content: isArabic
+                    ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
+                    : 'Under Egyptian Law PDPL 2020, owners agree to keep player phone numbers strictly confidential and use them only for booking communication.',
+              ),
 
-            const SizedBox(height: VSPSpacing.md),
+              const SizedBox(height: VSPSpacing.md),
 
-            // Section 3: Financial Fees Policy
-            _buildSectionCard(
-              context,
-              icon: LucideIcons.creditCard,
-              title: '3. سياسة الرسوم والدفع أونلاين',
-              content: 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع، لتضمن تأكيد الحجز فورياً بنزاهة وشفافية.',
-            ),
+              // Section 3: Payouts & Deposit Guarantee
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.wallet,
+                title: isArabic ? '3. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
+                content: isArabic
+                    ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
+                    : 'Owners must verify and honor direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer, maintaining fixed rates.',
+              ),
 
-            const SizedBox(height: VSPSpacing.md),
+              const SizedBox(height: VSPSpacing.md),
 
-            // Section 4: League & Dispute Policy
-            _buildSectionCard(
-              context,
-              icon: LucideIcons.trophy,
-              title: '4. سياسة نتايج المباريات والـ Elo Rating',
-              content: 'يُعتمد إدخال نتائج التحديات بين الكباتن تلقائياً بعد مرور 24 ساعة في حال عدم تقديم اعتراض رسمي من الفريق الخصم، وتُحدث نقاط الترتيب والـ Elo بناءً عليها بنزاهة.',
-            ),
+              // Section 4: Tournament & Dispute Integrity
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.trophy,
+                title: isArabic ? '4. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
+                content: isArabic
+                    ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
+                    : 'Owners hosting tournaments commit to fair refereeing, prompt score confirmation, and timely prize distribution to winning teams.',
+              ),
+            ] else ...[
+              // Player Terms
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.fileText,
+                title: isArabic ? '1. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
+                content: isArabic
+                    ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب.'
+                    : 'VSP acts as a digital intermediary facilitating pitch bookings and team challenges. Players must attend scheduled times with mutual respect.',
+              ),
+
+              const SizedBox(height: VSPSpacing.md),
+
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.lock,
+                title: isArabic ? '2. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
+                content: isArabic
+                    ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
+                    : 'In accordance with PDPL 2020, basic data is processed strictly for match organization. VSP never sells user data to third parties.',
+              ),
+
+              const SizedBox(height: VSPSpacing.md),
+
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.creditCard,
+                title: isArabic ? '3. سياسة الرسوم والدفع أونلاين' : '3. Payments & Refund Policy',
+                content: isArabic
+                    ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع.'
+                    : 'Digital payments are safely processed via Paymob. Applicable service fees are clearly shown before checkout.',
+              ),
+
+              const SizedBox(height: VSPSpacing.md),
+
+              _buildSectionCard(
+                context,
+                icon: LucideIcons.trophy,
+                title: isArabic ? '4. سياسة نتائج المباريات والترتيب الرسمي' : '4. Match Results & Ranking Policy',
+                content: isArabic
+                    ? 'يُعتمد إدخال نتائج التحديات بين الكباتن تلقائياً بعد مرور 24 ساعة في حال عدم تقديم اعتراض رسمي من الفريق الخصم، وتُحدث نقاط الترتيب بناءً عليها بنزاهة.'
+                    : 'Captains submit challenge scores post-match. Uncontested scores are verified within 24 hours to update rankings.',
+              ),
+            ],
 
             const SizedBox(height: VSPSpacing.xl),
           ],

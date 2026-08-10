@@ -121,7 +121,11 @@ class StadiumCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  stadium.area.isNotEmpty ? stadium.area : stadium.location,
+                                  stadium.area.isNotEmpty
+                                      ? ((stadium.governorate != null && stadium.governorate!.isNotEmpty && !stadium.area.contains(stadium.governorate!))
+                                          ? '${stadium.governorate} • ${stadium.area}'
+                                          : stadium.area)
+                                      : (stadium.location.isNotEmpty && stadium.location != 'Sheyakhah' ? stadium.location : 'القاهرة'),
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: VSPColors.textPrimary,
                                     fontWeight: FontWeight.bold,
@@ -136,7 +140,29 @@ class StadiumCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                     const Spacer(),
+                      const Spacer(),
+                    if (!stadium.isVerified) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.amber.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: Colors.amber, width: 1),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.clock, color: Colors.amber, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة 🕒' : 'Under Review 🕒',
+                              style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     if (isOwnerView)
                       GestureDetector(
                         onTap: onEditTap,
@@ -212,13 +238,13 @@ class StadiumCard extends StatelessWidget {
                         overflow: TextOverflow.ellipsis,
                       ),
                       const SizedBox(height: 6),
-                      // Seats
+                      // Working Hours
                       Text(
                         Localizations.localeOf(context).languageCode == 'ar'
-                            ? 'المقاعد: ${stadium.seatsCapacity} مقعد'
-                            : 'Seats ${stadium.seatsCapacity} person',
+                            ? 'ساعات العمل: ${stadium.openingTime} - ${stadium.closingTime}'
+                            : 'Working Hours: ${stadium.openingTime} - ${stadium.closingTime}',
                         style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                          color: Colors.white70,
+                          color: VSPColors.accent,
                           fontWeight: FontWeight.bold,
                           fontSize: 12,
                         ),

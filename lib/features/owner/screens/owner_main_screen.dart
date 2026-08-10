@@ -153,7 +153,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                   height: 50,
                   child: FloatingActionButton.extended(
                     onPressed: () {
-                       Navigator.push(context, MaterialPageRoute(builder: (context) => const CreateTournamentWizard()));
+                      CreateTournamentWizard.open(context);
                     },
                     backgroundColor: VSPColors.accent,
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),

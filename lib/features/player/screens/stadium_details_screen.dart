@@ -23,6 +23,7 @@ class StadiumDetailsScreen extends StatefulWidget {
 
 class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
+  late PageController _pageController;
   int _currentImageIndex = 0;
   late final List<String> _displayImages;
 
@@ -30,13 +31,86 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
-    _displayImages = widget.stadium.images.isNotEmpty ? widget.stadium.images : [widget.stadium.imageUrl];
+    _pageController = PageController();
+    
+    // Parse ONLY genuine stadium images uploaded for this specific stadium
+    final List<String> rawImages = [];
+    if (widget.stadium.imageUrl.isNotEmpty) {
+      rawImages.add(widget.stadium.imageUrl);
+    }
+    for (final img in widget.stadium.images) {
+      if (img.isNotEmpty && !rawImages.contains(img)) {
+        rawImages.add(img);
+      }
+    }
+
+    _displayImages = rawImages;
   }
 
   @override
   void dispose() {
     _tabController.dispose();
+    _pageController.dispose();
     super.dispose();
+  }
+
+  void _openFullScreenGallery(int initialIndex) {
+    int activeIdx = initialIndex;
+    final dialogPageController = PageController(initialPage: initialIndex);
+
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (context, setDialogState) {
+          return Dialog.fullscreen(
+            backgroundColor: Colors.black,
+            child: Stack(
+              children: [
+                PageView.builder(
+                  controller: dialogPageController,
+                  itemCount: _displayImages.length,
+                  onPageChanged: (idx) => setDialogState(() => activeIdx = idx),
+                  itemBuilder: (ctx, i) {
+                    return InteractiveViewer(
+                      child: CachedNetworkImage(
+                        imageUrl: _displayImages[i],
+                        fit: BoxFit.contain,
+                      ),
+                    );
+                  },
+                ),
+                Positioned(
+                  top: 40,
+                  right: 16,
+                  child: IconButton(
+                    icon: const Icon(LucideIcons.x, color: Colors.white, size: 28),
+                    onPressed: () => Navigator.pop(dialogCtx),
+                  ),
+                ),
+                Positioned(
+                  bottom: 30,
+                  left: 0,
+                  right: 0,
+                  child: Center(
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: Colors.white24,
+                        borderRadius: BorderRadius.circular(20),
+                      ),
+                      child: Text(
+                        '${activeIdx + 1} / ${_displayImages.length}',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          );
+        },
+      ),
+    );
   }
 
   @override
@@ -57,26 +131,32 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                 Positioned.fill(
                   child: _displayImages.isNotEmpty && _displayImages.first.isNotEmpty
                       ? PageView.builder(
+                          controller: _pageController,
                           itemCount: _displayImages.length,
                           onPageChanged: (index) => setState(() => _currentImageIndex = index),
                           itemBuilder: (context, index) {
-                            return CachedNetworkImage(
-                              imageUrl: _displayImages[index],
-                              fit: BoxFit.cover,
-                              placeholder: (ctx, url) => Container(color: VSPColors.surface),
-                              errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
+                            return GestureDetector(
+                              onTap: () => _openFullScreenGallery(index),
+                              child: CachedNetworkImage(
+                                imageUrl: _displayImages[index],
+                                fit: BoxFit.cover,
+                                placeholder: (ctx, url) => Container(color: VSPColors.surface),
+                                errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
+                              ),
                             );
                           },
                         )
                       : _buildVspLogoBackground(),
                 ),
                 Positioned.fill(
-                  child: Container(
-                    decoration: BoxDecoration(
-                      gradient: LinearGradient(
-                        begin: Alignment.topCenter,
-                        end: Alignment.bottomCenter,
-                        colors: [VSPColors.background.withValues(alpha: 0), VSPColors.background],
+                  child: IgnorePointer(
+                    child: Container(
+                      decoration: BoxDecoration(
+                        gradient: LinearGradient(
+                          begin: Alignment.topCenter,
+                          end: Alignment.bottomCenter,
+                          colors: [VSPColors.background.withValues(alpha: 0), VSPColors.background],
+                        ),
                       ),
                     ),
                   ),
@@ -120,6 +200,59 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     ),
                   ),
                 ),
+                // Left / Right Quick Navigation Arrows for non-swipers
+                if (_displayImages.length > 1) ...[
+                  Positioned(
+                    left: 12,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: IgnorePointer(
+                        ignoring: _currentImageIndex == 0,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _currentImageIndex > 0 ? 1.0 : 0.0,
+                          child: _buildCircularIcon(
+                            icon: isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+                            onTap: () {
+                              if (_currentImageIndex > 0) {
+                                _pageController.previousPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  Positioned(
+                    right: 12,
+                    top: 0,
+                    bottom: 0,
+                    child: Center(
+                      child: IgnorePointer(
+                        ignoring: _currentImageIndex == _displayImages.length - 1,
+                        child: AnimatedOpacity(
+                          duration: const Duration(milliseconds: 200),
+                          opacity: _currentImageIndex < _displayImages.length - 1 ? 1.0 : 0.0,
+                          child: _buildCircularIcon(
+                            icon: isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                            onTap: () {
+                              if (_currentImageIndex < _displayImages.length - 1) {
+                                _pageController.nextPage(
+                                  duration: const Duration(milliseconds: 300),
+                                  curve: Curves.easeInOut,
+                                );
+                              }
+                            },
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
                 Positioned(
                   bottom: 16, left: 0, right: 0,
                   child: Row(
@@ -127,6 +260,38 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     children: List.generate(_displayImages.length, (index) => Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _buildDot(isActive: index == _currentImageIndex))),
                   ),
                 ),
+                // Photo Counter Pill Badge (e.g. 1/4 📷) - Clickable to open full screen gallery
+                if (_displayImages.length > 1)
+                  Positioned(
+                    bottom: 16,
+                    right: 16,
+                    child: GestureDetector(
+                      onTap: () => _openFullScreenGallery(_currentImageIndex),
+                      child: Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: Colors.black.withValues(alpha: 0.65),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: Colors.white24, width: 0.5),
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(LucideIcons.image, color: Colors.white, size: 12),
+                            const SizedBox(width: 5),
+                            Text(
+                              '${_currentImageIndex + 1}/${_displayImages.length}',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontSize: 11,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  ),
               ],
             ),
           ),

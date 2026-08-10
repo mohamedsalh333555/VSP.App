@@ -642,13 +642,13 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             ),
                       ),
                       IconButton(
-                        icon: const Icon(Icons.close, color: VSPColors.textSecondary),
+                        icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary),
                         onPressed: () => Navigator.pop(sheetContext),
                       ),
                     ],
                   ),
                   Text(
-                    isArabic ? 'تسجيل فريق اشترك عبر الهاتف أو نقداً بالملعب' : 'Register an in-person or cash team',
+                    isArabic ? 'تسجيل وتنسيق فريق خارجي يدويًا في قائمة البطولة' : 'Manually add and register an external team to the tournament',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                   const SizedBox(height: 16),
@@ -773,7 +773,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                       ),
                                     ),
                                     child: isSelected
-                                        ? Icon(Icons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 16)
+                                        ? Icon(LucideIcons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 16)
                                         : null,
                                   ),
                                 );

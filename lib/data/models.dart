@@ -164,11 +164,11 @@ class Stadium {
       type: sportType,
       size: data['size'] ?? '5 VS 5',
       imageUrl: data['imageUrl'] ?? data['image_url'] ?? '',
-      images: data['images'] != null 
+      images: (data['images'] is List && (data['images'] as List).isNotEmpty)
           ? List<String>.from(data['images'])
           : (data['features'] is Map && data['features']['allImages'] is List && (data['features']['allImages'] as List).isNotEmpty)
               ? List<String>.from(data['features']['allImages'])
-              : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl']] : []),
+              : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl'].toString()] : (data['image_url'] != null && data['image_url'].toString().isNotEmpty ? [data['image_url'].toString()] : [])),
       baths: data['baths'] ?? 0,
       cafeteria: data['cafeteria'] ?? 0,
       playersPerTeam: ppt,
@@ -194,8 +194,8 @@ class Stadium {
       isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
       isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
-      openingTime: data['features']?['workingHours']?['start'] ?? '08:00 AM',
-      closingTime: data['features']?['workingHours']?['end'] ?? '12:00 AM',
+      openingTime: data['features']?['workingHours']?['start'] ?? '04:00 PM',
+      closingTime: data['features']?['workingHours']?['end'] ?? '03:00 AM',
       isSplitShift: data['features']?['isSplitShift'] ?? false,
       breakStartTime: data['features']?['breakTime']?['start'],
       breakEndTime: data['features']?['breakTime']?['end'],

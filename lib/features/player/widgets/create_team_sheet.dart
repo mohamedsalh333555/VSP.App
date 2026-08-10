@@ -221,14 +221,17 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                   const SizedBox(height: VSPSpacing.sm),
                   Container(
                     padding: const EdgeInsets.symmetric(horizontal: 16),
+                    height: 44,
                     decoration: BoxDecoration(
                       color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
                     ),
                     child: DropdownButtonHideUnderline(
                       child: DropdownButton<String>(
                         value: _selectedSport,
                         isExpanded: true,
+                        icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
                         dropdownColor: VSPColors.surface,
                         items: VSPConstants.sports
                             .map((s) => DropdownMenuItem(

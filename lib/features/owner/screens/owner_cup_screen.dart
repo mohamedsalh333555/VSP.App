@@ -2,9 +2,11 @@ import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/providers/stadium_provider.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -23,12 +25,29 @@ class OwnerCupScreen extends StatefulWidget {
 class _OwnerCupScreenState extends State<OwnerCupScreen> {
   int _selectedTab = 0; // 0: Coming, 1: Ongoing, 2: Finished
   String _selectedSport = 'Football';
-  String _selectedCategory = 'Cup';
+  String _selectedCategory = 'All';
 
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final ownerStadiums = stadiumProvider.stadiums;
+
+    final List<String> availableSports = ownerStadiums
+        .map((s) => s.type.trim())
+        .where((t) => t.isNotEmpty)
+        .toSet()
+        .toList();
+
+    if (availableSports.isEmpty) {
+      availableSports.add('Football');
+    }
+
+    if (!availableSports.contains(_selectedSport)) {
+      _selectedSport = availableSports.first;
+    }
     
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -44,19 +63,21 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       ),
       body: Column(
         children: [
-          // 1. التبويبات العلوية (القادمة، الجارية، المنتهية)
+          // 1. التبويبات العلوية الكبسولية الفاخرة الموحدة (Pill Shape)
           Padding(
-            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+            padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.xs),
             child: Container(
-              height: 50,
+              height: 48,
+              padding: const EdgeInsets.all(3),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.xl),
+                borderRadius: BorderRadius.circular(VSPRadius.full),
+                border: Border.all(color: VSPColors.divider, width: 0.5),
               ),
               child: Stack(
                 children: [
                   AnimatedAlign(
-                    duration: const Duration(milliseconds: 250),
+                    duration: const Duration(milliseconds: 220),
                     curve: Curves.easeInOut,
                     alignment: _selectedTab == 0 
                         ? AlignmentDirectional.centerStart 
@@ -64,18 +85,10 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     child: FractionallySizedBox(
                       widthFactor: 1 / 3,
                       child: Container(
-                        height: 44,
-                        margin: const EdgeInsets.symmetric(horizontal: 3),
+                        height: 42,
                         decoration: BoxDecoration(
                           color: VSPColors.accent,
-                          borderRadius: BorderRadius.circular(VSPRadius.xl),
-                          boxShadow: [
-                            BoxShadow(
-                              color: VSPColors.accent.withValues(alpha: 0.3),
-                              blurRadius: 8,
-                              offset: const Offset(0, 2),
-                            ),
-                          ],
+                          borderRadius: BorderRadius.circular(VSPRadius.full),
                         ),
                       ),
                     ),
@@ -92,7 +105,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             ),
           ),
 
-          // 2. الفلاتر المنسدلة
+          const SizedBox(height: 10),
+
+          // 2. الفلاتر المنسدلة الموحدة بتناسق الـ Corner Radius (16px)
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
             child: Row(
@@ -100,15 +115,15 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               children: [
                 Expanded(
                   child: _buildFilterDropdown(
-                    VSPConstants.sports, 
+                    availableSports, 
                     _selectedSport, 
                     (v) => setState(() => _selectedSport = v!)
                   ),
                 ),
-                const SizedBox(width: 12),
+                const SizedBox(width: 10),
                 Expanded(
                   child: _buildFilterDropdown(
-                    ['Cup', 'League'], 
+                    ['All', 'Cup', 'League', 'GroupsAndKnockout'], 
                     _selectedCategory, 
                     (v) => setState(() => _selectedCategory = v!)
                   ),
@@ -134,7 +149,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 final championships = snapshot.data ?? [];
                 
                 final filtered = championships.where((c) {
-                  final isRightCategory = c.type.toLowerCase() == _selectedCategory.toLowerCase();
+                  final isRightCategory = _selectedCategory == 'All' || c.type.toLowerCase() == _selectedCategory.toLowerCase();
                   
                   final now = DateTime.now();
                   bool isRightStatus = false;
@@ -160,10 +175,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     subtitle: l10n.noTournamentsSubtitle,
                     buttonText: l10n.createYourFirst,
                     onButtonPressed: () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (context) => const CreateTournamentWizard()),
-                      );
+                      CreateTournamentWizard.open(context);
                     },
                   );
                 }
@@ -216,8 +228,10 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     
     String translateItem(String val) {
       if (!isArabic) return val;
+      if (val == 'All') return 'جميع البطولات';
       if (val == 'Cup') return 'كأس';
       if (val == 'League') return 'دوري';
+      if (val == 'GroupsAndKnockout') return 'مجموعات وتصفيات';
       if (val == 'Football') return 'كرة القدم';
       if (val == 'Basketball') return 'كرة السلة';
       if (val == 'Padel') return 'بادل';
@@ -227,23 +241,35 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     }
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 12),
-      height: 40,
+      padding: const EdgeInsets.symmetric(horizontal: 14),
+      height: 44,
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.sm), 
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1), 
+        borderRadius: BorderRadius.circular(VSPRadius.lg), 
+        border: Border.all(color: VSPColors.divider, width: 0.5), 
       ),
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent),
-          style: Theme.of(context).textTheme.bodySmall,
+          isExpanded: true,
+          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+          style: Theme.of(context).textTheme.bodySmall?.copyWith(
+            color: VSPColors.textPrimary,
+            fontWeight: FontWeight.w600,
+            fontSize: 13,
+          ),
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(translateItem(item), style: Theme.of(context).textTheme.bodySmall),
+              child: Text(
+                translateItem(item),
+                style: const TextStyle(
+                  color: VSPColors.textPrimary,
+                  fontSize: 13,
+                  fontWeight: FontWeight.w600,
+                ),
+              ),
             );
           }).toList(),
           onChanged: onChanged,

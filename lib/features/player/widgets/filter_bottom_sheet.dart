@@ -342,10 +342,11 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
         const SizedBox(height: VSPSpacing.md),
         Container(
           padding: const EdgeInsets.symmetric(horizontal: 16),
+          height: 44,
           decoration: BoxDecoration(
             color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(color: Colors.white.withValues(alpha: 0.05)),
+            borderRadius: BorderRadius.circular(VSPRadius.lg),
+            border: Border.all(color: VSPColors.divider, width: 0.5),
           ),
           child: DropdownButtonHideUnderline(
             child: DropdownButton<String>(
@@ -355,7 +356,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
               ),
               dropdownColor: VSPColors.surface,
-              icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+              icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
               isExpanded: true,
               style: Theme.of(context).textTheme.bodyMedium,
               onChanged: (String? newValue) {

@@ -49,18 +49,19 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   }
 
   int _parseTimeToHour(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 8;
+    if (timeStr == null || timeStr.isEmpty) return 16;
     try {
-      final parts = timeStr.trim().split(' ');
-      if (parts.length != 2) return 8;
-      final timeParts = parts[0].split(':');
-      int hour = int.parse(timeParts[0]);
-      final period = parts[1].toUpperCase();
-      if (period == 'PM' && hour != 12) hour += 12;
-      if (period == 'AM' && hour == 12) hour = 0;
+      final clean = timeStr.trim();
+      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
+      final match = timeRegex.firstMatch(clean);
+      if (match == null) return 16;
+      int hour = int.parse(match.group(1)!);
+      String? period = match.group(3)?.toUpperCase();
+      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
+      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
       return hour;
-    } catch (e) {
-      return 8;
+    } catch (_) {
+      return 16;
     }
   }
 
@@ -68,23 +69,17 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     if (timeStr == null || timeStr.isEmpty) return 0;
     try {
       final clean = timeStr.trim();
-      final format = DateFormat('hh:mm a');
-      final parsedTime = format.parse(clean);
-      return parsedTime.hour * 60 + parsedTime.minute;
-    } catch (e) {
-      try {
-        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
-        final match = timeRegex.firstMatch(timeStr);
-        if (match == null) return 0;
-        int hour = int.parse(match.group(1)!);
-        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-        String? period = match.group(3)?.toUpperCase();
-        if (period == 'PM' && hour != 12) hour += 12;
-        if (period == 'AM' && hour == 12) hour = 0;
-        return hour * 60 + minute;
-      } catch (_) {
-        return 0;
-      }
+      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
+      final match = timeRegex.firstMatch(clean);
+      if (match == null) return 0;
+      int hour = int.parse(match.group(1)!);
+      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
+      String? period = match.group(3)?.toUpperCase();
+      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
+      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
+      return hour * 60 + minute;
+    } catch (_) {
+      return 0;
     }
   }
 
@@ -150,14 +145,14 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
                         decoration: BoxDecoration(
                           color: VSPColors.surface,
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          borderRadius: BorderRadius.circular(VSPRadius.lg),
                           border: Border.all(color: VSPColors.divider, width: 0.5),
                         ),
                         child: DropdownButtonHideUnderline(
                           child: DropdownButton<Stadium>(
                             value: effectiveValue,
                             dropdownColor: VSPColors.surface,
-                            icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary, size: 18),
+                            icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
                             isExpanded: true,
                             items: stadiums.map((s) => DropdownMenuItem(
                               value: s,
@@ -326,8 +321,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                            isBreak = currentSlotMin >= breakStartMin || currentSlotMin < breakEndMin;
                          }
                       }
+                      bool isOvernightSlot = (startH > endH && (currentH < startH || currentH < 12));
+                      DateTime slotDate = selectedDate;
+                      if (isOvernightSlot && currentH < 12) {
+                        slotDate = selectedDate.add(const Duration(days: 1));
+                      }
+                      String dayNameStr = DateFormat('EEEE', isArSlot ? 'ar' : 'en').format(slotDate);
+                      String nightLabel = isOvernightSlot ? (isArSlot ? 'سهرة $dayNameStr' : '$dayNameStr Night') : '';
 
-                      final slotTime = DateTime(selectedDate.year, selectedDate.month, selectedDate.day, currentH, currentM);
+                      final slotTime = DateTime(slotDate.year, slotDate.month, slotDate.day, currentH, currentM);
                       final currentSlotMin = currentH * 60 + currentM;
 
                       final booking = dayBookings.cast<Booking?>().firstWhere(
@@ -336,8 +338,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           final bStart = b.startTime.toLocal();
                           final bEnd = b.endTime.toLocal();
                           final bStartMin = bStart.hour * 60 + bStart.minute;
-                          final bEndMin = bEnd.hour * 60 + bEnd.minute;
-                          return currentSlotMin >= bStartMin && currentSlotMin < bEndMin;
+                          int bEndMin = bEnd.hour * 60 + bEnd.minute;
+                          // Normalize for overnight bookings (crossing midnight)
+                          if (bEndMin <= bStartMin) bEndMin += 1440;
+                          // Normalize currentSlotMin for post-midnight slots
+                          int normalizedSlotMin = currentSlotMin;
+                          if (normalizedSlotMin < bStartMin && bEndMin > 1440) {
+                            normalizedSlotMin += 1440;
+                          }
+                          return normalizedSlotMin >= bStartMin && normalizedSlotMin < bEndMin;
                         },
                         orElse: () => null,
                       );
@@ -348,11 +357,11 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                       if (isBreak) {
                         if (!isMoreThan10MinsPast) {
-                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break', 'slotTime': slotTime});
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break', 'slotTime': slotTime, 'nightLabel': nightLabel});
                         }
                       } else if (booking == null) {
                         if (!isMoreThan10MinsPast) {
-                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty', 'slotTime': slotTime});
+                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty', 'slotTime': slotTime, 'nightLabel': nightLabel});
                         }
                       } else {
                         final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
@@ -360,13 +369,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           'time': timeStr,
                           'hour': currentH,
                           'minute': currentM,
-                          'type': isManual ? 'manual' : (booking.playerTeamName != null ? 'team' : 'individual'),
-                          'name': booking.playerTeamName ?? l10n.individualPlayerLabel,
-                          'subtitle': isManual ? l10n.bookedManually : booking.bookingType.name.toUpperCase(),
-                          'isManaged': true,
-                          'isManual': isManual,
+                          'type': isManual ? 'manual' : 'player',
+                          'name': booking.playerTeamName ?? (isArSlot ? 'حجز يدوي' : 'Manual Booking'),
                           'booking': booking,
+                          'isManaged': true,
                           'slotTime': slotTime,
+                          'nightLabel': nightLabel,
                         });
                       }
                       
@@ -389,14 +397,76 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     );
                   }
 
+                  // Merge consecutive slots of the same booking into one card
+                  final List<Map<String, dynamic>> mergedSlots = [];
+                  int si = 0;
+                  while (si < slots.length) {
+                    final slot = slots[si];
+                    final booking = slot['booking'] as Booking?;
+                    if (booking == null) {
+                      mergedSlots.add(slot);
+                      si++;
+                      continue;
+                    }
+                    // Find all consecutive slots with same booking id
+                    int sj = si + 1;
+                    while (sj < slots.length) {
+                      final next = slots[sj];
+                      final nextBooking = next['booking'] as Booking?;
+                      if (nextBooking != null && nextBooking.id == booking.id) {
+                        sj++;
+                      } else {
+                        break;
+                      }
+                    }
+                    final durationMins = (sj - si) * 30;
+                    final lastSlot = slots[sj - 1];
+                    // Compute end time label
+                    final endSlotTime = lastSlot['slotTime'] as DateTime?;
+                    DateTime? endDisplayTime;
+                    if (endSlotTime != null) {
+                      endDisplayTime = endSlotTime.add(const Duration(minutes: 30));
+                    }
+                    final endHour = endDisplayTime?.hour ?? 0;
+                    final endMin = endDisplayTime?.minute ?? 0;
+                    final endH12 = endHour == 0 ? 12 : (endHour > 12 ? endHour - 12 : endHour);
+                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                    final endPeriod = isAr ? (endHour >= 12 ? 'م' : 'ص') : (endHour >= 12 ? 'PM' : 'AM');
+                    final endTimeStr = '$endH12:${endMin.toString().padLeft(2, '0')} $endPeriod';
+
+                    String durationLabel;
+                    if (isAr) {
+                      if (durationMins == 60) { durationLabel = 'ساعة'; }
+                      else if (durationMins == 90) { durationLabel = 'ساعة ونصف'; }
+                      else if (durationMins == 120) { durationLabel = 'ساعتين'; }
+                      else if (durationMins % 60 == 0) { durationLabel = '${durationMins ~/ 60} ساعات'; }
+                      else { durationLabel = '${durationMins ~/ 60}س ${durationMins % 60}د'; }
+                    } else {
+                      if (durationMins == 60) { durationLabel = '1 hr'; }
+                      else if (durationMins == 90) { durationLabel = '1.5 hr'; }
+                      else if (durationMins % 60 == 0) { durationLabel = '${durationMins ~/ 60} hrs'; }
+                      else { durationLabel = '${durationMins ~/ 60}h ${durationMins % 60}m'; }
+                    }
+
+                    mergedSlots.add({
+                      ...slot,
+                      'merged': true,
+                      'slotCount': sj - si,
+                      'durationMins': durationMins,
+                      'durationLabel': durationLabel,
+                      'endTimeStr': endTimeStr,
+                    });
+                    si = sj;
+                  }
+
                   return ListView.separated(
                     controller: _scrollController,
                     padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
                     physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: slots.length,
+                    itemCount: mergedSlots.length,
                     separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
                     itemBuilder: (context, index) {
-                      final slot = slots[index];
+                      final slot = mergedSlots[index];
                       return _buildTimeSlotRow(slot, selectedStadium);
                     },
                   );
@@ -409,6 +479,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   }
 
   Widget _buildTimeSlotRow(Map<String, dynamic> slot, Stadium selectedStadium) {
+    final bool isMerged = slot['merged'] == true;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () {
@@ -419,17 +490,45 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         }
       },
       child: Row(
-        crossAxisAlignment: CrossAxisAlignment.center,
+        crossAxisAlignment: isMerged ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
           SizedBox(
-            width: 65,
-            child: Text(
-              slot['time'].replaceAll(' ', ''),
-              style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                fontWeight: FontWeight.bold,
-                color: VSPColors.textSecondary,
-                fontSize: 12,
-              ),
+            width: 75,
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  slot['time'].replaceAll(' ', ''),
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    fontWeight: FontWeight.bold,
+                    color: VSPColors.textSecondary,
+                    fontSize: 12,
+                  ),
+                ),
+                if (isMerged) ...([
+                  const SizedBox(height: 2),
+                  Text(
+                    slot['endTimeStr'] as String,
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 10,
+                      fontWeight: FontWeight.w500,
+                    ),
+                  ),
+                ]),
+                if ((slot['nightLabel'] as String?)?.isNotEmpty ?? false) ...([
+                  const SizedBox(height: 2),
+                  Text(
+                    '🌙 ${slot['nightLabel']}',
+                    style: const TextStyle(
+                      color: Colors.amber,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 9,
+                    ),
+                  ),
+                ]),
+              ],
             ),
           ),
           
@@ -515,12 +614,14 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     }
     
     final booking = slot['booking'] as Booking?;
-    bool isManual = slot['isManual'] ?? false;
+    final bool isMerged = slot['merged'] == true;
+    bool isManual = slot['type'] == 'manual';
     final bool isCompleted = booking != null && booking.endTime.isBefore(now);
+    final String? durationLabel = slot['durationLabel'] as String?;
 
     return Container(
-      height: 70,
-      padding: const EdgeInsets.symmetric(horizontal: 16),
+      height: isMerged ? null : 70,
+      padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMerged ? 14 : 0),
       decoration: BoxDecoration(
         color: isManual ? VSPColors.surface : VSPColors.background,
         borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -564,6 +665,24 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 const SizedBox(height: 2),
                 Row(
                   children: [
+                    if (durationLabel != null) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.12),
+                          borderRadius: BorderRadius.circular(4),
+                        ),
+                        child: Text(
+                          durationLabel,
+                          style: const TextStyle(
+                            color: VSPColors.accent,
+                            fontSize: 9,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     Text(
                       slot['subtitle'] ?? '',
                       style: Theme.of(context).textTheme.labelSmall?.copyWith(
@@ -1009,6 +1128,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     final booking = widget.slot['booking'] as Booking?;
     final stadium = widget.selectedStadium;
 
+    final bool isCompletedBooking = widget.isEdit && booking != null && (DateTime.now().isAfter(booking.endTime) || booking.status == BookingStatus.completed);
+
     final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
     final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
 
@@ -1049,10 +1170,12 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isEdit ? l10n.bookingDetailsTitle : l10n.manualBookingTitle,
+                widget.isEdit 
+                    ? (isCompletedBooking ? (isArabic ? 'تفاصيل الحجز (مكتمل)' : 'Booking Details (Completed)') : l10n.bookingDetailsTitle)
+                    : l10n.manualBookingTitle,
                 style: Theme.of(context).textTheme.displaySmall,
               ),
-              if (widget.isEdit)
+              if (widget.isEdit && !isCompletedBooking)
                 IconButton(
                   icon: const Icon(LucideIcons.trash2, color: VSPColors.error),
                   onPressed: _isDeleting ? null : () async {
@@ -1108,7 +1231,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 children: [
                   _buildInputLabel(l10n.timeAndStadium),
                   _buildPillInput(
-                    initialValue: '${widget.slot['time']} - ${stadium.name}',
+                    initialValue: '${widget.slot['time'] ?? (booking != null ? DateFormat('hh:mm a').format(booking.startTime) : '')} - ${(stadium.name.isNotEmpty && stadium.name != 'Mo') ? stadium.name : (booking?.stadiumName ?? stadium.name)}',
                     enabled: false,
                   ),
                   const SizedBox(height: 14),
@@ -1120,8 +1243,9 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   _buildInputLabel(l10n.customerName),
                   _buildPillTextField(
                     controller: _nameController, 
-                    hint: isArabic ? 'أدخل اسم العميل' : 'Enter customer name',
+                    hint: isArabic ? 'أدخل اسم اللاعب' : 'Enter player name',
                     keyboardType: TextInputType.name,
+                    enabled: !isCompletedBooking,
                   ),
                   const SizedBox(height: 14),
 
@@ -1131,6 +1255,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     hint: isArabic ? 'رقم الهاتف (اختياري)' : 'Phone Number (Optional)',
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
+                    enabled: !isCompletedBooking,
                   ),
                   const SizedBox(height: 14),
 
@@ -1139,6 +1264,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     controller: _noteController, 
                     hint: isArabic ? 'أدخل أي ملاحظات إضافية عن الحجز...' : 'Enter internal notes...',
                     keyboardType: TextInputType.text,
+                    enabled: !isCompletedBooking,
                   ),
                   const SizedBox(height: 14),
 
@@ -1148,6 +1274,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار غير المدفوع)" : "Enter amount (0 for unpaid)",
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
+                    enabled: !isCompletedBooking,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -1157,39 +1284,42 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
 
           const SizedBox(height: 16),
           
-          Row(
-            children: [
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: ElevatedButton(
-                    onPressed: _isSaving ? null : () => Navigator.pop(context),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: VSPColors.surfaceAlt,
-                      foregroundColor: VSPColors.textPrimary,
-                      elevation: 0,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                    ),
-                    child: Text(
-                      l10n.cancelBtn,
-                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 15),
+          if (isCompletedBooking)
+            SizedBox(
+              width: double.infinity,
+              height: 52,
+              child: PrimaryButton(
+                text: isArabic ? 'إغلاق' : 'Close',
+                onPressed: () => Navigator.pop(context),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: PrimaryButton(
+                      text: l10n.cancelBtn,
+                      color: VSPColors.surfaceAlt,
+                      textColor: VSPColors.textPrimary,
+                      onPressed: _isSaving ? null : () => Navigator.pop(context),
                     ),
                   ),
                 ),
-              ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: SizedBox(
-                  height: 52,
-                  child: PrimaryButton(
-                    text: widget.isEdit ? l10n.update : l10n.confirmBtn,
-                    isLoading: _isSaving,
-                    onPressed: _isSaving ? null : () => _handleConfirmBooking(l10n, isArabic),
+                const SizedBox(width: 12),
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: PrimaryButton(
+                      text: widget.isEdit ? l10n.update : l10n.confirmBtn,
+                      isLoading: _isSaving,
+                      onPressed: _isSaving ? null : () => _handleConfirmBooking(l10n, isArabic),
+                    ),
                   ),
                 ),
-              ),
-            ],
-          ),
+              ],
+            ),
         ],
       ),
     );
@@ -1321,23 +1451,32 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     required String hint,
     TextInputType? keyboardType,
     List<TextInputFormatter>? inputFormatters,
+    bool enabled = true,
   }) {
     return Container(
       decoration: BoxDecoration(
-        color: VSPColors.background,
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
+        border: Border.all(color: VSPColors.divider, width: 1),
       ),
       child: TextField(
         controller: controller,
+        enabled: enabled,
         keyboardType: keyboardType,
         inputFormatters: inputFormatters,
-        style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
+        style: TextStyle(
+          color: enabled ? Colors.white : VSPColors.textSecondary,
+          fontSize: 14,
+          fontWeight: FontWeight.w500,
+        ),
         decoration: InputDecoration(
           hintText: hint,
           hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
           contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
           border: InputBorder.none,
+          enabledBorder: InputBorder.none,
+          focusedBorder: InputBorder.none,
+          filled: false,
         ),
       ),
     );
@@ -1348,16 +1487,25 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       width: double.infinity,
       padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
       decoration: BoxDecoration(
-        color: enabled ? VSPColors.background : VSPColors.surfaceAlt,
+        color: VSPColors.surfaceAlt,
         borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider, width: 0.5),
+        border: Border.all(color: VSPColors.divider, width: 1),
       ),
-      child: Text(
-        initialValue,
-        style: TextStyle(
-          color: enabled ? VSPColors.textPrimary : VSPColors.textSecondary,
-          fontSize: 14,
-        ),
+      child: Row(
+        children: [
+          const Icon(LucideIcons.clock, color: VSPColors.accent, size: 18),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Text(
+              initialValue,
+              style: const TextStyle(
+                color: Colors.white,
+                fontWeight: FontWeight.bold,
+                fontSize: 14,
+              ),
+            ),
+          ),
+        ],
       ),
     );
   }
