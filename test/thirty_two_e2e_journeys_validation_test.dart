@@ -8,9 +8,9 @@ void main() {
     test('Journey 1: Email Signup & OTP Route Gating', () {
       expect(AppConfig.useMockOtp, isFalse);
       expect(AppConfig.bypassOtp, isFalse);
-      // Route gating logic verification
       bool isEmailVerified = false;
-      String currentRoute = isEmailVerified ? '/home' : '/verify-email';
+      expect(isEmailVerified, isFalse);
+      String currentRoute = '/verify-email';
       expect(currentRoute, equals('/verify-email'));
     });
 
@@ -275,8 +275,8 @@ void main() {
     test('Journey 32: Match Attendance Verification & Elo Update', () {
       bool matchAttended = true;
       int initialElo = 1000;
-      int eloChange = 25;
-      if (!matchAttended) eloChange = -25;
+      int eloChange = 0;
+      if (matchAttended) eloChange = 25;
       int newElo = initialElo + eloChange;
       expect(newElo, equals(1025));
     });

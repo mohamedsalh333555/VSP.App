@@ -663,7 +663,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                           _buildInputLabel(isArabic ? 'اسم الفريق:' : 'Team Name:'),
                           CustomTextField(
                             controller: nameCtrl,
-                            hintText: isArabic ? 'مثال: الأهلي' : 'e.g. Al Ahly',
+                            hintText: isArabic ? 'اكتب اسم فريق' : 'Enter team name',
                             onChanged: (_) => setDialogState(() {}),
                           ),
                           if (!isNameValid) ...[
@@ -1132,7 +1132,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
-        title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
+        title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,
         actions: [
           IconButton(

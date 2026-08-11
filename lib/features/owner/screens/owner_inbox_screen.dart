@@ -87,7 +87,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         centerTitle: true,
         title: Text(
           isArabic ? 'المحادثات' : 'Chats',
-          style: Theme.of(context).textTheme.displayLarge,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
         ),
         actions: [
           IconButton(

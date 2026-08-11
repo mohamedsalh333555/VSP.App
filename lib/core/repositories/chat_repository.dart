@@ -123,31 +123,13 @@ class ChatRepository {
         return existing;
       }
 
-      String? stadiumId;
-      try {
-        final stadiumRes = await _supabase
-            .from('stadiums')
-            .select('id')
-            .eq('owner_id', ownerId)
-            .limit(1)
-            .maybeSingle();
-        if (stadiumRes != null && stadiumRes['id'] != null) {
-          stadiumId = stadiumRes['id'].toString();
-        } else {
-          final anyStadium = await _supabase.from('stadiums').select('id').limit(1).maybeSingle();
-          if (anyStadium != null && anyStadium['id'] != null) {
-            stadiumId = anyStadium['id'].toString();
-          }
-        }
-      } catch (_) {}
-
       final Map<String, dynamic> supportMap = {
-        if (stadiumId != null) 'stadium_id': stadiumId,
+        'stadium_id': null,
         'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
         'stadium_image_url': '',
         'owner_id': ownerId,
         'start_time': DateTime.now().toUtc().toIso8601String(),
-        'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
+        'end_time': DateTime.now().toUtc().toIso8601String(),
         'booking_type': 'personal',
         'notes': 'support_chat',
         'status': 'confirmed',
@@ -185,25 +167,13 @@ class ChatRepository {
         return existing;
       }
 
-      String? stadiumId;
-      try {
-        final stadiumRes = await _supabase
-            .from('stadiums')
-            .select('id')
-            .limit(1)
-            .maybeSingle();
-        if (stadiumRes != null && stadiumRes['id'] != null) {
-          stadiumId = stadiumRes['id'].toString();
-        }
-      } catch (_) {}
-
       final Map<String, dynamic> chatMap = {
-        if (stadiumId != null) 'stadium_id': stadiumId,
+        'stadium_id': null,
         'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
         'stadium_image_url': '',
         'owner_id': currentUserId,
         'start_time': DateTime.now().toUtc().toIso8601String(),
-        'end_time': DateTime.now().add(const Duration(days: 3650)).toUtc().toIso8601String(),
+        'end_time': DateTime.now().toUtc().toIso8601String(),
         'booking_type': 'personal',
         'notes': 'chat_thread',
         'status': 'confirmed',

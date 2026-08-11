@@ -32,7 +32,7 @@ class OwnerProfileScreen extends StatelessWidget {
         centerTitle: true,
         title: Text(
           isArabic ? 'ملفي' : 'Profile',
-          style: Theme.of(context).textTheme.displayLarge,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold),
         ),
       ),
       body: SingleChildScrollView(

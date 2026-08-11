@@ -58,7 +58,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         centerTitle: true,
         title: Text(
           l10n.tournamentsTitle,
-          style: Theme.of(context).textTheme.displayLarge,
+          style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 18, fontWeight: FontWeight.bold),
         ),
       ),
       body: Column(
