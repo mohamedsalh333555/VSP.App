@@ -680,7 +680,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   children: [
                     if (durationLabel != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: VSPColors.accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
@@ -694,16 +694,22 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           ),
                         ),
                       ),
-                      const SizedBox(width: 6),
+                      const SizedBox(width: 4),
                     ],
-                    Text(
-                      slot['subtitle'] ?? '',
-                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                        color: VSPColors.textSecondary,
-                        fontSize: 11
+                    if ((slot['subtitle'] as String?)?.isNotEmpty ?? false) ...[
+                      Flexible(
+                        child: Text(
+                          slot['subtitle'] ?? '',
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                          style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                            color: VSPColors.textSecondary,
+                            fontSize: 10,
+                          ),
+                        ),
                       ),
-                    ),
-                    const SizedBox(width: 10),
+                      const SizedBox(width: 4),
+                    ],
                     Builder(builder: (context) {
                       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                       final String paymentStatus = booking?.paymentStatus ?? 'pending';
@@ -724,7 +730,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       } else if (isPartiallyPaid) {
                         badgeLabel = isArabic 
                             ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م' 
-                            : 'Remaining ${remaining.toStringAsFixed(0)} EGP';
+                            : 'Rem. ${remaining.toStringAsFixed(0)} EGP';
                         badgeColor = Colors.amber;
                       } else {
                         badgeLabel = isArabic ? 'غير مدفوع' : 'Unpaid';
@@ -732,7 +738,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       }
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                         decoration: BoxDecoration(
                           color: badgeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
@@ -787,9 +793,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       lastDate: DateTime.now().add(const Duration(days: 365)),
       builder: (context, child) {
         return Theme(
-          data: ThemeData.dark().copyWith(
+          data: Theme.of(context).copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPColors.accent,
+              onPrimary: Colors.black,
+              surface: VSPColors.surface,
+              onSurface: VSPColors.textPrimary,
             ),
           ),
           child: child!,

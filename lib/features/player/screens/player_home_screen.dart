@@ -890,41 +890,14 @@ class _HomeContent extends StatelessWidget {
   }
 
   Widget _buildChampionshipsList(BuildContext context, AuthProvider auth) {
-    final userGovRaw = auth.userModel?.governorate ?? 'Aswan';
-    final userGovStd = EgyptGovernorates.resolveGoogleName(userGovRaw) ?? 'Aswan';
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
-    final String displayGovName = isArabic 
-        ? (userGovStd == 'Aswan' ? 'أسوان' : (userGovStd == 'Cairo' ? 'القاهرة' : userGovRaw))
-        : userGovStd;
-
     return StreamBuilder<List<Championship>>(
-      stream: TournamentRepository().getChampionshipsStream(governorate: userGovStd), 
+      stream: TournamentRepository().getChampionshipsStream(), 
       builder: (context, snapshot) {
         final championships = snapshot.data ?? [];
 
-        // 🛡️ Filtered strictly by user's location. If DB is empty for this governorate, show governorate-matched tournament card
-        final displayList = championships.isNotEmpty
-            ? championships
-            : [
-                Championship(
-                  id: '00000000-0000-0000-0000-000000000001',
-                  name: isArabic ? 'بطولة كأس أسوان الكبرى 🏆' : 'Aswan Cup Championship 🏆',
-                  type: 'Cup',
-                  sportType: 'Football',
-                  logoUrl: '',
-                  startDate: DateTime.now().add(const Duration(days: 2)),
-                  endDate: DateTime.now().add(const Duration(days: 10)),
-                  entryFee: 500,
-                  grandPrize: 10000,
-                  maxTeams: 16,
-                  joinedTeams: List.generate(12, (index) => 'team_$index'),
-                  ownerId: '00000000-0000-0000-0000-000000000002',
-                  governorate: displayGovName,
-                  rules: isArabic ? 'بطولة خروج المغلوب الرسمية لفرق وملاعب محافظة $displayGovName.' : 'Official knockout tournament in $displayGovName.',
-                  status: 'open',
-                ),
-              ];
+        if (championships.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
 
         return Column(
           children: [
@@ -945,13 +918,13 @@ class _HomeContent extends StatelessWidget {
                   : ListView.builder(
                       scrollDirection: Axis.horizontal, 
                       padding: const EdgeInsets.symmetric(horizontal: 16), 
-                      itemCount: displayList.length, 
+                      itemCount: championships.length, 
                       itemBuilder: (context, i) => Align(
                         alignment: Alignment.topCenter, 
                         child: Container(
                           width: 320, 
                           margin: const EdgeInsets.only(right: 12), 
-                          child: ChampionshipCard(championship: displayList[i]),
+                          child: ChampionshipCard(championship: championships[i]),
                         ),
                       ),
                     ),

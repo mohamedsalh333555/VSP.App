@@ -125,8 +125,30 @@ class AppTheme {
         backgroundColor: VSPColors.surface,
         surfaceTintColor: Colors.transparent,
         elevation: 10,
+        titleTextStyle: GoogleFonts.tajawal(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+        contentTextStyle: GoogleFonts.tajawal(color: VSPColors.textSecondary, fontSize: 14),
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VSPRadius.lg),
+        ),
+      ),
+
+      datePickerTheme: DatePickerThemeData(
+        backgroundColor: VSPColors.surface,
+        surfaceTintColor: Colors.transparent,
+        headerBackgroundColor: VSPColors.surface,
+        headerForegroundColor: VSPColors.accent,
+        headerHelpStyle: GoogleFonts.tajawal(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
+        headerHeadlineStyle: GoogleFonts.tajawal(color: Colors.white, fontSize: 22, fontWeight: FontWeight.bold),
+        dayStyle: GoogleFonts.tajawal(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        weekdayStyle: GoogleFonts.tajawal(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.bold),
+        yearStyle: GoogleFonts.tajawal(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+        cancelButtonStyle: ButtonStyle(
+          textStyle: WidgetStatePropertyAll(GoogleFonts.tajawal(color: VSPColors.accent, fontSize: 14, fontWeight: FontWeight.bold)),
+          foregroundColor: const WidgetStatePropertyAll(VSPColors.accent),
+        ),
+        confirmButtonStyle: ButtonStyle(
+          textStyle: WidgetStatePropertyAll(GoogleFonts.tajawal(color: VSPColors.accent, fontSize: 14, fontWeight: FontWeight.bold)),
+          foregroundColor: const WidgetStatePropertyAll(VSPColors.accent),
         ),
       ),
 

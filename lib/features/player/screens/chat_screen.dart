@@ -42,25 +42,42 @@ class _ChatScreenState extends State<ChatScreen> {
   bool _isSending = false;
   void _sendMessage() async {
     if (_isSending) return;
+    final text = _messageController.text.trim();
+    if (text.isEmpty) return;
+
     setState(() => _isSending = true);
-    if (_messageController.text.trim().isEmpty) return;
 
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final user = auth.userModel;
-    if (user == null) return;
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final user = auth.userModel;
+      if (user == null) return;
 
-    final message = ChatMessage(
-      id: '', 
-      senderId: user.uid,
-      senderName: user.name ?? 'Guest',
-      text: _messageController.text.trim(),
-      timestamp: DateTime.now(),
-    );
+      final message = ChatMessage(
+        id: '',
+        senderId: user.uid,
+        senderName: user.name ?? 'Guest',
+        text: text,
+        timestamp: DateTime.now(),
+      );
 
-    await ChatRepository().sendMessage(widget.booking.id, message);
-    AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
-    _messageController.clear();
-    if (mounted) setState(() => _isSending = false);
+      _messageController.clear();
+      await ChatRepository().sendMessage(widget.booking.id, message);
+      AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
+
+      if (_scrollController.hasClients) {
+        _scrollController.animateTo(
+          0.0,
+          duration: const Duration(milliseconds: 300),
+          curve: Curves.easeOut,
+        );
+      }
+    } catch (e) {
+      // Log errors if necessary
+    } finally {
+      if (mounted) {
+        setState(() => _isSending = false);
+      }
+    }
   }
 
   @override
@@ -86,6 +103,8 @@ class _ChatScreenState extends State<ChatScreen> {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
                                  widget.booking.stadiumId == 'chat_thread' || 
+                                 widget.booking.notes == 'chat_thread' || 
+                                 widget.booking.notes == 'support_chat' || 
                                  widget.booking.id.startsWith('support_chat_') || 
                                  widget.booking.id.startsWith('chat_');
 
@@ -204,6 +223,8 @@ class _ChatScreenState extends State<ChatScreen> {
     
     final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
                          widget.booking.stadiumId == 'chat_thread' || 
+                         widget.booking.notes == 'chat_thread' || 
+                         widget.booking.notes == 'support_chat' || 
                          widget.booking.id.startsWith('support_chat_') || 
                          widget.booking.id.startsWith('chat_');
 
@@ -236,49 +257,54 @@ class _ChatScreenState extends State<ChatScreen> {
     }
 
     return Container(
-      padding: EdgeInsets.fromLTRB(16, 8, 16, MediaQuery.of(context).padding.bottom + 8),
-      decoration: BoxDecoration(
+      padding: EdgeInsets.fromLTRB(16, 10, 16, MediaQuery.of(context).padding.bottom + 10),
+      decoration: const BoxDecoration(
         color: VSPColors.surface,
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.2),
-            blurRadius: 10,
-            offset: const Offset(0, -2),
-          ),
-        ],
+        border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
       ),
       child: Row(
         children: [
           Expanded(
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 16),
+              height: 48,
+              clipBehavior: Clip.antiAlias,
               decoration: BoxDecoration(
-                color: VSPColors.background,
-                borderRadius: BorderRadius.circular(24),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
+                color: VSPColors.surfaceAlt,
+                borderRadius: BorderRadius.circular(VSPRadius.full),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1),
               ),
               child: TextField(
                 controller: _messageController,
-                style: const TextStyle(color: VSPColors.textPrimary),
-                decoration: const InputDecoration(
-                  hintText: 'Type a message...',
-                  hintStyle: TextStyle(color: VSPColors.textSecondary),
+                style: const TextStyle(color: VSPColors.textPrimary, fontSize: 14),
+                textAlign: isArabic ? TextAlign.right : TextAlign.left,
+                decoration: InputDecoration(
+                  hintText: isArabic ? 'اكتب رسالتك هنا...' : 'Type a message...',
+                  hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                   border: InputBorder.none,
+                  focusedBorder: InputBorder.none,
+                  enabledBorder: InputBorder.none,
+                  contentPadding: const EdgeInsets.symmetric(horizontal: 18, vertical: 12),
                 ),
                 onSubmitted: (_) => _sendMessage(),
               ),
             ),
           ),
-          const SizedBox(width: 8),
+          const SizedBox(width: 10),
           GestureDetector(
             onTap: _sendMessage,
             child: Container(
-              padding: const EdgeInsets.all(12),
+              width: 48,
+              height: 48,
               decoration: const BoxDecoration(
                 color: VSPColors.accent,
                 shape: BoxShape.circle,
               ),
-              child: Icon(Iconsax.send_1_copy, color: VSPColors.background, size: 20),
+              child: Center(
+                child: Transform.rotate(
+                  angle: isArabic ? 3.14159 : 0,
+                  child: const Icon(Iconsax.send_1_copy, color: Colors.black, size: 20),
+                ),
+              ),
             ),
           ),
         ],
@@ -289,6 +315,8 @@ class _ChatScreenState extends State<ChatScreen> {
   Widget _buildSystemMessage(BuildContext context) {
     final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
                          widget.booking.stadiumId == 'chat_thread' || 
+                         widget.booking.notes == 'chat_thread' || 
+                         widget.booking.notes == 'support_chat' || 
                          widget.booking.id.startsWith('support_chat_') || 
                          widget.booking.id.startsWith('chat_');
 

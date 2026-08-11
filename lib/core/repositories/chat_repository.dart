@@ -8,17 +8,31 @@ class ChatRepository {
 
   /// Stream real-time chat messages for a specific booking from Supabase
   Stream<List<ChatMessage>> getChatMessages(String bookingId) {
-    return _supabase
-        .from('chat_messages')
-        .stream(primaryKey: ['id'])
-        .eq('booking_id', bookingId)
-        .map((list) {
-          final messages = list
-              .map((data) => ChatMessage.fromJson(data, data['id'].toString()))
-              .toList();
-          messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
-          return messages;
-        });
+    try {
+      return _supabase
+          .from('chat_messages')
+          .stream(primaryKey: ['id'])
+          .eq('booking_id', bookingId)
+          .map((list) {
+            try {
+              final messages = list
+                  .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
+                  .toList();
+              messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
+              return messages;
+            } catch (e) {
+              VSPLogger.e('Error mapping chat messages list for booking $bookingId', e);
+              return <ChatMessage>[];
+            }
+          })
+          .handleError((error) {
+            VSPLogger.e('Error in chat messages stream for booking $bookingId', error);
+            return <ChatMessage>[];
+          });
+    } catch (e) {
+      VSPLogger.e('Failed to initiate getChatMessages stream for booking $bookingId', e);
+      return Stream.value(<ChatMessage>[]);
+    }
   }
 
   /// Send message and dynamically increment unread counts on Supabase bookings table
@@ -80,8 +94,12 @@ class ChatRepository {
           );
         }
       }
+    } on PostgrestException catch (e) {
+      VSPLogger.e('Postgrest error sending chat message: ${e.message}', e);
+      rethrow;
     } catch (e) {
       VSPLogger.e('Error sending message on Supabase', e);
+      rethrow;
     }
   }
 
@@ -155,6 +173,7 @@ class ChatRepository {
       final pastEnd = DateTime.utc(2000, 1, 1, 0, 0, 1).toIso8601String();
 
       final Map<String, dynamic> supportMap = {
+        'user_id': ownerId,
         if (stadiumId != null) 'stadium_id': stadiumId,
         'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
         'stadium_image_url': '',
@@ -170,14 +189,16 @@ class ChatRepository {
         'joined_user_ids': [ownerId, '00000000-0000-0000-0000-000000000001'],
         'payment_method': 'cash',
         'total_price': 0.0,
-        'max_players': 2,
         'current_players': 2,
         'is_paid': true,
         'payment_status': 'paid',
       };
 
-      final response = await _supabase.from('bookings').insert(supportMap).select().single();
-      return response;
+      final response = await _supabase.from('bookings').insert(supportMap).select().maybeSingle();
+      return response ?? supportMap;
+    } on PostgrestException catch (e) {
+      VSPLogger.e('Postgrest error in getOrCreateSupportChat: ${e.message}', e);
+      rethrow;
     } catch (e) {
       VSPLogger.e('Error in getOrCreateSupportChat', e);
       rethrow;
@@ -203,6 +224,7 @@ class ChatRepository {
       final pastEnd = DateTime.utc(2000, 1, 1, 0, 0, 1).toIso8601String();
 
       final Map<String, dynamic> chatMap = {
+        'user_id': currentUserId,
         if (stadiumId != null) 'stadium_id': stadiumId,
         'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
         'stadium_image_url': '',
@@ -218,14 +240,16 @@ class ChatRepository {
         'joined_user_ids': [currentUserId, otherUserId],
         'payment_method': 'cash',
         'total_price': 0.0,
-        'max_players': 2,
         'current_players': 2,
         'is_paid': true,
         'payment_status': 'paid',
       };
 
-      final response = await _supabase.from('bookings').insert(chatMap).select().single();
-      return response;
+      final response = await _supabase.from('bookings').insert(chatMap).select().maybeSingle();
+      return response ?? chatMap;
+    } on PostgrestException catch (e) {
+      VSPLogger.e('Postgrest error in getOrCreateDirectChat: ${e.message}', e);
+      rethrow;
     } catch (e) {
       VSPLogger.e('Error in getOrCreateDirectChat', e);
       rethrow;

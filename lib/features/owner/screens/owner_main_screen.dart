@@ -1,4 +1,3 @@
-import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -10,7 +9,6 @@ import '../widgets/owner_bottom_nav_bar.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
 import 'owner_cup_screen.dart';
-import 'create_tournament_wizard.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_inbox_screen.dart';
 
@@ -74,6 +72,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             ),
           ],
         ),
+        titlePadding: const EdgeInsets.all(VSPSpacing.md),
         content: Text(
           isAr 
               ? "تهانينا! تم توثيق حسابك بنجاح، وملاعبك أصبحت الآن معروضة ومتاحة لجميع اللاعبين!" 
@@ -103,10 +102,6 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
-    final auth = Provider.of<AuthProvider>(context);
-    final isBlocked = auth.userModel?.isBlocked ?? false;
-    
     return Scaffold(
       extendBody: true,
       backgroundColor: VSPColors.background,

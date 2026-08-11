@@ -11,6 +11,8 @@ import '../../../core/services/sharing_service.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../data/models.dart';
+import '../../../core/services/location_service.dart';
+import '../../../core/constants/egypt_governorates.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
 import 'championship_checkout_screen.dart';
 
@@ -68,6 +70,40 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
            _showErrorDialog(AppLocalizations.of(context)!.alreadyJoinedError);
         }
         return;
+      }
+
+      // 🛡️ GPS GEOFENCING GUARD: Verify physical GPS location when joining a tournament in a different governorate
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      final champGovRaw = widget.championship.governorate.trim();
+      final playerGovRaw = auth.governorate.trim();
+
+      final champGovStd = EgyptGovernorates.resolveGoogleName(champGovRaw) ?? champGovRaw;
+      final playerGovStd = EgyptGovernorates.resolveGoogleName(playerGovRaw) ?? playerGovRaw;
+
+      if (champGovStd.isNotEmpty && champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
+        final (position, gpsGov) = await LocationService().getThrottledLocation(force: true);
+
+        if (gpsGov == 'mock_location_detected') {
+          if (mounted) {
+            _showErrorDialog(isArabic 
+                ? 'تنبيه أمني: تم اكتشاف استخدام موقع وهمي (Mock Location). لا يمكن الانضمام للبطولة.' 
+                : 'Security Alert: Mock location detected. Cannot join tournament.');
+          }
+          return;
+        }
+
+        final resolvedGpsGov = (gpsGov != null && gpsGov.isNotEmpty)
+            ? (EgyptGovernorates.resolveGoogleName(gpsGov) ?? gpsGov)
+            : null;
+
+        if (resolvedGpsGov == null || resolvedGpsGov.toLowerCase() != champGovStd.toLowerCase()) {
+          if (mounted) {
+            _showErrorDialog(isArabic 
+                ? 'عذراً! هذه البطولة مقامة في محافظة [$champGovRaw]. يتطلب النظام التحقق التلقائي من تواجدك الفعلي في نفس المحافظة عبر إذن الموقع (GPS) للانضمام.' 
+                : 'Sorry! This tournament is hosted in [$champGovRaw]. System requires active GPS verification confirming your presence in that governorate to join.');
+          }
+          return;
+        }
       }
 
       if (!mounted) return;

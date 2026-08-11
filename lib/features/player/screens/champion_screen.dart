@@ -46,9 +46,10 @@ class ChampionScreenState extends State<ChampionScreen>
 
     // Default to user's governorate
     WidgetsBinding.instance.addPostFrameCallback((_) {
-      final userGov = Provider.of<AuthProvider>(context, listen: false).governorate;
-      if (userGov.isNotEmpty) {
-        setState(() => _selectedLocation = userGov);
+      final rawGov = Provider.of<AuthProvider>(context, listen: false).governorate;
+      final resolvedGov = EgyptGovernorates.resolveGoogleName(rawGov) ?? rawGov;
+      if (resolvedGov.isNotEmpty && EgyptGovernorates.allGovernorates.contains(resolvedGov)) {
+        setState(() => _selectedLocation = resolvedGov);
       }
     });
   }

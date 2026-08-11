@@ -2,11 +2,11 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() async {
-  print('Fetching user profile for Mohamed Salah...');
-  final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/users?id=eq.85c2b66c-2ff4-455f-9799-4efe335e5b52');
+  print('Cleaning up test messages from chat_messages table...');
+  final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/chat_messages?text=ilike.*جاهز للماتش*');
   final client = HttpClient();
 
-  final req = await client.getUrl(url);
+  final req = await client.deleteUrl(url);
   req.headers.set('apikey', 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
   req.headers.set('Authorization', 'Bearer sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
 
@@ -14,6 +14,7 @@ void main() async {
   final body = await resp.transform(utf8.decoder).join();
 
   print('Status Code: ${resp.statusCode}');
-  print('User Profile Body: $body');
+  print('Response Body: $body');
+  print('Cleanup completed!');
   exit(0);
 }

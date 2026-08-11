@@ -14,6 +14,7 @@ import '../../player/screens/chat_screen.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/services/support_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class OwnerInboxScreen extends StatefulWidget {
   const OwnerInboxScreen({super.key});
@@ -65,8 +66,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
       if (context.mounted) {
         Navigator.pop(context);
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(isArabic ? 'حدث خطأ أثناء فتح المحادثة: $e' : 'Error opening chat: $e')),
+        VSPFeedback.showError(
+          context,
+          isArabic 
+              ? 'حدث خطأ أثناء فتح المحادثة، يرجى المحاولة لاحقاً.' 
+              : 'Error opening chat, please try again later.',
         );
       }
     }
@@ -96,9 +100,9 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
             tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
           ),
           IconButton(
-            icon: Icon(Iconsax.messages_3_copy, color: VSPColors.accent),
+            icon: Icon(Iconsax.search_normal_1_copy, color: VSPColors.accent),
             onPressed: () => _startNewChat(context, ownerId),
-            tooltip: isArabic ? 'محادثة جديدة' : 'New Chat',
+            tooltip: isArabic ? 'بحث عن لاعبين' : 'Search Players',
           ),
         ],
       ),
@@ -130,10 +134,15 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
             final unreadCount = unreadMap[ownerId] as int? ?? 0;
             final isRecent = b.endTime.add(const Duration(hours: 24)).isAfter(now);
             
-            // For general support/user chats, they never expire and have stadiumId == 'support_chat' or starting with 'chat_'
-            final isGeneralChat = b.stadiumId == 'support_chat' || b.stadiumId == 'chat_thread' || b.id.startsWith('support_chat_') || b.id.startsWith('chat_');
+            // For general support/user chats, they never expire and have stadiumId or notes == 'support_chat' / 'chat_thread'
+            final isGeneralChat = b.stadiumId == 'support_chat' || 
+                                  b.stadiumId == 'chat_thread' || 
+                                  b.notes == 'chat_thread' || 
+                                  b.notes == 'support_chat' || 
+                                  b.id.startsWith('support_chat_') || 
+                                  b.id.startsWith('chat_');
             
-            return isGeneralChat || (b.notes != null && (isRecent || unreadCount > 0));
+            return isGeneralChat || isRecent || unreadCount > 0;
           }).toList();
 
           if (bookings.isEmpty) {
@@ -165,6 +174,8 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
               final isSpecialChat = booking.stadiumId == 'support_chat' || 
                                    booking.stadiumId == 'chat_thread' || 
+                                   booking.notes == 'chat_thread' || 
+                                   booking.notes == 'support_chat' || 
                                    booking.id.startsWith('support_chat_') || 
                                    booking.id.startsWith('chat_');
 
@@ -275,12 +286,17 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                     Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(
-                          title,
-                          style: Theme.of(context).textTheme.titleSmall?.copyWith(
-                            fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                        Expanded(
+                          child: Text(
+                            title,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: Theme.of(context).textTheme.titleSmall?.copyWith(
+                              fontWeight: hasUnread ? FontWeight.bold : FontWeight.normal,
+                            ),
                           ),
                         ),
+                        const SizedBox(width: 8),
                         Text(
                           timeStr,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(

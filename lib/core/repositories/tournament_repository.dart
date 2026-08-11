@@ -62,16 +62,32 @@ class TournamentRepository {
   }) {
     return list.map((data) {
       if (data is! Map<String, dynamic>) return null;
-      // No is_approved gate – show all championships from DB as-is
+      // Show all championships from DB as-is
       if (isOwner && ownerId != null) {
         final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
         if (champOwnerId != ownerId) return null;
       }
-      if (governorate != null && governorate.isNotEmpty) {
+      if (governorate != null &&
+          governorate.isNotEmpty &&
+          governorate != 'All' &&
+          governorate != 'الكل' &&
+          governorate != 'الجميع') {
         final String champGov = data['governorate']?.toString() ?? '';
-        final stdGov1 = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate.trim().toLowerCase();
-        final stdGov2 = EgyptGovernorates.resolveGoogleName(champGov) ?? champGov.trim().toLowerCase();
-        if (stdGov1 != stdGov2) {
+        if (champGov.isNotEmpty) {
+          final stdGov1 = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate.trim().toLowerCase();
+          final stdGov2 = EgyptGovernorates.resolveGoogleName(champGov) ?? champGov.trim().toLowerCase();
+          if (stdGov1 != stdGov2) {
+            return null;
+          }
+        }
+      }
+      if (sportType != null &&
+          sportType.isNotEmpty &&
+          sportType != 'All' &&
+          sportType != 'الكل' &&
+          sportType != 'الجميع') {
+        final String champSport = (data['sport_type'] ?? data['sportType'] ?? 'Football').toString();
+        if (champSport.isNotEmpty && champSport.toLowerCase() != sportType.toLowerCase()) {
           return null;
         }
       }
