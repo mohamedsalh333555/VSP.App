@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -101,7 +101,7 @@ class _AccountScreenState extends State<AccountScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -190,7 +190,7 @@ class _AccountScreenState extends State<AccountScreen> {
             const SizedBox(height: 16),
 
             _buildLabel(context, isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-            CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', enabled: false, suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)),
+            CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', enabled: false, suffixIcon: Icon(Iconsax.lock_copy, size: 18, color: VSPColors.textSecondary)),
             const SizedBox(height: 16),
 
             _buildLabel(context, isArabic ? 'الموقع' : 'Location'),
@@ -203,7 +203,7 @@ class _AccountScreenState extends State<AccountScreen> {
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
+                  Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Column(
@@ -223,7 +223,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   _isLocating 
                   ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                   : IconButton(
-                    icon: Icon(LucideIcons.locate, color: VSPColors.accent),
+                    icon: Icon(Iconsax.gps_copy, color: VSPColors.accent),
                     onPressed: () async {
                       setState(() => _isLocating = true);
                       await Provider.of<AuthProvider>(context, listen: false).updateUserLocation();
@@ -343,7 +343,7 @@ class _AccountScreenState extends State<AccountScreen> {
                 ],
               ),
               child: const Icon(
-                LucideIcons.plus,
+                Iconsax.add_circle_copy,
                 color: VSPColors.accent,
                 size: 28,
               ),
@@ -383,7 +383,7 @@ class _AccountScreenState extends State<AccountScreen> {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.amber, width: 2),
                 ),
-                child: const Icon(LucideIcons.crown, color: Colors.amber, size: 30),
+                child: const Icon(Iconsax.crown_copy, color: Colors.amber, size: 30),
               ),
               const SizedBox(height: 16),
               Text(

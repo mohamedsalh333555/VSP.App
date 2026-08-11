@@ -1,5 +1,5 @@
 import '../../../l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:async';
@@ -458,34 +458,30 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           final resolved = EgyptGovernorates.resolveGoogleName(rawName);
           if (resolved != null) {
             _governorate = resolved;
-          } else {
-            _governorate = 'Cairo'; // Fallback
           }
-          VSPLogger.i('📍 Address resolved to: $readableAddress, Governorate: $_governorate');
+          VSPLogger.i('📍 Address resolved to: $readableAddress, Governorate: ${_governorate ?? "Unassigned"}');
         });
         if (widget.stadiumId == null) {
           _saveToPrefs('temp_stadium_location', readableAddress);
-          _saveToPrefs('temp_stadium_governorate', _governorate ?? 'Cairo');
+          if (_governorate != null) {
+            _saveToPrefs('temp_stadium_governorate', _governorate!);
+          }
         }
       } else {
         setState(() {
           _locationController.text = 'Lat: $lat, Long: $lng';
-          _governorate = 'Cairo'; // Fallback
         });
         if (widget.stadiumId == null) {
           _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
-          _saveToPrefs('temp_stadium_governorate', 'Cairo');
         }
       }
     } catch (e) {
       VSPLogger.e('❌ Geocoding error', e);
       setState(() {
         _locationController.text = 'Lat: $lat, Long: $lng';
-        _governorate = 'Cairo'; // Fallback
       });
       if (widget.stadiumId == null) {
         _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
-        _saveToPrefs('temp_stadium_governorate', 'Cairo');
       }
     }
   }
@@ -602,7 +598,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       alignment: Alignment.center,
                       child: Container(
                         transform: Matrix4.translationValues(0, -20, 0),
-                        child: Icon(LucideIcons.mapPin,
+                        child: Icon(Iconsax.location_copy,
                           color: VSPColors.accent,
                           size: 48,
                           shadows: [
@@ -640,7 +636,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                             ),
                             child: Row(
                               children: [
-                                Icon(LucideIcons.search, color: VSPColors.accent, size: 22),
+                                Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 22),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
@@ -665,7 +661,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   )
                                 else if (searchController.text.isNotEmpty)
                                   IconButton(
-                                    icon: Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 18),
+                                    icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                                     onPressed: () {
                                       searchController.clear();
                                       setSheetState(() {
@@ -694,7 +690,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   final result = searchResults[index];
                                   return ListTile(
                                     dense: true,
-                                    leading: Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 18),
+                                    leading: Icon(Iconsax.location_copy, color: VSPColors.accent, size: 18),
                                     title: Text(
                                       result['display_name'],
                                       maxLines: 2,
@@ -728,7 +724,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           border: Border.all(color: VSPColors.divider),
                         ),
                         child: IconButton(
-                          icon: Icon(LucideIcons.x, color: Colors.white, size: 20),
+                          icon: Icon(Iconsax.close_circle_copy, color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ),
@@ -752,7 +748,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           ],
                         ),
                         child: IconButton(
-                          icon: Icon(LucideIcons.locate, color: VSPColors.accent, size: 24),
+                          icon: Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 24),
                           onPressed: () async {
                             setSheetState(() {
                               isSearching = true;
@@ -1308,10 +1304,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: VSPColors.background,
-          leading: IconButton(icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary), onPressed: _previousPage),
+          leading: IconButton(icon: Icon(Iconsax.arrow_left_copy, color: VSPColors.textPrimary), onPressed: _previousPage),
           title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
           centerTitle: true,
-          elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(LucideIcons.trash2, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
+          elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
         ),
         body: SafeArea(
           child: Column(
@@ -1392,7 +1388,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     ),
                     child: Center(
                       child: i < _currentStep
-                          ? Icon(LucideIcons.check, color: Colors.black, size: 16)
+                          ? Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
                           : Text(
                               '${i + 1}',
                               style: TextStyle(
@@ -1430,7 +1426,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         left: VSPSpacing.md,
         right: VSPSpacing.md,
         top: VSPSpacing.md,
-        bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md,
+        bottom: MediaQuery.of(context).viewInsets.bottom > 0
+            ? MediaQuery.of(context).viewInsets.bottom + VSPSpacing.md
+            : (MediaQuery.of(context).padding.bottom > 0
+                ? MediaQuery.of(context).padding.bottom + VSPSpacing.md
+                : VSPSpacing.md),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -1458,7 +1458,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   child: Row(
                     children: [
                       Icon(
-                        widget.stadiumId != null ? LucideIcons.lock : LucideIcons.mapPin,
+                        widget.stadiumId != null ? Iconsax.lock_copy : Iconsax.location_copy,
                         color: VSPColors.accent,
                         size: 20,
                       ),
@@ -1484,9 +1484,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
                         )
                       else if (_locationController.text.isNotEmpty)
-                        const Icon(LucideIcons.checkCircle2, color: VSPColors.accent, size: 18)
+                        const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18)
                       else
-                        Icon(isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 18),
+                        Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary, size: 18),
                     ],
                   ),
                 ),
@@ -1537,7 +1537,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(LucideIcons.info, color: VSPColors.accent, size: 14),
+                Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Builder(
@@ -1600,7 +1600,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: Icon(LucideIcons.trash2, color: VSPColors.error, size: 20),
+                          icon: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                           onPressed: () {
                             setState(() {
                               _breakTimes.removeAt(index);
@@ -1627,7 +1627,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     _breakTimes.add({'start': null, 'end': null});
                   });
                 },
-                icon: Icon(LucideIcons.plus, color: VSPColors.accent, size: 18),
+                icon: Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),
                 label: Text(
                   isArabic ? 'إضافة فترة راحة أخرى' : 'Add Another Break', 
                   style: const TextStyle(color: VSPColors.accent, fontSize: 13),
@@ -1645,7 +1645,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 16),
+                    const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 16),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(
@@ -1785,7 +1785,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 children: [
                   Row(
                     children: [
-                      Icon(LucideIcons.lock, color: VSPColors.accent, size: 18),
+                      Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         isArabic ? 'اشتراط عربون حجز' : 'Require Booking Deposit',
@@ -2077,7 +2077,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               thumbnail
             else
               Icon(
-                fileUrl != null ? LucideIcons.checkCircle : LucideIcons.upload,
+                fileUrl != null ? Iconsax.tick_circle_copy : Iconsax.export_3_copy,
                 color: fileUrl != null ? Colors.green : VSPColors.accent,
                 size: 32,
               ),
@@ -2104,7 +2104,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               ),
             ),
             IconButton(
-              icon: Icon(LucideIcons.trash2, color: Colors.red),
+              icon: Icon(Iconsax.trash_copy, color: Colors.red),
               onPressed: onDelete,
             ),
           ],

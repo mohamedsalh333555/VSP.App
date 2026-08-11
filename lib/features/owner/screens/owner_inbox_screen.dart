@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -91,12 +91,12 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(LucideIcons.headset, color: VSPColors.accent),
+            icon: Icon(Iconsax.headphone_copy, color: VSPColors.accent),
             onPressed: () => _openSupportChat(context),
             tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
           ),
           IconButton(
-            icon: Icon(LucideIcons.messageSquarePlus, color: VSPColors.accent),
+            icon: Icon(Iconsax.messages_3_copy, color: VSPColors.accent),
             onPressed: () => _startNewChat(context, ownerId),
             tooltip: isArabic ? 'محادثة جديدة' : 'New Chat',
           ),
@@ -138,7 +138,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
           if (bookings.isEmpty) {
             return VSPEmptyState(
-              icon: LucideIcons.messageSquare,
+              icon: Iconsax.messages_3_copy,
               title: isArabic ? 'لا توجد محادثات نشطة' : 'No active chats',
               subtitle: isArabic 
                   ? 'ستظهر هنا المحادثات الواردة من اللاعبين بخصوص الحجوزات.' 
@@ -264,7 +264,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                 backgroundColor: VSPColors.surfaceAlt,
                 backgroundImage: avatar != null ? NetworkImage(avatar) : null,
                 child: avatar == null
-                    ? Icon(LucideIcons.user, color: VSPColors.accent)
+                    ? Icon(Iconsax.user_copy, color: VSPColors.accent)
                     : null,
               ),
               const SizedBox(width: 14),
@@ -328,6 +328,9 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   final String currentUserRole; // 'owner' or 'player'
 
   UserSearchDelegate({required this.currentUserId, required this.currentUserRole});
+
+  @override
+  String? get searchFieldLabel => 'بحث عن لاعبين...';
 
   @override
   ThemeData appBarTheme(BuildContext context) {

@@ -1,6 +1,6 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
 class VSPProLockedCard extends StatelessWidget {
@@ -70,7 +70,7 @@ class VSPProLockedCard extends StatelessWidget {
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.amber, width: 1.5),
                       ),
-                      child: const Icon(LucideIcons.lock, color: Colors.amber, size: 22),
+                      child: const Icon(Iconsax.lock_copy, color: Colors.amber, size: 22),
                     ),
                     const SizedBox(height: 8),
                     Container(
@@ -103,7 +103,7 @@ class VSPProLockedCard extends StatelessWidget {
                     const SizedBox(height: 12),
                     ElevatedButton.icon(
                       onPressed: onUpgradeTap,
-                      icon: const Icon(LucideIcons.sparkles, size: 16, color: Colors.black),
+                      icon: const Icon(Iconsax.magic_star_copy, size: 16, color: Colors.black),
                       label: const Text(
                         'ترقية واكتشاف التحليلات',
                         style: TextStyle(

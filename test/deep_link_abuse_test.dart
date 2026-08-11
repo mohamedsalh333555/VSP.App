@@ -115,7 +115,7 @@ void main() {
       );
       
       // Simulate receiving deep link to a match while blocked
-      final redirectResult = await AppRouter.redirectLogic(
+      final redirectResult = AppRouter.redirectLogic(
         DummyBuildContext(),
         FakeGoRouterState('/match/valid-booking-uuid'),
         authProvider,
@@ -162,7 +162,7 @@ void main() {
       );
 
       // Simulate Owner attempting to navigate to player-specific match deep link
-      final redirectResult = await AppRouter.redirectLogic(
+      final redirectResult = AppRouter.redirectLogic(
         DummyBuildContext(),
         FakeGoRouterState('/match/valid-booking-uuid'),
         authProvider,

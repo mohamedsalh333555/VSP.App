@@ -16,4 +16,8 @@ class AppConfig {
   // ⚠️ استبدل هذا الرقم بـ Iframe ID الحقيقي من لوحة تحكم Paymob
   // https://accept.paymob.com > Settings > Payment Integrations
   static const String paymobIframeId = 'YOUR_REAL_IFRAME_ID';
+
+  // 🔌 Supabase Connection Pooling (Supavisor) Configuration
+  // Direct Connection Port: 5432 | Pooled Connection Port: 6543 (Transaction Mode for Serverless)
+  static const int supabasePooledPort = 6543;
 }

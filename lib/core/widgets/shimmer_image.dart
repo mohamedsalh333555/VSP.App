@@ -1,6 +1,6 @@
 import 'dart:io';
 import 'package:flutter/foundation.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:shimmer/shimmer.dart';
@@ -35,7 +35,7 @@ class ShimmerImage extends StatelessWidget {
       color: VSPColors.surface,
       child: Center(
         child: Icon(
-          fit == BoxFit.cover ? LucideIcons.building : LucideIcons.trophy,
+          fit == BoxFit.cover ? Iconsax.building_copy : Iconsax.cup_copy,
           color: VSPColors.textSecondary.withValues(alpha: 0.5),
           size: 32,
         ),

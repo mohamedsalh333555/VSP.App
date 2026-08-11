@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/user_model.dart';
@@ -163,7 +163,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(LucideIcons.lightbulb, color: VSPColors.accent, size: 20),
+                          Icon(Iconsax.flash_1_copy, color: VSPColors.accent, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(
@@ -209,7 +209,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                           child: ElevatedButton.icon(
                             // 🔒 Gate: Check subscription before allowing second stadium
                             onPressed: () => _onAddAnotherStadium(context, stadiums, isAr),
-                            icon: const Icon(LucideIcons.plusCircle, color: Colors.white),
+                            icon: const Icon(Iconsax.add_circle_copy, color: Colors.white),
                             label: Text(
                               isAr ? 'إضافة ملعب آخر' : 'Add another stadium',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
@@ -316,7 +316,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
               color: Colors.amber.withValues(alpha: 0.15),
               shape: BoxShape.circle,
             ),
-            child: const Icon(LucideIcons.crown, color: Colors.amber, size: 32),
+            child: const Icon(Iconsax.crown_copy, color: Colors.amber, size: 32),
           ),
           const SizedBox(height: 16),
 
@@ -362,17 +362,17 @@ class _UpgradeBottomSheet extends StatelessWidget {
             child: Column(
               children: [
                 _FeatureRow(
-                  icon: LucideIcons.building2,
+                  icon: Iconsax.building_copy,
                   text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب مختلفة' : 'Operate up to 3 stadiums',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
-                  icon: LucideIcons.barChart2,
+                  icon: Iconsax.chart_1_copy,
                   text: isAr ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & daily booking analytics',
                 ),
                 const SizedBox(height: 8),
                 _FeatureRow(
-                  icon: LucideIcons.headphones,
+                  icon: Iconsax.headphones_copy,
                   text: isAr ? 'دعم فني وأولوية في تفعيل الحساب' : 'Priority owner support',
                 ),
               ],

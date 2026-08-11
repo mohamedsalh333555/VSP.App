@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -229,7 +229,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                         color: VSPColors.accent.withValues(alpha: 0.3)),
                   ),
                   child: Icon(
-                    LucideIcons.mailOpen,
+                    Iconsax.sms_copy,
                     color: VSPColors.accent,
                     size: 36,
                   ),

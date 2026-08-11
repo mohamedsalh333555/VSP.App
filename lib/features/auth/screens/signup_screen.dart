@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -245,7 +245,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+                          icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -315,7 +315,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _firstNameController,
                               hintText: AppLocalizations.of(context)!.firstNameHint,
                               textInputAction: TextInputAction.next,
-                              prefixIcon: LucideIcons.user,
+                              prefixIcon: Iconsax.user_copy,
                               maxLength: 30,
                             ),
                           ],
@@ -331,7 +331,7 @@ class _SignupScreenState extends State<SignupScreen> {
                               controller: _lastNameController,
                               hintText: AppLocalizations.of(context)!.lastNameHint,
                               textInputAction: TextInputAction.next,
-                              prefixIcon: LucideIcons.user2,
+                              prefixIcon: Iconsax.user_copy,
                               maxLength: 30,
                             ),
                           ],
@@ -355,7 +355,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
+                          Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
                           const SizedBox(width: 12),
                           Text(
                             _dateOfBirth != null
@@ -367,7 +367,7 @@ class _SignupScreenState extends State<SignupScreen> {
                           ),
                           const Spacer(),
                           if (_dateOfBirth != null)
-                            Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 16),
+                            Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
                         ],
                       ),
                     ),
@@ -380,7 +380,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: '01xxxxxxxxx',
                     keyboardType: TextInputType.phone,
                     textInputAction: TextInputAction.next,
-                    prefixIcon: LucideIcons.phone,
+                    prefixIcon: Iconsax.call_copy,
                     maxLength: 15,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                   ),
@@ -402,7 +402,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       else
                         GestureDetector(
                           onTap: _fetchAutoLocation,
-                          child: const Icon(LucideIcons.locate, color: VSPColors.accent, size: 18),
+                          child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
                         ),
                     ],
                   ),
@@ -422,7 +422,7 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: 'example@email.com',
                     keyboardType: TextInputType.emailAddress,
                     textInputAction: TextInputAction.next,
-                    prefixIcon: LucideIcons.mail,
+                    prefixIcon: Iconsax.sms_copy,
                   ),
                   
                   const SizedBox(height: 16),
@@ -432,10 +432,10 @@ class _SignupScreenState extends State<SignupScreen> {
                     hintText: '********',
                     obscureText: _obscurePassword,
                     textInputAction: TextInputAction.next,
-                    prefixIcon: LucideIcons.lock,
+                    prefixIcon: Iconsax.lock_copy,
                     onChanged: (val) => setState(() {}),
                     suffixIcon: IconButton(
-                      icon: Icon(_obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye, color: VSPColors.textSecondary),
+                      icon: Icon(_obscurePassword ? Iconsax.eye_slash_copy : Iconsax.eye_copy, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscurePassword = !_obscurePassword),
                     ),
                   ),
@@ -455,9 +455,9 @@ class _SignupScreenState extends State<SignupScreen> {
                     onFieldSubmitted: (_) {
                       if (!_isLoading) _handleSignup();
                     },
-                    prefixIcon: LucideIcons.lock,
+                    prefixIcon: Iconsax.lock_copy,
                     suffixIcon: IconButton(
-                      icon: Icon(_obscureConfirmPassword ? LucideIcons.eyeOff : LucideIcons.eye, color: VSPColors.textSecondary),
+                      icon: Icon(_obscureConfirmPassword ? Iconsax.eye_slash_copy : Iconsax.eye_copy, color: VSPColors.textSecondary),
                       onPressed: () => setState(() => _obscureConfirmPassword = !_obscureConfirmPassword),
                     ),
                   ),
@@ -638,7 +638,7 @@ class _SignupScreenState extends State<SignupScreen> {
         child: DropdownButton<String>(
           value: auth.governorate.isEmpty ? 'Cairo' : auth.governorate,
           dropdownColor: VSPColors.surface,
-          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+          icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {

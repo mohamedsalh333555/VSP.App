@@ -1,5 +1,5 @@
-﻿import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPMenuItem extends StatelessWidget {
@@ -72,9 +72,10 @@ class VSPMenuItem extends StatelessWidget {
               ),
             ),
             
-            // Chevron
+            // Chevron (RTL Directional compliant)
             if (!isLogout)
-              Icon(LucideIcons.chevronRight,
+              Icon(
+                Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                 color: VSPColors.textSecondary,
                 size: 22,
               ),

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../ui/tokens/vsp_tokens.dart';
 
 class VSPFeedback {
@@ -12,7 +12,7 @@ class VSPFeedback {
       message: message,
       backgroundColor: VSPColors.accent,
       textColor: Colors.black,
-      icon: LucideIcons.checkCircle,
+      icon: Iconsax.tick_circle_copy,
     );
   }
 
@@ -24,7 +24,7 @@ class VSPFeedback {
       message: message,
       backgroundColor: VSPColors.error,
       textColor: Colors.white,
-      icon: LucideIcons.alertCircle,
+      icon: Iconsax.warning_2_copy,
     );
   }
 

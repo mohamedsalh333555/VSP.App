@@ -1,5 +1,5 @@
 import 'dart:ui';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
@@ -160,18 +160,50 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     ),
   );
 }
-  /// 1. الهيدر الموحد لغوياً
+  /// 1. الهيدر الموحد لغوياً مع شارة الباقة الذهبية الهادئة
   Widget _buildHeader(AuthProvider auth, bool isArabic) {
     final firstName = (auth.userModel?.name ?? 'Owner').split(' ').first;
+    final isProOwner = auth.userModel?.isProPlan == true;
+    final isTrial = auth.userModel?.isInActiveTrial == true;
+
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
         Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              isArabic ? 'أهلاً $firstName' : 'Hi $firstName', 
-              style: Theme.of(context).textTheme.displayMedium,
+            Row(
+              children: [
+                Text(
+                  isArabic ? 'أهلاً $firstName' : 'Hi $firstName', 
+                  style: Theme.of(context).textTheme.displayMedium,
+                ),
+                if (isProOwner || isTrial) ...[
+                  const SizedBox(width: 8),
+                  InkWell(
+                    onTap: () => _showProUpgradeSheet(context),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                      decoration: BoxDecoration(
+                        color: Colors.amber.withValues(alpha: 0.15),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1),
+                      ),
+                      child: Row(
+                        mainAxisSize: MainAxisSize.min,
+                        children: [
+                          const Icon(Iconsax.crown_copy, color: Colors.amber, size: 12),
+                          const SizedBox(width: 4),
+                          Text(
+                            isTrial ? (isArabic ? 'تجريبي' : 'Trial') : 'Pro',
+                            style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ],
+              ],
             ),
             Text(
               isArabic ? 'لوحة تحكم الملعب' : 'Facility Dashboard', 
@@ -180,7 +212,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ],
         ),
         IconButton(
-          icon: const Icon(LucideIcons.bell, color: Colors.white),
+          icon: const Icon(Iconsax.notification_copy, color: Colors.white),
           onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsCenterScreen())),
         ),
       ],
@@ -214,7 +246,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.shieldAlert, color: Colors.redAccent, size: 18),
+          const Icon(Iconsax.security_safe_copy, color: Colors.redAccent, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -243,7 +275,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.clock, color: Colors.orange, size: 18),
+          const Icon(Iconsax.clock_copy, color: Colors.orange, size: 18),
           const SizedBox(width: 8),
           Expanded(
             child: Text(
@@ -253,7 +285,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           InkWell(
             onTap: () => setState(() => _isPendingBannerDismissed = true),
-            child: const Icon(LucideIcons.x, color: Colors.orange, size: 16),
+            child: const Icon(Iconsax.close_circle_copy, color: Colors.orange, size: 16),
           ),
         ],
       ),
@@ -264,32 +296,55 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final bool isPro = userModel.isProPlan;
     final bool isTrial = userModel.isInActiveTrial;
     final DateTime? trialEnd = userModel.effectiveTrialEndsAt;
-    final int remainingDays = trialEnd != null ? trialEnd.difference(DateTime.now()).inDays : 0;
+    final DateTime? subEnd = userModel.subscriptionExpiresAt;
+
+    final now = DateTime.now();
+    int remainingDays = 999;
+    if (isTrial && trialEnd != null) {
+      remainingDays = trialEnd.difference(now).inDays;
+    } else if (subEnd != null) {
+      remainingDays = subEnd.difference(now).inDays;
+    }
+
+    // 🌟 DYNAMIC STATE MACHINE ARCHITECTURE:
+    // 1. ACTIVE & HEALTHY (> 7 days left on Pro/Paid plan):
+    //    -> HIDE BANNER COMPLETELY! User has subtle gold Pro badge in header.
+    // 2. RENEWAL WARNING (<= 7 days left or in active trial):
+    //    -> Show Amber Warning Banner ("متبقي X أيام على تجديد الاشتراك - تجديد الآن ⚡")
+    // 3. EXPIRED:
+    //    -> Show Red Danger Banner ("انتهت الباقة! ادفع الآن لتفعيل الملاعب ⚠️")
+
+    if (!isExpired && isPro && !isTrial && remainingDays > 7) {
+      return const SizedBox.shrink();
+    }
+
     final String trialEndDateStr = trialEnd != null ? DateFormat('yyyy/MM/dd').format(trialEnd) : '';
 
     final String planLabel = isExpired
-        ? (isArabic ? 'انتهت المدة - ادفع الآن' : 'Period Expired - Pay Now')
+        ? (isArabic ? 'انتهت الباقة - ادفع الآن ⚠️' : 'Plan Expired - Renew Now ⚠️')
         : (isTrial
             ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم)' : 'Free Trial ($remainingDays days left)')
-            : (isArabic 
-                ? (isPro ? 'احترافية (Pro)' : 'أساسية (Basic)')
-                : userModel.subscriptionPlanLabel));
+            : (remainingDays <= 7
+                ? (isArabic ? 'تجديد قريب (متبقي $remainingDays يوم ⏳)' : 'Renewal Due ($remainingDays days left ⏳)')
+                : (isArabic ? 'احترافية (Pro)' : 'Pro Plan')));
 
     final String subtitleText = isExpired
-        ? (isArabic ? 'انتهت الفترة التجريبية. يرجى الاشتراك لتفعيل الحجوزات.' : 'Free trial ended. Subscribe to resume bookings.')
+        ? (isArabic ? 'انتهت فترة الاشتراك. يرجى التجديد لتشغيل الحجوزات.' : 'Subscription ended. Renew to enable bookings.')
         : (isTrial
             ? (isArabic ? 'ينتهي التجريبي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : 'Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
-            : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}');
+            : (remainingDays <= 7
+                ? (isArabic ? 'يرجى التجديد قبل انتهاء المدة لتجنب توقف الحجوزات.' : 'Please renew to prevent service interruption.')
+                : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}'));
 
     final String buttonLabel = isExpired
         ? (isArabic ? 'ادفع الآن' : 'Pay Now')
-        : (isArabic ? 'ترقية' : 'Upgrade');
+        : (remainingDays <= 7
+            ? (isArabic ? 'تجديد ⚡' : 'Renew ⚡')
+            : (isArabic ? 'ترقية' : 'Upgrade'));
 
-    final Color statusColor = isPro
-        ? Colors.amber
-        : (!isExpired
-            ? VSPColors.accent
-            : Colors.redAccent);
+    final Color statusColor = isExpired
+        ? Colors.redAccent
+        : Colors.amber;
 
     return InkWell(
       onTap: () => _showProUpgradeSheet(context),
@@ -299,17 +354,19 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         decoration: BoxDecoration(
           color: isExpired
               ? Colors.red.withValues(alpha: 0.15)
-              : (isPro ? Colors.amber.withValues(alpha: 0.1) : VSPColors.surface),
+              : Colors.amber.withValues(alpha: 0.1),
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isExpired ? Colors.redAccent : (isPro ? Colors.amber : VSPColors.accent),
+            color: isExpired ? Colors.redAccent : Colors.amber,
             width: isExpired ? 1.5 : 1.0,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              isPro ? LucideIcons.crown : (isTrial ? LucideIcons.timer : (!isExpired ? LucideIcons.award : LucideIcons.shieldAlert)),
+              isExpired
+                  ? Iconsax.security_safe_copy
+                  : (remainingDays <= 7 || isTrial ? Iconsax.clock_copy : Iconsax.crown_copy),
               color: statusColor,
               size: 22,
             ),
@@ -368,7 +425,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
                   ),
                   const SizedBox(width: 4),
-                  const Icon(LucideIcons.arrowUpRight, size: 14),
+                  const Icon(Iconsax.arrow_up_3_copy, size: 14),
                 ],
               ),
             ),
@@ -384,7 +441,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       height: 48,
       child: ElevatedButton.icon(
         onPressed: () => _navigateToWalkInBooking(context, isExpired),
-        icon: const Icon(LucideIcons.plusCircle, size: 18),
+        icon: const Icon(Iconsax.add_circle_copy, size: 18),
         label: Text(
           isArabic ? 'إضافة حجز يدوي' : 'Add Manual Booking',
           style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 14),
@@ -554,7 +611,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.lock, color: Colors.amber, size: 12),
+                        const Icon(Iconsax.lock_copy, color: Colors.amber, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           isArabic ? 'المحرك المالي 1000ج' : 'Pro Engine 1000 EGP',
@@ -803,7 +860,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
+                      const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 14),
                       const SizedBox(width: 6),
                       Text(
                         '${isArabic ? "الحجوزات:" : "Bookings:"} $activeBookingsCount',
@@ -826,7 +883,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   child: Row(
                     children: [
-                      const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
+                      const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 14),
                       const SizedBox(width: 6),
                       Text(
                         '${isArabic ? "التشغيل:" : "Hours:"} $formattedHours ${isArabic ? "ساعة" : "h"}',
@@ -862,7 +919,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               child: _buildCompactInsightCard(
                 title: isArabic ? 'أوقات الذروة' : 'Peak Hours',
                 subtitle: isArabic ? 'أكثر الساعات طلباً' : 'Most requested slots',
-                icon: LucideIcons.clock,
+                icon: Iconsax.clock_copy,
                 iconColor: VSPColors.accent,
                 isPro: isProOwner,
                 onTap: () {
@@ -880,7 +937,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               child: _buildCompactInsightCard(
                 title: isArabic ? 'مصادر الحجوزات' : 'Booking Sources',
                 subtitle: isArabic ? 'المباشر والتحديات' : 'Direct vs Challenges',
-                icon: LucideIcons.barChart3,
+                icon: Iconsax.chart_1_copy,
                 iconColor: Colors.blueAccent,
                 isPro: isProOwner,
                 onTap: () {
@@ -947,7 +1004,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   )
                 else
                   Icon(
-                    isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                    isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                     color: VSPColors.textSecondary,
                     size: 16,
                   ),
@@ -1080,7 +1137,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.clock, color: VSPColors.accent, size: 22),
+                      const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 22),
                       const SizedBox(width: 8),
                       Text(
                         isArabic ? 'تحليل أوقات الذروة' : 'Peak Hours Analytics',
@@ -1089,7 +1146,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 18),
+                    icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -1179,7 +1236,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   children: [
                     Row(
                       children: [
-                        const Icon(LucideIcons.lightbulb, color: VSPColors.accent, size: 22),
+                        const Icon(Iconsax.flash_1_copy, color: VSPColors.accent, size: 22),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(
@@ -1202,7 +1259,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                             isArabic ? 'تم فتح خاصية تعديل تسعير ساعات الذروة بنجاح!' : 'Dynamic peak pricing settings opened!',
                           );
                         },
-                        icon: const Icon(LucideIcons.settings2, size: 16),
+                        icon: const Icon(Iconsax.setting_2_copy, size: 16),
                         label: Text(
                           isArabic ? 'تعديل أسعار ساعات الذروة' : 'Adjust Peak Pricing',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),
@@ -1262,22 +1319,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String dynamicInsightText;
     final IconData dynamicInsightIcon;
     if (challengeCount >= directCount && challengeCount >= manualCount && challengeCount > 0) {
-      dynamicInsightIcon = LucideIcons.trophy;
+      dynamicInsightIcon = Iconsax.cup_copy;
       dynamicInsightText = isArabic 
           ? 'مباريات وتحديات الفرق تشكل المصدر الأعلى دخلاً ونشاطاً لملعبك حالياً!'
           : 'Team challenges & match bookings drive your highest revenue!';
     } else if (directCount >= manualCount && directCount > 0) {
-      dynamicInsightIcon = LucideIcons.smartphone;
+      dynamicInsightIcon = Iconsax.mobile_copy;
       dynamicInsightText = isArabic
           ? 'حجوزات اللاعبين المباشرة عبر التطبيق هي المصدر الأساسي لأرباح ملعبك حالياً!'
           : 'Direct app player bookings drive the majority of your pitch revenue!';
     } else if (manualCount > 0) {
-      dynamicInsightIcon = LucideIcons.lightbulb;
+      dynamicInsightIcon = Iconsax.flash_1_copy;
       dynamicInsightText = isArabic
           ? 'الحجوزات اليدوية / الكاش تشكل 100% من أرباحك حالياً. ننصح بتفعيل استقبال الحجوزات الأونلاين والتحديات لجذب عملاء وجدد لملعبك!'
           : 'Cash walk-ins account for 100% of revenue. Consider enabling online player bookings to attract new teams!';
     } else {
-      dynamicInsightIcon = LucideIcons.lightbulb;
+      dynamicInsightIcon = Iconsax.flash_1_copy;
       dynamicInsightText = isArabic
           ? 'لم تستقبل أي حجوزات بعد. يمكنك إضافة حجزك اليدوي الأول الآن أو تفعيل ملعبك لاستقبال حجوزات اللاعبين!'
           : 'No bookings received yet. Add your first manual booking or open online player slots!';
@@ -1314,7 +1371,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.barChart3, color: Colors.blueAccent, size: 22),
+                      const Icon(Iconsax.chart_1_copy, color: Colors.blueAccent, size: 22),
                       const SizedBox(width: 8),
                       Text(
                         isArabic ? 'تقرير مصادر الحجوزات' : 'Booking Sources Report',
@@ -1323,7 +1380,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     ],
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 18),
+                    icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                     onPressed: () => Navigator.pop(ctx),
                   ),
                 ],
@@ -1392,7 +1449,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                             isArabic ? 'تم تفعيل استقبال الحجز الإلكتروني وتحديات الفرق بنجاح!' : 'Online player bookings and team challenges activated!',
                           );
                         },
-                        icon: const Icon(LucideIcons.rocket, size: 16),
+                        icon: const Icon(Iconsax.flash_1_copy, size: 16),
                         label: Text(
                           isArabic ? 'تفعيل الحجز الإلكتروني والتحديات' : 'Enable Online Player Bookings',
                           style: const TextStyle(fontSize: 12, fontWeight: FontWeight.bold),

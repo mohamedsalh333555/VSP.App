@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
 class VSPCountdownTimer extends StatefulWidget {
@@ -79,7 +79,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
         child: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.timer, color: VSPColors.accent, size: 12),
+            const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 12),
             const SizedBox(width: 4),
             Text(
               '${days}d ${hours}h ${minutes}m',
@@ -102,7 +102,7 @@ class _VSPCountdownTimerState extends State<VSPCountdownTimer> {
           Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              const Icon(LucideIcons.timer, color: VSPColors.accent, size: 14),
+              const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
               const SizedBox(width: 6),
               Text(
                 isArabic ? 'ينتهي التسجيل وتبدأ البطولة خلال:' : 'Registration Closes In:',

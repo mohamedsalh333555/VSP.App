@@ -1,5 +1,5 @@
 import 'owner_tournament_dashboard_screen.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
@@ -216,22 +216,25 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
+          icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
         title: Text(
-          'Create a tournament',
+          isAr ? 'إنشاء بطولة جديدة' : 'Create a Tournament',
           style: Theme.of(context).textTheme.displaySmall,
         ),
       ),
-      body: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+      body: SingleChildScrollView(
+        keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
         padding: const EdgeInsets.only(bottom: 100),
         child: Padding(
           padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
@@ -239,26 +242,26 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // --- Basic Info ---
-              const VSPSectionTitle('Basic Info'),
-              _buildInputLabel('Name Tournament'),
-              _buildTextField(_nameController, hint: 'Sal Cup', maxLength: 50),
+              VSPSectionTitle(isAr ? 'البيانات الأساسية' : 'Basic Info'),
+              _buildInputLabel(isAr ? 'اسم البطولة' : 'Tournament Name'),
+              _buildTextField(_nameController, hint: isAr ? 'مثال: بطولة رمضان الكبرى' : 'e.g. Ramadan Cup', maxLength: 50),
               const SizedBox(height: 16),
-              _buildInputLabel('Type Tournament'),
-              _buildDropdown(['Cup', 'League'], _selectedTypeTournament, (v) => setState(() => _selectedTypeTournament = v!)),
+              _buildInputLabel(isAr ? 'نظام البطولة' : 'Tournament Type'),
+              _buildDropdown(['Cup', 'League'], _selectedTypeTournament, (v) => setState(() => _selectedTypeTournament = v!), isAr: isAr),
               const SizedBox(height: 16),
-              _buildInputLabel('Type Sport'),
-              _buildDropdown(_availableSports, _selectedSport, (v) => setState(() => _selectedSport = v!)),
+              _buildInputLabel(isAr ? 'نوع الرياضة' : 'Sport Type'),
+              _buildDropdown(_availableSports, _selectedSport, (v) => setState(() => _selectedSport = v!), isAr: isAr),
               const SizedBox(height: 24),
 
               // --- Dates ---
-              const VSPSectionTitle('Tournament Dates'),
+              VSPSectionTitle(isAr ? 'مواعيد البطولة' : 'Tournament Dates'),
               Row(
                 children: [
                   Expanded(
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInputLabel('Start Date'),
+                        _buildInputLabel(isAr ? 'تاريخ البدء' : 'Start Date'),
                         GestureDetector(
                           onTap: () => _selectDate(context, true),
                           child: _buildDateDisplay(_startDate),
@@ -271,7 +274,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildInputLabel('End Date'),
+                        _buildInputLabel(isAr ? 'تاريخ الانتهاء' : 'End Date'),
                         GestureDetector(
                           onTap: () => _selectDate(context, false),
                           child: _buildDateDisplay(_endDate),
@@ -284,11 +287,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 24),
 
               // --- Upload Cover ---
-              _buildInputLabel('Upload Tournament Cover'),
-              Text('Recommended Size: 1920x1080', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+              _buildInputLabel(isAr ? 'تحميل غلاف البطولة' : 'Upload Tournament Cover'),
+              Text(isAr ? 'الحجم الموصى به: 1920x1080' : 'Recommended Size: 1920x1080', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
               const SizedBox(height: VSPSpacing.xs),
               Container(
-                height: 150,
+                height: 130,
                 width: double.infinity,
                 decoration: BoxDecoration(
                   color: VSPColors.surface,
@@ -298,69 +301,69 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
                 child: Column(
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
-                    Icon(LucideIcons.camera, color: VSPColors.accent, size: 32),
+                    Icon(Iconsax.image_copy, color: VSPColors.accent, size: 32),
                     const SizedBox(height: VSPSpacing.xs),
-                    Text('Upload Image', style: Theme.of(context).textTheme.titleSmall),
-                    Text('JPG, JPEG, PNG Less Than 10MB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                    Text(isAr ? 'تحميل صورة الغلاف' : 'Upload Image', style: Theme.of(context).textTheme.titleSmall),
+                    Text(isAr ? 'JPG, PNG بحجم أقل من 10 ميجابايت' : 'JPG, PNG Less Than 10MB', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ],
                 ),
               ),
               const SizedBox(height: 24),
 
               // --- League Settings ---
-              const VSPSectionTitle('League Settings'),
-              _buildInputLabel('Number Of Teams'),
-              _buildDropdown(['4', '8', '16', '32'], _selectedNumTeams, (v) => setState(() => _selectedNumTeams = v!)), // 🟢 FIXED: Only Powers of 2 for Knockout Algorithm
+              VSPSectionTitle(isAr ? 'إعدادات الفرق' : 'League Settings'),
+              _buildInputLabel(isAr ? 'عدد الفرق المشاركة' : 'Number Of Teams'),
+              _buildDropdown(['4', '8', '16', '32'], _selectedNumTeams, (v) => setState(() => _selectedNumTeams = v!), isAr: isAr),
               const SizedBox(height: 16),
-              _buildInputLabel('Maximum Number Of Players Per Team'),
-              _buildDropdown(['5', '7', '11', '15'], _selectedMaxPlayers, (v) => setState(() => _selectedMaxPlayers = v!)),
+              _buildInputLabel(isAr ? 'أقصى عدد لاعبين لكل فريق' : 'Max Players Per Team'),
+              _buildDropdown(['5', '7', '11', '15'], _selectedMaxPlayers, (v) => setState(() => _selectedMaxPlayers = v!), isAr: isAr),
               const SizedBox(height: 16),
-              _buildInputLabel('Minimum Number Of Players Per Team'),
-              _buildDropdown(['5', '7', '11'], _selectedMinPlayers, (v) => setState(() => _selectedMinPlayers = v!)),
+              _buildInputLabel(isAr ? 'أدنى عدد لاعبين لكل فريق' : 'Min Players Per Team'),
+              _buildDropdown(['5', '7', '11'], _selectedMinPlayers, (v) => setState(() => _selectedMinPlayers = v!), isAr: isAr),
               const SizedBox(height: 24),
 
               // --- Scoring Rules ---
-              const VSPSectionTitle('Scoring Rules'),
-              _buildInputLabel('Winning Points'),
-              _buildTextField(_winningPointsController, hint: 'e.g. 3', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              VSPSectionTitle(isAr ? 'قواعد النقاط' : 'Scoring Rules'),
+              _buildInputLabel(isAr ? 'نقاط الفوز' : 'Winning Points'),
+              _buildTextField(_winningPointsController, hint: isAr ? 'مثال: 3' : 'e.g. 3', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
-              _buildInputLabel('Break-Even Points'),
-              _buildTextField(_breakEvenPointsController, hint: 'e.g. 1', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildInputLabel(isAr ? 'نقاط التعادل' : 'Draw Points'),
+              _buildTextField(_breakEvenPointsController, hint: isAr ? 'مثال: 1' : 'e.g. 1', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
-              _buildInputLabel('Loss Points'),
-              _buildTextField(_lossPointsController, hint: 'e.g. 0', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildInputLabel(isAr ? 'نقاط الخسارة' : 'Loss Points'),
+              _buildTextField(_lossPointsController, hint: isAr ? 'مثال: 0' : 'e.g. 0', maxLength: 2, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 24),
 
               // --- Match Settings ---
-              const VSPSectionTitle('Match Settings'),
-              _buildInputLabel('Duration Of The Match'),
-              _buildTextField(_durationController, hint: 'e.g. 30', maxLength: 3, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]), // Could be dropdown or text with suffix
-               const SizedBox(height: 16),
-              _buildInputLabel('Back And Forth'),
-              _buildDropdown(['Yes', 'No'], _selectedBackForth, (v) => setState(() => _selectedBackForth = v!)),
+              VSPSectionTitle(isAr ? 'إعدادات المباريات' : 'Match Settings'),
+              _buildInputLabel(isAr ? 'مدة المباراة (بالدقائق)' : 'Match Duration (Mins)'),
+              _buildTextField(_durationController, hint: isAr ? 'مثال: 30' : 'e.g. 30', maxLength: 3, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
-              _buildInputLabel('Determine The Pitch'),
-              _buildDropdown(['Pitch 1', 'Pitch 2'], _selectedPitch, (v) => setState(() => _selectedPitch = v!)),
+              _buildInputLabel(isAr ? 'نظام الذهاب والإياب' : 'Back & Forth'),
+              _buildDropdown(['Yes', 'No'], _selectedBackForth, (v) => setState(() => _selectedBackForth = v!), isAr: isAr),
               const SizedBox(height: 16),
-              _buildInputLabel('Number Of Rounds'),
-               _buildDropdown(['1', '2', '3'], _selectedRounds, (v) => setState(() => _selectedRounds = v!)),
+              _buildInputLabel(isAr ? 'تحديد الملعب' : 'Determine Pitch'),
+              _buildDropdown(['Pitch 1', 'Pitch 2'], _selectedPitch, (v) => setState(() => _selectedPitch = v!), isAr: isAr),
+              const SizedBox(height: 16),
+              _buildInputLabel(isAr ? 'عدد الأقسام / الأدوار' : 'Number Of Rounds'),
+              _buildDropdown(['1', '2', '3'], _selectedRounds, (v) => setState(() => _selectedRounds = v!), isAr: isAr),
               const SizedBox(height: 24),
 
               // --- Fees & Prize ---
-              const VSPSectionTitle('Fees & Prize'),
-              _buildInputLabel('Team Subscription Fees'),
-              _buildTextField(_feesController, hint: 'e.g. 1000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              VSPSectionTitle(isAr ? 'الرسوم والجوائز' : 'Fees & Prize'),
+              _buildInputLabel(isAr ? 'رسوم اشتراك الفريق (ج.م)' : 'Team Subscription Fee (EGP)'),
+              _buildTextField(_feesController, hint: isAr ? 'مثال: 1000' : 'e.g. 1000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
-              _buildInputLabel('Grand Prize'),
-              _buildTextField(_prizeController, hint: 'e.g. 5000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
+              _buildInputLabel(isAr ? 'الجائزة الكبرى (ج.م)' : 'Grand Prize (EGP)'),
+              _buildTextField(_prizeController, hint: isAr ? 'مثال: 5000' : 'e.g. 5000', maxLength: 7, keyboardType: TextInputType.number, inputFormatters: [FilteringTextInputFormatter.digitsOnly]),
               const SizedBox(height: 16),
-              _buildInputLabel('Payment Method'),
-              _buildDropdown(['Cash', 'Online', 'Both'], _selectedPaymentMethod, (v) => setState(() => _selectedPaymentMethod = v!)),
+              _buildInputLabel(isAr ? 'طريقة الدفع' : 'Payment Method'),
+              _buildDropdown(['Cash', 'Online', 'Both'], _selectedPaymentMethod, (v) => setState(() => _selectedPaymentMethod = v!), isAr: isAr),
               const SizedBox(height: 16),
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text('Trophy/Medals', style: Theme.of(context).textTheme.bodyMedium),
+                  Text(isAr ? 'كأس وميداليات للمراكز الأولى' : 'Trophy/Medals', style: Theme.of(context).textTheme.bodyMedium),
                   Switch(
                     value: _trophyMedals, 
                     onChanged: (v) => setState(() => _trophyMedals = v),
@@ -371,27 +374,27 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               const SizedBox(height: 24),
 
               // --- Rules & Regulations ---
-              const VSPSectionTitle('Rules & Regulations'),
-              _buildInputLabel('Yellow Cards Before Suspension'),
-              _buildDropdown(['1', '2', '3'], _selectedYellowCards, (v) => setState(() => _selectedYellowCards = v!)),
+              VSPSectionTitle(isAr ? 'القوانين والإنذارات' : 'Rules & Regulations'),
+              _buildInputLabel(isAr ? 'الكروت الصفراء قبل الإيقاف' : 'Yellow Cards Before Suspension'),
+              _buildDropdown(['1', '2', '3'], _selectedYellowCards, (v) => setState(() => _selectedYellowCards = v!), isAr: isAr),
               const SizedBox(height: 16),
-               Row(
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text('Red Cards Automatic Suspension', style: Theme.of(context).textTheme.bodyMedium),
-                   Switch(
+                  Text(isAr ? 'إيقاف تلقائي عند الكرت الأحمر' : 'Red Card Automatic Suspension', style: Theme.of(context).textTheme.bodyMedium),
+                  Switch(
                     value: _redCardSuspension,
                     onChanged: (v) => setState(() => _redCardSuspension = v),
                     activeColor: VSPColors.accent,
                   )
                 ],
               ),
-               const SizedBox(height: 8),
-               Row(
+              const SizedBox(height: 8),
+              Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                   Text('Fair-Play Scoring', style: Theme.of(context).textTheme.bodyMedium),
-                   Switch(
+                  Text(isAr ? 'احتساب نقاط اللعب النظيف' : 'Fair-Play Scoring', style: Theme.of(context).textTheme.bodyMedium),
+                  Switch(
                     value: _fairPlayScoring,
                     onChanged: (v) => setState(() => _fairPlayScoring = v),
                     activeColor: VSPColors.accent,
@@ -400,39 +403,39 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
               ),
               const SizedBox(height: 24),
               
-              _buildInputLabel('Championship instructions'),
-                Container(
-                  height: 120,
-                   decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                  ),
-                  child: TextField(
-                    controller: _instructionsController,
-                    maxLines: 5,
-                    maxLength: 500,
-                    style: Theme.of(context).textTheme.bodySmall,
-                    decoration: InputDecoration(
-                      border: InputBorder.none,
-                      counterText: "",
-                      contentPadding: const EdgeInsets.all(VSPSpacing.md),
-                      hintText: 'Welcome everyone, Before We Begin The Tournament I Would Like To Clarify Some Important Instructions To Ensure Fair Competition...',
-                      hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-                    ),
+              _buildInputLabel(isAr ? 'تعليمات وإرشادات البطولة' : 'Championship Instructions'),
+              Container(
+                height: 120,
+                decoration: BoxDecoration(
+                  color: VSPColors.surface,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                ),
+                child: TextField(
+                  controller: _instructionsController,
+                  maxLines: 5,
+                  maxLength: 500,
+                  style: Theme.of(context).textTheme.bodySmall,
+                  decoration: InputDecoration(
+                    border: InputBorder.none,
+                    counterText: "",
+                    contentPadding: const EdgeInsets.all(VSPSpacing.md),
+                    hintText: isAr ? 'أهلاً بالجميع، يرجى الالتزام بالروح الرياضية والحضور قبل موعد المباراة بـ 15 دقيقة...' : 'Welcome everyone, please ensure fair competition...',
+                    hintStyle: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
                   ),
                 ),
+              ),
             ],
           ),
         ),
       ),
       bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + VSPSpacing.md),
+        padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + VSPSpacing.md : VSPSpacing.md),
         color: VSPColors.background,
         child: SizedBox(
           width: double.infinity,
           height: 56,
           child: PrimaryButton(
-            text: 'Confirm',
+            text: isAr ? 'تأكيد وإنشاء البطولة' : 'Confirm & Create',
             isLoading: _isLoading,
             onPressed: _isLoading ? () {} : _handleCreateTournament,
           ),
@@ -466,7 +469,24 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
     );
   }
 
-  Widget _buildDropdown(List<String> items, String value, Function(String?) onChanged) {
+  Widget _buildDropdown(List<String> items, String value, Function(String?) onChanged, {bool isAr = false}) {
+    String getLocalizedItem(String item) {
+      if (!isAr) return item;
+      switch (item) {
+        case 'Cup': return 'كأس (خروج المغلوب)';
+        case 'League': return 'دوري نقاط';
+        case 'Football': return 'كرة قدم';
+        case 'Yes': return 'نعم';
+        case 'No': return 'لا';
+        case 'Cash': return 'نقداً في الملعب';
+        case 'Online': return 'دفع إلكتروني';
+        case 'Both': return 'كلاهما (نقداً وإلكتروني)';
+        case 'Pitch 1': return 'ملعب 1';
+        case 'Pitch 2': return 'ملعب 2';
+        default: return item;
+      }
+    }
+
     return Container(
       height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -479,13 +499,13 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+          icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           items: items.map((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(item),
+              child: Text(getLocalizedItem(item)),
             );
           }).toList(),
           onChanged: onChanged,
@@ -510,7 +530,7 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
             "${date.day}/${date.month}/${date.year}",
             style: Theme.of(context).textTheme.bodyMedium,
           ),
-          Icon(LucideIcons.calendar, color: VSPColors.accent, size: 18),
+          Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 18),
         ],
       ),
     );

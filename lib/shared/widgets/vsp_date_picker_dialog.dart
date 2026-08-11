@@ -132,7 +132,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
                         shape: BoxShape.circle,
                       ),
                       child: const Icon(
-                        Iconsax.calendar_1,
+                        Iconsax.calendar_1_copy,
                         color: VSPColors.accent,
                         size: 20,
                       ),
@@ -150,7 +150,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
                     ),
                     IconButton(
                       onPressed: () => Navigator.pop(context),
-                      icon: const Icon(Iconsax.close_circle, color: VSPColors.textSecondary, size: 22),
+                      icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 22),
                       padding: EdgeInsets.zero,
                       constraints: const BoxConstraints(),
                     ),

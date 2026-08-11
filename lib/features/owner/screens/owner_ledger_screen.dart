@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -10,12 +10,18 @@ class OwnerLedgerScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: Text('Financial Ledger', style: Theme.of(context).textTheme.displaySmall),
+        leading: IconButton(
+          icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
+        title: Text(isAr ? 'السجل المالي والتسويات' : 'Financial Ledger', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
@@ -39,7 +45,7 @@ class OwnerLedgerScreen extends StatelessWidget {
           final transactions = snapshot.data ?? [];
 
           if (transactions.isEmpty) {
-            return Center(child: Text('No transactions yet.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)));
+            return Center(child: Text(isAr ? 'لا توجد معاملات مالية بعد.' : 'No transactions yet.', style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)));
           }
 
           double totalCash = 0;
@@ -57,8 +63,8 @@ class OwnerLedgerScreen extends StatelessWidget {
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Text('Total Cash Collected', style: Theme.of(context).textTheme.bodyMedium),
-                    Text('${totalCash.toStringAsFixed(0)} EGP', 
+                    Text(isAr ? 'إجمالي المبالغ المحصلة' : 'Total Cash Collected', style: Theme.of(context).textTheme.bodyMedium),
+                    Text('${totalCash.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}', 
                       style: Theme.of(context).textTheme.displaySmall?.copyWith(color: VSPColors.accent)
                     ),
                   ],
@@ -85,21 +91,21 @@ class OwnerLedgerScreen extends StatelessWidget {
                     final String amountText;
 
                     if (type == 'match_win') {
-                      icon = LucideIcons.trophy;
+                      icon = Iconsax.cup_copy;
                       color = VSPColors.warning;
-                      title = 'Match Win Reward';
-                      amountText = '+3 pts';
+                      title = isAr ? 'مكافأة الفوز بمباراة' : 'Match Win Reward';
+                      amountText = isAr ? '+3 نقاط' : '+3 pts';
                     } else if (type == 'digital') {
-                      icon = LucideIcons.creditCard;
+                      icon = Iconsax.wallet_1_copy;
                       color = const Color(0xFF3B82F6); // Electric Blue/Indigo
-                      title = 'تحصيل إلكتروني آمن';
-                      amountText = '+${amount.toStringAsFixed(0)} eg';
+                      title = isAr ? 'تحصيل إلكتروني آمن (Paymob)' : 'Digital Online Payment';
+                      amountText = '+${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
                     } else {
                       // Default to cash
-                      icon = LucideIcons.banknote;
+                      icon = Iconsax.card_copy;
                       color = VSPColors.success;
-                      title = 'تحصيل نقدي بالملعب';
-                      amountText = '+${amount.toStringAsFixed(0)} eg';
+                      title = isAr ? 'تحصيل نقدي بالملعب' : 'Pitch Cash Payment';
+                      amountText = '+${amount.toStringAsFixed(0)} ${isAr ? "ج.م" : "EGP"}';
                     }
 
                     return VSPCard(

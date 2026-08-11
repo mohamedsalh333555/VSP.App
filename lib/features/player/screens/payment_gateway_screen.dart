@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
@@ -36,6 +36,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isAwaitingWebhook = false;
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
+  Timer? _webhookTimeoutTimer;
   bool _paymentCompleted = false;
 
   @override
@@ -46,6 +47,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   @override
   void dispose() {
+    _webhookTimeoutTimer?.cancel();
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
 
@@ -160,6 +162,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     if (_booking == null) return;
     setState(() => _isAwaitingWebhook = true);
 
+    _webhookTimeoutTimer?.cancel();
+    _webhookTimeoutTimer = Timer(const Duration(seconds: 90), () {
+      if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
+        setState(() => _isAwaitingWebhook = false);
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(
+              isArabic
+                  ? 'لم يصل تأكيد الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً أو اختيار وسيلة دفع أخرى.'
+                  : 'Webhook response timed out. You can retry or choose another method.',
+            ),
+            backgroundColor: VSPColors.error,
+          ),
+        );
+      }
+    });
+
     final amountToPay = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0 
         ? widget.bookingDraft.depositPaid.toInt() 
         : widget.bookingDraft.totalPrice.toInt();
@@ -198,7 +218,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
           title: const Row(
             children: [
-              Icon(LucideIcons.alertTriangle, color: VSPColors.error),
+              Icon(Iconsax.warning_2_copy, color: VSPColors.error),
               SizedBox(width: 8),
               Text(
                 'تنبيه النظام 🛑',
@@ -238,7 +258,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               children: [
                 const SizedBox(height: 8),
                 const Icon(
-                  LucideIcons.calendarX,
+                  Iconsax.calendar_1_copy,
                   color: VSPColors.error,
                   size: 48,
                 ),
@@ -326,7 +346,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           backgroundColor: VSPColors.background,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+            icon: Icon(isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
             onPressed: () async {
               final cancel = await showDialog<bool>(
                 context: context,
@@ -389,7 +409,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2),
                       ),
                       child: Icon(
-                        isChampionship ? LucideIcons.trophy : LucideIcons.shieldCheck, 
+                        isChampionship ? Iconsax.cup_copy : Iconsax.security_safe_copy, 
                         color: VSPColors.accent, 
                         size: 44,
                       ),
@@ -425,7 +445,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                             children: [
                               Row(
                                 children: [
-                                  Icon(isChampionship ? LucideIcons.trophy : LucideIcons.building, color: VSPColors.textSecondary, size: 16),
+                                  Icon(isChampionship ? Iconsax.cup_copy : Iconsax.building_copy, color: VSPColors.textSecondary, size: 16),
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
@@ -438,14 +458,14 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                               const SizedBox(height: 8),
                               Row(
                                 children: [
-                                  const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 14),
+                                  const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 14),
                                   const SizedBox(width: 8),
                                   Text(
                                     DateFormat('yyyy/MM/dd').format(widget.bookingDraft.startTime),
                                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                                   ),
                                   const SizedBox(width: 14),
-                                  const Icon(LucideIcons.clock, color: VSPColors.textSecondary, size: 14),
+                                  const Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 14),
                                   const SizedBox(width: 6),
                                   Text(
                                     DateFormat('hh:mm a').format(widget.bookingDraft.startTime),
@@ -495,8 +515,22 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         isArabic ? 'جاري انتظار تأكيد السيرفر وبوابة الدفع (Webhook)...' : 'Awaiting server webhook confirmation...',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                       ),
+                      if (_isAwaitingWebhook) ...[
+                        const SizedBox(height: 10),
+                        TextButton.icon(
+                          onPressed: () {
+                            _webhookTimeoutTimer?.cancel();
+                            setState(() => _isAwaitingWebhook = false);
+                          },
+                          icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 16),
+                          label: Text(
+                            isArabic ? 'إلغاء الانتظار وإعادة المحاولة' : 'Cancel Wait & Retry',
+                            style: const TextStyle(color: VSPColors.error, fontSize: 13, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
                     ] else ...[
-                      const Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 16),
+                      const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 16),
                       const SizedBox(height: 8),
                       Text(
                         isArabic ? 'سيتم تحويلك الآن لبوابة Paymob. التأكيد يتطلب رد الـ Webhook الرسمي.' : 'You will be redirected to Paymob. Confirmation relies strictly on Webhook API.',

@@ -1,6 +1,6 @@
 import 'subscription_plans_screen.dart';
 import 'owner_tournament_dashboard_screen.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -42,7 +42,7 @@ class CreateTournamentWizard extends StatefulWidget {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
-            const Icon(LucideIcons.crown, color: Colors.amber, size: 24),
+            const Icon(Iconsax.crown_copy, color: Colors.amber, size: 24),
             const SizedBox(width: 10),
             Expanded(
               child: Text(
@@ -458,7 +458,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
                     ),
                     child: Center(
                       child: i < _currentStep
-                          ? const Icon(LucideIcons.check, color: Colors.black, size: 16)
+                          ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
                           : Text(
                               '${i + 1}',
                               style: TextStyle(
@@ -506,7 +506,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           type: 'Cup',
           title: isAr ? 'خروج المغلوب' : 'Knockout',
           subtitle: isAr ? 'الخاسر يخرج فوراً. أعداد الفرق: 4، 8، 16، 32' : 'Single elimination. 4, 8, 16, 32 teams.',
-          icon: LucideIcons.trophy,
+          icon: Iconsax.cup_copy,
         ),
         const SizedBox(height: 10),
 
@@ -515,7 +515,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           type: 'League',
           title: isAr ? 'دوري نقاط كامل' : 'Full League',
           subtitle: isAr ? 'كل الفرق تلعب ضد بعضها. الترتيب بأعلى النقاط' : 'Round-Robin system. Winner with most points.',
-          icon: LucideIcons.award,
+          icon: Iconsax.award_copy,
         ),
         const SizedBox(height: 10),
 
@@ -524,7 +524,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           type: 'GroupsAndKnockout',
           title: isAr ? 'مجموعات ثم تصفيات' : 'Groups & Knockout',
           subtitle: isAr ? 'تقسيم لمجموعات ثم تصعيد المتأهلين للتصفيات' : 'Group stage followed by Knockout bracket.',
-          icon: LucideIcons.shieldCheck,
+          icon: Iconsax.security_safe_copy,
         ),
 
         const SizedBox(height: 24),
@@ -635,7 +635,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
               ),
             ),
             if (isSelected)
-              const Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 18),
+              const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18),
           ],
         ),
       ),
@@ -763,7 +763,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         child: DropdownButton<String>(
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
-          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontWeight: FontWeight.w600),
           items: items.map((item) {

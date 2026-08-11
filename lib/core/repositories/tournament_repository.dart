@@ -576,6 +576,21 @@ class TournamentRepository {
       }
 
       // 3. Cascade any subsequent BYE auto-advances for rounds r = startRoundIndex - 1 down to 1
+      bool isSubtreeEmpty(int roundIdx, int matchIdx) {
+        final mId = getMatchId(roundIdx, matchIdx);
+        final mData = matchesMap[mId];
+        if (mData == null) return true;
+        if (mData['home_team_id'] != null || mData['away_team_id'] != null || mData['winner_id'] != null) {
+          return false;
+        }
+        if (roundIdx < startRoundIndex) {
+          bool homeSub = isSubtreeEmpty(roundIdx + 1, matchIdx * 2);
+          bool awaySub = isSubtreeEmpty(roundIdx + 1, matchIdx * 2 + 1);
+          return homeSub && awaySub;
+        }
+        return true;
+      }
+
       for (int r = startRoundIndex - 1; r >= 1; r--) {
         int matchCount = (pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
@@ -585,14 +600,8 @@ class TournamentRepository {
           final String? homeId = matchData['home_team_id'];
           final String? awayId = matchData['away_team_id'];
 
-          final feederHomeMatchId = getMatchId(r + 1, m * 2);
-          final feederAwayMatchId = getMatchId(r + 1, m * 2 + 1);
-
-          final feederHome = matchesMap[feederHomeMatchId];
-          final feederAway = matchesMap[feederAwayMatchId];
-
-          final feederHomeEmpty = feederHome == null || (feederHome['home_team_id'] == null && feederHome['away_team_id'] == null);
-          final feederAwayEmpty = feederAway == null || (feederAway['home_team_id'] == null && feederAway['away_team_id'] == null);
+          final bool feederAwayEmpty = isSubtreeEmpty(r + 1, m * 2 + 1);
+          final bool feederHomeEmpty = isSubtreeEmpty(r + 1, m * 2);
 
           if (homeId != null && awayId == null && feederAwayEmpty) {
             matchData['winner_id'] = homeId;

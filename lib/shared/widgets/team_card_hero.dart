@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
@@ -22,7 +22,7 @@ class TeamCardHero extends StatelessWidget {
 
     return Container(
       width: isScreenshotMode ? 350 : double.infinity,
-      height: 480,
+      constraints: const BoxConstraints(minHeight: 440, maxHeight: 520),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(VSPRadius.xl),
         gradient: const LinearGradient(
@@ -53,7 +53,7 @@ class TeamCardHero extends StatelessWidget {
             right: -50,
             top: -50,
             child: Icon(
-              LucideIcons.shield,
+              Iconsax.security_safe_copy,
               size: 250,
               color: VSPColors.white.withValues(alpha: 0.03),
             ),
@@ -91,7 +91,7 @@ class TeamCardHero extends StatelessWidget {
                   child: ClipOval(
                     child: team.logoUrl.isNotEmpty 
                         ? Image.network(team.logoUrl, fit: BoxFit.cover)
-                        : Icon(LucideIcons.shield, size: 80, color: VSPColors.white),
+                        : Icon(Iconsax.security_safe_copy, size: 80, color: VSPColors.white),
                   ),
                 ),
                 

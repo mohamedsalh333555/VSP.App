@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -70,15 +70,16 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Padding(
       padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
       child: Container(
-        padding: const EdgeInsets.only(
+        padding: EdgeInsets.only(
           top: VSPSpacing.lg,
           left: VSPSpacing.md,
           right: VSPSpacing.md,
-          bottom: VSPSpacing.lg,
+          bottom: bottomPadding > 0 ? bottomPadding + VSPSpacing.lg : VSPSpacing.lg,
         ),
         decoration: const BoxDecoration(
           color: VSPColors.background,
@@ -101,7 +102,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
+                icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               ),
             ],
           ),
@@ -143,7 +144,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                           padding: EdgeInsets.all(VSPSpacing.sm),
                           child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
-                      : Icon(LucideIcons.search, color: VSPColors.background),
+                      : Icon(Iconsax.search_normal_copy, color: VSPColors.background),
                 ),
               ),
             ],
@@ -202,7 +203,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               child: Row(
                 children: [
-                   Icon(LucideIcons.check, color: VSPColors.accent, size: 16),
+                   Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
                    const SizedBox(width: 4),
                    Text(isArabic ? 'منضم' : 'Joined', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
@@ -241,7 +242,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
         children: [
           Row(
             children: [
-              Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 24),
+              Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 8),
               Text(
                 "رقم غير مسجل في VSP",
@@ -301,7 +302,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
                       elevation: 0,
                     ),
-                    icon: const Icon(LucideIcons.messageCircle, color: Colors.white, size: 18),
+                    icon: const Icon(Iconsax.messages_3_copy, color: Colors.white, size: 18),
                     label: const Text(
                       'واتساب',
                       style: TextStyle(fontWeight: FontWeight.bold, fontSize: 13),

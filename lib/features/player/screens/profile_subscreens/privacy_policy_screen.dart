@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
@@ -17,7 +17,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+          icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -47,7 +47,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 20),
+                      const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 20),
                       const SizedBox(width: 8),
                       Text(
                         isAr ? 'آخر تحديث: يوليو 2026' : 'Last Updated: July 2026',
@@ -77,7 +77,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 1: Data Collection
             _buildSection(
               context,
-              icon: LucideIcons.database,
+              icon: Iconsax.data_copy,
               title: isAr ? '١. البيانات التي نجمعها' : '1. Data We Collect',
               content: isAr
                   ? 'نقوم بجمع البيانات التي تُدخلها مباشرةً عند إنشاء حسابك، وتشمل: الاسم، رقم الهاتف، تاريخ الميلاد، المحافظة، صورة الملف الشخصي، والمركز المفضل (مهاجم / حارس / إلخ).'
@@ -87,7 +87,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 2: Payments via Paymob (Updated to 2 Hours)
             _buildSection(
               context,
-              icon: LucideIcons.creditCard,
+              icon: Iconsax.wallet_1_copy,
               title: isAr ? '٢. الدفع والمبالغ المستردة' : '2. Payments & Refunds',
               content: isAr
                   ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. تُحسب وتظهر رسوم خدمة المنصة ورسوم بوابة الدفع بوضوح في تفاصيل الفاتورة قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، يتم استرداد المبالغ المستحقة تلقائياً ومباشرةً إلى وسيلة الدفع الأصلية التي تم الدفع منها (الحساب البنكي / المحفظة الإلكترونية / انستا باي).'
@@ -97,7 +97,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 3: No-Show Penalties & GPS (Updated with strict constraints)
             _buildSection(
               context,
-              icon: LucideIcons.mapPin,
+              icon: Iconsax.location_copy,
               title: isAr ? '٣. تتبع الغياب والتحقق الجغرافي' : '3. No-Show Tracking & GPS',
               content: isAr
                   ? 'في حالة الإبلاغ عن "عدم الحضور" لمباراة تم حجزها، يتحقق النظام من موقعك الجغرافي (GPS) للتثبت من وجودك داخل نطاق الملعب (حتى 150 متر + دقة الـ GPS).\n\nيُسمح بتقديم طعن (نزاع) على حالة الغياب خلال نافذة زمنية مدتها 60 دقيقة فقط من وقت انتهاء المباراة، بشرط ألا تتعدى دقة إشارة الـ GPS لجهازك 50 متراً لمنع محاولات التلاعب بالموقع.'
@@ -107,7 +107,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 4: Team & Roster Limits
             _buildSection(
               context,
-              icon: LucideIcons.users,
+              icon: Iconsax.people_copy,
               title: isAr ? '٤. قواعد الفرق وحدود التسجيل' : '4. Team & Roster Rules',
               content: isAr
                   ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً كحد أقصى للقائمة الرسمية. كما يمكن لكل لاعب الانضمام إلى 3 فرق كحد أقصى في نفس الوقت لمنع الاحتكار.\n\nقائمة الفريق يتم التحكم فيها ومطابقتها على مستوى قاعدة البيانات عبر Row-Level Security (RLS) لمنع أي تجاوزات غير مصرح بها.'
@@ -117,7 +117,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 5: Data Sharing
             _buildSection(
               context,
-              icon: LucideIcons.share2,
+              icon: Iconsax.share_copy,
               title: isAr ? '٥. مشاركة البيانات' : '5. Data Sharing',
               content: isAr
                   ? 'لا نبيع بياناتك الشخصية لأي طرف ثالث. قد تُشارك بياناتك بشكل مُجمَّع وغير مُعرَّف مع شركائنا لأغراض التحليل وتحسين الخدمة.\n\nنستخدم خدمات Supabase (قاعدة البيانات)، Firebase (الإحصاءات)، وGoogle Mobile Ads لتشغيل التطبيق. لكل منهم سياسة خصوصية منفصلة ومستقلة.'
@@ -127,7 +127,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
             // Section 6: Your Rights
             _buildSection(
               context,
-              icon: LucideIcons.userCheck,
+              icon: Iconsax.user_tick_copy,
               title: isAr ? '٦. حقوقك' : '6. Your Rights',
               content: isAr
                   ? 'يحق لك في أي وقت: طلب حذف بياناتك كاملاً، تصحيح معلوماتك الشخصية، أو إلغاء حسابك. للتواصل بشأن أي طلب خصوصية، يرجى التواصل مع فريق الدعم مباشرةً عبر WhatsApp على الرقم: 01100229462.'

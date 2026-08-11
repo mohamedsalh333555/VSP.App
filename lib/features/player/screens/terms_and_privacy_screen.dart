@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -20,7 +20,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: Colors.white,
           ),
           onPressed: () => Navigator.pop(context),
@@ -56,7 +56,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                       color: VSPColors.accent.withValues(alpha: 0.15),
                       shape: BoxShape.circle,
                     ),
-                    child: const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 28),
+                    child: const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -89,7 +89,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 1: Stadium Operation Terms
               _buildSectionCard(
                 context,
-                icon: LucideIcons.building,
+                icon: Iconsax.building_copy,
                 title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
                 content: isArabic
                     ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
@@ -101,7 +101,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 2: Privacy & Player Data Protection
               _buildSectionCard(
                 context,
-                icon: LucideIcons.lock,
+                icon: Iconsax.lock_copy,
                 title: isArabic ? '2. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
                 content: isArabic
                     ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
@@ -113,7 +113,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 3: Payouts & Deposit Guarantee
               _buildSectionCard(
                 context,
-                icon: LucideIcons.wallet,
+                icon: Iconsax.wallet_1_copy,
                 title: isArabic ? '3. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
                 content: isArabic
                     ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
@@ -125,7 +125,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 4: Tournament & Dispute Integrity
               _buildSectionCard(
                 context,
-                icon: LucideIcons.trophy,
+                icon: Iconsax.cup_copy,
                 title: isArabic ? '4. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
                 content: isArabic
                     ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
@@ -135,7 +135,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Player Terms
               _buildSectionCard(
                 context,
-                icon: LucideIcons.fileText,
+                icon: Iconsax.document_text_copy,
                 title: isArabic ? '1. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
                 content: isArabic
                     ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب.'
@@ -146,7 +146,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: LucideIcons.lock,
+                icon: Iconsax.lock_copy,
                 title: isArabic ? '2. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
                 content: isArabic
                     ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
@@ -157,7 +157,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: LucideIcons.creditCard,
+                icon: Iconsax.wallet_1_copy,
                 title: isArabic ? '3. سياسة الرسوم والدفع أونلاين' : '3. Payments & Refund Policy',
                 content: isArabic
                     ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع.'
@@ -168,7 +168,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: LucideIcons.trophy,
+                icon: Iconsax.cup_copy,
                 title: isArabic ? '4. سياسة نتائج المباريات والترتيب الرسمي' : '4. Match Results & Ranking Policy',
                 content: isArabic
                     ? 'يُعتمد إدخال نتائج التحديات بين الكباتن تلقائياً بعد مرور 24 ساعة في حال عدم تقديم اعتراض رسمي من الفريق الخصم، وتُحدث نقاط الترتيب بناءً عليها بنزاهة.'

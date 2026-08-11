@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -47,16 +47,16 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
     return VSPColors.accent;
   }
 
-  String get _strengthLabel {
-    if (_strength <= 0.25) return 'Weak';
-    if (_strength <= 0.5) return 'Fair';
-    if (_strength <= 0.75) return 'Good';
-    return 'Strong';
+  String _getStrengthLabel(bool isAr) {
+    if (_strength <= 0.25) return isAr ? 'ضعيفة' : 'Weak';
+    if (_strength <= 0.5) return isAr ? 'متوسطة' : 'Fair';
+    if (_strength <= 0.75) return isAr ? 'جيدة' : 'Good';
+    return isAr ? 'قوية' : 'Strong';
   }
 
   // ── Save Password ──────────────────────────────────────────────────────────
 
-  Future<void> _save() async {
+  Future<void> _save(bool isAr) async {
     if (!_formKey.currentState!.validate()) return;
 
     setState(() {
@@ -71,7 +71,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
       if (!mounted) return;
       setState(() {
-        _successMessage = '✅ Password updated successfully!';
+        _successMessage = isAr ? '✅ تم تحديث كلمة المرور بنجاح!' : '✅ Password updated successfully!';
         _isLoading = false;
       });
 
@@ -87,7 +87,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
       });
     } catch (e) {
       setState(() {
-        _errorMessage = 'An unexpected error occurred. Please try again.';
+        _errorMessage = isAr ? 'حدث خطأ غير متوقع. يرجى المحاولة مرة أخرى.' : 'An unexpected error occurred. Please try again.';
         _isLoading = false;
       });
     }
@@ -102,14 +102,16 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        title: const Text(
-          'Set New Password',
-          style: TextStyle(
+        title: Text(
+          isAr ? 'تعيين كلمة مرور جديدة' : 'Set New Password',
+          style: const TextStyle(
             color: VSPColors.textPrimary,
             fontWeight: FontWeight.bold,
           ),
@@ -137,7 +139,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       border: Border.all(
                           color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    child: Icon(LucideIcons.unlock,
+                    child: Icon(Iconsax.lock_1_copy,
                       color: VSPColors.accent,
                       size: 32,
                     ),
@@ -146,14 +148,14 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                 const SizedBox(height: VSPSpacing.xl),
 
                 Text(
-                  'Create a strong password',
+                  isAr ? 'إنشاء كلمة مرور قوية' : 'Create a strong password',
                   style: Theme.of(context).textTheme.titleLarge?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: VSPSpacing.sm),
                 Text(
-                  'Your new password must be at least 8 characters long.',
+                  isAr ? 'يجب أن لا تقل كلمة المرور الجديدة عن 8 أحرف أو أرقام.' : 'Your new password must be at least 8 characters long.',
                   style: Theme.of(context).textTheme.bodySmall?.copyWith(
                         color: VSPColors.textSecondary,
                         height: 1.5,
@@ -163,17 +165,17 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                 const SizedBox(height: VSPSpacing.xl),
 
                 // ── New Password ───────────────────────────────────────────
-                _buildLabel(context, 'New Password'),
+                _buildLabel(context, isAr ? 'كلمة المرور الجديدة' : 'New Password'),
                 _PasswordField(
                   controller: _newPassController,
-                  hint: 'Enter new password',
+                  hint: isAr ? 'أدخل كلمة المرور الجديدة' : 'Enter new password',
                   obscure: !_showNew,
                   textInputAction: TextInputAction.next,
                   onToggle: () => setState(() => _showNew = !_showNew),
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
-                    if (v == null || v.isEmpty) return 'Required';
-                    if (v.length < 8) return 'At least 8 characters';
+                    if (v == null || v.isEmpty) return isAr ? 'مطلوب' : 'Required';
+                    if (v.length < 8) return isAr ? '8 أحرف على الأقل' : 'At least 8 characters';
                     return null;
                   },
                 ),
@@ -197,7 +199,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        _strengthLabel,
+                        _getStrengthLabel(isAr),
                         style: TextStyle(
                           color: _strengthColor,
                           fontSize: 11,
@@ -211,20 +213,20 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                 const SizedBox(height: VSPSpacing.lg),
 
                 // ── Confirm Password ───────────────────────────────────────
-                _buildLabel(context, 'Confirm New Password'),
+                _buildLabel(context, isAr ? 'تأكيد كلمة المرور' : 'Confirm New Password'),
                 _PasswordField(
                   controller: _confirmPassController,
-                  hint: 'Repeat your password',
+                  hint: isAr ? 'أعد كتابة كلمة المرور' : 'Repeat your password',
                   obscure: !_showConfirm,
                   textInputAction: TextInputAction.done,
                   onFieldSubmitted: (_) {
-                    if (!_isLoading) _save();
+                    if (!_isLoading) _save(isAr);
                   },
                   onToggle: () => setState(() => _showConfirm = !_showConfirm),
                   onChanged: (_) => setState(() {}),
                   validator: (v) {
                     if (v != _newPassController.text) {
-                      return 'Passwords do not match';
+                      return isAr ? 'كلمتا المرور غير متطابقتين' : 'Passwords do not match';
                     }
                     return null;
                   },
@@ -283,7 +285,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       ),
                       elevation: 0,
                     ),
-                    onPressed: _isLoading ? null : _save,
+                    onPressed: _isLoading ? null : () => _save(isAr),
                     child: _isLoading
                         ? const SizedBox(
                             width: 22,
@@ -293,9 +295,9 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                               color: Colors.black,
                             ),
                           )
-                        : const Text(
-                            'Save New Password',
-                            style: TextStyle(
+                        : Text(
+                            isAr ? 'حفظ كلمة المرور الجديدة' : 'Save New Password',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -358,10 +360,10 @@ class _PasswordField extends StatelessWidget {
       textInputAction: textInputAction,
       onFieldSubmitted: onFieldSubmitted,
       hintText: hint,
-      prefixIcon: LucideIcons.lock,
+      prefixIcon: Iconsax.lock_copy,
       suffixIcon: IconButton(
         icon: Icon(
-          obscure ? LucideIcons.eyeOff : LucideIcons.eye,
+          obscure ? Iconsax.eye_slash_copy : Iconsax.eye_copy,
           color: VSPColors.textSecondary,
           size: 20,
         ),

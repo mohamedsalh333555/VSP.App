@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:math';
@@ -311,7 +311,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                   child: const Center(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(horizontal: 2),
-                                      child: Icon(LucideIcons.chevronRight, color: VSPColors.accent, size: 16),
+                                      child: Icon(Iconsax.arrow_right_3_copy, color: VSPColors.accent, size: 16),
                                     ),
                                   ),
                                 ),
@@ -347,7 +347,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                       child: const Column(
                                         mainAxisSize: MainAxisSize.min,
                                         children: [
-                                          Icon(LucideIcons.trophy, color: VSPColors.accent, size: 36),
+                                          Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 36),
                                           SizedBox(height: 8),
                                           Text(
                                             '🏆 البطل',
@@ -504,7 +504,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
-            const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 22),
+            const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 22),
             const SizedBox(width: 8),
             Text(
               isArabic ? 'إلغاء انضمام الفريق؟' : 'Remove Team?',
@@ -642,7 +642,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             ),
                       ),
                       IconButton(
-                        icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary),
+                        icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
                         onPressed: () => Navigator.pop(sheetContext),
                       ),
                     ],
@@ -670,7 +670,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             const SizedBox(height: 6),
                             Row(
                               children: [
-                                const Icon(LucideIcons.alertCircle, color: Colors.orange, size: 14),
+                                const Icon(Iconsax.warning_2_copy, color: Colors.orange, size: 14),
                                 const SizedBox(width: 6),
                                 Text(
                                   isArabic ? '⚠️ يرجى كتابة اسم الفريق لتفعيل التنسيق' : '⚠️ Please enter team name',
@@ -773,7 +773,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                       ),
                                     ),
                                     child: isSelected
-                                        ? Icon(LucideIcons.check, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 16)
+                                        ? Icon(Iconsax.tick_circle_copy, color: item['color'] == Colors.white ? Colors.black : Colors.white, size: 16)
                                         : null,
                                   ),
                                 );
@@ -1050,7 +1050,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 : null,
             backgroundColor: VSPColors.surfaceAlt,
             child: team.captainImageUrl.isEmpty
-                ? const Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 20)
+                ? const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 20)
                 : null,
           ),
           const SizedBox(width: 12),
@@ -1092,7 +1092,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Icon(
-                    isPaid ? LucideIcons.checkCircle : LucideIcons.clock,
+                    isPaid ? Iconsax.tick_circle_copy : Iconsax.clock_copy,
                     size: 14,
                     color: isPaid ? VSPColors.success : VSPColors.warning,
                   ),
@@ -1113,7 +1113,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           const SizedBox(width: 12),
 
           IconButton(
-            icon: const Icon(LucideIcons.trash2, color: VSPColors.error, size: 20),
+            icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
             onPressed: () => _showDeleteTeamConfirmationDialog(team),
           ),
         ],
@@ -1129,14 +1129,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+          icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.displayLarge),
         centerTitle: true,
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.share2, color: VSPColors.accent),
+            icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
             onPressed: () {
               final isArabic = Localizations.localeOf(context).languageCode == 'ar';
               final String startDateStr = isArabic
@@ -1220,7 +1220,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg, vertical: VSPSpacing.sm),
                     child: Row(
                       children: [
-                        const Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 18),
+                        const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 18),
                         const SizedBox(width: 8),
                         Text(AppLocalizations.of(context)!.joinedTeamsLabel, style: Theme.of(context).textTheme.labelLarge?.copyWith(
                           color: VSPColors.textSecondary, 
@@ -1240,7 +1240,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                               child: Row(
                                 mainAxisSize: MainAxisSize.min,
                                 children: [
-                                  const Icon(LucideIcons.userPlus, color: VSPColors.accent, size: 14),
+                                  const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 14),
                                   const SizedBox(width: 4),
                                   Text(AppLocalizations.of(context)!.addTeam, style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: VSPColors.accent,
@@ -1323,7 +1323,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 24),
+                                const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
                                 const SizedBox(width: 10),
                                 Text(
                                   Localizations.localeOf(context).languageCode == 'ar'

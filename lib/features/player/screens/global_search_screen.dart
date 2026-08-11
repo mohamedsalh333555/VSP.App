@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
@@ -93,7 +93,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         actions: [
           if (_searchController.text.isNotEmpty)
             IconButton(
-              icon: Icon(LucideIcons.x, color: VSPColors.textSecondary),
+              icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               onPressed: () {
                 _searchController.clear();
                 _performSearch('');
@@ -164,24 +164,23 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
             final item = items[index];
             String name = '';
             String sub = '';
-            IconData icon = LucideIcons.helpCircle;
+            IconData icon = Iconsax.info_circle_copy;
             VoidCallback? onTap;
 
             if (item is Stadium) {
               name = item.name;
               sub = item.location;
-              icon = LucideIcons.mapPin;
+              icon = Iconsax.location_copy;
               onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => StadiumDetailsScreen(stadium: item)));
             } else if (item is Team) {
               name = item.name;
               sub = '${item.sportType} - ${item.governorate}';
-              icon = LucideIcons.users;
+              icon = Iconsax.people_copy;
               onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => TeamProfileScreen(team: item)));
             } else if (item is Championship) {
               name = item.name;
               sub = AppLocalizations.of(context)!.prizeLabel(item.grandPrize.toString());
-              icon = LucideIcons.trophy;
-              // TODO: Navigate to ChampionshipDetails
+              icon = Iconsax.cup_copy;
               onTap = () => Navigator.push(context, MaterialPageRoute(builder: (c) => ChampionshipDetailsScreen(championship: item)));
             }
 

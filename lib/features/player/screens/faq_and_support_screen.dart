@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -40,7 +40,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: Colors.white,
           ),
           onPressed: () => Navigator.pop(context),
@@ -71,7 +71,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.headphones, color: VSPColors.accent, size: 24),
+                      const Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 24),
                       const SizedBox(width: 10),
                       Text(
                         isOwner 
@@ -87,7 +87,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                       Expanded(
                         child: ElevatedButton.icon(
                           onPressed: _launchWhatsApp,
-                          icon: const Icon(LucideIcons.messageCircle, size: 18),
+                          icon: const Icon(Iconsax.messages_3_copy, size: 18),
                           label: Text(isArabic ? 'واتساب الدعم' : 'WhatsApp Support', style: const TextStyle(fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF25D366),
@@ -101,7 +101,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                       Expanded(
                         child: OutlinedButton.icon(
                           onPressed: _launchPhoneCall,
-                          icon: const Icon(LucideIcons.phone, size: 18, color: VSPColors.accent),
+                          icon: const Icon(Iconsax.call_copy, size: 18, color: VSPColors.accent),
                           label: Text(isArabic ? 'اتصال مباشر' : 'Direct Call', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: VSPColors.accent),

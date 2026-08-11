@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -167,7 +167,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
@@ -191,7 +191,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                     errorWidget: const CircleAvatar(
                       radius: 50,
                       backgroundColor: VSPColors.surface,
-                      child: Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 40),
+                      child: Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 40),
                     ),
                   ),
                   const SizedBox(height: VSPSpacing.md),
@@ -203,7 +203,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                   Row(
                     mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                      const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
                       const SizedBox(width: 4),
                       Text(
                         '${team.governorate} • ${team.sportType}',
@@ -286,7 +286,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                     errorWidget: const CircleAvatar(
                       radius: 24,
                       backgroundColor: VSPColors.surfaceAlt,
-                      child: Icon(LucideIcons.user, color: VSPColors.textSecondary),
+                      child: Icon(Iconsax.user_copy, color: VSPColors.textSecondary),
                     ),
                   ),
                   const SizedBox(width: VSPSpacing.md),
@@ -309,7 +309,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                   ),
                   if (team.captainPhone != null && team.captainPhone!.isNotEmpty)
                     IconButton(
-                      icon: const Icon(LucideIcons.messageSquare, color: VSPColors.accent),
+                      icon: const Icon(Iconsax.messages_3_copy, color: VSPColors.accent),
                       onPressed: _contactCaptain,
                     ),
                 ],
@@ -398,7 +398,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
             radius: 10,
             backgroundColor: VSPColors.surface,
             backgroundImage: (user.profileImageUrl?.isNotEmpty ?? false) ? NetworkImage(user.profileImageUrl!) : null,
-            child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 10) : null,
+            child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 10) : null,
           ),
           const SizedBox(width: 6),
           Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -410,9 +410,9 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
   Widget _buildAchievementSection() {
     final l10n = AppLocalizations.of(context)!;
     final badges = [
-      {'id': 'explorer', 'name': 'Explorer', 'icon': LucideIcons.compass, 'desc': 'Play against 5 different teams'},
-      {'id': 'gladiator', 'name': 'Gladiator', 'icon': LucideIcons.shield, 'desc': 'Played 10+ matches'},
-      {'id': 'streak_3', 'name': 'Streak 3', 'icon': LucideIcons.flame, 'desc': 'Won 3 matches in a row'},
+      {'id': 'explorer', 'name': 'Explorer', 'icon': Iconsax.discover_copy, 'desc': 'Play against 5 different teams'},
+      {'id': 'gladiator', 'name': 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': 'Played 10+ matches'},
+      {'id': 'streak_3', 'name': 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': 'Won 3 matches in a row'},
     ];
 
     return Column(
@@ -432,7 +432,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
                 ),
                 child: Row(
                   children: [
-                    const Icon(LucideIcons.zap, color: VSPColors.warning, size: 14),
+                    const Icon(Iconsax.flash_1_copy, color: VSPColors.warning, size: 14),
                     const SizedBox(width: 4),
                     Text(
                       l10n.winStreak(team.currentWinningStreak),

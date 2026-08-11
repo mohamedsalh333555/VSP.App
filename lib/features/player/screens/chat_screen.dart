@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -150,8 +150,8 @@ class _ChatScreenState extends State<ChatScreen> {
         leading: IconButton(
           icon: Icon(
             Localizations.localeOf(context).languageCode == 'ar'
-                ? LucideIcons.chevronRight
-                : LucideIcons.chevronLeft,
+                ? Iconsax.arrow_right_3_copy
+                : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
             size: 20,
           ),
@@ -221,7 +221,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.lock, color: VSPColors.textSecondary, size: 18),
+              Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 18),
               const SizedBox(width: 8),
               Text(
                 isCancelled 
@@ -278,7 +278,7 @@ class _ChatScreenState extends State<ChatScreen> {
                 color: VSPColors.accent,
                 shape: BoxShape.circle,
               ),
-              child: Icon(LucideIcons.send, color: VSPColors.background, size: 20),
+              child: Icon(Iconsax.send_1_copy, color: VSPColors.background, size: 20),
             ),
           ),
         ],
@@ -351,7 +351,7 @@ class _ChatScreenState extends State<ChatScreen> {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.trophy, color: VSPColors.warning, size: 20),
+                  const Icon(Iconsax.cup_copy, color: VSPColors.warning, size: 20),
                   const SizedBox(width: 8),
                   Flexible(
                     child: Text(

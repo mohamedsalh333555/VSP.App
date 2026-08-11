@@ -1,5 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'dart:async';
 import 'package:provider/provider.dart';
@@ -52,6 +52,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
 
   void _triggerCelebration() {
     if (!mounted) return;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     _confettiController.play();
     
     showDialog(
@@ -62,19 +63,23 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         shape: RoundedRectangleBorder(
           borderRadius: BorderRadius.circular(VSPRadius.lg),
         ),
-        title: const Row(
+        title: Row(
           children: [
-            Icon(LucideIcons.badgeCheck, color: VSPColors.accent, size: 28),
-            SizedBox(width: 12),
-            Text(
-              "Account Verified! 🎉",
-              style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+            const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 28),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Text(
+                isAr ? "تم توثيق الحساب! 🎉" : "Account Verified! 🎉",
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+              ),
             ),
           ],
         ),
-        content: const Text(
-          "Your account has been verified! 🎉 Your stadiums are now live and visible to all players!",
-          style: TextStyle(color: VSPColors.textSecondary),
+        content: Text(
+          isAr 
+              ? "تهانينا! تم توثيق حسابك بنجاح، وملاعبك أصبحت الآن معروضة ومتاحة لجميع اللاعبين!" 
+              : "Your account has been verified! 🎉 Your stadiums are now live and visible to all players!",
+          style: const TextStyle(color: VSPColors.textSecondary),
         ),
         actions: [
           TextButton(
@@ -82,7 +87,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
               _confettiController.stop();
               Navigator.of(ctx).pop();
             },
-            child: const Text('Great!', style: TextStyle(color: VSPColors.accent)),
+            child: Text(isAr ? 'رائع!' : 'Great!', style: const TextStyle(color: VSPColors.accent)),
           ),
         ],
       ),
@@ -161,7 +166,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
                       l10n.createTournament,
                       style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
                     ),
-                    icon: Icon(LucideIcons.plus, color: Colors.black),
+                    icon: Icon(Iconsax.add_circle_copy, color: Colors.black),
                     elevation: 4,
                   ),
                 )

@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
@@ -69,7 +69,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
             const SizedBox(height: VSPSpacing.md),
             ListTile(
-              leading: Icon(LucideIcons.camera, color: VSPColors.accent),
+              leading: Icon(Iconsax.image_copy, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.camera, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -77,7 +77,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: Icon(LucideIcons.image, color: VSPColors.accent),
+              leading: Icon(Iconsax.image_copy, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.gallery, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -85,7 +85,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: Icon(LucideIcons.fileText, color: VSPColors.accent),
+              leading: Icon(Iconsax.document_text_copy, color: VSPColors.accent),
               title: const Text('الملفات (PDF / صور)', style: TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -290,7 +290,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
           icon: Icon(
-            autoApprove ? LucideIcons.checkCircle : LucideIcons.clock,
+            autoApprove ? Iconsax.tick_circle_copy : Iconsax.clock_copy,
             color: VSPColors.accent,
             size: 48,
           ),
@@ -366,8 +366,8 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         leading: IconButton(
           icon: Icon(
             Localizations.localeOf(context).languageCode == 'ar'
-                ? LucideIcons.arrowRight
-                : LucideIcons.arrowLeft,
+                ? Iconsax.arrow_right_copy
+                : Iconsax.arrow_left_copy,
             color: VSPColors.textPrimary,
           ),
           onPressed: _previousPage,
@@ -495,7 +495,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             description: isArabic 
                 ? 'يرجى رفع صورة واضحة أو ملف PDF للسجل التجاري الخاص بملعبك/منشأتك. تأكد من أن المستند ساري المفعول ويحتوي على اسم المالك بشكل مقروء.'
                 : 'Please upload a clear photo or PDF of your commercial register. Ensure the document is valid and clearly shows the owner\'s name.',
-            icon: LucideIcons.fileText,
+            icon: Iconsax.document_text_copy,
           ),
           const SizedBox(height: VSPSpacing.md),
           
@@ -541,7 +541,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             description: isArabic 
                 ? 'يرجى رفع صورة واضحة أو ملف PDF للبطاقة الضريبية الخاصة بالمنشأة. يجب أن يظهر الرقم الضريبي بوضوح للمطابقة والتحقق.'
                 : 'Please upload a clear photo or PDF of your facility\'s tax card. The tax number must be clearly visible for verification.',
-            icon: LucideIcons.fileSpreadsheet,
+            icon: Iconsax.document_text_copy,
           ),
           const SizedBox(height: VSPSpacing.md),
           
@@ -587,7 +587,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             description: isArabic 
                 ? 'يرجى رفع صورتين واضحتين للوجهين الأمامي والخلفي لبطاقة الرقم القومي الخاصة بمالك المنشأة لإتمام عملية التحقق من الهوية.'
                 : 'Please upload clear photos of both the front and back of the owner\'s National ID to complete the verification process.',
-            icon: LucideIcons.contact,
+            icon: Iconsax.user_copy,
           ),
           const SizedBox(height: VSPSpacing.md),
           

@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -36,7 +36,7 @@ class SupportService {
             const SizedBox(height: VSPSpacing.md),
             _buildSupportOption(
               context,
-              LucideIcons.shieldCheck,
+              Iconsax.security_safe_copy,
               isArabic ? "تفعيل وحماية الحساب" : "Profile & Account Security",
               isOwner 
                   ? (isArabic ? "مشاكل توثيق الهوية والملعب" : "Issues with identity and stadium verification.")
@@ -44,13 +44,13 @@ class SupportService {
             ),
             _buildSupportOption(
               context,
-              LucideIcons.userMinus,
+              Iconsax.user_remove_copy,
               isArabic ? "الإبلاغ عن غياب لاعب" : "Report Player No-Show",
               isArabic ? "الإبلاغ عن عدم حضور اللاعبين في الوقت المحدد" : "Report players who did not show up on time.",
             ),
             _buildSupportOption(
               context,
-              LucideIcons.helpCircle,
+              Iconsax.info_circle_copy,
               isOwner ? (isArabic ? "دعم البطولات والتحصيل" : "Tournaments & Revenue Support") : (isArabic ? "مساعدة بالحجوزات والتقييمات" : "Bookings & Review Support"),
               isOwner
                   ? (isArabic ? "استفسارات تنظيم البطولات، المحفظة والتحصيل" : "Tournament organizing and payout inquiries.")

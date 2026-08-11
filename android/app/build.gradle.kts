@@ -71,7 +71,12 @@ android {
 
     applicationVariants.all {
         outputs.forEach { output ->
-            (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "VSP - Sports Platform.apk"
+            val abiFilter = output.filters.find { it.filterType == com.android.build.OutputFile.ABI }
+            if (abiFilter != null) {
+                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "vsp_app_${abiFilter.identifier}.apk"
+            } else {
+                (output as com.android.build.gradle.internal.api.BaseVariantOutputImpl).outputFileName = "vsp_app_release.apk"
+            }
         }
     }
 }

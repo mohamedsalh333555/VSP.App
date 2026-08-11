@@ -1,7 +1,7 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
@@ -119,7 +119,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                                 ],
                               ),
                               child: Icon(
-                                LucideIcons.wifiOff,
+                                Iconsax.wifi_square_copy,
                                 color: VSPColors.accent,
                                 size: 48,
                               ),

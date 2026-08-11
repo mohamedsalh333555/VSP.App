@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart' hide TextDirection;
@@ -170,7 +170,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
 
                 if (filtered.isEmpty) {
                   return VSPEmptyState(
-                    icon: LucideIcons.trophy,
+                    icon: Iconsax.cup_copy,
                     title: l10n.noTournamentsTitle,
                     subtitle: l10n.noTournamentsSubtitle,
                     buttonText: l10n.createYourFirst,
@@ -253,7 +253,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           value: items.contains(value) ? value : items.first,
           dropdownColor: VSPColors.surface,
           isExpanded: true,
-          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
           style: Theme.of(context).textTheme.bodySmall?.copyWith(
             color: VSPColors.textPrimary,
             fontWeight: FontWeight.w600,
@@ -325,7 +325,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     border: Border.all(color: VSPColors.divider, width: 1),
                   ),
                   child: tournament.imageUrl.isEmpty 
-                    ? const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 22) 
+                    ? const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 22) 
                     : null,
                 ),
                 const SizedBox(width: 12),
@@ -370,7 +370,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                       shape: BoxShape.circle,
                       border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
                     ),
-                    child: const Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 18),
+                    child: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18),
                   ),
                 ),
               ],
@@ -407,7 +407,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                               color: VSPColors.surfaceAlt,
                               border: Border.all(color: VSPColors.surface, width: 2),
                             ),
-                            child: const Icon(LucideIcons.users, color: VSPColors.accent, size: 14),
+                            child: const Icon(Iconsax.people_copy, color: VSPColors.accent, size: 14),
                           ),
                         );
                       }),
@@ -415,14 +415,13 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   ),
                 if (tournament.joinedTeams.isNotEmpty) const SizedBox(width: 8),
                 
-                Directionality(
-                  textDirection: TextDirection.ltr,
-                  child: Text(
-                    '${tournament.joinedTeams.length} / ${tournament.maxTeams} ${isArabic ? "فرق" : "Teams"}',
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                      color: VSPColors.textSecondary,
-                      fontWeight: FontWeight.bold,
-                    ),
+                Text(
+                  isArabic 
+                      ? '${tournament.joinedTeams.length} / ${tournament.maxTeams} فريق'
+                      : '${tournament.joinedTeams.length} / ${tournament.maxTeams} Teams',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                    color: VSPColors.textSecondary,
+                    fontWeight: FontWeight.bold,
                   ),
                 ),
               ],

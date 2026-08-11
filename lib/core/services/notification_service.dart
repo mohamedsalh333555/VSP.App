@@ -2,14 +2,14 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../ui/tokens/vsp_tokens.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/player/screens/booking_success_screen.dart';
 import '../../features/player/screens/chat_screen.dart';
-import '../../features/player/screens/bookings_screen.dart';
 import '../repositories/booking_repository.dart';
 import '../services/logger_service.dart';
 
@@ -125,7 +125,22 @@ class NotificationService {
       final androidPlugin = _localNotifications
           .resolvePlatformSpecificImplementation<AndroidFlutterLocalNotificationsPlugin>();
       if (androidPlugin != null) {
-        const AndroidNotificationChannel channel = AndroidNotificationChannel(
+        // Request Android 13+ (API 33+) Notification Permission explicitly
+        try {
+          await androidPlugin.requestNotificationsPermission();
+        } catch (e) {
+          VSPLogger.w('Android 13+ notification permission request notice: $e');
+        }
+
+        const AndroidNotificationChannel defaultChannel = AndroidNotificationChannel(
+          'vsp_default_channel',
+          'VSP General Notifications',
+          description: 'General booking, match, and challenge alerts',
+          importance: Importance.max,
+          enableVibration: true,
+          playSound: true,
+        );
+        const AndroidNotificationChannel p2pChannel = AndroidNotificationChannel(
           'vsp_p2p_alerts',
           'VSP P2P Alerts',
           description: 'High-priority notifications for P2P trading',
@@ -133,7 +148,8 @@ class NotificationService {
           enableVibration: true,
           playSound: true,
         );
-        await androidPlugin.createNotificationChannel(channel);
+        await androidPlugin.createNotificationChannel(defaultChannel);
+        await androidPlugin.createNotificationChannel(p2pChannel);
       }
     }
   }
@@ -183,42 +199,42 @@ class NotificationService {
 
     final String? type = data['type'];
     final String? bookingId = data['bookingId'];
+    final String? teamId = data['teamId'];
 
-    VSPLogger.i('Handling notification click: type=$type, bookingId=$bookingId');
+    VSPLogger.i('Handling notification click with GoRouter: type=$type, bookingId=$bookingId, teamId=$teamId');
 
-    // 1. CHAT
-    if (type == 'chat' && bookingId != null) {
-      _navigateToChat(context, bookingId);
-      return;
+    // 1. MATCH DETAILS / BOOKING DEEP LINK
+    if (bookingId != null && bookingId.isNotEmpty) {
+      if (type == 'chat') {
+        _navigateToChat(context, bookingId);
+        return;
+      }
+      try {
+        GoRouter.of(context).push('/match/$bookingId');
+        return;
+      } catch (_) {
+        _navigateToBooking(context, bookingId);
+        return;
+      }
     }
 
-    // 2. CHALLENGE
-    if (type == 'challenge' || type == 'challenge_declined' || type == 'challenge_accepted') {
+    // 2. TEAM PROFILE DEEP LINK
+    if (teamId != null && teamId.isNotEmpty) {
+      try {
+        GoRouter.of(context).push('/team/$teamId');
+        return;
+      } catch (_) {}
+    }
+
+    // 3. NOTIFICATIONS CENTER DEEP LINK
+    try {
+      GoRouter.of(context).push('/notifications');
+    } catch (_) {
       Navigator.push(
         context,
         MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
       );
-      return;
     }
-
-    // 3. BOOKING RELATED
-    if (bookingId != null) {
-      if (type == 'booking_new' || type == 'booking_confirmed') {
-        _navigateToBooking(context, bookingId);
-      } else {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (_) => const BookingsScreen()),
-        );
-      }
-      return;
-    }
-
-    // 4. FALLBACK
-    Navigator.push(
-      context,
-      MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
-    );
   }
 
   Future<void> _navigateToChat(BuildContext context, String bookingId) async {
@@ -410,7 +426,7 @@ class NotificationService {
         SnackBar(
           content: Row(
             children: [
-              const Icon(LucideIcons.messageSquare, color: Colors.black, size: 20),
+              const Icon(Iconsax.messages_3_copy, color: Colors.black, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Column(
@@ -440,6 +456,76 @@ class NotificationService {
       );
     } catch (e) {
       VSPLogger.e('Error showing in-app alert snackbar', e);
+    }
+  }
+
+  RealtimeChannel? _realtimeNotifChannel;
+
+  void listenToRealtimeNotifications(String userId) {
+    stopRealtimeNotificationsListener();
+
+    VSPLogger.i('📡 Subscribing to Supabase Realtime Notifications for user: $userId');
+    _realtimeNotifChannel = Supabase.instance.client
+        .channel('public:notifications:user_id=eq.$userId')
+        .onPostgresChanges(
+          event: PostgresChangeEvent.insert,
+          schema: 'public',
+          table: 'notifications',
+          filter: PostgresChangeFilter(
+            type: PostgresChangeFilterType.eq,
+            column: 'user_id',
+            value: userId,
+          ),
+          callback: (payload) async {
+            VSPLogger.i('⚡ Real-time notification inserted into DB: ${payload.newRecord}');
+            final record = payload.newRecord;
+            if (record.isNotEmpty) {
+              final title = record['title']?.toString() ?? 'إشعار جديد ⚽';
+              final body = record['body']?.toString() ?? '';
+              final type = record['type']?.toString();
+              final bookingId = record['booking_id']?.toString();
+
+              final shouldShow = await _shouldShowNotification(type);
+              if (!shouldShow) return;
+
+              // Fire System OS Notification Banner
+              const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+                'vsp_default_channel',
+                'VSP General Notifications',
+                importance: Importance.max,
+                priority: Priority.high,
+                icon: 'ic_notification',
+                enableVibration: true,
+                playSound: true,
+              );
+              const DarwinNotificationDetails darwinDetails = DarwinNotificationDetails(
+                presentAlert: true,
+                presentBadge: true,
+                presentSound: true,
+              );
+              const NotificationDetails details = NotificationDetails(
+                android: androidDetails,
+                iOS: darwinDetails,
+              );
+
+              await _localNotifications.show(
+                record['id'].hashCode,
+                title,
+                body,
+                details,
+                payload: jsonEncode({'type': type, 'bookingId': bookingId}),
+              );
+            }
+          },
+        );
+    _realtimeNotifChannel!.subscribe();
+  }
+
+  void stopRealtimeNotificationsListener() {
+    if (_realtimeNotifChannel != null) {
+      VSPLogger.i('📡 Stopping Supabase Realtime Notifications subscription');
+      Supabase.instance.client.removeChannel(_realtimeNotifChannel!);
+      _realtimeNotifChannel = null;
     }
   }
 }

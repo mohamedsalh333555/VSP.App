@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -316,12 +316,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         IconButton(
-                          icon: Icon(LucideIcons.chevronLeft, color: currentMonth.isAfter(todayMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
+                          icon: Icon(Iconsax.arrow_left_2_copy, color: currentMonth.isAfter(todayMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
                           onPressed: currentMonth.isAfter(todayMonth) ? () { setModalState(() { currentMonth = DateTime(currentMonth.year, currentMonth.month - 1); }); } : null,
                         ),
                         Text(DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth), style: Theme.of(context).textTheme.titleLarge),
                         IconButton(
-                          icon: Icon(LucideIcons.chevronRight, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
+                          icon: Icon(Iconsax.arrow_right_3_copy, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
                           onPressed: currentMonth.isBefore(maxMonth) ? () { setModalState(() { currentMonth = DateTime(currentMonth.year, currentMonth.month + 1); }); } : null,
                         ),
                       ],
@@ -390,7 +390,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
             size: 20,
           ),
@@ -419,7 +419,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         children: [
                           Text(DateFormat('MMMM, yyyy', Localizations.localeOf(context).toString()).format(_selectedDate), style: Theme.of(context).textTheme.labelLarge?.copyWith(fontWeight: FontWeight.bold)),
                           const SizedBox(width: VSPSpacing.xs),
-                          const Icon(LucideIcons.calendar, color: VSPColors.textPrimary, size: 18),
+                          const Icon(Iconsax.calendar_1_copy, color: VSPColors.textPrimary, size: 18),
                         ],
                       ),
                     ),
@@ -506,7 +506,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (isSelected) ...[const Icon(LucideIcons.checkCircle, size: 16, color: VSPColors.accent), const SizedBox(width: 8)],
+                                  if (isSelected) ...[const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.accent), const SizedBox(width: 8)],
                                   Directionality(
                                     textDirection: TextDirection.ltr,
                                     child: Text(
@@ -556,9 +556,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                         Row(
                           children: [
-                            _buildCounterButton(LucideIcons.minus, () { if (_currentPlayers > 1) setState(() => _currentPlayers--); }),
+                            _buildCounterButton(Iconsax.minus_cirlce_copy, () { if (_currentPlayers > 1) setState(() => _currentPlayers--); }),
                             Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('$_currentPlayers', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold))),
-                            _buildCounterButton(LucideIcons.plus, () { final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10; if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++); }),
+                            _buildCounterButton(Iconsax.add_circle_copy, () { final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10; if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++); }),
                           ],
                         ),
                       ],
@@ -584,7 +584,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           duration: const Duration(milliseconds: 200),
                           width: 24, height: 24,
                           decoration: BoxDecoration(color: _isBallRented ? VSPColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(VSPRadius.sm), border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.borderMedium)),
-                          child: _isBallRented ? const Icon(LucideIcons.check, size: 16, color: VSPColors.background) : null,
+                          child: _isBallRented ? const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.background) : null,
                         ),
                       ],
                     ),
@@ -612,7 +612,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 18),
+                                    const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 18),
                                     const SizedBox(width: 8),
                                     Text(isArabic ? "تقييد الحساب" : "Account Restricted", style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 13)),
                                   ],
@@ -632,9 +632,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         children: [
                           _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: false),
                           const SizedBox(height: 8),
-                          _buildPriceRow(isArabic ? 'عربون الحجز' : 'Upfront Deposit', '${deposit.toInt()} ${l10n.egCurrency}', icon: LucideIcons.lock, highlight: false, color: VSPColors.accent),
+                          _buildPriceRow(isArabic ? 'عربون الحجز' : 'Upfront Deposit', '${deposit.toInt()} ${l10n.egCurrency}', icon: Iconsax.lock_copy, highlight: false, color: VSPColors.accent),
                           const SizedBox(height: 8),
-                          _buildPriceRow(isArabic ? 'المتبقي عند الملعب' : 'Remaining (At Pitch)', '${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}', icon: LucideIcons.banknote, highlight: false, color: VSPColors.textSecondary),
+                          _buildPriceRow(isArabic ? 'المتبقي عند الملعب' : 'Remaining (At Pitch)', '${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}', icon: Iconsax.card_copy, highlight: false, color: VSPColors.textSecondary),
                           const SizedBox(height: VSPSpacing.lg),
                         ],
                       );
@@ -660,90 +660,217 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           ),
         ],
       ),
-      
-      // THINNED NAVIGATION BAR: Pinned cleanly at the bottom, holding ONLY the primary confirm button
-      bottomNavigationBar: Container(
-        padding: EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.sm, VSPSpacing.lg, MediaQuery.of(context).padding.bottom + VSPSpacing.sm),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
-        ),
-        child: PrimaryButton(
-          text: l10n.confirmSelections,
-          isLoading: _isLoading,
-          onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
-             setState(() => _isLoading = true);
-             final authProvider = Provider.of<AuthProvider>(context, listen: false);
-             final currentUserModel = authProvider.userModel;
-             if (currentUserModel == null) { setState(() => _isLoading = false); return; }
+      bottomNavigationBar: _buildBottomOverlay(context, l10n, isArabic),
+    );
+  }
 
-             final nav = Navigator.of(context);
-             final messenger = ScaffoldMessenger.of(context);
-             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+  String _getDurationText(int slotCount, bool isArabic) {
+    if (slotCount == 0) return isArabic ? 'اختر التوقيت أولاً' : 'Select Time Slot';
+    if (slotCount == 1) return isArabic ? '30 دقيقة' : '30 Mins';
+    if (slotCount == 2) return isArabic ? 'ساعة واحدة' : '1 Hour';
+    if (slotCount == 3) return isArabic ? 'ساعة ونصف' : '1.5 Hours';
+    if (slotCount == 4) return isArabic ? 'ساعتان' : '2 Hours';
+    final hours = slotCount * 0.5;
+    final hoursStr = hours == hours.roundToDouble() ? hours.toInt().toString() : hours.toString();
+    return isArabic ? '$hoursStr ساعات' : '$hoursStr Hours';
+  }
 
-             final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
-             final firstSlot = sortedSlots.first;
-             final startTime = _getSlotDateTime(firstSlot);
-             final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
+  Widget _buildBottomOverlay(BuildContext context, AppLocalizations l10n, bool isArabic) {
+    final hasBallOption = widget.stadium.hasBall || _ballPrice > 0;
+    final deposit = widget.stadium.depositAmount;
 
-             BookingType bType;
-             switch (widget.bookingType.toLowerCase()) {
-               case 'team': bType = BookingType.team; break;
-               case 'challenge': bType = BookingType.challenge; break;
-               default: bType = BookingType.personal;
-             }
+    return Container(
+      padding: EdgeInsets.fromLTRB(
+        VSPSpacing.md,
+        VSPSpacing.sm,
+        VSPSpacing.md,
+        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 6 : VSPSpacing.md,
+      ),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        border: const Border(top: BorderSide(color: VSPColors.divider, width: 1)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.3),
+            blurRadius: 10,
+            offset: const Offset(0, -4),
+          ),
+        ],
+      ),
+      child: Column(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          // ── 1. Ball Rental Quick Toggle (if available) ──
+          if (hasBallOption) ...[
+            InkWell(
+              onTap: () => setState(() => _isBallRented = !_isBallRented),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                decoration: BoxDecoration(
+                  color: _isBallRented ? VSPColors.accent.withValues(alpha: 0.12) : Colors.transparent,
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(
+                    color: _isBallRented ? VSPColors.accent : VSPColors.divider,
+                  ),
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Row(
+                      children: [
+                        Icon(Iconsax.element_4_copy, size: 16, color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary),
+                        const SizedBox(width: 8),
+                        Text(
+                          isArabic 
+                              ? 'تأجير كرة (+${_ballPrice.toInt()} ج.م)' 
+                              : 'Rent Football (+${_ballPrice.toInt()} EGP)',
+                          style: TextStyle(
+                            color: _isBallRented ? VSPColors.accent : VSPColors.textPrimary,
+                            fontSize: 12,
+                            fontWeight: _isBallRented ? FontWeight.bold : FontWeight.normal,
+                          ),
+                        ),
+                      ],
+                    ),
+                    Switch(
+                      value: _isBallRented,
+                      onChanged: (val) => setState(() => _isBallRented = val),
+                      activeColor: VSPColors.accent,
+                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
 
-             final depositAmount = widget.stadium.depositAmount;
-             final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
+          // ── 2. Running Cost Header Row ──
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    _getDurationText(_selectedTimeSlots.length, isArabic),
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 2),
+                  Row(
+                    children: [
+                      Text(
+                        '${_totalPrice.toInt()} ${l10n.egCurrency}',
+                        style: const TextStyle(
+                          color: VSPColors.accent,
+                          fontSize: 22,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                      if (deposit > 0 && widget.stadium.needsDeposit) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: VSPColors.warning.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(4),
+                          ),
+                          child: Text(
+                            isArabic ? 'عربون: ${deposit.toInt()} ج.م' : 'Deposit: ${deposit.toInt()} EGP',
+                            style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                ],
+              ),
+              Expanded(
+                child: Padding(
+                  padding: const EdgeInsets.only(left: 12),
+                  child: PrimaryButton(
+                    text: l10n.confirmSelections,
+                    height: 48,
+                    isLoading: _isLoading,
+                    onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+                      setState(() => _isLoading = true);
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final currentUserModel = authProvider.userModel;
+                      if (currentUserModel == null) { setState(() => _isLoading = false); return; }
 
-             final draft = BookingDraft(
-               stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
-               ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
-               playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
-               playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
-               opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
-               totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
-               currentPlayers: _currentPlayers, totalFieldCapacity: fieldCapacity,
-               depositPaid: widget.stadium.needsDeposit ? depositAmount : 0.0,
-               isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
-             );
+                      final nav = Navigator.of(context);
+                      final messenger = ScaffoldMessenger.of(context);
+                      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-             final needsDeposit = widget.stadium.needsDeposit;
-             final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(currentUserModel.uid);
-             final now = DateTime.now();
-             final activeUnpaidBookings = unpaidBookings.where((b) { return b.status != BookingStatus.cancelled && b.status != BookingStatus.completed && b.endTime.isAfter(now) && !b.isPaid && b.paymentMethod == 'cash'; }).toList();
-             final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
+                      final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                      final firstSlot = sortedSlots.first;
+                      final startTime = _getSlotDateTime(firstSlot);
+                      final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
 
-             if (!mounted) return;
+                      BookingType bType;
+                      switch (widget.bookingType.toLowerCase()) {
+                        case 'team': bType = BookingType.team; break;
+                        case 'challenge': bType = BookingType.challenge; break;
+                        default: bType = BookingType.personal;
+                      }
 
-             if (!needsDeposit && !hasActiveUnpaid) {
-               final cashDraft = draft.copyWith(isPaid: false, isDepositPaid: false, depositPaid: 0.0, paymentStatus: 'unpaid', paymentMethod: 'cash', paymentTransactionId: '_');
-               final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-               if (mounted) {
-                 setState(() => _isLoading = false);
-                 if (booking != null) {
-                   nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-                 } else {
-                   messenger.showSnackBar(SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to create booking')));
-                 }
-               }
-             } else {
-               final forceFullPayment = !needsDeposit && hasActiveUnpaid;
-               final amountToPay = needsDeposit ? depositAmount : _totalPrice;
-               if (amountToPay <= 0) {
-                 final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE');
-                 final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid);
-                 if (mounted) {
-                   setState(() => _isLoading = false);
-                   if (booking != null) nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-                 }
-                 return;
-               }
-               await nav.push(MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
-               if (mounted) { setState(() => _isLoading = false); }
-             }
-          },
-        ),
+                      final depositAmount = widget.stadium.depositAmount;
+                      final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
+
+                      final draft = BookingDraft(
+                        stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
+                        ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
+                        playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
+                        playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
+                        opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
+                        totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
+                        currentPlayers: _currentPlayers, totalFieldCapacity: fieldCapacity,
+                        depositPaid: widget.stadium.needsDeposit ? depositAmount : 0.0,
+                        isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
+                      );
+
+                      final needsDeposit = widget.stadium.needsDeposit;
+                      final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(currentUserModel.uid);
+                      final now = DateTime.now();
+                      final activeUnpaidBookings = unpaidBookings.where((b) { return b.status != BookingStatus.cancelled && b.status != BookingStatus.completed && b.endTime.isAfter(now) && !b.isPaid && b.paymentMethod == 'cash'; }).toList();
+                      final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
+
+                      if (!mounted) return;
+
+                      if (!needsDeposit && !hasActiveUnpaid) {
+                        final cashDraft = draft.copyWith(isPaid: false, isDepositPaid: false, depositPaid: 0.0, paymentStatus: 'unpaid', paymentMethod: 'cash', paymentTransactionId: '_');
+                        final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                        if (mounted) {
+                          setState(() => _isLoading = false);
+                          if (booking != null) {
+                            nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+                          } else {
+                            messenger.showSnackBar(SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to create booking')));
+                          }
+                        }
+                      } else {
+                        final forceFullPayment = !needsDeposit && hasActiveUnpaid;
+                        final amountToPay = needsDeposit ? depositAmount : _totalPrice;
+                        if (amountToPay <= 0) {
+                          final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE');
+                          final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid);
+                          if (mounted) {
+                            setState(() => _isLoading = false);
+                            if (booking != null) nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+                          }
+                          return;
+                        }
+                        await nav.push(MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
+                        if (mounted) { setState(() => _isLoading = false); }
+                      }
+                    },
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
     );
   }
@@ -768,7 +895,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.phoneCall, color: VSPColors.accent, size: 18),
+                const Icon(Iconsax.call_copy, color: VSPColors.accent, size: 18),
                 const SizedBox(width: 8),
                 Text(isArabic ? 'اتصل بالملعب للاستفسار المباشر' : 'Call Stadium directly to inquire', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
               ],

@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:font_awesome_flutter/font_awesome_flutter.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
@@ -75,8 +75,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               leading: IconButton(
                 icon: Icon(
                   Localizations.localeOf(context).languageCode == 'ar'
-                      ? FontAwesomeIcons.chevronRight
-                      : FontAwesomeIcons.chevronLeft,
+                      ? Iconsax.arrow_right_3_copy
+                      : Iconsax.arrow_left_2_copy,
                   color: VSPColors.textPrimary,
                   size: 18,
                 ),
@@ -114,7 +114,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
-                            const Icon(FontAwesomeIcons.trophy, color: VSPColors.accent, size: 28),
+                            const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
                             const SizedBox(width: 12),
                             Expanded(
                               child: Column(
@@ -220,7 +220,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                         _refreshMatches();
                       }
                     },
-                    child: const Icon(FontAwesomeIcons.calendarCheck, color: Colors.white, size: 16),
+                    child: const Icon(Iconsax.calendar_1_copy, color: Colors.white, size: 16),
                   ),
               ],
             ),
@@ -237,7 +237,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
             trailing: widget.isOwner && match.winnerId == null && match.homeTeamId != null && match.awayTeamId != null 
               ? IconButton(
                   icon: Icon(
-                    FontAwesomeIcons.penToSquare, 
+                    Iconsax.edit_copy, 
                     color: (!hasSchedule || !isTimePassed) ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.accent, 
                     size: 18,
                   ),
@@ -322,7 +322,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                           children: [
                             Text(isArabic ? 'تسجيل نتيجة وهدافي المباراة ⚽' : 'Submit Score & Goal Scorers ⚽', style: Theme.of(context).textTheme.displaySmall),
                             IconButton(
-                              icon: const Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
+                              icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                               onPressed: () => Navigator.pop(sheetContext),
                             ),
                           ],
@@ -616,7 +616,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle),
-                child: const Icon(FontAwesomeIcons.minus, color: Colors.white, size: 14),
+                child: const Icon(Iconsax.minus_cirlce_copy, color: Colors.white, size: 14),
               ),
             ),
             Padding(
@@ -628,7 +628,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               child: Container(
                 padding: const EdgeInsets.all(8),
                 decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                child: const Icon(FontAwesomeIcons.plus, color: Colors.black, size: 14),
+                child: const Icon(Iconsax.add_circle_copy, color: Colors.black, size: 14),
               ),
             ),
           ],
@@ -656,7 +656,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         children: [
           Row(
             children: [
-              const Icon(FontAwesomeIcons.futbol, color: VSPColors.accent, size: 12),
+              const Icon(Iconsax.element_4_copy, color: VSPColors.accent, size: 12),
               const SizedBox(width: 6),
               Expanded(
                 child: Text(
@@ -697,7 +697,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                       const SizedBox(width: 4),
                       GestureDetector(
                         onTap: () => onRemoveGoal(g),
-                        child: const Icon(FontAwesomeIcons.xmark, color: Colors.white54, size: 10),
+                        child: const Icon(Iconsax.close_circle_copy, color: Colors.white54, size: 10),
                       ),
                     ],
                   ),
@@ -736,7 +736,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
               title: Row(
                 children: [
-                  const Icon(FontAwesomeIcons.futbol, color: VSPColors.accent, size: 18),
+                  const Icon(Iconsax.element_4_copy, color: VSPColors.accent, size: 18),
                   const SizedBox(width: 8),
                   Expanded(
                     child: Text(
@@ -975,7 +975,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                 color: Colors.white10,
                 shape: BoxShape.circle,
               ),
-              child: const Icon(FontAwesomeIcons.lock, color: VSPColors.textSecondary, size: 14),
+              child: const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 14),
             ),
             const SizedBox(width: 12),
             Expanded(
@@ -1016,7 +1016,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               color: VSPColors.accent.withValues(alpha: 0.2),
               shape: BoxShape.circle,
             ),
-            child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: VSPColors.accent, size: 16),
+            child: const Icon(Iconsax.magic_star_copy, color: VSPColors.accent, size: 16),
           ),
           const SizedBox(width: 12),
           Expanded(
@@ -1042,7 +1042,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           if (hasScheduledMatches) ...[
             IconButton(
               tooltip: isArabic ? 'تصفير الجدول وإلغاء المواعيد 🧹' : 'Reset Round Schedule',
-              icon: const Icon(FontAwesomeIcons.rotateLeft, color: VSPColors.error, size: 16),
+              icon: const Icon(Iconsax.rotate_left_copy, color: VSPColors.error, size: 16),
               onPressed: () => _confirmResetRoundSchedule(context, roundIdx, matches, roundName),
             ),
             const SizedBox(width: 4),
@@ -1080,7 +1080,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              const Icon(FontAwesomeIcons.rotateLeft, color: VSPColors.warning, size: 18),
+              const Icon(Iconsax.rotate_left_copy, color: VSPColors.warning, size: 18),
               const SizedBox(width: 8),
               Text(
                 isArabic ? 'تصفير جدول $roundName' : 'Reset $roundName Schedule',
@@ -1184,7 +1184,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                       Container(
                         padding: const EdgeInsets.all(8),
                         decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
-                        child: const Icon(FontAwesomeIcons.wandMagicSparkles, color: Colors.black, size: 14),
+                        child: const Icon(Iconsax.magic_star_copy, color: Colors.black, size: 14),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
@@ -1196,7 +1196,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                         ),
                       ),
                       IconButton(
-                        icon: const Icon(FontAwesomeIcons.xmark, color: VSPColors.textSecondary, size: 18),
+                        icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                         onPressed: () => Navigator.pop(modalCtx),
                       ),
                     ],
@@ -1236,7 +1236,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                             child: Column(
                               children: [
                                 Icon(
-                                  d == 1 ? FontAwesomeIcons.calendarDay : (d == 2 ? FontAwesomeIcons.calendarDays : FontAwesomeIcons.calendarWeek),
+                                  d == 1 ? Iconsax.calendar_1_copy : (d == 2 ? Iconsax.calendar_1_copy : Iconsax.calendar_1_copy),
                                   color: isSelected ? Colors.black : VSPColors.accent,
                                   size: 16,
                                 ),
@@ -1302,7 +1302,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                       DateFormat('yyyy-MM-dd').format(selectedDate),
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                                     ),
-                                    const Icon(FontAwesomeIcons.calendar, color: VSPColors.accent, size: 14),
+                                    const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 14),
                                   ],
                                 ),
                               ),
@@ -1337,7 +1337,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                       selectedTime.format(context),
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
                                     ),
-                                    const Icon(FontAwesomeIcons.clock, color: VSPColors.accent, size: 14),
+                                    const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
                                   ],
                                 ),
                               ),
@@ -1355,7 +1355,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                     children: [
                       Row(
                         children: [
-                          const Icon(FontAwesomeIcons.stopwatch, color: VSPColors.accent, size: 14),
+                          const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 14),
                           const SizedBox(width: 8),
                           Text(
                             isArabic ? 'مدة المباراة / الفاصل:' : 'Match Duration:',

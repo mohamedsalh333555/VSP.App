@@ -1,5 +1,5 @@
 import 'dart:io';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -104,6 +104,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userProfileUrl = Provider.of<AuthProvider>(context).userModel?.profileImageUrl;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -111,7 +112,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -126,7 +127,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             left: VSPSpacing.lg,
             right: VSPSpacing.lg,
             top: VSPSpacing.lg,
-            bottom: MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg, // Keyboard protection
+            bottom: MediaQuery.of(context).viewInsets.bottom > 0
+                ? MediaQuery.of(context).viewInsets.bottom + VSPSpacing.lg
+                : (MediaQuery.of(context).padding.bottom > 0
+                    ? MediaQuery.of(context).padding.bottom + VSPSpacing.lg
+                    : VSPSpacing.lg),
           ),
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.center,
@@ -153,9 +158,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     imageUrl: userProfileUrl,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => const CircularProgressIndicator(color: VSPColors.accent),
-                                    errorWidget: (context, url, error) => Icon(LucideIcons.user, size: 50, color: VSPColors.textSecondary),
+                                    errorWidget: (context, url, error) => Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
                                   )
-                                : Icon(LucideIcons.user, size: 50, color: VSPColors.textSecondary),
+                                : Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
                       ),
                     ),
                     Container(
@@ -165,7 +170,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: VSPColors.background, width: 3),
                       ),
-                      child: Icon(LucideIcons.camera, size: 16, color: Colors.black),
+                      child: Icon(Iconsax.image_copy, size: 16, color: Colors.black),
                     ),
                   ],
                 ),
@@ -174,20 +179,20 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
               // --- Form Fields ---
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(AppLocalizations.of(context)!.fullName, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
               CustomTextField(
                 controller: _nameController,
                 hintText: AppLocalizations.of(context)!.enterName,
-                prefixIcon: LucideIcons.user,
+                prefixIcon: Iconsax.user_copy,
               ),
 
               const SizedBox(height: VSPSpacing.md),
 
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(AppLocalizations.of(context)!.phoneNumber, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
@@ -195,13 +200,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 controller: _phoneController,
                 hintText: AppLocalizations.of(context)!.enterPhone,
                 keyboardType: TextInputType.phone,
-                prefixIcon: LucideIcons.phone,
+                prefixIcon: Iconsax.call_copy,
               ),
 
               const SizedBox(height: VSPSpacing.md),
 
               Align(
-                alignment: Alignment.centerLeft,
+                alignment: AlignmentDirectional.centerStart,
                 child: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.labelMedium),
               ),
               const SizedBox(height: VSPSpacing.xs),
@@ -217,7 +222,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   child: DropdownButton<String>(
                     value: _selectedPosition,
                     dropdownColor: VSPColors.surface,
-                    icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+                    icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
                     isExpanded: true,
                     style: Theme.of(context).textTheme.bodyMedium,
                     items: _positions.map((String pos) {
@@ -237,7 +242,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 ),
               ),
 
-              const SizedBox(height: 40),
+              const SizedBox(height: 24),
 
               // --- Save Button ---
               PrimaryButton(
@@ -246,19 +251,72 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 onPressed: _isLoading ? null : _saveChanges,
               ),
 
-              const SizedBox(height: VSPSpacing.lg),
+              const SizedBox(height: VSPSpacing.md),
 
-              // --- Delete Account Button ---
-              TextButton(
-                onPressed: () => _showDeleteAccountDialog(context),
-                child: Text(
-                  Localizations.localeOf(context).languageCode == 'ar' ? 'حذف الحساب' : 'Delete Account',
-                  style: const TextStyle(
-                    color: VSPColors.error,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                  ),
-                ),
+              // --- Delete Account Danger Zone Card ---
+              Builder(
+                builder: (context) {
+                  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                  return Container(
+                    width: double.infinity,
+                    margin: const EdgeInsets.only(top: VSPSpacing.md),
+                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    decoration: BoxDecoration(
+                      color: VSPColors.error.withValues(alpha: 0.08),
+                      borderRadius: BorderRadius.circular(VSPRadius.lg),
+                      border: Border.all(color: VSPColors.error.withValues(alpha: 0.3), width: 1.5),
+                    ),
+                    child: Row(
+                      children: [
+                        Container(
+                          padding: const EdgeInsets.all(10),
+                          decoration: BoxDecoration(
+                            color: VSPColors.error.withValues(alpha: 0.15),
+                            shape: BoxShape.circle,
+                          ),
+                          child: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 22),
+                        ),
+                        const SizedBox(width: 14),
+                        Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                isArabic ? 'حذف الحساب نهائياً' : 'Delete Account',
+                                style: const TextStyle(
+                                  color: VSPColors.error,
+                                  fontWeight: FontWeight.bold,
+                                  fontSize: 15,
+                                ),
+                              ),
+                              const SizedBox(height: 2),
+                              Text(
+                                isArabic ? 'حذف كافة البيانات والحجوزات نهائياً' : 'Permanently remove your account & data',
+                                style: TextStyle(
+                                  color: VSPColors.textSecondary.withValues(alpha: 0.8),
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                        TextButton(
+                          onPressed: () => _showDeleteAccountDialog(context),
+                          style: TextButton.styleFrom(
+                            backgroundColor: VSPColors.error,
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                          ),
+                          child: Text(
+                            isArabic ? 'حذف' : 'Delete',
+                            style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                          ),
+                        ),
+                      ],
+                    ),
+                  );
+                }
               ),
             ],
           ),

@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -113,13 +113,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? LucideIcons.arrowRight : LucideIcons.arrowLeft,
+                          icon: languageProvider.isArabic ? Iconsax.arrow_right_copy : Iconsax.arrow_left_copy,
                           onTap: () => Navigator.pop(context),
                         ),
                       ],
                     ),
 
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 24),
 
                     // Greeting Section
                     VSPFadeInItem(
@@ -130,7 +130,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           Text(
                             greeting,
                             style: Theme.of(context).textTheme.displayLarge?.copyWith(
-                              fontSize: 52,
+                              fontSize: MediaQuery.of(context).size.width < 360 ? 38 : 46,
                               height: 0.9,
                               letterSpacing: -1,
                             ),
@@ -163,7 +163,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       ),
                     ),
 
-                    const SizedBox(height: 60),
+                    const SizedBox(height: 32),
 
                     // Action Buttons
                     VSPFadeInItem(
@@ -405,7 +405,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             shape: BoxShape.circle,
                           ),
                           child: const Icon(
-                            LucideIcons.shieldCheck,
+                            Iconsax.security_safe_copy,
                             color: VSPColors.accent,
                             size: 20,
                           ),
@@ -423,7 +423,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         ),
                         IconButton(
                           onPressed: () => Navigator.pop(dialogContext),
-                          icon: const Icon(LucideIcons.x, color: VSPColors.textSecondary, size: 20),
+                          icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 20),
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
                           splashRadius: 20,
@@ -453,7 +453,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                             ),
                             child: Row(
                               children: [
-                                const Icon(LucideIcons.info, color: VSPColors.accent, size: 18),
+                                const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 18),
                                 const SizedBox(width: 10),
                                 Expanded(
                                   child: Text(
@@ -474,7 +474,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           if (widget.isOwner) ...[
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.building,
+                              icon: Iconsax.building_copy,
                               title: isAr ? '١. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
                               content: isAr
                                   ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
@@ -484,7 +484,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.lock,
+                              icon: Iconsax.lock_copy,
                               title: isAr ? '٢. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
                               content: isAr
                                   ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
@@ -494,7 +494,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.wallet,
+                              icon: Iconsax.wallet_1_copy,
                               title: isAr ? '٣. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
                               content: isAr
                                   ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
@@ -504,7 +504,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.trophy,
+                              icon: Iconsax.cup_copy,
                               title: isAr ? '٤. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
                               content: isAr
                                   ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
@@ -513,7 +513,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           ] else ...[
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.fileText,
+                              icon: Iconsax.document_text_copy,
                               title: isAr ? '١. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
                               content: isAr
                                   ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.'
@@ -523,7 +523,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.lock,
+                              icon: Iconsax.lock_copy,
                               title: isAr ? '٢. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
                               content: isAr
                                   ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
@@ -533,7 +533,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.creditCard,
+                              icon: Iconsax.wallet_1_copy,
                               title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
                               content: isAr
                                   ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ المستحق تلقائياً إلى وسيلة الدفع الأصلية التي استخدمتها.'
@@ -543,7 +543,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
                             _buildModalSectionCard(
                               dialogContext,
-                              icon: LucideIcons.trophy,
+                              icon: Iconsax.cup_copy,
                               title: isAr ? '٤. قواعد الفرق ونظام الترتيب' : '4. Team Rules & Elo Rating System',
                               content: isAr
                                   ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً، ولكل لاعب الانضمام إلى 3 فرق كحد أقصى. تُعتمد نتائج التحديات تلقائياً بعد 24 ساعة ما لم يُقدَّم اعتراض رسمي.'

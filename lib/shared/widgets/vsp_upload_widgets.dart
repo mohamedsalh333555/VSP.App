@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 import 'dart:io';
@@ -48,7 +48,7 @@ class VspUploadMainCard extends StatelessWidget {
             : Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.imagePlus,
+                  Icon(Iconsax.image_copy,
                       color: VSPColors.textSecondary.withValues(alpha: 0.5), size: 40),
                   const SizedBox(height: VSPSpacing.sm),
                   Text(
@@ -148,11 +148,11 @@ class VspUploadedItemRow extends StatelessWidget {
           if (thumbnailUrl != null || imageFile != null)
             Row(
               children: [
-                Icon(LucideIcons.checkCircle, color: VSPColors.success, size: 20),
+                Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
                 if (onDelete != null) ...[
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(LucideIcons.trash2, color: VSPColors.error, size: 20),
+                    icon: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                     onPressed: onDelete,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -167,7 +167,7 @@ class VspUploadedItemRow extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
             )
           else
-            Icon(LucideIcons.alertCircle, color: VSPColors.error, size: 20),
+            Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),
         ],
       ),
     );

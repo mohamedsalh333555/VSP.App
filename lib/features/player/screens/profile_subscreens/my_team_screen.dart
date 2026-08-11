@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -83,7 +83,22 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     super.dispose();
   }
 
+  String _getLocalizedSport(String sport, bool isArabic) {
+    if (!isArabic) return sport;
+    switch (sport.trim()) {
+      case 'Football': return 'كرة القدم';
+      case 'Basketball': return 'كرة السلة';
+      case 'Padel': return 'بادل';
+      case 'Volleyball': return 'الكرة الطائرة';
+      case 'Handball': return 'كرة اليد';
+      default: return sport;
+    }
+  }
+
   Future<void> _initialLoad() async {
+    _teamSubscription?.cancel();
+    _teamSubscription = null;
+
     final auth = Provider.of<AuthProvider>(context, listen: false);
     final uid = auth.currentUser?.uid;
     if (uid == null) return;
@@ -96,7 +111,6 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         _localTeam = team;
         
         // Listen to team updates in Supabase
-        _teamSubscription?.cancel();
         _teamSubscription = Supabase.instance.client
             .from('teams')
             .stream(primaryKey: ['id'])
@@ -116,7 +130,6 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         
         await _loadMemberDetails(team);
       } else {
-        _teamSubscription?.cancel();
         setState(() {
           _localTeam = null;
           _isLoadingMembers = false;
@@ -173,7 +186,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 SnackBar(
                   content: Row(
                     children: [
-                      const Icon(LucideIcons.alertTriangle, color: VSPColors.error, size: 20),
+                      const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Text(
@@ -229,14 +242,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
         actions: [
           if (team != null)
             IconButton(
-              icon: Icon(LucideIcons.share2, color: VSPColors.accent),
+              icon: Icon(Iconsax.share_copy, color: VSPColors.accent),
               onPressed: () {
                 SharingService.shareTeam(
                   context,
@@ -257,45 +270,46 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
           VSPSpacing.md, 
           VSPSpacing.md, 
           VSPSpacing.md, 
-          MediaQuery.of(context).padding.bottom + 100 + MediaQuery.of(context).viewInsets.bottom
+          (MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom : 16) + 100 + MediaQuery.of(context).viewInsets.bottom
         ),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            // 1. Stats Grid
-            Row(
-              children: [
-                Expanded(
-                  child: GestureDetector(
-                    onTap: _showEloInfoDialog,
-                    child: Container(
-                      decoration: BoxDecoration(
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
-                      ),
-                      child: Stack(
-                        children: [
-                          _buildStatCard(team?.points.toString() ?? '0', isArabic ? 'نقاط الدوري' : l10n.points),
-                          const Positioned(
-                            top: 6,
-                            left: 6,
-                            child: Icon(LucideIcons.info, size: 12, color: VSPColors.accent),
-                          ),
-                        ],
+            // 1. Stats Grid (Show ONLY if team is created)
+            if (team != null) ...[
+              Row(
+                children: [
+                  Expanded(
+                    child: GestureDetector(
+                      onTap: _showEloInfoDialog,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
+                        ),
+                        child: Stack(
+                          children: [
+                            _buildStatCard(team.points.toString(), isArabic ? 'نقاط الدوري' : l10n.points),
+                            const Positioned(
+                              top: 6,
+                              left: 6,
+                              child: Icon(Iconsax.info_circle_copy, size: 12, color: VSPColors.accent),
+                            ),
+                          ],
+                        ),
                       ),
                     ),
                   ),
-                ),
-                const SizedBox(width: 8),
-                Expanded(child: _buildStatCard((1 + _teamMembers.length).toString(), l10n.members)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildStatCard(team?.championshipsWon.toString() ?? '0', l10n.trophies)),
-                const SizedBox(width: 8),
-                Expanded(child: _buildStatCard(team?.wins.toString() ?? '0', l10n.wins)),
-              ],
-            ),
-
-            const SizedBox(height: VSPSpacing.lg),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildStatCard((1 + _teamMembers.length).toString(), l10n.members)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildStatCard(team.championshipsWon.toString(), l10n.trophies)),
+                  const SizedBox(width: 8),
+                  Expanded(child: _buildStatCard(team.wins.toString(), l10n.wins)),
+                ],
+              ),
+              const SizedBox(height: VSPSpacing.lg),
+            ],
 
             // 2. Team Profile Section
             Text(l10n.teamName, style: Theme.of(context).textTheme.titleLarge),
@@ -319,8 +333,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   value: _selectedSport,
                   isExpanded: true,
                   dropdownColor: VSPColors.surface,
-                  icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
-                  items: VSPConstants.sports.map((s) => DropdownMenuItem(value: s, child: Text(s, style: const TextStyle(color: VSPColors.textPrimary)))).toList(),
+                  icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
+                  items: VSPConstants.sports.map((s) => DropdownMenuItem(
+                    value: s, 
+                    child: Text(_getLocalizedSport(s, isArabic), style: const TextStyle(color: VSPColors.textPrimary)),
+                  )).toList(),
                   onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
                 ),
               ),
@@ -336,7 +353,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 height: 45,
                 color: VSPColors.surfaceAlt,
                 textColor: isCaptain ? VSPColors.textPrimary : VSPColors.textSecondary.withValues(alpha: 0.5),
-                icon: LucideIcons.uploadCloud,
+                icon: Iconsax.export_3_copy,
                 onPressed: !isCaptain ? null : () async {
                   final picker = ImagePicker();
                   final XFile? image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
@@ -368,7 +385,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 if (isCaptain && (1 + _teamMembers.length) < 12)
                   TextButton.icon(
                     onPressed: () => _showAddPlayerSheet(team),
-                    icon: Icon(LucideIcons.plusCircle, size: 16, color: VSPColors.accent),
+                    icon: Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.accent),
                     label: Text(l10n.addMember, style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
               ],
@@ -376,7 +393,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             const SizedBox(height: VSPSpacing.sm),
             if (_isLoadingMembers)
               const Center(child: SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent)))
-            else if (_teamMembers.isNotEmpty || team != null)
+            else
               Container(
                 width: double.infinity,
                 padding: const EdgeInsets.all(VSPSpacing.md),
@@ -384,15 +401,11 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 child: Wrap(
                   spacing: 8, runSpacing: 8,
                   children: [
-                    _buildMemberAvatar(team?.captainImageUrl ?? auth.userModel?.profileImageUrl ?? ''),
+                    // Always render Captain chip first
+                    _buildCaptainChip(team, auth.userModel, isArabic),
                     ..._teamMembers.map((member) => _buildMemberChip(member, team, isCaptain)),
                   ],
                 ),
-              )
-            else
-              Padding(
-                padding: const EdgeInsets.symmetric(vertical: 4),
-                child: Text(l10n.addMembersHint, style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12)),
               ),
 
             const SizedBox(height: VSPSpacing.lg),
@@ -592,13 +605,44 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     );
   }
 
-  Widget _buildMemberAvatar(String imageUrl) {
+  Widget _buildCaptainChip(Team? team, UserModel? currentUser, bool isArabic) {
+    final name = team?.captainName ?? currentUser?.name ?? (isArabic ? 'الكابتن' : 'Captain');
+    final imgUrl = team?.captainImageUrl ?? currentUser?.profileImageUrl ?? '';
+
     return Container(
-      decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent, width: 2)),
-      child: CircleAvatar(
-        radius: 17, backgroundColor: VSPColors.surfaceAlt,
-        backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null,
-        child: imageUrl.isEmpty ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 18) : null,
+      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+      decoration: BoxDecoration(
+        color: VSPColors.accent.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(20),
+        border: Border.all(color: VSPColors.accent),
+      ),
+      child: Row(
+        mainAxisSize: MainAxisSize.min,
+        children: [
+          CircleAvatar(
+            radius: 12,
+            backgroundColor: VSPColors.accent,
+            backgroundImage: imgUrl.isNotEmpty ? NetworkImage(imgUrl) : null,
+            child: imgUrl.isEmpty ? const Icon(Iconsax.crown_copy, color: Colors.black, size: 12) : null,
+          ),
+          const SizedBox(width: VSPSpacing.sm),
+          Text(
+            name,
+            style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(width: 4),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1),
+            decoration: BoxDecoration(
+              color: VSPColors.accent,
+              borderRadius: BorderRadius.circular(4),
+            ),
+            child: Text(
+              isArabic ? 'كابتن' : 'C',
+              style: const TextStyle(color: Colors.black, fontSize: 9, fontWeight: FontWeight.bold),
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -613,7 +657,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             CircleAvatar(
               radius: 12, backgroundColor: VSPColors.surface,
               backgroundImage: (user.profileImageUrl?.isNotEmpty ?? false) ? NetworkImage(user.profileImageUrl!) : null,
-              child: (user.profileImageUrl?.isEmpty ?? true) ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 12) : null,
+              child: (user.profileImageUrl?.isEmpty ?? true) ? Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 12) : null,
             ),
             const SizedBox(width: VSPSpacing.sm),
             Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),
@@ -645,7 +689,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                     setState(() => _teamMembers.removeWhere((m) => m.uid == userToRemove.uid));
                   }
                 },
-                child: const Padding(padding: EdgeInsets.only(left: 6, right: 2), child: Icon(LucideIcons.x, color: VSPColors.error, size: 14)),
+                child: const Padding(padding: EdgeInsets.only(left: 6, right: 2), child: Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 14)),
               ),
         ],
       ),
@@ -655,9 +699,9 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
   Widget _buildAchievementSection(Team team) {
     final l10n = AppLocalizations.of(context)!;
     final badges = [
-      {'id': 'explorer', 'name': 'Explorer', 'icon': LucideIcons.compass, 'desc': 'Play against 5 different teams'},
-      {'id': 'gladiator', 'name': 'Gladiator', 'icon': LucideIcons.shield, 'desc': 'Played 10+ matches'},
-      {'id': 'streak_3', 'name': 'Streak 3', 'icon': LucideIcons.flame, 'desc': 'Won 3 matches in a row'},
+      {'id': 'explorer', 'name': 'Explorer', 'icon': Iconsax.discover_copy, 'desc': 'Play against 5 different teams'},
+      {'id': 'gladiator', 'name': 'Gladiator', 'icon': Iconsax.security_safe_copy, 'desc': 'Played 10+ matches'},
+      {'id': 'streak_3', 'name': 'Streak 3', 'icon': Iconsax.flash_1_copy, 'desc': 'Won 3 matches in a row'},
     ];
 
     return Column(
@@ -671,7 +715,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
               Container(
                 padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
                 decoration: BoxDecoration(color: VSPColors.warning.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: VSPColors.warning.withValues(alpha: 0.5))),
-                child: Row(children: [Icon(LucideIcons.zap, color: VSPColors.warning, size: 14), const SizedBox(width: 4), Text(l10n.winStreak(team.currentWinningStreak), style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold))]),
+                child: Row(children: [Icon(Iconsax.flash_1_copy, color: VSPColors.warning, size: 14), const SizedBox(width: 4), Text(l10n.winStreak(team.currentWinningStreak), style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold))]),
               ),
           ],
         ),
@@ -720,7 +764,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Row(
           children: [
-            const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 24),
+            const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
             const SizedBox(width: 10),
             Expanded(
               child: Text(

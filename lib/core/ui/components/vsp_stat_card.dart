@@ -1,5 +1,5 @@
 ﻿import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPStatCard extends StatelessWidget {
@@ -70,7 +70,7 @@ class VSPStatCard extends StatelessWidget {
             Row(
               children: [
                 Icon(
-                  isTrendPositive ? LucideIcons.trendingUp : LucideIcons.trendingDown,
+                  isTrendPositive ? Iconsax.trend_up_copy : Iconsax.trend_down_copy,
                   color: isTrendPositive ? Colors.green : Colors.red,
                   size: 14,
                 ),

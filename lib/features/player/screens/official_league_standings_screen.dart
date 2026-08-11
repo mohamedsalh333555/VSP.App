@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -154,25 +154,25 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
 
     if (!_isRegistrationOpen) {
       labelText = isArabic ? 'التسجيل مغلق حالياً 🛑' : 'Registration Closed 🛑';
-      iconData = LucideIcons.slash;
+      iconData = Iconsax.slash_copy;
       onPressed = null;
       buttonColor = VSPColors.surfaceAlt;
       textColor = VSPColors.textSecondary;
     } else if (_hasUserRegistered) {
       labelText = isArabic ? 'تم إرسال الطلب ⏳' : 'Request Sent ⏳';
-      iconData = LucideIcons.clock;
+      iconData = Iconsax.clock_copy;
       onPressed = null;
       buttonColor = VSPColors.surfaceAlt;
       textColor = VSPColors.textSecondary;
     } else if (_registrationCount >= 32) {
       labelText = isArabic ? 'اكتمل العدد 🔒' : 'Roster Full 🔒';
-      iconData = LucideIcons.lock;
+      iconData = Iconsax.lock_copy;
       onPressed = null;
       buttonColor = VSPColors.surfaceAlt;
       textColor = VSPColors.textSecondary;
     } else {
       labelText = isArabic ? 'سجل الآن' : 'Register Now';
-      iconData = LucideIcons.userPlus;
+      iconData = Iconsax.user_add_copy;
       onPressed = _isSubmitting ? null : _handleRegistration;
       buttonColor = VSPColors.accent;
       textColor = Colors.black;
@@ -208,7 +208,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -261,7 +261,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                       const SizedBox(height: VSPSpacing.md),
                       ElevatedButton.icon(
                         onPressed: _launchHighlights,
-                        icon: Icon(LucideIcons.playCircle, color: Colors.black, size: 20),
+                        icon: Icon(Iconsax.play_circle_copy, color: Colors.black, size: 20),
                         label: const Text(
                           'WATCH HIGHLIGHTS',
                           style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 1.0),
@@ -423,7 +423,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                             player.titles, 
                             (i) => const Padding(
                               padding: EdgeInsets.only(right: 4, top: 4),
-                              child: Icon(LucideIcons.trophy, color: VSPColors.accent, size: 18),
+                              child: Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 18),
                             ),
                           ),
                         ),
@@ -613,7 +613,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: List.generate(player.titles, (i) => const Padding(
                     padding: EdgeInsets.symmetric(horizontal: 1),
-                    child: Icon(LucideIcons.trophy, color: Colors.black, size: 14),
+                    child: Icon(Iconsax.cup_copy, color: Colors.black, size: 14),
                   )),
                 )
             ]
@@ -687,7 +687,7 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
                           child: Row(
                             children: List.generate(
                               widget.player.titles, 
-                              (i) => Icon(LucideIcons.trophy, color: VSPColors.accent, size: 12)
+                              (i) => Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 12)
                             ),
                           ),
                         ),
@@ -703,7 +703,7 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
                 ),
                 const SizedBox(width: 12),
                 Icon(
-                  _isExpanded ? LucideIcons.chevronUp : LucideIcons.chevronDown,
+                  _isExpanded ? Iconsax.arrow_up_1_copy : Iconsax.arrow_down_1_copy,
                   color: VSPColors.textSecondary.withValues(alpha: 0.4),
                   size: 16,
                 ),
@@ -735,9 +735,9 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
   }
 
   Widget _buildTrendIcon(String trend) {
-    if (trend == 'up') return Icon(LucideIcons.chevronUp, color: VSPColors.accent, size: 16);
-    if (trend == 'down') return Icon(LucideIcons.chevronDown, color: Colors.red, size: 16);
-    return Icon(LucideIcons.minus, color: VSPColors.textSecondary, size: 12);
+    if (trend == 'up') return Icon(Iconsax.arrow_up_1_copy, color: VSPColors.accent, size: 16);
+    if (trend == 'down') return Icon(Iconsax.arrow_down_1_copy, color: Colors.red, size: 16);
+    return Icon(Iconsax.minus_cirlce_copy, color: VSPColors.textSecondary, size: 12);
   }
 
   Widget _buildDetailStat(String label, String value, BuildContext context) {

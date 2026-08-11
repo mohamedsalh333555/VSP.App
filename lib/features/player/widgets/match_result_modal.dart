@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/shared/widgets/primary_button.dart';
@@ -34,10 +34,16 @@ class _MatchResultModalState extends State<MatchResultModal> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Dialog(
       backgroundColor: Colors.transparent,
-      insetPadding: const EdgeInsets.symmetric(horizontal: 16),
+      insetPadding: EdgeInsets.fromLTRB(
+        16, 
+        24, 
+        16, 
+        bottomPadding > 0 ? bottomPadding + 16 : 24,
+      ),
       child: Container(
         decoration: BoxDecoration(
           color: VSPColors.surface,
@@ -73,7 +79,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(LucideIcons.x, color: VSPColors.textPrimary),
+                    icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     visualDensity: VisualDensity.compact,
@@ -124,11 +130,11 @@ class _MatchResultModalState extends State<MatchResultModal> {
               const SizedBox(height: 24),
 
               // Selection Options
-              _buildSelectionOption(0, isArabic ? 'فزنا بالمباراة 🏆' : 'We Won', LucideIcons.trophy, VSPColors.warning),
+              _buildSelectionOption(0, isArabic ? 'فزنا بالمباراة 🏆' : 'We Won', Iconsax.cup_copy, VSPColors.warning),
               const SizedBox(height: 12),
-              _buildSelectionOption(1, isArabic ? 'تعادل 🤝' : 'Draw', LucideIcons.repeat, const Color(0xFF3B82F6)),
+              _buildSelectionOption(1, isArabic ? 'تعادل 🤝' : 'Draw', Iconsax.repeat_copy, const Color(0xFF3B82F6)),
               const SizedBox(height: 12),
-              _buildSelectionOption(2, isArabic ? 'خسرنا المباراة' : 'We Lost', LucideIcons.frown, VSPColors.error),
+              _buildSelectionOption(2, isArabic ? 'خسرنا المباراة' : 'We Lost', Iconsax.warning_2_copy, VSPColors.error),
 
               const SizedBox(height: VSPSpacing.lg),
               const Divider(color: VSPColors.divider),
@@ -210,7 +216,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                 });
               },
               child: Icon(
-                index < _rating ? LucideIcons.star : LucideIcons.star,
+                index < _rating ? Iconsax.star_copy : Iconsax.star_copy,
                 color: VSPColors.warning,
                 size: 32,
               ),
@@ -266,7 +272,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             ),
             const Spacer(),
             if (isSelected)
-              Icon(LucideIcons.checkCircle, color: activeColor),
+              Icon(Iconsax.tick_circle_copy, color: activeColor),
           ],
         ),
       ),
@@ -284,7 +290,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             shape: BoxShape.circle,
             border: Border.all(color: VSPColors.divider),
           ),
-          child: Icon(LucideIcons.trophy, color: VSPColors.textSecondary),
+          child: Icon(Iconsax.cup_copy, color: VSPColors.textSecondary),
         ),
         const SizedBox(height: VSPSpacing.sm),
         SizedBox(

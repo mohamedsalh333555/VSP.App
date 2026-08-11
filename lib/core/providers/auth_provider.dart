@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -238,6 +239,7 @@ class AuthProvider with ChangeNotifier {
         _updateFcmToken(user.id);
         _dataFetchError = false;
         _startRealtimeUserListener(user.id);
+        _notificationService.listenToRealtimeNotifications(user.id);
       } else {
         VSPLogger.w("⚠️ Ghost user detected (UID: ${user.id})");
         _isGhostUser = true;
@@ -637,6 +639,7 @@ class AuthProvider with ChangeNotifier {
     }
 
     _stopRealtimeUserListener();
+    _notificationService.stopRealtimeNotificationsListener();
     await _authService.signOut();
     _firebaseUser = null;
     _userModel = null;
@@ -736,9 +739,18 @@ class AuthProvider with ChangeNotifier {
     if (_firebaseUser == null || _userModel == null) return false;
 
     try {
-      final updatedAdditional = Map<String, dynamic>.from(
-        _userModel!.additionalData ?? {},
-      )..['isOnboardingConfirmed'] = true;
+      Map<String, dynamic> updatedAdditional;
+      if (_userModel!.additionalData != null && _userModel!.additionalData!.isNotEmpty) {
+        try {
+          final jsonStr = jsonEncode(_userModel!.additionalData);
+          updatedAdditional = Map<String, dynamic>.from(jsonDecode(jsonStr));
+        } catch (_) {
+          updatedAdditional = Map<String, dynamic>.from(_userModel!.additionalData!);
+        }
+      } else {
+        updatedAdditional = {};
+      }
+      updatedAdditional['isOnboardingConfirmed'] = true;
 
       await Supabase.instance.client.from('users').update({
         'verification_status': verificationStatus,
@@ -1005,14 +1017,85 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
   }
 
-  // Phase 2: User Deletion Logic (Safe Delete)
+  // Phase 2: User Deletion Logic (Safe Delete with Active Bookings Guard)
   Future<bool> deleteAccount() async {
     if (_userModel == null) return false;
     _isLoading = true;
+    _errorMessage = null;
     notifyListeners();
 
     try {
-      final result = await _authService.deleteAccount(_userModel!.uid);
+      final uid = _userModel!.uid;
+      final isOwner = _userModel!.role == 'owner';
+      final now = DateTime.now();
+
+      // 🛡️ SECURITY & BUSINESS GUARD: Check for active/upcoming bookings
+      if (isOwner) {
+        // 1. Fetch owner stadiums
+        final stadiumRes = await Supabase.instance.client
+            .from('stadiums')
+            .select('id')
+            .eq('owner_id', uid);
+        
+        final stadiumIds = (stadiumRes as List).map((s) => s['id'].toString()).toList();
+
+        if (stadiumIds.isNotEmpty) {
+          final bookingsRes = await Supabase.instance.client
+              .from('bookings')
+              .select('id, booking_date, start_time, status')
+              .inFilter('stadium_id', stadiumIds)
+              .inFilter('status', ['confirmed', 'pending']);
+
+          for (final b in bookingsRes as List) {
+            final dateStr = b['booking_date']?.toString() ?? '';
+            final startStr = b['start_time']?.toString() ?? '';
+            final bookingDt = _parseBookingDateTime(dateStr, startStr);
+            if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
+              final diffMinutes = bookingDt.difference(now).inMinutes;
+              if (diffMinutes <= 120 && diffMinutes >= -120) {
+                _errorMessage = 'لا يمكن حذف الحساب! يوجد حجز نشط في ملاعبك متبقي عليه أقل من ساعتين (أو جارٍ حالياً). ⚠️';
+              } else {
+                _errorMessage = 'لا يمكن حذف الحساب! يوجد حجوزات قادمة مؤكدة في ملاعبك لم تكتمل بعد. ⚠️';
+              }
+              _isLoading = false;
+              notifyListeners();
+              return false;
+            }
+          }
+        }
+      } else {
+        // Player check: search bookings where created_by = uid OR joined_user_ids contains uid
+        final bookingsRes = await Supabase.instance.client
+            .from('bookings')
+            .select('id, booking_date, start_time, status, joined_user_ids, created_by_user_id')
+            .inFilter('status', ['confirmed', 'pending']);
+
+        for (final b in bookingsRes as List) {
+          final createdBy = b['created_by_user_id']?.toString() ?? '';
+          final joinedUsers = List<String>.from(b['joined_user_ids'] ?? []);
+          
+          if (createdBy == uid || joinedUsers.contains(uid)) {
+            final dateStr = b['booking_date']?.toString() ?? '';
+            final startStr = b['start_time']?.toString() ?? '';
+            final bookingDt = _parseBookingDateTime(dateStr, startStr);
+
+            if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
+              final diffMinutes = bookingDt.difference(now).inMinutes;
+              if (diffMinutes <= 120 && diffMinutes >= -120) {
+                _errorMessage = 'لا يمكن حذف الحساب! لديك حجز مؤكد متبقي عليه أقل من ساعتين (أو جارٍ حالياً). ⚽⚠️';
+              } else {
+                _errorMessage = 'لا يمكن حذف الحساب! لديك حجز قادم لم يكتمل بعد. ⚠️';
+              }
+              _isLoading = false;
+              notifyListeners();
+              return false;
+            }
+          }
+        }
+      }
+
+      // Safe deletion proceed if no active bookings block
+      final result = await _authService.deleteAccount(uid);
       if (result['success']) {
         await signOut();
         _isLoading = false;
@@ -1024,10 +1107,35 @@ class AuthProvider with ChangeNotifier {
         return false;
       }
     } catch (e) {
-      _errorMessage = 'An error occurred while deleting your account.';
+      _errorMessage = 'حدث خطأ أثناء محاولة حذف الحساب: ${e.toString()}';
       _isLoading = false;
       notifyListeners();
       return false;
+    }
+  }
+
+  DateTime? _parseBookingDateTime(String dateStr, String timeStr) {
+    try {
+      final dateParts = dateStr.split('-');
+      if (dateParts.length != 3) return null;
+      final year = int.parse(dateParts[0]);
+      final month = int.parse(dateParts[1]);
+      final day = int.parse(dateParts[2]);
+
+      int hour = 0;
+      int minute = 0;
+      if (timeStr.isNotEmpty) {
+        final timeParts = timeStr.split(':');
+        if (timeParts.length >= 2) {
+          hour = int.parse(timeParts[0]);
+          minute = int.parse(timeParts[1].split(' ')[0]);
+          if (timeStr.toLowerCase().contains('pm') && hour < 12) hour += 12;
+          if (timeStr.toLowerCase().contains('am') && hour == 12) hour = 0;
+        }
+      }
+      return DateTime(year, month, day, hour, minute);
+    } catch (_) {
+      return null;
     }
   }
 

@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -230,7 +230,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: Colors.white,
           ),
           onPressed: () => Navigator.pop(context),
@@ -264,7 +264,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                       color: VSPColors.accent.withValues(alpha: 0.15),
                       borderRadius: BorderRadius.circular(VSPRadius.lg),
                     ),
-                    child: const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 28),
+                    child: const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
                   ),
                   const SizedBox(width: 14),
                   Expanded(
@@ -278,14 +278,14 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(LucideIcons.mapPin, color: VSPColors.textSecondary, size: 14),
+                            Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               widget.championship.governorate,
                               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                             ),
                             const SizedBox(width: 12),
-                            Icon(LucideIcons.users, color: VSPColors.textSecondary, size: 14),
+                            Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               widget.team.name,
@@ -380,7 +380,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                             : null,
                         backgroundColor: VSPColors.surfaceAlt,
                         child: (member['profile_image_url'] == null || member['profile_image_url'].toString().isEmpty)
-                            ? const Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 18)
+                            ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 18)
                             : null,
                       ),
                       onChanged: isCaptain
@@ -452,7 +452,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                   return Chip(
                     backgroundColor: VSPColors.surface,
                     label: Text(name, style: const TextStyle(color: Colors.white, fontSize: 12)),
-                    deleteIcon: const Icon(LucideIcons.x, size: 14, color: VSPColors.error),
+                    deleteIcon: const Icon(Iconsax.close_circle_copy, size: 14, color: VSPColors.error),
                     onDeleted: () {
                       setState(() => _offlineGuestNames.remove(name));
                     },

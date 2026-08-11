@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui' as ui;
 import 'package:flutter/services.dart';
 import 'package:flutter/rendering.dart';
@@ -109,7 +109,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
                     return ListTile(
                       leading: Icon(
-                        LucideIcons.mapPin,
+                        Iconsax.location_copy,
                         color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
                       ),
                       title: Text(
@@ -119,7 +119,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                           fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                         ),
                       ),
-                      trailing: isSelected ? const Icon(LucideIcons.check, color: VSPColors.accent) : null,
+                      trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null,
                       onTap: () async {
                         await auth.updateProfile({'governorate': gov});
                         if (context.mounted) {
@@ -200,7 +200,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         const SizedBox(height: VSPSpacing.md),
                         PrimaryButton(
                           text: l10n.shareTeamCard,
-                          icon: LucideIcons.share2,
+                          icon: Iconsax.share_copy,
                           color: VSPColors.accent.withValues(alpha: 0.15),
                           textColor: VSPColors.accent,
                           isLoading: _isSharing,
@@ -250,7 +250,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : null,
                             ),
                             child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                ? Icon(LucideIcons.user, color: VSPColors.textSecondary, size: 40)
+                                ? Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 40)
                                 : null,
                           ),
                           const SizedBox(height: VSPSpacing.sm),
@@ -292,7 +292,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 0,
                 child: VSPMenuItem(
-                  icon: LucideIcons.pencil,
+                  icon: Iconsax.edit_copy,
                   title: l10n.editProfile,
                   subtitle: l10n.editProfileSubtitle,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const EditProfileScreen())),
@@ -301,7 +301,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 1,
                 child: VSPMenuItem(
-                  icon: LucideIcons.users,
+                  icon: Iconsax.people_copy,
                   title: l10n.myTeam,
                   subtitle: l10n.manageTeamInfo,
                   onTap: () async {
@@ -313,7 +313,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 2,
                 child: VSPMenuItem(
-                  icon: LucideIcons.heart,
+                  icon: Iconsax.heart_copy,
                   title: l10n.favoriteStadiums,
                   subtitle: l10n.viewLikedFacilities,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
@@ -323,7 +323,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 VSPFadeInItem(
                   index: 3,
                   child: VSPMenuItem(
-                    icon: LucideIcons.creditCard,
+                    icon: Iconsax.wallet_1_copy,
                     title: l10n.paymentMethods,
                     subtitle: l10n.managePaymentMethods,
                     onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
@@ -346,7 +346,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       : govName;
 
                   return VSPMenuItem(
-                    icon: LucideIcons.mapPin,
+                    icon: Iconsax.location_copy,
                     title: isArabic ? 'الموقع والمحافظة' : 'Location & Governorate',
                     subtitle: isArabic
                         ? 'المحافظة الحالية: $displayGov (اضغط للتغيير)'
@@ -358,7 +358,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 5,
                 child: VSPMenuItem(
-                  icon: LucideIcons.bell,
+                  icon: Iconsax.notification_copy,
                   title: l10n.notifications,
                   subtitle: l10n.manageNotificationSettings,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const NotificationsScreen())),
@@ -367,7 +367,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 6,
                 child: VSPMenuItem(
-                  icon: LucideIcons.shieldCheck,
+                  icon: Iconsax.security_safe_copy,
                   title: l10n.privacy,
                   subtitle: isArabic ? 'الشروط والأحكام وسياسة الخصوصية (PDPL 2020)' : l10n.privacyPolicy,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const TermsAndPrivacyScreen())),
@@ -376,7 +376,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 7,
                 child: VSPMenuItem(
-                  icon: LucideIcons.globe,
+                  icon: Iconsax.global_copy,
                   title: l10n.language,
                   subtitle: l10n.manageLanguagePreferences,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const LanguageScreen())),
@@ -385,7 +385,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 8,
                 child: VSPMenuItem(
-                  icon: LucideIcons.helpCircle,
+                  icon: Iconsax.info_circle_copy,
                   title: l10n.helpCenter,
                   subtitle: isArabic ? 'الأسئلة الشائعة وتواصل مع فريق الدعم' : l10n.getHelpSupport,
                   onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FAQAndSupportScreen())),
@@ -398,7 +398,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               VSPFadeInItem(
                 index: 9,
                 child: VSPMenuItem(
-                  icon: LucideIcons.logOut,
+                  icon: Iconsax.logout_copy,
                   title: l10n.logout,
                   subtitle: l10n.signOutAccount,
                   isLogout: true,

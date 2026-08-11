@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
@@ -117,7 +117,7 @@ class StadiumCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                              Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -152,7 +152,7 @@ class StadiumCard extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.clock, color: Colors.amber, size: 12),
+                            const Icon(Iconsax.clock_copy, color: Colors.amber, size: 12),
                             const SizedBox(width: 4),
                             Text(
                               Localizations.localeOf(context).languageCode == 'ar' ? 'قيد المراجعة 🕒' : 'Under Review 🕒',
@@ -175,7 +175,7 @@ class StadiumCard extends StatelessWidget {
                             border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
                           child: Icon(
-                            LucideIcons.edit2,
+                            Iconsax.edit_copy,
                             color: VSPColors.accent,
                             size: 18,
                           ),
@@ -204,7 +204,7 @@ class StadiumCard extends StatelessWidget {
                                 border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
                               ),
                               child: Icon(
-                                isFav ? LucideIcons.heart : LucideIcons.heart,
+                                isFav ? Iconsax.heart_copy : Iconsax.heart_copy,
                                 color: isFav ? VSPColors.error : Colors.white,
                                 size: 20,
                               ),
@@ -264,17 +264,17 @@ class StadiumCard extends StatelessWidget {
                         return Row(
                           children: [
                             if (hasBaths) ...[
-                              Icon(LucideIcons.showerHead, color: VSPColors.accent, size: 14),
+                              Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'حمامات 🚻  ' : 'Baths 🚻  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasCafe) ...[
-                              Icon(LucideIcons.coffee, color: VSPColors.accent, size: 14),
+                              Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'كافتيريا ☕  ' : 'Cafeteria ☕  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasGarage) ...[
-                              Icon(LucideIcons.car, color: VSPColors.accent, size: 14),
+                              Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'جراج 🅿️  ' : 'Garage 🅿️  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
@@ -395,7 +395,7 @@ class StadiumCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(LucideIcons.navigation, color: Colors.black, size: 12),
+          Icon(Iconsax.gps_copy, color: Colors.black, size: 12),
           const SizedBox(width: 4),
           Text(
             GeoHelper.formatDistance(distance),

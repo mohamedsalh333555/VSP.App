@@ -1,5 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -138,14 +138,14 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
         ),
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
           IconButton(
-            icon: const Icon(LucideIcons.share2, color: VSPColors.accent, size: 20),
+            icon: const Icon(Iconsax.share_copy, color: VSPColors.accent, size: 20),
             onPressed: () {
               SharingService.shareChampionshipObject(
                 context: context,
@@ -180,8 +180,8 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                       ),
                       child: ClipOval(
                         child: championship.logoUrl.isNotEmpty
-                            ? Image.network(championship.logoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(LucideIcons.trophy, color: VSPColors.accent))
-                            : const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 24),
+                            ? Image.network(championship.logoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Iconsax.cup_copy, color: VSPColors.accent))
+                            : const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
                       ),
                     ),
                     const SizedBox(width: 12),
@@ -198,7 +198,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(LucideIcons.mapPin, color: VSPColors.textSecondary, size: 12),
+                              Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 12),
                               const SizedBox(width: 4),
                               Text(
                                 championship.governorate.isNotEmpty ? championship.governorate : (isArabic ? 'مصر' : 'Egypt'),
@@ -239,28 +239,28 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                 Row(
                   children: [
                     _buildStatCard(
-                      icon: LucideIcons.trophy,
+                      icon: Iconsax.cup_copy,
                       iconColor: VSPColors.accent,
                       label: isArabic ? 'الجائزة الكبرى' : 'Grand Prize',
                       value: '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}',
                     ),
                     const SizedBox(width: 8),
                     _buildStatCard(
-                      icon: LucideIcons.banknote,
+                      icon: Iconsax.card_copy,
                       iconColor: VSPColors.accent,
                       label: isArabic ? 'رسوم الاشتراك' : 'Entry Fee',
                       value: '${championship.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}',
                     ),
                     const SizedBox(width: 8),
                     _buildStatCard(
-                      icon: LucideIcons.calendar,
+                      icon: Iconsax.calendar_1_copy,
                       iconColor: VSPColors.accent,
                       label: isArabic ? 'الموعد' : 'Date',
                       value: startDateDisplay,
                     ),
                     const SizedBox(width: 8),
                     _buildStatCard(
-                      icon: LucideIcons.users,
+                      icon: Iconsax.people_copy,
                       iconColor: VSPColors.accent,
                       label: isArabic ? 'الفرق' : 'Teams',
                       value: '${championship.joinedTeams.length}/${championship.maxTeams}',
@@ -290,19 +290,19 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                       index: 0,
                       currentIndex: currentIndex,
                       title: isArabic ? 'الجدول والقرعة' : 'Brackets',
-                      icon: LucideIcons.calendar,
+                      icon: Iconsax.calendar_1_copy,
                     ),
                     _buildPillTabItem(
                       index: 1,
                       currentIndex: currentIndex,
                       title: isArabic ? 'الهدافين' : 'Scorers',
-                      icon: LucideIcons.trophy,
+                      icon: Iconsax.cup_copy,
                     ),
                     _buildPillTabItem(
                       index: 2,
                       currentIndex: currentIndex,
                       title: isArabic ? 'التفاصيل والقواعد' : 'Rules',
-                      icon: LucideIcons.fileText,
+                      icon: Iconsax.document_text_copy,
                     ),
                   ],
                 );
@@ -423,7 +423,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   }) {
     return Expanded(
       child: Container(
-        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 4),
+        padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 2),
         decoration: BoxDecoration(
           color: VSPColors.background,
           borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -433,18 +433,22 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
           children: [
             Icon(icon, color: iconColor, size: 16),
             const SizedBox(height: 4),
-            Text(
-              label,
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                label,
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 9),
+                maxLines: 1,
+              ),
             ),
             const SizedBox(height: 2),
-            Text(
-              value,
-              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
-              maxLines: 1,
-              overflow: TextOverflow.ellipsis,
+            FittedBox(
+              fit: BoxFit.scaleDown,
+              child: Text(
+                value,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 11),
+                maxLines: 1,
+              ),
             ),
           ],
         ),
@@ -465,7 +469,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       children: [
         Row(
           children: [
-            const Icon(LucideIcons.award, color: VSPColors.accent, size: 20),
+            const Icon(Iconsax.award_copy, color: VSPColors.accent, size: 20),
             const SizedBox(width: 8),
             Text(
               isArabic ? 'جدول الترتيب الحي' : 'Live Standings Table',
@@ -611,7 +615,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                   ),
                   child: Column(
                     children: [
-                      const Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 36),
+                      const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 36),
                       const SizedBox(height: 12),
                       Text(
                         isArabic ? 'لم يتم إعداد المباريات بعد' : 'No matches scheduled yet',
@@ -737,7 +741,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                                       if (scheduledLabel != null)
                                         Row(
                                           children: [
-                                            const Icon(LucideIcons.calendarDays, size: 11, color: VSPColors.textSecondary),
+                                            const Icon(Iconsax.calendar_1_copy, size: 11, color: VSPColors.textSecondary),
                                             const SizedBox(width: 4),
                                             Text(
                                               scheduledLabel,
@@ -839,7 +843,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(LucideIcons.trophy, size: 14, color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary),
+                        Icon(Iconsax.cup_copy, size: 14, color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           isArabic ? 'ترتيب الهدافين' : 'Top Scorers',
@@ -866,7 +870,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        Icon(LucideIcons.shieldCheck, size: 14, color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary),
+                        Icon(Iconsax.security_safe_copy, size: 14, color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary),
                         const SizedBox(width: 6),
                         Text(
                           isArabic ? 'أقوى دفاع (كلين شيت)' : 'Clean Sheets',
@@ -908,7 +912,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.medal, color: VSPColors.textSecondary, size: 40),
+                const Icon(Iconsax.award_copy, color: VSPColors.textSecondary, size: 40),
                 const SizedBox(height: 12),
                 Text(
                   isArabic ? 'لم يتم تسجيل أهداف بعد في هذه البطولة' : 'No goals recorded yet in this tournament',
@@ -964,7 +968,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     ),
                     child: Center(
                       child: isOwnGoalCategory
-                          ? const Icon(LucideIcons.repeat, color: VSPColors.error, size: 18)
+                          ? const Icon(Iconsax.repeat_copy, color: VSPColors.error, size: 18)
                           : Text(
                               rankEmoji,
                               style: TextStyle(
@@ -1007,7 +1011,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        Icon(isOwnGoalCategory ? LucideIcons.repeat : LucideIcons.trophy, color: isOwnGoalCategory ? VSPColors.error : VSPColors.accent, size: 12),
+                        Icon(isOwnGoalCategory ? Iconsax.repeat_copy : Iconsax.cup_copy, color: isOwnGoalCategory ? VSPColors.error : VSPColors.accent, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           '$goals ${isArabic ? "أهداف" : "goals"}',
@@ -1039,7 +1043,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                const Icon(LucideIcons.shieldCheck, color: VSPColors.textSecondary, size: 40),
+                const Icon(Iconsax.security_safe_copy, color: VSPColors.textSecondary, size: 40),
                 const SizedBox(height: 12),
                 Text(
                   isArabic ? 'لم يتم تسجيل مباريات بشباك نظيفة بعد' : 'No clean sheets recorded yet',
@@ -1120,7 +1124,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 12),
+                        const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 12),
                         const SizedBox(width: 4),
                         Text(
                           '$count ${isArabic ? "مباراة نظيفة" : "clean sheets"}',

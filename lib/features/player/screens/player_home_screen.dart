@@ -1,5 +1,4 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -121,7 +120,7 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              Icon(Iconsax.location, color: VSPColors.accent, size: 28),
+              Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -313,8 +312,8 @@ class ChampionshipCard extends StatelessWidget {
                   decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2)),
                   child: ClipOval(
                     child: championship.logoUrl.isNotEmpty
-                        ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(LucideIcons.trophy, color: VSPColors.accent))
-                        : Icon(LucideIcons.trophy, color: VSPColors.accent, size: 28),
+                        ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(Iconsax.cup_copy, color: VSPColors.accent))
+                        : Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -328,7 +327,7 @@ class ChampionshipCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(LucideIcons.share2, color: VSPColors.textSecondary, size: 20), 
+                  icon: Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 20), 
                   onPressed: () => SharingService.shareChampionshipObject(context: context, championship: championship),
                 ),
               ],
@@ -343,12 +342,12 @@ class ChampionshipCard extends StatelessWidget {
                   Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     final dateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
-                    return _buildCompactInfo(LucideIcons.calendar, dateStr);
+                    return _buildCompactInfo(Iconsax.calendar_1_copy, dateStr);
                   }),
                   _buildDivider(),
-                  _buildCompactInfo(LucideIcons.trophy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                  _buildCompactInfo(Iconsax.cup_copy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
                   _buildDivider(),
-                  _buildCompactInfo(LucideIcons.banknote, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                  _buildCompactInfo(Iconsax.card_copy, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
                 ],
               ),
             ),
@@ -366,7 +365,7 @@ class ChampionshipCard extends StatelessWidget {
                       final hasWinner = championship.championTeamName != null && championship.championTeamName!.isNotEmpty;
                       return Row(
                         children: [
-                          const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 16),
+                          const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 16),
                           const SizedBox(width: 6),
                           Expanded(
                             child: Text(
@@ -456,7 +455,7 @@ class ChampionshipCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Icon(
-                            isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                            isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                             size: 16,
                             color: isClosed ? VSPColors.accent : Colors.black,
                           ),
@@ -545,7 +544,7 @@ class _HomeContent extends StatelessWidget {
                   child: CircleAvatar(
                     radius: 25, backgroundColor: VSPColors.surface, 
                     backgroundImage: auth.userModel?.profileImageUrl != null ? NetworkImage(auth.userModel!.profileImageUrl!) : null, 
-                    child: auth.userModel?.profileImageUrl == null ? const Icon(LucideIcons.user, color: VSPColors.textSecondary) : null
+                    child: auth.userModel?.profileImageUrl == null ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary) : null
                   ),
                 ),
                 const SizedBox(width: 12),
@@ -579,7 +578,7 @@ class _HomeContent extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: const Icon(LucideIcons.bell, color: Colors.white),
+                  icon: const Icon(Iconsax.notification_copy, color: Colors.white),
                   onPressed: () => Navigator.push(
                     context,
                     MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
@@ -621,7 +620,7 @@ class _HomeContent extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  const Icon(LucideIcons.search, color: VSPColors.accent, size: 20),
+                  const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 20),
                   const SizedBox(width: 12),
                   Expanded(
                     child: Text(
@@ -670,7 +669,7 @@ class _HomeContent extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(LucideIcons.sliders, color: VSPColors.accent, size: 20),
+              child: const Icon(Iconsax.setting_2_copy, color: VSPColors.accent, size: 20),
             ),
           ),
         ),
@@ -731,7 +730,7 @@ class _HomeContent extends StatelessWidget {
           children: [
             Opacity(
               opacity: 0.3,
-              child: Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 64),
+              child: Icon(Iconsax.location_copy, color: VSPColors.accent, size: 64),
             ),
             const SizedBox(height: 16),
             Text(
@@ -792,7 +791,7 @@ class _HomeContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(LucideIcons.info, color: VSPColors.accent, size: 20),
+                Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -992,7 +991,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                   final isSelected = auth.userModel?.governorate == gov; 
                   return ListTile(
                     leading: Icon(
-                      LucideIcons.building, 
+                      Iconsax.building_copy, 
                       color: isSelected ? VSPColors.accent : VSPColors.textSecondary
                     ), 
                     title: Text(
@@ -1002,7 +1001,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
                       )
                     ), 
-                    trailing: isSelected ? Icon(LucideIcons.check, color: VSPColors.accent) : null, 
+                    trailing: isSelected ? Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null, 
                     onTap: () { 
                       auth.updateProfile({'governorate': gov}); 
                       context.read<StadiumProvider>().applyGovernorateFilter(gov); 

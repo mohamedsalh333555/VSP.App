@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'chat_screen.dart';
@@ -175,7 +175,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;
     return VSPEmptyState(
-      icon: LucideIcons.calendar,
+      icon: Iconsax.calendar_1_copy,
       title: l10n.noBookings,
       subtitle: l10n.noBookingsSubtitle,
       buttonText: l10n.exploreStadiums,
@@ -233,7 +233,7 @@ class _BookingCard extends StatelessWidget {
                         )
                       : Container(
                           color: VSPColors.surface,
-                          child: Icon(LucideIcons.mapPin, color: VSPColors.accent),
+                          child: Icon(Iconsax.location_copy, color: VSPColors.accent),
                         ),
                 ),
               ),
@@ -315,7 +315,7 @@ class _BookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(LucideIcons.trophy, color: VSPColors.warning, size: 20),
+                  Icon(Iconsax.cup_copy, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
                     l10n.vsOpponent(booking.opponentTeamName ?? ""),
@@ -419,7 +419,7 @@ class _BookingCard extends StatelessWidget {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(LucideIcons.timer, color: VSPColors.textSecondary, size: 16),
+              Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 16),
               const SizedBox(width: 8),
               Text(
                 isArabic ? 'انتهت مهلة إدخال النتيجة (30 يوم)' : 'Result submission period expired (30 days)',
@@ -467,7 +467,7 @@ class _BookingCard extends StatelessWidget {
             child: Row(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(LucideIcons.timer, color: VSPColors.textSecondary, size: 16),
+                Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 16),
                 const SizedBox(width: 8),
                 Text(
                   isArabic ? 'انتهت مهلة الرد على النتيجة' : 'Opponent response period expired',
@@ -676,7 +676,7 @@ class _BookingCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(LucideIcons.refreshCw, color: VSPColors.accent, size: 18),
+                    Icon(Iconsax.rotate_left_copy, color: VSPColors.accent, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

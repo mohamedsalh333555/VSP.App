@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
 /// Clean internal promotional card widget (no external AdMob/Google Ads dependency).
@@ -47,7 +47,7 @@ class VSPNativeAd extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(LucideIcons.trophy, color: VSPColors.accent, size: 16),
+              Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 16),
             ],
           ),
           const Spacer(),

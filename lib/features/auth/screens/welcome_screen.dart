@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
@@ -346,7 +346,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ],
         ),
         child: Icon(
-          Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.arrowLeft : LucideIcons.arrowRight,
+          Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_copy : Iconsax.arrow_right_copy,
           color: Colors.black,
           size: 18,
         ),
@@ -375,7 +375,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.globe, size: 14, color: Colors.white),
+                    const Icon(Iconsax.global_copy, size: 14, color: Colors.white),
                     const SizedBox(width: 6),
                     Text(
                       langProvider.isArabic 
@@ -461,8 +461,8 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                                     ),
                                     child: Icon(
                                       Localizations.localeOf(context).languageCode == 'ar'
-                                          ? LucideIcons.chevronRight
-                                          : LucideIcons.chevronLeft,
+                                          ? Iconsax.arrow_right_3_copy
+                                          : Iconsax.arrow_left_2_copy,
                                       color: Colors.white,
                                       size: 15,
                                     ),

@@ -1,6 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -174,7 +174,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               Row(
                 children: [
                   Icon(
-                    isExpired ? LucideIcons.timerOff : LucideIcons.timer,
+                    isExpired ? Iconsax.clock_copy : Iconsax.clock_copy,
                     color: isExpired ? Colors.redAccent : VSPColors.accent,
                     size: 22,
                   ),
@@ -331,7 +331,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 padding: const EdgeInsets.only(bottom: 8),
                 child: Row(
                   children: [
-                    Icon(LucideIcons.check, color: isProBorder ? Colors.amber : VSPColors.accent, size: 16),
+                    Icon(Iconsax.tick_circle_copy, color: isProBorder ? Colors.amber : VSPColors.accent, size: 16),
                     const SizedBox(width: 10),
                     Expanded(child: Text(f, style: const TextStyle(color: Colors.white, fontSize: 13))),
                   ],
@@ -351,7 +351,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: [
-                        const Icon(LucideIcons.checkCircle2, color: VSPColors.accent, size: 18),
+                        const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18),
                         const SizedBox(width: 8),
                         Text(
                           isArabic ? 'باقتك الحالية المفعلة' : 'Current Active Plan',

@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -14,14 +14,20 @@ class FavoritesScreen extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
+        leading: IconButton(
+          icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
+          onPressed: () => Navigator.pop(context),
+        ),
         title: Text(
-          'Favorite Stadiums',
+          isAr ? 'الملاعب المفضلة' : 'Favorite Stadiums',
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -30,10 +36,10 @@ class FavoritesScreen extends StatelessWidget {
           final favoriteIds = auth.userModel?.favoriteStadiums ?? [];
           
           if (favoriteIds.isEmpty) {
-            return const VSPEmptyState(
-              icon: LucideIcons.heart,
-              title: 'No Favorites Yet',
-              subtitle: 'Explore stadiums and heart your favorites to see them here.',
+            return VSPEmptyState(
+              icon: Iconsax.heart_copy,
+              title: isAr ? 'لا توجد ملاعب مفضلة بعد' : 'No Favorites Yet',
+              subtitle: isAr ? 'تصفح الملاعب واضغط على رمز القلب لإضافتها إلى مفضلتك هنا.' : 'Explore stadiums and heart your favorites to see them here.',
             );
           }
 
@@ -51,10 +57,10 @@ class FavoritesScreen extends StatelessWidget {
               final data = snapshot.data ?? [];
               
               if (data.isEmpty) {
-                return const VSPEmptyState(
-                  icon: LucideIcons.search,
-                  title: 'Stadiums Not Found',
-                  subtitle: 'Your favorite stadiums could not be loaded.',
+                return VSPEmptyState(
+                  icon: Iconsax.search_normal_copy,
+                  title: isAr ? 'تعذر تحميل الملاعب المفضلة' : 'Stadiums Not Found',
+                  subtitle: isAr ? 'لم نتمكن من العثور على بيانات الملاعب المفضلة حالياً.' : 'Your favorite stadiums could not be loaded.',
                 );
               }
 

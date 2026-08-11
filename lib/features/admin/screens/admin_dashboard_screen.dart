@@ -1,5 +1,5 @@
 import 'package:flutter/material.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -49,7 +49,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
         title: Row(
           mainAxisSize: MainAxisSize.min,
           children: [
-            const Icon(LucideIcons.shieldCheck, color: VSPColors.accent, size: 22),
+            const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 22),
             const SizedBox(width: 8),
             Text(
               isArabic ? 'لوحة تحكم الإدارة العليا' : 'VSP Admin Control Panel',
@@ -119,7 +119,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 child: VSPStatCard(
                   label: isArabic ? 'إجمالي المالكين' : 'Total Owners',
                   value: '$totalOwners',
-                  icon: LucideIcons.building,
+                  icon: Iconsax.building_copy,
                 ),
               ),
               const SizedBox(width: 12),
@@ -127,7 +127,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 child: VSPStatCard(
                   label: isArabic ? 'طلبات توثيق معلقة' : 'Pending Approvals',
                   value: '$pendingVerifications',
-                  icon: LucideIcons.clock,
+                  icon: Iconsax.clock_copy,
                   color: pendingVerifications > 0 ? VSPColors.warning : VSPColors.accent,
                 ),
               ),
@@ -155,7 +155,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
         if (owners.isEmpty) {
           return VSPEmptyState(
-            icon: LucideIcons.checkCheck,
+            icon: Iconsax.tick_circle_copy,
             title: isArabic ? 'لا توجد طلبات توثيق معلقة' : 'No Pending Approvals',
             subtitle: isArabic ? 'جميع مالكي الملاعب موثقون حالياً!' : 'All stadium owners are verified.',
           );
@@ -180,7 +180,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                       CircleAvatar(
                         backgroundColor: VSPColors.surfaceAlt,
                         backgroundImage: owner['profile_image_url'] != null ? NetworkImage(owner['profile_image_url']) : null,
-                        child: owner['profile_image_url'] == null ? const Icon(LucideIcons.user, color: Colors.white) : null,
+                        child: owner['profile_image_url'] == null ? const Icon(Iconsax.user_copy, color: Colors.white) : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -264,7 +264,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
         if (owners.isEmpty) {
           return VSPEmptyState(
-            icon: LucideIcons.crown,
+            icon: Iconsax.crown_copy,
             title: isArabic ? 'لا يوجد مالكين مسجلين' : 'No Owners Registered',
             subtitle: isArabic ? 'سيظهر المالكين هنا عند تسجيلهم.' : 'Owners will appear here once registered.',
           );
@@ -292,7 +292,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                       CircleAvatar(
                         backgroundColor: VSPColors.surfaceAlt,
                         backgroundImage: userModel.profileImageUrl != null ? NetworkImage(userModel.profileImageUrl!) : null,
-                        child: userModel.profileImageUrl == null ? const Icon(LucideIcons.user, color: Colors.white) : null,
+                        child: userModel.profileImageUrl == null ? const Icon(Iconsax.user_copy, color: Colors.white) : null,
                       ),
                       const SizedBox(width: 12),
                       Expanded(
@@ -446,7 +446,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
         if (disputes.isEmpty) {
           return VSPEmptyState(
-            icon: LucideIcons.shieldCheck,
+            icon: Iconsax.security_safe_copy,
             title: isArabic ? 'لا توجد نزاعات قائمة' : 'No Active Disputes',
             subtitle: isArabic ? 'جميع نتائج المباريات مؤكدة ومستقرة!' : 'All match outcomes are resolved.',
           );
@@ -549,7 +549,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
         if (owners.isEmpty) {
           return VSPEmptyState(
-            icon: LucideIcons.wallet,
+            icon: Iconsax.wallet_1_copy,
             title: isArabic ? 'لا توجد طلبات تسوية ماليّة' : 'No Payout Requests',
             subtitle: isArabic ? 'لم يضِف المالكين وسائل تحصيل بعد.' : 'No payout methods specified by owners.',
           );
@@ -569,7 +569,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                 children: [
                   Row(
                     children: [
-                      const Icon(LucideIcons.landmark, color: VSPColors.accent, size: 24),
+                      const Icon(Iconsax.card_copy, color: VSPColors.accent, size: 24),
                       const SizedBox(width: 12),
                       Expanded(
                         child: Column(
@@ -627,7 +627,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
         if (reports.isEmpty) {
           return VSPEmptyState(
-            icon: LucideIcons.shieldCheck,
+            icon: Iconsax.security_safe_copy,
             title: isArabic ? 'لا توجد بلاغات قائمة' : 'No Reports Found',
             subtitle: isArabic ? 'مجتمع VSP آمن وخالٍ من البلاغات!' : 'VSP community is clean and safe.',
           );
@@ -808,7 +808,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Widget _buildDocLinkChip(String label, String url) {
     return ActionChip(
-      avatar: const Icon(LucideIcons.externalLink, color: VSPColors.accent, size: 14),
+      avatar: const Icon(Iconsax.export_3_copy, color: VSPColors.accent, size: 14),
       label: Text(label, style: const TextStyle(color: Colors.white, fontSize: 11)),
       backgroundColor: VSPColors.surfaceAlt,
       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.sm)),

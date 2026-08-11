@@ -1,5 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -80,7 +80,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft, 
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, 
             color: VSPColors.textPrimary, 
             size: 20
           ), 
@@ -98,7 +98,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                     id: 'Book a Pitch',
                     title: AppLocalizations.of(context)!.bookPitch,
                     subtitle: AppLocalizations.of(context)!.bookPitchSubtitle,
-                    iconData: LucideIcons.calendarCheck,
+                    iconData: Iconsax.calendar_1_copy,
                   ),
                   _buildOptionCard(
                     id: _hasTeam ? 'Find Players' : 'Create Team to Find Players',
@@ -108,7 +108,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                     subtitle: _hasTeam 
                         ? AppLocalizations.of(context)!.findPlayersSubtitle 
                         : AppLocalizations.of(context)!.createTeamFirstContent,
-                    iconData: LucideIcons.users,
+                    iconData: Iconsax.people_copy,
                   ),
                   _buildChallengeBookingOption(context),
                 ],
@@ -253,7 +253,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
             child: Column(
               mainAxisSize: MainAxisSize.min,
               children: [
-                const Icon(LucideIcons.alertTriangle, color: VSPColors.warning, size: 38),
+                const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 38),
                 const SizedBox(height: VSPSpacing.md),
                 Text(
                   AppLocalizations.of(context)!.findPlayersWarningTitle, 
@@ -264,7 +264,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                 Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Icon(LucideIcons.dollarSign, color: VSPColors.warning),
+                    const Icon(Iconsax.money_change_copy, color: VSPColors.warning),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Text(
@@ -436,7 +436,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         id: 'Create Team to Compete', 
         title: AppLocalizations.of(context)!.createTeamToCompete,
         subtitle: AppLocalizations.of(context)!.createTeamSubtitle,
-        iconData: LucideIcons.lock,
+        iconData: Iconsax.lock_copy,
       );
     }
     
@@ -445,7 +445,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         id: 'Team Incomplete', 
         title: AppLocalizations.of(context)!.teamIncomplete,
         subtitle: AppLocalizations.of(context)!.teamIncompleteSubtitle,
-        iconData: LucideIcons.alertTriangle,
+        iconData: Iconsax.warning_2_copy,
       );
     }
     
@@ -454,7 +454,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         id: 'Fair Play Banned',
         title: AppLocalizations.of(context)!.fairPlayBannedTitle,
         subtitle: AppLocalizations.of(context)!.fairPlayBannedSubtitle(_teamFairPlayScore),
-        iconData: LucideIcons.gavel,
+        iconData: Iconsax.judge_copy,
         enabled: false,
         isError: true,
       );
@@ -464,7 +464,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       id: 'Challenge Match', 
       title: AppLocalizations.of(context)!.challengeMatch,
       subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle, 
-      iconData: LucideIcons.trophy,
+      iconData: Iconsax.cup_copy,
     );
   }
 }

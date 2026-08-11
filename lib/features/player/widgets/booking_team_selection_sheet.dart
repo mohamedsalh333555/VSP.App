@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -78,9 +78,16 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
     }
 
     final hasTeam = _myTeam != null;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
 
     return Container(
-      padding: const EdgeInsets.only(top: VSPSpacing.lg, left: VSPSpacing.md, right: VSPSpacing.md, bottom: VSPSpacing.lg),
+      padding: EdgeInsets.only(
+        top: VSPSpacing.lg, 
+        left: VSPSpacing.md, 
+        right: VSPSpacing.md, 
+        bottom: bottomPadding > 0 ? bottomPadding + VSPSpacing.lg : VSPSpacing.lg,
+      ),
       decoration: const BoxDecoration(
         color: VSPColors.background,
         borderRadius: BorderRadius.only(
@@ -110,12 +117,12 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               Text(
-                'Choose What Suits You',
+                isAr ? 'اختر التفضيل المناسب لك' : 'Choose What Suits You',
                 style: Theme.of(context).textTheme.displayMedium,
               ),
               const SizedBox(height: VSPSpacing.sm),
               Text(
-                'Choose What Suits You To Finish Your Booking Easily',
+                isAr ? 'اختر نوع الحجز لإتمام عمليتك بكل سهولة' : 'Choose What Suits You To Finish Your Booking Easily',
                 style: Theme.of(context).textTheme.labelSmall?.copyWith(
                       color: VSPColors.textSecondary,
                     ),
@@ -144,7 +151,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                       color: VSPColors.surfaceAlt,
                       shape: BoxShape.circle,
                     ),
-                    child: Icon(LucideIcons.users, color: VSPColors.accent),
+                    child: const Icon(Iconsax.people_copy, color: VSPColors.accent),
                   ),
                   const SizedBox(width: 16),
                   Expanded(
@@ -152,12 +159,12 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
                         Text(
-                          'Create A New Team',
+                          isAr ? 'إنشاء فريق جديد' : 'Create A New Team',
                           style: Theme.of(context).textTheme.titleMedium,
                         ),
                         const SizedBox(height: VSPSpacing.xs),
                         Text(
-                          'Create A New Team Now To Confirm Your Booking.',
+                          isAr ? 'أنشئ فريقك الآن لتأكيد حجز التحديات' : 'Create A New Team Now To Confirm Your Booking.',
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                 color: VSPColors.textSecondary,
                               ),
@@ -176,17 +183,17 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
                       ),
                       child: Row(
                         mainAxisSize: MainAxisSize.min,
-                        children: const [
+                        children: [
                           Text(
-                            'Create',
-                            style: TextStyle(
+                            isAr ? 'إنشاء' : 'Create',
+                            style: const TextStyle(
                               color: VSPColors.background,
                               fontWeight: FontWeight.bold,
                               fontSize: 12,
                             ),
                           ),
-                          SizedBox(width: 4),
-                          Icon(LucideIcons.refreshCw, size: 14, color: VSPColors.background), 
+                          const SizedBox(width: 4),
+                          const Icon(Iconsax.add_circle_copy, size: 14, color: VSPColors.background), 
                         ],
                       ),
                     ),
@@ -198,9 +205,9 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
           // Option 1: Personal Booking
           _buildOptionCard(
             id: 'Personal',
-            title: 'Personal Booking',
-            subtitle: 'Booking The Pitch For Yourself Only',
-            iconData: LucideIcons.user, // Replaced fake Unsplash image with neutral icon
+            title: isAr ? 'حجز شخصي (لك ولأصدقائك)' : 'Personal Booking',
+            subtitle: isAr ? 'حجز الملعب كجلسة خاصة دون فتح تحديات عامة' : 'Booking The Pitch For Yourself Only',
+            iconData: Iconsax.user_copy,
             isAvatar: true,
           ),
 
@@ -208,8 +215,8 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
           if (hasTeam)
             _buildOptionCard(
               id: 'Team',
-              title: 'Your Team (${_myTeam!.name})',
-              subtitle: 'For You & Your Team — Public With A Link Or Private For Friends',
+              title: isAr ? 'فريقك (${_myTeam!.name})' : 'Your Team (${_myTeam!.name})',
+              subtitle: isAr ? 'حجز حصري لأعضاء فريقك' : 'For You & Your Team',
               iconUrl: _myTeam!.captainImageUrl,
               isAvatar: true, 
             ),
@@ -217,9 +224,11 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
           // Option 3: Challenge
           _buildOptionCard(
             id: 'Challenge',
-            title: 'Challenge',
-            subtitle: hasTeam ? 'Challenge Another Team' : "You Don't Have A Team.",
-            iconData: LucideIcons.zap,
+            title: isAr ? 'مباراة تحدي ضد فريق آخر' : 'Challenge',
+            subtitle: hasTeam 
+                ? (isAr ? 'تحدي فريق آخر وفتح حجز المباراة للمنافسين' : 'Challenge Another Team')
+                : (isAr ? 'يتطلب فريقاً مفعلاً أولاً' : "You Don't Have A Team."),
+            iconData: Iconsax.flash_1_copy,
             enabled: hasTeam,
           ),
 
@@ -227,7 +236,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
 
           // Continue Button
           PrimaryButton(
-            text: 'Continue',
+            text: isAr ? 'متابعة الحجز' : 'Continue',
             onPressed: () {
               Navigator.pop(context); // Close modal
               

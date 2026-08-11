@@ -1,4 +1,4 @@
-﻿import 'package:lucide_icons_flutter/lucide_icons.dart';
+﻿import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
@@ -27,7 +27,7 @@ class SuspendedAccountScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
                 ),
-                child: Icon(LucideIcons.ban,
+                child: Icon(Iconsax.close_circle_copy,
                   color: Colors.redAccent,
                   size: 56,
                 ),
@@ -73,7 +73,7 @@ class SuspendedAccountScreen extends StatelessWidget {
                   onPressed: () {
                     // Launch WhatsApp or support contact link placeholder
                   },
-                  icon: Icon(LucideIcons.headphones, color: VSPColors.background),
+                  icon: Icon(Iconsax.headphones_copy, color: VSPColors.background),
                   label: Text(
                     isAr ? 'التواصل مع الدعم' : 'Contact Support',
                     style: const TextStyle(

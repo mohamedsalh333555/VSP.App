@@ -1,5 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -28,6 +28,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   Booking? _booking;
   Stadium? _stadium;
   bool _isJoining = false;
+  bool _isActionProcessing = false;
 
   @override
   void initState() {
@@ -54,18 +55,25 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   }
 
   Future<void> _onJoin() async {
+    if (_isJoining || _isActionProcessing) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
       VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
       return;
     }
 
-    setState(() => _isJoining = true);
+    setState(() {
+      _isJoining = true;
+      _isActionProcessing = true;
+    });
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
     final success = await bookingProvider.joinPublicMatch(widget.bookingId, auth.currentUser!.uid);
     
     if (mounted) {
-      setState(() => _isJoining = false);
+      setState(() {
+        _isJoining = false;
+        _isActionProcessing = false;
+      });
       if (success) {
         VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.matchJoinSuccess);
         _fetchMatchDetails();
@@ -104,6 +112,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
   }
 
   void _onReport() {
+    if (_isActionProcessing) return;
     final auth = Provider.of<AuthProvider>(context, listen: false);
     if (!auth.isAuthenticated) {
       VSPFeedback.showError(context, AppLocalizations.of(context)!.loginToJoinError);
@@ -203,7 +212,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       ),
       child: Row(
         children: [
-          Icon(LucideIcons.star, color: VSPColors.accent),
+          Icon(Iconsax.star_copy, color: VSPColors.accent),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -245,7 +254,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(LucideIcons.alertCircle, color: VSPColors.error, size: 48),
+                  Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 48),
                   const SizedBox(height: 16),
                   Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
                   TextButton(
@@ -272,7 +281,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 backgroundColor: VSPColors.background,
                 actions: [
                   IconButton(
-                    icon: Icon(LucideIcons.share2, color: Colors.white),
+                    icon: Icon(Iconsax.share_copy, color: Colors.white),
                     onPressed: () {
                       if (_booking != null) {
                         SharingService.shareMatch(
@@ -285,7 +294,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(LucideIcons.alertTriangle, color: VSPColors.textSecondary),
+                    icon: Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
                     onPressed: _onReport,
                   ),
                   const SizedBox(width: 8),
@@ -331,9 +340,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                         ],
                       ),
                       const SizedBox(height: VSPSpacing.md),
-                      _buildDetailRow(LucideIcons.calendar, AppLocalizations.of(context)!.date, _booking!.formattedDate),
-                      _buildDetailRow(LucideIcons.clock, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
-                      _buildDetailRow(LucideIcons.mapPin, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
+                      _buildDetailRow(Iconsax.calendar_1_copy, AppLocalizations.of(context)!.date, _booking!.formattedDate),
+                      _buildDetailRow(Iconsax.clock_copy, AppLocalizations.of(context)!.time, _booking!.formattedTimeRange),
+                      _buildDetailRow(Iconsax.location_copy, AppLocalizations.of(context)!.location, _stadium?.location ?? 'Unknown'),
                       if (isHost) ...[
                         const SizedBox(height: 16),
                         _buildHostSettingsCard(context),
@@ -352,7 +361,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                           return ListTile(
                             leading: const CircleAvatar(
                               backgroundColor: VSPColors.surface,
-                              child: Icon(LucideIcons.user, color: VSPColors.textSecondary),
+                              child: Icon(Iconsax.user_copy, color: VSPColors.textSecondary),
                             ),
                             title: Text(AppLocalizations.of(context)!.playerLabel(index + 1), style: const TextStyle(color: Colors.white)),
                             trailing: index == 0 ? Text(AppLocalizations.of(context)!.host, style: const TextStyle(color: VSPColors.accent)) : null,

@@ -1,6 +1,5 @@
 import 'package:flutter/material.dart';
 import 'package:go_router/go_router.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../providers/auth_provider.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
@@ -13,6 +12,7 @@ import '../../features/owner/screens/owner_main_screen.dart';
 import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/screens/team_profile_screen.dart';
+import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
 import '../config/app_config.dart';
 import 'offline_error_screen.dart';
@@ -93,6 +93,10 @@ class AppRouter {
           },
         ),
         GoRoute(
+          path: '/notifications',
+          builder: (context, state) => const NotificationsCenterScreen(),
+        ),
+        GoRoute(
           path: '/admin',
           builder: (context, state) => const AdminDashboardScreen(),
         ),
@@ -101,7 +105,7 @@ class AppRouter {
     );
   }
 
-  static Future<String?> redirectLogic(BuildContext context, GoRouterState state, AuthProvider authProvider) async {
+  static String? redirectLogic(BuildContext context, GoRouterState state, AuthProvider authProvider) {
     final isInitializing = authProvider.isInitializing;
     final isAuthenticated = authProvider.isAuthenticated;
     final isGhostUser = authProvider.isGhostUser;
@@ -118,23 +122,6 @@ class AppRouter {
     if (isInitializing) {
       if (path != '/splash') return '/splash';
       return null;
-    }
-
-    // 🛡️ SECURITY & RESILIENCE: OTP Session Gating on App Restarts
-    // If the user closed/restarted the app while in verify-email stage,
-    // intercept the welcome/home flow and force direct redirection to /verify-email.
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      final pendingEmail = prefs.getString('pending_verification_email');
-      if (pendingEmail != null && pendingEmail.isNotEmpty) {
-        final isVerified = userModel?.isEmailVerified ?? false;
-        if (!isAuthenticated || !isVerified) {
-          if (path != '/verify-email') return '/verify-email';
-          return null;
-        }
-      }
-    } catch (_) {
-      // Degrade gracefully
     }
 
     // 2. Unauthenticated check

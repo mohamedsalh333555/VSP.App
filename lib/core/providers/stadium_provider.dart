@@ -226,9 +226,10 @@ class StadiumProvider with ChangeNotifier {
   // Search stadiums (Robust)
   List<Stadium> searchStadiums(String query) {
     final cleanQuery = query.trim().toLowerCase();
-    if (cleanQuery.isEmpty) return _stadiums;
+    final sourceList = _isFilterActive ? _filteredStadiums : _stadiums;
+    if (cleanQuery.isEmpty) return sourceList;
 
-    return _stadiums.where((stadium) => 
+    return sourceList.where((stadium) => 
       stadium.name.toLowerCase().contains(cleanQuery) ||
       stadium.location.toLowerCase().contains(cleanQuery)
     ).toList();

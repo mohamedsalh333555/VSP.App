@@ -1,5 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import 'package:cached_network_image/cached_network_image.dart';
@@ -271,7 +271,7 @@ class ChampionScreenState extends State<ChampionScreen>
       child: DropdownButtonHideUnderline(
         child: DropdownButton<String>(
           value: effectiveValue,
-          icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
           dropdownColor: VSPColors.surface,
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
@@ -350,13 +350,13 @@ class ChampionScreenState extends State<ChampionScreen>
                     width: 30,
                     child: Text('${player.rank}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: isFirst ? VSPColors.accent : VSPColors.textSecondary, fontWeight: FontWeight.w900)),
                   ),
-                  Icon(player.trend == 'up' ? LucideIcons.chevronUp : (player.trend == 'down' ? LucideIcons.chevronDown : LucideIcons.minus), color: player.trend == 'up' ? VSPColors.accent : (player.trend == 'down' ? Colors.red : VSPColors.textSecondary), size: 20),
+                  Icon(player.trend == 'up' ? Iconsax.arrow_up_1_copy : (player.trend == 'down' ? Iconsax.arrow_down_1_copy : Iconsax.minus_cirlce_copy), color: player.trend == 'up' ? VSPColors.accent : (player.trend == 'down' ? Colors.red : VSPColors.textSecondary), size: 20),
                   const SizedBox(width: 12),
                   CircleAvatar(
                     radius: 18, 
                     backgroundColor: VSPColors.surfaceAlt, 
                     backgroundImage: player.avatarUrl.isNotEmpty ? NetworkImage(player.avatarUrl) : null,
-                    child: player.avatarUrl.isEmpty ? Icon(LucideIcons.user, size: 20, color: VSPColors.accent) : null,
+                    child: player.avatarUrl.isEmpty ? Icon(Iconsax.user_copy, size: 20, color: VSPColors.accent) : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(
@@ -747,7 +747,7 @@ class ChampionScreenState extends State<ChampionScreen>
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(LucideIcons.trophy, color: Colors.white.withValues(alpha: 0.1), size: 64),
+                Icon(Iconsax.cup_copy, color: Colors.white.withValues(alpha: 0.1), size: 64),
                 const SizedBox(height: 16),
                 Text(
                   AppLocalizations.of(context)!.noChampionshipsInLoc(_selectedLocation),

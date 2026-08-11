@@ -1,5 +1,5 @@
 import 'dart:async';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -129,7 +129,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft,  color: VSPColors.textPrimary, size: 20),
+          icon: Icon(Iconsax.arrow_left_2_copy,  color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -174,7 +174,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(context)!.searchTeamPlaceholder,
                         hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                        prefixIcon: Icon(LucideIcons.search, color: VSPColors.accent),
+                        prefixIcon: Icon(Iconsax.search_normal_copy, color: VSPColors.accent),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
                       ),
@@ -203,7 +203,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                           padding: const EdgeInsets.symmetric(vertical: 40),
                           child: Column(
                             children: [
-                              Icon(LucideIcons.search, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+                              Icon(Iconsax.search_normal_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                               const SizedBox(height: 16),
                               Text(
                                 AppLocalizations.of(context)!.noTeamsFound(_searchQuery),
@@ -238,7 +238,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                         ),
                         child: Column(
                           children: [
-                            Icon(LucideIcons.history, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+                            Icon(Iconsax.rotate_left_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
                             const SizedBox(height: 16),
                             Text(
                               AppLocalizations.of(context)!.noPreviousOpponents,
@@ -408,9 +408,9 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   ),
                 ),
                 if (isSelected)
-                  Icon(LucideIcons.checkCircle, color: VSPColors.accent)
+                  Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
                 else
-                  Icon(LucideIcons.circle, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
+                  Icon(Iconsax.tick_circle_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
               ],
             ),
             if (isSelected) ...[

@@ -65,13 +65,16 @@
             android:name="flutterEmbedding"
             android:value="2" />
 
-        <!-- Firebase Cloud Messaging: Default notification icon & color -->
+        <!-- Firebase Cloud Messaging: Default notification icon, color & channel -->
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_icon"
             android:resource="@drawable/ic_notification" />
         <meta-data
             android:name="com.google.firebase.messaging.default_notification_color"
             android:value="#9FDF02" />
+        <meta-data
+            android:name="com.google.firebase.messaging.default_notification_channel_id"
+            android:value="vsp_default_channel" />
             
     </application>
     <!-- Required to query activities that can process text, see:

@@ -1,7 +1,7 @@
 import 'add_stadium_wizard.dart';
 import 'subscription_plans_screen.dart';
 import '../../../shared/widgets/stadium_card.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -80,12 +80,13 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       return;
     }
     if (instapay.isEmpty && vodafone.isEmpty && bank.isEmpty) {
-      VSPFeedback.showSuccess(
+      VSPFeedback.showError(
         context,
         isArabic
-            ? 'تم حفظ البيانات الشخصية (يرجى إضافة وسيلة تحصيل لاحقاً) 💡'
-            : 'Profile updated (please add a payout method later) 💡',
+            ? 'خطأ: لا يمكن مسح أو ترك جميع وسائل التسوية المالية فارغة! ⚠️\nيجب إدخال وسيلة تحصيل واحدة على الأقل (إنستا باي، محفظة إلكترونية، أو حساب بنكي) لاستلام أرباحك.'
+            : 'Error: Payout methods cannot all be empty! ⚠️ Please provide at least one method (InstaPay, Mobile Wallet, or Bank IBAN).',
       );
+      return;
     }
 
     setState(() => _isLoading = true);
@@ -125,7 +126,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
+          icon: Icon(Iconsax.arrow_left_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -136,7 +137,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       ),
       body: SingleChildScrollView(
         keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-        padding: const EdgeInsets.only(bottom: 100),
+        padding: const EdgeInsets.only(bottom: 24),
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -215,7 +216,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(LucideIcons.lock, size: 18, color: VSPColors.textSecondary)),
+                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(Iconsax.lock_copy, size: 18, color: VSPColors.textSecondary)),
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'الموقع' : 'Location'),
@@ -228,7 +229,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      ),
                      child: Row(
                        children: [
-                         Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 28),
+                         Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
                          const SizedBox(width: 12),
                          Expanded(
                            child: Column(
@@ -248,7 +249,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                          _isLocating 
                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                          : IconButton(
-                           icon: Icon(LucideIcons.locate, color: VSPColors.accent),
+                           icon: Icon(Iconsax.gps_copy, color: VSPColors.accent),
                            onPressed: () async {
                              setState(() => _isLocating = true);
                              await authProvider.updateUserLocation();
@@ -284,7 +285,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                   children: [
                     Row(
                       children: [
-                        const Icon(LucideIcons.wallet, color: VSPColors.accent, size: 20),
+                        const Icon(Iconsax.wallet_1_copy, color: VSPColors.accent, size: 20),
                         const SizedBox(width: 8),
                         Expanded(
                           child: Text(
@@ -307,7 +308,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                       controller: _instapayController,
                       hintText: isArabic ? 'أدخل عنوان إنستا باي أو الهاتف' : 'Enter InstaPay IPN or phone number',
                       suffixIcon: _instapayController.text.isNotEmpty 
-                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _instapayController.clear()))
+                        ? IconButton(icon: const Icon(Iconsax.close_circle_copy, size: 16), onPressed: () => setState(() => _instapayController.clear()))
                         : null,
                     ),
                     const SizedBox(height: 16),
@@ -317,7 +318,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                       hintText: isArabic ? 'أدخل رقم المحفظة' : 'Enter wallet phone number',
                       keyboardType: TextInputType.phone,
                       suffixIcon: _vodafoneController.text.isNotEmpty 
-                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _vodafoneController.clear()))
+                        ? IconButton(icon: const Icon(Iconsax.close_circle_copy, size: 16), onPressed: () => setState(() => _vodafoneController.clear()))
                         : null,
                     ),
                     const SizedBox(height: 16),
@@ -326,7 +327,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                       controller: _bankController,
                       hintText: isArabic ? 'أدخل تفاصيل الحساب واسم المستفيد' : 'Enter Bank Account/IBAN and Holder Name',
                       suffixIcon: _bankController.text.isNotEmpty 
-                        ? IconButton(icon: const Icon(LucideIcons.x, size: 16), onPressed: () => setState(() => _bankController.clear()))
+                        ? IconButton(icon: const Icon(Iconsax.close_circle_copy, size: 16), onPressed: () => setState(() => _bankController.clear()))
                         : null,
                     ),
                   ],
@@ -334,19 +335,67 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               ),
             ),
 
-            const SizedBox(height: 32),
+            const SizedBox(height: 16),
 
-            // --- Delete Account Button ---
-            Center(
-              child: TextButton(
-                onPressed: () => _showDeleteAccountDialog(context),
-                child: Text(
-                  isArabic ? 'حذف الحساب' : 'Delete Account',
-                  style: const TextStyle(
-                    color: VSPColors.error,
-                    fontWeight: FontWeight.bold,
-                    decoration: TextDecoration.underline,
-                  ),
+            // --- Delete Account Danger Zone Card ---
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+              child: Container(
+                width: double.infinity,
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(
+                  color: VSPColors.error.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
+                  border: Border.all(color: VSPColors.error.withValues(alpha: 0.3), width: 1.5),
+                ),
+                child: Row(
+                  children: [
+                    Container(
+                      padding: const EdgeInsets.all(10),
+                      decoration: BoxDecoration(
+                        color: VSPColors.error.withValues(alpha: 0.15),
+                        shape: BoxShape.circle,
+                      ),
+                      child: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 22),
+                    ),
+                    const SizedBox(width: 14),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic ? 'حذف الحساب نهائياً' : 'Delete Account',
+                            style: const TextStyle(
+                              color: VSPColors.error,
+                              fontWeight: FontWeight.bold,
+                              fontSize: 15,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isArabic ? 'حذف كافة البيانات والملاعب السابقة' : 'Permanently remove profile & stadiums',
+                            style: TextStyle(
+                              color: VSPColors.textSecondary.withValues(alpha: 0.8),
+                              fontSize: 11,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                    TextButton(
+                      onPressed: () => _showDeleteAccountDialog(context),
+                      style: TextButton.styleFrom(
+                        backgroundColor: VSPColors.error,
+                        foregroundColor: Colors.white,
+                        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                      ),
+                      child: Text(
+                        isArabic ? 'حذف' : 'Delete',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                      ),
+                    ),
+                  ],
                 ),
               ),
             ),
@@ -355,7 +404,17 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       ),
       bottomNavigationBar: Container(
         padding: EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.md, VSPSpacing.md, MediaQuery.of(context).padding.bottom + VSPSpacing.md),
-        color: VSPColors.background,
+        decoration: BoxDecoration(
+          color: VSPColors.background,
+          border: Border(top: BorderSide(color: VSPColors.divider.withValues(alpha: 0.2), width: 1)),
+          boxShadow: [
+            BoxShadow(
+              color: Colors.black.withValues(alpha: 0.5),
+              blurRadius: 10,
+              offset: const Offset(0, -4),
+            ),
+          ],
+        ),
         child: PrimaryButton(
           text: isArabic ? 'تأكيد' : 'Confirm',
           isLoading: _isLoading,
@@ -448,7 +507,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                 ],
               ),
               child: const Icon(
-                LucideIcons.plus,
+                Iconsax.add_circle_copy,
                 color: VSPColors.accent,
                 size: 28,
               ),
@@ -488,7 +547,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.amber, width: 2),
                 ),
-                child: const Icon(LucideIcons.crown, color: Colors.amber, size: 30),
+                child: const Icon(Iconsax.crown_copy, color: Colors.amber, size: 30),
               ),
               const SizedBox(height: 16),
               Text(

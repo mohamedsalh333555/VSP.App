@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
@@ -71,7 +71,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     controller: resetEmailController,
                     keyboardType: TextInputType.emailAddress,
                     hintText: AppLocalizations.of(context)!.emailAddress,
-                    prefixIcon: LucideIcons.mail,
+                    prefixIcon: Iconsax.sms_copy,
                   ),
                 ],
               ),
@@ -212,7 +212,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: Localizations.localeOf(context).languageCode == 'ar' ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+                          icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),
@@ -273,7 +273,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       hintText: AppLocalizations.of(context)!.emailAddress,
                       keyboardType: TextInputType.emailAddress,
                       textInputAction: TextInputAction.next,
-                      prefixIcon: LucideIcons.mail,
+                      prefixIcon: Iconsax.sms_copy,
                     ),
                     const SizedBox(height: 16),
                     CustomTextField(
@@ -284,10 +284,10 @@ class _LoginScreenState extends State<LoginScreen> {
                       onFieldSubmitted: (_) {
                         if (!_isLoading) _handleLogin();
                       },
-                      prefixIcon: LucideIcons.lock,
+                      prefixIcon: Iconsax.lock_copy,
                       suffixIcon: IconButton(
                         icon: Icon(
-                          _obscurePassword ? LucideIcons.eyeOff : LucideIcons.eye,
+                          _obscurePassword ? Iconsax.eye_slash_copy : Iconsax.eye_copy,
                           color: VSPColors.textSecondary,
                           size: 20,
                         ),

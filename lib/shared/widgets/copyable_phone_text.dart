@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
 class CopyablePhoneText extends StatelessWidget {
@@ -25,7 +25,7 @@ class CopyablePhoneText extends StatelessWidget {
             SnackBar(
               content: Row(
                 children: [
-                  const Icon(LucideIcons.copy, color: Colors.black, size: 16),
+                  const Icon(Iconsax.copy_copy, color: Colors.black, size: 16),
                   const SizedBox(width: 8),
                   Text(
                     isArabic ? 'تم نسخ رقم الهاتف: $phone' : 'Phone number copied: $phone',

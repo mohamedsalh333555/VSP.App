@@ -1,5 +1,5 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:confetti/confetti.dart';
@@ -124,6 +124,21 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
 
   @override
   Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    final shortRef = widget.booking.id.length >= 8 
+        ? widget.booking.id.substring(0, 8).toUpperCase() 
+        : widget.booking.id.toUpperCase();
+
+    final paymentMethodText = widget.booking.paymentMethod.toLowerCase() == 'cash'
+        ? (isArabic ? 'دفع نقداً' : 'Cash')
+        : (isArabic ? 'دفع إلكتروني' : 'Online Payment');
+
+    final formattedPriceAndPayment = isArabic
+        ? '${widget.booking.totalPrice.toInt()} ج.م • $paymentMethodText'
+        : '${widget.booking.totalPrice.toInt()} EGP • $paymentMethodText';
+
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) {
@@ -137,152 +152,185 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
           children: [
             // Main Content Centered
             Center(
-              child: Container(
-                margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
-                padding: const EdgeInsets.all(VSPSpacing.xl),
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.xl),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    // Animated Icon
-                    ScaleTransition(
-                      scale: _scaleAnimation,
-                      child: Container(
-                        width: 100,
-                        height: 100,
-                        decoration: BoxDecoration(
-                          shape: BoxShape.circle,
-                          border: Border.all(color: VSPColors.accent, width: 4),
-                          color: VSPColors.surface,
-                        ),
-                        child: Icon(LucideIcons.check, color: VSPColors.accent, size: 60),
-                      ),
-                    ),
-                    const SizedBox(height: 24),
-                    
-                    // Title
-                    Text(
-                      AppLocalizations.of(context)!.bookingSuccess,
-                      textAlign: TextAlign.center,
-                      style: Theme.of(context).textTheme.displaySmall,
-                    ),
-  
-                    const SizedBox(height: 24),
-  
-                    // Booking Details Summary
-                    Container(
-                      padding: const EdgeInsets.all(VSPSpacing.md),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                      ),
-                      child: Column(
-                        children: [
-                          _buildDetailRow(LucideIcons.building, widget.booking.stadiumName),
-                          const SizedBox(height: VSPSpacing.md),
-                          _buildDetailRow(LucideIcons.calendar, widget.booking.formattedDate),
-                          const SizedBox(height: VSPSpacing.md),
-                          _buildDetailRow(LucideIcons.clock, widget.booking.formattedTimeRange),
-                          const SizedBox(height: VSPSpacing.md),
-                          _buildDetailRow(
-                            LucideIcons.creditCard, 
-                            '${widget.booking.totalPrice.toInt()} ${widget.booking.currency} - ${widget.booking.paymentMethod.toUpperCase()}'
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(vertical: VSPSpacing.xl),
+                child: Container(
+                  margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.lg),
+                  padding: const EdgeInsets.all(VSPSpacing.xl),
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.xl),
+                    border: Border.all(color: VSPColors.divider, width: 0.5),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      // Animated Icon
+                      ScaleTransition(
+                        scale: _scaleAnimation,
+                        child: Container(
+                          width: 84,
+                          height: 84,
+                          decoration: BoxDecoration(
+                            shape: BoxShape.circle,
+                            border: Border.all(color: VSPColors.accent, width: 3.5),
+                            color: VSPColors.accent.withValues(alpha: 0.1),
                           ),
-                          if (widget.booking.bookingType == BookingType.challenge) ...[
-                            const SizedBox(height: 12),
+                          child: const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 48),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      
+                      // Title
+                      Text(
+                        l10n.bookingSuccess,
+                        textAlign: TextAlign.center,
+                        style: Theme.of(context).textTheme.displaySmall?.copyWith(fontSize: 22),
+                      ),
+    
+                      const SizedBox(height: 20),
+    
+                      // Booking Details Summary (Receipt Summary Card)
+                      Container(
+                        padding: const EdgeInsets.all(VSPSpacing.md),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+                        ),
+                        child: Column(
+                          children: [
                             _buildDetailRow(
-                              LucideIcons.trophy, 
-                              AppLocalizations.of(context)!.vsOpponent(widget.booking.opponentTeamName ?? 'Opponent')
+                              Iconsax.building_copy, 
+                              isArabic ? 'الملعب' : 'Stadium', 
+                              widget.booking.stadiumName,
+                            ),
+                            const Divider(color: VSPColors.divider, height: 16),
+                            _buildDetailRow(
+                              Iconsax.calendar_1_copy, 
+                              isArabic ? 'التاريخ' : 'Date', 
+                              widget.booking.formattedDate,
+                            ),
+                            const Divider(color: VSPColors.divider, height: 16),
+                            _buildDetailRow(
+                              Iconsax.clock_copy, 
+                              isArabic ? 'التوقيت' : 'Time Slot', 
+                              widget.booking.formattedTimeRange,
+                              isDirectionalText: true,
+                            ),
+                            const Divider(color: VSPColors.divider, height: 16),
+                            _buildDetailRow(
+                              Iconsax.wallet_1_copy, 
+                              isArabic ? 'طريقة الدفع' : 'Payment', 
+                              formattedPriceAndPayment,
+                            ),
+                            if (widget.booking.bookingType == BookingType.challenge) ...[
+                              const Divider(color: VSPColors.divider, height: 16),
+                              _buildDetailRow(
+                                Iconsax.cup_copy, 
+                                isArabic ? 'التحدي ضد' : 'VS Opponent', 
+                                widget.booking.opponentTeamName ?? (isArabic ? 'فريق المنافس' : 'Opponent Team'),
+                              ),
+                            ],
+                          ],
+                        ),
+                      ),
+    
+                      const SizedBox(height: VSPSpacing.lg),
+    
+                      // Booking Reference Box (Cleaned & Shortened)
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
+                        decoration: BoxDecoration(
+                          color: VSPColors.surfaceAlt,
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Iconsax.tag_copy, color: VSPColors.accent, size: 16),
+                                const SizedBox(width: 6),
+                                Text(
+                                  isArabic ? 'مرجع الحجز: ' : 'Ref #: ',
+                                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                ),
+                                Directionality(
+                                  textDirection: TextDirection.ltr,
+                                  child: Text(
+                                    shortRef,
+                                    style: const TextStyle(
+                                      color: VSPColors.accent,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 14,
+                                      letterSpacing: 1.2,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                            InkWell(
+                              onTap: _copyLink,
+                              borderRadius: BorderRadius.circular(VSPRadius.xs),
+                              child: Container(
+                                padding: const EdgeInsets.all(8),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.accent,
+                                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                                ),
+                                child: const Icon(Iconsax.copy_copy, color: VSPColors.background, size: 16),
+                              ),
                             ),
                           ],
-                        ],
+                        ),
                       ),
-                    ),
-  
-                    const SizedBox(height: VSPSpacing.lg),
-  
-                    // Share Link
-                    Align(
-                      alignment: Alignment.centerLeft,
-                      child: Text(AppLocalizations.of(context)!.bookingReference, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                    ),
-                    const SizedBox(height: VSPSpacing.sm),
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(VSPRadius.sm),
-                      ),
-                      child: Row(
+    
+                      const SizedBox(height: 24),
+
+                      // Action Buttons (Equal Heights: 52px)
+                      Row(
                         children: [
                           Expanded(
-                            child: Text(
-                              AppLocalizations.of(context)!.refHash(widget.booking.id.toUpperCase()),
-                              style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                                letterSpacing: 1.1,
-                                fontWeight: FontWeight.bold,
-                              ),
+                            child: PrimaryButton(
+                              text: l10n.myBookings,
+                              height: 52,
+                              color: VSPColors.surfaceAlt,
+                              textColor: VSPColors.textPrimary,
+                              onPressed: () {
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              },
                             ),
                           ),
-                          const SizedBox(width: VSPSpacing.sm),
-                          InkWell(
-                            onTap: _copyLink,
-                            child: Container(
-                              padding: const EdgeInsets.all(6),
-                              decoration: BoxDecoration(
-                                color: VSPColors.accent,
-                                borderRadius: BorderRadius.circular(VSPRadius.xs),
-                              ),
-                              child: Icon(LucideIcons.copy, color: VSPColors.background, size: 18),
+                          const SizedBox(width: VSPSpacing.md),
+                          Expanded(
+                            child: PrimaryButton(
+                              text: l10n.home,
+                              height: 52,
+                              onPressed: () {
+                                Navigator.of(context).popUntil((route) => route.isFirst);
+                              },
                             ),
                           ),
                         ],
                       ),
-                    ),
-  
-                    const SizedBox(height: 24),
-                    // Action Buttons
-                    Row(
-                      children: [
-                        Expanded(
-                          child: PrimaryButton(
-                            text: AppLocalizations.of(context)!.myBookings,
-                            color: VSPColors.surfaceAlt,
-                            textColor: VSPColors.textPrimary,
-                            onPressed: () {
-                              Navigator.of(context).popUntil((route) => route.isFirst);
-                            },
-                          ),
-                        ),
-                        const SizedBox(width: VSPSpacing.md),
-                        Expanded(
-                          child: PrimaryButton(
-                            text: AppLocalizations.of(context)!.home,
-                            onPressed: () {
-                              // Reset to the very first screen (Dashboard)
-                              Navigator.of(context).popUntil((route) => route.isFirst);
-                            },
-                          ),
-                        ),
-                      ],
-                    ),
-                  ],
+                    ],
+                  ),
                 ),
               ),
             ),
-  
-            // Confetti Animation Overlay
+    
+            // Confetti Animation Overlay (Optimized UX)
             RepaintBoundary(
               child: ConfettiWidget(
                 confettiController: _confettiController,
                 blastDirection: pi / 2, // Down
-                maxBlastForce: 5,
-                minBlastForce: 2,
-                emissionFrequency: 0.05,
-                numberOfParticles: 20,
+                maxBlastForce: 10,
+                minBlastForce: 3,
+                emissionFrequency: 0.03,
+                numberOfParticles: 15,
                 gravity: 0.2,
                 colors: const [
                   VSPColors.accent,
@@ -298,16 +346,31 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     );
   }
 
-  Widget _buildDetailRow(IconData icon, String text) {
+  Widget _buildDetailRow(IconData icon, String label, String value, {bool isDirectionalText = false}) {
     return Row(
       children: [
-        Icon(icon, color: VSPColors.accent, size: 20),
-        const SizedBox(width: VSPSpacing.md),
+        Icon(icon, color: VSPColors.accent, size: 18),
+        const SizedBox(width: 10),
+        Text(
+          '$label: ',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+        ),
         Expanded(
-          child: Text(
-            text,
-            style: Theme.of(context).textTheme.bodySmall,
-          ),
+          child: isDirectionalText
+              ? Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: Text(
+                    value,
+                    textAlign: TextAlign.end,
+                    style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                  ),
+                )
+              : Text(
+                  value,
+                  textAlign: TextAlign.end,
+                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                  overflow: TextOverflow.ellipsis,
+                ),
         ),
       ],
     );

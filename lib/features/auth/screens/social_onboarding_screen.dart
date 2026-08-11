@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/config/app_config.dart';
@@ -178,7 +178,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
                 title: Row(
                   children: [
-                    Icon(LucideIcons.logOut, color: VSPColors.warning),
+                    Icon(Iconsax.logout_copy, color: VSPColors.warning),
                     const SizedBox(width: 10),
                     const Text(
                       'تأكيد الخروج؟',
@@ -233,7 +233,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
           elevation: 0,
           scrolledUnderElevation: 0, // ✅ منع تغيير اللون عند السكرول
           leading: IconButton(
-            icon: Icon(LucideIcons.arrowLeft, color: VSPColors.textPrimary),
+            icon: Icon(Iconsax.arrow_left_copy, color: VSPColors.textPrimary),
             onPressed: () => Navigator.maybePop(context),
           ),
           actions: const [],
@@ -286,7 +286,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                             controller: _firstNameController,
                             hintText: 'أدخل الاسم الأول',
                             textInputAction: TextInputAction.next,
-                            prefixIcon: LucideIcons.user,
+                            prefixIcon: Iconsax.user_copy,
                           ),
                         ],
                       ),
@@ -301,7 +301,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                             controller: _lastNameController,
                             hintText: 'أدخل الاسم الثاني',
                             textInputAction: TextInputAction.next,
-                            prefixIcon: LucideIcons.user2,
+                            prefixIcon: Iconsax.user_copy,
                           ),
                         ],
                       ),
@@ -324,7 +324,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                     ),
                     child: Row(
                       children: [
-                        Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 18),
+                        Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
                         const SizedBox(width: 12),
                         Text(
                           _dateOfBirth != null
@@ -336,7 +336,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                         ),
                         const Spacer(),
                         if (_dateOfBirth != null)
-                          Icon(LucideIcons.checkCircle, color: VSPColors.accent, size: 16),
+                          Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
                       ],
                     ),
                   ),
@@ -351,7 +351,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                   hintText: '01xxxxxxxxx',
                   keyboardType: TextInputType.phone,
                   textInputAction: TextInputAction.next,
-                  prefixIcon: LucideIcons.phone,
+                  prefixIcon: Iconsax.call_copy,
                 ),
                            const SizedBox(height: 20),
                 Row(
@@ -370,7 +370,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                     else
                       GestureDetector(
                         onTap: _fetchAutoLocation,
-                        child: const Icon(LucideIcons.locate, color: VSPColors.accent, size: 18),
+                        child: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 18),
                       ),
                   ],
                 ),
@@ -414,7 +414,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                       children: [
                         const Row(
                           children: [
-                            Icon(LucideIcons.wallet, color: VSPColors.accent, size: 20),
+                            Icon(Iconsax.wallet_1_copy, color: VSPColors.accent, size: 20),
                             SizedBox(width: 8),
                             Expanded(
                               child: Text(
@@ -435,7 +435,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           controller: _instapayController,
                           hintText: 'username@instapay',
                           textInputAction: TextInputAction.next,
-                          prefixIcon: LucideIcons.wallet,
+                          prefixIcon: Iconsax.wallet_1_copy,
                         ),
                         const SizedBox(height: 16),
                         _buildLabel('رقم المحفظة الإلكترونية (فودافون/اتصالات/أورنج)'),
@@ -444,7 +444,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           hintText: '01xxxxxxxxx',
                           keyboardType: TextInputType.phone,
                           textInputAction: TextInputAction.next,
-                          prefixIcon: LucideIcons.phoneCall,
+                          prefixIcon: Iconsax.call_copy,
                         ),
                         const SizedBox(height: 16),
                         _buildLabel('الحساب البنكي / IBAN واسم المستفيد'),
@@ -455,7 +455,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
                           onFieldSubmitted: (_) {
                             if (!_isLoading) _handleCompleteRegistration();
                           },
-                          prefixIcon: LucideIcons.landmark,
+                          prefixIcon: Iconsax.card_copy,
                         ),
                       ],
                     ),
@@ -647,7 +647,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
         child: DropdownButton<String>(
           value: _selectedGovernorate,
           dropdownColor: VSPColors.surface,
-          icon: Icon(LucideIcons.chevronDown, color: VSPColors.textSecondary),
+          icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (String? newValue) {

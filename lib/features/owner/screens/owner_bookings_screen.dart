@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -116,7 +116,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         automaticallyImplyLeading: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+                icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -152,7 +152,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           child: DropdownButton<Stadium>(
                             value: effectiveValue,
                             dropdownColor: VSPColors.surface,
-                            icon: const Icon(LucideIcons.chevronDown, color: VSPColors.accent, size: 16),
+                            icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
                             isExpanded: true,
                             items: stadiums.map((s) => DropdownMenuItem(
                               value: s,
@@ -201,7 +201,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(LucideIcons.calendar, color: VSPColors.textSecondary, size: 16),
+                        Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 16),
                       ],
                     ),
                   ),
@@ -278,21 +278,34 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                  if (selectedStadium == null) {
                     return VSPEmptyState(
-                      icon: LucideIcons.building,
+                      icon: Iconsax.building_copy,
                       title: l10n.stadiumsEmptyTitle,
                       subtitle: l10n.stadiumsEmptySubtitle,
                     );
                  }
 
                  final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
-                 
+                 final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+                 final int startH = _parseTimeToHour(selectedStadium.openingTime);
+
+                 DateTime getShiftDate(DateTime dt, int openingHour) {
+                   final local = dt.toLocal();
+                   if (local.hour < openingHour && local.hour < 12) {
+                     final prev = local.subtract(const Duration(days: 1));
+                     return DateTime(prev.year, prev.month, prev.day);
+                   }
+                   return DateTime(local.year, local.month, local.day);
+                 }
+
                  final dayBookings = bookingProvider.userBookings.where((b) {
-                    final bStartLocal = b.startTime.toLocal();
-                    return b.stadiumId.toLowerCase().trim() == selectedStadium.id.toLowerCase().trim() &&
-                           b.status != BookingStatus.cancelled &&
-                           bStartLocal.year == selectedDate.year &&
-                           bStartLocal.month == selectedDate.month &&
-                           bStartLocal.day == selectedDate.day;
+                    if (b.stadiumId.toLowerCase().trim() != selectedStadium.id.toLowerCase().trim() ||
+                        b.status == BookingStatus.cancelled) {
+                      return false;
+                    }
+                    final bShiftDate = getShiftDate(b.startTime, startH);
+                    return bShiftDate.year == selectedDateOnly.year &&
+                           bShiftDate.month == selectedDateOnly.month &&
+                           bShiftDate.day == selectedDateOnly.day;
                   }).toList();
 
                   List<Map<String, dynamic>> slots = [];
@@ -391,7 +404,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
                   if (slots.isEmpty) {
                     return VSPEmptyState(
-                      icon: LucideIcons.clock,
+                      icon: Iconsax.clock_copy,
                       title: l10n.noWorkingHoursTitle,
                       subtitle: l10n.noWorkingHoursSubtitle,
                     );
@@ -579,7 +592,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         child: Row(
           children: [
             Icon(
-              isBreak ? LucideIcons.ban : (isPast ? LucideIcons.history : LucideIcons.plusCircle),
+              isBreak ? Iconsax.close_circle_copy : (isPast ? Iconsax.rotate_left_copy : Iconsax.add_circle_copy),
               color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : (isNowSlot ? VSPColors.accent : VSPColors.textSecondary),
               size: 22,
             ),
@@ -640,7 +653,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               color: isManual ? Colors.blueAccent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
             ),
             child: Icon(
-              isManual ? LucideIcons.fileSignature : LucideIcons.trophy, 
+              isManual ? Iconsax.document_text_copy : Iconsax.cup_copy, 
               size: 22, 
               color: isManual ? Colors.blueAccent : VSPColors.accent
             ),
@@ -760,7 +773,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               ),
             );
           }),
-          Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 14),
+          Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary, size: 14),
         ],
       ),
     );
@@ -1080,7 +1093,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
               child: Row(
                 children: [
                   IconButton(
-                    icon: const Icon(LucideIcons.minus, size: 16, color: VSPColors.textPrimary),
+                    icon: const Icon(Iconsax.minus_cirlce_copy, size: 16, color: VSPColors.textPrimary),
                     onPressed: (widget.isEdit || _selectedMinutes <= 30) ? null : () {
                       _updateDuration(_selectedMinutes - 30);
                     },
@@ -1097,7 +1110,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     ),
                   ),
                   IconButton(
-                    icon: const Icon(LucideIcons.plus, size: 16, color: VSPColors.textPrimary),
+                    icon: const Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.textPrimary),
                     onPressed: (widget.isEdit || _selectedMinutes + 30 > maxMins) ? null : () {
                       _updateDuration(_selectedMinutes + 30);
                     },
@@ -1177,7 +1190,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
               ),
               if (widget.isEdit && !isCompletedBooking)
                 IconButton(
-                  icon: const Icon(LucideIcons.trash2, color: VSPColors.error),
+                  icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
                   onPressed: _isDeleting ? null : () async {
                     final parentCtx = widget.parentContext;
                     final nav = Navigator.of(context);
@@ -1493,7 +1506,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       ),
       child: Row(
         children: [
-          const Icon(LucideIcons.clock, color: VSPColors.accent, size: 18),
+          const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 18),
           const SizedBox(width: 10),
           Expanded(
             child: Text(

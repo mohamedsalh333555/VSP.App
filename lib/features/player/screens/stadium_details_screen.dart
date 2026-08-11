@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:share_plus/share_plus.dart';
@@ -83,7 +83,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   top: 40,
                   right: 16,
                   child: IconButton(
-                    icon: const Icon(LucideIcons.x, color: Colors.white, size: 28),
+                    icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 28),
                     onPressed: () => Navigator.pop(dialogCtx),
                   ),
                 ),
@@ -169,8 +169,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       children: [
                         _buildCircularIcon(
                           icon: Localizations.localeOf(context).languageCode == 'ar'
-                              ? LucideIcons.chevronRight
-                              : LucideIcons.chevronLeft,
+                              ? Iconsax.arrow_right_3_copy
+                              : Iconsax.arrow_left_2_copy,
                           onTap: () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
@@ -180,7 +180,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         Row(
                           children: [
                             _buildCircularIcon(
-                              icon: LucideIcons.share2,
+                              icon: Iconsax.share_copy,
                               onTap: () => SharePlus.instance.share(ShareParams(text: l10n.shareStadiumText(stadium.name, stadium.location))),
                             ),
                             const SizedBox(width: 16),
@@ -188,7 +188,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               builder: (context, auth, _) {
                                 final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) ?? false;
                                 return _buildCircularIcon(
-                                  icon: LucideIcons.heart,
+                                  icon: Iconsax.heart_copy,
                                   color: isFav ? VSPColors.accent : VSPColors.textPrimary,
                                   onTap: () => auth.toggleFavoriteStadium(stadium.id),
                                 );
@@ -213,7 +213,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           duration: const Duration(milliseconds: 200),
                           opacity: _currentImageIndex > 0 ? 1.0 : 0.0,
                           child: _buildCircularIcon(
-                            icon: isArabic ? LucideIcons.chevronRight : LucideIcons.chevronLeft,
+                            icon: isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
                             onTap: () {
                               if (_currentImageIndex > 0) {
                                 _pageController.previousPage(
@@ -238,7 +238,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           duration: const Duration(milliseconds: 200),
                           opacity: _currentImageIndex < _displayImages.length - 1 ? 1.0 : 0.0,
                           child: _buildCircularIcon(
-                            icon: isArabic ? LucideIcons.chevronLeft : LucideIcons.chevronRight,
+                            icon: isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
                             onTap: () {
                               if (_currentImageIndex < _displayImages.length - 1) {
                                 _pageController.nextPage(
@@ -277,7 +277,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            const Icon(LucideIcons.image, color: Colors.white, size: 12),
+                            const Icon(Iconsax.image_copy, color: Colors.white, size: 12),
                             const SizedBox(width: 5),
                             Text(
                               '${_currentImageIndex + 1}/${_displayImages.length}',
@@ -353,7 +353,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         ? Row(
                             key: const ValueKey('deposit'),
                             children: [
-                              const Icon(LucideIcons.lock, color: VSPColors.accent, size: 11),
+                              const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
                               const SizedBox(width: 4),
                               Text('${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${l10n.egCurrency}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
                             ],
@@ -361,7 +361,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         : Row(
                             key: const ValueKey('cash'),
                             children: [
-                              const Icon(LucideIcons.banknote, color: VSPColors.textSecondary, size: 11),
+                              const Icon(Iconsax.card_copy, color: VSPColors.textSecondary, size: 11),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
                             ],
@@ -454,7 +454,7 @@ class _InformationTab extends StatelessWidget {
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
-                    const Icon(LucideIcons.star, color: VSPColors.accent, size: 14),
+                    const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 14),
                     const SizedBox(width: 5),
                     Text(
                       stadium.rating.toStringAsFixed(1),
@@ -494,7 +494,7 @@ class _InformationTab extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.mapPin, color: VSPColors.accent, size: 14),
+                  const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
@@ -505,7 +505,7 @@ class _InformationTab extends StatelessWidget {
                     ),
                   ),
                   const SizedBox(width: 8),
-                  const Icon(LucideIcons.externalLink, color: VSPColors.textSecondary, size: 12),
+                  const Icon(Iconsax.export_3_copy, color: VSPColors.textSecondary, size: 12),
                 ],
               ),
             ),
@@ -528,7 +528,7 @@ class _InformationTab extends StatelessWidget {
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  const Icon(LucideIcons.trophy, color: VSPColors.accent, size: 14),
+                  const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 14),
                   const SizedBox(width: 8),
                   Text(l10n.ballAvailable(stadium.ballPrice.toStringAsFixed(0), l10n.egCurrency), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
@@ -568,11 +568,11 @@ class _FacilitiesGrid extends StatelessWidget {
     final hasSeats = seats.isNotEmpty && seats != '0' && seats != 'null';
 
     final facilities = [
-      _FacilityItem(icon: LucideIcons.showerHead, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
-      _FacilityItem(icon: LucideIcons.car, label: isArabic ? 'جراج' : 'Garage', active: hasGarage),
-      _FacilityItem(icon: LucideIcons.coffee, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
-      _FacilityItem(icon: LucideIcons.shirt, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
-      _FacilityItem(icon: LucideIcons.sofa, label: isArabic ? 'مدرجات' : 'Seats', active: hasSeats, badge: hasSeats ? seats : null),
+      _FacilityItem(icon: Iconsax.drop, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
+      _FacilityItem(icon: Iconsax.car_copy, label: isArabic ? 'جراج' : 'Garage', active: hasGarage),
+      _FacilityItem(icon: Iconsax.coffee_copy, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
+      _FacilityItem(icon: Iconsax.tag_copy, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
+      _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مدرجات' : 'Seats', active: hasSeats, badge: hasSeats ? seats : null),
     ];
 
     return GridView.count(
@@ -741,7 +741,7 @@ class _RatingsTab extends StatelessWidget {
                         final starIndex = index + 1;
                         return IconButton(
                           icon: Icon(
-                            LucideIcons.star,
+                            Iconsax.star_copy,
                             color: starIndex <= selectedRating ? Colors.amber : VSPColors.surfaceAlt,
                             size: 32,
                           ),
@@ -857,7 +857,7 @@ class _RatingsTab extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(stadium.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42)),
-                      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => const Icon(LucideIcons.star, color: Colors.amber, size: 16))),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => const Icon(Iconsax.star_copy, color: Colors.amber, size: 16))),
                       const SizedBox(height: VSPSpacing.xs),
                       Text(l10n.reviews(stadium.reviewsCount), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                     ],
@@ -923,7 +923,7 @@ class _RatingsTab extends StatelessWidget {
       child: Row(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          CircleAvatar(radius: 20, backgroundColor: VSPColors.surfaceAlt, backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null, child: imageUrl.isEmpty ? const Icon(LucideIcons.user, color: VSPColors.textSecondary) : null),
+          CircleAvatar(radius: 20, backgroundColor: VSPColors.surfaceAlt, backgroundImage: imageUrl.isNotEmpty ? NetworkImage(imageUrl) : null, child: imageUrl.isEmpty ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary) : null),
           const SizedBox(width: 12),
           Expanded(
             child: Column(
@@ -936,7 +936,7 @@ class _RatingsTab extends StatelessWidget {
                     Text(timeAgo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ],
                 ),
-                Row(children: List.generate(5, (i) => Icon(LucideIcons.star, size: 12, color: i < rating ? Colors.amber : VSPColors.surfaceAlt))),
+                Row(children: List.generate(5, (i) => Icon(Iconsax.star_copy, size: 12, color: i < rating ? Colors.amber : VSPColors.surfaceAlt))),
                 const SizedBox(height: 8),
                 Text(comment, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.4)),
                 const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.md), child: Divider(color: VSPColors.divider)),

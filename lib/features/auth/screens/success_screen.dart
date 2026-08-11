@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
@@ -192,7 +192,7 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
           color: VSPColors.accent.withValues(alpha: 0.15),
           border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 2),
         ),
-        child: Icon(LucideIcons.check,
+        child: Icon(Iconsax.tick_circle_copy,
           size: 64,
           color: VSPColors.accent,
         ),

@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -39,7 +39,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary),
+          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
@@ -74,7 +74,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(LucideIcons.headphones, color: VSPColors.accent, size: 32),
+                  Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 32),
                   const SizedBox(height: 12),
                   Text(
                     isAr ? 'كيف يمكننا مساعدتك اليوم؟' : 'How can we help you today?',
@@ -104,7 +104,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               context,
               title: isAr ? 'محادثة الدعم' : 'Chat with Support',
               subtitle: isAr ? 'تحدث مباشرة مع فريقنا على واتساب' : 'Chat directly with our team on WhatsApp',
-              icon: LucideIcons.messageCircle,
+              icon: Iconsax.messages_3_copy,
               color: const Color(0xFF25D366),
               onTap: () => _launchWhatsApp(context),
             ),
@@ -113,7 +113,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               context,
               title: isAr ? 'اتصل بالدعم' : 'Call Support',
               subtitle: isAr ? 'مساعدة طارئة للحجوزات والمباريات' : 'Emergency help for bookings and matches',
-              icon: LucideIcons.phoneCall,
+              icon: Iconsax.call_copy,
               color: VSPColors.accent,
               onTap: () async {
                 final settings = await AppSettingsRepository().getSettings();
@@ -197,7 +197,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 ],
               ),
             ),
-            Icon(LucideIcons.chevronRight, color: VSPColors.textSecondary, size: 16),
+            Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary, size: 16),
           ],
         ),
       ),

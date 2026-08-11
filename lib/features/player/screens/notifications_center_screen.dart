@@ -1,4 +1,4 @@
-import 'package:lucide_icons_flutter/lucide_icons.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -24,7 +24,7 @@ class NotificationsCenterScreen extends StatelessWidget {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(LucideIcons.chevronLeft, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,
@@ -51,7 +51,7 @@ class NotificationsCenterScreen extends StatelessWidget {
 
           if (notifications.isEmpty) {
             return VSPEmptyState(
-              icon: LucideIcons.bellOff,
+              icon: Iconsax.notification_copy,
               title: AppLocalizations.of(context)!.noNotificationsTitle,
               subtitle: AppLocalizations.of(context)!.noNotificationsSubtitle,
               buttonText: AppLocalizations.of(context)!.backToDashboard,
@@ -79,7 +79,7 @@ class NotificationsCenterScreen extends StatelessWidget {
                       color: VSPColors.error.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(VSPRadius.lg),
                     ),
-                    child: Icon(LucideIcons.trash2, color: VSPColors.error, size: 24),
+                    child: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
                     NotificationRepository().deleteNotification(userId, notification.id);
@@ -210,34 +210,34 @@ class _NotificationCard extends StatelessWidget {
   IconData _getIcon(String type) {
     switch (type) {
       case 'challenge':
-        return LucideIcons.trophy;
+        return Iconsax.cup_copy;
       case 'result_confirmation':
-        return LucideIcons.trophy;
+        return Iconsax.cup_copy;
       case 'booking_confirmed':
-        return LucideIcons.checkCircle;
+        return Iconsax.tick_circle_copy;
       case 'booking_new':
-        return LucideIcons.calendar;
+        return Iconsax.calendar_1_copy;
       case 'booking_cancelled':
-        return LucideIcons.xCircle;
+        return Iconsax.close_circle_copy;
       case 'debt_warning':
-        return LucideIcons.alertTriangle;
+        return Iconsax.warning_2_copy;
       case 'debt_grace':
-        return LucideIcons.timer;
+        return Iconsax.clock_copy;
       case 'account_blocked':
-        return LucideIcons.ban;
+        return Iconsax.close_circle_copy;
       case 'player_blocked':
-        return LucideIcons.userMinus;
+        return Iconsax.user_remove_copy;
       case 'stadium_approved':
-        return LucideIcons.badgeCheck;
+        return Iconsax.verify_copy;
       case 'public_match_joined':
-        return LucideIcons.userPlus;
+        return Iconsax.user_add_copy;
       case 'match_full':
-        return LucideIcons.users;
+        return Iconsax.people_copy;
       case 'chat':
-        return LucideIcons.messageSquare;
+        return Iconsax.messages_3_copy;
       case 'info':
       default:
-        return LucideIcons.info;
+        return Iconsax.info_circle_copy;
     }
   }
 
