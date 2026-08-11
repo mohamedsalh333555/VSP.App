@@ -62,8 +62,7 @@ class TournamentRepository {
   }) {
     return list.map((data) {
       if (data is! Map<String, dynamic>) return null;
-      final bool isApproved = data['is_approved'] == null ? true : (data['is_approved'] == true);
-      if (!isOwner && !isApproved) return null;
+      // No is_approved gate – show all championships from DB as-is
       if (isOwner && ownerId != null) {
         final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
         if (champOwnerId != ownerId) return null;
@@ -118,6 +117,7 @@ class TournamentRepository {
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
+        'is_approved': true, // Always approved when created by owner – visible to players immediately
         'joined_teams': [],
         'paid_teams': [],
         'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],

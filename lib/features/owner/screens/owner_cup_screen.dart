@@ -51,6 +51,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     
     return Scaffold(
       backgroundColor: VSPColors.background,
+      floatingActionButton: FloatingActionButton(
+        onPressed: () => _showTournamentTypeSheet(context, isArabic, l10n),
+        backgroundColor: VSPColors.accent,
+        shape: const CircleBorder(),
+        elevation: 6,
+        child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
+      ),
+      floatingActionButtonLocation: isArabic
+          ? FloatingActionButtonLocation.startFloat
+          : FloatingActionButtonLocation.endFloat,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
@@ -195,6 +205,155 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             ),
           ),
         ],
+      ),
+    );
+  }
+
+  void _showTournamentTypeSheet(BuildContext context, bool isArabic, dynamic l10n) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: Colors.transparent,
+      isScrollControlled: true,
+      builder: (ctx) {
+        return Container(
+          decoration: const BoxDecoration(
+            color: VSPColors.surface,
+            borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+          ),
+          padding: EdgeInsets.fromLTRB(
+            20, 20, 20,
+            MediaQuery.of(ctx).padding.bottom + 24,
+          ),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              // Handle bar
+              Center(
+                child: Container(
+                  width: 40, height: 4,
+                  decoration: BoxDecoration(
+                    color: VSPColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 20),
+              Text(
+                isArabic ? 'اختر نوع البطولة' : 'Choose Tournament Type',
+                style: const TextStyle(
+                  color: Colors.white,
+                  fontWeight: FontWeight.w900,
+                  fontSize: 18,
+                ),
+              ),
+              const SizedBox(height: 6),
+              Text(
+                isArabic
+                    ? 'كل نظام له أسلوب تنافسي مختلف'
+                    : 'Each format has a unique competitive style',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+              ),
+              const SizedBox(height: 20),
+              _buildTypeOption(
+                ctx,
+                icon: Iconsax.cup_copy,
+                title: isArabic ? 'خروج المغلوب (كأس)' : 'Knockout (Cup)',
+                subtitle: isArabic
+                    ? 'الخاسر يخرج فوراً — 4، 8، 16، 32 فريق'
+                    : 'Single elimination — 4, 8, 16, 32 teams',
+                color: const Color(0xFFFFD700),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  CreateTournamentWizard.open(context, preselectedType: 'Cup');
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildTypeOption(
+                ctx,
+                icon: Iconsax.security_safe_copy,
+                title: isArabic ? 'مجموعات + تصفيات' : 'Groups & Knockout',
+                subtitle: isArabic
+                    ? 'مجموعات أولاً ثم المتأهلون للتصفيات'
+                    : 'Group stage followed by knockout bracket',
+                color: const Color(0xFF7C3AED),
+                onTap: () {
+                  Navigator.pop(ctx);
+                  CreateTournamentWizard.open(context, preselectedType: 'GroupsAndKnockout');
+                },
+              ),
+              const SizedBox(height: 12),
+              _buildTypeOption(
+                ctx,
+                icon: Iconsax.award_copy,
+                title: isArabic ? 'دوري نقاط كامل' : 'Full League',
+                subtitle: isArabic
+                    ? 'كل الفرق تلعب ضد بعضها — الترتيب بالنقاط'
+                    : 'Round-robin — ranked by points',
+                color: VSPColors.accent,
+                onTap: () {
+                  Navigator.pop(ctx);
+                  CreateTournamentWizard.open(context, preselectedType: 'League');
+                },
+              ),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildTypeOption(
+    BuildContext context, {
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(16),
+      child: Container(
+        padding: const EdgeInsets.all(16),
+        decoration: BoxDecoration(
+          color: VSPColors.background,
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: color.withValues(alpha: 0.25), width: 1.5),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 48, height: 48,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.12),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 22),
+            ),
+            const SizedBox(width: 14),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(title,
+                    style: const TextStyle(
+                      color: Colors.white,
+                      fontWeight: FontWeight.bold,
+                      fontSize: 15,
+                    )),
+                  const SizedBox(height: 3),
+                  Text(subtitle,
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 11,
+                    )),
+                ],
+              ),
+            ),
+            Icon(Icons.arrow_forward_ios_rounded, color: color, size: 16),
+          ],
+        ),
       ),
     );
   }

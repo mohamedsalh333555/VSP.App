@@ -14,6 +14,7 @@ class StadiumRepository {
     return query
         .limit(limit)
         .map((list) => list
+            .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .where((stadium) => stadium.isVerified && !stadium.isBlocked)
             .toList());
@@ -27,7 +28,7 @@ class StadiumRepository {
           .select()
           .eq('id', stadiumId)
           .maybeSingle();
-      if (response != null) {
+      if (response != null && response['is_deleted_by_owner'] != true) {
         return Stadium.fromFirestore(response, response['id'].toString());
       }
       return null;
@@ -57,6 +58,7 @@ class StadiumRepository {
         .stream(primaryKey: ['id'])
         .eq('owner_id', ownerId)
         .map((list) => list
+            .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .toList());
   }
@@ -76,7 +78,8 @@ class StadiumRepository {
             final existingStadiums = await _supabase
                 .from('stadiums')
                 .select('id')
-                .eq('owner_id', ownerId);
+                .eq('owner_id', ownerId)
+                .neq('is_deleted_by_owner', true);
             final currentCount = (existingStadiums as List).length;
             if (currentCount >= userModel.maxStadiums) {
               throw Exception(
@@ -124,6 +127,7 @@ class StadiumRepository {
         'image_url': sanitizedData['imageUrl'] ?? sanitizedData['image_url'] ?? firstImage,
         'is_verified': false, 
         'is_blocked': false,
+        'is_deleted_by_owner': false,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
       };
@@ -146,8 +150,6 @@ class StadiumRepository {
   Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
     try {
       final securedData = Map<String, dynamic>.from(data);
-      securedData.remove('isVerified');
-      securedData.remove('is_verified');
       securedData.remove('ownerId');
       securedData.remove('owner_id');
       securedData.remove('createdAt');
@@ -172,6 +174,9 @@ class StadiumRepository {
       if (securedData.containsKey('image_url')) pgData['image_url'] = securedData['image_url'];
       if (securedData.containsKey('isBlocked')) pgData['is_blocked'] = securedData['isBlocked'];
       if (securedData.containsKey('is_blocked')) pgData['is_blocked'] = securedData['is_blocked'];
+      if (securedData.containsKey('is_verified')) pgData['is_verified'] = securedData['is_verified'];
+      if (securedData.containsKey('isVerified')) pgData['is_verified'] = securedData['isVerified'];
+      if (securedData.containsKey('is_deleted_by_owner')) pgData['is_deleted_by_owner'] = securedData['is_deleted_by_owner'];
       if (securedData.containsKey('rating')) pgData['rating'] = securedData['rating'];
       if (securedData.containsKey('reviewsCount')) pgData['reviews_count'] = securedData['reviewsCount'];
       if (securedData.containsKey('reviews_count')) pgData['reviews_count'] = securedData['reviews_count'];

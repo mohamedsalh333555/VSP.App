@@ -326,55 +326,89 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
         ],
       ),
       bottomNavigationBar: Container(
-        padding: const EdgeInsets.all(VSPSpacing.lg),
+        padding: const EdgeInsets.fromLTRB(VSPSpacing.lg, VSPSpacing.md, VSPSpacing.lg, VSPSpacing.lg),
         decoration: const BoxDecoration(
           color: VSPColors.surface,
           borderRadius: BorderRadius.only(topLeft: Radius.circular(VSPRadius.xl), topRight: Radius.circular(VSPRadius.xl)),
         ),
         child: SafeArea(
-          child: Row(
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                crossAxisAlignment: CrossAxisAlignment.start,
+              // 🔥 Loss Aversion Urgency Banner (تجنب الخسارة)
+              Container(
+                width: double.infinity,
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                margin: const EdgeInsets.only(bottom: 10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.flash_1_copy, color: Colors.amber, size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? '🔥 80% من مواعيد اليوم محجوزة! احجز موعدك الآن قبل انشغال الملعب'
+                            : '🔥 80% of today\'s slots are booked! Lock in your pitch before it\'s taken',
+                        style: const TextStyle(
+                          color: Colors.amber,
+                          fontSize: 11,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+              Row(
                 children: [
-                  Text(l10n.pricePerHour, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                  RichText(
-                    text: TextSpan(
-                      children: [
-                        TextSpan(text: '${stadium.basePrice.toStringAsFixed(0)} ', style: Theme.of(context).textTheme.displayLarge),
-                        TextSpan(text: l10n.egCurrency, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
-                      ],
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(l10n.pricePerHour, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
+                      RichText(
+                        text: TextSpan(
+                          children: [
+                            TextSpan(text: '${stadium.basePrice.toStringAsFixed(0)} ', style: Theme.of(context).textTheme.displayLarge),
+                            TextSpan(text: l10n.egCurrency, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+                          ],
+                        ),
+                      ),
+                      AnimatedSwitcher(
+                        duration: const Duration(milliseconds: 250),
+                        child: hasDeposit
+                            ? Row(
+                                key: const ValueKey('deposit'),
+                                children: [
+                                  const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
+                                  const SizedBox(width: 4),
+                                  Text('${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${l10n.egCurrency}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                ],
+                              )
+                            : Row(
+                                key: const ValueKey('cash'),
+                                children: [
+                                  const Icon(Iconsax.card_copy, color: VSPColors.textSecondary, size: 11),
+                                  const SizedBox(width: 4),
+                                  Text(isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
+                                ],
+                              ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(width: VSPSpacing.lg),
+                  Expanded(
+                    child: PrimaryButton(
+                      text: isArabic ? '⚡ احجز الآن' : '⚡ Book Now',
+                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingTypeScreen(stadium: stadium))),
                     ),
                   ),
-                  AnimatedSwitcher(
-                    duration: const Duration(milliseconds: 250),
-                    child: hasDeposit
-                        ? Row(
-                            key: const ValueKey('deposit'),
-                            children: [
-                              const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
-                              const SizedBox(width: 4),
-                              Text('${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${l10n.egCurrency}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
-                            ],
-                          )
-                        : Row(
-                            key: const ValueKey('cash'),
-                            children: [
-                              const Icon(Iconsax.card_copy, color: VSPColors.textSecondary, size: 11),
-                              const SizedBox(width: 4),
-                              Text(isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
-                            ],
-                          ),
-                  ),
                 ],
-              ),
-              const SizedBox(width: VSPSpacing.lg),
-              Expanded(
-                child: PrimaryButton(
-                  text: l10n.bookNow,
-                  onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingTypeScreen(stadium: stadium))),
-                ),
               ),
             ],
           ),

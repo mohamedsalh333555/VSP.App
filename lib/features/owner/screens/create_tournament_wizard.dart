@@ -16,12 +16,13 @@ import '../../../data/models.dart';
 
 class CreateTournamentWizard extends StatefulWidget {
   final Championship? tournament;
-  const CreateTournamentWizard({super.key, this.tournament});
+  final String? preselectedType;
+  const CreateTournamentWizard({super.key, this.tournament, this.preselectedType});
 
   /// 🔒 Gatekeeper: Checks if owner is on Pro Plan (1000 EGP).
   /// Pro Plan owners -> Open Wizard.
   /// Basic / Trial / Expired owners -> Show upgrade dialog & redirect to SubscriptionPlansScreen.
-  static void open(BuildContext context, {Championship? tournament}) {
+  static void open(BuildContext context, {Championship? tournament, String? preselectedType}) {
     final user = Provider.of<AuthProvider>(context, listen: false).userModel;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
@@ -29,7 +30,7 @@ class CreateTournamentWizard extends StatefulWidget {
     if (tournament != null || (user != null && user.canCreateTournaments)) {
       Navigator.push(
         context,
-        MaterialPageRoute(builder: (context) => CreateTournamentWizard(tournament: tournament)),
+        MaterialPageRoute(builder: (context) => CreateTournamentWizard(tournament: tournament, preselectedType: preselectedType)),
       );
       return;
     }
@@ -131,6 +132,9 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _endDate = t.endDate;
       _durationController.text = t.matchDuration.toString();
       _prizeController.text = t.grandPrize.toInt().toString();
+    } else if (widget.preselectedType != null) {
+      // Pre-fill type from FAB bottom sheet selection
+      _selectedType = widget.preselectedType!;
     }
   }
 

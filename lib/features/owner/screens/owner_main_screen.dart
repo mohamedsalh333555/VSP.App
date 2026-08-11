@@ -23,7 +23,6 @@ class OwnerMainScreen extends StatefulWidget {
 
 class _OwnerMainScreenState extends State<OwnerMainScreen> {
   int _currentIndex = 0;
-  final ValueNotifier<bool> _showTournamentFAB = ValueNotifier<bool>(false);
   late final ConfettiController _confettiController;
   StreamSubscription? _celebrationSubscription;
 
@@ -118,9 +117,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
             index: _currentIndex,
             children: [
               const OwnerDashboardScreen(),
-              OwnerCupScreen(onTournamentListChanged: (isEmpty) {
-                _showTournamentFAB.value = !isEmpty;
-              }),
+              const OwnerCupScreen(),
               const OwnerInboxScreen(), // New Chat tab
               const OwnerBookingsScreen(),
               const OwnerProfileScreen(),
@@ -143,38 +140,6 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
         ],
       ),
 
-      floatingActionButton: ValueListenableBuilder<bool>(
-        valueListenable: _showTournamentFAB,
-        builder: (context, showTournamentFAB, child) {
-          final bool isVisible = _currentIndex == 1 && showTournamentFAB && !isBlocked;
-          
-          return AnimatedScale(
-            scale: isVisible ? 1.0 : 0.0,
-            duration: const Duration(milliseconds: 300),
-            curve: Curves.easeInOut,
-            child: isVisible 
-              ? SizedBox(
-                  width: 200,
-                  height: 50,
-                  child: FloatingActionButton.extended(
-                    onPressed: () {
-                      CreateTournamentWizard.open(context);
-                    },
-                    backgroundColor: VSPColors.accent,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                    label: Text(
-                      l10n.createTournament,
-                      style: Theme.of(context).textTheme.labelLarge?.copyWith(color: Colors.black),
-                    ),
-                    icon: Icon(Iconsax.add_circle_copy, color: Colors.black),
-                    elevation: 4,
-                  ),
-                )
-              : const SizedBox.shrink(),
-          );
-        }
-      ),
-      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
 
       bottomNavigationBar: OwnerBottomNavBar(
         currentIndex: _currentIndex,

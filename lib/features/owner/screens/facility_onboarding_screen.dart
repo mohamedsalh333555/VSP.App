@@ -152,6 +152,78 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                     ),
                     const SizedBox(height: 16),
 
+                    // 📊 Goal Gradient Progress Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(14),
+                      margin: const EdgeInsets.only(bottom: 14),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                            children: [
+                              Row(
+                                children: [
+                                  const Icon(Iconsax.chart_1_copy, color: VSPColors.accent, size: 18),
+                                  const SizedBox(width: 8),
+                                  Text(
+                                    isAr ? 'تقدم إكتمال ملفك الرياضي' : 'Profile Completion',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 13,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ],
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                                decoration: BoxDecoration(
+                                  color: VSPColors.accent.withValues(alpha: 0.2),
+                                  borderRadius: BorderRadius.circular(10),
+                                ),
+                                child: const Text(
+                                  '65% 🔥',
+                                  style: TextStyle(
+                                    color: VSPColors.accent,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.w900,
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 10),
+                          ClipRRect(
+                            borderRadius: BorderRadius.circular(4),
+                            child: const LinearProgressIndicator(
+                              value: 0.65,
+                              minHeight: 6,
+                              backgroundColor: VSPColors.surfaceAlt,
+                              valueColor: AlwaysStoppedAnimation<Color>(VSPColors.accent),
+                            ),
+                          ),
+                          const SizedBox(height: 8),
+                          Text(
+                            isAr
+                                ? 'أحسنت! قطعنا 65% من الإعداد. تابع رفع الوثائق لتصل لـ 100% وتفعل شارة المالك الموثوق 🌟'
+                                : '65% complete! Finish uploading documents to reach 100% and earn your Verified Badge 🌟',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                              height: 1.4,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+
                     // 💡 ملاحظة المعاينة
                     Container(
                       width: double.infinity,
@@ -163,7 +235,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                       ),
                       child: Row(
                         children: [
-                          Icon(Iconsax.flash_1_copy, color: VSPColors.accent, size: 20),
+                          const Icon(Iconsax.flash_1_copy, color: VSPColors.accent, size: 20),
                           const SizedBox(width: 8),
                           Expanded(
                             child: Text(

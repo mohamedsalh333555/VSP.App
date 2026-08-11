@@ -91,34 +91,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 20),
 
-            // 2. 💳 كارت الباقة الأساسية (500 ج.م - متضمنة التجربة المجانية)
-            _buildPlanCard(
-              title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
-              priceText: isArabic ? '500 ج.م' : '500 EGP',
-              periodText: isArabic ? 'شهرياً (مجاناً لأول 3 شهور)' : 'Monthly (Free 1st 3 months)',
-              stadiumsCount: 1,
-              badgeText: isArabic ? '3 شهور مجاناً' : '3 Months Free',
-              badgeColor: VSPColors.accent,
-              isCurrentPlan: userModel?.isInActiveTrial == true || (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true),
-              features: [
-                isArabic ? 'إضافة وتشغيل ملعب واحد (1)' : 'Operate 1 Stadium',
-                isArabic ? 'استقبال الحجوزات النقدية والأونلاين' : 'Accept Cash & Online Bookings',
-                isArabic ? 'تنبيهات إشعار فورية بالحجوزات' : 'Instant Booking Notifications',
-                isArabic ? 'لوحة تحكم وتحصيل أرباح 100%' : '100% Direct Revenue Dashboard',
-              ],
-              onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
-              isArabic: isArabic,
-            ),
-
-            const SizedBox(height: 16),
-
-            // 3. 👑 كارت الباقة الاحترافية (1000 ج.م - المجمعات)
+            // 👑 1. كارت الباقة الاحترافية (1000 ج.م - الخيار المرجعي والأعلى قيمة - Contrast Anchor)
             _buildPlanCard(
               title: isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
               priceText: isArabic ? '1000 ج.م' : '1000 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               stadiumsCount: 3,
-              badgeText: isArabic ? 'للمجمعات والملاعب المزدوجة' : 'For Multi-Pitches',
+              badgeText: isArabic ? '👑 الأكثر طلباً وتوصية' : '👑 Most Popular & Recommended',
               badgeColor: Colors.amber,
               isProBorder: true,
               isCurrentPlan: userModel?.isProPlan == true,
@@ -131,6 +110,27 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                 isArabic ? 'دعم فني وتفعيل أولوية أجهزة المالك' : 'Priority Owner Support',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
+              isArabic: isArabic,
+            ),
+
+            const SizedBox(height: 16),
+
+            // 💳 2. كارت الباقة الأساسية (500 ج.م - تباين رائع وموفر)
+            _buildPlanCard(
+              title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
+              priceText: isArabic ? '500 ج.م' : '500 EGP',
+              periodText: isArabic ? 'شهرياً (مجاناً لأول 3 شهور)' : 'Monthly (Free 1st 3 months)',
+              stadiumsCount: 1,
+              badgeText: isArabic ? '🎁 3 شهور مجاناً' : '🎁 3 Months Free',
+              badgeColor: VSPColors.accent,
+              isCurrentPlan: userModel?.isInActiveTrial == true || (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true),
+              features: [
+                isArabic ? 'إضافة وتشغيل ملعب واحد (1)' : 'Operate 1 Stadium',
+                isArabic ? 'استقبال الحجوزات النقدية والأونلاين' : 'Accept Cash & Online Bookings',
+                isArabic ? 'تنبيهات إشعار فورية بالحجوزات' : 'Instant Booking Notifications',
+                isArabic ? 'لوحة تحكم وتحصيل أرباح 100%' : '100% Direct Revenue Dashboard',
+              ],
+              onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
               isArabic: isArabic,
             ),
 

@@ -1340,77 +1340,135 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       isArabic ? 'الخدمات' : 'Features',
       isArabic ? 'الصور' : 'Photos',
     ];
+
+    // Goal Gradient Effect progress calculations
+    final bool isEditing = widget.stadiumId != null;
+    final int percent = _currentStep == 0 ? 33 : (_currentStep == 1 ? 66 : 100);
+    final String progressText = isEditing
+        ? (isArabic ? '✏️ تعديل بيانات وتفاصيل الملعب الحالي' : '✏️ Editing current stadium details')
+        : (_currentStep == 0
+            ? (isArabic ? '📝 الخطوة 1 من 3: أدخل البيانات الأساسية للملعب' : '📝 Step 1 of 3: Enter basic details')
+            : (_currentStep == 1
+                ? (isArabic ? '⚡ الخطوة 2 من 3: حدد الميزات والخدمات المتاحة' : '⚡ Step 2 of 3: Select features & options')
+                : (isArabic ? '🎉 الخطوة 3 من 3: أضف صور الملعب والمعاينة النهائية' : '🎉 Step 3 of 3: Add photos & preview')));
+
     return Padding(
-      padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 8),
-      child: Stack(
+      padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
+      child: Column(
         children: [
-          // Background Connecting Lines
-          Positioned(
-            left: 28 / 2 + 12, // Half circle diameter + horizontal padding
-            right: 28 / 2 + 12,
-            top: 28 / 2 - 1, // Centered vertically on the circles
+          // Goal Gradient Progress Banner
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+            margin: const EdgeInsets.only(bottom: 12),
+            decoration: BoxDecoration(
+              color: VSPColors.accent.withValues(alpha: 0.1),
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+            ),
             child: Row(
               children: [
                 Expanded(
-                  child: Container(
-                    height: 2,
-                    color: _currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
+                  child: Text(
+                    progressText,
+                    style: const TextStyle(
+                      color: VSPColors.accent,
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                 ),
-                Expanded(
-                  child: Container(
-                    height: 2,
-                    color: _currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
+                Container(
+                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                  decoration: BoxDecoration(
+                    color: VSPColors.accent,
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Text(
+                    isEditing ? (isArabic ? 'تعديل' : 'Edit') : '$percent%',
+                    style: const TextStyle(
+                      color: Colors.black,
+                      fontSize: 11,
+                      fontWeight: FontWeight.w900,
+                    ),
                   ),
                 ),
               ],
             ),
           ),
-          // Stepper Circles and Text
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: List.generate(3, (i) {
-              final isActive = i <= _currentStep;
-              final isCurrent = i == _currentStep;
-              return Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Container(
-                    width: 28,
-                    height: 28,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: isActive ? VSPColors.accent : VSPColors.surface,
-                      border: Border.all(
-                        color: isActive ? VSPColors.accent : VSPColors.divider,
-                        width: 2,
+
+          // Stepper Lines and Circles
+          Stack(
+            children: [
+              // Background Connecting Lines
+              Positioned(
+                left: 28 / 2 + 12,
+                right: 28 / 2 + 12,
+                top: 28 / 2 - 1,
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: _currentStep >= 1 ? VSPColors.accent : VSPColors.divider,
                       ),
                     ),
-                    child: Center(
-                      child: i < _currentStep
-                          ? Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
-                          : Text(
-                              '${i + 1}',
-                              style: TextStyle(
-                                color: isActive ? Colors.black : VSPColors.textSecondary,
-                                fontSize: 12,
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
+                    Expanded(
+                      child: Container(
+                        height: 2,
+                        color: _currentStep >= 2 ? VSPColors.accent : VSPColors.divider,
+                      ),
                     ),
-                  ),
-                  const SizedBox(height: 4),
-                  Text(
-                    labels[i],
-                    style: Theme.of(context).textTheme.labelSmall?.copyWith(
-                          color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
-                          fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
-                          fontSize: 9,
+                  ],
+                ),
+              ),
+              // Stepper Circles and Text
+              Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: List.generate(3, (i) {
+                  final isActive = i <= _currentStep;
+                  final isCurrent = i == _currentStep;
+                  return Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(
+                        width: 28,
+                        height: 28,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: isActive ? VSPColors.accent : VSPColors.surface,
+                          border: Border.all(
+                            color: isActive ? VSPColors.accent : VSPColors.divider,
+                            width: 2,
+                          ),
                         ),
-                  ),
-                ],
-              );
-            }),
+                        child: Center(
+                          child: i < _currentStep
+                              ? const Icon(Iconsax.tick_circle_copy, color: Colors.black, size: 16)
+                              : Text(
+                                  '${i + 1}',
+                                  style: TextStyle(
+                                    color: isActive ? Colors.black : VSPColors.textSecondary,
+                                    fontSize: 12,
+                                    fontWeight: FontWeight.bold,
+                                  ),
+                                ),
+                        ),
+                      ),
+                      const SizedBox(height: 4),
+                      Text(
+                        labels[i],
+                        style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: isCurrent ? VSPColors.accent : VSPColors.textSecondary,
+                              fontWeight: isCurrent ? FontWeight.bold : FontWeight.normal,
+                              fontSize: 9,
+                            ),
+                      ),
+                    ],
+                  );
+                }),
+              ),
+            ],
           ),
         ],
       ),
@@ -2150,39 +2208,102 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     if (confirm == true && mounted) {
       setState(() => _isSaving = true);
       try {
+        final now = DateTime.now();
+        final startOfTodayUtc = DateTime.utc(now.year, now.month, now.day).toIso8601String();
+
+        // 🛡️ Business Rule: Block deletion ONLY if there are active non-cancelled bookings today or in the future
         final activeBookingsCheck = await Supabase.instance.client
             .from('bookings')
             .select('id')
             .eq('stadium_id', widget.stadiumId!)
-            .eq('status', 'confirmed')
-            .gte('start_time', DateTime.now().toUtc().toIso8601String());
+            .neq('status', 'cancelled')
+            .gte('start_time', startOfTodayUtc);
+
         if (!mounted) return;
         if ((activeBookingsCheck as List).isNotEmpty) {
           VSPFeedback.showError(
             context,
             isArabic
-                ? 'لا يمكن إخفاء الملعب لوجود حجوزات قادمة نشطة! قم بإلغائها أولاً.'
-                : 'Cannot hide stadium with active upcoming bookings! Cancel them first.',
+                ? 'لا يمكن حذف الملعب لوجود حجوزات نشطة اليوم أو في المستقبل! قم بإلغائها أو انتظار انتهائها أولاً.'
+                : 'Cannot delete stadium with active bookings today or in the future! Cancel them or wait for completion first.',
           );
           return;
         }
-        final success = await _databaseService.updateStadium(
-          widget.stadiumId!,
-          {'is_verified': false, 'is_deleted_by_owner': true},
-        );
+
+        // 🗑️ Clean up associated reviews and non-blocking records first so foreign key constraints allow CASCADE delete
+        try {
+          await Supabase.instance.client
+              .from('reviews')
+              .delete()
+              .eq('stadium_id', widget.stadiumId!);
+          await Supabase.instance.client
+              .from('bookings')
+              .delete()
+              .eq('stadium_id', widget.stadiumId!);
+        } catch (e) {
+          debugPrint('Pre-delete cleanup warning: $e');
+        }
+
+        // 1. Try Hard Delete (Permanent DB Removal)
+        bool success = false;
+        try {
+          await Supabase.instance.client
+              .from('stadiums')
+              .delete()
+              .eq('id', widget.stadiumId!);
+          success = true;
+        } catch (e) {
+          debugPrint('Hard delete fallback to soft-delete: $e');
+        }
+
+        // 2. Fallback Soft-Delete if DB constraint prevents hard delete
+        if (!success) {
+          try {
+            await Supabase.instance.client
+                .from('stadiums')
+                .update({
+                  'is_verified': false,
+                  'is_deleted_by_owner': true,
+                  'is_blocked': true,
+                })
+                .eq('id', widget.stadiumId!);
+            success = true;
+          } catch (_) {}
+        }
+
         if (!mounted) return;
         if (success) {
-          VSPFeedback.showSuccess(
-            context,
-            isArabic
-                ? 'تم إيقاف وإخفاء الملعب بنجاح وجاري المراجعة! 🛡️'
-                : 'Stadium hidden successfully, pending admin review! 🛡️',
-          );
-          Navigator.pop(context);
+          // Check remaining active stadiums for owner
+          final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+          final uid = auth.currentUser?.uid;
+          if (uid != null) {
+            try {
+              final remaining = await Supabase.instance.client
+                  .from('stadiums')
+                  .select('id')
+                  .eq('owner_id', uid)
+                  .neq('is_deleted_by_owner', true);
+              final bool stillHas = (remaining as List).isNotEmpty;
+              await auth.updateProfile({'hasStadium': stillHas});
+            } catch (_) {}
+          }
+
+          if (mounted) {
+            VSPFeedback.showSuccess(
+              context,
+              isArabic
+                  ? 'تم حذف الملعب نهائياً واختفاؤه من التطبيق بنجاح! 🗑️'
+                  : 'Stadium deleted permanently and hidden from app! 🗑️',
+            );
+            Navigator.pop(context);
+          }
         }
       } catch (e) {
         if (mounted) {
-          VSPFeedback.showError(context, 'Error: ');
+          VSPFeedback.showError(
+            context,
+            isArabic ? 'حدث خطأ أثناء عملية حذف الملعب' : 'Error deleting stadium',
+          );
         }
       } finally {
         if (mounted) setState(() => _isSaving = false);

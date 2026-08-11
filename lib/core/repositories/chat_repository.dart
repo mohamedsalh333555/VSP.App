@@ -109,6 +109,33 @@ class ChatRepository {
     }
   }
 
+  Future<String?> _getValidStadiumId(String? ownerId) async {
+    try {
+      if (ownerId != null && ownerId.isNotEmpty) {
+        final stadiumRes = await _supabase
+            .from('stadiums')
+            .select('id')
+            .eq('owner_id', ownerId)
+            .limit(1)
+            .maybeSingle();
+        if (stadiumRes != null && stadiumRes['id'] != null) {
+          return stadiumRes['id'].toString();
+        }
+      }
+      final anyStadium = await _supabase
+          .from('stadiums')
+          .select('id')
+          .limit(1)
+          .maybeSingle();
+      if (anyStadium != null && anyStadium['id'] != null) {
+        return anyStadium['id'].toString();
+      }
+    } catch (e) {
+      VSPLogger.w('Could not fetch stadium ID for chat thread: $e');
+    }
+    return null;
+  }
+
   /// 🛠️ FIX: Get or create a support chat thread using valid UUID and RLS-compliant fields
   Future<Map<String, dynamic>> getOrCreateSupportChat(String ownerId, bool isArabic) async {
     try {
@@ -123,13 +150,17 @@ class ChatRepository {
         return existing;
       }
 
+      final stadiumId = await _getValidStadiumId(ownerId);
+      final pastStart = DateTime.utc(2000, 1, 1).toIso8601String();
+      final pastEnd = DateTime.utc(2000, 1, 1, 0, 0, 1).toIso8601String();
+
       final Map<String, dynamic> supportMap = {
-        'stadium_id': null,
+        if (stadiumId != null) 'stadium_id': stadiumId,
         'stadium_name': isArabic ? 'الدعم الفني VSP' : 'VSP Support',
         'stadium_image_url': '',
         'owner_id': ownerId,
-        'start_time': DateTime.now().toUtc().toIso8601String(),
-        'end_time': DateTime.now().toUtc().toIso8601String(),
+        'start_time': pastStart,
+        'end_time': pastEnd,
         'booking_type': 'personal',
         'notes': 'support_chat',
         'status': 'confirmed',
@@ -167,13 +198,17 @@ class ChatRepository {
         return existing;
       }
 
+      final stadiumId = await _getValidStadiumId(currentUserId);
+      final pastStart = DateTime.utc(2000, 1, 1).toIso8601String();
+      final pastEnd = DateTime.utc(2000, 1, 1, 0, 0, 1).toIso8601String();
+
       final Map<String, dynamic> chatMap = {
-        'stadium_id': null,
+        if (stadiumId != null) 'stadium_id': stadiumId,
         'stadium_name': isArabic ? 'محادثة مباشرة' : 'Direct Chat',
         'stadium_image_url': '',
         'owner_id': currentUserId,
-        'start_time': DateTime.now().toUtc().toIso8601String(),
-        'end_time': DateTime.now().toUtc().toIso8601String(),
+        'start_time': pastStart,
+        'end_time': pastEnd,
         'booking_type': 'personal',
         'notes': 'chat_thread',
         'status': 'confirmed',
