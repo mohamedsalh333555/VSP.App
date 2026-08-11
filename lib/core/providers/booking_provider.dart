@@ -217,16 +217,17 @@ class BookingProvider with ChangeNotifier {
               }
             }
 
-            _userBookings = bookings;
+            final normalized = _normalizeBookings(bookings);
+            _userBookings = normalized;
             final now = DateTime.now();
-            _upcomingBookings = bookings
+            _upcomingBookings = normalized
                 .where(
                   (b) =>
                       b.status == BookingStatus.confirmed &&
                       b.endTime.isAfter(now),
                 )
                 .toList();
-            _historyBookings = bookings
+            _historyBookings = normalized
                 .where(
                   (b) =>
                       b.status == BookingStatus.completed ||
@@ -454,6 +455,32 @@ class BookingProvider with ChangeNotifier {
   /// Get bookings for a specific stadium and date (Stream)
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
     return _repository.getBookingsForStadium(stadiumId, date);
+  }
+
+  List<Booking> _normalizeBookings(List<Booking> rawBookings) {
+    return rawBookings.map((b) {
+      final bStartLocal = b.startTime.toLocal();
+      final bEndLocal = b.endTime.toLocal();
+      final int startMin = bStartLocal.hour * 60 + bStartLocal.minute;
+      final int endMin = bEndLocal.hour * 60 + bEndLocal.minute;
+
+      const int breakStartMin = 1110; // 6:30 PM (18:30)
+
+      if (startMin < breakStartMin && endMin > breakStartMin && bStartLocal.hour >= 12) {
+        final newEnd = DateTime(
+          bStartLocal.year,
+          bStartLocal.month,
+          bStartLocal.day,
+          18,
+          30,
+        );
+        return b.copyWith(
+          endTime: newEnd,
+          totalPrice: 100.0,
+        );
+      }
+      return b;
+    }).toList();
   }
 
   /// Clear error message

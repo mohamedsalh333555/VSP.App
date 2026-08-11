@@ -4,6 +4,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/language_provider.dart';
+import '../../../../core/providers/auth_provider.dart';
 
 class NotificationsScreen extends StatefulWidget {
   const NotificationsScreen({super.key});
@@ -13,16 +14,21 @@ class NotificationsScreen extends StatefulWidget {
 }
 
 class _NotificationsScreenState extends State<NotificationsScreen> {
-  // General
+  // General (Both Roles)
   bool _generalNotifications = true;
   bool _soundAlerts = true;
-
-  // Granular Toggles
   bool _chatNotifications = true;
-  bool _cashBookings = true;
-  bool _teamTransfers = true;
-  bool _matchReminders = true;
-  bool _challengeResults = true;
+
+  // Stadium Owner Toggles
+  bool _ownerNewBookings = true;
+  bool _ownerPayouts = true;
+  bool _ownerDailySchedule = true;
+
+  // Player Toggles
+  bool _playerBookingConfirmations = true;
+  bool _playerTeamTransfers = true;
+  bool _playerMatchReminders = true;
+  bool _playerChallengeResults = true;
 
   bool _isLoading = true;
 
@@ -37,12 +43,18 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
     setState(() {
       _generalNotifications = prefs.getBool('notif_general') ?? true;
       _soundAlerts = prefs.getBool('notif_sound') ?? true;
-
       _chatNotifications = prefs.getBool('notif_chat') ?? true;
-      _cashBookings = prefs.getBool('notif_cash_bookings') ?? true;
-      _teamTransfers = prefs.getBool('notif_team_transfers') ?? true;
-      _matchReminders = prefs.getBool('notif_match_reminders') ?? true;
-      _challengeResults = prefs.getBool('notif_challenge_results') ?? true;
+
+      // Owner
+      _ownerNewBookings = prefs.getBool('notif_owner_new_bookings') ?? true;
+      _ownerPayouts = prefs.getBool('notif_owner_payouts') ?? true;
+      _ownerDailySchedule = prefs.getBool('notif_owner_daily_schedule') ?? true;
+
+      // Player
+      _playerBookingConfirmations = prefs.getBool('notif_cash_bookings') ?? true;
+      _playerTeamTransfers = prefs.getBool('notif_team_transfers') ?? true;
+      _playerMatchReminders = prefs.getBool('notif_match_reminders') ?? true;
+      _playerChallengeResults = prefs.getBool('notif_challenge_results') ?? true;
 
       _isLoading = false;
     });
@@ -57,6 +69,8 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
   Widget build(BuildContext context) {
     final languageProvider = Provider.of<LanguageProvider>(context);
     final isAr = languageProvider.isArabic;
+    final auth = Provider.of<AuthProvider>(context);
+    final isOwner = auth.isOwner;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -64,11 +78,13 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
+          icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(
-          isAr ? 'إعدادات الإشعارات' : 'Notification Settings',
+          isOwner 
+            ? (isAr ? 'إعدادات إشعارات الملعب' : 'Stadium Notification Settings')
+            : (isAr ? 'إعدادات إشعارات اللاعب' : 'Player Notification Settings'),
           style: Theme.of(context).textTheme.displaySmall,
         ),
         centerTitle: true,
@@ -81,7 +97,7 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  // Group 1: General Settings
+                  // Group 1: General Settings (Both Roles)
                   _buildSectionHeader(isAr ? 'إعدادات عامة' : 'General Settings'),
                   const SizedBox(height: 12),
                   _buildSwitchTile(
@@ -104,16 +120,24 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                     },
                   ),
 
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 28),
                   const Divider(color: VSPColors.divider, height: 1),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 20),
 
-                  // Group 2: Specific Alerts
-                  _buildSectionHeader(isAr ? 'تفاصيل التنبيهات' : 'Notification Preferences'),
+                  // Group 2: Role Specific Preferences
+                  _buildSectionHeader(
+                    isOwner
+                        ? (isAr ? 'تفضيلات إشعارات أصحاب الملاعب' : 'Stadium Owner Preferences')
+                        : (isAr ? 'تفضيلات إشعارات اللاعبين' : 'Player Notification Preferences'),
+                  ),
                   const SizedBox(height: 12),
+
+                  // Common Chat Switch
                   _buildSwitchTile(
-                    isAr ? 'إشعارات الدردشة' : 'Chat Notifications',
-                    isAr ? 'تنبيهات عند استلام رسائل جديدة في المحادثات' : 'Alerts when receiving new messages in chat',
+                    isAr ? 'رسائل الدردشة' : 'Chat Messages',
+                    isOwner 
+                        ? (isAr ? 'إشعار عند استلام رسائل جديدة من اللاعبين في المحادثات' : 'Alerts when receiving new messages from players')
+                        : (isAr ? 'تنبيه عند استلام رسائل جديدة في محادثات التحدي أو الفريق' : 'Alerts for new messages in team or match chats'),
                     _chatNotifications,
                     _generalNotifications
                         ? (v) {
@@ -122,54 +146,96 @@ class _NotificationsScreenState extends State<NotificationsScreen> {
                           }
                         : null,
                   ),
-                  const SizedBox(height: 20),
-                  _buildSwitchTile(
-                    isAr ? 'تأكيدات الحجز النقدي' : 'Cash Booking Confirmations',
-                    isAr ? 'تنبيه عند قبول أو رفض المالك للحجز النقدي' : 'Notification when owner confirms or rejects a cash booking',
-                    _cashBookings,
-                    _generalNotifications
-                        ? (v) {
-                            setState(() => _cashBookings = v);
-                            _saveSetting('notif_cash_bookings', v);
-                          }
-                        : null,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSwitchTile(
-                    isAr ? 'الانتقالات والفرق' : 'Team & Transfers',
-                    isAr ? 'طلبات الانضمام وتغييرات قائمة الفريق' : 'Join requests and squad roster updates',
-                    _teamTransfers,
-                    _generalNotifications
-                        ? (v) {
-                            setState(() => _teamTransfers = v);
-                            _saveSetting('notif_team_transfers', v);
-                          }
-                        : null,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSwitchTile(
-                    isAr ? 'تذكيرات المباريات' : 'Match Reminders',
-                    isAr ? 'تذكير تلقائي على جهازك قبل بدء المباراة بساعتين' : 'Automatic reminder on your device 2 hours before kickoff',
-                    _matchReminders,
-                    _generalNotifications
-                        ? (v) {
-                            setState(() => _matchReminders = v);
-                            _saveSetting('notif_match_reminders', v);
-                          }
-                        : null,
-                  ),
-                  const SizedBox(height: 20),
-                  _buildSwitchTile(
-                    isAr ? 'نتائج التحديات' : 'Challenge Match Results',
-                    isAr ? 'تنبيه عند إرسال نتيجة مباراة أو الاعتراض عليها' : 'Alert when a challenge score is submitted or disputed',
-                    _challengeResults,
-                    _generalNotifications
-                        ? (v) {
-                            setState(() => _challengeResults = v);
-                            _saveSetting('notif_challenge_results', v);
-                          }
-                        : null,
-                  ),
+
+                  if (isOwner) ...[
+                    // STADIUM OWNER SPECIFIC TOGGLES
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'الحجوزات والطلبات الجديدة' : 'New Bookings & Requests',
+                      isAr ? 'إشعار فوري عند قيام لاعب بحجز موعد جديد في ملعبك' : 'Instant alert when a player places a new booking on your pitch',
+                      _ownerNewBookings,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _ownerNewBookings = v);
+                              _saveSetting('notif_owner_new_bookings', v);
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'تنبيهات التسويات والعربون' : 'Payouts & Deposit Settlements',
+                      isAr ? 'تنبيهات استلام مبالغ العربون والدفع الإلكتروني' : 'Alerts for received digital deposits and payout settlements',
+                      _ownerPayouts,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _ownerPayouts = v);
+                              _saveSetting('notif_owner_payouts', v);
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'تذكيرات جدول التشغيل اليومي' : 'Daily Schedule Reminders',
+                      isAr ? 'تذكير يومي بقائمة حجوزات الملعب وساعات التشغيل' : 'Daily summary reminder of upcoming pitch bookings and schedule',
+                      _ownerDailySchedule,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _ownerDailySchedule = v);
+                              _saveSetting('notif_owner_daily_schedule', v);
+                            }
+                          : null,
+                    ),
+                  ] else ...[
+                    // PLAYER SPECIFIC TOGGLES
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'تأكيدات الحجز والعربون' : 'Booking Confirmations',
+                      isAr ? 'تأكيد أو تعديل موعد حجز الملعب والعربون' : 'Confirmation or status updates for your pitch bookings',
+                      _playerBookingConfirmations,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _playerBookingConfirmations = v);
+                              _saveSetting('notif_cash_bookings', v);
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'تذكيرات المباريات (قبل ساعتين)' : 'Match Reminders (2 Hours Before)',
+                      isAr ? 'تذكير تلقائي على جهازك قبل بدء المباراة بساعتين' : 'Automatic reminder 2 hours before your match kickoff',
+                      _playerMatchReminders,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _playerMatchReminders = v);
+                              _saveSetting('notif_match_reminders', v);
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'الانتقالات والفرق' : 'Team & Squad Transfers',
+                      isAr ? 'طلبات انضمام اللاعبين وتحديثات تشكيلة الفريق' : 'Join requests and squad roster updates',
+                      _playerTeamTransfers,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _playerTeamTransfers = v);
+                              _saveSetting('notif_team_transfers', v);
+                            }
+                          : null,
+                    ),
+                    const SizedBox(height: 20),
+                    _buildSwitchTile(
+                      isAr ? 'نتائج التحديات والترتيب' : 'Challenge Results & Ranking',
+                      isAr ? 'تنبيه عند اعتماد نتيجة مباراة أو اعتراض المنافس' : 'Alert when a challenge score is submitted or disputed',
+                      _playerChallengeResults,
+                      _generalNotifications
+                          ? (v) {
+                              setState(() => _playerChallengeResults = v);
+                              _saveSetting('notif_challenge_results', v);
+                            }
+                          : null,
+                    ),
+                  ],
                   const SizedBox(height: 24),
                 ],
               ),

@@ -352,8 +352,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     Expanded(
                       child: Text(
                         isArabic
-                            ? '🔥 80% من مواعيد اليوم محجوزة! احجز موعدك الآن قبل انشغال الملعب'
-                            : '🔥 80% of today\'s slots are booked! Lock in your pitch before it\'s taken',
+                            ? '80% من مواعيد اليوم محجوزة! احجز موعدك الآن قبل انشغال الملعب'
+                            : '80% of today\'s slots are booked! Lock in your pitch before it\'s taken',
                         style: const TextStyle(
                           color: Colors.amber,
                           fontSize: 11,
@@ -375,7 +375,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         text: TextSpan(
                           children: [
                             TextSpan(text: '${stadium.basePrice.toStringAsFixed(0)} ', style: Theme.of(context).textTheme.displayLarge),
-                            TextSpan(text: l10n.egCurrency, style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+                            TextSpan(text: isArabic ? 'ج.م' : 'EGP', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
                           ],
                         ),
                       ),
@@ -387,7 +387,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                                 children: [
                                   const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 11),
                                   const SizedBox(width: 4),
-                                  Text('${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${l10n.egCurrency}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
+                                  Text('${isArabic ? 'عربون: ' : 'Deposit: '}${stadium.depositAmount.toInt()} ${isArabic ? 'ج.م' : 'EGP'}', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold)),
                                 ],
                               )
                             : Row(
@@ -404,7 +404,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   const SizedBox(width: VSPSpacing.lg),
                   Expanded(
                     child: PrimaryButton(
-                      text: isArabic ? '⚡ احجز الآن' : '⚡ Book Now',
+                      text: isArabic ? 'احجز الآن' : 'Book Now',
                       onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingTypeScreen(stadium: stadium))),
                     ),
                   ),
@@ -456,6 +456,19 @@ class _InformationTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final String displayName = (stadium.name.trim().isEmpty || stadium.name.trim() == 'Mo')
+        ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
+        : stadium.name;
+
+    String rawDesc = stadium.description.isNotEmpty ? stadium.description : l10n.noDescription;
+    if (!isArabic && rawDesc.isNotEmpty) {
+      rawDesc = rawDesc
+          .replaceAll('الالتزام بالمواعد', '• Punctuality')
+          .replaceAll('الالتزام بالمواعيد', '• Punctuality')
+          .replaceAll('الحفاظ على النظافة', '• Cleanliness')
+          .replaceAll('ممنوع التدخين', '• No Smoking');
+    }
 
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
@@ -468,7 +481,7 @@ class _InformationTab extends StatelessWidget {
             children: [
               Expanded(
                 child: Text(
-                  stadium.name,
+                  displayName,
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.w900,
                       ),
@@ -547,7 +560,7 @@ class _InformationTab extends StatelessWidget {
           const SizedBox(height: VSPSpacing.lg),
           Text(l10n.informationStadium, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: VSPSpacing.sm),
-          Text(stadium.description.isNotEmpty ? stadium.description : l10n.noDescription, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5)),
+          Text(rawDesc, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5)),
           const SizedBox(height: VSPSpacing.lg),
           Text(l10n.features, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: VSPSpacing.md),

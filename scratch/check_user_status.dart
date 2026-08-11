@@ -2,18 +2,17 @@ import 'dart:io';
 import 'dart:convert';
 
 void main() async {
-  print('Fetching user profile for Mohamed Salah...');
-  final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/users?id=eq.85c2b66c-2ff4-455f-9799-4efe335e5b52');
+  print('Fetching all bookings raw...');
+  final url = Uri.parse(
+    'https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/bookings?select=id,start_time,end_time,status,payment_status,is_paid'
+  );
   final client = HttpClient();
-
   final req = await client.getUrl(url);
   req.headers.set('apikey', 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
   req.headers.set('Authorization', 'Bearer sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
-
   final resp = await req.close();
   final body = await resp.transform(utf8.decoder).join();
-
-  print('Status Code: ${resp.statusCode}');
-  print('User Profile Body: $body');
+  print('HTTP Status: ${resp.statusCode}');
+  print('Raw: $body');
   exit(0);
 }

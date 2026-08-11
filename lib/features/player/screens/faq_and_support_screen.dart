@@ -68,45 +68,53 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
                 border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
               child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Row(
-                    children: [
-                      const Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 24),
-                      const SizedBox(width: 10),
-                      Text(
-                        isOwner 
-                          ? (isArabic ? 'فريق دعم أصحاب الملاعب المباشر' : 'Direct Stadium Owners Support')
-                          : (isArabic ? 'فريق دعم VSP المباشر' : 'VSP Direct Support Team'),
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-                      ),
-                    ],
+                  Text(
+                    isOwner 
+                      ? (isArabic ? 'دعم أصحاب الملاعب المباشر' : 'Stadium Owner Direct Support')
+                      : (isArabic ? 'دعم VSP المباشر' : 'VSP Direct Support'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton.icon(
+                        child: ElevatedButton(
                           onPressed: _launchWhatsApp,
-                          icon: const Icon(Iconsax.messages_3_copy, size: 18),
-                          label: Text(isArabic ? 'واتساب الدعم' : 'WhatsApp Support', style: const TextStyle(fontWeight: FontWeight.bold)),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFF25D366),
                             foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                            elevation: 0,
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isArabic ? 'واتساب الدعم' : 'WhatsApp Support',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                       ),
                       const SizedBox(width: 10),
                       Expanded(
-                        child: OutlinedButton.icon(
+                        child: OutlinedButton(
                           onPressed: _launchPhoneCall,
-                          icon: const Icon(Iconsax.call_copy, size: 18, color: VSPColors.accent),
-                          label: Text(isArabic ? 'اتصال مباشر' : 'Direct Call', style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold)),
                           style: OutlinedButton.styleFrom(
                             side: const BorderSide(color: VSPColors.accent),
-                            padding: const EdgeInsets.symmetric(vertical: 12),
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
                             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                          ),
+                          child: FittedBox(
+                            fit: BoxFit.scaleDown,
+                            child: Text(
+                              isArabic ? 'اتصال مباشر' : 'Direct Call',
+                              style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                              maxLines: 1,
+                            ),
                           ),
                         ),
                       ),

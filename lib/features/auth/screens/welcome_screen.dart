@@ -346,9 +346,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
           ],
         ),
         child: Icon(
-          Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_copy : Iconsax.arrow_right_copy,
+          Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
           color: Colors.black,
-          size: 18,
+          size: 20,
         ),
       ),
     );

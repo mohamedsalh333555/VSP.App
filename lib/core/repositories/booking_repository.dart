@@ -414,12 +414,14 @@ class SupabaseBookingRepository implements BookingRepository {
 
   Future<void> _sendOwnerNotification(BookingDraft draft, String bookingId) async {
     try {
+      final dateStr = DateFormat('MMM d', 'en').format(draft.startTime);
+      final timeStr = DateFormat('h:mm a', 'en').format(draft.startTime);
       await NotificationRepository().sendNotification(
         draft.ownerId,
         AppNotification(
           id: '',
           title: 'New Booking Received! 💰',
-          body: '${draft.playerTeamName ?? "A player"} booked ${draft.stadiumName} on ${DateFormat('MMM d').format(draft.startTime)} at ${DateFormat('h:mm a').format(draft.startTime)}.',
+          body: '${draft.playerTeamName ?? "A player"} booked ${draft.stadiumName} on $dateStr at $timeStr.',
           type: 'info',
           createdAt: DateTime.now(),
           bookingId: bookingId,

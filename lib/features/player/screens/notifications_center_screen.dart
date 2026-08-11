@@ -141,7 +141,7 @@ class _NotificationCard extends StatelessWidget {
                     children: [
                       Flexible(
                         child: Text(
-                          notification.title,
+                          _localizeText(context, notification.title),
                           maxLines: 1,
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.titleMedium?.copyWith(
@@ -149,6 +149,7 @@ class _NotificationCard extends StatelessWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 8),
                       Text(
                         _formatTime(context, notification.createdAt),
                         style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
@@ -157,7 +158,7 @@ class _NotificationCard extends StatelessWidget {
                   ),
                   const SizedBox(height: VSPSpacing.xs),
                   Text(
-                    notification.body,
+                    _localizeText(context, notification.body),
                     style: Theme.of(context).textTheme.bodySmall?.copyWith(
                       color: notification.isRead ? VSPColors.textSecondary.withValues(alpha: 0.6) : VSPColors.textSecondary,
                     ),
@@ -274,6 +275,37 @@ class _NotificationCard extends StatelessWidget {
     if (diff.inMinutes < 60) return AppLocalizations.of(context)!.minutesAgo(diff.inMinutes);
     if (diff.inHours < 24) return AppLocalizations.of(context)!.hoursAgo(diff.inHours);
     return DateFormat('MMM d', AppLocalizations.of(context)!.localeName).format(dt);
+  }
+
+  String _localizeText(BuildContext context, String text) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    if (isArabic) return text;
+
+    String result = text;
+    final Map<String, String> replacements = {
+      'يناير': 'Jan',
+      'فبراير': 'Feb',
+      'مارس': 'Mar',
+      'أبريل': 'Apr',
+      'مايو': 'May',
+      'يونيو': 'Jun',
+      'يوليو': 'Jul',
+      'أغسطس': 'Aug',
+      'سبتمبر': 'Sep',
+      'أكتوبر': 'Oct',
+      'نوفمبر': 'Nov',
+      'ديسمبر': 'Dec',
+      ' م': ' PM',
+      ' ص': ' AM',
+      'مـ': 'PM',
+      'صـ': 'AM',
+    };
+
+    replacements.forEach((ar, en) {
+      result = result.replaceAll(ar, en);
+    });
+
+    return result;
   }
 }
 

@@ -47,37 +47,21 @@ class TermsAndPrivacyScreen extends StatelessWidget {
                 borderRadius: BorderRadius.circular(VSPRadius.xl),
                 border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
-              child: Row(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Container(
-                    width: 50,
-                    height: 50,
-                    decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 28),
+                  Text(
+                    isOwner 
+                        ? (isArabic ? 'اتفاقية تشغيل وحماية أصحاب الملاعب' : 'Stadium Operator & Data Agreement')
+                        : (isArabic ? 'اتفاقية الاستخدام وحماية البيانات' : 'Terms of Use & Data Agreement'),
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                   ),
-                  const SizedBox(width: 14),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          isOwner 
-                              ? (isArabic ? 'اتفاقية تشغيل وحماية أصحاب الملاعب' : 'Stadium Operator & Data Agreement')
-                              : (isArabic ? 'اتفاقية الاستخدام وحماية البيانات' : 'Terms of Use & Data Agreement'),
-                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          isArabic 
-                              ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
-                              : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
-                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                        ),
-                      ],
-                    ),
+                  const SizedBox(height: 4),
+                  Text(
+                    isArabic 
+                        ? 'مطابق لقوانين وحماية البيانات المصرية (PDPL 2020)'
+                        : 'Compliant with Egyptian Data Protection Law (PDPL 2020)',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                 ],
               ),
@@ -89,7 +73,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 1: Stadium Operation Terms
               _buildSectionCard(
                 context,
-                icon: Iconsax.building_copy,
                 title: isArabic ? '1. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
                 content: isArabic
                     ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
@@ -101,7 +84,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 2: Privacy & Player Data Protection
               _buildSectionCard(
                 context,
-                icon: Iconsax.lock_copy,
                 title: isArabic ? '2. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
                 content: isArabic
                     ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
@@ -113,7 +95,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 3: Payouts & Deposit Guarantee
               _buildSectionCard(
                 context,
-                icon: Iconsax.wallet_1_copy,
                 title: isArabic ? '3. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
                 content: isArabic
                     ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
@@ -125,7 +106,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Section 4: Tournament & Dispute Integrity
               _buildSectionCard(
                 context,
-                icon: Iconsax.cup_copy,
                 title: isArabic ? '4. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
                 content: isArabic
                     ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
@@ -135,7 +115,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
               // Player Terms
               _buildSectionCard(
                 context,
-                icon: Iconsax.document_text_copy,
                 title: isArabic ? '1. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
                 content: isArabic
                     ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب.'
@@ -146,7 +125,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: Iconsax.lock_copy,
                 title: isArabic ? '2. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
                 content: isArabic
                     ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
@@ -157,7 +135,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: Iconsax.wallet_1_copy,
                 title: isArabic ? '3. سياسة الرسوم والدفع أونلاين' : '3. Payments & Refund Policy',
                 content: isArabic
                     ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع.'
@@ -168,7 +145,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
               _buildSectionCard(
                 context,
-                icon: Iconsax.cup_copy,
                 title: isArabic ? '4. سياسة نتائج المباريات والترتيب الرسمي' : '4. Match Results & Ranking Policy',
                 content: isArabic
                     ? 'يُعتمد إدخال نتائج التحديات بين الكباتن تلقائياً بعد مرور 24 ساعة في حال عدم تقديم اعتراض رسمي من الفريق الخصم، وتُحدث نقاط الترتيب بناءً عليها بنزاهة.'
@@ -185,7 +161,6 @@ class TermsAndPrivacyScreen extends StatelessWidget {
 
   Widget _buildSectionCard(
     BuildContext context, {
-    required IconData icon,
     required String title,
     required String content,
   }) {
@@ -199,15 +174,9 @@ class TermsAndPrivacyScreen extends StatelessWidget {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Row(
-            children: [
-              Icon(icon, color: VSPColors.accent, size: 20),
-              const SizedBox(width: 10),
-              Text(
-                title,
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
-              ),
-            ],
+          Text(
+            title,
+            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
           ),
           const SizedBox(height: 10),
           Text(

@@ -11,6 +11,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -469,7 +470,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
           Expanded(
             child: SingleChildScrollView(
               physics: const BouncingScrollPhysics(),
-              padding: const EdgeInsets.all(16),
+              padding: const EdgeInsets.fromLTRB(16, 16, 16, 140),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
@@ -499,21 +500,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
-                                color: (isBooked || isPast) ? VSPColors.surface.withValues(alpha: 0.3) : (isSelected ? VSPColors.accentSoft : Colors.transparent),
+                                color: (isBooked || isPast)
+                                    ? VSPColors.surface.withValues(alpha: 0.3)
+                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
-                                border: Border.all(color: (isBooked || isPast) ? Colors.transparent : (isSelected ? VSPColors.accent : VSPColors.divider), width: isSelected ? 2 : 1),
+                                border: Border.all(
+                                  color: (isBooked || isPast)
+                                      ? Colors.transparent
+                                      : (isSelected ? VSPColors.accent : VSPColors.divider),
+                                  width: isSelected ? 2 : 1,
+                                ),
                               ),
                               child: Row(
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
-                                  if (isSelected) ...[const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.accent), const SizedBox(width: 8)],
+                                  if (isSelected) ...[const Icon(Iconsax.tick_circle_copy, size: 18, color: VSPColors.accent), const SizedBox(width: 8)],
                                   Directionality(
                                     textDirection: TextDirection.ltr,
                                     child: Text(
                                       slotLabel,
                                       style: TextStyle(
-                                        color: (isBooked || isPast) ? VSPColors.textSecondary.withValues(alpha: 0.3) : (isSelected ? VSPColors.accent : VSPColors.textPrimary),
-                                        fontSize: 16, fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                                        color: (isBooked || isPast)
+                                            ? VSPColors.textSecondary.withValues(alpha: 0.3)
+                                            : (isSelected ? Colors.white : VSPColors.textPrimary),
+                                        fontSize: 16,
+                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                         decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
                                       ),
                                     ),
@@ -846,7 +857,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           if (booking != null) {
                             nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
                           } else {
-                            messenger.showSnackBar(SnackBar(content: Text(bookingProvider.errorMessage ?? 'Failed to create booking')));
+                            VSPFeedback.showError(
+                              context,
+                              bookingProvider.errorMessage ?? (isArabic ? 'فشل إنشاء الحجز' : 'Failed to create booking'),
+                            );
                           }
                         }
                       } else {

@@ -7,12 +7,12 @@ import 'package:flutter/services.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
-
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/repositories/match_repository.dart';
+import '../../../core/repositories/notification_repository.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
@@ -577,12 +577,47 @@ class _HomeContent extends StatelessWidget {
                     ],
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Iconsax.notification_copy, color: Colors.white),
-                  onPressed: () => Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                StreamBuilder<int>(
+                  stream: NotificationRepository().getUnreadNotificationCount(
+                    context.read<AuthProvider>().currentUser?.uid ?? '',
                   ),
+                  builder: (context, snapshot) {
+                    final hasUnread = (snapshot.data ?? 0) > 0;
+                    return Stack(
+                      alignment: Alignment.center,
+                      children: [
+                        IconButton(
+                          icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+                          onPressed: () => Navigator.push(
+                            context,
+                            MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                          ),
+                        ),
+                        if (hasUnread)
+                          Positioned(
+                            top: 8,
+                            right: 8,
+                            child: TweenAnimationBuilder<double>(
+                              tween: Tween(begin: 0.0, end: 1.0),
+                              duration: const Duration(milliseconds: 400),
+                              curve: Curves.elasticOut,
+                              builder: (ctx, val, _) => Transform.scale(
+                                scale: val,
+                                child: Container(
+                                  width: 9,
+                                  height: 9,
+                                  decoration: BoxDecoration(
+                                    color: VSPColors.error,
+                                    shape: BoxShape.circle,
+                                    boxShadow: [BoxShadow(color: VSPColors.error.withValues(alpha: 0.6), blurRadius: 4, spreadRadius: 1)],
+                                  ),
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    );
+                  },
                 ),
               ],
             ),

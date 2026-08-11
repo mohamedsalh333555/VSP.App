@@ -47,10 +47,10 @@ class ChatRepository {
         'created_at': message.timestamp.toUtc().toIso8601String(),
       });
 
-      // 2. Fetch current unread_counts and joined_user_ids to update them safely
+      // 2. Fetch current booking info
       final bookingResponse = await _supabase
           .from('bookings')
-          .select('joined_user_ids, unread_counts')
+          .select('joined_user_ids, unread_counts, owner_id, player_id')
           .eq('id', bookingId)
           .maybeSingle();
 
@@ -81,10 +81,16 @@ class ChatRepository {
           }).eq('id', bookingId);
         }
 
-        final List<String> otherParticipants = joinedIds
-            .map((uid) => uid.toString())
-            .where((uid) => uid != message.senderId)
+        // 3. 📣 إشعار كل المشاركين (owner + player + joined_user_ids) عدا المُرسِل
+        final Set<String> allRecipients = {
+          ...joinedIds.map((uid) => uid.toString()),
+          if (bookingResponse['owner_id'] != null) bookingResponse['owner_id'].toString(),
+          if (bookingResponse['player_id'] != null) bookingResponse['player_id'].toString(),
+        };
+        final List<String> otherParticipants = allRecipients
+            .where((uid) => uid != message.senderId && uid.isNotEmpty)
             .toList();
+
         if (otherParticipants.isNotEmpty) {
           await NotificationHandler.notifyNewChatMessage(
             recipientIds: otherParticipants,
@@ -102,6 +108,7 @@ class ChatRepository {
       rethrow;
     }
   }
+
 
   /// Clear unread message count for a specific user in a booking
   Future<void> markMessagesAsRead(String bookingId, String userId) async {
@@ -263,5 +270,23 @@ class ChatRepository {
         .stream(primaryKey: ['id'])
         .order('last_message_time', ascending: false)
         .map((list) => list);
+  }
+
+  /// 🔴 Stream إجمالي عدد الرسائل غير المقروءة للمستخدم الحالي (للـ badge في الـ nav bar)
+  Stream<int> streamTotalUnreadCount(String userId) {
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          int total = 0;
+          for (final booking in list) {
+            final unreadMap = booking['unread_counts'];
+            if (unreadMap is Map) {
+              final count = unreadMap[userId];
+              if (count is int && count > 0) total += count;
+            }
+          }
+          return total;
+        });
   }
 }

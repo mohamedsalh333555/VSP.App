@@ -2,9 +2,17 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../ui/tokens/vsp_tokens.dart';
+import '../../l10n/app_localizations.dart';
 
 class VSPFeedback {
-  /// 🟢 إظهار إشعار نجاح أعلى الشاشة فوق أي بوب اب أو مودال مفتوح
+
+  // ─── نظام الألوان الموحد للتنبيهات اللحظية ───
+  // 🟢 أخضر  = نجاح  (VSPColors.accent)
+  // 🔴 أحمر  = خطأ   (VSPColors.error)
+  // 🟠 برتقالي = تحذير (VSPColors.warning / Orange)
+  // ⚪ أبيض  = معلومة (Colors.white / textPrimary)
+
+  /// 🟢 نجاح
   static void showSuccess(BuildContext context, String message) {
     HapticFeedback.lightImpact();
     _showOverlayToast(
@@ -16,9 +24,10 @@ class VSPFeedback {
     );
   }
 
-  /// 🔴 إظهار إشعار خطأ أعلى الشاشة فوق أي بوب اب أو مودال مفتوح
-  static void showError(BuildContext context, String message) {
+  /// 🔴 خطأ — مع تنظيف تلقائي للرسالة من prefixes الـ DB
+  static void showError(BuildContext context, String rawMessage) {
     HapticFeedback.heavyImpact();
+    final message = _cleanErrorMessage(context, rawMessage);
     _showOverlayToast(
       context: context,
       message: message,
@@ -28,8 +37,57 @@ class VSPFeedback {
     );
   }
 
+  /// 🟠 تحذير
+  static void showWarning(BuildContext context, String message) {
+    HapticFeedback.mediumImpact();
+    _showOverlayToast(
+      context: context,
+      message: message,
+      backgroundColor: const Color(0xFFE67E22),
+      textColor: Colors.white,
+      icon: Iconsax.warning_2_copy,
+    );
+  }
+
+  /// ⚪ معلومة
+  static void showInfo(BuildContext context, String message) {
+    _showOverlayToast(
+      context: context,
+      message: message,
+      backgroundColor: VSPColors.surface,
+      textColor: Colors.white,
+      icon: Iconsax.info_circle_copy,
+    );
+  }
+
   static void triggerSuccess() {
     HapticFeedback.lightImpact();
+  }
+
+  /// 🧹 تنظيف رسائل الخطأ الخام من DB ومع localization تلقائي
+  static String _cleanErrorMessage(BuildContext context, String raw) {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    String msg = raw
+        .replaceAll('Failed to create booking: ', '')
+        .replaceAll('Exception: ', '')
+        .replaceAll('PostgrestException', '')
+        .replaceAll('(message:', '')
+        .replaceAll('hint: null)', '')
+        .trim();
+
+    // ترجمة رسائل double booking الشائعة
+    if (msg.contains('double booking') || msg.contains('time_conflict') || msg.contains('تحجز نفس الوقت')) {
+      return isAr
+          ? 'هذا الوقت محجوز بالفعل. يرجى اختيار وقت آخر.'
+          : 'This time slot is already booked. Please choose another.';
+    }
+    if (msg.contains('cash limit') || msg.contains('حد الكاش')) {
+      return isAr
+          ? 'تجاوزت حد الحجوزات النقدية المسموح بها. يرجى سداد الحجوزات السابقة أولاً.'
+          : 'Cash booking limit reached. Please pay for previous bookings first.';
+    }
+
+    return msg.isNotEmpty ? msg : (isAr ? 'حدث خطأ غير متوقع.' : 'An unexpected error occurred.');
   }
 
   /// 🛡️ المحرك المركزي لإظهار التنبيهات بـ Root Overlay فوق جميع الطبقات والبوب اب

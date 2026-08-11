@@ -4,6 +4,8 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
@@ -417,6 +419,31 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     final slot = slots[si];
                     final booking = slot['booking'] as Booking?;
                     if (booking == null) {
+                      if (slot['type'] == 'break') {
+                        int sj = si + 1;
+                        while (sj < slots.length && slots[sj]['type'] == 'break') {
+                          sj++;
+                        }
+                        if (sj > si + 1) {
+                          final lastSlot = slots[sj - 1];
+                          final endSlotTime = (lastSlot['slotTime'] as DateTime?)?.add(const Duration(minutes: 30));
+                          final endHour = endSlotTime?.hour ?? 0;
+                          final endMin = endSlotTime?.minute ?? 0;
+                          final endH12 = endHour == 0 ? 12 : (endHour > 12 ? endHour - 12 : endHour);
+                          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                          final endPeriod = isAr ? (endHour >= 12 ? 'م' : 'ص') : (endHour >= 12 ? 'PM' : 'AM');
+                          final endTimeStr = '$endH12:${endMin.toString().padLeft(2, '0')} $endPeriod';
+                          
+                          mergedSlots.add({
+                            ...slot,
+                            'merged': true,
+                            'slotCount': sj - si,
+                            'endTimeStr': endTimeStr,
+                          });
+                          si = sj;
+                          continue;
+                        }
+                      }
                       mergedSlots.add(slot);
                       si++;
                       continue;
@@ -1015,6 +1042,21 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     return maxMins.clamp(30, 720);
   }
 
+  Future<void> _launchWhatsAppSupport(Booking b, bool isArabic) async {
+    final player = (b.playerTeamName != null && b.playerTeamName!.isNotEmpty) ? b.playerTeamName! : 'لاعب';
+    final id = b.id;
+    final dateStr = DateFormat('yyyy/MM/dd hh:mm a').format(b.startTime.toLocal());
+    final msg = isArabic
+        ? "مرحباً دعم VSP، أريد الإبلاغ عن صاحب الحجز (عدم حضور / مشكلة بالحجز).\nرقم الحجز: $id\nاسم صاحب الحجز: $player\nموعد الحجز: $dateStr"
+        : "Hi VSP Support, I would like to report the booking holder (no-show / dispute).\nBooking ID: $id\nPlayer Name: $player\nSlot: $dateStr";
+    final url = 'https://wa.me/201100229462?text=${Uri.encodeComponent(msg)}';
+    try {
+      await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      debugPrint('Could not launch WhatsApp: $e');
+    }
+  }
+
   void _updateDuration(int newMins) {
     setState(() {
       _selectedMinutes = newMins;
@@ -1049,6 +1091,9 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
       {'label': isArabic ? '4 ساعات' : '4 Hrs', 'value': 240},
     ];
 
+    final booking = widget.slot['booking'] as Booking?;
+    final bool isCompletedBooking = widget.isEdit && booking != null && (DateTime.now().isAfter(booking.endTime) || booking.status == BookingStatus.completed);
+
     final availableOptions = allOptions.where((opt) => (opt['value'] as int) <= maxMins).toList();
 
     return Column(
@@ -1067,7 +1112,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 child: ChoiceChip(
                   label: Text(opt['label'] as String),
                   selected: isSelected,
-                  onSelected: widget.isEdit ? null : (_) {
+                  onSelected: isCompletedBooking ? null : (_) {
                     _updateDuration(val);
                   },
                   selectedColor: VSPColors.accent,
@@ -1103,7 +1148,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 children: [
                   IconButton(
                     icon: const Icon(Iconsax.minus_cirlce_copy, size: 16, color: VSPColors.textPrimary),
-                    onPressed: (widget.isEdit || _selectedMinutes <= 30) ? null : () {
+                    onPressed: (isCompletedBooking || _selectedMinutes <= 30) ? null : () {
                       _updateDuration(_selectedMinutes - 30);
                     },
                   ),
@@ -1120,7 +1165,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   ),
                   IconButton(
                     icon: const Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.textPrimary),
-                    onPressed: (widget.isEdit || _selectedMinutes + 30 > maxMins) ? null : () {
+                    onPressed: (isCompletedBooking || _selectedMinutes + 30 > maxMins) ? null : () {
                       _updateDuration(_selectedMinutes + 30);
                     },
                   ),
@@ -1187,7 +1232,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
             ),
           ),
           const SizedBox(height: 16),
-          
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1199,10 +1243,61 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
               ),
               if (widget.isEdit && !isCompletedBooking)
                 IconButton(
-                  icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
+                  icon: Icon(
+                    (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash')
+                        ? Iconsax.trash_copy
+                        : Iconsax.warning_2_copy,
+                    color: VSPColors.error,
+                  ),
                   onPressed: _isDeleting ? null : () async {
                     final parentCtx = widget.parentContext;
                     final nav = Navigator.of(context);
+
+                    final bool isManualBooking = (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash');
+
+                    if (!isManualBooking && booking != null) {
+                      // 🛡️ ACTIVE ONLINE BOOKING: Disallow direct deletion & redirect to WhatsApp support report
+                      await showDialog(
+                        context: context,
+                        builder: (ctx) => AlertDialog(
+                          backgroundColor: VSPColors.surface,
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+                          title: Text(
+                            isArabic ? 'إبلاغ عن عدم حضور / مشكلة بالحجز ⚠️' : 'Report No-Show / Booking Issue ⚠️',
+                            style: Theme.of(context).textTheme.titleLarge,
+                          ),
+                          content: Text(
+                            isArabic
+                                ? 'لا يمكن حذف الحجوزات النشطة أونلاين مباشرة. في حال عدم حضور اللاعبين في الموعد، انقر زر الإبلاغ أدناه للتواصل المباشر مع الدعم الفني عبر واتساب وسيتولى الفريق معالجة الحالة فوراً.'
+                                : 'Active online bookings cannot be deleted directly. If players did not show up, tap report below to contact VSP support via WhatsApp.',
+                            style: Theme.of(context).textTheme.bodyMedium,
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () => Navigator.pop(ctx),
+                              child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+                            ),
+                            ElevatedButton(
+                              onPressed: () {
+                                Navigator.pop(ctx);
+                                _launchWhatsAppSupport(booking, isArabic);
+                              },
+                              style: ElevatedButton.styleFrom(
+                                backgroundColor: VSPColors.error,
+                                foregroundColor: Colors.white,
+                              ),
+                              child: Text(
+                                isArabic ? 'إبلاغ وتواصل واتساب 💬' : 'Report via WhatsApp 💬',
+                                style: const TextStyle(fontWeight: FontWeight.bold),
+                              ),
+                            ),
+                          ],
+                        ),
+                      );
+                      return;
+                    }
+
+                    // 🗑️ Manual booking direct cancellation
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -1252,9 +1347,27 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   _buildInputLabel(l10n.timeAndStadium),
-                  _buildPillInput(
-                    initialValue: '${widget.slot['time'] ?? (booking != null ? DateFormat('hh:mm a').format(booking.startTime) : '')} - ${(stadium.name.isNotEmpty && stadium.name != 'Mo') ? stadium.name : (booking?.stadiumName ?? stadium.name)}',
-                    enabled: false,
+                  Container(
+                    padding: const EdgeInsets.all(12),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 18),
+                        const SizedBox(width: 10),
+                        Expanded(
+                          child: Text(
+                            widget.isEdit && booking != null
+                                ? '${DateFormat('hh:mm a').format(booking.startTime.toLocal())} - ${DateFormat('EEEE').format(booking.startTime.toLocal())}'
+                                : '${DateFormat('hh:mm a').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)).add(Duration(hours: widget.slot['hour'] as int, minutes: widget.slot['minute'] as int)))} - ${DateFormat('EEEE').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)))}',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                          ),
+                        ),
+                      ],
+                    ),
                   ),
                   const SizedBox(height: 14),
 
@@ -1265,16 +1378,16 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   _buildInputLabel(l10n.customerName),
                   _buildPillTextField(
                     controller: _nameController, 
-                    hint: isArabic ? 'أدخل اسم اللاعب' : 'Enter player name',
+                    hint: isArabic ? 'اسم الفريق / اللاعب' : 'Customer / Team Name',
                     keyboardType: TextInputType.name,
                     enabled: !isCompletedBooking,
                   ),
                   const SizedBox(height: 14),
 
-                  _buildInputLabel(l10n.phoneNumber),
+                  _buildInputLabel(isArabic ? "رقم الهاتف" : "Phone Number"),
                   _buildPillTextField(
                     controller: _phoneController,
-                    hint: isArabic ? 'رقم الهاتف (اختياري)' : 'Phone Number (Optional)',
+                    hint: isArabic ? "رقم الهاتف (اختياري)" : "Phone Number (Optional)",
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
                     enabled: !isCompletedBooking,
@@ -1322,10 +1435,23 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   child: SizedBox(
                     height: 52,
                     child: PrimaryButton(
-                      text: l10n.cancelBtn,
+                      text: (widget.isEdit && booking != null && !(booking.paymentTransactionId?.startsWith('MANUAL') == true || booking.paymentMethod == 'cash'))
+                          ? (isArabic ? 'إبلاغ الدعم (واتساب)' : 'Report No-Show')
+                          : l10n.cancelBtn,
                       color: VSPColors.surfaceAlt,
-                      textColor: VSPColors.textPrimary,
-                      onPressed: _isSaving ? null : () => Navigator.pop(context),
+                      textColor: (widget.isEdit && booking != null && !(booking.paymentTransactionId?.startsWith('MANUAL') == true || booking.paymentMethod == 'cash'))
+                          ? Colors.amber
+                          : VSPColors.textPrimary,
+                      onPressed: _isSaving
+                          ? null
+                          : () {
+                              final bool isManual = (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash');
+                              if (widget.isEdit && booking != null && !isManual) {
+                                _launchWhatsAppSupport(booking, isArabic);
+                              } else {
+                                Navigator.pop(context);
+                              }
+                            },
                     ),
                   ),
                 ),
@@ -1388,6 +1514,22 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                  bStartLocal.day == selectedDate.day;
         }).toList();
 
+        if (stadium.isSplitShift) {
+          final int breakStartMin = _parseTimeToMinutes(stadium.breakStartTime);
+          final int breakEndMin = _parseTimeToMinutes(stadium.breakEndTime);
+          final int startMin = startTime.hour * 60 + startTime.minute;
+          final int endMin = endTime.hour * 60 + endTime.minute;
+          bool overlapsBreak = false;
+          if (breakStartMin < breakEndMin) {
+            overlapsBreak = (startMin < breakEndMin && endMin > breakStartMin);
+          } else if (breakStartMin != breakEndMin) {
+            overlapsBreak = (startMin >= breakStartMin || endMin > breakStartMin);
+          }
+          if (overlapsBreak) {
+            throw Exception(isArabic ? "عذراً، هذا الموعد يتعارض مع فترة استراحة الملعب ⚠️" : "Booking overlaps with stadium break time ⚠️");
+          }
+        }
+
         bool hasOverlap = false;
         for (final b in bookings) {
           final bStartLocal = b.startTime.toLocal();
@@ -1433,6 +1575,69 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           throw Exception(errMsg);
         }
         await bookingProvider.loadOwnerBookings(uid);
+      } else {
+        // 🔄 UPDATE EXISTING BOOKING (DURATION EXTENSION / NOTES / PAYMENTS)
+        final booking = widget.slot['booking'] as Booking?;
+        if (booking != null) {
+          final startTime = booking.startTime.toLocal();
+          final endTime = startTime.add(Duration(minutes: _selectedMinutes));
+
+          // Check overlap with OTHER active bookings for the same stadium
+          final bookings = bookingProvider.userBookings.where((b) {
+            final bStartLocal = b.startTime.toLocal();
+            return b.id != booking.id &&
+                   b.stadiumId.toLowerCase().trim() == stadium.id.toLowerCase().trim() &&
+                   b.status != BookingStatus.cancelled &&
+                   bStartLocal.year == startTime.year &&
+                   bStartLocal.month == startTime.month &&
+                   bStartLocal.day == startTime.day;
+          }).toList();
+
+          bool hasOverlap = false;
+          for (final b in bookings) {
+            final bStartLocal = b.startTime.toLocal();
+            final bEndLocal = b.endTime.toLocal();
+            if (startTime.isBefore(bEndLocal) && endTime.isAfter(bStartLocal)) {
+              hasOverlap = true;
+              break;
+            }
+          }
+          if (hasOverlap) {
+            throw Exception(isArabic ? "مدة الحجز المعدلة تتداخل مع حجز آخر نشط ⚠️" : "Updated duration overlaps with another active booking ⚠️");
+          }
+
+          final double calculatedPrice = stadium.pricePerHour * (_selectedMinutes / 60.0);
+          final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
+          final double finalTotal = isManual 
+              ? (calculatedPrice > 0 ? calculatedPrice : booking.totalPrice) 
+              : (calculatedPrice > booking.totalPrice ? calculatedPrice : booking.totalPrice);
+
+          final updateMap = <String, dynamic>{
+            'end_time': endTime.toUtc().toIso8601String(),
+            'player_team_name': customerName,
+            'notes': notes,
+            'deposit_paid': collectedAmount,
+            'is_deposit_paid': collectedAmount > 0,
+            'is_paid': collectedAmount >= finalTotal,
+            'payment_status': collectedAmount >= finalTotal ? 'paid' : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          };
+
+          if (customerPhone.isNotEmpty) {
+            updateMap['player_phone'] = PhoneUtils.normalize(customerPhone);
+          }
+
+          if (finalTotal != booking.totalPrice) {
+            updateMap['total_price'] = finalTotal;
+          }
+
+          await Supabase.instance.client
+              .from('bookings')
+              .update(updateMap)
+              .eq('id', booking.id);
+
+          await bookingProvider.loadOwnerBookings(uid);
+        }
       }
 
       if (mounted) {
@@ -1442,7 +1647,9 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
         if (parentCtx.mounted) {
           VSPFeedback.showSuccess(
             parentCtx,
-            isArabic ? 'تم تأكيد الحجز اليدوي بنجاح ⚽' : 'Manual booking confirmed successfully',
+            widget.isEdit
+                ? (isArabic ? 'تم تحديث تفاصيل وزيادة مدة الحجز بنجاح ⚽' : 'Booking duration updated successfully')
+                : (isArabic ? 'تم تأكيد الحجز اليدوي بنجاح ⚽' : 'Manual booking confirmed successfully'),
           );
         }
       }

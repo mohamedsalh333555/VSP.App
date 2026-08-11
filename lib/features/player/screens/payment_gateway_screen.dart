@@ -79,6 +79,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
       try {
+        // 🧹 تنظيف أي حجوزات pending غير مدفوعة للمستخدم على نفس الملعب قبل الإنشاء
+        // هذا يمنع مشكلة double booking بسبب حجوزات شبح قديمة
+        await _cleanupStalePendingBookings(userId);
+
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         final draft = widget.bookingDraft.copyWith(
           paymentStatus: 'pending',
@@ -119,6 +123,25 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       }
     }
   }
+
+  /// 🧹 حذف الحجوزات الشبح: pending + is_paid = false للمستخدم على نفس الملعب
+  /// يعمل بالـ auth token الخاص بالجلسة (يتجاوز RLS بأمان)
+  Future<void> _cleanupStalePendingBookings(String userId) async {
+    try {
+      await Supabase.instance.client
+          .from('bookings')
+          .delete()
+          .eq('player_id', userId)
+          .eq('stadium_id', widget.bookingDraft.stadiumId)
+          .eq('status', 'pending')
+          .eq('is_paid', false);
+      debugPrint('🧹 Stale pending bookings cleaned up for user: $userId');
+    } catch (e) {
+      // لا نوقف التدفق إذا فشل التنظيف — نكمل إنشاء الحجز
+      debugPrint('⚠️ Cleanup stale bookings failed (non-blocking): $e');
+    }
+  }
+
 
   /// 📡 التسمع اللحظي الحصري: لا يتم الانتقال إلا عندما يغير الـ Webhook في السيرفر حالة الحجز
   void _initBookingRealtimeListener(String bookingId) {
@@ -429,11 +452,17 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       style: const TextStyle(color: VSPColors.accent, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 0.5),
                     ),
                     const SizedBox(height: 20),
-                    // 💰 Financial Breakdown Card (3% Net VSP App Commission Model)
+                    // 💰 Financial Breakdown Card (Platform Fee 3% + Paymob Gateway Fee 2.75%)
                     Builder(
                       builder: (context) {
-                        final double netCommission = amountToPay * 0.03;
-                        final double totalWithCommission = amountToPay + netCommission;
+                        final double platformFee = amountToPay * 0.03;
+                        final double paymobFee = amountToPay * 0.0275;
+                        final double totalWithFees = amountToPay + platformFee + paymobFee;
+
+                        final String displayStadiumName = (widget.bookingDraft.stadiumName.trim().isEmpty || widget.bookingDraft.stadiumName.trim() == 'Mo')
+                            ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
+                            : widget.bookingDraft.stadiumName;
+
                         return Container(
                           padding: const EdgeInsets.all(16),
                           decoration: BoxDecoration(
@@ -449,7 +478,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                                   const SizedBox(width: 10),
                                   Expanded(
                                     child: Text(
-                                      widget.bookingDraft.stadiumName,
+                                      displayStadiumName,
                                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
                                     ),
                                   ),
@@ -476,30 +505,36 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                               const Divider(color: VSPColors.divider, height: 20),
                               _buildFeeRow(
                                 label: isChampionship
-                                  ? (isArabic ? 'قيمة رسوم اشتراك البطولة' : 'Championship Entry Fee')
+                                  ? (isArabic ? 'رسوم اشتراك البطولة' : 'Championship Entry Fee')
                                   : (hasDeposit 
-                                      ? (isArabic ? 'قيمة العربون المطلوبة للملعب' : 'Stadium Deposit') 
+                                      ? (isArabic ? 'عربون حجز الملعب' : 'Stadium Deposit') 
                                       : (isArabic ? 'إجمالي سعر حجز الملعب' : 'Stadium Total Price')),
-                                value: '${amountToPay.toInt()} ج.م',
+                                value: '${amountToPay.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
                                 isBold: false,
                               ),
                               const SizedBox(height: 6),
                               _buildFeeRow(
                                 label: isArabic ? 'رسوم خدمة المنصة والتشغيل (3%)' : 'Platform Service Fee (3%)',
-                                value: '${netCommission.toStringAsFixed(1)} ج.م',
+                                value: '${platformFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+                                isBold: false,
+                              ),
+                              const SizedBox(height: 6),
+                              _buildFeeRow(
+                                label: isArabic ? 'رسوم المعالجة الرقمية (Paymob 2.75%)' : 'Paymob Processing Fee (2.75%)',
+                                value: '${paymobFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
                                 isBold: false,
                               ),
                               const SizedBox(height: 6),
                               _buildFeeRow(
                                 label: isArabic ? 'المبلغ الإجمالي للسداد أونلاين' : 'Total Checkout Amount',
-                                value: '${totalWithCommission.toStringAsFixed(1)} ج.م',
+                                value: '${totalWithFees.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
                                 isBold: true,
                               ),
                               if (hasDeposit) ...[
                                 const SizedBox(height: 6),
                                 _buildFeeRow(
                                   label: isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch',
-                                  value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ج.م',
+                                  value: '${(widget.bookingDraft.totalPrice - amountToPay).toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
                                 ),
                               ]
                             ],

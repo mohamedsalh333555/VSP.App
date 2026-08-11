@@ -7,11 +7,13 @@ class VspNavItem {
   final IconData activeIcon;
   final IconData inactiveIcon;
   final String label;
+  final bool hasNotification; // 🔴 نقطة الإشعار
 
   VspNavItem({
     required this.activeIcon,
     required this.inactiveIcon,
     required this.label,
+    this.hasNotification = false,
   });
 }
 
@@ -77,10 +79,45 @@ class VspBottomNavBar extends StatelessWidget {
                         child: Row(
                           mainAxisSize: MainAxisSize.min,
                           children: [
-                            Icon(
-                              isSelected ? item.activeIcon : item.inactiveIcon,
-                              color: isSelected ? Colors.black : VSPColors.textSecondary,
-                              size: 20,
+                            // الأيقونة مع النقطة الحمراء
+                            Stack(
+                              clipBehavior: Clip.none,
+                              children: [
+                                Icon(
+                                  isSelected ? item.activeIcon : item.inactiveIcon,
+                                  color: isSelected ? Colors.black : VSPColors.textSecondary,
+                                  size: 20,
+                                ),
+                                // 🔴 نقطة الإشعار
+                                if (item.hasNotification && !isSelected)
+                                  Positioned(
+                                    top: -3,
+                                    right: -3,
+                                    child: TweenAnimationBuilder<double>(
+                                      tween: Tween(begin: 0.0, end: 1.0),
+                                      duration: const Duration(milliseconds: 300),
+                                      curve: Curves.elasticOut,
+                                      builder: (ctx, val, _) => Transform.scale(
+                                        scale: val,
+                                        child: Container(
+                                          width: 8,
+                                          height: 8,
+                                          decoration: BoxDecoration(
+                                            color: VSPColors.error,
+                                            shape: BoxShape.circle,
+                                            boxShadow: [
+                                              BoxShadow(
+                                                color: VSPColors.error.withValues(alpha: 0.6),
+                                                blurRadius: 4,
+                                                spreadRadius: 1,
+                                              ),
+                                            ],
+                                          ),
+                                        ),
+                                      ),
+                                    ),
+                                  ),
+                              ],
                             ),
                             if (isSelected) ...[
                               const SizedBox(width: 8),
