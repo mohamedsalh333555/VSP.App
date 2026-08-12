@@ -51,12 +51,15 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     
     return Scaffold(
       backgroundColor: VSPColors.background,
-      floatingActionButton: FloatingActionButton(
-        onPressed: () => _showTournamentTypeSheet(context, isArabic, l10n),
-        backgroundColor: VSPColors.accent,
-        shape: const CircleBorder(),
-        elevation: 6,
-        child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
+      floatingActionButton: Padding(
+        padding: const EdgeInsets.only(bottom: 75.0),
+        child: FloatingActionButton(
+          onPressed: () => _showTournamentTypeSheet(context, isArabic, l10n),
+          backgroundColor: VSPColors.accent,
+          shape: const CircleBorder(),
+          elevation: 6,
+          child: const Icon(Icons.add_rounded, color: Colors.black, size: 30),
+        ),
       ),
       floatingActionButtonLocation: isArabic
           ? FloatingActionButtonLocation.startFloat

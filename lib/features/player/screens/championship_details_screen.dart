@@ -73,6 +73,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       }
 
       // 🛡️ GPS GEOFENCING GUARD: Verify physical GPS location when joining a tournament in a different governorate
+      if (!mounted) return;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final champGovRaw = widget.championship.governorate.trim();
       final playerGovRaw = auth.governorate.trim();

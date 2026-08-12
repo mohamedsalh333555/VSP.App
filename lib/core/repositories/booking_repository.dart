@@ -784,6 +784,22 @@ class SupabaseBookingRepository implements BookingRepository {
         'payment_status': isPaid ? 'paid' : 'pending',
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', bookingId);
+
+      if (isPaid) {
+        try {
+          final b = await getBookingById(bookingId);
+          if (b != null) {
+            await NotificationHandler.notifyPaymentReceived(
+              recipientId: b.ownerId,
+              userName: b.hostName ?? 'لاعب',
+              amount: b.totalPrice,
+              bookingId: bookingId,
+            );
+          }
+        } catch (e) {
+          VSPLogger.w('Skip payment notification: $e');
+        }
+      }
       return true;
     } catch (e) {
       debugPrint('❌ Error updating payment status: $e');

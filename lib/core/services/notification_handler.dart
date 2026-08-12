@@ -246,6 +246,53 @@ class NotificationHandler {
     }
   }
 
+  /// Notify tournament owner when a team joins their tournament
+  static Future<void> notifyTeamJoinedTournament({
+    required String ownerId,
+    required String teamName,
+    required String tournamentName,
+    required String championshipId,
+  }) async {
+    final notif = AppNotification(
+      id: '',
+      title: 'فريق جديد انضم لبطولتك! 🏆',
+      body: 'انضم فريق "$teamName" إلى بطولة "$tournamentName".',
+      type: 'tournament_joined',
+      createdAt: DateTime.now(),
+      metadata: {
+        'championship_id': championshipId,
+        'team_name': teamName,
+        'tournament_name': tournamentName,
+        'sound': 'default',
+      },
+    );
+    await _notificationRepo.sendNotification(ownerId, notif);
+  }
+
+  /// Notify user/owner when a payment or deposit is received
+  static Future<void> notifyPaymentReceived({
+    required String recipientId,
+    required String userName,
+    required double amount,
+    required String bookingId,
+  }) async {
+    final notif = AppNotification(
+      id: '',
+      title: 'تم استلام دفعة مالية 💰',
+      body: 'تم استلام مبلغ ${amount.toStringAsFixed(0)} ج.م من $userName.',
+      type: 'payment_received',
+      bookingId: bookingId,
+      createdAt: DateTime.now(),
+      metadata: {
+        'amount': amount,
+        'userName': userName,
+        'bookingId': bookingId,
+        'sound': 'default',
+      },
+    );
+    await _notificationRepo.sendNotification(recipientId, notif);
+  }
+
   // --------------------------------------------------------------------------
   // 5. DEBT MANAGEMENT (Gentle Reminders Only — NO Auto-Blocking)
   // --------------------------------------------------------------------------

@@ -811,7 +811,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       if (currentUserModel == null) { setState(() => _isLoading = false); return; }
 
                       final nav = Navigator.of(context);
-                      final messenger = ScaffoldMessenger.of(context);
                       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
                       final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
@@ -852,11 +851,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       if (!needsDeposit && !hasActiveUnpaid) {
                         final cashDraft = draft.copyWith(isPaid: false, isDepositPaid: false, depositPaid: 0.0, paymentStatus: 'unpaid', paymentMethod: 'cash', paymentTransactionId: '_');
                         final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-                        if (mounted) {
+                        if (!mounted) return;
+                        if (booking != null) {
                           setState(() => _isLoading = false);
-                          if (booking != null) {
-                            nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-                          } else {
+                          nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
+                        } else {
+                          if (context.mounted) {
+                            setState(() => _isLoading = false);
                             VSPFeedback.showError(
                               context,
                               bookingProvider.errorMessage ?? (isArabic ? 'فشل إنشاء الحجز' : 'Failed to create booking'),

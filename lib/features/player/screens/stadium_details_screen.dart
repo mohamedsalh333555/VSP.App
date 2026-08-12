@@ -13,6 +13,7 @@ import '../../../data/models.dart';
 import 'booking_type_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/logger_service.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -766,7 +767,12 @@ class _RatingsTab extends StatelessWidget {
             return Padding(
               padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
               child: Container(
-                padding: const EdgeInsets.all(VSPSpacing.md),
+                padding: EdgeInsets.fromLTRB(
+                  VSPSpacing.md,
+                  VSPSpacing.md,
+                  VSPSpacing.md,
+                  VSPSpacing.md + MediaQuery.of(context).padding.bottom + 16,
+                ),
                 decoration: const BoxDecoration(
                   color: VSPColors.background,
                   borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
@@ -786,11 +792,12 @@ class _RatingsTab extends StatelessWidget {
                       mainAxisAlignment: MainAxisAlignment.center,
                       children: List.generate(5, (index) {
                         final starIndex = index + 1;
+                        final isSelected = starIndex <= selectedRating;
                         return IconButton(
                           icon: Icon(
-                            Iconsax.star_copy,
-                            color: starIndex <= selectedRating ? Colors.amber : VSPColors.surfaceAlt,
-                            size: 32,
+                            isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                            color: isSelected ? Colors.amber : VSPColors.textSecondary,
+                            size: 36,
                           ),
                           onPressed: () {
                             setSheetState(() {
@@ -868,7 +875,7 @@ class _RatingsTab extends StatelessWidget {
                             VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
                           }
                         } catch (e, stack) {
-                          debugPrint('❌ Error saving review: $e\n$stack');
+                          VSPLogger.e('❌ Error saving review to Supabase', e, stack);
                           setSheetState(() => isSubmitting = false);
                           if (sheetCtx.mounted) {
                             VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
@@ -904,7 +911,7 @@ class _RatingsTab extends StatelessWidget {
                   child: Column(
                     children: [
                       Text(stadium.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42)),
-                      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => const Icon(Iconsax.star_copy, color: Colors.amber, size: 16))),
+                      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => Icon(i < stadium.rating.round() ? Icons.star_rounded : Icons.star_outline_rounded, color: i < stadium.rating.round() ? Colors.amber : VSPColors.textSecondary, size: 18))),
                       const SizedBox(height: VSPSpacing.xs),
                       Text(l10n.reviews(stadium.reviewsCount), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                     ],
@@ -983,7 +990,7 @@ class _RatingsTab extends StatelessWidget {
                     Text(timeAgo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ],
                 ),
-                Row(children: List.generate(5, (i) => Icon(Iconsax.star_copy, size: 12, color: i < rating ? Colors.amber : VSPColors.surfaceAlt))),
+                Row(children: List.generate(5, (i) => Icon(i < rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 14, color: i < rating ? Colors.amber : VSPColors.textSecondary))),
                 const SizedBox(height: 8),
                 Text(comment, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.4)),
                 const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.md), child: Divider(color: VSPColors.divider)),

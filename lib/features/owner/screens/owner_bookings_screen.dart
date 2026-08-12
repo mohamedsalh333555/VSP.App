@@ -1193,7 +1193,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final booking = widget.slot['booking'] as Booking?;
-    final stadium = widget.selectedStadium;
 
     final bool isCompletedBooking = widget.isEdit && booking != null && (DateTime.now().isAfter(booking.endTime) || booking.status == BookingStatus.completed);
 
@@ -1707,34 +1706,6 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           focusedBorder: InputBorder.none,
           filled: false,
         ),
-      ),
-    );
-  }
-
-  Widget _buildPillInput({required String initialValue, bool enabled = true}) {
-    return Container(
-      width: double.infinity,
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 14),
-      decoration: BoxDecoration(
-        color: VSPColors.surfaceAlt,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
-        border: Border.all(color: VSPColors.divider, width: 1),
-      ),
-      child: Row(
-        children: [
-          const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 18),
-          const SizedBox(width: 10),
-          Expanded(
-            child: Text(
-              initialValue,
-              style: const TextStyle(
-                color: Colors.white,
-                fontWeight: FontWeight.bold,
-                fontSize: 14,
-              ),
-            ),
-          ),
-        ],
       ),
     );
   }

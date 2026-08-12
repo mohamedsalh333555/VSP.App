@@ -83,6 +83,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         // هذا يمنع مشكلة double booking بسبب حجوزات شبح قديمة
         await _cleanupStalePendingBookings(userId);
 
+        if (!mounted) return;
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         final draft = widget.bookingDraft.copyWith(
           paymentStatus: 'pending',

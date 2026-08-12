@@ -6,10 +6,12 @@ import 'package:intl/intl.dart';
 import '../../../core/models/chat_model.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/repositories/report_repository.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/analytics_service.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -88,10 +90,140 @@ class _ChatScreenState extends State<ChatScreen> {
     super.dispose();
   }
 
+  void _showReportDialog(BuildContext context, String currentUserId) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final reasonController = TextEditingController();
+    final detailsController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isArabic ? 'إبلاغ عن المحادثة 🚨' : 'Report Chat 🚨',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: reasonController,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: isArabic ? 'سبب الإبلاغ (مثال: سلوك غير لائق)' : 'Reason for report',
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+              ),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: detailsController,
+              maxLines: 2,
+              style: const TextStyle(color: Colors.white),
+              decoration: InputDecoration(
+                hintText: isArabic ? 'تفاصيل إضافية (اختياري)...' : 'Additional details...',
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final reason = reasonController.text.trim();
+              if (reason.isEmpty) return;
+              Navigator.pop(dlgCtx);
+              final success = await ReportRepository().reportEntity(
+                reporterId: currentUserId,
+                targetId: widget.booking.id,
+                targetType: 'chat',
+                reason: reason,
+                details: detailsController.text.trim(),
+              );
+              if (context.mounted) {
+                if (success) {
+                  VSPFeedback.showSuccess(context, isArabic ? 'تم إرسال بلاغك بنجاح وسيتولى الفريق مراجعته.' : 'Report submitted successfully.');
+                } else {
+                  VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء إرسال البلاغ.' : 'Error submitting report.');
+                }
+              }
+            },
+            child: Text(isArabic ? 'إرسال البلاغ' : 'Submit Report', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
+  void _confirmDeleteConversation(BuildContext context, String currentUserId) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isArabic ? 'حذف المحادثة 🗑️' : 'Delete Conversation 🗑️',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          isArabic ? 'هل أنت تأكد من رغبتك في حذف هذه المحادثة من طرفك؟' : 'Are you sure you want to delete this conversation?',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              Navigator.pop(dlgCtx);
+              
+              String otherUserId = widget.booking.joinedUserIds.firstWhere(
+                (uid) => uid.isNotEmpty && uid != currentUserId,
+                orElse: () => '',
+              );
+
+              if (otherUserId.isEmpty) {
+                final isSupport = widget.booking.stadiumId == 'support_chat' ||
+                                 widget.booking.notes == 'support_chat' ||
+                                 widget.booking.id.startsWith('support_chat_');
+                if (isSupport) {
+                  otherUserId = 'vsp_support_admin';
+                } else if (widget.booking.createdByUserId.isNotEmpty && widget.booking.createdByUserId != currentUserId) {
+                  otherUserId = widget.booking.createdByUserId;
+                } else if (widget.booking.ownerId.isNotEmpty && widget.booking.ownerId != currentUserId) {
+                  otherUserId = widget.booking.ownerId;
+                }
+              }
+
+              await ChatRepository().deleteConversationForUser(
+                widget.booking.id, 
+                currentUserId,
+                contactId: otherUserId.isNotEmpty ? otherUserId : null,
+              );
+
+              if (context.mounted) {
+                Navigator.pop(context, true);
+                VSPFeedback.showSuccess(context, isArabic ? 'تم حذف المحادثة.' : 'Conversation deleted.');
+              }
+            },
+            child: Text(isArabic ? 'حذف' : 'Delete', style: const TextStyle(color: Colors.redAccent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final auth = Provider.of<AuthProvider>(context);
-    final currentUserId = auth.currentUser?.uid;
+    final currentUserId = auth.currentUser?.uid ?? '';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -100,7 +232,6 @@ class _ChatScreenState extends State<ChatScreen> {
         elevation: 0,
         title: Builder(
           builder: (context) {
-            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             final isSpecialChat = widget.booking.stadiumId == 'support_chat' || 
                                  widget.booking.stadiumId == 'chat_thread' || 
                                  widget.booking.notes == 'chat_thread' || 
@@ -168,20 +299,53 @@ class _ChatScreenState extends State<ChatScreen> {
         ),
         leading: IconButton(
           icon: Icon(
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_3_copy
-                : Iconsax.arrow_left_2_copy,
+            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
             size: 20,
           ),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          PopupMenuButton<String>(
+            icon: const Icon(Icons.more_vert_rounded, color: VSPColors.textPrimary),
+            color: VSPColors.surface,
+            onSelected: (value) {
+              if (value == 'report') {
+                _showReportDialog(context, currentUserId);
+              } else if (value == 'delete') {
+                _confirmDeleteConversation(context, currentUserId);
+              }
+            },
+            itemBuilder: (ctx) => [
+              PopupMenuItem(
+                value: 'report',
+                child: Row(
+                  children: [
+                    const Icon(Icons.flag_outlined, color: Colors.orangeAccent, size: 18),
+                    const SizedBox(width: 8),
+                    Text(isArabic ? 'إبلاغ عن المحادثة' : 'Report Chat', style: const TextStyle(color: Colors.white, fontSize: 13)),
+                  ],
+                ),
+              ),
+              PopupMenuItem(
+                value: 'delete',
+                child: Row(
+                  children: [
+                    const Icon(Icons.delete_outline_rounded, color: Colors.redAccent, size: 18),
+                    const SizedBox(width: 8),
+                    Text(isArabic ? 'حذف المحادثة' : 'Delete Conversation', style: const TextStyle(color: Colors.redAccent, fontSize: 13)),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
       ),
       body: Column(
         children: [
           Expanded(
             child: StreamBuilder<List<ChatMessage>>(
-              stream: ChatRepository().getChatMessages(widget.booking.id),
+              stream: ChatRepository().getChatMessages(widget.booking.id, currentUserId: currentUserId),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -413,81 +577,151 @@ class _ChatBubble extends StatelessWidget {
     required this.booking,
   });
 
+  void _showEditDialog(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final editController = TextEditingController(text: message.text);
+
+    showDialog(
+      context: context,
+      builder: (dlgCtx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(16)),
+        title: Text(
+          isArabic ? 'تعديل الرسالة ✏️' : 'Edit Message ✏️',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: TextField(
+          controller: editController,
+          style: const TextStyle(color: Colors.white),
+          maxLines: 3,
+          decoration: InputDecoration(
+            hintText: isArabic ? 'اكتب الرسالة الجديدة...' : 'Enter new message...',
+            hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+          ),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(dlgCtx),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          TextButton(
+            onPressed: () async {
+              final newText = editController.text.trim();
+              if (newText.isEmpty || newText == message.text) {
+                Navigator.pop(dlgCtx);
+                return;
+              }
+              Navigator.pop(dlgCtx);
+              await ChatRepository().editMessage(message.id, newText);
+            },
+            child: Text(isArabic ? 'حفظ التعديل' : 'Save', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     final isHost = message.senderId == booking.createdByUserId;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Align(
-      alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
-      child: Container(
-        margin: const EdgeInsets.symmetric(vertical: 4),
-        padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-        decoration: BoxDecoration(
-          color: isMe ? VSPColors.accent : VSPColors.surface,
-          borderRadius: BorderRadius.only(
-            topLeft: const Radius.circular(16),
-            topRight: const Radius.circular(16),
-            bottomLeft: Radius.circular(isMe ? 16 : 4),
-            bottomRight: Radius.circular(isMe ? 4 : 16),
-          ),
-          boxShadow: isHost
-              ? [
-                  BoxShadow(
-                    color: VSPColors.accent.withValues(alpha: 0.3),
-                    blurRadius: 8,
-                    spreadRadius: 1,
-                    offset: const Offset(0, 2),
-                  ),
-                ]
-              : null,
-        ),
-        child: Column(
-          crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            if (!isMe)
-              Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    message.senderName,
-                    style: const TextStyle(
-                      color: VSPColors.accent,
-                      fontSize: 10,
-                      fontWeight: FontWeight.bold,
+    return GestureDetector(
+      onLongPress: isMe ? () => _showEditDialog(context) : null,
+      child: Align(
+        alignment: isMe ? Alignment.centerRight : Alignment.centerLeft,
+        child: Container(
+          margin: const EdgeInsets.symmetric(vertical: 4),
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
+          decoration: BoxDecoration(
+            color: isMe ? VSPColors.accent : VSPColors.surface,
+            borderRadius: BorderRadius.only(
+              topLeft: const Radius.circular(16),
+              topRight: const Radius.circular(16),
+              bottomLeft: Radius.circular(isMe ? 16 : 4),
+              bottomRight: Radius.circular(isMe ? 4 : 16),
+            ),
+            boxShadow: isHost
+                ? [
+                    BoxShadow(
+                      color: VSPColors.accent.withValues(alpha: 0.3),
+                      blurRadius: 8,
+                      spreadRadius: 1,
+                      offset: const Offset(0, 2),
                     ),
-                  ),
-                  if (isHost) ...[
-                    const SizedBox(width: 4),
+                  ]
+                : null,
+          ),
+          child: Column(
+            crossAxisAlignment: isMe ? CrossAxisAlignment.end : CrossAxisAlignment.start,
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              if (!isMe)
+                Row(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
                     Text(
-                      isArabic ? '[المُضيف 👑]' : '[HOST 👑]',
+                      message.senderName,
                       style: const TextStyle(
-                        color: VSPColors.warning,
+                        color: VSPColors.accent,
                         fontSize: 10,
                         fontWeight: FontWeight.bold,
                       ),
                     ),
+                    if (isHost) ...[
+                      const SizedBox(width: 4),
+                      Text(
+                        isArabic ? '[المُضيف 👑]' : '[HOST 👑]',
+                        style: const TextStyle(
+                          color: VSPColors.warning,
+                          fontSize: 10,
+                          fontWeight: FontWeight.bold,
+                        ),
+                      ),
+                    ],
+                  ],
+                ),
+              if (!isMe) const SizedBox(height: 2),
+              Text(
+                message.text,
+                style: TextStyle(
+                  color: isMe ? VSPColors.background : VSPColors.textPrimary,
+                  fontSize: 14,
+                ),
+              ),
+              const SizedBox(height: 4),
+              Row(
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  if (message.isEdited) ...[
+                    Text(
+                      isArabic ? '(مُعدلة) ' : '(edited) ',
+                      style: TextStyle(
+                        color: (isMe ? VSPColors.background : VSPColors.textSecondary).withValues(alpha: 0.65),
+                        fontSize: 9,
+                        fontStyle: FontStyle.italic,
+                      ),
+                    ),
+                  ],
+                  Text(
+                    DateFormat('hh:mm a').format(message.timestamp),
+                    style: TextStyle(
+                      color: (isMe ? VSPColors.background : VSPColors.textSecondary).withValues(alpha: 0.6),
+                      fontSize: 10,
+                    ),
+                  ),
+                  if (isMe) ...[
+                    const SizedBox(width: 4),
+                    Icon(
+                      message.isRead ? Icons.done_all_rounded : Icons.check_rounded,
+                      size: 14,
+                      color: message.isRead ? Colors.blueAccent : VSPColors.background.withValues(alpha: 0.65),
+                    ),
                   ],
                 ],
               ),
-            if (!isMe) const SizedBox(height: 2),
-            Text(
-              message.text,
-              style: TextStyle(
-                color: isMe ? VSPColors.background : VSPColors.textPrimary,
-                fontSize: 14,
-              ),
-            ),
-            const SizedBox(height: 4),
-            Text(
-              DateFormat('hh:mm a').format(message.timestamp),
-              style: TextStyle(
-                color: (isMe ? VSPColors.background : VSPColors.textSecondary).withValues(alpha: 0.6),
-                fontSize: 10,
-              ),
-            ),
-          ],
+            ],
+          ),
         ),
       ),
     );

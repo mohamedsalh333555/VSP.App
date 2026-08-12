@@ -6,6 +6,7 @@ import '../repositories/notification_repository.dart';
 import '../repositories/team_repository.dart';
 import '../utils/app_date_formatter.dart';
 import '../constants/egypt_governorates.dart';
+import '../services/notification_handler.dart';
 import '../../data/models.dart';
 
 class TournamentRepository {
@@ -319,6 +320,21 @@ class TournamentRepository {
         'player_ids': selectedPlayerIds,
         'guest_names': offlineGuestNames,
       });
+
+      // 🔔 Notify tournament owner
+      final ownerId = champ.ownerId;
+      if (ownerId.isNotEmpty) {
+        try {
+          await NotificationHandler.notifyTeamJoinedTournament(
+            ownerId: ownerId,
+            teamName: team.name,
+            tournamentName: champ.name,
+            championshipId: championshipId,
+          );
+        } catch (e) {
+          debugPrint('Error sending tournament joined notification: $e');
+        }
+      }
 
       return true;
     } catch (e) {

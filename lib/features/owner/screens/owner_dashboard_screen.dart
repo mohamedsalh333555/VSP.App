@@ -125,11 +125,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 const SizedBox(height: VSPSpacing.md),
               ],
 
-              // 🔹 أ. شريط النطاق الزمني (Time-Filter Bar)
+              // 🔹 شريط النطاق الزمني (Time-Filter Bar)
               _buildTimeFilterBar(isArabic),
               const SizedBox(height: VSPSpacing.sm),
 
-              // 🧮 3. المحرك المالي والكارت الرئيسي 10/10 (Hero Revenue Card)
+              // 🧮 3. المحرك المالي والكارت الرئيسي (Hero Revenue Card)
               _buildStatsGrid(isArabic),
               const SizedBox(height: VSPSpacing.lg),
 
@@ -494,49 +494,54 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 🔹 أ. شريط النطاق الزمني (Time-Filter Bar)
+  /// 🎨 Component 1: Period Tabs (UX Spec: 14px, 12x20px padding, 10px spacing, single row)
   Widget _buildTimeFilterBar(bool isArabic) {
     final filters = [
-      {'key': 'all', 'labelAr': 'الكل', 'labelEn': 'All'},
       {'key': 'today', 'labelAr': 'اليوم', 'labelEn': 'Today'},
       {'key': 'yesterday', 'labelAr': 'أمس', 'labelEn': 'Yesterday'},
       {'key': 'week', 'labelAr': 'هذا الأسبوع', 'labelEn': 'This Week'},
       {'key': 'month', 'labelAr': 'هذا الشهر', 'labelEn': 'This Month'},
+      {'key': 'all', 'labelAr': 'الكل', 'labelEn': 'All-time'},
     ];
 
-    return SingleChildScrollView(
-      scrollDirection: Axis.horizontal,
-      physics: const BouncingScrollPhysics(),
-      child: Row(
-        children: filters.map((f) {
+    return SizedBox(
+      width: double.infinity,
+      child: SingleChildScrollView(
+        scrollDirection: Axis.horizontal,
+        physics: const BouncingScrollPhysics(),
+        child: Row(
+          children: filters.map((f) {
           final isSelected = _selectedTimePeriod == f['key'];
-          return Container(
-            margin: const EdgeInsets.only(left: 6, right: 2),
+          return Padding(
+            padding: const EdgeInsets.only(right: 8),
             child: InkWell(
               onTap: () => setState(() => _selectedTimePeriod = f['key'] as String),
-              borderRadius: BorderRadius.circular(20),
+              borderRadius: BorderRadius.circular(18),
               child: AnimatedContainer(
-                duration: const Duration(milliseconds: 200),
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                duration: const Duration(milliseconds: 180),
+                curve: Curves.easeInOut,
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
                 decoration: BoxDecoration(
-                  color: isSelected ? VSPColors.accent : VSPColors.surface,
-                  borderRadius: BorderRadius.circular(20),
-                  border: Border.all(
-                    color: isSelected ? VSPColors.accent : VSPColors.divider,
-                  ),
+                  color: isSelected
+                      ? const Color(0xFFC8FF00)
+                      : const Color(0xFF27272A).withValues(alpha: 0.6),
+                  borderRadius: BorderRadius.circular(18),
                 ),
                 child: Text(
                   isArabic ? f['labelAr'] as String : f['labelEn'] as String,
                   style: TextStyle(
-                    color: isSelected ? Colors.black : VSPColors.textSecondary,
-                    fontSize: 11.5,
-                    fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                    color: isSelected
+                        ? const Color(0xFF09090B)
+                        : const Color(0xFFA1A1AA),
+                    fontSize: 12.5,
+                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
                   ),
                 ),
               ),
             ),
           );
         }).toList(),
+        ),
       ),
     );
   }
@@ -605,7 +610,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       totalHours += (diffMinutes / 60.0);
     }
 
-    final String formattedHours = (totalHours % 1 == 0) ? totalHours.toInt().toString() : totalHours.toStringAsFixed(1);
+
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
     final String periodLabel = _selectedTimePeriod == 'today'
@@ -743,6 +748,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       );
     }
 
+    final String formattedHours = (totalHours % 1 == 0) ? totalHours.toInt().toString() : totalHours.toStringAsFixed(1);
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
@@ -763,335 +770,265 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // الهيدر علوي مع شارة التحديث اللحظي (System Status Badge)
+          // العنوان + شارة "محدّث الآن"
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text(
-                periodLabel,
-                style: const TextStyle(
-                  color: VSPColors.textPrimary,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 14,
+              Expanded(
+                child: Text(
+                  periodLabel,
+                  style: const TextStyle(
+                    color: VSPColors.textPrimary,
+                    fontWeight: FontWeight.bold,
+                    fontSize: 14,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                 ),
               ),
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
                 decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.1),
+                  color: VSPColors.accent.withValues(alpha: 0.12),
                   borderRadius: BorderRadius.circular(12),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 0.5),
                 ),
                 child: Row(
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Container(
-                      width: 6,
-                      height: 6,
-                      decoration: const BoxDecoration(
-                        color: VSPColors.accent,
-                        shape: BoxShape.circle,
-                      ),
+                      width: 6, height: 6,
+                      decoration: const BoxDecoration(color: VSPColors.accent, shape: BoxShape.circle),
                     ),
-                    const SizedBox(width: 5),
+                    const SizedBox(width: 4),
                     Text(
-                      isArabic ? 'مُحدّث الآن' : 'Live Sync',
-                      style: const TextStyle(
-                        color: VSPColors.accent,
-                        fontSize: 10,
-                        fontWeight: FontWeight.bold,
-                      ),
+                      isArabic ? 'محدّث الآن' : 'Updated now',
+                      style: TextStyle(color: VSPColors.accent.withValues(alpha: 0.8), fontSize: 10, fontWeight: FontWeight.w600),
                     ),
                   ],
                 ),
               ),
             ],
           ),
-          const SizedBox(height: 12),
-          
-          // الرقم الرئيسي الكبير (المُحصل فعلياً)
-          Row(
-            crossAxisAlignment: CrossAxisAlignment.baseline,
-            textBaseline: TextBaseline.alphabetic,
+          const SizedBox(height: 16),
+
+          // الرقم المالي الرئيسي المباشر (مثل الصورة بالضبط)
+          Column(
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
-              Text(
-                '${totalPipeline.toInt()}',
-                style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontSize: 38,
-                  fontWeight: FontWeight.w900,
-                  letterSpacing: -1,
+              TweenAnimationBuilder<double>(
+                key: ValueKey('counter_$_selectedTimePeriod'),
+                tween: Tween(begin: 0.0, end: collectedRevenue),
+                duration: const Duration(milliseconds: 800),
+                curve: Curves.easeOutCubic,
+                builder: (_, val, __) => Text(
+                  '${val.toInt()}',
+                  style: const TextStyle(
+                    color: Color(0xFFC8FF00),
+                    fontSize: 52,
+                    fontWeight: FontWeight.w900,
+                    height: 1.1,
+                    letterSpacing: -1,
+                  ),
                 ),
               ),
-              const SizedBox(width: 6),
               Text(
                 currencySymbol,
                 style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontSize: 18,
+                  color: Color(0xFFC8FF00),
+                  fontSize: 22,
                   fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
-          
           const SizedBox(height: 16),
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 16),
 
-          // الصف الأوسط: المستحقات المعلقة + إجمالي قيمة الحجوزات مع أزرار الشرح المباشر (Help Tooltips)
+          // 📊 1. الصف الأول: القيمة الإجمالية + معلق
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.divider, width: 0.5),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              isArabic ? 'المستحقات المعلقة' : 'Pending Receivables',
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showTermHelpModal(
-                              context,
-                              isArabic ? 'المستحقات المعلقة' : 'Pending Receivables',
-                              isArabic
-                                  ? 'المبالغ المتبقية للحجوزات القادمة التي يدفعها اللاعبون كاش في الملعب فور حضورهم.'
-                                  : 'Remaining amounts for upcoming bookings to be paid in cash at the pitch.',
-                              isArabic,
-                            ),
-                            child: const Icon(Iconsax.info_circle_copy, color: VSPColors.textSecondary, size: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${pendingReceivables.toInt()} $currencySymbol',
-                        style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ],
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'القيمة الإجمالية' : 'Total Value',
+                  value: '${totalPipeline.toInt()} $currencySymbol',
+                  valueColor: Colors.white,
+                  tooltipText: isArabic
+                      ? 'مجموع كل الحجوزات والإيرادات المتوقعة من الملعب'
+                      : 'Total of all bookings and expected revenue from pitch',
+                  isArabic: isArabic,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.divider, width: 0.5),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Text(
-                              isArabic ? 'إجمالي الحجوزات' : 'Total Pipeline',
-                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                              maxLines: 1,
-                              overflow: TextOverflow.ellipsis,
-                            ),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showTermHelpModal(
-                              context,
-                              isArabic ? 'إجمالي قيمة الحجوزات (Total Pipeline)' : 'Total Pipeline',
-                              isArabic
-                                  ? 'القيمة المالية الكلية لجميع الحجوزات المؤكدة (المدفوع + المتبقي) خلال الفترة المحددة.'
-                                  : 'Total financial value of all confirmed bookings (Paid + Pending).',
-                              isArabic,
-                            ),
-                            child: const Icon(Iconsax.info_circle_copy, color: VSPColors.textSecondary, size: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${totalPipeline.toInt()} $currencySymbol',
-                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ],
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'معلق' : 'Pending',
+                  value: '${pendingReceivables.toInt()} $currencySymbol',
+                  valueColor: const Color(0xFFFFB800),
+                  tooltipText: isArabic
+                      ? 'المبالغ قيد التحصيل والانتظار'
+                      : 'Amounts pending collection',
+                  isArabic: isArabic,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 12),
-
-          // الصف المالي: كاش الملعب مقابل المستحقات الرقمية لدي VSP
+          // 💵 2. الصف الثاني: دفع مباشر + محفظة رقمية
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.divider, width: 0.5),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            isArabic ? 'كاش الملعب' : 'Pitch Cash',
-                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showTermHelpModal(
-                              context,
-                              isArabic ? 'كاش الملعب' : 'Pitch Cash',
-                              isArabic
-                                  ? 'المبالغ المحصلة نقدياً بيدك مباشرة في الملعب من قبل اللاعبين.'
-                                  : 'Cash collected directly by you at the pitch from players.',
-                              isArabic,
-                            ),
-                            child: const Icon(Iconsax.info_circle_copy, color: VSPColors.textSecondary, size: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${pitchCashRevenue.toInt()} $currencySymbol',
-                        style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
-                      ),
-                    ],
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'دفع مباشر' : 'Direct Cash',
+                  value: '${pitchCashRevenue.toInt()} $currencySymbol',
+                  valueColor: const Color(0xFFC8FF00),
+                  tooltipText: isArabic
+                      ? 'المبالغ المحصلة كاش في الملعب'
+                      : 'Amounts collected in cash at pitch',
+                  isArabic: isArabic,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.all(12),
-                  decoration: BoxDecoration(
-                    color: VSPColors.accent.withValues(alpha: 0.08),
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
-                  ),
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Text(
-                            isArabic ? 'الرقمي لدى VSP' : 'Digital at VSP',
-                            style: const TextStyle(color: Colors.blueAccent, fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                          GestureDetector(
-                            onTap: () => _showTermHelpModal(
-                              context,
-                              isArabic ? 'الرقمي لدى VSP' : 'Digital Funds at VSP',
-                              isArabic
-                                  ? 'مبالغ العرابين والدفع الأونلاين التي استلمها تطبيق VSP عبر باي موب والمستحقة لك.'
-                                  : 'Online deposits and payments collected via PayMob on your behalf.',
-                              isArabic,
-                            ),
-                            child: const Icon(Iconsax.info_circle_copy, color: Colors.blueAccent, size: 14),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        '${digitalVspBalance.toInt()} $currencySymbol',
-                        style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.w900, fontSize: 14),
-                      ),
-                    ],
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'محفظة رقمية' : 'Digital Wallet',
+                  value: '${digitalVspBalance.toInt()} $currencySymbol',
+                  valueColor: const Color(0xFF38BDF8),
+                  borderColor: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+                  tooltipText: isArabic
+                      ? 'المبالغ المدفوعة عبر منصات رقمية'
+                      : 'Amounts paid via digital platforms',
+                  isArabic: isArabic,
                 ),
               ),
             ],
           ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 12),
-
-          // زر طلب تسوية مالية من VSP (نظيف وبدون إيموجي)
+          // 🏦 3. زر تحويل الأرباح (زر حقيقي بدون أيقونة الشرح)
           SizedBox(
             width: double.infinity,
-            height: 46,
+            height: 48,
             child: ElevatedButton(
               onPressed: () => _showSettlementModal(context, digitalVspBalance, currencySymbol, isArabic),
               style: ElevatedButton.styleFrom(
-                backgroundColor: digitalVspBalance > 0 ? VSPColors.accent : VSPColors.surfaceAlt,
-                foregroundColor: digitalVspBalance > 0 ? Colors.black : VSPColors.textSecondary,
+                backgroundColor: digitalVspBalance > 0 ? const Color(0xFFC8FF00) : const Color(0xFF18181B),
+                foregroundColor: digitalVspBalance > 0 ? Colors.black : const Color(0xFFA1A1AA),
                 shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  side: digitalVspBalance > 0 ? BorderSide.none : const BorderSide(color: VSPColors.divider),
+                  borderRadius: BorderRadius.circular(14),
+                  side: digitalVspBalance > 0 ? BorderSide.none : const BorderSide(color: Color(0xFF27272A)),
                 ),
                 elevation: 0,
               ),
               child: Text(
-                digitalVspBalance > 0 
-                    ? (isArabic ? 'طلب تسوية مالية من VSP' : 'Request VSP Settlement')
-                    : (isArabic ? 'طلب تسوية مالية (لا توجد مستحقات)' : 'Request Settlement (0 EGP)'),
-                style: const TextStyle(fontSize: 13, fontWeight: FontWeight.bold),
+                digitalVspBalance > 0
+                    ? (isArabic
+                        ? 'طلب تحويل الأرباح (${digitalVspBalance.toInt()} $currencySymbol)'
+                        : 'Transfer Profits (${digitalVspBalance.toInt()} $currencySymbol)')
+                    : (isArabic
+                        ? 'تحويل الأرباح (لا توجد مستحقات)'
+                        : 'Profit Transfer (No Funds)'),
+                style: const TextStyle(fontSize: 13.5, fontWeight: FontWeight.w700),
               ),
             ),
           ),
+          const SizedBox(height: 10),
 
-          const SizedBox(height: 12),
-
-          // الصف السفلي: عدد الحجوزات + ساعات التشغيل
+          // ⏱️ 4. الصف السفلي: عدد الحجوزات + ساعات التشغيل
           Row(
             children: [
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 0.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${isArabic ? "الحجوزات:" : "Bookings:"} $activeBookingsCount',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'عدد الحجوزات' : 'Bookings',
+                  value: '$activeBookingsCount',
+                  valueColor: Colors.white,
+                  tooltipText: isArabic
+                      ? 'عدد الحجوزات النشطة في الفترة المحددة'
+                      : 'Number of active bookings in selected period',
+                  isArabic: isArabic,
                 ),
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 10),
               Expanded(
-                child: Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
-                  decoration: BoxDecoration(
-                    color: VSPColors.surfaceAlt.withValues(alpha: 0.5),
-                    borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5), width: 0.5),
-                  ),
-                  child: Center(
-                    child: Text(
-                      '${isArabic ? "التشغيل:" : "Hours:"} $formattedHours ${isArabic ? "ساعة" : "h"}',
-                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
-                    ),
-                  ),
+                child: _buildGridStatCard(
+                  title: isArabic ? 'ساعات التشغيل' : 'Operating Hours',
+                  value: '$formattedHours ${isArabic ? "ساعة" : "h"}',
+                  valueColor: const Color(0xFFA3E635),
+                  tooltipText: isArabic
+                      ? 'إجمالي ساعات تشغيل الملعب'
+                      : 'Total pitch operating hours',
+                  isArabic: isArabic,
                 ),
               ),
             ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 🗂️ كارت إحصائي متقن بسلسل هيراركي ألوان واضح وواجهة عالية الجودة
+  Widget _buildGridStatCard({
+    required String title,
+    required String value,
+    required Color valueColor,
+    required String tooltipText,
+    required bool isArabic,
+    Color? borderColor,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(14),
+        border: Border.all(
+          color: borderColor ?? const Color(0xFF27272A),
+          width: 1,
+        ),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Expanded(
+                child: Text(
+                  title,
+                  style: const TextStyle(
+                    color: Color(0xFFA1A1AA),
+                    fontSize: 12,
+                    fontWeight: FontWeight.w600,
+                  ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+              ),
+              GestureDetector(
+                onTap: () => _showTermHelpModal(
+                  context,
+                  title,
+                  tooltipText,
+                  isArabic,
+                ),
+                child: const Icon(
+                  Iconsax.info_circle_copy,
+                  color: Color(0xFF71717A),
+                  size: 15,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            value,
+            style: TextStyle(
+              color: valueColor,
+              fontSize: 16,
+              fontWeight: FontWeight.w900,
+              letterSpacing: 0.3,
+            ),
           ),
         ],
       ),
@@ -1226,139 +1163,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  void _showDetailedRevenueBreakdown(
-    BuildContext context,
-    double totalRevenue,
-    double pitchCash,
-    double digitalVsp,
-    String currency,
-    bool isArabic,
-  ) {
-    showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      backgroundColor: Colors.transparent,
-      builder: (ctx) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-        child: Container(
-          padding: const EdgeInsets.all(VSPSpacing.lg),
-          decoration: const BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
-            border: Border(top: BorderSide(color: VSPColors.accent, width: 2)),
-          ),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Center(
-                child: Container(
-                  width: 40,
-                  height: 4,
-                  decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2)),
-                ),
-              ),
-              const SizedBox(height: 16),
 
-              Row(
-                children: [
-                  const Icon(Iconsax.chart_21_copy, color: VSPColors.accent, size: 22),
-                  const SizedBox(width: 8),
-                  Expanded(
-                    child: Text(
-                      isArabic ? 'تحليل تفاصيل الإيرادات المحصلة' : 'Revenue Breakdown Analysis',
-                      style: Theme.of(context).textTheme.displaySmall,
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
-                    onPressed: () => Navigator.pop(ctx),
-                  ),
-                ],
-              ),
-              const Divider(color: VSPColors.divider),
-              const SizedBox(height: 12),
-
-              // Main Total Box
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.all(16),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent.withValues(alpha: 0.1),
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Text(
-                      isArabic ? 'إجمالي المحصل الفعلي' : 'Total Revenue Collected',
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.bold),
-                    ),
-                    Text(
-                      '${totalRevenue.toInt()} $currency',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 24, fontWeight: FontWeight.w900),
-                    ),
-                  ],
-                ),
-              ),
-              const SizedBox(height: 16),
-
-              // Breakdown list
-              Container(
-                padding: const EdgeInsets.all(12),
-                decoration: BoxDecoration(
-                  color: VSPColors.surfaceAlt,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: VSPColors.divider, width: 0.5),
-                ),
-                child: Column(
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          isArabic ? 'كاش الملعب (مباشر)' : 'Pitch Cash (Direct)',
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${pitchCash.toInt()} $currency',
-                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                    const Divider(color: VSPColors.divider, height: 20),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(
-                          isArabic ? 'الرقمي لدى VSP (أونلاين)' : 'Digital at VSP (Online)',
-                          style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                        Text(
-                          '${digitalVsp.toInt()} $currency',
-                          style: const TextStyle(color: Colors.blueAccent, fontWeight: FontWeight.bold, fontSize: 14),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-
-              const SizedBox(height: 16),
-              Text(
-                isArabic
-                    ? 'ملاحظة: كاش الملعب يتم تحصيله نقدياً بيدك مباشرة، بينما المبالغ الرقمية تودع في حساب VSP البنكي نيابة عنك وتستطيع طلب تسويتها وسحبها في أي وقت.'
-                    : 'Note: Pitch cash is collected directly by you, while digital payments are held by VSP and can be settled anytime.',
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, height: 1.4),
-              ),
-              const SizedBox(height: 20),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
 
   void _showTermHelpModal(BuildContext context, String term, String description, bool isArabic) {
     showModalBottomSheet(
@@ -2031,6 +1836,27 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 isArabic: isArabic,
               ),
 
+              const SizedBox(height: 16),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.blueAccent.withValues(alpha: 0.08),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: Colors.blueAccent.withValues(alpha: 0.3), width: 0.8),
+                ),
+                child: Row(
+                  children: [
+                    Icon(dynamicInsightIcon, color: Colors.blueAccent, size: 20),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: Text(
+                        dynamicInsightText,
+                        style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               const SizedBox(height: 20),
             ],
           ),
@@ -2105,6 +1931,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
     );
   }
+
+
 
   Widget _buildBookedTodayList(bool isArabic) {
     final bookingProvider = Provider.of<BookingProvider>(context);
@@ -2273,3 +2101,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 }
+
+
+

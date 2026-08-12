@@ -1,4 +1,5 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_model.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
@@ -6,8 +7,7 @@ import '../services/notification_handler.dart';
 class ChatRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  /// Stream real-time chat messages for a specific booking from Supabase
-  Stream<List<ChatMessage>> getChatMessages(String bookingId) {
+  Stream<List<ChatMessage>> getChatMessages(String bookingId, {String? currentUserId}) {
     try {
       return _supabase
           .from('chat_messages')
@@ -17,37 +17,38 @@ class ChatRepository {
             try {
               final messages = list
                   .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
+                  .where((msg) => currentUserId == null || !msg.deletedForUsers.contains(currentUserId))
                   .toList();
               messages.sort((a, b) => b.timestamp.compareTo(a.timestamp));
               return messages;
             } catch (e) {
-              VSPLogger.e('Error mapping chat messages list for booking $bookingId', e);
+              VSPLogger.e('Error mapping chat messages list for booking ', e);
               return <ChatMessage>[];
             }
           })
           .handleError((error) {
-            VSPLogger.e('Error in chat messages stream for booking $bookingId', error);
+            VSPLogger.e('Error in chat messages stream for booking ', error);
             return <ChatMessage>[];
           });
     } catch (e) {
-      VSPLogger.e('Failed to initiate getChatMessages stream for booking $bookingId', e);
+      VSPLogger.e('Failed to initiate getChatMessages stream for booking ', e);
       return Stream.value(<ChatMessage>[]);
     }
   }
 
-  /// Send message and dynamically increment unread counts on Supabase bookings table
   Future<void> sendMessage(String bookingId, ChatMessage message) async {
     try {
-      // 1. Insert message to Supabase chat_messages
       await _supabase.from('chat_messages').insert({
         'booking_id': bookingId,
         'sender_id': message.senderId,
         'sender_name': message.senderName,
         'text': message.text,
         'created_at': message.timestamp.toUtc().toIso8601String(),
+        'is_read': false,
+        'is_edited': false,
+        'deleted_for_users': [],
       });
 
-      // 2. Fetch current booking info
       final bookingResponse = await _supabase
           .from('bookings')
           .select('joined_user_ids, unread_counts, owner_id, player_id')
@@ -81,7 +82,6 @@ class ChatRepository {
           }).eq('id', bookingId);
         }
 
-        // 3. 📣 إشعار كل المشاركين (owner + player + joined_user_ids) عدا المُرسِل
         final Set<String> allRecipients = {
           ...joinedIds.map((uid) => uid.toString()),
           if (bookingResponse['owner_id'] != null) bookingResponse['owner_id'].toString(),
@@ -101,7 +101,7 @@ class ChatRepository {
         }
       }
     } on PostgrestException catch (e) {
-      VSPLogger.e('Postgrest error sending chat message: ${e.message}', e);
+      VSPLogger.e('Postgrest error sending chat message: ', e);
       rethrow;
     } catch (e) {
       VSPLogger.e('Error sending message on Supabase', e);
@@ -109,10 +109,34 @@ class ChatRepository {
     }
   }
 
+  Future<void> editMessage(String messageId, String newText) async {
+    try {
+      await _supabase.from('chat_messages').update({
+        'text': newText,
+        'is_edited': true,
+      }).eq('id', messageId);
+    } catch (e) {
+      VSPLogger.e('Error editing message ', e);
+      rethrow;
+    }
+  }
 
-  /// Clear unread message count for a specific user in a booking
   Future<void> markMessagesAsRead(String bookingId, String userId) async {
     try {
+      try {
+        await _supabase.rpc('mark_chat_messages_as_read', params: {
+          'p_booking_id': bookingId,
+          'p_user_id': userId,
+        });
+      } catch (_) {
+        await _supabase
+            .from('chat_messages')
+            .update({'is_read': true})
+            .eq('booking_id', bookingId)
+            .neq('sender_id', userId)
+            .eq('is_read', false);
+      }
+
       final bookingResponse = await _supabase
           .from('bookings')
           .select('unread_counts')
@@ -131,6 +155,76 @@ class ChatRepository {
       }
     } catch (e) {
       VSPLogger.e('Error marking messages as read on Supabase', e);
+    }
+  }
+
+  static Future<List<String>> getDeletedChatIds(String userId) async {
+    if (userId.isEmpty) return [];
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      return prefs.getStringList('deleted_chats_$userId') ?? [];
+    } catch (_) {
+      return [];
+    }
+  }
+
+  Future<void> deleteConversationForUser(String bookingId, String userId, {String? contactId}) async {
+    if (userId.isEmpty) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final String userKey = 'deleted_chats_$userId';
+      final List<String> deletedList = prefs.getStringList(userKey) ?? [];
+      if (!deletedList.contains(bookingId)) {
+        deletedList.add(bookingId);
+      }
+      if (contactId != null && contactId.isNotEmpty && !deletedList.contains(contactId)) {
+        deletedList.add(contactId);
+      }
+      await prefs.setStringList(userKey, deletedList);
+
+      // Fast parallel update on chat_messages
+      try {
+        final messages = await _supabase
+            .from('chat_messages')
+            .select('id, deleted_for_users')
+            .eq('booking_id', bookingId);
+
+        if (messages.isNotEmpty) {
+          await Future.wait(messages.map((msg) async {
+            final String msgId = msg['id'].toString();
+            final List<dynamic> currentDeleted = msg['deleted_for_users'] ?? [];
+            final Set<String> updatedSet = currentDeleted.map((e) => e.toString()).toSet()..add(userId);
+
+            await _supabase.from('chat_messages').update({
+              'deleted_for_users': updatedSet.toList(),
+            }).eq('id', msgId);
+          }));
+        }
+      } catch (e) {
+        VSPLogger.w('chat_messages delete notice: $e');
+      }
+
+      // Fast update on bookings
+      try {
+        final bookingResponse = await _supabase
+            .from('bookings')
+            .select('deleted_for_users')
+            .eq('id', bookingId)
+            .maybeSingle();
+
+        if (bookingResponse != null) {
+          final List<dynamic> currentDeleted = bookingResponse['deleted_for_users'] ?? [];
+          final Set<String> updatedSet = currentDeleted.map((e) => e.toString()).toSet()..add(userId);
+
+          await _supabase.from('bookings').update({
+            'deleted_for_users': updatedSet.toList(),
+          }).eq('id', bookingId);
+        }
+      } catch (e) {
+        VSPLogger.w('bookings delete notice: $e');
+      }
+    } catch (e) {
+      VSPLogger.e('Error deleting conversation for user $userId: ', e);
     }
   }
 
@@ -156,12 +250,11 @@ class ChatRepository {
         return anyStadium['id'].toString();
       }
     } catch (e) {
-      VSPLogger.w('Could not fetch stadium ID for chat thread: $e');
+      VSPLogger.w('Could not fetch stadium ID for chat thread: ');
     }
     return null;
   }
 
-  /// 🛠️ FIX: Get or create a support chat thread using valid UUID and RLS-compliant fields
   Future<Map<String, dynamic>> getOrCreateSupportChat(String ownerId, bool isArabic) async {
     try {
       final existing = await _supabase
@@ -204,7 +297,7 @@ class ChatRepository {
       final response = await _supabase.from('bookings').insert(supportMap).select().maybeSingle();
       return response ?? supportMap;
     } on PostgrestException catch (e) {
-      VSPLogger.e('Postgrest error in getOrCreateSupportChat: ${e.message}', e);
+      VSPLogger.e('Postgrest error in getOrCreateSupportChat: ', e);
       rethrow;
     } catch (e) {
       VSPLogger.e('Error in getOrCreateSupportChat', e);
@@ -212,7 +305,6 @@ class ChatRepository {
     }
   }
 
-  /// 🛠️ FIX: Get or create a direct chat thread using valid UUID and RLS-compliant fields
   Future<Map<String, dynamic>> getOrCreateDirectChat(String currentUserId, String otherUserId, bool isArabic) async {
     try {
       final existing = await _supabase
@@ -255,7 +347,7 @@ class ChatRepository {
       final response = await _supabase.from('bookings').insert(chatMap).select().maybeSingle();
       return response ?? chatMap;
     } on PostgrestException catch (e) {
-      VSPLogger.e('Postgrest error in getOrCreateDirectChat: ${e.message}', e);
+      VSPLogger.e('Postgrest error in getOrCreateDirectChat: ', e);
       rethrow;
     } catch (e) {
       VSPLogger.e('Error in getOrCreateDirectChat', e);
@@ -263,7 +355,6 @@ class ChatRepository {
     }
   }
 
-  /// Stream chats from bookings table
   Stream<List<Map<String, dynamic>>> streamBookingsChats() {
     return _supabase
         .from('bookings')
@@ -272,7 +363,6 @@ class ChatRepository {
         .map((list) => list);
   }
 
-  /// 🔴 Stream إجمالي عدد الرسائل غير المقروءة للمستخدم الحالي (للـ badge في الـ nav bar)
   Stream<int> streamTotalUnreadCount(String userId) {
     return _supabase
         .from('bookings')

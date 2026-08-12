@@ -1,7 +1,14 @@
-import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'dart:io';
+
+void main() {
+  print('Running VSP Auto-Fixer...');
+
+  final file2 = File('lib/features/owner/screens/owner_inbox_screen.dart');
+  file2.writeAsStringSync(r'''import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -106,7 +113,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         ],
       ),
       body: FutureBuilder<List<String>>(
-        future: ChatRepository.getDeletedChatIds(ownerId),
+        future: SharedPreferences.getInstance().then((p) => p.getStringList('deleted_chats_') ?? []),
         builder: (context, prefsSnap) {
           final localDeleted = prefsSnap.data ?? [];
 
@@ -293,14 +300,11 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
     return Padding(
       padding: const EdgeInsets.only(bottom: VSPSpacing.sm),
       child: InkWell(
-        onTap: () async {
-          await Navigator.push(
+        onTap: () {
+          Navigator.push(
             context,
             MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
           );
-          if (mounted) {
-            setState(() {});
-          }
         },
         borderRadius: BorderRadius.circular(VSPRadius.lg),
         child: VSPCard(
@@ -519,4 +523,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
       return [];
     }
   }
+}
+''');
+  print('✅ Cleanly rewrote lib/features/owner/screens/owner_inbox_screen.dart');
 }
