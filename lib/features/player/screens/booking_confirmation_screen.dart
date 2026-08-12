@@ -9,21 +9,36 @@ import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
-import '../../../core/repositories/booking_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
 import 'package:url_launcher/url_launcher.dart';
 
+class TimeSlotItem {
+  final String startTime;
+  final String endTime;
+  final String key;
+  final int startMinutes;
+
+  TimeSlotItem({
+    required this.startTime,
+    required this.endTime,
+    required this.key,
+    required this.startMinutes,
+  });
+}
+
 class BookingConfirmationScreen extends StatefulWidget {
   final Stadium stadium; 
-  final String bookingType; 
+  final DateTime? selectedDate;
+  final String bookingType; // 'Personal', 'Team', 'Challenge'
   final Team? opponentTeam;
 
   const BookingConfirmationScreen({
     super.key,
     required this.stadium,
+    this.selectedDate,
     this.bookingType = 'Personal',
     this.opponentTeam,
   });
@@ -33,29 +48,54 @@ class BookingConfirmationScreen extends StatefulWidget {
 }
 
 class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
-  DateTime _selectedDate = DateTime.now();
+  late DateTime _selectedDate;
   final List<String> _selectedTimeSlots = []; 
   bool _isBallRented = false;
   bool _isPrivate = true;
   bool _isLoading = false;
-  int _currentPlayers = 1;
+  final int _currentPlayers = 1;
+  int _initialPlayersCount = 1;
   String? _userTeamId;
   String? _userTeamName;
   String? _ownerPhone;
   bool _isLoadingPhone = true;
-  List<String> _timeSlots = [];
+  List<TimeSlotItem> _timeSlots = [];
+
+  DateTime get _operationalBaseDate {
+    final now = DateTime.now();
+    final openMin = _parseTimeToMinutes(widget.stadium.openingTime);
+    final closeMin = _parseTimeToMinutes(widget.stadium.closingTime);
+    final openH = openMin ~/ 60;
+    final closeH = closeMin ~/ 60;
+    if (openH > closeH && now.hour < closeH) {
+      final prev = now.subtract(const Duration(days: 1));
+      return DateTime(prev.year, prev.month, prev.day);
+    }
+    return DateTime(now.year, now.month, now.day);
+  }
+
+  bool _isSlotsInitialized = false;
 
   @override
   void initState() {
     super.initState();
+    _selectedDate = widget.selectedDate ?? _operationalBaseDate;
     if (widget.bookingType == 'Team') {
       _isPrivate = false;
     } else {
       _isPrivate = true;
     }
-    _generateDynamicTimeSlots();
     _fetchUserTeam();
     _fetchOwnerPhone();
+  }
+
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isSlotsInitialized) {
+      _isSlotsInitialized = true;
+      _generateDynamicTimeSlots();
+    }
   }
 
   Future<void> _fetchOwnerPhone() async {
@@ -125,17 +165,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     }
   }
 
-  String _formatMinutesToTime(int totalMinutes) {
-    int hour = totalMinutes ~/ 60;
+  String _formatMinutesToTime(int totalMinutes, bool isArabic) {
+    int hour = (totalMinutes ~/ 60) % 24;
     int minute = totalMinutes % 60;
-    final period = hour >= 12 ? 'PM' : 'AM';
+    final period = isArabic
+        ? (hour >= 12 ? 'م' : 'ص')
+        : (hour >= 12 ? 'PM' : 'AM');
     if (hour > 12) hour -= 12;
     if (hour == 0) hour = 12;
-    return '${hour.toString().padLeft(2, '0')}:${minute.toString().padLeft(2, '0')} $period';
+    final minStr = minute.toString().padLeft(2, '0');
+    return '$hour:$minStr $period';
   }
 
   void _generateDynamicTimeSlots() {
     try {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final features = widget.stadium.features;
       String startStr = widget.stadium.openingTime; 
       String endStr = widget.stadium.closingTime;   
@@ -150,11 +194,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       int startMinutes = _parseTimeToMinutes(startStr);
       int endMinutes = _parseTimeToMinutes(endStr);
 
-      if (endMinutes < startMinutes) {
+      if (endMinutes <= startMinutes) {
         endMinutes += 24 * 60; 
       }
 
       int getCumulativeMinutes(String timeStr) {
+        if (timeStr.trim().isEmpty) return -1;
         int min = _parseTimeToMinutes(timeStr);
         if (min < startMinutes) {
           min += 24 * 60; 
@@ -165,26 +210,53 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       int? bStart;
       int? bEnd;
       if (features is Map && features['breakTime'] != null) {
-        bStart = getCumulativeMinutes(features['breakTime']['start'] ?? '');
-        bEnd = getCumulativeMinutes(features['breakTime']['end'] ?? '');
+        final s = features['breakTime']['start']?.toString() ?? '';
+        final e = features['breakTime']['end']?.toString() ?? '';
+        if (s.isNotEmpty && e.isNotEmpty) {
+          bStart = getCumulativeMinutes(s);
+          bEnd = getCumulativeMinutes(e);
+        }
       }
 
-      final List<String> slots = [];
-      for (int m = startMinutes; m <= endMinutes; m += 30) {
-        if (bStart != null && bEnd != null) {
-          if ((m >= bStart && m < bEnd) || (m + 30 > bStart && m + 30 <= bEnd)) {
+      final List<TimeSlotItem> slots = [];
+      for (int m = startMinutes; m < endMinutes; m += 30) {
+        final slotStart = m;
+        final slotEnd = m + 30;
+
+        // Skip slot if it overlaps with stadium break shift
+        if (bStart != null && bEnd != null && bStart != -1 && bEnd != -1) {
+          if (slotStart < bEnd && slotEnd > bStart) {
             continue; 
           }
         }
-        slots.add(_formatMinutesToTime(m % (24 * 60)));
+
+        final startTimeFormatted = _formatMinutesToTime(slotStart % (24 * 60), isArabic);
+        final endTimeFormatted = _formatMinutesToTime(slotEnd % (24 * 60), isArabic);
+        final rawKey = _formatMinutesToTime(slotStart % (24 * 60), false);
+
+        slots.add(TimeSlotItem(
+          startTime: startTimeFormatted,
+          endTime: endTimeFormatted,
+          key: rawKey,
+          startMinutes: slotStart,
+        ));
       }
 
       setState(() {
         _timeSlots = slots;
       });
     } catch (e) {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       setState(() {
-        _timeSlots = ['02:00 PM', '03:00 PM', '04:00 PM', '05:00 PM', '06:00 PM', '07:00 PM', '08:00 PM', '09:00 PM', '10:00 PM', '11:00 PM'];
+        _timeSlots = List.generate(8, (i) {
+          final m = (14 + i) * 60;
+          return TimeSlotItem(
+            startTime: _formatMinutesToTime(m, isArabic),
+            endTime: _formatMinutesToTime(m + 30, isArabic),
+            key: _formatMinutesToTime(m, false),
+            startMinutes: m,
+          );
+        });
       });
     }
   }
@@ -200,22 +272,28 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   DateTime _getSlotDateTime(String slot) {
     int startMin = _parseTimeToMinutes(slot);
     String openStr = widget.stadium.openingTime;
+    String closeStr = widget.stadium.closingTime;
     final features = widget.stadium.features;
-    if (openStr.isEmpty && features is Map && features['workingHours'] != null) {
-      openStr = features['workingHours']['start'] ?? '';
+    if ((openStr.isEmpty || closeStr.isEmpty) && features is Map && features['workingHours'] != null) {
+      openStr = openStr.isNotEmpty ? openStr : (features['workingHours']['start'] ?? '');
+      closeStr = closeStr.isNotEmpty ? closeStr : (features['workingHours']['end'] ?? '');
     }
     int openMin = _parseTimeToMinutes(openStr);
+    int closeMin = _parseTimeToMinutes(closeStr);
     
     DateTime date = _selectedDate;
-    if (openMin > 12 * 60 && startMin < openMin) {
+    final bool isOvernightShift = (closeMin <= openMin && openMin > 0);
+    if (isOvernightShift && startMin < openMin) {
+      date = date.add(const Duration(days: 1));
+    } else if (!isOvernightShift && openMin > 12 * 60 && startMin < openMin) {
       date = date.add(const Duration(days: 1));
     }
     return DateTime(date.year, date.month, date.day, startMin ~/ 60, startMin % 60);
   }
 
-  bool _isSlotBooked(String slot, List<Booking> existingBookings) {
-    final slotStartTime = _getSlotDateTime(slot);
-    final slotEndTime = slotStartTime.add(const Duration(hours: 1));
+  bool _isSlotBooked(String slotKey, List<Booking> existingBookings) {
+    final slotStartTime = _getSlotDateTime(slotKey);
+    final slotEndTime = slotStartTime.add(const Duration(minutes: 30));
     for (var booking in existingBookings) {
       if (slotStartTime.isBefore(booking.endTime) && slotEndTime.isAfter(booking.startTime)) {
         return true;
@@ -224,39 +302,53 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return false;
   }
 
-  void _onTimeSlotTap(String slot, List<Booking> existingBookings) {
+  void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
     setState(() {
       if (_selectedTimeSlots.isEmpty) {
-        _selectedTimeSlots.add(slot);
+        _selectedTimeSlots.add(slotKey);
       } else if (_selectedTimeSlots.length == 1) {
         final first = _selectedTimeSlots.first;
-        if (first == slot) {
+        if (first == slotKey) {
           _selectedTimeSlots.clear();
         } else {
-          final idxFirst = _timeSlots.indexOf(first);
-          final idxTapped = _timeSlots.indexOf(slot);
+          final idxFirst = _timeSlots.indexWhere((s) => s.key == first);
+          final idxTapped = _timeSlots.indexWhere((s) => s.key == slotKey);
           
+          if (idxFirst == -1 || idxTapped == -1) {
+            _selectedTimeSlots.clear();
+            _selectedTimeSlots.add(slotKey);
+            return;
+          }
+
           final startIdx = idxFirst < idxTapped ? idxFirst : idxTapped;
           final endIdx = idxFirst > idxTapped ? idxFirst : idxTapped;
           
           bool hasInvalidSlot = false;
           final List<String> tempRange = [];
           for (int i = startIdx; i <= endIdx; i++) {
-            final checkSlot = _timeSlots[i];
-            final slotDateTime = _getSlotDateTime(checkSlot);
+            if (i > startIdx) {
+              final prevSlot = _timeSlots[i - 1];
+              final currSlot = _timeSlots[i];
+              if (currSlot.startMinutes != prevSlot.startMinutes + 30) {
+                hasInvalidSlot = true; // Break time gap detected!
+                break;
+              }
+            }
+            final checkItem = _timeSlots[i];
+            final slotDateTime = _getSlotDateTime(checkItem.key);
             final isPast = slotDateTime.isBefore(DateTime.now());
-            final isBooked = _isSlotBooked(checkSlot, existingBookings);
+            final isBooked = _isSlotBooked(checkItem.key, existingBookings);
             
             if (isPast || isBooked) {
               hasInvalidSlot = true;
               break;
             }
-            tempRange.add(checkSlot);
+            tempRange.add(checkItem.key);
           }
           
           if (hasInvalidSlot) {
             _selectedTimeSlots.clear();
-            _selectedTimeSlots.add(slot);
+            _selectedTimeSlots.add(slotKey);
           } else {
             _selectedTimeSlots.clear();
             _selectedTimeSlots.addAll(tempRange);
@@ -264,7 +356,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         }
       } else {
         _selectedTimeSlots.clear();
-        _selectedTimeSlots.add(slot);
+        _selectedTimeSlots.add(slotKey);
       }
     });
   }
@@ -440,7 +532,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           scrollDirection: Axis.horizontal,
                           itemCount: 14, 
                           itemBuilder: (context, index) {
-                            final date = DateTime.now().add(Duration(days: index));
+                            final date = _operationalBaseDate.add(Duration(days: index));
                             final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
                             return GestureDetector(
                               onTap: () { setState(() { _selectedDate = date; }); },
@@ -481,19 +573,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     builder: (context, snapshot) {
                       final existingBookings = snapshot.data ?? [];
                       return Column(
-                        children: List.generate(_timeSlots.isEmpty ? 0 : _timeSlots.length - 1, (index) {
-                          final startTime = _timeSlots[index];
-                          final endTime = _timeSlots[index + 1];
-                          final slotLabel = '$startTime  -  $endTime';
-                          final isBooked = _isSlotBooked(startTime, existingBookings);
-                          final isSelected = _selectedTimeSlots.contains(startTime);
-                          final slotDateTime = _getSlotDateTime(startTime);
+                        children: List.generate(_timeSlots.length, (index) {
+                          final slotItem = _timeSlots[index];
+                          final isBooked = _isSlotBooked(slotItem.key, existingBookings);
+                          final isSelected = _selectedTimeSlots.contains(slotItem.key);
+                          final slotDateTime = _getSlotDateTime(slotItem.key);
                           final isPast = slotDateTime.isBefore(DateTime.now());
-                          
-                          if (isPast) return const SizedBox.shrink();
-
                           return GestureDetector(
-                            onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(startTime, existingBookings),
+                            onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(slotItem.key, existingBookings),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
                               alignment: Alignment.center,
@@ -515,21 +602,51 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 mainAxisAlignment: MainAxisAlignment.center,
                                 children: [
                                   if (isSelected) ...[const Icon(Iconsax.tick_circle_copy, size: 18, color: VSPColors.accent), const SizedBox(width: 8)],
-                                  Directionality(
-                                    textDirection: TextDirection.ltr,
-                                    child: Text(
-                                      slotLabel,
-                                      style: TextStyle(
-                                        color: (isBooked || isPast)
-                                            ? VSPColors.textSecondary.withValues(alpha: 0.3)
-                                            : (isSelected ? Colors.white : VSPColors.textPrimary),
-                                        fontSize: 16,
-                                        fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
-                                        decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
+                                  Row(
+                                    mainAxisSize: MainAxisSize.min,
+                                    children: [
+                                      Text(
+                                        slotItem.startTime,
+                                        style: TextStyle(
+                                          color: (isBooked || isPast)
+                                              ? VSPColors.textSecondary.withValues(alpha: 0.4)
+                                              : (isSelected ? Colors.white : VSPColors.textPrimary),
+                                          fontSize: 15,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
+                                        ),
                                       ),
-                                    ),
+                                      Padding(
+                                        padding: const EdgeInsets.symmetric(horizontal: 8),
+                                        child: Text(
+                                          '–',
+                                          style: TextStyle(
+                                            color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                                            fontSize: 15,
+                                            fontWeight: FontWeight.bold,
+                                          ),
+                                        ),
+                                      ),
+                                      Text(
+                                        slotItem.endTime,
+                                        style: TextStyle(
+                                          color: (isBooked || isPast)
+                                              ? VSPColors.textSecondary.withValues(alpha: 0.4)
+                                              : (isSelected ? Colors.white : VSPColors.textPrimary),
+                                          fontSize: 15,
+                                          fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
+                                          decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
+                                        ),
+                                      ),
+                                    ],
                                   ),
-                                  if (isBooked) ...[const SizedBox(width: 12), Text(l10n.bookedStatus, style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold))] 
+                                  if (isBooked) ...[
+                                    const SizedBox(width: 12),
+                                    Text(l10n.bookedStatus, style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ] else if (isPast) ...[
+                                    const SizedBox(width: 12),
+                                    Text(isArabic ? 'منقضي' : 'Past', style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold)),
+                                  ],
                                 ],
                               ),
                             ),
@@ -538,72 +655,63 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       );
                     },
                   ),
-                  
-                  const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg), child: Divider(color: VSPColors.divider, thickness: 1)),
-                  
-                  // 1. Private/Public Switch Option
-                  if (widget.bookingType != 'Team') ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Text(l10n.privateLabel, style: Theme.of(context).textTheme.titleLarge),
-                        Switch(value: _isPrivate, onChanged: (val) => setState(() => _isPrivate = val), activeColor: VSPColors.accent, activeTrackColor: VSPColors.accentSoft),
-                      ],
+
+                  const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.md), child: Divider(color: VSPColors.divider, thickness: 0.5)),
+
+                  // ── OpenJoin Available Players Counter Card ──
+                  if (widget.bookingType.toLowerCase() == 'openjoin') ...[
+                    Container(
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                      padding: const EdgeInsets.all(VSPSpacing.md),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Expanded(
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  isArabic ? 'عدد اللاعبين المتوفرين معك حالياً' : 'Available Players With You',
+                                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
+                                ),
+                                const SizedBox(height: 2),
+                                Text(
+                                  isArabic ? 'حدد كم لاعب متواجد معك لتكملة سعة الملعب' : 'Specify how many players you bring to fill pitch capacity',
+                                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                ),
+                              ],
+                            ),
+                          ),
+                          Row(
+                            children: [
+                              IconButton(
+                                icon: const Icon(Iconsax.minus_copy, size: 18, color: VSPColors.accent),
+                                onPressed: _initialPlayersCount > 1 ? () => setState(() => _initialPlayersCount--) : null,
+                              ),
+                              Container(
+                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                                decoration: BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.circular(6)),
+                                child: Text('$_initialPlayersCount', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 16)),
+                              ),
+                              IconButton(
+                                icon: const Icon(Iconsax.add_copy, size: 18, color: VSPColors.accent),
+                                onPressed: _initialPlayersCount < (widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : 10)
+                                    ? () => setState(() => _initialPlayersCount++)
+                                    : null,
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: VSPSpacing.sm),
                   ],
-                  
-                  // 2. Team current players count option
-                  if (widget.bookingType == 'Team') ...[
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.currentPlayersWithYou, style: Theme.of(context).textTheme.titleMedium),
-                            Text(l10n.playersInGroupSubtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                          ],
-                        ),
-                        Row(
-                          children: [
-                            _buildCounterButton(Iconsax.minus_cirlce_copy, () { if (_currentPlayers > 1) setState(() => _currentPlayers--); }),
-                            Padding(padding: const EdgeInsets.symmetric(horizontal: 16), child: Text('$_currentPlayers', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold))),
-                            _buildCounterButton(Iconsax.add_circle_copy, () { final int maxAllowed = (widget.stadium.seatsCapacity > 0) ? widget.stadium.seatsCapacity : 10; if (_currentPlayers < maxAllowed) setState(() => _currentPlayers++); }),
-                          ],
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 24),
-                  ],
-                  
-                  // 3. Ball Rent Option
-                  GestureDetector(
-                    onTap: () => setState(() => _isBallRented = !_isBallRented),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(l10n.rentBallLabel(_ballPrice.toInt(), l10n.egCurrency), style: Theme.of(context).textTheme.titleMedium),
-                            const SizedBox(height: VSPSpacing.xs),
-                            Text(l10n.payPerBallSubtitle, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                          ],
-                        ),
-                        AnimatedContainer(
-                          duration: const Duration(milliseconds: 200),
-                          width: 24, height: 24,
-                          decoration: BoxDecoration(color: _isBallRented ? VSPColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(VSPRadius.sm), border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.borderMedium)),
-                          child: _isBallRented ? const Icon(Iconsax.tick_circle_copy, size: 16, color: VSPColors.background) : null,
-                        ),
-                      ],
-                    ),
-                  ),
-                  
-                  const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.lg), child: Divider(color: VSPColors.divider, thickness: 1)),
-                  
-                  // 4. Financial Calculations Panel
+
+                  // ── Financial & Debt Calculations Summary Panel ──
                   Builder(builder: (context) {
                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
                     final isCashLocked = (authProvider.userModel?.noShowCount ?? 0) >= 2;
@@ -613,8 +721,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       return Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: true),
-                          const SizedBox(height: 12),
                           Container(
                             padding: const EdgeInsets.all(12),
                             decoration: BoxDecoration(color: VSPColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.error.withValues(alpha: 0.5))),
@@ -629,42 +735,44 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   ],
                                 ),
                                 const SizedBox(height: 6),
-                                Text(isArabic ? "تم تقييد حسابك مؤقتاً من الحجوزات النقدية بسبب تكرار عدم الحضور. للحجز، يجب دفع 100٪ من قيمة الحجز عبر الإنترنت باستخدام المحافظ الرقمية." : "Your account is temporarily restricted from Cash bookings due to multiple missed bookings. To book, you must pay 100% of the booking amount online via digital wallets.", style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4)),
+                                Text(isArabic ? "تم تقييد حسابك مؤقتاً من الحجوزات النقدية بسبب تكرار عدم الحضور. للحجز، يجب دفع 100٪ من قيمة الحجز عبر الإنترنت." : "Account temporarily restricted from Cash bookings due to missed attendance. Must pay 100% online.", style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4)),
                               ],
                             ),
                           ),
-                          const SizedBox(height: VSPSpacing.lg),
+                          const SizedBox(height: VSPSpacing.md),
                         ],
                       );
                     }
 
                     if (deposit > 0 && widget.stadium.needsDeposit) {
-                      return Column(
-                        children: [
-                          _buildPriceRow(l10n.totalPriceLabel, '${_totalPrice.toInt()} ${l10n.egCurrency}', highlight: false),
-                          const SizedBox(height: 8),
-                          _buildPriceRow(isArabic ? 'عربون الحجز' : 'Upfront Deposit', '${deposit.toInt()} ${l10n.egCurrency}', icon: Iconsax.lock_copy, highlight: false, color: VSPColors.accent),
-                          const SizedBox(height: 8),
-                          _buildPriceRow(isArabic ? 'المتبقي عند الملعب' : 'Remaining (At Pitch)', '${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}', icon: Iconsax.card_copy, highlight: false, color: VSPColors.textSecondary),
-                          const SizedBox(height: VSPSpacing.lg),
-                        ],
+                      return Container(
+                        padding: const EdgeInsets.all(12),
+                        decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.divider)),
+                        child: Column(
+                          children: [
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(isArabic ? 'عربون الحجز المطلوبة' : 'Upfront Deposit Required', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
+                                Text('${deposit.toInt()} ${l10n.egCurrency}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 14)),
+                              ],
+                            ),
+                            const SizedBox(height: 6),
+                            Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Text(isArabic ? 'المتبقي عند الملعب' : 'Remaining at Pitch', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+                                Text('${(_totalPrice - deposit).clamp(0, double.infinity).toInt()} ${l10n.egCurrency}', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12)),
+                              ],
+                            ),
+                          ],
+                        ),
                       );
                     }
-                    return Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(l10n.totalPriceLabel, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                        Text(l10n.priceEgp(_totalPrice.toInt()), style: Theme.of(context).textTheme.displayLarge),
-                        const SizedBox(height: VSPSpacing.lg),
-                      ],
-                    );
+                    return const SizedBox.shrink();
                   }),
-                  
-                  // 5. Contact Pitch Button
-                  if (!_isLoadingPhone && _ownerPhone != null && _ownerPhone!.isNotEmpty) ...[
-                    _buildContactPitchButton(context, _ownerPhone!),
-                    const SizedBox(height: 12),
-                  ],
+
+                  const SizedBox(height: VSPSpacing.xl),
                 ],
               ),
             ),
@@ -695,15 +803,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         VSPSpacing.md,
         VSPSpacing.sm,
         VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 6 : VSPSpacing.md,
+        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8 : VSPSpacing.md,
       ),
       decoration: BoxDecoration(
         color: VSPColors.surface,
         border: const Border(top: BorderSide(color: VSPColors.divider, width: 1)),
         boxShadow: [
           BoxShadow(
-            color: Colors.black.withValues(alpha: 0.3),
-            blurRadius: 10,
+            color: Colors.black.withValues(alpha: 0.4),
+            blurRadius: 14,
             offset: const Offset(0, -4),
           ),
         ],
@@ -711,57 +819,131 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [
-          // ── 1. Ball Rental Quick Toggle (if available) ──
-          if (hasBallOption) ...[
-            InkWell(
-              onTap: () => setState(() => _isBallRented = !_isBallRented),
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
-                decoration: BoxDecoration(
-                  color: _isBallRented ? VSPColors.accent.withValues(alpha: 0.12) : Colors.transparent,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(
-                    color: _isBallRented ? VSPColors.accent : VSPColors.divider,
-                  ),
-                ),
-                child: Row(
-                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                  children: [
-                    Row(
-                      children: [
-                        Icon(Iconsax.element_4_copy, size: 16, color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary),
-                        const SizedBox(width: 8),
-                        Text(
-                          isArabic 
-                              ? 'تأجير كرة (+${_ballPrice.toInt()} ج.م)' 
-                              : 'Rent Football (+${_ballPrice.toInt()} EGP)',
-                          style: TextStyle(
-                            color: _isBallRented ? VSPColors.accent : VSPColors.textPrimary,
-                            fontSize: 12,
-                            fontWeight: _isBallRented ? FontWeight.bold : FontWeight.normal,
+          // ── Layer 1: Fixed Options Row (Private/Public + Ball Rent + Contact Pitch) ──
+          SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                // A. Private / Public Toggle Chip
+                if (widget.bookingType != 'Team')
+                  GestureDetector(
+                    onTap: () {
+                      setState(() => _isPrivate = !_isPrivate);
+                      VSPFeedback.showInfo(
+                        context,
+                        _isPrivate
+                            ? (isArabic ? '🔒 حجز خاص: تقتصر المباراة على فريقك وحجوزاتكم الخاصة فقط.' : '🔒 Private Booking: Exclusive for your team only.')
+                            : (isArabic ? '👥 حجز عام: ستظهر مباراتك في رادار الخريطة ليتمكن اللاعبون من الانضمام!' : '👥 Public Booking: Visible on map feed so players can join!'),
+                      );
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: _isPrivate ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _isPrivate ? VSPColors.accent : VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            _isPrivate ? Iconsax.lock_copy : Iconsax.people_copy,
+                            size: 14,
+                            color: _isPrivate ? VSPColors.accent : VSPColors.textSecondary,
                           ),
-                        ),
-                      ],
+                          const SizedBox(width: 5),
+                          Text(
+                            _isPrivate ? (isArabic ? 'حجز خاص 🔒' : 'Private 🔒') : (isArabic ? 'حجز عام 👥' : 'Public 👥'),
+                            style: TextStyle(
+                              color: _isPrivate ? VSPColors.accent : VSPColors.textPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
-                    Switch(
-                      value: _isBallRented,
-                      onChanged: (val) => setState(() => _isBallRented = val),
-                      activeColor: VSPColors.accent,
-                      materialTapTargetSize: MaterialTapTargetSize.shrinkWrap,
-                    ),
-                  ],
-                ),
-              ),
-            ),
-            const SizedBox(height: 8),
-          ],
+                  ),
 
-          // ── 2. Running Cost Header Row ──
+                // B. Ball Rental Toggle Chip
+                if (hasBallOption)
+                  GestureDetector(
+                    onTap: () => setState(() => _isBallRented = !_isBallRented),
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      margin: const EdgeInsets.only(right: 6),
+                      decoration: BoxDecoration(
+                        color: _isBallRented ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Iconsax.cup_copy,
+                            size: 14,
+                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            _isBallRented
+                                ? (isArabic ? 'كرة ⚽ (+${_ballPrice.toInt()} ج.م)' : 'Football ⚽ (+${_ballPrice.toInt()} EGP)')
+                                : (isArabic ? '+ إيجار كرة ⚽' : '+ Rent Football ⚽'),
+                            style: TextStyle(
+                              color: _isBallRented ? VSPColors.accent : VSPColors.textPrimary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+
+                // C. Contact Pitch Owner Button
+                if (!_isLoadingPhone && _ownerPhone != null && _ownerPhone!.isNotEmpty)
+                  GestureDetector(
+                    onTap: () async {
+                      try {
+                        final cleanPhone = _ownerPhone!.replaceAll(RegExp(r'\D'), '');
+                        final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 ? '+2$cleanPhone' : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
+                        final Uri launchUri = Uri(scheme: 'tel', path: path);
+                        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+                      } catch (e) {
+                        debugPrint('Could not launch phone: $e');
+                      }
+                    },
+                    child: Container(
+                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                      decoration: BoxDecoration(
+                        color: VSPColors.surfaceAlt,
+                        borderRadius: BorderRadius.circular(20),
+                        border: Border.all(color: VSPColors.divider),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(Iconsax.call_copy, size: 14, color: VSPColors.accent),
+                          const SizedBox(width: 5),
+                          Text(
+                            isArabic ? 'اتصل بالملعب 📞' : 'Call Pitch 📞',
+                            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 11, fontWeight: FontWeight.bold),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+              ],
+            ),
+          ),
+          const SizedBox(height: 10),
+
+          // ── Layer 2: Total Price & Primary Checkout Button ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Column(
+                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(
@@ -775,12 +957,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         '${_totalPrice.toInt()} ${l10n.egCurrency}',
                         style: const TextStyle(
                           color: VSPColors.accent,
-                          fontSize: 22,
+                          fontSize: 20,
                           fontWeight: FontWeight.bold,
                         ),
                       ),
                       if (deposit > 0 && widget.stadium.needsDeposit) ...[
-                        const SizedBox(width: 8),
+                        const SizedBox(width: 6),
                         Container(
                           padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                           decoration: BoxDecoration(
@@ -788,7 +970,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            isArabic ? 'عربون: ${deposit.toInt()} ج.م' : 'Deposit: ${deposit.toInt()} EGP',
+                            isArabic ? 'عربون: ${deposit.toInt()} ج.م' : 'Dep: ${deposit.toInt()} EGP',
                             style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -797,154 +979,113 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                 ],
               ),
+              const SizedBox(width: 12),
               Expanded(
-                child: Padding(
-                  padding: const EdgeInsets.only(left: 12),
-                  child: PrimaryButton(
-                    text: l10n.confirmSelections,
-                    height: 48,
-                    isLoading: _isLoading,
-                    onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
-                      setState(() => _isLoading = true);
-                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                      final currentUserModel = authProvider.userModel;
-                      if (currentUserModel == null) { setState(() => _isLoading = false); return; }
+                child: PrimaryButton(
+                  text: isArabic ? 'تأكيد ودفع الحجز 💳' : 'Confirm & Proceed 💳',
+                  height: 46,
+                  isLoading: _isLoading,
+                  onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
+                    setState(() => _isLoading = true);
+                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                    final currentUserModel = authProvider.userModel;
+                    if (currentUserModel == null) { setState(() => _isLoading = false); return; }
 
-                      final nav = Navigator.of(context);
-                      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+                    final nav = Navigator.of(context);
+                    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-                      final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
-                      final firstSlot = sortedSlots.first;
-                      final startTime = _getSlotDateTime(firstSlot);
-                      final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
+                    final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                    final firstSlot = sortedSlots.first;
+                    final startTime = _getSlotDateTime(firstSlot);
+                    final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
 
-                      BookingType bType;
-                      switch (widget.bookingType.toLowerCase()) {
-                        case 'team': bType = BookingType.team; break;
-                        case 'challenge': bType = BookingType.challenge; break;
-                        default: bType = BookingType.personal;
-                      }
+                    BookingType bType;
+                    switch (widget.bookingType.toLowerCase()) {
+                      case 'team': bType = BookingType.team; break;
+                      case 'challenge': bType = BookingType.challenge; break;
+                      default: bType = BookingType.personal;
+                    }
 
-                      final depositAmount = widget.stadium.depositAmount;
-                      final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
+                    final depositAmount = widget.stadium.depositAmount;
+                    final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
 
-                      final draft = BookingDraft(
-                        stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
-                        ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
-                        playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
-                        playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
-                        opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
-                        totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
-                        currentPlayers: _currentPlayers, totalFieldCapacity: fieldCapacity,
-                        depositPaid: widget.stadium.needsDeposit ? depositAmount : 0.0,
-                        isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
-                      );
+                    final draft = BookingDraft(
+                      stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
+                      ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
+                      playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
+                      playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
+                      opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
+                      totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
+                      currentPlayers: (bType == BookingType.openJoin) ? _initialPlayersCount : _currentPlayers, playersPerTeam: widget.stadium.playersPerTeam, totalFieldCapacity: fieldCapacity,
+                      depositPaid: depositAmount, isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
+                      instapay: widget.stadium.features is Map ? widget.stadium.features['instapay'] : null,
+                      vodafoneCash: widget.stadium.features is Map ? widget.stadium.features['vodafoneCash'] : null,
+                      binanceId: widget.stadium.features is Map ? widget.stadium.features['binanceId'] : null,
+                    );
 
-                      final needsDeposit = widget.stadium.needsDeposit;
-                      final unpaidBookings = await SupabaseBookingRepository().getUnpaidBookingsForUser(currentUserModel.uid);
-                      final now = DateTime.now();
-                      final activeUnpaidBookings = unpaidBookings.where((b) { return b.status != BookingStatus.cancelled && b.status != BookingStatus.completed && b.endTime.isAfter(now) && !b.isPaid && b.paymentMethod == 'cash'; }).toList();
-                      final bool hasActiveUnpaid = activeUnpaidBookings.isNotEmpty;
+                    setState(() => _isLoading = false);
 
-                      if (!mounted) return;
+                    if (widget.stadium.needsDeposit && depositAmount > 0) {
+                      nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                      return;
+                    }
 
-                      if (!needsDeposit && !hasActiveUnpaid) {
-                        final cashDraft = draft.copyWith(isPaid: false, isDepositPaid: false, depositPaid: 0.0, paymentStatus: 'unpaid', paymentMethod: 'cash', paymentTransactionId: '_');
-                        final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-                        if (!mounted) return;
-                        if (booking != null) {
-                          setState(() => _isLoading = false);
-                          nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-                        } else {
-                          if (context.mounted) {
-                            setState(() => _isLoading = false);
-                            VSPFeedback.showError(
-                              context,
-                              bookingProvider.errorMessage ?? (isArabic ? 'فشل إنشاء الحجز' : 'Failed to create booking'),
-                            );
-                          }
-                        }
-                      } else {
-                        final forceFullPayment = !needsDeposit && hasActiveUnpaid;
-                        final amountToPay = needsDeposit ? depositAmount : _totalPrice;
-                        if (amountToPay <= 0) {
-                          final zeroDraft = draft.copyWith(isPaid: true, paymentStatus: 'paid', paymentMethod: 'free', paymentTransactionId: 'FREE');
-                          final booking = await bookingProvider.createBooking(zeroDraft, currentUserModel.uid);
-                          if (mounted) {
-                            setState(() => _isLoading = false);
-                            if (booking != null) nav.pushReplacement(MaterialPageRoute(builder: (context) => BookingSuccessScreen(booking: booking)));
-                          }
-                          return;
-                        }
-                        await nav.push(MaterialPageRoute(builder: (context) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: forceFullPayment)));
-                        if (mounted) { setState(() => _isLoading = false); }
-                      }
-                    },
-                  ),
+                    final isCashLocked = (currentUserModel.noShowCount) >= 2;
+                    if (isCashLocked) {
+                      VSPFeedback.showError(context, isArabic ? "حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪." : "Cash bookings restricted due to missed attendance. Please pay 100% online.");
+                      nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                      return;
+                    }
+
+                    showModalBottomSheet(
+                      context: context,
+                      backgroundColor: VSPColors.surface,
+                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                      builder: (ctx) => Container(
+                        padding: const EdgeInsets.all(20),
+                        child: Column(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            Text(isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                            const SizedBox(height: 16),
+                            ListTile(
+                              leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                              title: Text(isArabic ? 'دفع إلكتروني (فودافون كاش / إنستاباي / بطاقة)' : 'Online Payment (Vodafone Cash / InstaPay / Card)'),
+                              subtitle: Text(isArabic ? 'دفع سريع وتأكيد فوري' : 'Fast payment and instant confirmation'),
+                              onTap: () {
+                                Navigator.pop(ctx);
+                                nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                              },
+                            ),
+                            const Divider(color: VSPColors.divider),
+                            ListTile(
+                              leading: const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
+                              title: Text(isArabic ? 'دفع نقدي في الملعب (Cash)' : 'Pay Cash at Pitch'),
+                              subtitle: Text(isArabic ? 'تدفع الكابتن عند الحضور للملعب' : 'Pay captain directly upon arrival'),
+                              onTap: () async {
+                                Navigator.pop(ctx);
+                                try {
+                                  final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
+                                  final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                                  if (booking != null && nav.mounted) {
+                                    nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
+                                  }
+                                } catch (e) {
+                                  if (context.mounted) VSPFeedback.showError(context, e.toString());
+                                }
+                              },
+                            ),
+                          ],
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ),
             ],
           ),
         ],
       ),
-    );
-  }
-
-  Widget _buildContactPitchButton(BuildContext context, String phone) {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    return Container(
-      width: double.infinity,
-      decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3))),
-      child: Material(
-        color: Colors.transparent,
-        child: InkWell(
-          onTap: () async {
-            final cleanPhone = phone.replaceAll(RegExp(r'\D'), '');
-            final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 ? '+2$cleanPhone' : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
-            final Uri launchUri = Uri(scheme: 'tel', path: path);
-            try { if (await canLaunchUrl(launchUri)) { await launchUrl(launchUri, mode: LaunchMode.externalApplication); } } catch (e) { debugPrint('Could not launch tel URI: $e'); }
-          },
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
-          child: Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 10),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Iconsax.call_copy, color: VSPColors.accent, size: 18),
-                const SizedBox(width: 8),
-                Text(isArabic ? 'اتصل بالملعب للاستفسار المباشر' : 'Call Stadium directly to inquire', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-
-  Widget _buildCounterButton(IconData icon, VoidCallback onTap) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        width: 32, height: 32,
-        decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.divider)),
-        child: Icon(icon, color: VSPColors.textPrimary, size: 16),
-      ),
-    );
-  }
-
-  Widget _buildPriceRow(String label, String value, {bool highlight = false, IconData? icon, Color? color}) {
-    final effectiveColor = color ?? (highlight ? VSPColors.accent : VSPColors.textPrimary);
-    return Row(
-      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-      children: [
-        Row(
-          children: [
-            if (icon != null) ...[Icon(icon, color: effectiveColor, size: 14), const SizedBox(width: 6)],
-            Text(label, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-          ],
-        ),
-        Text(value, style: TextStyle(color: effectiveColor, fontSize: highlight ? 18 : 14, fontWeight: highlight ? FontWeight.bold : FontWeight.w600)),
-      ],
     );
   }
 }

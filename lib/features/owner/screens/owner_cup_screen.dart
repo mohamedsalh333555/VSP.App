@@ -52,7 +52,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     return Scaffold(
       backgroundColor: VSPColors.background,
       floatingActionButton: Padding(
-        padding: const EdgeInsets.only(bottom: 75.0),
+        padding: const EdgeInsets.only(bottom: 100.0),
         child: FloatingActionButton(
           onPressed: () => _showTournamentTypeSheet(context, isArabic, l10n),
           backgroundColor: VSPColors.accent,
@@ -165,13 +165,17 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   final isRightCategory = _selectedCategory == 'All' || c.type.toLowerCase() == _selectedCategory.toLowerCase();
                   
                   final now = DateTime.now();
+                  final todayStart = DateTime(now.year, now.month, now.day);
+                  final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
+
                   bool isRightStatus = false;
-                  if (_selectedTab == 0) {
-                    isRightStatus = c.startDate.isAfter(now);
-                  } else if (_selectedTab == 1) {
-                    isRightStatus = c.startDate.isBefore(now) && c.endDate.isAfter(now);
-                  } else if (_selectedTab == 2) {
-                    isRightStatus = c.endDate.isBefore(now);
+                  if (_selectedTab == 0) { // Coming (Upcoming)
+                    isRightStatus = c.startDate.isAfter(todayEnd);
+                  } else if (_selectedTab == 1) { // Ongoing
+                    isRightStatus = (c.startDate.isBefore(todayEnd) || c.startDate.isAtSameMomentAs(todayEnd)) &&
+                                    (c.endDate.isAfter(todayStart) || c.endDate.isAtSameMomentAs(todayStart));
+                  } else if (_selectedTab == 2) { // Finished
+                    isRightStatus = c.endDate.isBefore(todayStart);
                   }
                   
                   return isRightCategory && isRightStatus;
@@ -182,12 +186,27 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 });
 
                 if (filtered.isEmpty) {
+                  final String emptyTitle;
+                  final String emptySubtitle;
+                  final bool hasAnyChampionships = championships.isNotEmpty;
+
+                  if (_selectedTab == 0) {
+                    emptyTitle = isArabic ? 'لا توجد بطولات قادمة' : 'No upcoming tournaments';
+                    emptySubtitle = isArabic ? 'قم بإنشاء بطولة جديدة لتظهر هنا' : 'Create a tournament to show it here';
+                  } else if (_selectedTab == 1) {
+                    emptyTitle = isArabic ? 'لا توجد بطولات جارية حالياً' : 'No ongoing tournaments currently';
+                    emptySubtitle = isArabic ? 'البطولات المبدوءة والمستمرة ستظهر هنا' : 'Active ongoing tournaments will appear here';
+                  } else {
+                    emptyTitle = isArabic ? 'لا توجد بطولات منتهية بعد' : 'No finished tournaments yet';
+                    emptySubtitle = isArabic ? 'البطولات المكتملة ستظهر في هذا الأرشيف' : 'Completed tournaments will be archived here';
+                  }
+
                   return VSPEmptyState(
                     icon: Iconsax.cup_copy,
-                    title: l10n.noTournamentsTitle,
-                    subtitle: l10n.noTournamentsSubtitle,
-                    buttonText: l10n.createYourFirst,
-                    onButtonPressed: () {
+                    title: emptyTitle,
+                    subtitle: emptySubtitle,
+                    buttonText: hasAnyChampionships ? null : l10n.createYourFirst,
+                    onButtonPressed: hasAnyChampionships ? null : () {
                       CreateTournamentWizard.open(context);
                     },
                   );
@@ -222,6 +241,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
           decoration: const BoxDecoration(
             color: VSPColors.surface,
             borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
+            border: Border(top: BorderSide(color: Color(0xFF3F3F46), width: 2)),
           ),
           padding: EdgeInsets.fromLTRB(
             20, 20, 20,
@@ -231,7 +251,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              // Handle bar
               Center(
                 child: Container(
                   width: 40, height: 4,
@@ -243,19 +262,19 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               ),
               const SizedBox(height: 20),
               Text(
-                isArabic ? 'اختر نوع البطولة' : 'Choose Tournament Type',
+                isArabic ? 'اختر نظام البطولة' : 'Choose Tournament Format',
                 style: const TextStyle(
                   color: Colors.white,
                   fontWeight: FontWeight.w900,
                   fontSize: 18,
                 ),
               ),
-              const SizedBox(height: 6),
+              const SizedBox(height: 4),
               Text(
                 isArabic
-                    ? 'كل نظام له أسلوب تنافسي مختلف'
-                    : 'Each format has a unique competitive style',
-                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    ? 'اختر النظام التنافسي الأنسب لملعبك وعملائك'
+                    : 'Select the best competitive style for your pitch',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12.5),
               ),
               const SizedBox(height: 20),
               _buildTypeOption(
@@ -263,9 +282,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 icon: Iconsax.cup_copy,
                 title: isArabic ? 'خروج المغلوب (كأس)' : 'Knockout (Cup)',
                 subtitle: isArabic
-                    ? 'الخاسر يخرج فوراً — 4، 8، 16، 32 فريق'
-                    : 'Single elimination — 4, 8, 16, 32 teams',
+                    ? 'مناسب للمنافسات السريعة (الخاسر يخرج فوراً)'
+                    : 'Single elimination — Fast & highly competitive',
+                badgeText: isArabic ? 'الأسرع حاسميًا ⚡' : 'Fastest ⚡',
                 color: const Color(0xFFFFD700),
+                isArabic: isArabic,
                 onTap: () {
                   Navigator.pop(ctx);
                   CreateTournamentWizard.open(context, preselectedType: 'Cup');
@@ -277,9 +298,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 icon: Iconsax.security_safe_copy,
                 title: isArabic ? 'مجموعات + تصفيات' : 'Groups & Knockout',
                 subtitle: isArabic
-                    ? 'مجموعات أولاً ثم المتأهلون للتصفيات'
+                    ? 'مناسب لبطولات رمضان والشركات (مجموعات ثم أدوار إقصائية)'
                     : 'Group stage followed by knockout bracket',
-                color: const Color(0xFF7C3AED),
+                badgeText: isArabic ? 'الأكثر شعبية ⭐' : 'Most Popular ⭐',
+                color: const Color(0xFFA78BFA),
+                isArabic: isArabic,
                 onTap: () {
                   Navigator.pop(ctx);
                   CreateTournamentWizard.open(context, preselectedType: 'GroupsAndKnockout');
@@ -291,9 +314,10 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 icon: Iconsax.award_copy,
                 title: isArabic ? 'دوري نقاط كامل' : 'Full League',
                 subtitle: isArabic
-                    ? 'كل الفرق تلعب ضد بعضها — الترتيب بالنقاط'
-                    : 'Round-robin — ranked by points',
+                    ? 'مناسب للمواسم والبطولات الطويلة (كل الفرق تلعب والترتيب بالنقاط)'
+                    : 'Round-robin season — ranked by points',
                 color: VSPColors.accent,
+                isArabic: isArabic,
                 onTap: () {
                   Navigator.pop(ctx);
                   CreateTournamentWizard.open(context, preselectedType: 'League');
@@ -312,7 +336,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     required String title,
     required String subtitle,
     required Color color,
+    required bool isArabic,
     required VoidCallback onTap,
+    String? badgeText,
   }) {
     return InkWell(
       onTap: onTap,
@@ -320,16 +346,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       child: Container(
         padding: const EdgeInsets.all(16),
         decoration: BoxDecoration(
-          color: VSPColors.background,
+          color: const Color(0xFF18181B),
           borderRadius: BorderRadius.circular(16),
-          border: Border.all(color: color.withValues(alpha: 0.25), width: 1.5),
+          border: Border.all(color: const Color(0xFF27272A), width: 1.2),
         ),
         child: Row(
           children: [
             Container(
-              width: 48, height: 48,
+              width: 46, height: 46,
               decoration: BoxDecoration(
-                color: color.withValues(alpha: 0.12),
+                color: color.withValues(alpha: 0.15),
                 shape: BoxShape.circle,
               ),
               child: Icon(icon, color: color, size: 22),
@@ -339,22 +365,49 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(title,
+                  Row(
+                    children: [
+                      Text(
+                        title,
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.bold,
+                          fontSize: 15,
+                        ),
+                      ),
+                      if (badgeText != null) ...[
+                        const SizedBox(width: 8),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.15),
+                            borderRadius: BorderRadius.circular(8),
+                          ),
+                          child: Text(
+                            badgeText,
+                            style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 4),
+                  Text(
+                    subtitle,
                     style: const TextStyle(
-                      color: Colors.white,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 15,
-                    )),
-                  const SizedBox(height: 3),
-                  Text(subtitle,
-                    style: const TextStyle(
-                      color: VSPColors.textSecondary,
-                      fontSize: 11,
-                    )),
+                      color: Color(0xFFA1A1AA),
+                      fontSize: 11.5,
+                      height: 1.3,
+                    ),
+                  ),
                 ],
               ),
             ),
-            Icon(Icons.arrow_forward_ios_rounded, color: color, size: 16),
+            Icon(
+              isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+              color: const Color(0xFFA1A1AA),
+              size: 16,
+            ),
           ],
         ),
       ),

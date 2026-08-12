@@ -8,7 +8,6 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/repositories/team_repository.dart';
 import '../../../data/models.dart';
-import '../../../core/widgets/skeleton_loader.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
 import 'profile_subscreens/my_team_screen.dart';
@@ -24,10 +23,8 @@ class BookingTypeScreen extends StatefulWidget {
 
 class _BookingTypeScreenState extends State<BookingTypeScreen> {
   String? _selectedType;
-  bool _isLoadingTeam = true;
   bool _hasTeam = false;
   int _teamPlayersCount = 0;
-  int _teamFairPlayScore = 100;
   bool _isNavigating = false;
 
   @override
@@ -51,11 +48,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
       setState(() {
         _hasTeam = team != null;
         _teamPlayersCount = team?.currentPlayers ?? 0;
-        _teamFairPlayScore = team?.fairPlayScore ?? 100;
-        _isLoadingTeam = false;
       });
-    } else {
-      if (context.mounted) setState(() => _isLoadingTeam = false);
     }
   }
 
@@ -96,21 +89,22 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                 children: [
                   _buildOptionCard(
                     id: 'Book a Pitch',
-                    title: AppLocalizations.of(context)!.bookPitch,
-                    subtitle: AppLocalizations.of(context)!.bookPitchSubtitle,
+                    title: isArabic ? 'حجز ملعب عادي ⚽' : 'Standard Pitch Booking',
+                    subtitle: isArabic ? 'حجز مباشر وسريع للملعب لوقتك الخاص بدون إضافة لاعبين' : 'Direct pitch booking for your group without extra player matching',
                     iconData: Iconsax.calendar_1_copy,
                   ),
                   _buildOptionCard(
-                    id: _hasTeam ? 'Find Players' : 'Create Team to Find Players',
-                    title: _hasTeam 
-                        ? AppLocalizations.of(context)!.findPlayers 
-                        : AppLocalizations.of(context)!.createTeamFirstTitle,
-                    subtitle: _hasTeam 
-                        ? AppLocalizations.of(context)!.findPlayersSubtitle 
-                        : AppLocalizations.of(context)!.createTeamFirstContent,
+                    id: 'Open Join Match',
+                    title: isArabic ? 'حجز انضمام وتجميع 👥' : 'Open Gathering Match',
+                    subtitle: isArabic ? 'حجز مباراة تجميعية وتحديد عدد لاعبيك والسماح للاعبين بالانضمام' : 'Create an open match, specify your available players, and let others join',
                     iconData: Iconsax.people_copy,
                   ),
-                  _buildChallengeBookingOption(context),
+                  _buildOptionCard(
+                    id: 'Challenge Match',
+                    title: isArabic ? 'مباراة تحدي فرق 🏆' : 'Team Challenge Match',
+                    subtitle: isArabic ? 'مباراة تحدي بين فريقك وفريق آخر واحتساب نقاط تصنيف الـ ELO' : 'Competitive match between two teams to earn ELO rank points',
+                    iconData: Iconsax.cup_copy,
+                  ),
                 ],
               ),
             ),
@@ -147,10 +141,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     });
 
     try {
-      if (_selectedType == 'Create Team to Compete' || 
-          _selectedType == 'Team Incomplete' || 
-          _selectedType == 'Create Team to Find Players') {
-        
+      if (_selectedType == 'Challenge Match') {
         if (!_hasTeam || _teamPlayersCount < 5) {
           await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
           await _checkUserTeam();
@@ -165,27 +156,15 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
             );
             return;
           }
-          
-          // Re-evaluate selected type after successfully setting up the team
-          if (_selectedType == 'Create Team to Find Players') {
-            _selectedType = 'Find Players';
-          } else {
-            _selectedType = 'Challenge Match';
-          }
         }
-      }
-
-      if (_selectedType == 'Find Players') {
-        final confirmed = await _showFindPlayersWarningDialog();
-        if (!confirmed || !mounted) return;
       }
 
       BookingType type = BookingType.personal;
       String typeString = 'Personal';
 
-      if (_selectedType == 'Find Players') {
-        type = BookingType.team;
-        typeString = 'Team';
+      if (_selectedType == 'Open Join Match') {
+        type = BookingType.openJoin;
+        typeString = 'OpenJoin';
       } else if (_selectedType == 'Challenge Match') {
         type = BookingType.challenge;
         typeString = 'Challenge';
@@ -204,7 +183,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         startTime: DateTime.now(), 
         endTime: DateTime.now().add(const Duration(hours: 1)),
         bookingType: type, 
-        isPrivate: _selectedType != 'Find Players', 
+        isPrivate: type != BookingType.openJoin, 
         rentBall: false, 
         totalPrice: 0, 
         needsDeposit: widget.stadium.needsDeposit,
@@ -234,81 +213,6 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         });
       }
     }
-  }
-
-  Future<bool> _showFindPlayersWarningDialog() async {
-    final result = await showDialog<bool>(
-      context: context, 
-      barrierDismissible: false,
-      builder: (ctx) => Dialog(
-        backgroundColor: Colors.transparent,
-        child: Container(
-          decoration: BoxDecoration(
-            color: VSPColors.surface, 
-            borderRadius: BorderRadius.circular(VSPRadius.lg), 
-            border: Border.all(color: VSPColors.warning, width: 1.5)
-          ),
-          child: Padding(
-            padding: const EdgeInsets.all(VSPSpacing.lg),
-            child: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const Icon(Iconsax.warning_2_copy, color: VSPColors.warning, size: 38),
-                const SizedBox(height: VSPSpacing.md),
-                Text(
-                  AppLocalizations.of(context)!.findPlayersWarningTitle, 
-                  style: const TextStyle(color: VSPColors.warning, fontSize: 20, fontWeight: FontWeight.bold), 
-                  textAlign: TextAlign.center
-                ),
-                const SizedBox(height: VSPSpacing.md),
-                Row(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    const Icon(Iconsax.money_change_copy, color: VSPColors.warning),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: Text(
-                        AppLocalizations.of(context)!.findPlayersWarningContent, 
-                        style: const TextStyle(color: VSPColors.textPrimary, fontSize: 13, height: 1.5)
-                      )
-                    ),
-                  ],
-                ),
-                const SizedBox(height: VSPSpacing.lg),
-                Row(
-                  children: [
-                    Expanded(
-                      child: OutlinedButton(
-                        style: OutlinedButton.styleFrom(
-                          foregroundColor: VSPColors.textPrimary,
-                          side: const BorderSide(color: VSPColors.divider),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                        ),
-                        onPressed: () => Navigator.of(ctx).pop(false), 
-                        child: Text(AppLocalizations.of(context)!.backButton)
-                      )
-                    ),
-                    const SizedBox(width: 12),
-                    Expanded(
-                      child: ElevatedButton(
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.warning,
-                          foregroundColor: Colors.white,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                        ),
-                        onPressed: () => Navigator.of(ctx).pop(true), 
-                        child: Text(AppLocalizations.of(context)!.accept)
-                      )
-                    ),
-                  ],
-                ),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-    return result ?? false;
   }
 
   Widget _buildOptionCard({
@@ -416,55 +320,6 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
           ),
         ),
       ),
-    );
-  }
-
-  Widget _buildChallengeBookingOption(BuildContext context) {
-    if (_isLoadingTeam) {
-      return Padding(
-        padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-        child: VSPSkeleton(
-          width: double.infinity,
-          height: 110,
-          borderRadius: VSPRadius.lg,
-        ),
-      );
-    }
-    
-    if (!_hasTeam) {
-      return _buildOptionCard(
-        id: 'Create Team to Compete', 
-        title: AppLocalizations.of(context)!.createTeamToCompete,
-        subtitle: AppLocalizations.of(context)!.createTeamSubtitle,
-        iconData: Iconsax.lock_copy,
-      );
-    }
-    
-    if (_teamPlayersCount < 5) {
-      return _buildOptionCard(
-        id: 'Team Incomplete', 
-        title: AppLocalizations.of(context)!.teamIncomplete,
-        subtitle: AppLocalizations.of(context)!.teamIncompleteSubtitle,
-        iconData: Iconsax.warning_2_copy,
-      );
-    }
-    
-    if (_teamFairPlayScore < 40) {
-      return _buildOptionCard(
-        id: 'Fair Play Banned',
-        title: AppLocalizations.of(context)!.fairPlayBannedTitle,
-        subtitle: AppLocalizations.of(context)!.fairPlayBannedSubtitle(_teamFairPlayScore),
-        iconData: Iconsax.judge_copy,
-        enabled: false,
-        isError: true,
-      );
-    }
-    
-    return _buildOptionCard(
-      id: 'Challenge Match', 
-      title: AppLocalizations.of(context)!.challengeMatch,
-      subtitle: AppLocalizations.of(context)!.challengeMatchSubtitle, 
-      iconData: Iconsax.cup_copy,
     );
   }
 }

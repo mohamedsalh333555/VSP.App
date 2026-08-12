@@ -11,6 +11,7 @@ class BookingProvider with ChangeNotifier {
   List<Booking> _userBookings = [];
   List<Booking> _upcomingBookings = [];
   List<Booking> _historyBookings = [];
+  List<Booking> _pendingBookings = [];
   List<Booking> _publicMatches = []; // ✅ Dedicated list for paginated matches
   Booking? _currentBooking;
   BookingDraft? _currentDraft;
@@ -29,6 +30,8 @@ class BookingProvider with ChangeNotifier {
       _upcomingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   List<Booking> get historyBookings =>
       _historyBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
+  List<Booking> get pendingBookings =>
+      _pendingBookings.where((b) => !_cancellingIds.contains(b.id)).toList();
   List<Booking> get publicMatches => _publicMatches;
   Booking? get currentBooking => _currentBooking;
   BookingDraft? get currentDraft => _currentDraft;
@@ -164,6 +167,11 @@ class BookingProvider with ChangeNotifier {
                       b.endTime.isAfter(now),
                 )
                 .toList();
+            _pendingBookings = bookings.where((b) {
+              final ageInMinutes = now.difference(b.createdAt).inMinutes;
+              return b.status == BookingStatus.pending && !b.isPaid && ageInMinutes < 10;
+            }).toList();
+
             _historyBookings = bookings
                 .where(
                   (b) =>
@@ -182,11 +190,20 @@ class BookingProvider with ChangeNotifier {
         );
   }
 
+  String? _activeOwnerId;
+
   /// Load owner's bookings (for stadium owners)
-  Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds}) async {
-    _repository.autoExpirePendingChallenges();
-    _repository.autoReconcileSingleEntryResults();
-    _repository.autoNudgePostMatchResults();
+  Future<void> loadOwnerBookings(String ownerId, {List<String>? stadiumIds, bool forceRefresh = false}) async {
+    if (!forceRefresh && _activeOwnerId == ownerId && _bookingSubscription != null) {
+      return;
+    }
+    _activeOwnerId = ownerId;
+
+    Future.microtask(() {
+      _repository.autoExpirePendingChallenges();
+      _repository.autoReconcileSingleEntryResults();
+      _repository.autoNudgePostMatchResults();
+    });
 
     // ⚡ Direct REST API fetch to guarantee instant data load even if WebSocket stream is silent
     try {

@@ -156,6 +156,28 @@ class Stadium {
       sportType = parts[1];
     }
 
+    final List<String> parsedImages = [];
+    final mainImg = data['imageUrl'] ?? data['image_url'];
+    if (mainImg != null && mainImg.toString().trim().isNotEmpty) {
+      parsedImages.add(mainImg.toString().trim());
+    }
+    if (data['images'] is List) {
+      for (var img in (data['images'] as List)) {
+        final imgStr = img?.toString().trim() ?? '';
+        if (imgStr.isNotEmpty && !parsedImages.contains(imgStr)) {
+          parsedImages.add(imgStr);
+        }
+      }
+    }
+    if (data['features'] is Map && data['features']['allImages'] is List) {
+      for (var img in (data['features']['allImages'] as List)) {
+        final imgStr = img?.toString().trim() ?? '';
+        if (imgStr.isNotEmpty && !parsedImages.contains(imgStr)) {
+          parsedImages.add(imgStr);
+        }
+      }
+    }
+
     return Stadium(
       id: id,
       name: data['name'] ?? '',
@@ -163,12 +185,8 @@ class Stadium {
       governorate: data['governorate'], // ✅ Added for filtering
       type: sportType,
       size: data['size'] ?? '5 VS 5',
-      imageUrl: data['imageUrl'] ?? data['image_url'] ?? '',
-      images: (data['images'] is List && (data['images'] as List).isNotEmpty)
-          ? List<String>.from(data['images'])
-          : (data['features'] is Map && data['features']['allImages'] is List && (data['features']['allImages'] as List).isNotEmpty)
-              ? List<String>.from(data['features']['allImages'])
-              : (data['imageUrl'] != null && data['imageUrl'].toString().isNotEmpty ? [data['imageUrl'].toString()] : (data['image_url'] != null && data['image_url'].toString().isNotEmpty ? [data['image_url'].toString()] : [])),
+      imageUrl: parsedImages.isNotEmpty ? parsedImages.first : (data['imageUrl'] ?? data['image_url'] ?? ''),
+      images: parsedImages,
       baths: data['baths'] ?? 0,
       cafeteria: data['cafeteria'] ?? 0,
       playersPerTeam: ppt,
@@ -307,9 +325,10 @@ enum MatchResultChoice { weWon, draw, weLost }
 
 /// Booking Type Enum
 enum BookingType {
-  personal,   // Solo booking
-  team,       // Booking with team
-  challenge,  // Challenge another team
+  personal,   // Solo/Standard booking (حجز عادي)
+  openJoin,   // Open gathering match (حجز انضمام وتجميع)
+  challenge,  // Team challenge match (حجز تحدي فرق)
+  team,       // Legacy alias for challenge
 }
 
 /// Booking Draft - Used for passing data between screens before final save
@@ -577,8 +596,9 @@ class Booking {
   final String? lastMessage;
   final DateTime? lastMessageTime;
 
-  // Backward compatibility getter
+  // Backward compatibility getters
   int get maxPlayers => totalFieldCapacity;
+  String get userId => createdByUserId;
 
   Booking({
     required this.id,

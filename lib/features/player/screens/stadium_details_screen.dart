@@ -14,6 +14,7 @@ import 'booking_type_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/logger_service.dart';
+import '../../../core/constants/egypt_governorates.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -34,7 +35,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     _tabController = TabController(length: 3, vsync: this);
     _pageController = PageController();
     
-    // Parse ONLY genuine stadium images uploaded for this specific stadium
+    // Parse ALL genuine stadium images (primary imageUrl + images array + features['allImages'])
     final List<String> rawImages = [];
     if (widget.stadium.imageUrl.isNotEmpty) {
       rawImages.add(widget.stadium.imageUrl);
@@ -42,6 +43,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     for (final img in widget.stadium.images) {
       if (img.isNotEmpty && !rawImages.contains(img)) {
         rawImages.add(img);
+      }
+    }
+    final features = widget.stadium.features;
+    if (features is Map && features['allImages'] is List) {
+      for (final img in (features['allImages'] as List)) {
+        final imgStr = img.toString().trim();
+        if (imgStr.isNotEmpty && !rawImages.contains(imgStr)) {
+          rawImages.add(imgStr);
+        }
       }
     }
 
@@ -129,6 +139,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
             height: (MediaQuery.of(context).size.height * 0.35).clamp(250.0, 450.0),
             child: Stack(
               children: [
+                // 1. Full Bleed Image Carousel with Touch Swipe
                 Positioned.fill(
                   child: _displayImages.isNotEmpty && _displayImages.first.isNotEmpty
                       ? PageView.builder(
@@ -149,6 +160,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         )
                       : _buildVspLogoBackground(),
                 ),
+
+                // 2. Subtle Gradient Overlay for Top & Bottom Controls Readability
                 Positioned.fill(
                   child: IgnorePointer(
                     child: Container(
@@ -156,22 +169,27 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                         gradient: LinearGradient(
                           begin: Alignment.topCenter,
                           end: Alignment.bottomCenter,
-                          colors: [VSPColors.background.withValues(alpha: 0), VSPColors.background],
+                          colors: [
+                            Colors.black.withValues(alpha: 0.6),
+                            Colors.transparent,
+                            Colors.black.withValues(alpha: 0.6),
+                          ],
+                          stops: const [0.0, 0.4, 1.0],
                         ),
                       ),
                     ),
                   ),
                 ),
+
+                // 3. Top Action Bar (Back, Share, Favorite)
                 SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(16),
+                    padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCircularIcon(
-                          icon: Localizations.localeOf(context).languageCode == 'ar'
-                              ? Iconsax.arrow_right_3_copy
-                              : Iconsax.arrow_left_2_copy,
+                          icon: isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
                           onTap: () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);
@@ -184,13 +202,13 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               icon: Iconsax.share_copy,
                               onTap: () => SharePlus.instance.share(ShareParams(text: l10n.shareStadiumText(stadium.name, stadium.location))),
                             ),
-                            const SizedBox(width: 16),
+                            const SizedBox(width: 12),
                             Consumer<AuthProvider>(
                               builder: (context, auth, _) {
                                 final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) ?? false;
                                 return _buildCircularIcon(
                                   icon: Iconsax.heart_copy,
-                                  color: isFav ? VSPColors.accent : VSPColors.textPrimary,
+                                  color: isFav ? VSPColors.accent : Colors.white,
                                   onTap: () => auth.toggleFavoriteStadium(stadium.id),
                                 );
                               },
@@ -201,94 +219,48 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     ),
                   ),
                 ),
-                // Left / Right Quick Navigation Arrows for non-swipers
-                if (_displayImages.length > 1) ...[
-                  Positioned(
-                    left: 12,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: IgnorePointer(
-                        ignoring: _currentImageIndex == 0,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _currentImageIndex > 0 ? 1.0 : 0.0,
-                          child: _buildCircularIcon(
-                            icon: isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
-                            onTap: () {
-                              if (_currentImageIndex > 0) {
-                                _pageController.previousPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                  Positioned(
-                    right: 12,
-                    top: 0,
-                    bottom: 0,
-                    child: Center(
-                      child: IgnorePointer(
-                        ignoring: _currentImageIndex == _displayImages.length - 1,
-                        child: AnimatedOpacity(
-                          duration: const Duration(milliseconds: 200),
-                          opacity: _currentImageIndex < _displayImages.length - 1 ? 1.0 : 0.0,
-                          child: _buildCircularIcon(
-                            icon: isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
-                            onTap: () {
-                              if (_currentImageIndex < _displayImages.length - 1) {
-                                _pageController.nextPage(
-                                  duration: const Duration(milliseconds: 300),
-                                  curve: Curves.easeInOut,
-                                );
-                              }
-                            },
-                          ),
-                        ),
-                      ),
-                    ),
-                  ),
-                ],
-                Positioned(
-                  bottom: 16, left: 0, right: 0,
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: List.generate(_displayImages.length, (index) => Padding(padding: const EdgeInsets.symmetric(horizontal: 4), child: _buildDot(isActive: index == _currentImageIndex))),
-                  ),
-                ),
-                // Photo Counter Pill Badge (e.g. 1/4 📷) - Clickable to open full screen gallery
+
+                // 4. Instagram/Airbnb Style Bottom Dots Indicator & Counter Badge
                 if (_displayImages.length > 1)
                   Positioned(
                     bottom: 16,
-                    right: 16,
-                    child: GestureDetector(
-                      onTap: () => _openFullScreenGallery(_currentImageIndex),
-                      child: Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                        decoration: BoxDecoration(
-                          color: Colors.black.withValues(alpha: 0.65),
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                          border: Border.all(color: Colors.white24, width: 0.5),
-                        ),
-                        child: Row(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            const Icon(Iconsax.image_copy, color: Colors.white, size: 12),
-                            const SizedBox(width: 5),
-                            Text(
-                              '${_currentImageIndex + 1}/${_displayImages.length}',
-                              style: const TextStyle(
-                                color: Colors.white,
-                                fontSize: 11,
-                                fontWeight: FontWeight.bold,
+                    left: 0,
+                    right: 0,
+                    child: Center(
+                      child: GestureDetector(
+                        onTap: () => _openFullScreenGallery(_currentImageIndex),
+                        child: Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          decoration: BoxDecoration(
+                            color: Colors.black.withValues(alpha: 0.55),
+                            borderRadius: BorderRadius.circular(20),
+                            border: Border.all(color: Colors.white.withValues(alpha: 0.15)),
+                          ),
+                          child: Row(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Row(
+                                children: List.generate(_displayImages.length, (idx) {
+                                  final isSelected = _currentImageIndex == idx;
+                                  return AnimatedContainer(
+                                    duration: const Duration(milliseconds: 200),
+                                    width: isSelected ? 14 : 6,
+                                    height: 6,
+                                    margin: const EdgeInsets.symmetric(horizontal: 3),
+                                    decoration: BoxDecoration(
+                                      color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.5),
+                                      borderRadius: BorderRadius.circular(3),
+                                    ),
+                                  );
+                                }),
                               ),
-                            ),
-                          ],
+                              const SizedBox(width: 8),
+                              Text(
+                                '${_currentImageIndex + 1}/${_displayImages.length}',
+                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
                         ),
                       ),
                     ),
@@ -336,35 +308,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
           child: Column(
             mainAxisSize: MainAxisSize.min,
             children: [
-              // 🔥 Loss Aversion Urgency Banner (تجنب الخسارة)
-              Container(
-                width: double.infinity,
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                margin: const EdgeInsets.only(bottom: 10),
-                decoration: BoxDecoration(
-                  color: Colors.amber.withValues(alpha: 0.12),
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
-                  border: Border.all(color: Colors.amber.withValues(alpha: 0.35)),
-                ),
-                child: Row(
-                  children: [
-                    const Icon(Iconsax.flash_1_copy, color: Colors.amber, size: 14),
-                    const SizedBox(width: 6),
-                    Expanded(
-                      child: Text(
-                        isArabic
-                            ? '80% من مواعيد اليوم محجوزة! احجز موعدك الآن قبل انشغال الملعب'
-                            : '80% of today\'s slots are booked! Lock in your pitch before it\'s taken',
-                        style: const TextStyle(
-                          color: Colors.amber,
-                          fontSize: 11,
-                          fontWeight: FontWeight.bold,
-                        ),
-                      ),
-                    ),
-                  ],
-                ),
-              ),
               Row(
                 children: [
                   Column(
@@ -445,8 +388,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     );
   }
 
-  Widget _buildDot({required bool isActive}) => Container(width: isActive ? 12 : 8, height: 8, decoration: BoxDecoration(color: isActive ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.5), borderRadius: BorderRadius.circular(4)));
-
   Widget _buildVspLogoBackground() => Container(color: VSPColors.surface, child: Center(child: Image.asset('assets/images/logo.png', width: 80, height: 80, color: VSPColors.textPrimary.withValues(alpha: 0.06), colorBlendMode: BlendMode.modulate)));
 }
 
@@ -458,9 +399,9 @@ class _InformationTab extends StatelessWidget {
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final String displayName = (stadium.name.trim().isEmpty || stadium.name.trim() == 'Mo')
-        ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')
-        : stadium.name;
+    final String displayName = stadium.name.trim().isNotEmpty
+        ? stadium.name.trim()
+        : (isArabic ? 'ملعب بدون اسم' : 'Unnamed Pitch');
 
     String rawDesc = stadium.description.isNotEmpty ? stadium.description : l10n.noDescription;
     if (!isArabic && rawDesc.isNotEmpty) {
@@ -546,7 +487,10 @@ class _InformationTab extends StatelessWidget {
                   const SizedBox(width: 6),
                   Flexible(
                     child: Text(
-                      stadium.location.isNotEmpty ? stadium.location : (stadium.address.isNotEmpty ? stadium.address : l10n.na),
+                      EgyptGovernorates.formatSmartLocation(
+                        rawAddress: stadium.location.isNotEmpty ? stadium.location : stadium.address,
+                        administrativeArea: stadium.governorate,
+                      ),
                       style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
@@ -558,31 +502,48 @@ class _InformationTab extends StatelessWidget {
               ),
             ),
           ),
-          const SizedBox(height: VSPSpacing.lg),
-          Text(l10n.informationStadium, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: VSPSpacing.sm),
-          Text(rawDesc, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5)),
-          const SizedBox(height: VSPSpacing.lg),
-          Text(l10n.features, style: Theme.of(context).textTheme.titleLarge),
           const SizedBox(height: VSPSpacing.md),
+          // Description Card
+          Container(
+            width: double.infinity,
+            padding: const EdgeInsets.all(VSPSpacing.md),
+            decoration: BoxDecoration(
+              color: VSPColors.surface,
+              borderRadius: BorderRadius.circular(VSPRadius.lg),
+              border: Border.all(color: VSPColors.divider.withValues(alpha: 0.5)),
+            ),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(l10n.informationStadium, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+                const SizedBox(height: 8),
+                Text(rawDesc, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5)),
+              ],
+            ),
+          ),
+          const SizedBox(height: VSPSpacing.md),
+          // Features Section Header
+          Text(l10n.features, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+          const SizedBox(height: 10),
           _FacilitiesGrid(stadium: stadium),
-          const SizedBox(height: VSPSpacing.lg),
-          Text(l10n.featuresForMoney, style: Theme.of(context).textTheme.titleLarge),
-          const SizedBox(height: VSPSpacing.md),
-          if (stadium.hasBall || stadium.ballPrice > 0)
-            Container(
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.sm),
-              decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3))),
-              child: Row(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 8),
-                  Text(l10n.ballAvailable(stadium.ballPrice.toStringAsFixed(0), l10n.egCurrency), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-                ],
+          if (stadium.hasBall || stadium.ballPrice > 0) ...[
+            const SizedBox(height: VSPSpacing.md),
+            Text(l10n.featuresForMoney, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
+            const SizedBox(height: 10),
+            SizedBox(
+              width: 74,
+              height: 72,
+              child: _FacilityTile(
+                item: _FacilityItem(
+                  icon: Icons.sports_soccer_rounded,
+                  label: isArabic ? 'كرة قدم' : 'Soccer Ball',
+                  active: true,
+                  badge: '${stadium.ballPrice.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
+                ),
               ),
             ),
-          const SizedBox(height: VSPSpacing.xxl),
+          ],
+          const SizedBox(height: VSPSpacing.lg),
         ],
       ),
     );
@@ -615,17 +576,34 @@ class _FacilitiesGrid extends StatelessWidget {
     final seats = _getSeat();
     final hasSeats = seats.isNotEmpty && seats != '0' && seats != 'null';
 
-    final facilities = [
-      _FacilityItem(icon: Iconsax.drop, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
+    final allFacilities = [
+      _FacilityItem(icon: Icons.shower_rounded, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
       _FacilityItem(icon: Iconsax.car_copy, label: isArabic ? 'جراج' : 'Garage', active: hasGarage),
       _FacilityItem(icon: Iconsax.coffee_copy, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
-      _FacilityItem(icon: Iconsax.tag_copy, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
+      _FacilityItem(icon: Icons.checkroom_rounded, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
       _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مدرجات' : 'Seats', active: hasSeats, badge: hasSeats ? seats : null),
     ];
 
-    return GridView.count(
-      crossAxisCount: 4, crossAxisSpacing: 8, mainAxisSpacing: 8, shrinkWrap: true, physics: const NeverScrollableScrollPhysics(), childAspectRatio: 0.85,
-      children: facilities.map((f) => _FacilityTile(item: f)).toList(),
+    // Filter to only active features selected by the owner
+    final activeFacilities = allFacilities.where((f) => f.active).toList();
+
+    if (activeFacilities.isEmpty) {
+      return Text(
+        isArabic ? 'لا توجد مميزات مضافة لهذا الملعب' : 'No features listed for this pitch',
+        style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.7), fontSize: 11),
+      );
+    }
+
+    return SizedBox(
+      height: 72,
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.start,
+        children: activeFacilities.map((f) => Container(
+          width: 74,
+          margin: const EdgeInsets.only(left: 8),
+          child: _FacilityTile(item: f),
+        )).toList(),
+      ),
     );
   }
 }
@@ -644,13 +622,11 @@ class _FacilityTile extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final color = item.active ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.35);
-    return AnimatedContainer(
-      duration: const Duration(milliseconds: 250),
+    return Container(
       decoration: BoxDecoration(
-        color: item.active ? VSPColors.accent.withValues(alpha: 0.08) : VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.lg),
-        border: Border.all(color: item.active ? VSPColors.accent.withValues(alpha: 0.4) : VSPColors.divider, width: item.active ? 1.5 : 1),
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: VSPColors.divider, width: 1),
       ),
       child: Stack(
         alignment: Alignment.center,
@@ -658,23 +634,37 @@ class _FacilityTile extends StatelessWidget {
           Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(item.icon, color: color, size: 26),
-              const SizedBox(height: 6),
+              Icon(item.icon, color: VSPColors.accent, size: 22),
+              const SizedBox(height: 5),
               Text(
                 item.label,
                 textAlign: TextAlign.center,
                 maxLines: 1,
                 overflow: TextOverflow.ellipsis,
-                style: TextStyle(
-                  color: color,
-                  fontSize: 10,
-                  fontWeight: item.active ? FontWeight.bold : FontWeight.normal,
+                style: const TextStyle(
+                  color: VSPColors.accent,
+                  fontSize: 9.5,
+                  fontWeight: FontWeight.bold,
                 ),
               ),
             ],
           ),
           if (item.badge != null)
-            Positioned(top: 6, right: 6, child: Container(padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2), decoration: BoxDecoration(color: VSPColors.accent, borderRadius: BorderRadius.circular(VSPRadius.xs)), child: Text(item.badge!, style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold)))),
+            Positioned(
+              top: 4,
+              right: 4,
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent,
+                  borderRadius: BorderRadius.circular(VSPRadius.xs),
+                ),
+                child: Text(
+                  item.badge!,
+                  style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold),
+                ),
+              ),
+            ),
         ],
       ),
     );
@@ -898,76 +888,120 @@ class _RatingsTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
-    return Column(
-      children: [
-        Padding(
-          padding: const EdgeInsets.all(VSPSpacing.md),
-          child: Container(
-            padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Column(
-                    children: [
-                      Text(stadium.rating.toStringAsFixed(1), style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42)),
-                      Row(mainAxisAlignment: MainAxisAlignment.center, children: List.generate(5, (i) => Icon(i < stadium.rating.round() ? Icons.star_rounded : Icons.star_outline_rounded, color: i < stadium.rating.round() ? Colors.amber : VSPColors.textSecondary, size: 18))),
-                      const SizedBox(height: VSPSpacing.xs),
-                      Text(l10n.reviews(stadium.reviewsCount), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          ),
-        ),
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-          child: PrimaryButton(
-            text: isArabic ? 'إضافة تقييمك ورأيك' : 'Add Your Review',
-            height: 44,
-            color: VSPColors.surfaceAlt,
-            textColor: VSPColors.accent,
-            onPressed: () => _showAddReviewSheet(context),
-          ),
-        ),
-        const SizedBox(height: VSPSpacing.sm),
-        Expanded(
-          child: StreamBuilder<List<Map<String, dynamic>>>(
-            stream: Supabase.instance.client.from('reviews').stream(primaryKey: ['id']).eq('stadium_id', stadium.id).map((list) {
-                  final sorted = List<Map<String, dynamic>>.from(list);
-                  sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
-                  return sorted;
-                }),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-              final docs = snapshot.data ?? [];
-              if (docs.isEmpty) return Center(child: Padding(padding: const EdgeInsets.all(40.0), child: Text(l10n.noReviews, textAlign: TextAlign.center, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary))));
-              return ListView.builder(
-                padding: const EdgeInsets.all(VSPSpacing.md),
-                itemCount: docs.length,
-                itemBuilder: (context, index) {
-                  final doc = docs[index];
-                  final createdAtStr = doc['created_at'] as String?;
-                  final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
-                  final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Supabase.instance.client.from('reviews').stream(primaryKey: ['id']).eq('stadium_id', stadium.id).map((list) {
+        final sorted = List<Map<String, dynamic>>.from(list);
+        sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
+        return sorted;
+      }),
+      builder: (context, snapshot) {
+        final docs = snapshot.data ?? [];
+        final count = docs.length;
+        
+        double liveRating = 0.0;
+        if (count > 0) {
+          double sum = 0.0;
+          for (final doc in docs) {
+            sum += (doc['rating'] as num?)?.toDouble() ?? 0.0;
+          }
+          liveRating = sum / count;
+        }
 
-                  return _buildReviewItem(
-                    context,
-                    name: userName,
-                    imageUrl: userImage,
-                    rating: (doc['rating'] as num?)?.toInt() ?? 0,
-                    timeAgo: createdAtStr != null 
-                        ? timeago.format(DateTime.parse(createdAtStr), locale: Localizations.localeOf(context).languageCode) 
-                        : l10n.recently,
-                    comment: doc['review_text'] as String? ?? '',
+        return Column(
+          children: [
+            Padding(
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              child: Container(
+                padding: const EdgeInsets.all(VSPSpacing.md),
+                decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: Column(
+                        children: [
+                          Text(
+                            count > 0 ? liveRating.toStringAsFixed(1) : '0.0',
+                            style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42),
+                          ),
+                          Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: List.generate(
+                              5,
+                              (i) => Icon(
+                                i < liveRating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                                color: i < liveRating.round() ? Colors.amber : VSPColors.textSecondary,
+                                size: 18,
+                              ),
+                            ),
+                          ),
+                          const SizedBox(height: VSPSpacing.xs),
+                          Text(
+                            count > 0 ? l10n.reviews(count) : (isArabic ? 'ملعب جديد ✨' : 'New Stadium ✨'),
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ),
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
+              child: PrimaryButton(
+                text: isArabic ? 'إضافة تقييمك ورأيك' : 'Add Your Review',
+                height: 44,
+                color: VSPColors.surfaceAlt,
+                textColor: VSPColors.accent,
+                onPressed: () => _showAddReviewSheet(context),
+              ),
+            ),
+            const SizedBox(height: VSPSpacing.sm),
+            Expanded(
+              child: Builder(
+                builder: (context) {
+                  if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
+                    return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+                  }
+                  if (docs.isEmpty) {
+                    return Center(
+                      child: Padding(
+                        padding: const EdgeInsets.all(40.0),
+                        child: Text(
+                          l10n.noReviews,
+                          textAlign: TextAlign.center,
+                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                        ),
+                      ),
+                    );
+                  }
+                  return ListView.builder(
+                    padding: const EdgeInsets.all(VSPSpacing.md),
+                    itemCount: docs.length,
+                    itemBuilder: (context, index) {
+                      final doc = docs[index];
+                      final createdAtStr = doc['created_at'] as String?;
+                      final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
+                      final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
+
+                      return _buildReviewItem(
+                        context,
+                        name: userName,
+                        imageUrl: userImage,
+                        rating: (doc['rating'] as num?)?.toInt() ?? 0,
+                        timeAgo: createdAtStr != null 
+                            ? timeago.format(DateTime.parse(createdAtStr), locale: Localizations.localeOf(context).languageCode) 
+                            : l10n.recently,
+                        comment: doc['review_text'] as String? ?? '',
+                      );
+                    },
                   );
                 },
-              );
-            },
-          ),
-        ),
-      ],
+              ),
+            ),
+          ],
+        );
+      },
     );
   }
 

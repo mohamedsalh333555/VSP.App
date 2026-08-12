@@ -27,7 +27,24 @@ class OwnerBookingsScreen extends StatefulWidget {
 class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   int _selectedDayIndex = 0; 
   Stadium? _selectedStadium;
-  final DateTime _baseDate = DateTime.now();
+  
+  DateTime get _baseDate {
+    final now = DateTime.now();
+    try {
+      final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+      final selectedStadium = _getEffectiveStadium(stadiumProvider.stadiums);
+      if (selectedStadium != null) {
+        final int startH = _parseTimeToHour(selectedStadium.openingTime);
+        final int endH = _parseTimeToHour(selectedStadium.closingTime);
+        if (startH > endH && now.hour < endH) {
+          final prev = now.subtract(const Duration(days: 1));
+          return DateTime(prev.year, prev.month, prev.day);
+        }
+      }
+    } catch (_) {}
+    return DateTime(now.year, now.month, now.day);
+  }
+
   final ScrollController _scrollController = ScrollController();
 
   @override
@@ -286,9 +303,21 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     );
                  }
 
-                 final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
-                 final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-                 final int startH = _parseTimeToHour(selectedStadium.openingTime);
+                 DateTime getEffectiveOperationalBaseDate() {
+                    final now = DateTime.now();
+                    final int startH = _parseTimeToHour(selectedStadium.openingTime);
+                    final int endH = _parseTimeToHour(selectedStadium.closingTime);
+                    if (startH > endH && now.hour < endH) {
+                      final prev = now.subtract(const Duration(days: 1));
+                      return DateTime(prev.year, prev.month, prev.day);
+                    }
+                    return DateTime(now.year, now.month, now.day);
+                  }
+
+                  final baseDate = getEffectiveOperationalBaseDate();
+                  final selectedDate = baseDate.add(Duration(days: _selectedDayIndex));
+                  final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+                  final int startH = _parseTimeToHour(selectedStadium.openingTime);
 
                  DateTime getShiftDate(DateTime dt, int openingHour) {
                    final local = dt.toLocal();
@@ -365,19 +394,10 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         },
                         orElse: () => null,
                       );
-
-                      final now = DateTime.now();
-                      final bool isToday = _selectedDayIndex == 0;
-                      final bool isMoreThan10MinsPast = isToday && now.isAfter(slotTime.add(const Duration(minutes: 10)));
-
                       if (isBreak) {
-                        if (!isMoreThan10MinsPast) {
-                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break', 'slotTime': slotTime, 'nightLabel': nightLabel});
-                        }
+                        slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'break', 'slotTime': slotTime, 'nightLabel': nightLabel});
                       } else if (booking == null) {
-                        if (!isMoreThan10MinsPast) {
-                          slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty', 'slotTime': slotTime, 'nightLabel': nightLabel});
-                        }
+                        slots.add({'time': timeStr, 'hour': currentH, 'minute': currentM, 'type': 'empty', 'slotTime': slotTime, 'nightLabel': nightLabel});
                       } else {
                         final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
                         slots.add({

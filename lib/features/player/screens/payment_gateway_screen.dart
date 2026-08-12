@@ -34,19 +34,43 @@ class PaymentGatewayScreen extends StatefulWidget {
 class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
+  bool _isVerifyingManual = false;
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
   Timer? _webhookTimeoutTimer;
+  Timer? _countdownTimer;
+  int _remainingSeconds = 600; // 10 minutes hold timer
   bool _paymentCompleted = false;
+  String _selectedMethod = 'wallet'; // 'wallet', 'card', 'instapay'
 
   @override
   void initState() {
     super.initState();
+    _startCountdownTimer();
     _createPendingBooking();
+  }
+
+  void _startCountdownTimer() {
+    _countdownTimer?.cancel();
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+      if (!mounted) return;
+      if (_remainingSeconds > 0) {
+        setState(() => _remainingSeconds--);
+      } else {
+        _countdownTimer?.cancel();
+      }
+    });
+  }
+
+  String _formatCountdown(int totalSeconds) {
+    final minutes = (totalSeconds ~/ 60).toString().padLeft(2, '0');
+    final seconds = (totalSeconds % 60).toString().padLeft(2, '0');
+    return '$minutes:$seconds';
   }
 
   @override
   void dispose() {
+    _countdownTimer?.cancel();
     _webhookTimeoutTimer?.cancel();
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
@@ -68,6 +92,48 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
 
     super.dispose();
+  }
+
+  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع عند النقر على "تحقق الآن"
+  Future<void> _verifyPaymentStatusManual() async {
+    if (_booking == null || _isVerifyingManual) return;
+    setState(() => _isVerifyingManual = true);
+
+    try {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+      final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
+      
+      if (updatedBooking != null && (updatedBooking.status == BookingStatus.confirmed || updatedBooking.isPaid)) {
+        HapticFeedback.heavyImpact();
+        _paymentCompleted = true;
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
+            ),
+          );
+        }
+      } else {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(
+              content: Text(
+                isArabic
+                    ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التأكيد في البوابة.'
+                    : 'Payment not confirmed yet. Please complete checkout in gateway.',
+              ),
+              backgroundColor: VSPColors.warning,
+            ),
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Manual payment verification error: $e');
+    } finally {
+      if (mounted) setState(() => _isVerifyingManual = false);
+    }
   }
 
   /// إنشاء الحجز البدايات بحالة pending و is_paid = false فقط
@@ -418,42 +484,122 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               ),
             ),
             SafeArea(
-              child: Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 24.0, vertical: 16.0),
+              child: SingleChildScrollView(
+                physics: const BouncingScrollPhysics(),
+                padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 12.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    const Spacer(),
+                    // ⏱️ 1. Hold Countdown Timer Banner (10-minute hold)
                     Container(
-                      width: 90,
-                      height: 90,
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
                       decoration: BoxDecoration(
                         color: VSPColors.accent.withValues(alpha: 0.1),
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2),
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
+                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
                       ),
-                      child: Icon(
-                        isChampionship ? Iconsax.cup_copy : Iconsax.security_safe_copy, 
-                        color: VSPColors.accent, 
-                        size: 44,
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                isArabic
+                                    ? 'تم تثبيت الوقت لك مؤقتاً لمدة:'
+                                    : 'Slot temporarily held for:',
+                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                              ),
+                            ],
+                          ),
+                          Container(
+                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent,
+                              borderRadius: BorderRadius.circular(8),
+                            ),
+                            child: Text(
+                              _formatCountdown(_remainingSeconds),
+                              style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900),
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    const SizedBox(height: 32),
-                    Text(
-                      isChampionship
-                          ? (isArabic ? 'رسوم الاشتراك المطلوبة' : 'Entry Fee Required')
-                          : (hasDeposit 
-                              ? (isArabic ? 'عربون الحجز المطلوب' : 'Upfront Deposit Required')
-                              : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount')),
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14, fontWeight: FontWeight.w500),
+                    const SizedBox(height: 16),
+
+                    // Amount Header Card
+                    Container(
+                      width: double.infinity,
+                      padding: const EdgeInsets.all(16),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF18181B),
+                        borderRadius: BorderRadius.circular(VSPRadius.xl),
+                        border: Border.all(color: const Color(0xFF27272A), width: 1.2),
+                      ),
+                      child: Column(
+                        children: [
+                          Text(
+                            isChampionship
+                                ? (isArabic ? 'رسوم الاشتراك المطلوبة' : 'Entry Fee Required')
+                                : (hasDeposit 
+                                    ? (isArabic ? 'عربون الحجز المطلوب أونلاين' : 'Upfront Deposit Required')
+                                    : (isArabic ? 'المبلغ الإجمالي المطلوب' : 'Total Checkout Amount')),
+                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, fontWeight: FontWeight.w500),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            '${amountToPay.toInt()} ${l10n.egCurrency}',
+                            style: const TextStyle(color: VSPColors.accent, fontSize: 34, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+                          ),
+                        ],
+                      ),
                     ),
-                    const SizedBox(height: 4),
-                    Text(
-                      '${amountToPay.toInt()} ${l10n.egCurrency}',
-                      style: const TextStyle(color: VSPColors.accent, fontSize: 36, fontWeight: FontWeight.w900, letterSpacing: 0.5),
+
+                    const SizedBox(height: 16),
+
+                    // 💳 2. Interactive Visual Payment Method Selector Cards
+                    Align(
+                      alignment: isArabic ? Alignment.centerRight : Alignment.centerLeft,
+                      child: Text(
+                        isArabic ? 'اختر وسيلة الدفع المناسبة لك:' : 'Select Payment Method:',
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                      ),
                     ),
-                    const SizedBox(height: 20),
-                    // 💰 Financial Breakdown Card (Platform Fee 3% + Paymob Gateway Fee 2.75%)
+                    const SizedBox(height: 10),
+
+                    _buildPaymentMethodCard(
+                      id: 'wallet',
+                      icon: Iconsax.mobile_copy,
+                      title: isArabic ? 'فودافون كاش / المحافظ الرقمية' : 'Vodafone Cash & Digital Wallets',
+                      subtitle: isArabic ? 'دفع سريع ومباشر بأي محفظة إلكترونية' : 'Instant pay with any mobile wallet',
+                      badge: isArabic ? 'الأسرع والأسهل ⚡' : 'Fastest ⚡',
+                      color: const Color(0xFFE50914),
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildPaymentMethodCard(
+                      id: 'instapay',
+                      icon: Iconsax.send_2_copy,
+                      title: isArabic ? 'تطبيق إنستاباي (InstaPay)' : 'InstaPay App',
+                      subtitle: isArabic ? 'دفع مباشر عبر البنوك المصرية والمحفظة' : 'Direct bank transfer via InstaPay',
+                      badge: isArabic ? 'بدون عمولة 🌟' : 'No Fees 🌟',
+                      color: const Color(0xFF00A859),
+                    ),
+                    const SizedBox(height: 8),
+
+                    _buildPaymentMethodCard(
+                      id: 'card',
+                      icon: Iconsax.card_copy,
+                      title: isArabic ? 'بطاقة بنكية / كارت ميزة (Visa - Mastercard - Meeza)' : 'Bank Card / Meeza Card',
+                      subtitle: isArabic ? 'دفع آمن بالفيزا أو الماستركارد أو كارت ميزة' : 'Secure payment via Debit/Credit card',
+                      color: const Color(0xFF0066CC),
+                    ),
+
+                    const SizedBox(height: 16),
+
+                    // 💰 Financial Breakdown Card
                     Builder(
                       builder: (context) {
                         final double platformFee = amountToPay * 0.03;
@@ -515,19 +661,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                               ),
                               const SizedBox(height: 6),
                               _buildFeeRow(
-                                label: isArabic ? 'رسوم خدمة المنصة والتشغيل (3%)' : 'Platform Service Fee (3%)',
-                                value: '${platformFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
+                                label: isArabic ? 'رسوم معالجة السداد أونلاين' : 'Online Processing Fee',
+                                value: '${(platformFee + paymobFee).toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
                                 isBold: false,
                               ),
                               const SizedBox(height: 6),
                               _buildFeeRow(
-                                label: isArabic ? 'رسوم المعالجة الرقمية (Paymob 2.75%)' : 'Paymob Processing Fee (2.75%)',
-                                value: '${paymobFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
-                                isBold: false,
-                              ),
-                              const SizedBox(height: 6),
-                              _buildFeeRow(
-                                label: isArabic ? 'المبلغ الإجمالي للسداد أونلاين' : 'Total Checkout Amount',
+                                label: isArabic ? 'إجمالي الدفع النهائي' : 'Total Checkout Amount',
                                 value: '${totalWithFees.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
                                 isBold: true,
                               ),
@@ -543,16 +683,31 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                         );
                       },
                     ),
-                    const SizedBox(height: 24),
-                    if (_isLoading || _isAwaitingWebhook) ...[
+                    const SizedBox(height: 20),
+                    if (_isLoading || _isAwaitingWebhook || _isVerifyingManual) ...[
                       const CircularProgressIndicator(color: VSPColors.accent),
                       const SizedBox(height: 16),
                       Text(
-                        isArabic ? 'جاري انتظار تأكيد السيرفر وبوابة الدفع (Webhook)...' : 'Awaiting server webhook confirmation...',
+                        isArabic ? 'جاري انتظار تأكيد السيرفر وبوابة الدفع...' : 'Awaiting payment confirmation...',
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
                       ),
+                      const SizedBox(height: 12),
+                      // ⚡ Manual verification button fallback!
+                      ElevatedButton.icon(
+                        onPressed: _isVerifyingManual ? null : _verifyPaymentStatusManual,
+                        icon: const Icon(Iconsax.refresh_copy, color: Colors.black, size: 16),
+                        label: Text(
+                          isArabic ? 'تم الدفع؟ تحقق فوراً ⚡' : 'Paid? Verify Now ⚡',
+                          style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: VSPColors.accent,
+                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        ),
+                      ),
                       if (_isAwaitingWebhook) ...[
-                        const SizedBox(height: 10),
+                        const SizedBox(height: 8),
                         TextButton.icon(
                           onPressed: () {
                             _webhookTimeoutTimer?.cancel();
@@ -560,31 +715,31 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                           },
                           icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 16),
                           label: Text(
-                            isArabic ? 'إلغاء الانتظار وإعادة المحاولة' : 'Cancel Wait & Retry',
-                            style: const TextStyle(color: VSPColors.error, fontSize: 13, fontWeight: FontWeight.bold),
+                            isArabic ? 'إلغاء الانتظار' : 'Cancel Wait',
+                            style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),
                       ],
                     ] else ...[
                       const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 16),
-                      const SizedBox(height: 8),
+                      const SizedBox(height: 6),
                       Text(
-                        isArabic ? 'سيتم تحويلك الآن لبوابة Paymob. التأكيد يتطلب رد الـ Webhook الرسمي.' : 'You will be redirected to Paymob. Confirmation relies strictly on Webhook API.',
+                        isArabic ? 'جميع المعاملات تشفير آمن 100% ومحمية بواسطة بوابة Paymob المعتمدة.' : '100% secure encrypted payment via Paymob.',
                         textAlign: TextAlign.center,
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
                       ),
                     ],
-                    const Spacer(),
+                    const SizedBox(height: 20),
                     SizedBox(
                       width: double.infinity,
-                      height: 56,
+                      height: 54,
                       child: PrimaryButton(
-                        text: isArabic ? 'الانتقال للدفع الآمن (Paymob)' : 'Proceed to Paymob',
-                        isLoading: _isLoading || _isAwaitingWebhook,
+                        text: isArabic ? 'الانتقال للدفع الآمن ⚡' : 'Proceed to Secure Checkout ⚡',
+                        isLoading: _isLoading || _isAwaitingWebhook || _isVerifyingManual,
                         onPressed: (_booking == null) ? null : _startPaymobCheckout,
                       ),
                     ),
-                    const SizedBox(height: 24),
+                    const SizedBox(height: 20),
                   ],
                 ),
               ),
@@ -620,6 +775,106 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         ),
       ],
+    );
+  }
+
+  Widget _buildPaymentMethodCard({
+    required String id,
+    required IconData icon,
+    required String title,
+    required String subtitle,
+    required Color color,
+    String? badge,
+  }) {
+    final bool isSelected = _selectedMethod == id;
+
+    return InkWell(
+      onTap: () {
+        setState(() {
+          _selectedMethod = id;
+        });
+      },
+      borderRadius: BorderRadius.circular(14),
+      child: AnimatedContainer(
+        duration: const Duration(milliseconds: 180),
+        padding: const EdgeInsets.all(14),
+        decoration: BoxDecoration(
+          color: isSelected ? color.withValues(alpha: 0.12) : const Color(0xFF18181B),
+          borderRadius: BorderRadius.circular(14),
+          border: Border.all(
+            color: isSelected ? color : const Color(0xFF27272A),
+            width: isSelected ? 1.8 : 1.0,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              width: 42,
+              height: 42,
+              decoration: BoxDecoration(
+                color: color.withValues(alpha: 0.15),
+                shape: BoxShape.circle,
+              ),
+              child: Icon(icon, color: color, size: 20),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      Expanded(
+                        child: Text(
+                          title,
+                          style: TextStyle(
+                            color: Colors.white,
+                            fontSize: 13.5,
+                            fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
+                          ),
+                          maxLines: 1,
+                          overflow: TextOverflow.ellipsis,
+                        ),
+                      ),
+                      if (badge != null) ...[
+                        const SizedBox(width: 6),
+                        Container(
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          decoration: BoxDecoration(
+                            color: color.withValues(alpha: 0.2),
+                            borderRadius: BorderRadius.circular(6),
+                          ),
+                          child: Text(
+                            badge,
+                            style: TextStyle(color: color, fontSize: 9.5, fontWeight: FontWeight.bold),
+                          ),
+                        ),
+                      ],
+                    ],
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    subtitle,
+                    style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 11),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            AnimatedContainer(
+              duration: const Duration(milliseconds: 180),
+              width: 20,
+              height: 20,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                color: isSelected ? color : Colors.transparent,
+                border: Border.all(color: isSelected ? color : const Color(0xFF52525B), width: 1.5),
+              ),
+              child: isSelected ? const Icon(Icons.check, color: Colors.white, size: 12) : null,
+            ),
+          ],
+        ),
+      ),
     );
   }
 }

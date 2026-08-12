@@ -438,19 +438,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng).timeout(const Duration(seconds: 5));
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
-        final street = place.street ?? '';
         final subLocality = place.subLocality ?? '';
         final locality = place.locality ?? '';
         final administrativeArea = place.administrativeArea ?? '';
 
-        final addressParts = [
-          if (street.isNotEmpty && street != place.name) street,
-          if (subLocality.isNotEmpty) subLocality,
-          if (locality.isNotEmpty) locality,
-          if (administrativeArea.isNotEmpty) administrativeArea,
-        ];
-
-        final readableAddress = addressParts.isNotEmpty ? addressParts.join(', ') : 'Lat: $lat, Long: $lng';
+        final readableAddress = EgyptGovernorates.formatSmartLocation(
+          subLocality: subLocality,
+          locality: locality,
+          subAdministrativeArea: place.subAdministrativeArea,
+          administrativeArea: administrativeArea,
+          rawAddress: place.name,
+        );
 
         setState(() {
           _locationController.text = readableAddress;

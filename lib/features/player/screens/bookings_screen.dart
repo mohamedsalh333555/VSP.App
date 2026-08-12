@@ -14,6 +14,7 @@ import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../data/models.dart';
 import '../widgets/match_result_modal.dart';
 import '../../../core/repositories/team_repository.dart';
+import 'payment_gateway_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -63,20 +64,22 @@ class _BookingsScreenState extends State<BookingsScreen> {
       body: SafeArea(
         top: true,
         bottom: false,
-        child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, bool loading})>(
+        child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, List<Booking> pending, bool loading})>(
           selector: (_, provider) => (
             upcoming: provider.upcomingBookings,
             history: provider.historyBookings,
+            pending: provider.pendingBookings,
             loading: provider.isLoading,
           ),
           builder: (context, data, child) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
             if (data.loading) {
               return const Center(
                 child: CircularProgressIndicator(color: VSPColors.accent),
               );
             }
   
-            if (data.upcoming.isEmpty && data.history.isEmpty) {
+            if (data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
               return RefreshIndicator(
                 onRefresh: () async {
                   final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
@@ -117,6 +120,121 @@ class _BookingsScreenState extends State<BookingsScreen> {
                 physics: const AlwaysScrollableScrollPhysics(),
                 padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
                 children: [
+                // ⏱️ 1. Pending Booking Auto-Recovery Banner
+                if (data.pending.isNotEmpty) ...[
+                  ...data.pending.map((pendingBooking) {
+                    return Container(
+                      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+                      padding: const EdgeInsets.all(14),
+                      decoration: BoxDecoration(
+                        color: const Color(0xFF18181B),
+                        borderRadius: BorderRadius.circular(VSPRadius.xl),
+                        border: Border.all(color: Colors.amber, width: 1.2),
+                      ),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Iconsax.timer_1_copy, color: Colors.amber, size: 20),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: Text(
+                                  isArabic ? 'لديك حجز معلق في انتظار السداد ⏱️' : 'Pending Booking Awaiting Payment ⏱️',
+                                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                                ),
+                              ),
+                            ],
+                          ),
+                          const SizedBox(height: 6),
+                          Text(
+                            isArabic
+                                ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
+                                : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.',
+                            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, height: 1.4),
+                          ),
+                          const SizedBox(height: 12),
+                          Row(
+                            children: [
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () async {
+                                    final bp = Provider.of<BookingProvider>(context, listen: false);
+                                    final updated = await bp.getBookingById(pendingBooking.id);
+                                    if (context.mounted) {
+                                      if (updated != null && (updated.status == BookingStatus.confirmed || updated.isPaid)) {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(isArabic ? '🎉 تم تأكيد حجزك بنجاح!' : '🎉 Booking Confirmed!'),
+                                            backgroundColor: VSPColors.accent,
+                                          ),
+                                        );
+                                      } else {
+                                        ScaffoldMessenger.of(context).showSnackBar(
+                                          SnackBar(
+                                            content: Text(isArabic ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.' : 'Payment pending. Complete checkout.'),
+                                            backgroundColor: Colors.amber,
+                                          ),
+                                        );
+                                      }
+                                    }
+                                  },
+                                  icon: const Icon(Iconsax.refresh_copy, size: 14, color: Colors.white),
+                                  label: Text(
+                                    isArabic ? 'استعلم ⚡' : 'Check Status ⚡',
+                                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: const Color(0xFF27272A),
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                              const SizedBox(width: 8),
+                              Expanded(
+                                child: ElevatedButton.icon(
+                                  onPressed: () {
+                                    final draft = BookingDraft(
+                                      stadiumId: pendingBooking.stadiumId,
+                                      stadiumName: pendingBooking.stadiumName,
+                                      stadiumImageUrl: pendingBooking.stadiumImageUrl,
+                                      ownerId: pendingBooking.ownerId,
+                                      startTime: pendingBooking.startTime,
+                                      endTime: pendingBooking.endTime,
+                                      bookingType: pendingBooking.bookingType,
+                                      totalPrice: pendingBooking.totalPrice,
+                                      depositPaid: pendingBooking.depositPaid,
+                                      needsDeposit: pendingBooking.depositPaid > 0,
+                                      isPaid: false,
+                                      isPrivate: pendingBooking.isPrivate,
+                                      rentBall: pendingBooking.rentBall,
+                                    );
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (ctx) => PaymentGatewayScreen(bookingDraft: draft),
+                                      ),
+                                    );
+                                  },
+                                  icon: const Icon(Iconsax.card_copy, size: 14, color: Colors.black),
+                                  label: Text(
+                                    isArabic ? 'استكمل الدفع 💳' : 'Resume Checkout 💳',
+                                    style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.bold),
+                                  ),
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: VSPColors.accent,
+                                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                                  ),
+                                ),
+                              ),
+                            ],
+                          ),
+                        ],
+                      ),
+                    );
+                  }),
+                ],
+
                 if (data.upcoming.isNotEmpty) ...[
                   Text(
                     l10n.upcoming,
@@ -386,9 +504,12 @@ class _BookingCard extends StatelessWidget {
 
   String _getLocalizedBookingType(BuildContext context, BookingType type) {
     final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     switch (type) {
       case BookingType.personal:
-        return l10n.personalType.toUpperCase();
+        return isArabic ? 'حجز عادي' : 'SOLO';
+      case BookingType.openJoin:
+        return isArabic ? 'تجميعي' : 'GATHERING';
       case BookingType.team:
         return l10n.teamType.toUpperCase();
       case BookingType.challenge:

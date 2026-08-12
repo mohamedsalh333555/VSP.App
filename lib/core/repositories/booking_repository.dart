@@ -468,10 +468,10 @@ class SupabaseBookingRepository implements BookingRepository {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
-        .eq('created_by_user_id', userId)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) => b.userId == userId || b.joinedUserIds.contains(userId))
               .toList();
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;

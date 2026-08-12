@@ -128,6 +128,8 @@ class StadiumRepository {
         'is_verified': false, 
         'is_blocked': false,
         'is_deleted_by_owner': false,
+        'rating': 0.0,
+        'reviews_count': 0,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
       };
