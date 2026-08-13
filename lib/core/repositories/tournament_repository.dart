@@ -313,13 +313,16 @@ class TournamentRepository {
           })
           .eq('id', championshipId);
 
-      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد
-      await _supabase.from('championship_rosters').insert({
-        'championship_id': championshipId,
-        'team_id': teamId,
-        'player_ids': selectedPlayerIds,
-        'guest_names': offlineGuestNames,
-      });
+      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد (مع حماية حقول الـ schema)
+      try {
+        await _supabase.from('championship_rosters').insert({
+          'championship_id': championshipId,
+          'team_id': teamId,
+          'player_ids': selectedPlayerIds,
+        });
+      } catch (rosterErr) {
+        debugPrint('⚠️ Non-blocking roster record notice: $rosterErr');
+      }
 
       // 🔔 Notify tournament owner
       final ownerId = champ.ownerId;

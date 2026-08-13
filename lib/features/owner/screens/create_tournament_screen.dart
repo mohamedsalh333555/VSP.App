@@ -132,6 +132,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       return;
     }
 
+    if (_durationController.text.trim().isEmpty) {
+      VSPFeedback.showError(context, isAr ? 'يرجى إدخال مدة المباراة بالدقائق' : 'Please enter match duration in minutes');
+      return;
+    }
+
     if (!_endDate.isAfter(_startDate)) {
       VSPFeedback.showError(context, isAr ? 'تاريخ الانتهاء يجب أن يكون بعد تاريخ البدء!' : 'End date must be strictly after start date!');
       return;

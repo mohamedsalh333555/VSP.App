@@ -326,19 +326,19 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                     _buildPillTabItem(
                       index: 0,
                       currentIndex: currentIndex,
-                      title: isArabic ? 'الجدول والقرعة' : 'Brackets',
+                      title: isArabic ? 'المباريات' : 'Matches',
                       icon: Iconsax.calendar_1_copy,
                     ),
                     _buildPillTabItem(
                       index: 1,
                       currentIndex: currentIndex,
                       title: isArabic ? 'الهدافين' : 'Scorers',
-                      icon: Iconsax.cup_copy,
+                      icon: Iconsax.award_copy,
                     ),
                     _buildPillTabItem(
                       index: 2,
                       currentIndex: currentIndex,
-                      title: isArabic ? 'التفاصيل والقواعد' : 'Rules',
+                      title: isArabic ? 'القواعد' : 'Rules',
                       icon: Iconsax.document_text_copy,
                     ),
                   ],
@@ -644,24 +644,69 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
             builder: (context, snapshot) {
               if (!snapshot.hasData || snapshot.data!.isEmpty) {
                 return Container(
-                  padding: const EdgeInsets.all(VSPSpacing.xl),
+                  width: double.infinity,
+                  padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 24),
                   decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.lg),
-                    border: Border.all(color: VSPColors.divider, width: 0.5),
+                    gradient: LinearGradient(
+                      begin: Alignment.topLeft,
+                      end: Alignment.bottomRight,
+                      colors: [
+                        VSPColors.surface,
+                        VSPColors.accent.withValues(alpha: 0.04),
+                      ],
+                    ),
+                    borderRadius: BorderRadius.circular(VSPRadius.xl),
+                    border: Border.all(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      width: 1,
+                    ),
                   ),
                   child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
                     children: [
-                      const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 36),
-                      const SizedBox(height: 12),
+                      Container(
+                        width: 72,
+                        height: 72,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle,
+                          color: VSPColors.accent.withValues(alpha: 0.1),
+                          border: Border.all(
+                            color: VSPColors.accent.withValues(alpha: 0.25),
+                            width: 1.5,
+                          ),
+                        ),
+                        child: const Icon(
+                          Iconsax.calendar_1_copy,
+                          color: VSPColors.accent,
+                          size: 32,
+                        ),
+                      ),
+                      const SizedBox(height: 18),
                       Text(
-                        isArabic ? 'لم يتم إعداد المباريات بعد' : 'No matches scheduled yet',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                        isArabic ? 'لم يتم إعداد المباريات بعد' : 'No Matches Scheduled Yet',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontWeight: FontWeight.w800,
+                          fontSize: 15,
+                        ),
+                        textAlign: TextAlign.center,
+                      ),
+                      const SizedBox(height: 8),
+                      Text(
+                        isArabic
+                            ? 'سيتم الإعلان عن جدول المباريات بمجرد اكتمال التسجيل'
+                            : 'Match schedule will be announced once registration is complete',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 12,
+                          height: 1.5,
+                        ),
                         textAlign: TextAlign.center,
                       ),
                     ],
                   ),
                 );
+
               }
 
               final matches = snapshot.data!;
@@ -855,84 +900,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
   }
 
   Widget _buildTopScorersTab(bool isArabic) {
-    return Column(
-      children: [
-        // Sub-switcher for Scorers vs Clean Sheets
-        Container(
-          margin: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 4),
-          padding: const EdgeInsets.all(4),
-          decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: Border.all(color: VSPColors.divider, width: 0.5),
-          ),
-          child: Row(
-            children: [
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _statsSubIndex = 0),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _statsSubIndex == 0 ? VSPColors.accent : Colors.transparent,
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Iconsax.cup_copy, size: 14, color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          isArabic ? 'ترتيب الهدافين' : 'Top Scorers',
-                          style: TextStyle(
-                            color: _statsSubIndex == 0 ? Colors.black : VSPColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-              Expanded(
-                child: GestureDetector(
-                  onTap: () => setState(() => _statsSubIndex = 1),
-                  child: Container(
-                    padding: const EdgeInsets.symmetric(vertical: 8),
-                    decoration: BoxDecoration(
-                      color: _statsSubIndex == 1 ? VSPColors.accent : Colors.transparent,
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    ),
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: [
-                        Icon(Iconsax.security_safe_copy, size: 14, color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary),
-                        const SizedBox(width: 6),
-                        Text(
-                          isArabic ? 'أقوى دفاع (كلين شيت)' : 'Clean Sheets',
-                          style: TextStyle(
-                            color: _statsSubIndex == 1 ? Colors.black : VSPColors.textSecondary,
-                            fontWeight: FontWeight.bold,
-                            fontSize: 12,
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
-                ),
-              ),
-            ],
-          ),
-        ),
-
-        Expanded(
-          child: _statsSubIndex == 0
-              ? _buildScorersList(isArabic)
-              : _buildCleanSheetsList(isArabic),
-        ),
-      ],
-    );
+    return _buildScorersList(isArabic);
   }
 
   Widget _buildScorersList(bool isArabic) {
@@ -1197,11 +1165,11 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
           _buildInfoSection(
             isArabic ? 'قوانين المباريات' : 'Match Rules',
             isArabic
-                ? '• مدة المباراة: ${championship.matchDuration} دقيقة.\n'
+                ? '• مدة المباراة: ${championship.matchDuration > 0 ? "${championship.matchDuration} دقيقة" : "غير محددة"}.\n'
                   '• عدد اللاعبين الأساسيين لكل فريق: ${championship.minPlayersPerTeam} لاعبين.\n'
                   '• الحد الأقصى للاعبين في التشكيلة: ${championship.maxPlayersPerTeam} لاعبين.\n'
                   '• احتساب النقاط: ${championship.winningPoints} نقاط للفوز، ${championship.drawPoints} نقطة للتعادل، ${championship.lossPoints} للهزيمة.'
-                : '• Match Duration: ${championship.matchDuration} mins.\n'
+                : '• Match Duration: ${championship.matchDuration > 0 ? "${championship.matchDuration} mins" : "TBD"}.\n'
                   '• Min Players: ${championship.minPlayersPerTeam}.\n'
                   '• Max Players: ${championship.maxPlayersPerTeam}.\n'
                   '• Points: ${championship.winningPoints} Win / ${championship.drawPoints} Draw / ${championship.lossPoints} Loss.',

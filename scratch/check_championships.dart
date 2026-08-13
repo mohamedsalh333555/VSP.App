@@ -1,19 +1,16 @@
-import 'dart:io';
 import 'dart:convert';
+import 'package:http/http.dart' as http;
 
 void main() async {
-  print('Fetching all championships from Supabase...');
-  final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/championships');
-  final client = HttpClient();
+  final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/championships?select=id,name,match_duration');
+  final response = await http.get(
+    url,
+    headers: {
+      'apikey': 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
+      'Authorization': 'Bearer sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
+    },
+  );
 
-  final req = await client.getUrl(url);
-  req.headers.set('apikey', 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
-  req.headers.set('Authorization', 'Bearer sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE');
-
-  final resp = await req.close();
-  final body = await resp.transform(utf8.decoder).join();
-
-  print('Status Code: ${resp.statusCode}');
-  print('Response Body: $body');
-  exit(0);
+  print('Status: ${response.statusCode}');
+  print('Body: ${response.body}');
 }

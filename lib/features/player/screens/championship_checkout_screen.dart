@@ -224,8 +224,9 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
 
     final entryFee = widget.championship.entryFee;
-    final netCommission = entryFee * 0.03;
-    final totalCheckoutPrice = entryFee + netCommission;
+    // Unified Platform & Processing Service Fee: 4.75% + 3 EGP fixed
+    final serviceFee = (entryFee * 0.0475) + 3.0;
+    final totalCheckoutPrice = entryFee + serviceFee;
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -306,32 +307,82 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
             const SizedBox(height: VSPSpacing.lg),
 
-            // 2. Roster Counter & Validation Badge
+            // 2. Squad Selection Requirement Header
             Container(
-              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
               decoration: BoxDecoration(
-                color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.1) : VSPColors.error.withValues(alpha: 0.1),
-                borderRadius: BorderRadius.circular(VSPRadius.md),
+                color: isSelectionValid 
+                    ? VSPColors.accent.withValues(alpha: 0.08) 
+                    : VSPColors.warning.withValues(alpha: 0.08),
+                borderRadius: BorderRadius.circular(VSPRadius.lg),
                 border: Border.all(
-                  color: isSelectionValid ? VSPColors.accent.withValues(alpha: 0.3) : VSPColors.error.withValues(alpha: 0.3),
+                  color: isSelectionValid 
+                      ? VSPColors.accent.withValues(alpha: 0.3) 
+                      : VSPColors.warning.withValues(alpha: 0.4),
+                  width: 1,
                 ),
               ),
               child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text(
-                    'تشكيلة الفريق (المنتخب: $totalCount لاعبين)',
-                    style: TextStyle(
-                      color: isSelectionValid ? VSPColors.accent : VSPColors.error,
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
+                  Container(
+                    width: 40,
+                    height: 40,
+                    decoration: BoxDecoration(
+                      color: isSelectionValid 
+                          ? VSPColors.accent.withValues(alpha: 0.15) 
+                          : VSPColors.warning.withValues(alpha: 0.15),
+                      shape: BoxShape.circle,
+                    ),
+                    child: Icon(
+                      Iconsax.people_copy,
+                      color: isSelectionValid ? VSPColors.accent : VSPColors.warning,
+                      size: 20,
                     ),
                   ),
-                  Text(
-                    'المطلوب: $minPlayers - $maxPlayers لاعبين',
-                    style: TextStyle(
-                      color: isSelectionValid ? VSPColors.accent : VSPColors.error,
-                      fontSize: 12,
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Text(
+                              isArabic ? 'تشكيلة الفريق' : 'Team Roster',
+                              style: const TextStyle(
+                                color: Colors.white,
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                              ),
+                            ),
+                            const SizedBox(width: 8),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                              decoration: BoxDecoration(
+                                color: isSelectionValid ? VSPColors.accent : VSPColors.warning,
+                                borderRadius: BorderRadius.circular(VSPRadius.full),
+                              ),
+                              child: Text(
+                                isArabic ? '$totalCount لاعبين' : '$totalCount Players',
+                                style: const TextStyle(
+                                  color: Colors.black,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 11,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 4),
+                        Text(
+                          minPlayers == maxPlayers
+                              ? (isArabic ? 'المطلوب: $minPlayers لاعبين بالضبط' : 'Required: Exactly $minPlayers players')
+                              : (isArabic ? 'المطلوب: من $minPlayers إلى $maxPlayers لاعبين' : 'Required: $minPlayers to $maxPlayers players'),
+                          style: TextStyle(
+                            color: isSelectionValid ? VSPColors.textSecondary : VSPColors.warning,
+                            fontSize: 12,
+                          ),
+                        ),
+                      ],
                     ),
                   ),
                 ],
@@ -419,7 +470,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                     controller: _guestController,
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'اسم الصديق (مثال: محمد أحمد)',
+                      hintText: 'اسم الصديق',
                       hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       filled: true,
                       fillColor: VSPColors.surface,
@@ -498,8 +549,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      const Text('رسوم خدمة المنصة والتشغيل (3%):', style: TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
-                      Text('${netCommission.toStringAsFixed(1)} ج.م', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
+                      Text(
+                        isArabic ? 'رسوم خدمات المنصة:' : 'Platform Service Fee:',
+                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      ),
+                      Text('${serviceFee.toStringAsFixed(1)} ج.م', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13)),
                     ],
                   ),
                   const Divider(color: VSPColors.divider, height: 20),

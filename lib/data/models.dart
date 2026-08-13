@@ -1369,7 +1369,7 @@ class Championship {
         winningPoints: int.tryParse((data['winning_points'] ?? settings['winningPoints'] ?? settings['winning_points'] ?? data['winningPoints'] ?? 3).toString()) ?? 3,
         drawPoints: int.tryParse((data['draw_points'] ?? settings['drawPoints'] ?? settings['draw_points'] ?? data['drawPoints'] ?? 1).toString()) ?? 1,
         lossPoints: int.tryParse((data['loss_points'] ?? settings['lossPoints'] ?? settings['loss_points'] ?? data['lossPoints'] ?? 0).toString()) ?? 0,
-        matchDuration: int.tryParse((data['match_duration'] ?? settings['matchDuration'] ?? settings['match_duration'] ?? data['matchDuration'] ?? 30).toString()) ?? 30,
+        matchDuration: int.tryParse((data['match_duration'] ?? settings['matchDuration'] ?? settings['match_duration'] ?? data['matchDuration'] ?? 0).toString()) ?? 0,
         isBackAndForth: data['is_back_and_forth'] == true || settings['isBackAndForth'] == true || settings['is_back_and_forth'] == true || data['isBackAndForth'] == true,
         trophyMedals: data['trophy_medals'] != false && settings['trophyMedals'] != false && settings['trophy_medals'] != false && data['trophyMedals'] != false,
         redCardSuspension: data['red_card_suspension'] != false && settings['redCardSuspension'] != false && settings['red_card_suspension'] != false && data['redCardSuspension'] != false,
