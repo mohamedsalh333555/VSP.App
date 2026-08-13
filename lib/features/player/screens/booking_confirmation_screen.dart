@@ -74,13 +74,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     return DateTime(now.year, now.month, now.day);
   }
 
+  bool get _isOpenJoin {
+    final bType = widget.bookingType.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+    return bType == 'openjoin' || bType == 'openjoinmatch';
+  }
+
+  bool get _isChallenge {
+    final bType = widget.bookingType.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+    return bType == 'challenge' || bType == 'challengematch';
+  }
+
   bool _isSlotsInitialized = false;
 
   @override
   void initState() {
     super.initState();
     _selectedDate = widget.selectedDate ?? _operationalBaseDate;
-    if (widget.bookingType == 'Team') {
+    if (_isOpenJoin) {
       _isPrivate = false;
     } else {
       _isPrivate = true;
@@ -185,8 +195,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       String endStr = widget.stadium.closingTime;   
 
       if ((startStr.isEmpty || endStr.isEmpty) && features is Map && features['workingHours'] != null) {
-        startStr = startStr.isNotEmpty ? startStr : (features['workingHours']['start'] ?? '04:00 PM');
-        endStr = endStr.isNotEmpty ? endStr : (features['workingHours']['end'] ?? '03:00 AM');
+        startStr = startStr.isNotEmpty ? startStr : (features['workingHours']['start']?.toString() ?? '');
+        endStr = endStr.isNotEmpty ? endStr : (features['workingHours']['end']?.toString() ?? '');
       }
       if (startStr.isEmpty) startStr = '04:00 PM';
       if (endStr.isEmpty) endStr = '03:00 AM';
@@ -579,7 +589,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           final isSelected = _selectedTimeSlots.contains(slotItem.key);
                           final slotDateTime = _getSlotDateTime(slotItem.key);
                           final isPast = slotDateTime.isBefore(DateTime.now());
-                          return GestureDetector(
+                          final isOvernightSlot = slotItem.startMinutes >= 1440;
+                          final bool isFirstOvernightSlot = isOvernightSlot && (index == 0 || _timeSlots[index - 1].startMinutes < 1440);
+                          final String nextDayName = isOvernightSlot
+                              ? DateFormat('EEEE', Localizations.localeOf(context).toString()).format(slotDateTime)
+                              : '';
+
+                          final slotWidget = GestureDetector(
                             onTap: (isBooked || isPast) ? null : () => _onTimeSlotTap(slotItem.key, existingBookings),
                             child: AnimatedContainer(
                               duration: const Duration(milliseconds: 200),
@@ -651,6 +667,28 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               ),
                             ),
                           );
+
+                          if (isFirstOvernightSlot) {
+                            return Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Padding(
+                                  padding: const EdgeInsets.only(top: 16, bottom: 10, right: 4, left: 4),
+                                  child: Text(
+                                    isArabic ? 'بعد منتصف الليل ($nextDayName)' : 'After Midnight ($nextDayName)',
+                                    style: const TextStyle(
+                                      color: Colors.white,
+                                      fontSize: 14,
+                                      fontWeight: FontWeight.bold,
+                                    ),
+                                  ),
+                                ),
+                                slotWidget,
+                              ],
+                            );
+                          }
+
+                          return slotWidget;
                         }),
                       );
                     },
@@ -797,180 +835,222 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   Widget _buildBottomOverlay(BuildContext context, AppLocalizations l10n, bool isArabic) {
     final hasBallOption = widget.stadium.hasBall || _ballPrice > 0;
     final deposit = widget.stadium.depositAmount;
+    final isSlotSelected = _selectedTimeSlots.isNotEmpty;
 
     return Container(
       padding: EdgeInsets.fromLTRB(
-        VSPSpacing.md,
-        VSPSpacing.sm,
-        VSPSpacing.md,
-        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8 : VSPSpacing.md,
+        20,
+        12,
+        20,
+        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8 : 16,
       ),
-      decoration: BoxDecoration(
-        color: VSPColors.surface,
-        border: const Border(top: BorderSide(color: VSPColors.divider, width: 1)),
-        boxShadow: [
-          BoxShadow(
-            color: Colors.black.withValues(alpha: 0.4),
-            blurRadius: 14,
-            offset: const Offset(0, -4),
-          ),
-        ],
+      decoration: const BoxDecoration(
+        color: Color(0xFF161616),
+        border: Border(top: BorderSide(color: Color(0xFF262626), width: 1)),
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
+        crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // ── Layer 1: Fixed Options Row (Private/Public + Ball Rent + Contact Pitch) ──
-          SingleChildScrollView(
-            scrollDirection: Axis.horizontal,
-            physics: const BouncingScrollPhysics(),
-            child: Row(
+          // ── Row 1: Private Toggle (Only shown for OpenJoin gathering matches - FIRST) ──
+          if (_isOpenJoin) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
               children: [
-                // A. Private / Public Toggle Chip
-                if (widget.bookingType != 'Team')
-                  GestureDetector(
-                    onTap: () {
-                      setState(() => _isPrivate = !_isPrivate);
+                Text(
+                  isArabic ? 'حجز خاص' : 'Private',
+                  style: const TextStyle(
+                    color: Colors.white,
+                    fontSize: 18,
+                    fontWeight: FontWeight.bold,
+                    letterSpacing: -0.3,
+                  ),
+                ),
+                Transform.scale(
+                  scale: 0.85,
+                  child: Switch(
+                    value: _isPrivate,
+                    activeColor: Colors.black,
+                    activeTrackColor: VSPColors.accent,
+                    inactiveThumbColor: Colors.grey,
+                    inactiveTrackColor: const Color(0xFF2C2C2E),
+                    trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
+                    onChanged: (val) {
+                      setState(() => _isPrivate = val);
                       VSPFeedback.showInfo(
                         context,
                         _isPrivate
-                            ? (isArabic ? '🔒 حجز خاص: تقتصر المباراة على فريقك وحجوزاتكم الخاصة فقط.' : '🔒 Private Booking: Exclusive for your team only.')
-                            : (isArabic ? '👥 حجز عام: ستظهر مباراتك في رادار الخريطة ليتمكن اللاعبون من الانضمام!' : '👥 Public Booking: Visible on map feed so players can join!'),
+                            ? (isArabic ? 'حجز خاص: تقتصر المباراة على فريقك فقط.' : 'Private Booking: Exclusive for your team only.')
+                            : (isArabic ? 'حجز عام: ستظهر مباراتك في الخريطة ليتمكن باقي اللاعبين من الانضمام!' : 'Public Booking: Visible on map for players to join!'),
                       );
                     },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        color: _isPrivate ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _isPrivate ? VSPColors.accent : VSPColors.divider),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            _isPrivate ? Iconsax.lock_copy : Iconsax.people_copy,
-                            size: 14,
-                            color: _isPrivate ? VSPColors.accent : VSPColors.textSecondary,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _isPrivate ? (isArabic ? 'حجز خاص 🔒' : 'Private 🔒') : (isArabic ? 'حجز عام 👥' : 'Public 👥'),
-                            style: TextStyle(
-                              color: _isPrivate ? VSPColors.accent : VSPColors.textPrimary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
                   ),
-
-                // B. Ball Rental Toggle Chip
-                if (hasBallOption)
-                  GestureDetector(
-                    onTap: () => setState(() => _isBallRented = !_isBallRented),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      margin: const EdgeInsets.only(right: 6),
-                      decoration: BoxDecoration(
-                        color: _isBallRented ? VSPColors.accent.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: _isBallRented ? VSPColors.accent : VSPColors.divider),
-                      ),
-                      child: Row(
-                        children: [
-                          Icon(
-                            Iconsax.cup_copy,
-                            size: 14,
-                            color: _isBallRented ? VSPColors.accent : VSPColors.textSecondary,
-                          ),
-                          const SizedBox(width: 5),
-                          Text(
-                            _isBallRented
-                                ? (isArabic ? 'كرة ⚽ (+${_ballPrice.toInt()} ج.م)' : 'Football ⚽ (+${_ballPrice.toInt()} EGP)')
-                                : (isArabic ? '+ إيجار كرة ⚽' : '+ Rent Football ⚽'),
-                            style: TextStyle(
-                              color: _isBallRented ? VSPColors.accent : VSPColors.textPrimary,
-                              fontSize: 11,
-                              fontWeight: FontWeight.bold,
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
-
-                // C. Contact Pitch Owner Button
-                if (!_isLoadingPhone && _ownerPhone != null && _ownerPhone!.isNotEmpty)
-                  GestureDetector(
-                    onTap: () async {
-                      try {
-                        final cleanPhone = _ownerPhone!.replaceAll(RegExp(r'\D'), '');
-                        final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 ? '+2$cleanPhone' : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
-                        final Uri launchUri = Uri(scheme: 'tel', path: path);
-                        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
-                      } catch (e) {
-                        debugPrint('Could not launch phone: $e');
-                      }
-                    },
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surfaceAlt,
-                        borderRadius: BorderRadius.circular(20),
-                        border: Border.all(color: VSPColors.divider),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(Iconsax.call_copy, size: 14, color: VSPColors.accent),
-                          const SizedBox(width: 5),
-                          Text(
-                            isArabic ? 'اتصل بالملعب 📞' : 'Call Pitch 📞',
-                            style: const TextStyle(color: VSPColors.textPrimary, fontSize: 11, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ),
+                ),
               ],
             ),
-          ),
-          const SizedBox(height: 10),
+            const SizedBox(height: 8),
+          ],
 
-          // ── Layer 2: Total Price & Primary Checkout Button ──
+          // ── Row 2: Available Players With You Counter (Only shown for OpenJoin gathering matches - SECOND) ──
+          if (_isOpenJoin) ...[
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      isArabic ? 'عدد اللاعبين المتوفرين معك' : 'Players With You',
+                      style: const TextStyle(
+                        color: Colors.white,
+                        fontSize: 17,
+                        fontWeight: FontWeight.bold,
+                        letterSpacing: -0.3,
+                      ),
+                    ),
+                    const SizedBox(height: 2),
+                    Text(
+                      isArabic ? 'حدد عدد أصحابك القادمين معك لتكملة سعة الملعب' : 'Specify how many friends you bring with you',
+                      style: const TextStyle(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w500,
+                      ),
+                    ),
+                  ],
+                ),
+                Container(
+                  decoration: BoxDecoration(
+                    color: const Color(0xFF222222),
+                    borderRadius: BorderRadius.circular(10),
+                    border: Border.all(color: const Color(0xFF333333)),
+                  ),
+                  child: Row(
+                    children: [
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Iconsax.minus_copy, size: 16, color: Colors.white),
+                        onPressed: _initialPlayersCount > 1 ? () => setState(() => _initialPlayersCount--) : null,
+                      ),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 6),
+                        child: Text(
+                          '$_initialPlayersCount',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                        ),
+                      ),
+                      IconButton(
+                        visualDensity: VisualDensity.compact,
+                        icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
+                        onPressed: _initialPlayersCount < widget.stadium.totalFieldCapacity 
+                            ? () => setState(() => _initialPlayersCount++) 
+                            : null,
+                      ),
+                    ],
+                  ),
+                ),
+              ],
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          // ── Row 3: Ball Rental Option ──
+          if (hasBallOption) ...[
+            GestureDetector(
+              onTap: () => setState(() => _isBallRented = !_isBallRented),
+              behavior: HitTestBehavior.opaque,
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        isArabic
+                            ? 'إيجار كرة / ${_ballPrice.toInt()} ج.م'
+                            : 'Ball / ${_ballPrice.toInt()}eg',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 18,
+                          fontWeight: FontWeight.bold,
+                          letterSpacing: -0.3,
+                        ),
+                      ),
+                      const SizedBox(height: 2),
+                      Text(
+                        isArabic
+                            ? 'دفع رسوم إيجار الكرة في هذا الملعب'
+                            : 'Pay Per Ball At This Pitch',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 11.5,
+                          fontWeight: FontWeight.w500,
+                        ),
+                      ),
+                    ],
+                  ),
+                  Container(
+                    width: 22,
+                    height: 22,
+                    decoration: BoxDecoration(
+                      shape: BoxShape.circle,
+                      color: _isBallRented ? VSPColors.accent : const Color(0xFF2C2C2E),
+                      border: Border.all(
+                        color: _isBallRented ? VSPColors.accent : Colors.grey.shade700,
+                        width: 1.5,
+                      ),
+                    ),
+                    child: _isBallRented
+                        ? const Icon(Icons.check, size: 15, color: Colors.black)
+                        : null,
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 8),
+          ],
+
+          const SizedBox(height: 4),
+
+          // ── Row 3: Price & Booking Confirmation Button ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            crossAxisAlignment: CrossAxisAlignment.end,
             children: [
               Column(
-                mainAxisSize: MainAxisSize.min,
                 crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    _getDurationText(_selectedTimeSlots.length, isArabic),
-                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                    isArabic ? 'السعر' : 'Price',
+                    style: TextStyle(
+                      color: Colors.grey.shade400,
+                      fontSize: 13,
+                      fontWeight: FontWeight.w500,
+                    ),
                   ),
                   const SizedBox(height: 2),
                   Row(
                     children: [
                       Text(
-                        '${_totalPrice.toInt()} ${l10n.egCurrency}',
+                        '${_totalPrice.toInt()} ${isArabic ? "ج.م" : "eg"}',
                         style: const TextStyle(
-                          color: VSPColors.accent,
-                          fontSize: 20,
+                          color: Colors.white,
+                          fontSize: 24,
                           fontWeight: FontWeight.bold,
+                          letterSpacing: -0.5,
                         ),
                       ),
                       if (deposit > 0 && widget.stadium.needsDeposit) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
                           decoration: BoxDecoration(
-                            color: VSPColors.warning.withValues(alpha: 0.15),
+                            color: VSPColors.warning.withValues(alpha: 0.2),
                             borderRadius: BorderRadius.circular(4),
                           ),
                           child: Text(
-                            isArabic ? 'عربون: ${deposit.toInt()} ج.م' : 'Dep: ${deposit.toInt()} EGP',
+                            isArabic ? 'عربون ${deposit.toInt()}' : 'Dep ${deposit.toInt()}',
                             style: const TextStyle(color: VSPColors.warning, fontSize: 10, fontWeight: FontWeight.bold),
                           ),
                         ),
@@ -979,107 +1059,133 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                   ),
                 ],
               ),
-              const SizedBox(width: 12),
+              const SizedBox(width: 16),
               Expanded(
-                child: PrimaryButton(
-                  text: isArabic ? 'تأكيد ودفع الحجز 💳' : 'Confirm & Proceed 💳',
-                  height: 46,
-                  isLoading: _isLoading,
-                  onPressed: (_selectedTimeSlots.isEmpty || _isLoading) ? null : () async {
-                    setState(() => _isLoading = true);
-                    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                    final currentUserModel = authProvider.userModel;
-                    if (currentUserModel == null) { setState(() => _isLoading = false); return; }
-
-                    final nav = Navigator.of(context);
-                    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-
-                    final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
-                    final firstSlot = sortedSlots.first;
-                    final startTime = _getSlotDateTime(firstSlot);
-                    final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
-
-                    BookingType bType;
-                    switch (widget.bookingType.toLowerCase()) {
-                      case 'team': bType = BookingType.team; break;
-                      case 'challenge': bType = BookingType.challenge; break;
-                      default: bType = BookingType.personal;
-                    }
-
-                    final depositAmount = widget.stadium.depositAmount;
-                    final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
-
-                    final draft = BookingDraft(
-                      stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
-                      ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
-                      playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
-                      playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
-                      opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
-                      totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
-                      currentPlayers: (bType == BookingType.openJoin) ? _initialPlayersCount : _currentPlayers, playersPerTeam: widget.stadium.playersPerTeam, totalFieldCapacity: fieldCapacity,
-                      depositPaid: depositAmount, isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
-                      instapay: widget.stadium.features is Map ? widget.stadium.features['instapay'] : null,
-                      vodafoneCash: widget.stadium.features is Map ? widget.stadium.features['vodafoneCash'] : null,
-                      binanceId: widget.stadium.features is Map ? widget.stadium.features['binanceId'] : null,
-                    );
-
-                    setState(() => _isLoading = false);
-
-                    if (widget.stadium.needsDeposit && depositAmount > 0) {
-                      nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                      return;
-                    }
-
-                    final isCashLocked = (currentUserModel.noShowCount) >= 2;
-                    if (isCashLocked) {
-                      VSPFeedback.showError(context, isArabic ? "حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪." : "Cash bookings restricted due to missed attendance. Please pay 100% online.");
-                      nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                      return;
-                    }
-
-                    showModalBottomSheet(
-                      context: context,
-                      backgroundColor: VSPColors.surface,
-                      shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                      builder: (ctx) => Container(
-                        padding: const EdgeInsets.all(20),
-                        child: Column(
-                          mainAxisSize: MainAxisSize.min,
-                          children: [
-                            Text(isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-                            const SizedBox(height: 16),
-                            ListTile(
-                              leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
-                              title: Text(isArabic ? 'دفع إلكتروني (فودافون كاش / إنستاباي / بطاقة)' : 'Online Payment (Vodafone Cash / InstaPay / Card)'),
-                              subtitle: Text(isArabic ? 'دفع سريع وتأكيد فوري' : 'Fast payment and instant confirmation'),
-                              onTap: () {
-                                Navigator.pop(ctx);
-                                nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                              },
-                            ),
-                            const Divider(color: VSPColors.divider),
-                            ListTile(
-                              leading: const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
-                              title: Text(isArabic ? 'دفع نقدي في الملعب (Cash)' : 'Pay Cash at Pitch'),
-                              subtitle: Text(isArabic ? 'تدفع الكابتن عند الحضور للملعب' : 'Pay captain directly upon arrival'),
-                              onTap: () async {
-                                Navigator.pop(ctx);
-                                try {
-                                  final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
-                                  final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-                                  if (booking != null && nav.mounted) {
-                                    nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
-                                  }
-                                } catch (e) {
-                                  if (context.mounted) VSPFeedback.showError(context, e.toString());
-                                }
-                              },
-                            ),
-                          ],
-                        ),
+                child: SizedBox(
+                  height: 48,
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: isSlotSelected ? VSPColors.accent : const Color(0xFF2C2C2E),
+                      foregroundColor: isSlotSelected ? Colors.black : Colors.grey.shade400,
+                      elevation: 0,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(16),
                       ),
-                    );
-                  },
+                    ),
+                    onPressed: (!isSlotSelected || _isLoading) ? null : () async {
+                      setState(() => _isLoading = true);
+                      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+                      final currentUserModel = authProvider.userModel;
+                      if (currentUserModel == null) { setState(() => _isLoading = false); return; }
+
+                      final nav = Navigator.of(context);
+                      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
+                      final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                      final firstSlot = sortedSlots.first;
+                      final startTime = _getSlotDateTime(firstSlot);
+                      final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
+
+                      BookingType bType;
+                      if (_isOpenJoin) {
+                        bType = BookingType.openJoin;
+                      } else if (_isChallenge) {
+                        bType = BookingType.challenge;
+                      } else {
+                        bType = BookingType.personal;
+                      }
+
+                      final depositAmount = widget.stadium.depositAmount;
+                      final fieldCapacity = widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : (widget.stadium.seatsCapacity > 0 ? widget.stadium.seatsCapacity * 2 : 10);
+
+                      final draft = BookingDraft(
+                        stadiumId: widget.stadium.id, stadiumName: widget.stadium.name, stadiumImageUrl: widget.stadium.imageUrl,
+                        ownerId: widget.stadium.ownerId, startTime: startTime, endTime: endTime, bookingType: bType,
+                        playerTeamId: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamId : null,
+                        playerTeamName: (bType == BookingType.team || bType == BookingType.challenge) ? _userTeamName : currentUserModel.name,
+                        opponentTeamId: widget.opponentTeam?.id, opponentTeamName: widget.opponentTeam?.name,
+                        totalPrice: _totalPrice, isPaid: false, isPrivate: _isPrivate, rentBall: _isBallRented,
+                        currentPlayers: (bType == BookingType.openJoin) ? _initialPlayersCount : _currentPlayers, playersPerTeam: widget.stadium.playersPerTeam, totalFieldCapacity: fieldCapacity,
+                        depositPaid: depositAmount, isDepositPaid: false, needsDeposit: widget.stadium.needsDeposit,
+                        instapay: widget.stadium.features is Map ? widget.stadium.features['instapay'] : null,
+                        vodafoneCash: widget.stadium.features is Map ? widget.stadium.features['vodafoneCash'] : null,
+                        binanceId: widget.stadium.features is Map ? widget.stadium.features['binanceId'] : null,
+                      );
+
+                      setState(() => _isLoading = false);
+
+                      if (widget.stadium.needsDeposit && depositAmount > 0) {
+                        nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                        return;
+                      }
+
+                      final isCashLocked = (currentUserModel.noShowCount) >= 2;
+                      if (isCashLocked) {
+                        VSPFeedback.showError(context, isArabic ? "حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪." : "Cash bookings restricted due to missed attendance. Please pay 100% online.");
+                        nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                        return;
+                      }
+
+                      showModalBottomSheet(
+                        context: context,
+                        backgroundColor: VSPColors.surface,
+                        shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
+                        builder: (ctx) => Container(
+                          padding: const EdgeInsets.all(20),
+                          child: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              Text(isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
+                              const SizedBox(height: 16),
+                              ListTile(
+                                leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                                title: Text(isArabic ? 'دفع إلكتروني (فودافون كاش / إنستاباي / بطاقة)' : 'Online Payment (Vodafone Cash / InstaPay / Card)'),
+                                subtitle: Text(isArabic ? 'دفع سريع وتأكيد فوري' : 'Fast payment and instant confirmation'),
+                                onTap: () {
+                                  Navigator.pop(ctx);
+                                  nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                                },
+                              ),
+                              const Divider(color: VSPColors.divider),
+                              ListTile(
+                                leading: const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
+                                title: Text(isArabic ? 'دفع نقدي في الملعب (Cash)' : 'Pay Cash at Pitch'),
+                                subtitle: Text(isArabic ? 'تدفع الكابتن عند الحضور للملعب' : 'Pay captain directly upon arrival'),
+                                onTap: () async {
+                                  Navigator.pop(ctx);
+                                  try {
+                                    final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
+                                    final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                                    if (booking != null && nav.mounted) {
+                                      nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
+                                    }
+                                  } catch (e) {
+                                    if (context.mounted) VSPFeedback.showError(context, e.toString());
+                                  }
+                                },
+                              ),
+                            ],
+                          ),
+                        ),
+                      );
+                    },
+                    child: _isLoading
+                        ? const SizedBox(
+                            width: 20,
+                            height: 20,
+                            child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                          )
+                        : Text(
+                            isSlotSelected
+                                ? (isArabic ? 'تأكيد الحجز' : 'Booking Confirmation')
+                                : (isArabic ? 'اختر الوقت أولاً' : 'Select Time'),
+                            style: TextStyle(
+                              color: isSlotSelected ? Colors.black : Colors.grey.shade400,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                  ),
                 ),
               ),
             ],

@@ -116,6 +116,8 @@ class StadiumRepository {
         'description': descWithSport,
         'notes': sanitizedData['notes'] ?? '',
         'features': features,
+        'opening_time': sanitizedData['openingTime'] ?? sanitizedData['opening_time'] ?? ((features is Map && features['workingHours'] is Map) ? features['workingHours']['start'] : null),
+        'closing_time': sanitizedData['closingTime'] ?? sanitizedData['closing_time'] ?? ((features is Map && features['workingHours'] is Map) ? features['workingHours']['end'] : null),
         'players_per_team': ppt,
         'total_field_capacity': tfc,
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
@@ -164,6 +166,11 @@ class StadiumRepository {
         final String desc = securedData['description'] ?? '';
         pgData['description'] = '$desc|Sport:$sport';
       }
+      if (securedData.containsKey('features')) pgData['features'] = securedData['features'];
+      if (securedData.containsKey('openingTime')) pgData['opening_time'] = securedData['openingTime'];
+      if (securedData.containsKey('opening_time')) pgData['opening_time'] = securedData['opening_time'];
+      if (securedData.containsKey('closingTime')) pgData['closing_time'] = securedData['closingTime'];
+      if (securedData.containsKey('closing_time')) pgData['closing_time'] = securedData['closing_time'];
       if (securedData.containsKey('governorate')) pgData['governorate'] = securedData['governorate'];
       if (securedData.containsKey('address')) pgData['location'] = securedData['address'];
       if (securedData.containsKey('location')) pgData['location'] = securedData['location'];

@@ -115,6 +115,20 @@ class SupabaseBookingRepository implements BookingRepository {
     }
   }
 
+  String _dbBookingType(BookingType type) {
+    switch (type) {
+      case BookingType.openJoin:
+        return 'open_join';
+      case BookingType.challenge:
+        return 'challenge';
+      case BookingType.team:
+        return 'team';
+      case BookingType.personal:
+      default:
+        return 'personal';
+    }
+  }
+
   @override
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     try {
@@ -228,7 +242,7 @@ class SupabaseBookingRepository implements BookingRepository {
           'p_owner_id': draft.ownerId,
           'p_start_time': draft.startTime.toUtc().toIso8601String(),
           'p_end_time': draft.endTime.toUtc().toIso8601String(),
-          'p_booking_type': draft.bookingType.name,
+          'p_booking_type': _dbBookingType(draft.bookingType),
           'p_total_price': draft.totalPrice,
           'p_stadium_name': draft.stadiumName,
           'p_stadium_image_url': draft.stadiumImageUrl,
@@ -279,7 +293,7 @@ class SupabaseBookingRepository implements BookingRepository {
         status: status,
       );
 
-      // 🧹 PRE-CLEANUP: Hard-delete any cancelled booking rows for the same stadium & start_time to satisfy prevent_double_booking constraint
+      // 🧹 PRE-CLEANUP: Hard-delete any cancelled OR stale pending-unpaid booking rows for the same stadium & start_time
       try {
         await _supabase
             .from('bookings')
@@ -287,6 +301,16 @@ class SupabaseBookingRepository implements BookingRepository {
             .eq('stadium_id', booking.stadiumId)
             .eq('start_time', booking.startTime.toUtc().toIso8601String())
             .eq('status', 'cancelled');
+
+        // Delete user's own stale pending unpaid booking for this exact slot if retrying
+        await _supabase
+            .from('bookings')
+            .delete()
+            .eq('stadium_id', booking.stadiumId)
+            .eq('created_by_user_id', userId)
+            .eq('start_time', booking.startTime.toUtc().toIso8601String())
+            .eq('status', 'pending')
+            .eq('is_paid', false);
       } catch (_) {}
 
       final double platformFee = 0.0;
@@ -298,7 +322,7 @@ class SupabaseBookingRepository implements BookingRepository {
         'owner_id': booking.ownerId,
         'start_time': booking.startTime.toUtc().toIso8601String(),
         'end_time': booking.endTime.toUtc().toIso8601String(),
-        'booking_type': booking.bookingType.name,
+        'booking_type': _dbBookingType(booking.bookingType),
         'player_team_id': booking.playerTeamId,
         'player_team_name': booking.playerTeamName,
         'player_team_logo_url': booking.playerTeamLogoUrl,
@@ -402,7 +426,7 @@ class SupabaseBookingRepository implements BookingRepository {
       return createdBooking;
     } on PostgrestException catch (e) {
       if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
-        throw Exception("Overlapping slots already booked!");
+        throw Exception("عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
       }
       VSPLogger.e('❌ Postgres error creating booking', e);
       rethrow;
@@ -760,7 +784,7 @@ class SupabaseBookingRepository implements BookingRepository {
           return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                if (b.stadiumId != stadiumId) return false;
+                if (b.stadiumId.toLowerCase() != stadiumId.toLowerCase()) return false;
                 if (b.status == BookingStatus.cancelled) return false;
 
                 // 🛑 Fix: If booking is pending and older than 15 minutes without payment, ignore it (does not block slot)

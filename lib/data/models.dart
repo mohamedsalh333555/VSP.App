@@ -212,8 +212,8 @@ class Stadium {
       isVerified: data['isVerified'] ?? data['is_verified'] ?? false,
       isFeatured: data['isFeatured'] ?? data['is_featured'] ?? false,
       ownerId: data['ownerId'] ?? data['owner_id'] ?? '',
-      openingTime: data['features']?['workingHours']?['start'] ?? '04:00 PM',
-      closingTime: data['features']?['workingHours']?['end'] ?? '03:00 AM',
+      openingTime: (data['opening_time'] ?? data['openingTime'] ?? data['features']?['workingHours']?['start'])?.toString() ?? '04:00 PM',
+      closingTime: (data['closing_time'] ?? data['closingTime'] ?? data['features']?['workingHours']?['end'])?.toString() ?? '03:00 AM',
       isSplitShift: data['features']?['isSplitShift'] ?? false,
       breakStartTime: data['features']?['breakTime']?['start'],
       breakEndTime: data['features']?['breakTime']?['end'],
@@ -683,10 +683,13 @@ class Booking {
               ? endTimeVal.toLocal() 
               : DateTime.parse(endTimeVal.toString()).toLocal())
           : DateTime.now(),
-      bookingType: BookingType.values.firstWhere(
-        (e) => e.name == bookingTypeVal,
-        orElse: () => BookingType.personal,
-      ),
+      bookingType: () {
+        final val = bookingTypeVal?.toString().toLowerCase().replaceAll('_', '').replaceAll(' ', '') ?? '';
+        if (val == 'openjoin' || val == 'openjoinmatch') return BookingType.openJoin;
+        if (val == 'challenge' || val == 'challengematch') return BookingType.challenge;
+        if (val == 'team') return BookingType.team;
+        return BookingType.personal;
+      }(),
       playerTeamId: data['playerTeamId'] ?? data['player_team_id'],
       playerTeamName: data['playerTeamName'] ?? data['player_team_name'],
       playerTeamLogoUrl: data['playerTeamLogoUrl'] ?? data['player_team_logo_url'],

@@ -12,6 +12,7 @@ import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/notification_handler.dart';
 import '../../../core/repositories/team_repository.dart';
+import 'chat_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   final Booking booking;
@@ -289,6 +290,23 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                       ),
     
                       const SizedBox(height: 24),
+
+                      // Chat with Stadium Owner Button (Available Post-Booking)
+                      PrimaryButton(
+                        text: isArabic ? 'شات مع المالك 💬' : 'Chat with Owner 💬',
+                        height: 50,
+                        color: VSPColors.accent.withValues(alpha: 0.15),
+                        textColor: VSPColors.accent,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (_) => ChatScreen(booking: widget.booking),
+                            ),
+                          );
+                        },
+                      ),
+                      const SizedBox(height: 12),
 
                       // Action Buttons (Equal Heights: 52px)
                       Row(

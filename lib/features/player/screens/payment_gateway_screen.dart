@@ -198,7 +198,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       await Supabase.instance.client
           .from('bookings')
           .delete()
-          .eq('player_id', userId)
+          .eq('created_by_user_id', userId)
           .eq('stadium_id', widget.bookingDraft.stadiumId)
           .eq('status', 'pending')
           .eq('is_paid', false);
@@ -274,7 +274,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? widget.bookingDraft.depositPaid.toInt() 
         : widget.bookingDraft.totalPrice.toInt();
 
-    // 1. في البيئة الفعلية: فتح صفحة Paymob بـ Iframe ID الصحيح من AppConfig
+    // 1. في البيئة الفعلية مع مفاتيح Paymob الحقيقية: فتح صفحة Paymob
     final paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=${_booking!.id}';
     final Uri uri = Uri.parse(paymobUrl);
 

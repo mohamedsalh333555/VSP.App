@@ -1,3 +1,4 @@
+import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
@@ -39,6 +40,37 @@ class _ChatScreenState extends State<ChatScreen> {
         ChatRepository().markMessagesAsRead(widget.booking.id, auth.currentUser!.uid);
       }
     });
+  }
+
+  Future<void> _makeCallToOwner() async {
+    try {
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      String? ownerPhone;
+      
+      final ownerId = widget.booking.ownerId;
+      if (ownerId.isNotEmpty) {
+        final userData = await UserRepository().getUserData(ownerId);
+        ownerPhone = userData?['phone']?.toString().trim();
+      }
+
+      if (ownerPhone != null && ownerPhone.isNotEmpty) {
+        final cleanPhone = ownerPhone.replaceAll(RegExp(r'\D'), '');
+        final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 
+            ? '+2$cleanPhone' 
+            : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
+        final Uri launchUri = Uri(scheme: 'tel', path: path);
+        await launchUrl(launchUri, mode: LaunchMode.externalApplication);
+      } else {
+        if (mounted) {
+          VSPFeedback.showError(
+            context, 
+            isArabic ? 'رقم هاتف المالك غير متاح حالياً.' : 'Owner phone number is not available.',
+          );
+        }
+      }
+    } catch (e) {
+      debugPrint('Could not launch phone call from chat: $e');
+    }
   }
 
   bool _isSending = false;
@@ -306,6 +338,11 @@ class _ChatScreenState extends State<ChatScreen> {
           onPressed: () => Navigator.pop(context),
         ),
         actions: [
+          IconButton(
+            icon: const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 20),
+            tooltip: isArabic ? 'اتصال بالمالك' : 'Call Owner',
+            onPressed: _makeCallToOwner,
+          ),
           PopupMenuButton<String>(
             icon: const Icon(Icons.more_vert_rounded, color: VSPColors.textPrimary),
             color: VSPColors.surface,
