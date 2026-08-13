@@ -2,6 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/image_pick_service.dart';
 import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/models/user_model.dart';
@@ -31,9 +32,11 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
   String? _uploadedLogoUrl;
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) {
+    final image = await ImagePickService.pick(
+      context,
+      aspectRatio: CropAspectRatioPreset.square,
+    );
+    if (image != null && mounted) {
       setState(() => _selectedLogo = image);
     }
   }

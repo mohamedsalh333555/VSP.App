@@ -195,7 +195,13 @@ class _ProfileScreenState extends State<ProfileScreen> {
                       children: [
                         RepaintBoundary(
                           key: _teamCardKey,
-                          child: TeamCardHero(team: team),
+                          child: GestureDetector(
+                            onTap: () async {
+                              await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+                              if (mounted) setState(() {});
+                            },
+                            child: TeamCardHero(team: team),
+                          ),
                         ),
                         const SizedBox(height: VSPSpacing.md),
                         PrimaryButton(

@@ -4,6 +4,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../../core/services/image_pick_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -49,9 +50,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   }
 
   Future<void> _pickImage() async {
-    final picker = ImagePicker();
-    final image = await picker.pickImage(source: ImageSource.gallery, imageQuality: 70);
-    if (image != null) {
+    final image = await ImagePickService.pick(
+      context,
+      aspectRatio: CropAspectRatioPreset.square,
+    );
+    if (image != null && mounted) {
       setState(() => _newProfileImage = image);
     }
   }

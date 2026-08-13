@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/foundation.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/image_pick_service.dart';
 import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -49,6 +50,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     super.dispose();
   }
 
+  // ignore: unused_field
   final ImagePicker _picker = ImagePicker();
 
   Future<void> _showImageSourceActionSheet(OwnerDocumentType type, String key) async {
@@ -151,9 +153,10 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
   Future<void> _pickAndUpload(OwnerDocumentType type, String key, ImageSource source) async {
     try {
-      final XFile? pickedFile = await _picker.pickImage(
+      final XFile? pickedFile = await ImagePickService.pick(
+        context,
+        aspectRatio: CropAspectRatioPreset.original, // Documents can be any shape
         source: source,
-        imageQuality: 80, // High quality for verification
       );
       
       if (pickedFile == null) return;

@@ -177,7 +177,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       child: GestureDetector(
         onTap: _isLoading ? null : onTap,
         child: Container(
-          height: 44.0,
+          height: 48.0,
           padding: const EdgeInsets.symmetric(horizontal: 32),
           decoration: BoxDecoration(
             color: isOutlined ? Colors.transparent : color,

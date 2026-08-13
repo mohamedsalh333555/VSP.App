@@ -10,7 +10,7 @@ import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
-import 'booking_type_screen.dart';
+import '../widgets/booking_type_modal.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/logger_service.dart';
@@ -349,7 +349,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   Expanded(
                     child: PrimaryButton(
                       text: isArabic ? 'احجز الآن' : 'Book Now',
-                      onPressed: () => Navigator.push(context, MaterialPageRoute(builder: (_) => BookingTypeScreen(stadium: stadium))),
+                      onPressed: () => BookingTypeModal.show(context, stadium),
                     ),
                   ),
                 ],
@@ -517,7 +517,7 @@ class _InformationTab extends StatelessWidget {
               children: [
                 Text(l10n.informationStadium, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
                 const SizedBox(height: 8),
-                Text(rawDesc, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.5)),
+                Text(rawDesc, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.6)),
               ],
             ),
           ),

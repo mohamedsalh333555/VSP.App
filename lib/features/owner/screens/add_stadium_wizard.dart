@@ -5,6 +5,7 @@ import 'dart:io';
 import 'dart:async';
 import 'package:flutter/services.dart';
 import 'package:image_picker/image_picker.dart';
+import '../../../core/services/image_pick_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -77,6 +78,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   String? _governorate; // ✅ Extracted via Geocoding for filtering
   bool _requireDeposit = false;
 
+  // ImagePicker is no longer used directly; kept for multi-image reference.
+  // ignore: unused_field
   final ImagePicker _imagePicker = ImagePicker();
   final StorageService _storageService = StorageService();
   final StadiumRepository _databaseService = StadiumRepository();
@@ -927,12 +930,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Future<void> _pickImage() async {
     try {
-      final List<XFile> pickedFiles = await _imagePicker.pickMultiImage(imageQuality: 80);
-      if (pickedFiles.isEmpty) return;
-
-      for (final pickedFile in pickedFiles) {
-        _uploadSinglePickedFile(pickedFile);
-      }
+      // Open cropper (16:9 for stadium photos) then upload the result
+      final picked = await ImagePickService.pick(
+        context,
+        aspectRatio: CropAspectRatioPreset.ratio16x9,
+      );
+      if (picked == null) return;
+      _uploadSinglePickedFile(picked);
     } catch (e) {
       debugPrint('Error picking images: $e');
     }

@@ -89,19 +89,19 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                 children: [
                   _buildOptionCard(
                     id: 'Book a Pitch',
-                    title: isArabic ? 'حجز ملعب عادي ⚽' : 'Standard Pitch Booking',
+                    title: isArabic ? 'حجز ملعب عادي' : 'Standard Pitch Booking',
                     subtitle: isArabic ? 'حجز مباشر وسريع للملعب لوقتك الخاص بدون إضافة لاعبين' : 'Direct pitch booking for your group without extra player matching',
                     iconData: Iconsax.calendar_1_copy,
                   ),
                   _buildOptionCard(
                     id: 'Open Join Match',
-                    title: isArabic ? 'حجز انضمام وتجميع 👥' : 'Open Gathering Match',
+                    title: isArabic ? 'حجز انضمام وتجميع' : 'Open Gathering Match',
                     subtitle: isArabic ? 'حجز مباراة تجميعية وتحديد عدد لاعبيك والسماح للاعبين بالانضمام' : 'Create an open match, specify your available players, and let others join',
                     iconData: Iconsax.people_copy,
                   ),
                   _buildOptionCard(
                     id: 'Challenge Match',
-                    title: isArabic ? 'مباراة تحدي فرق 🏆' : 'Team Challenge Match',
+                    title: isArabic ? 'مباراة تحدي فرق' : 'Team Challenge Match',
                     subtitle: isArabic ? 'مباراة تحدي بين فريقك وفريق آخر واحتساب نقاط تصنيف الـ ELO' : 'Competitive match between two teams to earn ELO rank points',
                     iconData: Iconsax.cup_copy,
                   ),
