@@ -48,17 +48,6 @@ class TeamCardHero extends StatelessWidget {
       ),
       child: Stack(
         children: [
-          // Background Design Elements
-          Positioned(
-            right: -50,
-            top: -50,
-            child: Icon(
-              Iconsax.security_safe_copy,
-              size: 250,
-              color: VSPColors.white.withValues(alpha: 0.03),
-            ),
-          ),
-          
           Padding(
             padding: const EdgeInsets.all(VSPSpacing.xl),
             child: Column(

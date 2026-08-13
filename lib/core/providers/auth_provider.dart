@@ -241,9 +241,27 @@ class AuthProvider with ChangeNotifier {
         _startRealtimeUserListener(user.id);
         _notificationService.listenToRealtimeNotifications(user.id);
       } else {
-        VSPLogger.w("⚠️ Ghost user detected (UID: ${user.id})");
-        _isGhostUser = true;
-        _userModel = null;
+        VSPLogger.w("⚠️ User profile missing in DB for UID: ${user.id}, auto-creating initial row...");
+        final created = await _userRepository.createUserProfile(user, {
+          'role': _userType ?? user.userMetadata?['role'] ?? 'player',
+          'name': user.userMetadata?['name'] ?? '',
+          'phone': user.phone ?? '',
+          'is_registration_complete': false,
+        });
+        if (created) {
+          final newUserData = await _userRepository.getUserData(user.id);
+          if (newUserData != null) {
+            _userModel = UserModel.fromFirestore(newUserData);
+            _isGhostUser = false;
+            _dataFetchError = false;
+          } else {
+            _isGhostUser = true;
+            _userModel = null;
+          }
+        } else {
+          _isGhostUser = true;
+          _userModel = null;
+        }
       }
     } catch (e, stack) {
       VSPLogger.e("❌ AuthProvider: Supabase fetch exception", e, stack);
@@ -883,6 +901,7 @@ class AuthProvider with ChangeNotifier {
         );
       }
 
+      await _userRepository.completeRegistrationFlags(currentUid!, updateData);
       await updateProfile(updateData);
       _isGhostUser = false;
 

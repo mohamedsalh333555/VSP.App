@@ -5,7 +5,6 @@ import 'package:share_plus/share_plus.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:timeago/timeago.dart' as timeago;
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -13,8 +12,9 @@ import '../../../data/models.dart';
 import '../widgets/booking_type_modal.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import '../../../core/services/logger_service.dart';
 import '../../../core/constants/egypt_governorates.dart';
+import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/services/logger_service.dart';
 
 class StadiumDetailsScreen extends StatefulWidget {
   final Stadium stadium;
@@ -207,8 +207,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               builder: (context, auth, _) {
                                 final isFav = auth.userModel?.favoriteStadiums.contains(stadium.id) ?? false;
                                 return _buildCircularIcon(
-                                  icon: Iconsax.heart_copy,
-                                  color: isFav ? VSPColors.accent : Colors.white,
+                                  icon: isFav ? Iconsax.heart : Iconsax.heart_copy,
+                                  color: VSPColors.accent,
                                   onTap: () => auth.toggleFavoriteStadium(stadium.id),
                                 );
                               },
@@ -220,7 +220,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                   ),
                 ),
 
-                // 4. Instagram/Airbnb Style Bottom Dots Indicator & Counter Badge
+                // 4. Instagram/Airbnb Style Bottom Dots Indicator
                 if (_displayImages.length > 1)
                   Positioned(
                     bottom: 16,
@@ -230,7 +230,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       child: GestureDetector(
                         onTap: () => _openFullScreenGallery(_currentImageIndex),
                         child: Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                          padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
                           decoration: BoxDecoration(
                             color: Colors.black.withValues(alpha: 0.55),
                             borderRadius: BorderRadius.circular(20),
@@ -238,28 +238,19 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           ),
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Row(
-                                children: List.generate(_displayImages.length, (idx) {
-                                  final isSelected = _currentImageIndex == idx;
-                                  return AnimatedContainer(
-                                    duration: const Duration(milliseconds: 200),
-                                    width: isSelected ? 14 : 6,
-                                    height: 6,
-                                    margin: const EdgeInsets.symmetric(horizontal: 3),
-                                    decoration: BoxDecoration(
-                                      color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.5),
-                                      borderRadius: BorderRadius.circular(3),
-                                    ),
-                                  );
-                                }),
-                              ),
-                              const SizedBox(width: 8),
-                              Text(
-                                '${_currentImageIndex + 1}/${_displayImages.length}',
-                                style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
-                              ),
-                            ],
+                            children: List.generate(_displayImages.length, (idx) {
+                              final isSelected = _currentImageIndex == idx;
+                              return AnimatedContainer(
+                                duration: const Duration(milliseconds: 200),
+                                width: isSelected ? 14 : 6,
+                                height: 6,
+                                margin: const EdgeInsets.symmetric(horizontal: 3),
+                                decoration: BoxDecoration(
+                                  color: isSelected ? VSPColors.accent : Colors.white.withValues(alpha: 0.5),
+                                  borderRadius: BorderRadius.circular(3),
+                                ),
+                              );
+                            }),
                           ),
                         ),
                       ),
@@ -337,8 +328,6 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                             : Row(
                                 key: const ValueKey('cash'),
                                 children: [
-                                  const Icon(Iconsax.card_copy, color: VSPColors.textSecondary, size: 11),
-                                  const SizedBox(width: 4),
                                   Text(isArabic ? 'ادفع نقداً في الملعب' : 'Pay cash at stadium', style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
                                 ],
                               ),
@@ -400,7 +389,7 @@ class _InformationTab extends StatelessWidget {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final String displayName = stadium.name.trim().isNotEmpty
-        ? stadium.name.trim()
+        ? (isArabic ? stadium.formattedName : stadium.name.trim())
         : (isArabic ? 'ملعب بدون اسم' : 'Unnamed Pitch');
 
     String rawDesc = stadium.description.isNotEmpty ? stadium.description : l10n.noDescription;
@@ -474,30 +463,34 @@ class _InformationTab extends StatelessWidget {
               }
             },
             child: Container(
-              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
               decoration: BoxDecoration(
                 color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+                borderRadius: BorderRadius.circular(VSPRadius.xl),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
               ),
               child: Row(
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
-                  const SizedBox(width: 6),
+                  const SizedBox(width: 4),
                   Flexible(
                     child: Text(
                       EgyptGovernorates.formatSmartLocation(
-                        rawAddress: stadium.location.isNotEmpty ? stadium.location : stadium.address,
+                        rawAddress: stadium.area.isNotEmpty
+                            ? stadium.area
+                            : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
                         administrativeArea: stadium.governorate,
                       ),
-                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontWeight: FontWeight.w600),
+                      style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.textPrimary,
+                        fontWeight: FontWeight.bold,
+                        fontSize: 11,
+                      ),
                       maxLines: 1,
                       overflow: TextOverflow.ellipsis,
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  const Icon(Iconsax.export_3_copy, color: VSPColors.textSecondary, size: 12),
                 ],
               ),
             ),
@@ -531,14 +524,13 @@ class _InformationTab extends StatelessWidget {
             Text(l10n.featuresForMoney, style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, color: Colors.white)),
             const SizedBox(height: 10),
             SizedBox(
-              width: 74,
+              width: 96,
               height: 72,
               child: _FacilityTile(
                 item: _FacilityItem(
                   icon: Icons.sports_soccer_rounded,
-                  label: isArabic ? 'كرة قدم' : 'Soccer Ball',
+                  label: isArabic ? 'كرة (${stadium.ballPrice.toInt()} ج.م)' : 'Ball (${stadium.ballPrice.toInt()} EGP)',
                   active: true,
-                  badge: '${stadium.ballPrice.toInt()} ${isArabic ? 'ج.م' : 'EGP'}',
                 ),
               ),
             ),
@@ -581,7 +573,7 @@ class _FacilitiesGrid extends StatelessWidget {
       _FacilityItem(icon: Iconsax.car_copy, label: isArabic ? 'جراج' : 'Garage', active: hasGarage),
       _FacilityItem(icon: Iconsax.coffee_copy, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
       _FacilityItem(icon: Icons.checkroom_rounded, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
-      _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مدرجات' : 'Seats', active: hasSeats, badge: hasSeats ? seats : null),
+      _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مقاعد' : 'Seats', active: hasSeats),
     ];
 
     // Filter to only active features selected by the owner
@@ -612,8 +604,7 @@ class _FacilityItem {
   final IconData icon;
   final String label;
   final bool active;
-  final String? badge;
-  const _FacilityItem({required this.icon, required this.label, required this.active, this.badge});
+  const _FacilityItem({required this.icon, required this.label, required this.active});
 }
 
 class _FacilityTile extends StatelessWidget {
@@ -628,44 +619,25 @@ class _FacilityTile extends StatelessWidget {
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(color: VSPColors.divider, width: 1),
       ),
-      child: Stack(
-        alignment: Alignment.center,
-        children: [
-          Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              Icon(item.icon, color: VSPColors.accent, size: 22),
-              const SizedBox(height: 5),
-              Text(
-                item.label,
-                textAlign: TextAlign.center,
-                maxLines: 1,
-                overflow: TextOverflow.ellipsis,
-                style: const TextStyle(
-                  color: VSPColors.accent,
-                  fontSize: 9.5,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ],
-          ),
-          if (item.badge != null)
-            Positioned(
-              top: 4,
-              right: 4,
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 4, vertical: 1.5),
-                decoration: BoxDecoration(
-                  color: VSPColors.accent,
-                  borderRadius: BorderRadius.circular(VSPRadius.xs),
-                ),
-                child: Text(
-                  item.badge!,
-                  style: const TextStyle(color: Colors.black, fontSize: 8, fontWeight: FontWeight.bold),
-                ),
+      child: Center(
+        child: Column(
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(item.icon, color: VSPColors.accent, size: 22),
+            const SizedBox(height: 5),
+            Text(
+              item.label,
+              textAlign: TextAlign.center,
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+              style: const TextStyle(
+                color: VSPColors.accent,
+                fontSize: 9.5,
+                fontWeight: FontWeight.bold,
               ),
             ),
-        ],
+          ],
+        ),
       ),
     );
   }
@@ -678,25 +650,11 @@ class _PitchConditionsTab extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
-    final hasOwnerNotes = stadium.notes.trim().isNotEmpty;
     return SingleChildScrollView(
       padding: const EdgeInsets.all(VSPSpacing.md),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          Container(
-            width: double.infinity, padding: const EdgeInsets.all(VSPSpacing.md),
-            decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4))),
-            child: Column(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Text(l10n.ownerNotes, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-                const SizedBox(height: VSPSpacing.sm),
-                Text(hasOwnerNotes ? stadium.notes : l10n.noOwnerNotes, style: Theme.of(context).textTheme.bodySmall?.copyWith(height: 1.5)),
-              ],
-            ),
-          ),
-          const SizedBox(height: VSPSpacing.lg),
           Container(
             padding: const EdgeInsets.all(VSPSpacing.md),
             decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
@@ -749,6 +707,7 @@ class _RatingsTab extends StatelessWidget {
 
     await showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (sheetCtx) {
@@ -907,11 +866,12 @@ class _RatingsTab extends StatelessWidget {
           liveRating = sum / count;
         }
 
-        return Column(
-          children: [
-            Padding(
-              padding: const EdgeInsets.all(VSPSpacing.md),
-              child: Container(
+        Widget buildReviewHeader() {
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: VSPSpacing.md),
                 padding: const EdgeInsets.all(VSPSpacing.md),
                 decoration: BoxDecoration(color: VSPColors.surface, borderRadius: BorderRadius.circular(VSPRadius.lg)),
                 child: Row(
@@ -923,14 +883,17 @@ class _RatingsTab extends StatelessWidget {
                             count > 0 ? liveRating.toStringAsFixed(1) : '0.0',
                             style: Theme.of(context).textTheme.displayLarge?.copyWith(fontSize: 42),
                           ),
-                          Row(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            children: List.generate(
-                              5,
-                              (i) => Icon(
-                                i < liveRating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
-                                color: i < liveRating.round() ? Colors.amber : VSPColors.textSecondary,
-                                size: 18,
+                          Directionality(
+                            textDirection: TextDirection.ltr,
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.center,
+                              children: List.generate(
+                                5,
+                                (i) => Icon(
+                                  i < liveRating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                                  color: i < liveRating.round() ? Colors.amber : VSPColors.textSecondary,
+                                  size: 18,
+                                ),
                               ),
                             ),
                           ),
@@ -945,61 +908,84 @@ class _RatingsTab extends StatelessWidget {
                   ],
                 ),
               ),
-            ),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
-              child: PrimaryButton(
+              PrimaryButton(
                 text: isArabic ? 'إضافة تقييمك ورأيك' : 'Add Your Review',
                 height: 44,
                 color: VSPColors.surfaceAlt,
                 textColor: VSPColors.accent,
                 onPressed: () => _showAddReviewSheet(context),
               ),
-            ),
-            const SizedBox(height: VSPSpacing.sm),
-            Expanded(
-              child: Builder(
-                builder: (context) {
-                  if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
-                    return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-                  }
-                  if (docs.isEmpty) {
-                    return Center(
-                      child: Padding(
-                        padding: const EdgeInsets.all(40.0),
-                        child: Text(
-                          l10n.noReviews,
-                          textAlign: TextAlign.center,
-                          style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                        ),
-                      ),
-                    );
-                  }
-                  return ListView.builder(
-                    padding: const EdgeInsets.all(VSPSpacing.md),
-                    itemCount: docs.length,
-                    itemBuilder: (context, index) {
-                      final doc = docs[index];
-                      final createdAtStr = doc['created_at'] as String?;
-                      final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
-                      final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
+              const SizedBox(height: VSPSpacing.md),
+            ],
+          );
+        }
 
-                      return _buildReviewItem(
-                        context,
-                        name: userName,
-                        imageUrl: userImage,
-                        rating: (doc['rating'] as num?)?.toInt() ?? 0,
-                        timeAgo: createdAtStr != null 
-                            ? timeago.format(DateTime.parse(createdAtStr), locale: Localizations.localeOf(context).languageCode) 
-                            : l10n.recently,
-                        comment: doc['review_text'] as String? ?? '',
-                      );
-                    },
-                  );
-                },
-              ),
+        if (snapshot.connectionState == ConnectionState.waiting && docs.isEmpty) {
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+
+        if (docs.isEmpty) {
+          return SingleChildScrollView(
+            physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+            padding: const EdgeInsets.all(VSPSpacing.md),
+            child: Column(
+              children: [
+                buildReviewHeader(),
+                Padding(
+                  padding: const EdgeInsets.all(40.0),
+                  child: Text(
+                    l10n.noReviews,
+                    textAlign: TextAlign.center,
+                    style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+                  ),
+                ),
+              ],
             ),
-          ],
+          );
+        }
+
+        return ListView.builder(
+          physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          itemCount: docs.length + 1,
+          itemBuilder: (context, index) {
+            if (index == 0) {
+              return buildReviewHeader();
+            }
+
+            final doc = docs[index - 1];
+            final createdAtStr = doc['created_at'] as String?;
+            final userName = doc['user_name']?.toString() ?? doc['userName']?.toString() ?? l10n.player;
+            final userImage = doc['user_image_url']?.toString() ?? doc['userImageUrl']?.toString() ?? '';
+
+            String formattedTime = l10n.recently;
+            if (createdAtStr != null) {
+              try {
+                final dt = DateTime.parse(createdAtStr);
+                final diff = DateTime.now().difference(dt);
+                if (diff.inSeconds < 60) {
+                  formattedTime = isArabic ? 'منذ لحظات' : 'Just now';
+                } else if (diff.inMinutes < 60) {
+                  formattedTime = isArabic ? 'منذ ${diff.inMinutes} دقيقة' : '${diff.inMinutes}m ago';
+                } else if (diff.inHours < 24) {
+                  formattedTime = isArabic ? 'منذ ${diff.inHours} ساعة' : '${diff.inHours}h ago';
+                } else if (diff.inDays < 30) {
+                  formattedTime = isArabic ? 'منذ ${diff.inDays} يوم' : '${diff.inDays}d ago';
+                } else {
+                  formattedTime = AppDateFormatter.formatDayMonth(dt, isArabic ? 'ar' : 'en');
+                }
+              } catch (_) {}
+            }
+
+            return _buildReviewItem(
+              context,
+              name: userName,
+              imageUrl: userImage,
+              rating: (doc['rating'] as num?)?.toInt() ?? 0,
+              timeAgo: formattedTime,
+              comment: doc['review_text'] as String? ?? '',
+            );
+          },
         );
       },
     );

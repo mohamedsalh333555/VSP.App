@@ -231,7 +231,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     items: _positions.map((String pos) {
                       return DropdownMenuItem<String>(
                         value: pos,
-                        child: Text(pos),
+                        child: Text(pos, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
                       );
                     }).toList(),
                     onChanged: (String? newValue) {

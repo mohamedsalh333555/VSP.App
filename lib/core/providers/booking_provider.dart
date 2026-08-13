@@ -139,7 +139,8 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return booking;
     } catch (e) {
-      _errorMessage = 'Failed to create booking: $e';
+      final cleanMsg = e.toString().replaceAll('Exception: ', '').replaceAll('Failed to create booking: ', '');
+      _errorMessage = cleanMsg;
       _isLoading = false;
       notifyListeners();
       return null;

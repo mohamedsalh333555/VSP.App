@@ -17,13 +17,21 @@ class SupportService {
 
     showModalBottomSheet(
       context: context,
+      useSafeArea: true,
+      isScrollControlled: true,
       backgroundColor: VSPColors.surface,
       shape: const RoundedRectangleBorder(
         borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
       ),
-      builder: (context) => Container(
-        padding: const EdgeInsets.all(VSPSpacing.xl),
-        child: Column(
+      builder: (context) => SafeArea(
+        child: Container(
+          padding: EdgeInsets.fromLTRB(
+            VSPSpacing.xl,
+            VSPSpacing.xl,
+            VSPSpacing.xl,
+            MediaQuery.of(context).padding.bottom > 0 ? 8 : VSPSpacing.xl,
+          ),
+          child: Column(
           mainAxisSize: MainAxisSize.min,
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
@@ -68,8 +76,9 @@ class SupportService {
           ],
         ),
       ),
-    );
-  }
+    ),
+  );
+}
 
   Widget _buildSupportOption(BuildContext context, IconData icon, String title, String subtitle) {
     return ListTile(

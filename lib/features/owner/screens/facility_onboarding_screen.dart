@@ -57,6 +57,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
   ) async {
     await showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       backgroundColor: Colors.transparent,
       isScrollControlled: true,
       builder: (ctx) => _UpgradeBottomSheet(isAr: isAr, user: user),
@@ -367,7 +368,12 @@ class _UpgradeBottomSheet extends StatelessWidget {
           topRight: Radius.circular(VSPRadius.xl),
         ),
       ),
-      padding: const EdgeInsets.fromLTRB(24, 20, 24, 36),
+      padding: EdgeInsets.fromLTRB(
+        24,
+        20,
+        24,
+        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 16 : 36,
+      ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
         children: [

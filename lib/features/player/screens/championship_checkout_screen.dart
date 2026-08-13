@@ -121,28 +121,32 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
       if (entryFee > 0) {
         final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-        String validStadiumId = uuidRegex.hasMatch(widget.championship.id) ? widget.championship.id : '';
+        String validStadiumId = '';
         String validOwnerId = uuidRegex.hasMatch(widget.championship.ownerId) ? widget.championship.ownerId : '';
 
-        if (validStadiumId.isEmpty || validOwnerId.isEmpty) {
-          try {
-            final res = await Supabase.instance.client
-                .from('stadiums')
-                .select('id, owner_id')
-                .limit(1)
-                .maybeSingle();
+        try {
+          final res = await Supabase.instance.client
+              .from('stadiums')
+              .select('id, owner_id')
+              .limit(1)
+              .maybeSingle();
 
-            if (res != null) {
-              if (validStadiumId.isEmpty) validStadiumId = res['id'].toString();
-              if (validOwnerId.isEmpty) validOwnerId = (res['owner_id'] ?? '').toString();
-            }
-          } catch (e) {
-            debugPrint('Error fetching stadium fallback: $e');
+          if (res != null) {
+            validStadiumId = res['id'].toString();
+            if (validOwnerId.isEmpty) validOwnerId = (res['owner_id'] ?? '').toString();
           }
+        } catch (e) {
+          debugPrint('Error fetching stadium fallback: $e');
         }
 
-        if (validStadiumId.isEmpty) validStadiumId = '00000000-0000-0000-0000-000000000001';
-        if (validOwnerId.isEmpty) validOwnerId = '00000000-0000-0000-0000-000000000002';
+        if (validStadiumId.isEmpty) {
+          if (mounted) {
+            setState(() => _isSubmitting = false);
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            VSPFeedback.showError(context, isAr ? 'عذراً، يرجى إضافة ملعب واحد على الأقل في النظام لتفعيل حجز البطولات.' : 'Please register a stadium first.');
+            return;
+          }
+        }
 
         final draft = BookingDraft(
           stadiumId: validStadiumId,
@@ -531,7 +535,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
         ),
         child: PrimaryButton(
-          text: entryFee > 0 ? 'الانتقال للدفع الآمن (Paymob)' : 'تأكيد الاشتراك في البطولة',
+          text: entryFee > 0 ? (isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Payment') : (isArabic ? 'تأكيد الاشتراك في البطولة' : 'Confirm Registration'),
           isLoading: _isSubmitting,
           onPressed: isSelectionValid ? _handleConfirmAndPay : null,
         ),

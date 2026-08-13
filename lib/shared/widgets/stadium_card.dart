@@ -8,6 +8,7 @@ import '../../data/models.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
 import '../../core/widgets/shimmer_image.dart';
+import '../../core/constants/egypt_governorates.dart';
 
 /// Stadium Card with Real Image Background and Glass Effect
 /// Refactored from PlayerHomeScreen for reusability
@@ -121,11 +122,12 @@ class StadiumCard extends StatelessWidget {
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
-                                  stadium.area.isNotEmpty
-                                      ? ((stadium.governorate != null && stadium.governorate!.isNotEmpty && !stadium.area.contains(stadium.governorate!))
-                                          ? '${stadium.governorate} • ${stadium.area}'
-                                          : stadium.area)
-                                      : (stadium.location.isNotEmpty && stadium.location != 'Sheyakhah' ? stadium.location : 'القاهرة'),
+                                  EgyptGovernorates.formatSmartLocation(
+                                    rawAddress: stadium.area.isNotEmpty
+                                        ? stadium.area
+                                        : (stadium.location.isNotEmpty ? stadium.location : stadium.address),
+                                    administrativeArea: stadium.governorate,
+                                  ),
                                   style: Theme.of(context).textTheme.labelSmall?.copyWith(
                                     color: VSPColors.textPrimary,
                                     fontWeight: FontWeight.bold,
@@ -204,8 +206,8 @@ class StadiumCard extends StatelessWidget {
                                 border: Border.all(color: VSPColors.textPrimary.withValues(alpha: 0.1)),
                               ),
                               child: Icon(
-                                isFav ? Iconsax.heart_copy : Iconsax.heart_copy,
-                                color: isFav ? VSPColors.error : Colors.white,
+                                isFav ? Iconsax.heart : Iconsax.heart_copy,
+                                color: VSPColors.accent,
                                 size: 20,
                               ),
                             ),
@@ -310,7 +312,7 @@ class StadiumCard extends StatelessWidget {
                     ] else ...[
                       // Player standard view details
                       Text(
-                        stadium.name,
+                        Localizations.localeOf(context).languageCode == 'ar' ? stadium.formattedName : stadium.name,
                         style: Theme.of(context).textTheme.titleLarge?.copyWith(
                           color: VSPColors.textPrimary,
                           fontWeight: FontWeight.w900,

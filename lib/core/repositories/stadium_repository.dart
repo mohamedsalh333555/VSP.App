@@ -166,7 +166,14 @@ class StadiumRepository {
         final String desc = securedData['description'] ?? '';
         pgData['description'] = '$desc|Sport:$sport';
       }
-      if (securedData.containsKey('features')) pgData['features'] = securedData['features'];
+      if (securedData.containsKey('features')) {
+        pgData['features'] = securedData['features'];
+        final feat = securedData['features'];
+        if (feat is Map && feat['workingHours'] is Map) {
+          if (feat['workingHours']['start'] != null) pgData['opening_time'] = feat['workingHours']['start'];
+          if (feat['workingHours']['end'] != null) pgData['closing_time'] = feat['workingHours']['end'];
+        }
+      }
       if (securedData.containsKey('openingTime')) pgData['opening_time'] = securedData['openingTime'];
       if (securedData.containsKey('opening_time')) pgData['opening_time'] = securedData['opening_time'];
       if (securedData.containsKey('closingTime')) pgData['closing_time'] = securedData['closingTime'];

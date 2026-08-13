@@ -27,6 +27,14 @@ class Stadium {
   // Backward compatibility getter
   int get seatsCapacity => totalFieldCapacity;
 
+  // Format stadium name to always start with 'ملعب'
+  String get formattedName {
+    final trimmed = name.trim();
+    if (trimmed.isEmpty) return 'ملعب';
+    if (trimmed.startsWith('ملعب')) return trimmed;
+    return 'ملعب $trimmed';
+  }
+
   // Extended fields for details screen
   final String address;
   final double rating;

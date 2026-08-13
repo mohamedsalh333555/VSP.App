@@ -20,6 +20,7 @@ class BookingTypeModal extends StatefulWidget {
   static Future<void> show(BuildContext context, Stadium stadium) {
     return showModalBottomSheet(
       context: context,
+      useSafeArea: true,
       isScrollControlled: true,
       backgroundColor: Colors.transparent,
       builder: (_) => BookingTypeModal(stadium: stadium),

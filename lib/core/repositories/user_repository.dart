@@ -144,6 +144,34 @@ class UserRepository {
     }
   }
 
+  /// Trusted method to complete user registration and persist is_registration_complete flag permanently in DB
+  Future<bool> completeRegistrationFlags(String userId, Map<String, dynamic> additionalData) async {
+    try {
+      final snakeData = _convertToSnakeCase(additionalData);
+      snakeData['is_registration_complete'] = true;
+      snakeData['is_email_verified'] = true;
+      snakeData['updated_at'] = DateTime.now().toUtc().toIso8601String();
+
+      // Ensure profile row exists
+      final exists = await getUserData(userId);
+      if (exists == null) {
+        final user = _supabase.auth.currentUser;
+        snakeData['id'] = userId;
+        snakeData['email'] = user?.email ?? '';
+        snakeData['role'] = user?.userMetadata?['role'] ?? 'player';
+        snakeData['created_at'] = DateTime.now().toUtc().toIso8601String();
+        await _supabase.from('users').insert(snakeData);
+      } else {
+        await _supabase.from('users').update(snakeData).eq('id', userId);
+      }
+      VSPLogger.i('✅ completeRegistrationFlags persisted successfully for $userId');
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error completing registration flags for $userId', e);
+      return false;
+    }
+  }
+
   Future<void> updateUserModerationStatus(String userId, {required bool isBlocked, String? warningMessage}) async {
     try {
       await _supabase.from('users').update({

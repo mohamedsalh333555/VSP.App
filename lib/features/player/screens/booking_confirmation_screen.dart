@@ -13,7 +13,6 @@ import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
-import 'package:url_launcher/url_launcher.dart';
 
 class TimeSlotItem {
   final String startTime;
@@ -57,8 +56,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   int _initialPlayersCount = 1;
   String? _userTeamId;
   String? _userTeamName;
-  String? _ownerPhone;
-  bool _isLoadingPhone = true;
   List<TimeSlotItem> _timeSlots = [];
 
   DateTime get _operationalBaseDate {
@@ -96,7 +93,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       _isPrivate = true;
     }
     _fetchUserTeam();
-    _fetchOwnerPhone();
   }
 
   @override
@@ -105,38 +101,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     if (!_isSlotsInitialized) {
       _isSlotsInitialized = true;
       _generateDynamicTimeSlots();
-    }
-  }
-
-  Future<void> _fetchOwnerPhone() async {
-    try {
-      final features = widget.stadium.features;
-      if (features is Map && features['stadiumPhone'] != null && features['stadiumPhone'].toString().trim().isNotEmpty) {
-        if (mounted) {
-          setState(() {
-            _ownerPhone = features['stadiumPhone'].toString().trim();
-            _isLoadingPhone = false;
-          });
-        }
-        return;
-      }
-
-      final ownerId = widget.stadium.ownerId;
-      if (ownerId.isNotEmpty) {
-        final userData = await UserRepository().getUserData(ownerId);
-        if (userData != null && mounted) {
-          setState(() {
-            _ownerPhone = userData['phone']?.toString();
-            _isLoadingPhone = false;
-          });
-          return;
-        }
-      }
-    } catch (e) {
-      debugPrint('Error fetching owner phone in confirmation: $e');
-    }
-    if (mounted) {
-      setState(() => _isLoadingPhone = false);
     }
   }
 
@@ -191,13 +155,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     try {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final features = widget.stadium.features;
-      String startStr = widget.stadium.openingTime; 
-      String endStr = widget.stadium.closingTime;   
+      String startStr = '';
+      String endStr = ''; 
 
-      if ((startStr.isEmpty || endStr.isEmpty) && features is Map && features['workingHours'] != null) {
-        startStr = startStr.isNotEmpty ? startStr : (features['workingHours']['start']?.toString() ?? '');
-        endStr = endStr.isNotEmpty ? endStr : (features['workingHours']['end']?.toString() ?? '');
+      if (features is Map && features['workingHours'] is Map) {
+        startStr = features['workingHours']['start']?.toString() ?? '';
+        endStr = features['workingHours']['end']?.toString() ?? '';
       }
+      if (startStr.isEmpty) startStr = widget.stadium.openingTime;
+      if (endStr.isEmpty) endStr = widget.stadium.closingTime;
       if (startStr.isEmpty) startStr = '04:00 PM';
       if (endStr.isEmpty) endStr = '03:00 AM';
 
@@ -577,10 +543,26 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   Text(l10n.selectTime, style: Theme.of(context).textTheme.displaySmall),
-                  const SizedBox(height: VSPSpacing.md),
                   StreamBuilder<List<Booking>>(
                     stream: Provider.of<BookingProvider>(context, listen: false).getBookingsForStadium(widget.stadium.id, _selectedDate),
                     builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+                        return const Padding(
+                          padding: EdgeInsets.symmetric(vertical: 40),
+                          child: Center(
+                            child: Column(
+                              children: [
+                                CircularProgressIndicator(color: VSPColors.accent, strokeWidth: 2.5),
+                                SizedBox(height: 12),
+                                Text(
+                                  'جاري قراءة وتحديث الساعات المتاحة...',
+                                  style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      }
                       final existingBookings = snapshot.data ?? [];
                       return Column(
                         children: List.generate(_timeSlots.length, (index) {
@@ -694,61 +676,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     },
                   ),
 
-                  const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.md), child: Divider(color: VSPColors.divider, thickness: 0.5)),
-
-                  // ── OpenJoin Available Players Counter Card ──
-                  if (widget.bookingType.toLowerCase() == 'openjoin') ...[
-                    Container(
-                      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
-                      padding: const EdgeInsets.all(VSPSpacing.md),
-                      decoration: BoxDecoration(
-                        color: VSPColors.surface,
-                        borderRadius: BorderRadius.circular(VSPRadius.md),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Column(
-                              crossAxisAlignment: CrossAxisAlignment.start,
-                              children: [
-                                Text(
-                                  isArabic ? 'عدد اللاعبين المتوفرين معك حالياً' : 'Available Players With You',
-                                  style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold, fontSize: 13),
-                                ),
-                                const SizedBox(height: 2),
-                                Text(
-                                  isArabic ? 'حدد كم لاعب متواجد معك لتكملة سعة الملعب' : 'Specify how many players you bring to fill pitch capacity',
-                                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
-                                ),
-                              ],
-                            ),
-                          ),
-                          Row(
-                            children: [
-                              IconButton(
-                                icon: const Icon(Iconsax.minus_copy, size: 18, color: VSPColors.accent),
-                                onPressed: _initialPlayersCount > 1 ? () => setState(() => _initialPlayersCount--) : null,
-                              ),
-                              Container(
-                                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                                decoration: BoxDecoration(color: VSPColors.surfaceAlt, borderRadius: BorderRadius.circular(6)),
-                                child: Text('$_initialPlayersCount', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 16)),
-                              ),
-                              IconButton(
-                                icon: const Icon(Iconsax.add_copy, size: 18, color: VSPColors.accent),
-                                onPressed: _initialPlayersCount < (widget.stadium.totalFieldCapacity > 0 ? widget.stadium.totalFieldCapacity : 10)
-                                    ? () => setState(() => _initialPlayersCount++)
-                                    : null,
-                              ),
-                            ],
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-
                   // ── Financial & Debt Calculations Summary Panel ──
                   Builder(builder: (context) {
                     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -819,17 +746,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       ),
       bottomNavigationBar: _buildBottomOverlay(context, l10n, isArabic),
     );
-  }
-
-  String _getDurationText(int slotCount, bool isArabic) {
-    if (slotCount == 0) return isArabic ? 'اختر التوقيت أولاً' : 'Select Time Slot';
-    if (slotCount == 1) return isArabic ? '30 دقيقة' : '30 Mins';
-    if (slotCount == 2) return isArabic ? 'ساعة واحدة' : '1 Hour';
-    if (slotCount == 3) return isArabic ? 'ساعة ونصف' : '1.5 Hours';
-    if (slotCount == 4) return isArabic ? 'ساعتان' : '2 Hours';
-    final hours = slotCount * 0.5;
-    final hoursStr = hours == hours.roundToDouble() ? hours.toInt().toString() : hours.toString();
-    return isArabic ? '$hoursStr ساعات' : '$hoursStr Hours';
   }
 
   Widget _buildBottomOverlay(BuildContext context, AppLocalizations l10n, bool isArabic) {
@@ -954,7 +870,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
             const SizedBox(height: 8),
           ],
 
-          // ── Row 3: Ball Rental Option ──
+
           if (hasBallOption) ...[
             GestureDetector(
               onTap: () => setState(() => _isBallRented = !_isBallRented),
@@ -1081,7 +997,23 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       final nav = Navigator.of(context);
                       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-                      final sortedSlots = List<String>.from(_selectedTimeSlots)..sort();
+                      // 🛡️ Pre-Selection Double-Check: Verify slot is still 100% free right before opening payment
+                      try {
+                        final currentBookings = await bookingProvider.getBookingsForStadium(widget.stadium.id, _selectedDate).first;
+                        final sortedCheck = List<String>.from(_selectedTimeSlots)
+                          ..sort((a, b) => _getSlotDateTime(a).compareTo(_getSlotDateTime(b)));
+                        final isConflict = _isSlotBooked(sortedCheck.first, currentBookings);
+                        if (isConflict) {
+                          setState(() => _isLoading = false);
+                          if (context.mounted) {
+                            VSPFeedback.showError(context, 'عذراً، هذا التوقيت تم حجزه وتأكيده للتو من لاعب آخر.');
+                          }
+                          return;
+                        }
+                      } catch (_) {}
+
+                      final sortedSlots = List<String>.from(_selectedTimeSlots)
+                        ..sort((a, b) => _getSlotDateTime(a).compareTo(_getSlotDateTime(b)));
                       final firstSlot = sortedSlots.first;
                       final startTime = _getSlotDateTime(firstSlot);
                       final endTime = startTime.add(Duration(minutes: _selectedTimeSlots.length * 30));
@@ -1119,6 +1051,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         return;
                       }
 
+                      if (!context.mounted) return;
                       final isCashLocked = (currentUserModel.noShowCount) >= 2;
                       if (isCashLocked) {
                         VSPFeedback.showError(context, isArabic ? "حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪." : "Cash bookings restricted due to missed attendance. Please pay 100% online.");
@@ -1126,45 +1059,72 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         return;
                       }
 
+                      if (!context.mounted) return;
                       showModalBottomSheet(
                         context: context,
+                        useSafeArea: true,
+                        isScrollControlled: true,
                         backgroundColor: VSPColors.surface,
                         shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
-                        builder: (ctx) => Container(
-                          padding: const EdgeInsets.all(20),
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              Text(isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold)),
-                              const SizedBox(height: 16),
-                              ListTile(
-                                leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
-                                title: Text(isArabic ? 'دفع إلكتروني (فودافون كاش / إنستاباي / بطاقة)' : 'Online Payment (Vodafone Cash / InstaPay / Card)'),
-                                subtitle: Text(isArabic ? 'دفع سريع وتأكيد فوري' : 'Fast payment and instant confirmation'),
-                                onTap: () {
-                                  Navigator.pop(ctx);
-                                  nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                                },
-                              ),
-                              const Divider(color: VSPColors.divider),
-                              ListTile(
-                                leading: const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
-                                title: Text(isArabic ? 'دفع نقدي في الملعب (Cash)' : 'Pay Cash at Pitch'),
-                                subtitle: Text(isArabic ? 'تدفع الكابتن عند الحضور للملعب' : 'Pay captain directly upon arrival'),
-                                onTap: () async {
-                                  Navigator.pop(ctx);
-                                  try {
-                                    final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
-                                    final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-                                    if (booking != null && nav.mounted) {
-                                      nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
+                        builder: (ctx) => SafeArea(
+                          child: Padding(
+                            padding: EdgeInsets.fromLTRB(
+                              20,
+                              20,
+                              20,
+                              MediaQuery.of(ctx).padding.bottom > 0 ? 8 : 20,
+                            ),
+                            child: Column(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                Text(
+                                  isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method',
+                                  style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
+                                ),
+                                const SizedBox(height: 16),
+                                ListTile(
+                                  leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                                  title: Text(
+                                    isArabic ? 'دفع إلكتروني' : 'Online Payment',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Text(
+                                    isArabic ? 'فودافون كاش / إنستاباي / بطاقة بانكية' : 'Vodafone Cash / InstaPay / Card',
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                  ),
+                                  onTap: () {
+                                    Navigator.pop(ctx);
+                                    nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                                  },
+                                ),
+                                const Divider(color: VSPColors.divider),
+                                ListTile(
+                                  leading: const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
+                                  title: Text(
+                                    isArabic ? 'دفع نقدي في الملعب' : 'Pay Cash at Pitch',
+                                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                  ),
+                                  subtitle: Text(
+                                    isArabic ? 'الدفع للمسؤول مباشرة عند الحضور للملعب' : 'Pay captain directly upon arrival',
+                                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                  ),
+                                  onTap: () async {
+                                    Navigator.pop(ctx);
+                                    try {
+                                      final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
+                                      final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                                      if (booking != null && nav.mounted) {
+                                        nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
+                                      } else if (bookingProvider.errorMessage != null && context.mounted) {
+                                        VSPFeedback.showError(context, bookingProvider.errorMessage!);
+                                      }
+                                    } catch (e) {
+                                      if (context.mounted) VSPFeedback.showError(context, e.toString().replaceAll('Exception: ', ''));
                                     }
-                                  } catch (e) {
-                                    if (context.mounted) VSPFeedback.showError(context, e.toString());
-                                  }
-                                },
-                              ),
-                            ],
+                                  },
+                                ),
+                              ],
+                            ),
                           ),
                         ),
                       );

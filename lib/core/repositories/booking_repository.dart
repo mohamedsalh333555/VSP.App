@@ -124,7 +124,6 @@ class SupabaseBookingRepository implements BookingRepository {
       case BookingType.team:
         return 'team';
       case BookingType.personal:
-      default:
         return 'personal';
     }
   }
@@ -149,23 +148,26 @@ class SupabaseBookingRepository implements BookingRepository {
 
       // 🛡️ Gating Safety: Check if booking falls inside stadium break hours
       try {
-        final stadiumDoc = await _supabase
-            .from('stadiums')
-            .select('features, opening_time')
-            .eq('id', draft.stadiumId)
-            .maybeSingle();
-        if (stadiumDoc != null) {
-          final features = stadiumDoc['features'] as Map<String, dynamic>?;
-          if (features != null && features['breakTime'] != null) {
-            final breakTime = features['breakTime'] as Map<String, dynamic>?;
-            final openingTime = stadiumDoc['opening_time']?.toString() ?? '03:00 PM';
-            if (_isTimeInBreak(draft.startTime, draft.endTime, breakTime, openingTime)) {
-              throw Exception("Cannot book during the stadium's break hours.");
+        final isChampionship = draft.stadiumName.startsWith('بطولة:');
+        if (!isChampionship) {
+          final stadiumDoc = await _supabase
+              .from('stadiums')
+              .select('features, opening_time')
+              .eq('id', draft.stadiumId)
+              .maybeSingle();
+          if (stadiumDoc != null) {
+            final features = stadiumDoc['features'] as Map<String, dynamic>?;
+            if (features != null && features['breakTime'] != null) {
+              final breakTime = features['breakTime'] as Map<String, dynamic>?;
+              final openingTime = stadiumDoc['opening_time']?.toString() ?? '03:00 PM';
+              if (_isTimeInBreak(draft.startTime, draft.endTime, breakTime, openingTime)) {
+                throw Exception("عذراً، هذا الموعد يقع ضمن أوقات استراحة الملعب.");
+              }
             }
           }
         }
       } catch (e) {
-        if (e.toString().contains("break hours")) {
+        if (e.toString().contains("استراحة الملعب") || e.toString().contains("break hours")) {
           rethrow;
         }
         VSPLogger.w('Skip break hours database validation: $e');
@@ -293,25 +295,24 @@ class SupabaseBookingRepository implements BookingRepository {
         status: status,
       );
 
-      // 🧹 PRE-CLEANUP: Hard-delete any cancelled OR stale pending-unpaid booking rows for the same stadium & start_time
+      // 🛡️ Double Booking Prevention Guard: Check for existing active booking in same slot
       try {
-        await _supabase
+        final existingCollision = await _supabase
             .from('bookings')
-            .delete()
+            .select('id')
             .eq('stadium_id', booking.stadiumId)
             .eq('start_time', booking.startTime.toUtc().toIso8601String())
-            .eq('status', 'cancelled');
+            .neq('status', 'cancelled')
+            .maybeSingle();
 
-        // Delete user's own stale pending unpaid booking for this exact slot if retrying
-        await _supabase
-            .from('bookings')
-            .delete()
-            .eq('stadium_id', booking.stadiumId)
-            .eq('created_by_user_id', userId)
-            .eq('start_time', booking.startTime.toUtc().toIso8601String())
-            .eq('status', 'pending')
-            .eq('is_paid', false);
-      } catch (_) {}
+        if (existingCollision != null) {
+          throw Exception("عذراً، هذا التوقيت تم حجزه بالفعل بملعب آخر. يرجى اختيار موعد آخر!");
+        }
+      } catch (e) {
+        if (e.toString().contains("تم حجزه بالفعل")) {
+          rethrow;
+        }
+      }
 
       final double platformFee = 0.0;
 
@@ -775,7 +776,6 @@ class SupabaseBookingRepository implements BookingRepository {
   Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
     final startOfDay = DateTime(date.year, date.month, date.day);
     final endOfDay = startOfDay.add(const Duration(days: 2));
-    final now = DateTime.now();
 
     return _supabase
         .from('bookings')
@@ -787,9 +787,10 @@ class SupabaseBookingRepository implements BookingRepository {
                 if (b.stadiumId.toLowerCase() != stadiumId.toLowerCase()) return false;
                 if (b.status == BookingStatus.cancelled) return false;
 
-                // 🛑 Fix: If booking is pending and older than 15 minutes without payment, ignore it (does not block slot)
+                // 🛑 Fix: If booking is pending and older than 10 minutes without payment, ignore it (does not block slot)
                 if (b.status == BookingStatus.pending) {
-                  final isExpired = now.difference(b.createdAt).inMinutes >= 15;
+                  final createdAtLocal = b.createdAt.toLocal();
+                  final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 10;
                   if (isExpired) return false;
                 }
 
@@ -864,11 +865,15 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<List<Booking>> getUnpaidBookingsForUser(String userId) async {
     try {
+      final nowUtcIso = DateTime.now().toUtc().toIso8601String();
       final response = await _supabase
           .from('bookings')
           .select()
           .eq('created_by_user_id', userId)
-          .eq('is_paid', false);
+          .eq('is_paid', false)
+          .gte('end_time', nowUtcIso)
+          .neq('status', 'cancelled')
+          .neq('status', 'completed');
       
       return (response as List)
           .map((doc) => Booking.fromFirestore(doc as Map<String, dynamic>, doc['id'].toString()))

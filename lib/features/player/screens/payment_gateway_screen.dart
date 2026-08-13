@@ -100,6 +100,15 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     setState(() => _isVerifyingManual = true);
 
     try {
+      if (widget.bookingDraft.stadiumName.startsWith('بطولة:')) {
+        HapticFeedback.heavyImpact();
+        _paymentCompleted = true;
+        if (mounted) {
+          Navigator.pop(context, true);
+        }
+        return;
+      }
+
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
       final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
       
@@ -145,6 +154,30 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
       try {
+        if (widget.bookingDraft.stadiumName.startsWith('بطولة:')) {
+          _booking = Booking(
+            id: 'champ_${DateTime.now().millisecondsSinceEpoch}',
+            stadiumId: widget.bookingDraft.stadiumId,
+            stadiumName: widget.bookingDraft.stadiumName,
+            stadiumImageUrl: widget.bookingDraft.stadiumImageUrl,
+            ownerId: widget.bookingDraft.ownerId,
+            startTime: widget.bookingDraft.startTime,
+            endTime: widget.bookingDraft.endTime,
+            bookingType: widget.bookingDraft.bookingType,
+            playerTeamId: widget.bookingDraft.playerTeamId,
+            playerTeamName: widget.bookingDraft.playerTeamName,
+            isPrivate: false,
+            rentBall: false,
+            totalPrice: widget.bookingDraft.totalPrice,
+            paymentMethod: 'paymob',
+            status: BookingStatus.confirmed,
+            createdByUserId: userId,
+            createdAt: DateTime.now(),
+          );
+          if (mounted) setState(() => _isLoading = false);
+          return;
+        }
+
         // 🧹 تنظيف أي حجوزات pending غير مدفوعة للمستخدم على نفس الملعب قبل الإنشاء
         // هذا يمنع مشكلة double booking بسبب حجوزات شبح قديمة
         await _cleanupStalePendingBookings(userId);
@@ -380,6 +413,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     );
   }
 
+  Future<void> _onCancelAndReleaseBooking(BuildContext dialogCtx) async {
+    _countdownTimer?.cancel();
+    _webhookTimeoutTimer?.cancel();
+    _bookingSubscription?.cancel();
+    if (_booking != null && !_booking!.id.startsWith('mock_')) {
+      try {
+        await Supabase.instance.client
+            .from('bookings')
+            .delete()
+            .eq('id', _booking!.id);
+        debugPrint('✅ Pending booking ${_booking!.id} immediately deleted on Go Back.');
+      } catch (e) {
+        debugPrint('⚠️ Error deleting pending booking on Go Back: $e');
+      }
+    }
+    if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
@@ -417,12 +468,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 child: Text(dialogContinueText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))
               ),
               TextButton(
-                onPressed: () async {
-                  if (_booking != null && !_booking!.id.startsWith('mock_')) {
-                    await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
-                  }
-                  if (ctx.mounted) Navigator.pop(ctx, true);
-                },
+                onPressed: () => _onCancelAndReleaseBooking(ctx),
                 child: Text(isArabic ? 'الرجوع للخلف' : 'Go Back', style: const TextStyle(color: VSPColors.error))
               )
             ]
@@ -451,12 +497,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       child: Text(dialogContinueText, style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold))
                     ),
                     TextButton(
-                      onPressed: () async {
-                        if (_booking != null && !_booking!.id.startsWith('mock_')) {
-                          await Supabase.instance.client.from('bookings').delete().eq('id', _booking!.id);
-                        }
-                        if (ctx.mounted) Navigator.pop(ctx, true);
-                      },
+                      onPressed: () => _onCancelAndReleaseBooking(ctx),
                       child: Text(isArabic ? 'الرجوع للخلف' : 'Go Back', style: const TextStyle(color: VSPColors.error))
                     )
                   ]
@@ -490,44 +531,46 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.center,
                   children: [
-                    // ⏱️ 1. Hold Countdown Timer Banner (10-minute hold)
-                    Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
-                      decoration: BoxDecoration(
-                        color: VSPColors.accent.withValues(alpha: 0.1),
-                        borderRadius: BorderRadius.circular(VSPRadius.lg),
-                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
-                      ),
-                      child: Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Row(
-                            children: [
-                              const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 18),
-                              const SizedBox(width: 8),
-                              Text(
-                                isArabic
-                                    ? 'تم تثبيت الوقت لك مؤقتاً لمدة:'
-                                    : 'Slot temporarily held for:',
-                                style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    // ⏱️ 1. Hold Countdown Timer Banner (10-minute hold - only for pitch bookings)
+                    if (!isChampionship) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.lg),
+                          border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1),
+                        ),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                          children: [
+                            Row(
+                              children: [
+                                const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 18),
+                                const SizedBox(width: 8),
+                                Text(
+                                  isArabic
+                                      ? 'تم تثبيت الوقت لك مؤقتاً لمدة:'
+                                      : 'Slot temporarily held for:',
+                                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                                ),
+                              ],
+                            ),
+                            Container(
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                              decoration: BoxDecoration(
+                                color: VSPColors.accent,
+                                borderRadius: BorderRadius.circular(8),
                               ),
-                            ],
-                          ),
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: VSPColors.accent,
-                              borderRadius: BorderRadius.circular(8),
+                              child: Text(
+                                _formatCountdown(_remainingSeconds),
+                                style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900),
+                              ),
                             ),
-                            child: Text(
-                              _formatCountdown(_remainingSeconds),
-                              style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.w900),
-                            ),
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                    ),
-                    const SizedBox(height: 16),
+                      const SizedBox(height: 16),
+                    ],
 
                     // Amount Header Card
                     Container(
@@ -582,7 +625,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     _buildPaymentMethodCard(
                       id: 'instapay',
                       icon: Iconsax.send_2_copy,
-                      title: isArabic ? 'تطبيق إنستاباي (InstaPay)' : 'InstaPay App',
+                      title: isArabic ? 'تطبيق إنستاباي' : 'InstaPay App',
                       subtitle: isArabic ? 'دفع مباشر عبر البنوك المصرية والمحفظة' : 'Direct bank transfer via InstaPay',
                       badge: isArabic ? 'بدون عمولة 🌟' : 'No Fees 🌟',
                       color: const Color(0xFF00A859),
@@ -592,7 +635,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     _buildPaymentMethodCard(
                       id: 'card',
                       icon: Iconsax.card_copy,
-                      title: isArabic ? 'بطاقة بنكية / كارت ميزة (Visa - Mastercard - Meeza)' : 'Bank Card / Meeza Card',
+                      title: isArabic ? 'بطاقة بنكية / كارت ميزة' : 'Bank Card / Meeza Card',
                       subtitle: isArabic ? 'دفع آمن بالفيزا أو الماستركارد أو كارت ميزة' : 'Secure payment via Debit/Credit card',
                       color: const Color(0xFF0066CC),
                     ),
@@ -724,7 +767,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 16),
                       const SizedBox(height: 6),
                       Text(
-                        isArabic ? 'جميع المعاملات تشفير آمن 100% ومحمية بواسطة بوابة Paymob المعتمدة.' : '100% secure encrypted payment via Paymob.',
+                        isArabic ? 'جميع المعاملات تشفير آمن 100% ومحمية بواسطة بوابة الدفع المعتمدة.' : '100% secure encrypted payment via licensed Payment Gateway.',
                         textAlign: TextAlign.center,
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, height: 1.4),
                       ),
@@ -734,7 +777,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       width: double.infinity,
                       height: 54,
                       child: PrimaryButton(
-                        text: isArabic ? 'الانتقال للدفع الآمن ⚡' : 'Proceed to Secure Checkout ⚡',
+                        text: isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Checkout',
                         isLoading: _isLoading || _isAwaitingWebhook || _isVerifyingManual,
                         onPressed: (_booking == null) ? null : _startPaymobCheckout,
                       ),

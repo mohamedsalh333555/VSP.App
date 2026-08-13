@@ -1223,6 +1223,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'images': uploadedUrls,
             'notes': _notesController.text.trim(),
             'features': stadiumFeatures,
+            'opening_time': _formatTime(_startTime, '04:00 PM'),
+            'closing_time': _formatTime(_endTime, '03:00 AM'),
           });
       } else {
           // Create Logic
@@ -1358,46 +1360,47 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 6),
       child: Column(
         children: [
-          // Goal Gradient Progress Banner
-          Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-            margin: const EdgeInsets.only(bottom: 12),
-            decoration: BoxDecoration(
-              color: VSPColors.accent.withValues(alpha: 0.1),
-              borderRadius: BorderRadius.circular(VSPRadius.md),
-              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-            ),
-            child: Row(
-              children: [
-                Expanded(
-                  child: Text(
-                    progressText,
-                    style: const TextStyle(
+          // Goal Gradient Progress Banner (Only shown when adding a new stadium)
+          if (!isEditing)
+            Container(
+              width: double.infinity,
+              padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+              margin: const EdgeInsets.only(bottom: 12),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.1),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Text(
+                      progressText,
+                      style: const TextStyle(
+                        color: VSPColors.accent,
+                        fontSize: 12,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                  ),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
                       color: VSPColors.accent,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: Text(
+                      '$percent%',
+                      style: const TextStyle(
+                        color: Colors.black,
+                        fontSize: 11,
+                        fontWeight: FontWeight.w900,
+                      ),
                     ),
                   ),
-                ),
-                Container(
-                  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                  decoration: BoxDecoration(
-                    color: VSPColors.accent,
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                  child: Text(
-                    isEditing ? (isArabic ? 'تعديل' : 'Edit') : '$percent%',
-                    style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 11,
-                      fontWeight: FontWeight.w900,
-                    ),
-                  ),
-                ),
-              ],
+                ],
+              ),
             ),
-          ),
 
           // Stepper Lines and Circles
           Stack(
@@ -1603,17 +1606,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   child: Builder(
                     builder: (context) {
                       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                      final closingTime = TimeOfDay(
-                        hour: (_endTime!.hour + 1) % 24, 
-                        minute: _endTime!.minute,
-                      );
                       final selectedEndStr = _formatTime(_endTime, '');
-                      final realCloseStr = _formatTime(closingTime, '');
                       
                       return Text(
                         isArabic 
-                            ? "ملاحظة: اختيار وقت الانتهاء ($selectedEndStr) يعني أن آخر حجز سيبدأ في هذا الوقت، وسيغلق الملعب فعلياً الساعة ($realCloseStr)."
-                            : "Note: Selecting ($selectedEndStr) means the last booking starts at this time. The pitch will actually close at ($realCloseStr).",
+                            ? "ملاحظة: اختيار وقت الإغلاق ($selectedEndStr) يعني أن الملعب يغلق فعلياً وينتهي آخر حجز في هذا الوقت."
+                            : "Note: Selecting closing time ($selectedEndStr) means the pitch actually closes and the last booking ends at this time.",
                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
                       );
                     }

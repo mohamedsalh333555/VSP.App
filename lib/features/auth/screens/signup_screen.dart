@@ -649,7 +649,7 @@ class _SignupScreenState extends State<SignupScreen> {
           items: govs.map<DropdownMenuItem<String>>((String value) {
             return DropdownMenuItem<String>(
               value: value,
-              child: Text(value),
+              child: Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
             );
           }).toList(),
         ),

@@ -2,7 +2,6 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/services.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
@@ -38,16 +37,22 @@ import 'notifications_center_screen.dart';
 
 // المفتاح العالمي للتحكم في تبويبات صفحة البطل
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
+// المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة
+final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
 
 class PlayerHomeScreen extends StatefulWidget {
   const PlayerHomeScreen({super.key});
 
   @override
-  State<PlayerHomeScreen> createState() => _PlayerHomeScreenState();
+  State<PlayerHomeScreen> createState() => PlayerHomeScreenState();
 }
 
-class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
+class PlayerHomeScreenState extends State<PlayerHomeScreen> {
   int _selectedIndex = 0;
+
+  void switchToTab(int index) {
+    setState(() => _selectedIndex = index);
+  }
   final _searchController = TextEditingController();
 
   @override
@@ -221,9 +226,9 @@ class _PlayerHomeScreenState extends State<PlayerHomeScreen> {
 
 class _SectionHeader extends StatelessWidget {
   final String title;
-  final VoidCallback onSeeAll;
+  final VoidCallback? onSeeAll;
 
-  const _SectionHeader({required this.title, required this.onSeeAll});
+  const _SectionHeader({required this.title, this.onSeeAll});
 
   @override
   Widget build(BuildContext context) {
@@ -233,10 +238,11 @@ class _SectionHeader extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
           VSPSectionTitle(title),
-          TextButton(
-            onPressed: onSeeAll,
-            child: Text(AppLocalizations.of(context)!.seeAll, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
-          ),
+          if (onSeeAll != null)
+            TextButton(
+              onPressed: onSeeAll,
+              child: Text(AppLocalizations.of(context)!.seeAll, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+            ),
         ],
       ),
     );
@@ -307,16 +313,6 @@ class ChampionshipCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
-                Container(
-                  width: 52, height: 52,
-                  decoration: BoxDecoration(shape: BoxShape.circle, border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 2)),
-                  child: ClipOval(
-                    child: championship.logoUrl.isNotEmpty
-                        ? CachedNetworkImage(imageUrl: championship.logoUrl, fit: BoxFit.cover, errorWidget: (_, __, ___) => Icon(Iconsax.cup_copy, color: VSPColors.accent))
-                        : Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
-                  ),
-                ),
-                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -472,7 +468,7 @@ class ChampionshipCard extends StatelessWidget {
     );
   }
 
-  Widget _buildTypeBadge(String text) => Container(padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4), decoration: BoxDecoration(color: VSPColors.accent.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(4), border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3))), child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)));
+  Widget _buildTypeBadge(String text) => Text(text, style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold));
 
   Widget _buildStatusBadge(String text, Color color) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.4))), child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 6), Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold))]));
 
@@ -509,13 +505,13 @@ class _HomeContent extends StatelessWidget {
               padding: EdgeInsets.only(bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
               child: Column(
                 children: [
-                  const SizedBox(height: 16),
+                  const SizedBox(height: 12),
                   _buildPromos(),
-                  const SizedBox(height: 24),
+                  const SizedBox(height: 14),
                   _buildStadiumsList(context, stadiumProvider),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                   _buildMatchesList(context),
-                  const SizedBox(height: 32),
+                  const SizedBox(height: 16),
                   _buildChampionshipsList(context, auth),
                 ],
               ),
@@ -680,10 +676,8 @@ class _HomeContent extends StatelessWidget {
                 context: context,
                 backgroundColor: Colors.transparent,
                 isScrollControlled: true,
-                builder: (context) => Padding(
-                  padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-                  child: const FilterBottomSheet(),
-                ),
+                useSafeArea: true,
+                builder: (context) => const FilterBottomSheet(),
               );
               if (result != null && context.mounted) {
                 context.read<StadiumProvider>().applyFilters(result);
@@ -704,7 +698,7 @@ class _HomeContent extends StatelessWidget {
                   ),
                 ],
               ),
-              child: const Icon(Iconsax.setting_2_copy, color: VSPColors.accent, size: 20),
+              child: const Icon(Iconsax.filter_copy, color: VSPColors.accent, size: 20),
             ),
           ),
         ),
@@ -843,8 +837,8 @@ class _HomeContent extends StatelessWidget {
           ),
           const SizedBox(height: 8),
         ],
-        _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums, onSeeAll: () {}),
-        const SizedBox(height: 16),
+        _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums),
+        const SizedBox(height: 8),
         SizedBox(
           height: 240,
           child: provider.isLoading && provider.stadiums.isEmpty
@@ -857,7 +851,7 @@ class _HomeContent extends StatelessWidget {
                     final stadium = provider.stadiums[index];
                     return Container(
                       width: 300, 
-                      margin: const EdgeInsets.only(right: 12), 
+                      margin: const EdgeInsets.only(right: 6), 
                       child: StadiumCard(
                         stadium: stadium, 
                         onTap: () => Navigator.push(
@@ -894,7 +888,7 @@ class _HomeContent extends StatelessWidget {
         return Column(
           children: [
             _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => onNavigate(1)),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             SizedBox(
               height: 240,
               child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
@@ -912,7 +906,7 @@ class _HomeContent extends StatelessWidget {
                         alignment: Alignment.topCenter, 
                         child: Container(
                           width: 320, 
-                          margin: const EdgeInsets.only(right: 12), 
+                          margin: const EdgeInsets.only(right: 6), 
                           child: PublicMatchCard(booking: matches[i]),
                         ),
                       ),
@@ -940,7 +934,7 @@ class _HomeContent extends StatelessWidget {
               title: AppLocalizations.of(context)!.joinChampionships, 
               onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1}),
             ),
-            const SizedBox(height: 16),
+            const SizedBox(height: 8),
             SizedBox(
               height: 250,
               child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
@@ -958,7 +952,7 @@ class _HomeContent extends StatelessWidget {
                         alignment: Alignment.topCenter, 
                         child: Container(
                           width: 320, 
-                          margin: const EdgeInsets.only(right: 12), 
+                          margin: const EdgeInsets.only(right: 6), 
                           child: ChampionshipCard(championship: championships[i]),
                         ),
                       ),
@@ -975,6 +969,8 @@ class _HomeContent extends StatelessWidget {
 void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
   showModalBottomSheet(
     context: context, 
+    useSafeArea: true,
+    isScrollControlled: true,
     backgroundColor: VSPColors.surface, 
     shape: const RoundedRectangleBorder(
       borderRadius: BorderRadius.vertical(top: Radius.circular(20))

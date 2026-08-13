@@ -300,7 +300,11 @@ class ChampionScreenState extends State<ChampionScreen>
           items: items.map<DropdownMenuItem<String>>((String item) {
             return DropdownMenuItem<String>(
               value: item,
-              child: Text(_translateItem(item), overflow: TextOverflow.ellipsis),
+              child: Text(
+                _translateItem(item),
+                overflow: TextOverflow.ellipsis,
+                style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white, fontSize: 13),
+              ),
             );
           }).toList(),
         ),

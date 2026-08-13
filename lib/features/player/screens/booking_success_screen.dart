@@ -13,6 +13,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/notification_handler.dart';
 import '../../../core/repositories/team_repository.dart';
 import 'chat_screen.dart';
+import 'player_home_screen.dart';
+import 'bookings_screen.dart';
 
 class BookingSuccessScreen extends StatefulWidget {
   final Booking booking;
@@ -318,7 +320,13 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                               color: VSPColors.surfaceAlt,
                               textColor: VSPColors.textPrimary,
                               onPressed: () {
-                                Navigator.of(context).popUntil((route) => route.isFirst);
+                                if (playerHomeScreenKey.currentState != null) {
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  playerHomeScreenKey.currentState?.switchToTab(3);
+                                } else {
+                                  Navigator.of(context).popUntil((route) => route.isFirst);
+                                  Navigator.push(context, MaterialPageRoute(builder: (_) => const BookingsScreen()));
+                                }
                               },
                             ),
                           ),

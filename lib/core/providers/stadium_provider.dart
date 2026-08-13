@@ -235,44 +235,55 @@ class StadiumProvider with ChangeNotifier {
     ).toList();
   }
 
+  double get maxStadiumPrice {
+    if (_stadiums.isEmpty) return 2000.0;
+    final maxP = _stadiums.map((s) => s.pricePerHour).reduce((a, b) => a > b ? a : b);
+    return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
+  }
+
+  /// Returns unique registered sports dynamically from stadiums database
+  List<String> get availableSportTypes {
+    final sports = _stadiums.map((s) => s.type).where((t) => t.trim().isNotEmpty).toSet().toList();
+    if (sports.isEmpty) return ['Football', 'Padel'];
+    return sports;
+  }
+
   // Private helper to check dynamic features mapping safely
   bool _checkAmenity(Stadium stadium, String amenity) {
-    if (amenity == 'Professional Lighting') {
-      return stadium.hasJerash;
-    }
-    if (amenity == 'Spectator Seats') {
-      return stadium.hasSeats;
-    }
-    if (amenity == 'Ball Provided') {
-      return stadium.hasBall;
-    }
-    
     final dynamic feats = stadium.features;
     final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
 
-    if (amenity == 'Cafeteria') {
-      return stadium.cafeteria > 0 || 
-             featMap['cafeteria'] == true || 
-             featMap['cafeteria'] == 'yes' || 
-             featMap['hasCafeteria'] == true;
-    }
-    if (amenity == 'Changing Rooms') {
-      return featMap['changingRooms'] == true || 
-             featMap['changing_rooms'] == true || 
-             featMap['hasChangingRooms'] == true;
-    }
-    if (amenity == 'Garage') {
-      return featMap['garage'] == true || 
-             featMap['hasGarage'] == true || 
-             featMap['parking'] == true;
+    // 1. Payment & Deposit
+    if (amenity == 'No Deposit Needed' || amenity == 'حجز بدون عربون (دفع نقدي)') {
+      return !stadium.needsDeposit;
     }
 
-    // Default fallback checks
+    // 2. Real Owner Amenities (Strictly matching owner inputs)
+    if (amenity == 'Showers & Baths' || amenity == 'دش وحمام') {
+      return featMap['bathOption'] == 'Yes' || featMap['hasShower'] == true || featMap['shower'] == true;
+    }
+    if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
+      return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
+    }
+    if (amenity == 'Night Floodlights' || amenity == 'كشافات إضاءة ليلاً') {
+      return stadium.hasJerash || featMap['hasLighting'] == true || featMap['lighting'] == true;
+    }
+    if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
+      return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
+    }
+    if (amenity == 'Ball Provided' || amenity == 'كرة متوفرة' || amenity == 'كرة') {
+      return stadium.hasBall || featMap['hasBall'] == true;
+    }
+    if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
+      return stadium.hasSeats || featMap['hasSeats'] == true;
+    }
+    if (amenity == 'Garage & Parking' || amenity == 'جراج سيارات') {
+      return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
+    }
+
+    // Fallback checks
     final key = amenity.replaceAll(' ', '').toLowerCase();
-    final firstLowerKey = amenity[0].toLowerCase() + amenity.substring(1).replaceAll(' ', '');
-    return featMap[key] == true || 
-           featMap[firstLowerKey] == true || 
-           featMap['has${amenity.replaceAll(' ', '')}'] == true;
+    return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
   }
 
   // Apply complex filters
@@ -283,7 +294,8 @@ class StadiumProvider with ChangeNotifier {
     final String? location = filters['location'] as String?;
     final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
     final double minPrice = (filters['minPrice'] ?? 0.0).toDouble();
-    final double maxPrice = (filters['maxPrice'] ?? 3000.0).toDouble();
+    final double maxPrice = (filters['maxPrice'] ?? 999999.0).toDouble();
+    final bool noDepositOnly = filters['noDepositOnly'] == true;
     final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
 
     _filteredStadiums = _stadiums.where((stadium) {
@@ -311,7 +323,12 @@ class StadiumProvider with ChangeNotifier {
         return false;
       }
 
-      // 5. Amenities Filter
+      // 5. No Deposit Filter
+      if (noDepositOnly && stadium.needsDeposit) {
+        return false;
+      }
+
+      // 6. Essential Amenities Filter
       if (amenities.isNotEmpty) {
         for (final amenity in amenities) {
           if (!_checkAmenity(stadium, amenity)) {
