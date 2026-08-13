@@ -9,7 +9,6 @@ import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
-import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';

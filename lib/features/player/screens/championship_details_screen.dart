@@ -28,7 +28,6 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
-  int _statsSubIndex = 0; // 0: Top Scorers, 1: Clean Sheets
 
   @override
   void initState() {
@@ -1034,118 +1033,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     );
   }
 
-  Widget _buildCleanSheetsList(bool isArabic) {
-    return FutureBuilder<List<Map<String, dynamic>>>(
-      future: TournamentRepository().getCleanSheetsForChampionship(widget.championship.id),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-        }
 
-        final cleanSheets = snapshot.data ?? [];
-        if (cleanSheets.isEmpty) {
-          return Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                const Icon(Iconsax.security_safe_copy, color: VSPColors.textSecondary, size: 40),
-                const SizedBox(height: 12),
-                Text(
-                  isArabic ? 'لم يتم تسجيل مباريات بشباك نظيفة بعد' : 'No clean sheets recorded yet',
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                ),
-              ],
-            ),
-          );
-        }
-
-        return ListView.builder(
-          padding: const EdgeInsets.all(VSPSpacing.md),
-          itemCount: cleanSheets.length,
-          itemBuilder: (context, index) {
-            final item = cleanSheets[index];
-            final rank = index + 1;
-            final String team = item['team'] ?? '';
-            final int count = item['clean_sheets'] as int? ?? 0;
-
-            Color rankColor = VSPColors.surfaceAlt;
-            String rankEmoji = '#$rank';
-            if (rank == 1) {
-              rankColor = VSPColors.accent;
-              rankEmoji = '🥇';
-            } else if (rank == 2) {
-              rankColor = VSPColors.accent.withValues(alpha: 0.7);
-              rankEmoji = '🥈';
-            } else if (rank == 3) {
-              rankColor = VSPColors.accent.withValues(alpha: 0.5);
-              rankEmoji = '🥉';
-            }
-
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: VSPColors.divider, width: 0.5),
-              ),
-              child: Row(
-                children: [
-                  Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: rankColor.withValues(alpha: 0.15),
-                      shape: BoxShape.circle,
-                    ),
-                    child: Center(
-                      child: Text(
-                        rankEmoji,
-                        style: TextStyle(
-                          color: rank <= 3 ? rankColor : VSPColors.textSecondary,
-                          fontWeight: FontWeight.bold,
-                          fontSize: rank <= 3 ? 16 : 12,
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Text(
-                      team,
-                      style: const TextStyle(
-                        color: Colors.white,
-                        fontWeight: FontWeight.bold,
-                        fontSize: 14,
-                      ),
-                    ),
-                  ),
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                    decoration: BoxDecoration(
-                      color: VSPColors.accent.withValues(alpha: 0.15),
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                    ),
-                    child: Row(
-                      mainAxisSize: MainAxisSize.min,
-                      children: [
-                        const Icon(Iconsax.security_safe_copy, color: VSPColors.accent, size: 12),
-                        const SizedBox(width: 4),
-                        Text(
-                          '$count ${isArabic ? "مباراة نظيفة" : "clean sheets"}',
-                          style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
-                        ),
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            );
-          },
-        );
-      },
-    );
-  }
 
   Widget _buildRulesAndInfoTab(bool isArabic) {
     final championship = widget.championship;

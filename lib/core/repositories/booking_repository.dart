@@ -299,17 +299,25 @@ class SupabaseBookingRepository implements BookingRepository {
       try {
         final existingCollision = await _supabase
             .from('bookings')
-            .select('id')
+            .select('id, created_by_user_id, status')
             .eq('stadium_id', booking.stadiumId)
             .eq('start_time', booking.startTime.toUtc().toIso8601String())
             .neq('status', 'cancelled')
             .maybeSingle();
 
         if (existingCollision != null) {
-          throw Exception("عذراً، هذا التوقيت تم حجزه بالفعل بملعب آخر. يرجى اختيار موعد آخر!");
+          final collisionStatus = existingCollision['status']?.toString();
+          final collisionUser = existingCollision['created_by_user_id']?.toString();
+          
+          // إذا كان الحجز القديم معلق (pending) لنفس المستخدم، نحذفه ونفسح المجال للحجز الجديد
+          if (collisionStatus == 'pending' && collisionUser == userId) {
+            await _supabase.from('bookings').delete().eq('id', existingCollision['id']);
+          } else {
+            throw Exception("عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
+          }
         }
       } catch (e) {
-        if (e.toString().contains("تم حجزه بالفعل")) {
+        if (e.toString().contains("محجوز بالفعل")) {
           rethrow;
         }
       }

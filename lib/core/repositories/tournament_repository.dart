@@ -313,12 +313,13 @@ class TournamentRepository {
           })
           .eq('id', championshipId);
 
-      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد (مع حماية حقول الـ schema)
+      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد
       try {
         await _supabase.from('championship_rosters').insert({
           'championship_id': championshipId,
           'team_id': teamId,
           'player_ids': selectedPlayerIds,
+          'guest_names': offlineGuestNames,
         });
       } catch (rosterErr) {
         debugPrint('⚠️ Non-blocking roster record notice: $rosterErr');

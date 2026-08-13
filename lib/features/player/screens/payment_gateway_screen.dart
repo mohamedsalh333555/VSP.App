@@ -107,7 +107,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         HapticFeedback.heavyImpact();
         _paymentCompleted = true;
         if (mounted) {
-          Navigator.pop(context, true);
+          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+          final champBooking = await bookingProvider.getBookingById(_booking!.id);
+          if (champBooking != null && mounted) {
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingSuccessScreen(booking: champBooking),
+              ),
+            );
+          } else if (mounted) {
+            Navigator.pop(context, true);
+          }
         }
         return;
       }
@@ -242,8 +253,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
   }
 
-  /// 🧹 حذف الحجوزات الشبح: pending + is_paid = false للمستخدم على نفس الملعب
-  /// يعمل بالـ auth token الخاص بالجلسة (يتجاوز RLS بأمان)
+  /// 🧹 حذف الحجوزات الشبح المعلقة (pending) للمستخدم على نفس الملعب
   Future<void> _cleanupStalePendingBookings(String userId) async {
     try {
       await Supabase.instance.client
@@ -251,11 +261,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           .delete()
           .eq('created_by_user_id', userId)
           .eq('stadium_id', widget.bookingDraft.stadiumId)
-          .eq('status', 'pending')
-          .eq('is_paid', false);
+          .eq('status', 'pending');
       debugPrint('🧹 Stale pending bookings cleaned up for user: $userId');
     } catch (e) {
-      // لا نوقف التدفق إذا فشل التنظيف — نكمل إنشاء الحجز
       debugPrint('⚠️ Cleanup stale bookings failed (non-blocking): $e');
     }
   }
@@ -366,14 +374,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
           if (mounted && !_paymentCompleted) {
             setState(() => _isAwaitingWebhook = false);
-            // ⚡ فحص فوري ومؤكد لحالة الدفع بمجرد عودة المستخدم من المتصفح
             _verifyPaymentStatusManual();
           }
-        } else if (kDebugMode) {
-          await Supabase.instance.client.rpc('simulate_paymob_webhook', params: {
-            'p_booking_id': _booking!.id,
-            'p_amount': totalAmount.toInt(),
-          });
         }
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
