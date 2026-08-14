@@ -132,11 +132,17 @@ class _LoginScreenState extends State<LoginScreen> {
 
   void _handleLogin() async {
     // Basic Validation
-    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
-       VSPFeedback.showError(context, 'Please enter email and password');
-       return;
-     }
+    if (_emailController.text.trim().isEmpty || _passwordController.text.isEmpty) {
+      HapticFeedback.heavyImpact();
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showError(
+        context,
+        isAr ? 'يرجى إدخال البريد الإلكتروني وكلمة المرور 🔑' : 'Please enter email and password 🔑',
+      );
+      return;
+    }
 
+    HapticFeedback.mediumImpact();
     setState(() => _isLoading = true);
     
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
@@ -149,13 +155,17 @@ class _LoginScreenState extends State<LoginScreen> {
     setState(() => _isLoading = false);
 
     if (success) {
-        if (mounted) {
-          context.go('/');
-        }
+      if (mounted) {
+        HapticFeedback.lightImpact();
+        context.go('/');
+      }
     } else {
-        if (mounted) {
-          VSPFeedback.showError(context, authProvider.errorMessage ?? 'Login Failed');
-        }
+      if (mounted) {
+        HapticFeedback.vibrate();
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        final fallbackMsg = isAr ? 'فشل تسجيل الدخول، يرجى التأكد من صحة البريد وكلمة المرور' : 'Login failed. Please check your credentials';
+        VSPFeedback.showError(context, authProvider.errorMessage ?? fallbackMsg);
+      }
     }
   }
 
@@ -372,6 +382,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                  ],
                                ),
                                onPressed: _isLoading ? null : () async {
+                                 HapticFeedback.mediumImpact();
                                  setState(() => _isLoading = true);
                                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
                                  final success = await authProvider.signInWithApple();
@@ -380,9 +391,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                  setState(() => _isLoading = false);
 
                                  if (success) {
+                                   HapticFeedback.lightImpact();
                                    context.go('/');
                                  } else {
-                                   VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
+                                   HapticFeedback.vibrate();
+                                   final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                                   VSPFeedback.showError(context, authProvider.errorMessage ?? (isAr ? 'فشل تسجيل الدخول عبر Apple' : 'Apple Sign-In failed'));
                                  }
                                },
                              ),
@@ -413,6 +427,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                ],
                              ),
                              onPressed: _isLoading ? null : () async {
+                               HapticFeedback.mediumImpact();
                                setState(() => _isLoading = true);
                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
                                final success = await authProvider.signInWithGoogle();
@@ -421,9 +436,12 @@ class _LoginScreenState extends State<LoginScreen> {
                                setState(() => _isLoading = false);
 
                                if (success) {
+                                 HapticFeedback.lightImpact();
                                  context.go('/');
                                } else {
-                                 VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+                                 HapticFeedback.vibrate();
+                                 final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                                 VSPFeedback.showError(context, authProvider.errorMessage ?? (isAr ? 'فشل تسجيل الدخول عبر Google' : 'Google Sign-In failed'));
                                }
                              },
                            ),

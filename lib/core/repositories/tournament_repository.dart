@@ -134,7 +134,7 @@ class TournamentRepository {
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
         'rules': sanitizedData['rules'] ?? '',
         'status': 'open',
-        'is_approved': true, // Always approved when created by owner – visible to players immediately
+        'is_approved': true, // Directly open and approved for owner
         'joined_teams': [],
         'paid_teams': [],
         'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
@@ -174,6 +174,24 @@ class TournamentRepository {
     } catch (e) {
       debugPrint('Error creating championship: $e');
       rethrow;
+    }
+  }
+
+  /// 🏦 تفعيل البطولة بعد دفع رسوم الإنشاء (100 ج.م)
+  /// تُغيِّر status من 'draft' إلى 'open' وتُعلِّم creation_fee_paid = true
+  Future<bool> activateChampionship(String championshipId, {String? paymentId}) async {
+    try {
+      await _supabase.from('championships').update({
+        'status': 'open',
+        'is_approved': true,
+        'creation_fee_paid': true,
+        if (paymentId != null) 'creation_payment_id': paymentId,
+      }).eq('id', championshipId);
+      debugPrint('✅ Championship $championshipId activated successfully after fee payment.');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error activating championship: $e');
+      return false;
     }
   }
 
@@ -313,14 +331,14 @@ class TournamentRepository {
           })
           .eq('id', championshipId);
 
-      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول الجديد
+      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول
       try {
-        await _supabase.from('championship_rosters').insert({
-          'championship_id': championshipId,
-          'team_id': teamId,
-          'player_ids': selectedPlayerIds,
-          'guest_names': offlineGuestNames,
-        });
+        await updateSingleTeamRoster(
+          championshipId: championshipId,
+          teamId: teamId,
+          playerIds: selectedPlayerIds,
+          guestNames: offlineGuestNames,
+        );
       } catch (rosterErr) {
         debugPrint('⚠️ Non-blocking roster record notice: $rosterErr');
       }
@@ -982,6 +1000,71 @@ class TournamentRepository {
     }
 
     return {'home': homePlayers, 'away': awayPlayers};
+  }
+
+  /// Fetch player IDs and guest names for a single team in a championship roster
+  Future<Map<String, dynamic>> getSingleTeamRoster(String championshipId, String teamId) async {
+    try {
+      final roster = await _supabase
+          .from('championship_rosters')
+          .select()
+          .eq('championship_id', championshipId)
+          .eq('team_id', teamId)
+          .maybeSingle();
+
+      if (roster != null) {
+        final playerIdsRaw = roster['player_ids'] ?? [];
+        final guestNamesRaw = roster['guest_names'] ?? roster['player_names'] ?? [];
+
+        return {
+          'player_ids': playerIdsRaw is List ? List<String>.from(playerIdsRaw) : <String>[],
+          'guest_names': guestNamesRaw is List ? List<String>.from(guestNamesRaw) : <String>[],
+        };
+      }
+    } catch (e) {
+      debugPrint('Error fetching single team roster: $e');
+    }
+    return {'player_ids': <String>[], 'guest_names': <String>[]};
+  }
+
+  /// Update single team roster (player_ids & guest_names) in a championship
+  Future<bool> updateSingleTeamRoster({
+    required String championshipId,
+    required String teamId,
+    required List<String> playerIds,
+    required List<String> guestNames,
+  }) async {
+    try {
+      final existing = await _supabase
+          .from('championship_rosters')
+          .select('id')
+          .eq('championship_id', championshipId)
+          .eq('team_id', teamId)
+          .maybeSingle();
+
+      final payload = {
+        'championship_id': championshipId,
+        'team_id': teamId,
+        'player_ids': playerIds,
+        'guest_names': guestNames,
+      };
+
+      if (existing != null) {
+        await _supabase
+            .from('championship_rosters')
+            .update(payload)
+            .eq('id', existing['id']);
+      } else {
+        await _supabase
+            .from('championship_rosters')
+            .insert(payload);
+      }
+      debugPrint('✅ Tournament roster updated successfully for team $teamId');
+      return true;
+    } catch (e) {
+      debugPrint('❌ Error updating tournament roster: $e');
+      return false;
+    }
   }
 
   /// ⚡ Auto-schedule matches in a specific round across 1, 2, or 4 days

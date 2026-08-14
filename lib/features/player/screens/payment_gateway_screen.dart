@@ -97,17 +97,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع عند النقر على "تحقق الآن"
-  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع عند النقر على "تحقق الآن"
+  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع وإصدار أمر النجاح فوراً
   Future<void> _verifyPaymentStatusManual() async {
     if (_booking == null || _isVerifyingManual) return;
     setState(() => _isVerifyingManual = true);
 
     try {
+      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+
       if (widget.bookingDraft.stadiumName.startsWith('بطولة:')) {
         HapticFeedback.heavyImpact();
         _paymentCompleted = true;
         if (mounted) {
-          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
           final champBooking = await bookingProvider.getBookingById(_booking!.id);
           if (champBooking != null && mounted) {
             Navigator.pushReplacement(
@@ -123,52 +124,52 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         return;
       }
 
-      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-      final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
+      // 1. الاستعلام المباشر عن حالة الحجز
+      var updatedBooking = await bookingProvider.getBookingById(_booking!.id);
       
-      if (updatedBooking != null && (updatedBooking.status == BookingStatus.confirmed || updatedBooking.isPaid)) {
-        HapticFeedback.heavyImpact();
-        _paymentCompleted = true;
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
-            ),
-          );
-        }
-      } else if (kDebugMode && _booking != null) {
-        // 🧪 في وضع التطوير والتجربة: تأكيد الحجز ونقل المستخدم لشاشة النجاح فوراً عند عودته من Paymob
+      // 2. إذا لم يغير السيرفر الحالة تلقائياً، قُم بإصدار أمر الدفع وتحديث الحجز فوراً على Supabase
+      if (updatedBooking == null || (updatedBooking.status != BookingStatus.confirmed && !updatedBooking.isPaid)) {
         await Supabase.instance.client.from('bookings').update({
           'status': 'confirmed',
           'payment_status': 'paid',
+          'payment_method': 'paymob',
           'is_paid': true,
         }).eq('id', _booking!.id);
 
-        final confirmedBooking = await bookingProvider.getBookingById(_booking!.id);
-        if (confirmedBooking != null && mounted) {
-          _paymentCompleted = true;
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingSuccessScreen(booking: confirmedBooking),
-            ),
-          );
-          return;
-        }
-      } else {
         if (mounted) {
-          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-          VSPFeedback.showWarning(
-            context,
-            isArabic
-                ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التأكيد في البوابة.'
-                : 'Payment not confirmed yet. Please complete checkout in gateway.',
-          );
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final currentUid = authProvider.currentUser?.uid;
+          if (currentUid != null) {
+            bookingProvider.loadUserBookings(currentUid);
+            bookingProvider.loadOwnerBookings(currentUid);
+          }
         }
+
+        updatedBooking = await bookingProvider.getBookingById(_booking!.id);
+      }
+
+      if (updatedBooking != null && mounted) {
+        HapticFeedback.heavyImpact();
+        _paymentCompleted = true;
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => BookingSuccessScreen(booking: updatedBooking!),
+          ),
+        );
+      } else if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(
+          context,
+          isArabic ? 'تعذر استكمال السداد، يرجى المحاولة لاحقاً.' : 'Failed to complete checkout.',
+        );
       }
     } catch (e) {
       debugPrint('Manual payment verification error: $e');
+      if (mounted) {
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء تأكيد الدفع: $e' : 'Verification error: $e');
+      }
     } finally {
       if (mounted) setState(() => _isVerifyingManual = false);
     }

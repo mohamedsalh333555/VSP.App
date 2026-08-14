@@ -111,6 +111,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     final code = _enteredCode;
     if (code.length < 6) return;
 
+    HapticFeedback.mediumImpact();
     setState(() {
       _isVerifying = true;
       _errorMessage = null;
@@ -125,15 +126,18 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     if (!mounted) return;
 
     if (success) {
+      HapticFeedback.lightImpact();
       // Clear pending verification email from SharedPreferences
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('pending_verification_email');
       // GoRouter will redirect automatically via authStateChanges
     } else {
+      HapticFeedback.vibrate();
       _shakeController.forward(from: 0);
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
       setState(() {
         _errorMessage = auth.errorMessage ??
-            'Invalid or expired code. Please try again.';
+            (isAr ? 'رمز التفعيل خاطئ أو انتهت صلاحيته. يرجى المحاولة مجدداً' : 'Invalid or expired code. Please try again.');
         _isVerifying = false;
       });
     }
@@ -143,6 +147,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
   Future<void> _resend() async {
     if (_countdown > 0 || _isResending) return;
+    HapticFeedback.lightImpact();
     setState(() {
       _isResending = true;
       _errorMessage = null;
@@ -154,16 +159,17 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     if (!mounted) return;
     setState(() => _isResending = false);
 
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
     if (success) {
       _startCountdown();
       ScaffoldMessenger.of(context).showSnackBar(
-        const SnackBar(
-          content: Text('✅ A new code has been sent to your email.'),
+        SnackBar(
+          content: Text(isAr ? '✅ تم إرسال رمز تفعيل جديد إلى بريدك الإلكتروني.' : '✅ A new code has been sent to your email.'),
           backgroundColor: VSPColors.accent,
         ),
       );
     } else {
-      setState(() => _errorMessage = 'Failed to resend OTP. Try again.');
+      setState(() => _errorMessage = isAr ? 'فشل إعادة إرسال الرمز. يرجى المحاولة لاحقاً.' : 'Failed to resend OTP. Try again.');
     }
   }
 
@@ -205,6 +211,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
     final displayEmail = _resolvedEmail ?? '';
     final maskedEmail = displayEmail.isNotEmpty ? _maskEmail(displayEmail) : '';
     final canResend = _countdown == 0 && !_isResending;
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return PopScope(
       canPop: false,
@@ -239,14 +246,14 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
                 // ── Title ──────────────────────────────────────────────────
                 Text(
-                  'Verify Your Email',
+                  isAr ? 'تأكيد البريد الإلكتروني' : 'Verify Your Email',
                   style: Theme.of(context).textTheme.displaySmall?.copyWith(
                         fontWeight: FontWeight.bold,
                       ),
                 ),
                 const SizedBox(height: VSPSpacing.sm),
                 Text(
-                  'We sent a 6-digit code to',
+                  isAr ? 'أرسلنا رمز تفعيل مكون من 6 أرقام إلى' : 'We sent a 6-digit code to',
                   style: Theme.of(context)
                       .textTheme
                       .bodyMedium
@@ -330,9 +337,9 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                               color: Colors.black,
                             ),
                           )
-                        : const Text(
-                            'Verify Code',
-                            style: TextStyle(
+                        : Text(
+                            isAr ? 'تأكيد الرمز' : 'Verify Code',
+                            style: const TextStyle(
                               fontWeight: FontWeight.bold,
                               fontSize: 16,
                             ),
@@ -347,7 +354,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                   mainAxisAlignment: MainAxisAlignment.center,
                   children: [
                     Text(
-                      "Didn't receive it? ",
+                      isAr ? 'لم يصلك الرمز؟ ' : "Didn't receive it? ",
                       style: Theme.of(context).textTheme.bodySmall?.copyWith(
                             color: VSPColors.textSecondary,
                           ),
@@ -365,8 +372,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                         ),
                         child: Text(
                           canResend
-                              ? 'Resend Code'
-                              : 'Resend in ${_countdown}s',
+                              ? (isAr ? 'إعادة إرسال الرمز' : 'Resend Code')
+                              : (isAr ? 'إعادة إرسال خلال $_countdown ثانية' : 'Resend in ${_countdown}s'),
                         ),
                       ),
                     ),

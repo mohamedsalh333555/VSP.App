@@ -593,7 +593,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       totalPipeline += totalPrice;
 
       final bool isManual = (b.paymentMethod == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
-      final bool isOnlinePayment = !isManual && (b.paymentMethod == 'online' || (b.paymentTransactionId?.startsWith('PAYMOB') == true));
+      final bool isOnlinePayment = !isManual && (
+        b.paymentMethod == 'online' || 
+        b.paymentMethod == 'paymob' || 
+        b.paymentMethod == 'vodafone_cash' || 
+        b.paymentMethod == 'instapay' || 
+        (b.paymentTransactionId?.startsWith('PAYMOB') == true)
+      );
 
       if (isOnlinePayment) {
         final onlinePaid = (b.depositPaid > 0 ? b.depositPaid : paidAmount);
@@ -901,7 +907,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               const SizedBox(width: 10),
               Expanded(
                 child: _buildGridStatCard(
-                  title: isArabic ? 'محفظة رقمية' : 'Digital Wallet',
+                  title: isArabic ? 'رقمي' : 'Digital',
                   value: '${digitalVspBalance.toInt()} $currencySymbol',
                   valueColor: const Color(0xFF38BDF8),
                   borderColor: const Color(0xFF38BDF8).withValues(alpha: 0.35),

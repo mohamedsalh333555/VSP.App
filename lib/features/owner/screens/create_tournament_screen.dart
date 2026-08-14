@@ -195,20 +195,25 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
       final id = await TournamentRepository().createChampionship(champData);
       
       if (id != null && mounted) {
-        Navigator.pop(context);
-        VSPFeedback.showSuccess(context, 'Tournament Created Successfully!');
+        VSPFeedback.showSuccess(context, isAr ? 'تم إنشاء البطولة بنجاح! 🏆' : 'Tournament Created Successfully!');
         
         try {
           final newChampList = await TournamentRepository().getChampionshipsStream(sportType: _selectedSport).first;
           final newChamp = newChampList.firstWhere((c) => c.id == id);
           if (mounted) {
-            Navigator.push(context, MaterialPageRoute(builder: (_) => OwnerTournamentDashboardScreen(championship: newChamp)));
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(builder: (_) => OwnerTournamentDashboardScreen(championship: newChamp)),
+            );
+            return;
           }
         } catch (e) {
-          // Fallback
+          debugPrint('Error fetching created championship: $e');
         }
+
+        if (mounted) Navigator.pop(context);
       } else if (id == null && mounted) {
-        VSPFeedback.showError(context, 'فشل إنشاء البطولة. يرجى التحقق من دورك والاتصال بالإنترنت.');
+        VSPFeedback.showError(context, isAr ? 'فشل إنشاء البطولة. يرجى التحقق من دورك والاتصال بالإنترنت.' : 'Failed to create tournament. Check internet connection.');
       }
     } catch (e) {
       if (mounted) {

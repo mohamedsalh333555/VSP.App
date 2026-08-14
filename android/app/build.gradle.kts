@@ -59,9 +59,9 @@ android {
                 signingConfig = signingConfigs.getByName("debug")
                 logger.warn("⚠️ RELEASE SIGNING WARNING: key.properties not found. Building with debug keys. This will be REJECTED by Play Store.")
             }
-            // ✅ Release Build Settings: Set to false to prevent R8 from stripping native plugin classes on physical devices
-            isMinifyEnabled = false          // Prevent R8 code stripping crashes
-            isShrinkResources = false        // Retain all native resources
+            // ✅ Release Build Settings: Enable R8 shrinking for minimum APK size
+            isMinifyEnabled = true           // Enable R8 code stripping & optimization
+            isShrinkResources = true         // Remove unused native resources and drawables
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro"

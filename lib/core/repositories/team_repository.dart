@@ -26,6 +26,29 @@ class TeamRepository {
         .toList();
   }
 
+  /// Fetch list of player profiles (id, name, phone, position) for members of a team
+  Future<List<Map<String, String>>> getTeamMemberProfiles(String teamId) async {
+    try {
+      final memberUids = await getTeamMemberUids(teamId);
+      if (memberUids.isEmpty) return [];
+
+      final response = await _supabase
+          .from('users')
+          .select('id, name, phone, position')
+          .inFilter('id', memberUids);
+
+      return (response as List).map((row) => {
+        'uid': row['id']?.toString() ?? '',
+        'name': row['name']?.toString() ?? 'Player',
+        'phone': row['phone']?.toString() ?? '',
+        'position': row['position']?.toString() ?? 'Player',
+      }).toList();
+    } catch (e) {
+      debugPrint('Error getting team member profiles: $e');
+      return [];
+    }
+  }
+
   /// 🛡️ خوارزمية كشف الفرق الوهمية (Fake Team Protection)
   /// الفريق يصبح رسمياً ويؤثر في نقاط الـ Elo والترتيب إذا:
   /// 1. خاض مباراة واحدة موثقة سابقة على الأقل.

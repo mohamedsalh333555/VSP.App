@@ -138,6 +138,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
     if (!mounted) return;
 
     if (success) {
+      HapticFeedback.lightImpact();
       // Mark registration complete — GoRouter will automatically route to
       // /player or /owner via its redirect function once notifyListeners fires.
       if (authProvider.firebaseUser != null) {
@@ -149,8 +150,10 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
       });
       // ✅ No imperative navigation needed — GoRouter handles it.
     } else {
+      HapticFeedback.vibrate();
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
       ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'Registration failed')),
+        SnackBar(content: Text(authProvider.errorMessage ?? (isAr ? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً' : 'Registration failed'))),
       );
     }
 

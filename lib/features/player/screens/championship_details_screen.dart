@@ -15,6 +15,7 @@ import '../../../core/services/location_service.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
 import 'championship_checkout_screen.dart';
+import 'manage_tournament_roster_screen.dart';
 
 class ChampionshipDetailsScreen extends StatefulWidget {
   final Championship championship;
@@ -28,11 +29,32 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
   late TabController _tabController;
   bool _isJoining = false;
+  Team? _myTeam;
+  bool _isTeamJoined = false;
 
   @override
   void initState() {
     super.initState();
     _tabController = TabController(length: 3, vsync: this);
+    _checkUserTeamState();
+  }
+
+  Future<void> _checkUserTeamState() async {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final userPhone = auth.userModel?.phone ?? '';
+      if (userPhone.isNotEmpty) {
+        final team = await TeamRepository().getTeamByCaptainPhone(userPhone);
+        if (team != null && mounted) {
+          setState(() {
+            _myTeam = team;
+            _isTeamJoined = widget.championship.joinedTeams.contains(team.id);
+          });
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking user team state in championship: $e');
+    }
   }
 
   @override
@@ -193,6 +215,32 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       ),
       body: Column(
         children: [
+          if (_isTeamJoined && _myTeam != null) ...[
+            Container(
+              width: double.infinity,
+              margin: const EdgeInsets.fromLTRB(VSPSpacing.md, VSPSpacing.xs, VSPSpacing.md, 0),
+              padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 10),
+              decoration: BoxDecoration(
+                color: VSPColors.accent.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.verify_copy, color: VSPColors.accent, size: 20),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Text(
+                      isArabic 
+                          ? 'فريقك [${_myTeam!.name}] مسجّل رسمياً في هذه البطولة ✅'
+                          : 'Your team [${_myTeam!.name}] is registered in this tournament ✅',
+                      style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           // 🏆 1. Modern Glassmorphic Header Card
           Container(
             width: double.infinity,
@@ -376,28 +424,48 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               color: VSPColors.surface,
               border: Border(top: BorderSide(color: VSPColors.divider, width: 0.5)),
             ),
-            child: (isFull || championship.status == 'ongoing' || championship.status == 'completed')
+            child: (_isTeamJoined && _myTeam != null)
                 ? PrimaryButton(
-                    text: isFull && championship.status != 'ongoing' && championship.status != 'completed'
-                        ? (isArabic ? 'مكتمل العدد (مشاهدة القرعة والجدول)' : 'Fully Booked (View Brackets)')
-                        : AppLocalizations.of(context)!.viewBrackets,
-                    onPressed: () {
-                      Navigator.push(
+                    text: isArabic ? 'فريقك مسجّل بالبطولة ✅ | إدارة التشكيلة 👥' : 'Team Registered ✅ | Manage Roster 👥',
+                    color: VSPColors.accent,
+                    textColor: Colors.black,
+                    onPressed: () async {
+                      final updated = await Navigator.push<bool>(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => TournamentBracketsScreen(
+                          builder: (_) => ManageTournamentRosterScreen(
                             championship: championship,
-                            isOwner: false,
+                            team: _myTeam!,
                           ),
                         ),
                       );
+                      if (updated == true && mounted) {
+                        setState(() {});
+                      }
                     },
                   )
-                : PrimaryButton(
-                    text: isArabic ? 'انضمام للبطولة الآن ⚽' : AppLocalizations.of(context)!.join,
-                    isLoading: _isJoining,
-                    onPressed: _handleJoin,
-                  ),
+                : (isFull || championship.status == 'ongoing' || championship.status == 'completed')
+                    ? PrimaryButton(
+                        text: isFull && championship.status != 'ongoing' && championship.status != 'completed'
+                            ? (isArabic ? 'مكتمل العدد (مشاهدة القرعة والجدول)' : 'Fully Booked (View Brackets)')
+                            : AppLocalizations.of(context)!.viewBrackets,
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => TournamentBracketsScreen(
+                                championship: championship,
+                                isOwner: false,
+                              ),
+                            ),
+                          );
+                        },
+                      )
+                    : PrimaryButton(
+                        text: isArabic ? 'انضمام للبطولة الآن ⚽' : AppLocalizations.of(context)!.join,
+                        isLoading: _isJoining,
+                        onPressed: _handleJoin,
+                      ),
           ),
         ],
       ),
