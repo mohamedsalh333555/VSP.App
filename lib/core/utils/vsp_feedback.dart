@@ -63,6 +63,10 @@ class VSPFeedback {
     HapticFeedback.lightImpact();
   }
 
+  static void triggerTap() {
+    HapticFeedback.selectionClick();
+  }
+
   /// 🧹 تنظيف رسائل الخطأ الخام من DB ومع localization تلقائي
   static String _cleanErrorMessage(BuildContext context, String raw) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';

@@ -394,7 +394,7 @@ class _AccountScreenState extends State<AccountScreen> {
               const SizedBox(height: 10),
               Text(
                 isArabic
-                    ? 'الباقة الأساسية (500 ج.م / 3 شهور مجاناً) تتيح تشغيل ملعب واحد فقط.\n\nترقية حسابك للباقة الاحترافية (1000 ج.م) لإضافة حتى 3 ملاعب كاملة وإدارتها من مكان واحد!'
+                    ? 'الباقة الأساسية (500 ج.م / شهرين مجاناً) تتيح تشغيل ملعب واحد فقط.\n\nترقية حسابك للباقة الاحترافية (1000 ج.م) لإضافة حتى 3 ملاعب كاملة وإدارتها من مكان واحد!'
                     : 'Basic Plan allows 1 stadium only.\n\nUpgrade to Pro Plan (1000 EGP) to add up to 3 stadiums and manage your full multi-pitch complex!',
                 style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
                 textAlign: TextAlign.center,

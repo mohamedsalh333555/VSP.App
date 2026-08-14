@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'dart:math';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
@@ -1129,8 +1130,16 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         backgroundColor: Colors.transparent,
         elevation: 0,
         leading: IconButton(
-          icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? Iconsax.arrow_right_3_copy
+                : Iconsax.arrow_left_2_copy,
+            color: VSPColors.textPrimary,
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
         ),
         title: Text(_currentChampionship.name, style: Theme.of(context).textTheme.titleLarge?.copyWith(fontSize: 20, fontWeight: FontWeight.bold)),
         centerTitle: true,

@@ -846,7 +846,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       IconButton(
                         visualDensity: VisualDensity.compact,
                         icon: const Icon(Iconsax.minus_copy, size: 16, color: Colors.white),
-                        onPressed: _initialPlayersCount > 1 ? () => setState(() => _initialPlayersCount--) : null,
+                        onPressed: _initialPlayersCount > 1 
+                            ? () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _initialPlayersCount--);
+                              } 
+                            : null,
                       ),
                       Padding(
                         padding: const EdgeInsets.symmetric(horizontal: 6),
@@ -859,7 +864,10 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         visualDensity: VisualDensity.compact,
                         icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
                         onPressed: _initialPlayersCount < widget.stadium.totalFieldCapacity 
-                            ? () => setState(() => _initialPlayersCount++) 
+                            ? () {
+                                HapticFeedback.selectionClick();
+                                setState(() => _initialPlayersCount++);
+                              } 
                             : null,
                       ),
                     ],

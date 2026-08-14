@@ -373,7 +373,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           mainAxisSize: MainAxisSize.min,
           children: [
             ListTile(
-              title: const Text('الفترة التجريبية (3 شهور)', style: TextStyle(color: Colors.white, fontSize: 14)),
+              title: const Text('الفترة التجريبية (شهرين)', style: TextStyle(color: Colors.white, fontSize: 14)),
               subtitle: const Text('مجاناً - 1 ملعب', style: TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
               onTap: () {
                 Navigator.pop(ctx);

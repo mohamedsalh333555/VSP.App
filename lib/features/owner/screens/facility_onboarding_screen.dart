@@ -500,7 +500,7 @@ class _UpgradeBottomSheet extends StatelessWidget {
         : 0;
 
     final String planLabel = isTrial
-        ? (isAr ? 'اشتراك مجاني — فترة تجريبية 3 شهور' : 'Free Trial — 3 Month Plan')
+        ? (isAr ? 'اشتراك مجاني — فترة تجريبية شهرين' : 'Free Trial — 2 Month Plan')
         : (isAr ? 'الباقة الأساسية (Basic)' : 'Basic Plan');
 
     final String daysText = isTrial

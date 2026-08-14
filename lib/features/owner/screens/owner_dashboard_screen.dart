@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -11,6 +12,7 @@ import '../../../data/models.dart';
 import '../../../features/player/screens/notifications_center_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/repositories/notification_repository.dart';
+import '../../../core/repositories/tournament_repository.dart';
 
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
@@ -25,6 +27,8 @@ class OwnerDashboardScreen extends StatefulWidget {
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   bool _isPendingBannerDismissed = false;
   String _selectedTimePeriod = 'today'; // 'today' | 'week' | 'month' | 'all'
+  StreamSubscription<List<Championship>>? _champSubscription;
+  double _championshipDigitalRevenue = 0.0;
 
   @override
   void initState() {
@@ -39,8 +43,30 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         if (!mounted) return;
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         bookingProvider.loadOwnerBookings(uid);
+
+        _champSubscription?.cancel();
+        _champSubscription = TournamentRepository()
+            .getChampionshipsStream(isOwner: true, ownerId: uid)
+            .listen((champs) {
+          if (!mounted) return;
+          double total = 0.0;
+          for (var c in champs) {
+            if (c.entryFee > 0 && c.paidTeams.isNotEmpty) {
+              total += (c.paidTeams.length * c.entryFee);
+            }
+          }
+          if (_championshipDigitalRevenue != total) {
+            setState(() => _championshipDigitalRevenue = total);
+          }
+        });
       }
     });
+  }
+
+  @override
+  void dispose() {
+    _champSubscription?.cancel();
+    super.dispose();
   }
 
   void _showProUpgradeSheet(BuildContext context) {
@@ -613,6 +639,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       totalHours += (diffMinutes / 60.0);
     }
 
+    // 🏆 دمج إيرادات اشتراكات البطولات الأونلاين الحية
+    digitalVspBalance += _championshipDigitalRevenue;
+    collectedRevenue += _championshipDigitalRevenue;
+    totalPipeline += _championshipDigitalRevenue;
 
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 

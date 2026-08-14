@@ -1,4 +1,3 @@
-import 'subscription_plans_screen.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -19,69 +18,15 @@ class CreateTournamentWizard extends StatefulWidget {
   final String? preselectedType;
   const CreateTournamentWizard({super.key, this.tournament, this.preselectedType});
 
-  /// 🔒 Gatekeeper: Checks if owner is on Pro Plan (1000 EGP).
-  /// Pro Plan owners -> Open Wizard.
-  /// Basic / Trial / Expired owners -> Show upgrade dialog & redirect to SubscriptionPlansScreen.
+  /// 🏆 إتاحة إنشاء البطولة لجميع الملاك بدون استثناء
   static void open(BuildContext context, {Championship? tournament, String? preselectedType}) {
-    final user = Provider.of<AuthProvider>(context, listen: false).userModel;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-
-    // If editing existing tournament OR owner is Pro Plan -> Allow
-    if (tournament != null || (user != null && user.canCreateTournaments)) {
-      Navigator.push(
-        context,
-        MaterialPageRoute(builder: (context) => CreateTournamentWizard(tournament: tournament, preselectedType: preselectedType)),
-      );
-      return;
-    }
-
-    // 🔒 Non-Pro Plan -> Show dialog & redirect to SubscriptionPlansScreen
-    showDialog(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-        title: Row(
-          children: [
-            const Icon(Iconsax.crown_copy, color: Colors.amber, size: 24),
-            const SizedBox(width: 10),
-            Expanded(
-              child: Text(
-                isArabic ? 'ميزة الباقة الاحترافية' : 'Pro Plan Feature',
-                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
-              ),
-            ),
-          ],
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => CreateTournamentWizard(
+          tournament: tournament,
+          preselectedType: preselectedType,
         ),
-        content: Text(
-          isArabic
-              ? 'عذراً! ميزة إنشاء وتنظيم البطولات الاحترافية متاحة حصرياً لمشتركي الباقة الاحترافية (1000 ج.م).\n\nيرجى ترقية باقتك الآن لتنظيم بطولاتك الخاصة وجذب الفرق واللاعبين!'
-              : 'Tournament creation is exclusively available for Pro Plan subscribers (1000 EGP).\n\nUpgrade your subscription now to host unlimited tournaments!',
-          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textMuted)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(
-              backgroundColor: Colors.amber,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-            ),
-            onPressed: () {
-              Navigator.pop(ctx);
-              Navigator.push(
-                context,
-                MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
-              );
-            },
-            child: Text(
-              isArabic ? 'عرض الباقات والترقية' : 'Upgrade Plan Now',
-              style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold),
-            ),
-          ),
-        ],
       ),
     );
   }
@@ -334,8 +279,16 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Icons.adaptive.arrow_back, color: VSPColors.textPrimary),
-          onPressed: _prevStep,
+          icon: Icon(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? Iconsax.arrow_right_3_copy
+                : Iconsax.arrow_left_2_copy,
+            color: VSPColors.textPrimary,
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            _prevStep();
+          },
         ),
         centerTitle: true,
         title: Text(

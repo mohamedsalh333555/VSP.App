@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 
 import '../../../core/repositories/team_repository.dart';
@@ -129,8 +130,17 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Iconsax.arrow_left_2_copy,  color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
+          icon: Icon(
+            Localizations.localeOf(context).languageCode == 'ar'
+                ? Iconsax.arrow_right_3_copy
+                : Iconsax.arrow_left_2_copy,
+            color: VSPColors.textPrimary,
+            size: 20,
+          ),
+          onPressed: () {
+            HapticFeedback.lightImpact();
+            Navigator.pop(context);
+          },
         ),
         centerTitle: true,
         title: Text(
@@ -320,6 +330,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
 
     return GestureDetector(
       onTap: () async {
+        HapticFeedback.selectionClick();
         if (isSelected) return;
         
         setState(() {

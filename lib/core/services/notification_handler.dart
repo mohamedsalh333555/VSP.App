@@ -229,7 +229,7 @@ class NotificationHandler {
     for (final uid in recipientIds) {
       final notif = AppNotification(
         id: '',
-        title: 'New message from $senderName 💬',
+        title: 'رسالة جديدة من $senderName 💬',
         body: messageText,
         type: 'chat',
         bookingId: bookingId,

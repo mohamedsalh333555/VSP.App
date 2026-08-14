@@ -177,17 +177,15 @@ class TournamentRepository {
     }
   }
 
-  /// 🏦 تفعيل البطولة بعد دفع رسوم الإنشاء (100 ج.م)
-  /// تُغيِّر status من 'draft' إلى 'open' وتُعلِّم creation_fee_paid = true
-  Future<bool> activateChampionship(String championshipId, {String? paymentId}) async {
+  /// 🏆 تفعيل ونشر البطولة للمالك (مجانية 100% بدون أي رسوم إنشاء)
+  Future<bool> activateChampionship(String championshipId) async {
     try {
       await _supabase.from('championships').update({
         'status': 'open',
         'is_approved': true,
         'creation_fee_paid': true,
-        if (paymentId != null) 'creation_payment_id': paymentId,
       }).eq('id', championshipId);
-      debugPrint('✅ Championship $championshipId activated successfully after fee payment.');
+      debugPrint('✅ Championship $championshipId activated successfully (100% Free).');
       return true;
     } catch (e) {
       debugPrint('❌ Error activating championship: $e');
@@ -330,6 +328,21 @@ class TournamentRepository {
             'paid_teams': updatedPaid,
           })
           .eq('id', championshipId);
+
+      // 💳 تسجيل معاملة اشتراك البطولة في جدول المعاملات المالية
+      if (isPaid && champ.entryFee > 0) {
+        try {
+          await _supabase.from('transactions').insert({
+            'championship_id': championshipId,
+            'user_id': _supabase.auth.currentUser?.id,
+            'amount': champ.entryFee,
+            'type': 'digital',
+            'created_at': DateTime.now().toIso8601String(),
+          });
+        } catch (txErr) {
+          debugPrint('⚠️ Non-blocking transaction logging notice: $txErr');
+        }
+      }
 
       // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول
       try {

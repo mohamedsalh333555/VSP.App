@@ -91,23 +91,22 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 20),
 
-            // 👑 1. كارت الباقة الاحترافية (1000 ج.م - الخيار المرجعي والأعلى قيمة - Contrast Anchor)
+            // 👑 1. كارت الباقة الاحترافية (Pro Plan - محرك الأرباح وحماية الدخل)
             _buildPlanCard(
               title: isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
               priceText: isArabic ? '1000 ج.م' : '1000 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               stadiumsCount: 3,
-              badgeText: isArabic ? '👑 الأكثر طلباً وتوصية' : '👑 Most Popular & Recommended',
+              badgeText: isArabic ? '👑 الخيار الاستثماري الأعلى عائداً' : '👑 Highest ROI Plan',
               badgeColor: Colors.amber,
               isProBorder: true,
               isCurrentPlan: userModel?.isProPlan == true,
+              customButtonText: isArabic ? '🚀 فعّل الباقة الاحترافية وضاعف إيراداتك' : '🚀 Upgrade to Pro & Double Revenue',
               features: [
-                isArabic ? 'إضافة وتشغيل حتى 3 ملاعب مختلفة' : 'Operate up to 3 Stadiums',
-                isArabic ? 'إنشاء وتنظيم عدد غير محدود من البطولات الاحترافية' : 'Host & organize unlimited tournaments',
-                isArabic ? 'إمكانية إضافة ملعب إضافي (+200 ج.م/شهرياً)' : 'Extra Stadium Add-on (+200 EGP/mo)',
-                isArabic ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & Daily Booking Analytics',
-                isArabic ? 'تقرير مصادر الحجز (مباشر مقابل تحديات)' : 'Booking Source Report (Direct vs Challenge)',
-                isArabic ? 'دعم فني وتفعيل أولوية أجهزة المالك' : 'Priority Owner Support',
+                isArabic ? '🛡️ استيعاب التوسع ومنع رفض الفرق: تشغيل حتى 3 ملاعب كاملة دون تفويت حجز واحد' : 'Operate up to 3 stadiums to capture full capacity',
+                isArabic ? '📈 تحويل الساعات الميتة إلى أرباح: تحليلات دقيقة لأوقات الركود لملء الفترات الهادئة بعروض ذكية' : 'Turn off-peak hours into revenue with smart analytics',
+                isArabic ? '🏆 مضاعفة الدخل عبر البطولات: تنظيم بطولات مفتوحة لجذب عشرات الفرق وزيادة دخل الاشتراكات' : 'Host unlimited tournaments to maximize revenue',
+                isArabic ? '⚡ استقرار تشغيلي 24/7: دعم فني مخصص وأولوية قصوى لضمان عدم توقف الحجوزات لحظة واحدة' : '24/7 Priority support & operational stability',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
               isArabic: isArabic,
@@ -115,20 +114,21 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 16),
 
-            // 💳 2. كارت الباقة الأساسية (500 ج.م - تباين رائع وموفر)
+            // 💳 2. كارت الباقة الأساسية (Basic Plan - الدخول الآمن)
             _buildPlanCard(
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isArabic ? '500 ج.م' : '500 EGP',
-              periodText: isArabic ? 'شهرياً (مجاناً لأول 3 شهور)' : 'Monthly (Free 1st 3 months)',
+              periodText: isArabic ? 'شهرياً (مجاناً لأول شهرين)' : 'Monthly (Free 1st 2 months)',
               stadiumsCount: 1,
-              badgeText: isArabic ? '🎁 3 شهور مجاناً' : '🎁 3 Months Free',
+              badgeText: isArabic ? '🎁 ابدأ بتجربة مجانية كاملة' : '🎁 Full Free Trial',
               badgeColor: VSPColors.accent,
               isCurrentPlan: userModel?.isInActiveTrial == true || (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true),
+              customButtonText: isArabic ? 'المتابعة بالباقة الأساسية لملعب واحد فقط' : 'Continue with Basic (1 Stadium)',
               features: [
-                isArabic ? 'إضافة وتشغيل ملعب واحد (1)' : 'Operate 1 Stadium',
-                isArabic ? 'استقبال الحجوزات النقدية والأونلاين' : 'Accept Cash & Online Bookings',
-                isArabic ? 'تنبيهات إشعار فورية بالحجوزات' : 'Instant Booking Notifications',
-                isArabic ? 'لوحة تحكم وتحصيل أرباح 100%' : '100% Direct Revenue Dashboard',
+                isArabic ? '✅ تشغيل وإدارة كاملة لملعب واحد (1)' : 'Full operation for 1 stadium',
+                isArabic ? '✅ استقبال الحجوزات الفورية (كاش وأونلاين) ومنع التضارب اليدوي' : 'Accept Cash & Online bookings',
+                isArabic ? '⏱️ فترة تجريبية مجانية (شهرين) لتقييم العائد على استثمارك' : '2 Months free trial to evaluate ROI',
+                isArabic ? '🏆 إنشاء وتنظيم البطولات مجاناً لجميع الملاك بدون قيود' : 'Free Tournament creation for all owners',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
               isArabic: isArabic,
@@ -294,6 +294,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
     required bool isArabic,
     bool isCurrentPlan = false,
     bool isProBorder = false,
+    String? customButtonText,
   }) {
     return VSPCard(
       padding: const EdgeInsets.all(20),
@@ -361,9 +362,9 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                     ),
                   )
                 : PrimaryButton(
-                    text: onSelect != null
+                    text: customButtonText ?? (onSelect != null
                         ? (isArabic ? 'تجديد / ترقية الباقة' : 'Subscribe / Upgrade')
-                        : (isArabic ? 'مفعلة مجاناً' : 'Free Active'),
+                        : (isArabic ? 'مفعلة مجاناً' : 'Free Active')),
                     color: isProBorder ? Colors.amber : VSPColors.accent,
                     textColor: Colors.black,
                     onPressed: onSelect,
