@@ -1,18 +1,7 @@
 class AppConfig {
-  static const bool bypassOtp = false;
-  static const bool demoMode = false;
-  static const bool enableOnlinePayment = false;
+  static const bool enableOnlinePayment = true;
 
-  // OTP Configuration
-  // 🛡️ Set to false to force real email OTP sending via Supabase/Resend
-  static const bool useMockOtp = false;
-  static const String mockOtpCode = "123456";
-  static const int otpCountdownSeconds = 60;
-
-  // Sandbox & Verification Configuration
-  static const bool autoApproveOwnerInDebug = false;
-
-  // 💳 Paymob Payment Gateway Configuration
+  // 💳 Paymob Payment Gateway Production Configuration
   static const String paymobIframeId = '1059114';
   static const String paymobCardIntegrationId = String.fromEnvironment('PAYMOB_CARD_INTEGRATION_ID', defaultValue: '5772488');
   static const String paymobWalletIntegrationId = String.fromEnvironment('PAYMOB_WALLET_INTEGRATION_ID', defaultValue: '5772511');
@@ -21,7 +10,6 @@ class AppConfig {
   static const String paymobSecretKey = String.fromEnvironment('PAYMOB_SECRET_KEY', defaultValue: 'egy_sk_test_bd1135d9086f141c2a800d726aa7c118ff988321ab75aba708252df996658697');
   static const String paymobHmac = String.fromEnvironment('PAYMOB_HMAC', defaultValue: 'F3D831A6ABCF88F4A2FCFB8B92C92623');
 
-  // 🔌 Supabase Connection Pooling (Supavisor) Configuration
-  // Direct Connection Port: 5432 | Pooled Connection Port: 6543 (Transaction Mode for Serverless)
+  // 🔌 Supabase Connection Pooling Configuration
   static const int supabasePooledPort = 6543;
 }

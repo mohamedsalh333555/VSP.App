@@ -753,16 +753,25 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
     final deposit = widget.stadium.depositAmount;
     final isSlotSelected = _selectedTimeSlots.isNotEmpty;
 
+    final bottomPadding = MediaQuery.of(context).padding.bottom;
+
     return Container(
       padding: EdgeInsets.fromLTRB(
         20,
-        12,
+        16,
         20,
-        MediaQuery.of(context).padding.bottom > 0 ? MediaQuery.of(context).padding.bottom + 8 : 16,
+        bottomPadding > 0 ? bottomPadding + 14 : 20,
       ),
-      decoration: const BoxDecoration(
-        color: Color(0xFF161616),
-        border: Border(top: BorderSide(color: Color(0xFF262626), width: 1)),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        border: const Border(top: BorderSide(color: VSPColors.divider, width: 1.5)),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.5),
+            blurRadius: 20,
+            offset: const Offset(0, -6),
+          ),
+        ],
       ),
       child: Column(
         mainAxisSize: MainAxisSize.min,
@@ -789,7 +798,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     activeColor: Colors.black,
                     activeTrackColor: VSPColors.accent,
                     inactiveThumbColor: Colors.grey,
-                    inactiveTrackColor: const Color(0xFF2C2C2E),
+                    inactiveTrackColor: VSPColors.surfaceAlt,
                     trackOutlineColor: WidgetStateProperty.all(Colors.transparent),
                     onChanged: (val) {
                       setState(() => _isPrivate = val);
@@ -804,7 +813,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
           ],
 
           // ── Row 2: Available Players With You Counter (Only shown for OpenJoin gathering matches - SECOND) ──
@@ -819,7 +828,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       isArabic ? 'عدد اللاعبين المتوفرين معك' : 'Players With You',
                       style: const TextStyle(
                         color: Colors.white,
-                        fontSize: 17,
+                        fontSize: 16,
                         fontWeight: FontWeight.bold,
                         letterSpacing: -0.3,
                       ),
@@ -837,9 +846,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
                 Container(
                   decoration: BoxDecoration(
-                    color: const Color(0xFF222222),
-                    borderRadius: BorderRadius.circular(10),
-                    border: Border.all(color: const Color(0xFF333333)),
+                    color: VSPColors.surfaceAlt,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                    border: Border.all(color: VSPColors.borderLight),
                   ),
                   child: Row(
                     children: [
@@ -875,82 +884,97 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 ),
               ],
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 12),
           ],
 
-
+          // ── Option Card: Rent Ball Add-on ──
           if (hasBallOption) ...[
             GestureDetector(
               onTap: () => setState(() => _isBallRented = !_isBallRented),
               behavior: HitTestBehavior.opaque,
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        isArabic
-                            ? 'إيجار كرة / ${_ballPrice.toInt()} ج.م'
-                            : 'Ball / ${_ballPrice.toInt()}eg',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 18,
-                          fontWeight: FontWeight.bold,
-                          letterSpacing: -0.3,
-                        ),
-                      ),
-                      const SizedBox(height: 2),
-                      Text(
-                        isArabic
-                            ? 'دفع رسوم إيجار الكرة في هذا الملعب'
-                            : 'Pay Per Ball At This Pitch',
-                        style: const TextStyle(
-                          color: VSPColors.textSecondary,
-                          fontSize: 11.5,
-                          fontWeight: FontWeight.w500,
-                        ),
-                      ),
-                    ],
+              child: AnimatedContainer(
+                duration: const Duration(milliseconds: 180),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+                decoration: BoxDecoration(
+                  color: _isBallRented
+                      ? VSPColors.accent.withValues(alpha: 0.12)
+                      : VSPColors.surfaceAlt,
+                  borderRadius: BorderRadius.circular(VSPRadius.lg),
+                  border: Border.all(
+                    color: _isBallRented ? VSPColors.accent : VSPColors.divider,
+                    width: _isBallRented ? 1.5 : 1.0,
                   ),
-                  Container(
-                    width: 22,
-                    height: 22,
-                    decoration: BoxDecoration(
-                      shape: BoxShape.circle,
-                      color: _isBallRented ? VSPColors.accent : const Color(0xFF2C2C2E),
-                      border: Border.all(
-                        color: _isBallRented ? VSPColors.accent : Colors.grey.shade700,
-                        width: 1.5,
+                ),
+                child: Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            isArabic
+                                ? 'إيجار كرة / ${_ballPrice.toInt()} ج.م'
+                                : 'Ball / ${_ballPrice.toInt()}eg',
+                            style: TextStyle(
+                              color: _isBallRented ? Colors.white : VSPColors.textPrimary,
+                              fontSize: 15,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                          const SizedBox(height: 2),
+                          Text(
+                            isArabic
+                                ? 'دفع رسوم إيجار الكرة في هذا الملعب'
+                                : 'Pay Per Ball At This Pitch',
+                            style: const TextStyle(
+                              color: VSPColors.textSecondary,
+                              fontSize: 11,
+                              fontWeight: FontWeight.w500,
+                            ),
+                          ),
+                        ],
                       ),
                     ),
-                    child: _isBallRented
-                        ? const Icon(Icons.check, size: 15, color: Colors.black)
-                        : null,
-                  ),
-                ],
+                    const SizedBox(width: 10),
+                    Container(
+                      width: 24,
+                      height: 24,
+                      decoration: BoxDecoration(
+                        shape: BoxShape.circle,
+                        color: _isBallRented ? VSPColors.accent : Colors.transparent,
+                        border: Border.all(
+                          color: _isBallRented ? VSPColors.accent : Colors.grey.shade600,
+                          width: 1.5,
+                        ),
+                      ),
+                      child: _isBallRented
+                          ? const Icon(Icons.check, size: 16, color: Colors.black)
+                          : null,
+                    ),
+                  ],
+                ),
               ),
             ),
-            const SizedBox(height: 8),
+            const SizedBox(height: 14),
           ],
 
-          const SizedBox(height: 4),
-
-          // ── Row 3: Price & Booking Confirmation Button ──
+          // ── Row 3: Price & Spacious Booking Confirmation Button ──
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.center,
             children: [
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   Text(
-                    isArabic ? 'السعر' : 'Price',
-                    style: TextStyle(
-                      color: Colors.grey.shade400,
-                      fontSize: 13,
-                      fontWeight: FontWeight.w500,
+                    isArabic ? 'السعر الإجمالي' : 'Total Price',
+                    style: const TextStyle(
+                      color: VSPColors.textSecondary,
+                      fontSize: 11,
+                      fontWeight: FontWeight.bold,
+                      letterSpacing: 0.2,
                     ),
                   ),
                   const SizedBox(height: 2),
@@ -958,20 +982,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     children: [
                       Text(
                         '${_totalPrice.toInt()} ${isArabic ? "ج.م" : "eg"}',
-                        style: const TextStyle(
-                          color: Colors.white,
-                          fontSize: 24,
-                          fontWeight: FontWeight.bold,
+                        style: TextStyle(
+                          color: isSlotSelected ? VSPColors.accent : Colors.white,
+                          fontSize: 22,
+                          fontWeight: FontWeight.w900,
                           letterSpacing: -0.5,
                         ),
                       ),
                       if (deposit > 0 && widget.stadium.needsDeposit) ...[
                         const SizedBox(width: 6),
                         Container(
-                          padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                          padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 3),
                           decoration: BoxDecoration(
                             color: VSPColors.warning.withValues(alpha: 0.2),
-                            borderRadius: BorderRadius.circular(4),
+                            borderRadius: BorderRadius.circular(6),
                           ),
                           child: Text(
                             isArabic ? 'عربون ${deposit.toInt()}' : 'Dep ${deposit.toInt()}',
@@ -986,14 +1010,15 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
               const SizedBox(width: 16),
               Expanded(
                 child: SizedBox(
-                  height: 48,
+                  height: 52,
                   child: ElevatedButton(
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: isSlotSelected ? VSPColors.accent : const Color(0xFF2C2C2E),
-                      foregroundColor: isSlotSelected ? Colors.black : Colors.grey.shade400,
+                      backgroundColor: isSlotSelected ? VSPColors.accent : VSPColors.surfaceAlt,
+                      foregroundColor: isSlotSelected ? Colors.black : Colors.grey.shade500,
                       elevation: 0,
+                      padding: const EdgeInsets.symmetric(horizontal: 12),
                       shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(16),
+                        borderRadius: BorderRadius.circular(VSPRadius.lg),
                       ),
                     ),
                     onPressed: (!isSlotSelected || _isLoading) ? null : () async {

@@ -76,10 +76,10 @@ class PaymobService {
       final phone = userPhone.trim().isNotEmpty ? userPhone.trim() : '+201000000000';
       final email = userEmail.trim().isNotEmpty ? userEmail.trim() : 'player@vsp.app';
 
-      // Default integration ID fallback
+      // Integration ID: 5772488 (Card Integration) or 5772511 (Wallet Integration)
       final activeIntegrationId = (integrationId != null && integrationId.isNotEmpty) 
           ? integrationId 
-          : (AppConfig.paymobIframeId.isNotEmpty ? AppConfig.paymobIframeId : '1059114');
+          : AppConfig.paymobCardIntegrationId;
 
       final paymentKeyResponse = await http.post(
         Uri.parse('$_baseUrl/acceptance/payment_keys'),

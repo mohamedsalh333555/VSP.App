@@ -14,7 +14,6 @@ import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
 import '../../features/admin/screens/admin_dashboard_screen.dart';
-import '../config/app_config.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
@@ -154,7 +153,7 @@ class AppRouter {
     // Checks isEmailVerified — NOT isRegistrationComplete.
     // Google/Apple users are already email-verified by the provider → skip this gate.
     // Email/password users must verify their OTP before proceeding.
-    if (!AppConfig.bypassOtp && !userModel.isEmailVerified) {
+    if (!userModel.isEmailVerified) {
       if (path != '/verify-email') return '/verify-email';
       return null;
     }

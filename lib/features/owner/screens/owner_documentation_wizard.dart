@@ -14,8 +14,6 @@ import '../../../core/services/owner_document_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
-import '../../../core/config/app_config.dart';
-
 class OwnerDocumentationWizard extends StatefulWidget {
   const OwnerDocumentationWizard({super.key});
 
@@ -262,13 +260,10 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         return;
       }
 
-      final bool autoApprove = AppConfig.autoApproveOwnerInDebug && kDebugMode;
-
-      // ✅ Use completeOwnerRegistration — writes verificationStatus &
-      // isRegistrationComplete directly via Supabase, bypassing the
-      // client-side security filter that previously blocked these fields.
+      // ✅ Submit documents: verificationStatus is strictly 'pending'
+      // requiring real Admin approval from Admin Dashboard.
       final bool saved = await authProvider.completeOwnerRegistration(
-        verificationStatus: autoApprove ? 'approved' : 'pending',
+        verificationStatus: 'pending',
       );
 
       if (!saved) {
@@ -292,24 +287,20 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
           shape: RoundedRectangleBorder(
             borderRadius: BorderRadius.circular(VSPRadius.lg),
           ),
-          icon: Icon(
-            autoApprove ? Iconsax.tick_circle_copy : Iconsax.clock_copy,
+          icon: const Icon(
+            Iconsax.clock_copy,
             color: VSPColors.accent,
             size: 48,
           ),
           title: Text(
-            autoApprove
-                ? (isArabic ? '🎉 تم التسجيل بنجاح!' : '🎉 Registration Complete!')
-                : (isArabic ? '⏳ قيد المراجعة' : '⏳ Under Review'),
+            isArabic ? '⏳ قيد المراجعة' : '⏳ Under Review',
             style: Theme.of(ctx).textTheme.titleLarge,
             textAlign: TextAlign.center,
           ),
           content: Text(
-            autoApprove
-                ? (isArabic ? AppLocalizations.of(context)!.regCompleteBody : AppLocalizations.of(context)!.regCompleteBody)
-                : (isArabic
-                    ? "لقد تم استلام بياناتك بنجاح! 🎉\n\nنحن الآن نقوم بمراجعتها. يمكنك الانتقال لاستكشاف لوحة التحكم الخاصة بك الآن، ولكن يرجى العلم أن ملاعبك ستظل مخفية عن اللاعبين حتى يتم التوثيق من الإدارة."
-                    : "Your data has been successfully received! 🎉\n\nWe are reviewing it now. You can explore your dashboard, but your stadiums will remain hidden from players until verified by admin."),
+            isArabic
+                ? "لقد تم استلام بياناتك بنجاح! 🎉\n\nنحن الآن نقوم بمراجعتها. يمكنك الانتقال لاستكشاف لوحة التحكم الخاصة بك الآن، ولكن يرجى العلم أن ملاعبك ستظل مخفية عن اللاعبين حتى يتم التوثيق من الإدارة."
+                : "Your data has been successfully received! 🎉\n\nWe are reviewing it now. You can explore your dashboard, but your stadiums will remain hidden from players until verified by admin.",
             style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(
               color: VSPColors.textSecondary,
               height: 1.6,

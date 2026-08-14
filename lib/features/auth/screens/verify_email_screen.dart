@@ -6,7 +6,6 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/config/app_config.dart';
 
 /// Screen shown after email signup (when bypassOtp == false).
 /// Allows the user to enter their 6-digit OTP, resend it (with a 60-second
@@ -379,26 +378,6 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     ),
                   ],
                 ),
-
-                // ── Dev bypass note ───────────────────────────────────────
-                if (AppConfig.bypassOtp) ...[
-                  const SizedBox(height: VSPSpacing.xl),
-                  Container(
-                    padding: const EdgeInsets.all(VSPSpacing.sm),
-                    decoration: BoxDecoration(
-                      color: Colors.orange.withValues(alpha: 0.1),
-                      borderRadius: BorderRadius.circular(VSPRadius.sm),
-                      border: Border.all(
-                          color: Colors.orange.withValues(alpha: 0.3)),
-                    ),
-                    child: Text(
-                      '🛠️ Dev mode: OTP bypass active. Code: ${AppConfig.mockOtpCode}',
-                      textAlign: TextAlign.center,
-                      style: const TextStyle(
-                          color: Colors.orange, fontSize: 11),
-                    ),
-                  ),
-                ],
                 const SizedBox(height: 24),
                 TextButton(
                   onPressed: () async {

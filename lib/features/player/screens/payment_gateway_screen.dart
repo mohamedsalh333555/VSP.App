@@ -7,12 +7,12 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/services.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 import 'booking_success_screen.dart';
+import 'paymob_web_view_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/config/app_config.dart';
@@ -97,7 +97,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   }
 
   /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع عند النقر على "تحقق الآن"
-  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع وإصدار أمر النجاح فوراً
+  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع
   Future<void> _verifyPaymentStatusManual() async {
     if (_booking == null || _isVerifyingManual) return;
     setState(() => _isVerifyingManual = true);
@@ -105,63 +105,28 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     try {
       final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
-      if (widget.bookingDraft.stadiumName.startsWith('بطولة:')) {
-        HapticFeedback.heavyImpact();
-        _paymentCompleted = true;
-        if (mounted) {
-          final champBooking = await bookingProvider.getBookingById(_booking!.id);
-          if (champBooking != null && mounted) {
-            Navigator.pushReplacement(
-              context,
-              MaterialPageRoute(
-                builder: (context) => BookingSuccessScreen(booking: champBooking),
-              ),
-            );
-          } else if (mounted) {
-            Navigator.pop(context, true);
-          }
-        }
-        return;
-      }
-
-      // 1. الاستعلام المباشر عن حالة الحجز
-      var updatedBooking = await bookingProvider.getBookingById(_booking!.id);
+      // 1. الاستعلام المباشر عن حالة الحجز الفعلية من السيرفر
+      final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
       
-      // 2. إذا لم يغير السيرفر الحالة تلقائياً، قُم بإصدار أمر الدفع وتحديث الحجز فوراً على Supabase
-      if (updatedBooking == null || (updatedBooking.status != BookingStatus.confirmed && !updatedBooking.isPaid)) {
-        await Supabase.instance.client.from('bookings').update({
-          'status': 'confirmed',
-          'payment_status': 'paid',
-          'payment_method': 'paymob',
-          'is_paid': true,
-        }).eq('id', _booking!.id);
-
-        if (mounted) {
-          final authProvider = Provider.of<AuthProvider>(context, listen: false);
-          final currentUid = authProvider.currentUser?.uid;
-          if (currentUid != null) {
-            bookingProvider.loadUserBookings(currentUid);
-            bookingProvider.loadOwnerBookings(currentUid);
-          }
-        }
-
-        updatedBooking = await bookingProvider.getBookingById(_booking!.id);
-      }
-
-      if (updatedBooking != null && mounted) {
+      // 2. التحقق مما إذا كان Paymob Webhook قد أصدر إشعار النجاح بالفعل
+      if (updatedBooking != null && (updatedBooking.status == BookingStatus.confirmed || updatedBooking.isPaid)) {
         HapticFeedback.heavyImpact();
         _paymentCompleted = true;
-        Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => BookingSuccessScreen(booking: updatedBooking!),
-          ),
-        );
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
+            ),
+          );
+        }
       } else if (mounted) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(
+        VSPFeedback.showInfo(
           context,
-          isArabic ? 'تعذر استكمال السداد، يرجى المحاولة لاحقاً.' : 'Failed to complete checkout.',
+          isArabic 
+              ? 'لم يتم استكمال عملية الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً.' 
+              : 'Payment not completed yet. You can retry.',
         );
       }
     } catch (e) {
@@ -175,7 +140,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
   }
 
-  /// إنشاء الحجز البدايات بحالة pending و is_paid = false فقط
+  /// إنشاء الحجز بحالة pending و is_paid = false فقط
   Future<void> _createPendingBooking() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
@@ -184,32 +149,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final userId = authProvider.currentUser?.uid;
     if (userId != null) {
       try {
-        if (widget.bookingDraft.stadiumName.startsWith('بطولة:')) {
-          _booking = Booking(
-            id: 'champ_${DateTime.now().millisecondsSinceEpoch}',
-            stadiumId: widget.bookingDraft.stadiumId,
-            stadiumName: widget.bookingDraft.stadiumName,
-            stadiumImageUrl: widget.bookingDraft.stadiumImageUrl,
-            ownerId: widget.bookingDraft.ownerId,
-            startTime: widget.bookingDraft.startTime,
-            endTime: widget.bookingDraft.endTime,
-            bookingType: widget.bookingDraft.bookingType,
-            playerTeamId: widget.bookingDraft.playerTeamId,
-            playerTeamName: widget.bookingDraft.playerTeamName,
-            isPrivate: false,
-            rentBall: false,
-            totalPrice: widget.bookingDraft.totalPrice,
-            paymentMethod: 'paymob',
-            status: BookingStatus.confirmed,
-            createdByUserId: userId,
-            createdAt: DateTime.now(),
-          );
-          if (mounted) setState(() => _isLoading = false);
-          return;
-        }
-
         // 🧹 تنظيف أي حجوزات pending غير مدفوعة للمستخدم على نفس الملعب قبل الإنشاء
-        // هذا يمنع مشكلة double booking بسبب حجوزات شبح قديمة
         await _cleanupStalePendingBookings(userId);
 
         if (!mounted) return;
@@ -365,18 +305,27 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         );
         paymobUrl = walletUrl ?? 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
       } else {
+        // 💳 Modern Paymob Checkout Page inside In-App WebView
         paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
       }
 
-      final Uri uri = Uri.parse(paymobUrl);
+      final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
 
       try {
-        if (await canLaunchUrl(uri)) {
-          await launchUrl(uri, mode: LaunchMode.inAppBrowserView);
-          if (mounted && !_paymentCompleted) {
-            setState(() => _isAwaitingWebhook = false);
-            _verifyPaymentStatusManual();
-          }
+        if (!mounted) return;
+        await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymobWebViewScreen(
+              initialUrl: paymobUrl,
+              title: isArabic ? 'سداد الحجز بالفيزا 💳' : 'Pay via Card 💳',
+            ),
+          ),
+        );
+
+        if (mounted && !_paymentCompleted) {
+          setState(() => _isAwaitingWebhook = false);
+          _verifyPaymentStatusManual();
         }
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');

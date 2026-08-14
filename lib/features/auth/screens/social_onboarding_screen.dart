@@ -1,7 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
-import '../../../core/config/app_config.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
 import 'package:provider/provider.dart';
@@ -556,9 +555,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
             width: double.infinity,
             height: 56,
             child: PrimaryButton(
-              text: AppConfig.bypassOtp 
-                ? 'إتمام وتحقق (وضع التطوير)' 
-                : (isOwner ? 'متابعة لإعداد الملعب' : 'إتمام التسجيل'),
+              text: isOwner ? 'متابعة لإعداد الملعب' : 'إتمام التسجيل',
               isLoading: _isLoading,
               onPressed: () {
                 final firstName = _firstNameController.text.trim();

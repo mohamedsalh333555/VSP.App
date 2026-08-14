@@ -13,7 +13,6 @@ import '../services/location_service.dart';
 import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
 import '../repositories/user_repository.dart';
-import '../config/app_config.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -943,13 +942,12 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
-      await Future.delayed(const Duration(seconds: 1));
-      if (AppConfig.useMockOtp && (code == _verificationCode || code == AppConfig.mockOtpCode)) {
+      if (code == _verificationCode && _verificationCode != null) {
         _isLoading = false;
         notifyListeners();
         return true;
       } else {
-        _errorMessage = 'Invalid verification code or mock OTP disabled in release';
+        _errorMessage = 'رمز التحقق غير صحيح';
         _isLoading = false;
         notifyListeners();
         return false;

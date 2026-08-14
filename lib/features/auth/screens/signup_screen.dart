@@ -11,7 +11,6 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
-import '../../../core/config/app_config.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
@@ -162,21 +161,8 @@ class _SignupScreenState extends State<SignupScreen> {
         final prefs = await SharedPreferences.getInstance();
         await prefs.setString('pending_verification_email', email);
 
-        if (AppConfig.bypassOtp) {
-          // New user — set registration flags so GoRouter routes them home.
-          if (authProvider.firebaseUser != null) {
-            await authProvider.verifyEmailManual(authProvider.firebaseUser!.uid);
-          }
-          await authProvider.updateProfile({
-            'isRegistrationComplete': true,
-            'isEmailVerified': true,
-          });
-        } else {
-          // Go to verify email screen
-          if (mounted) {
-            context.push('/verify-email', extra: email);
-          }
-        }
+        if (!mounted) return;
+        context.push('/verify-email', extra: email);
       }
     } else {
       if (mounted) {
@@ -464,9 +450,7 @@ class _SignupScreenState extends State<SignupScreen> {
                   
                   const SizedBox(height: 32),
                   PrimaryButton(
-                    text: AppConfig.bypassOtp 
-                      ? 'Sign Up & Verify (Bypass)' 
-                      : AppLocalizations.of(context)!.createAccount,
+                    text: AppLocalizations.of(context)!.createAccount,
                     isLoading: _isLoading,
                     onPressed: _isLoading ? null : _handleSignup,
                   ),
