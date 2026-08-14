@@ -1,10 +1,72 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
+import 'package:crypto/crypto.dart';
 import '../config/app_config.dart';
 
 class PaymobService {
   static const String _baseUrl = 'https://accept.paymob.com/api';
+
+  /// 🚀 Generate Paymob Unified Checkout URL using Intention API (Modern Standard)
+  static Future<String?> getUnifiedCheckoutUrl({
+    required double amountInEgp,
+    required String bookingId,
+    required String userEmail,
+    required String userName,
+    required String userPhone,
+    String? integrationId,
+  }) async {
+    try {
+      final secretKey = AppConfig.paymobSecretKey;
+      final publicKey = AppConfig.paymobPublicKey;
+      if (secretKey.isEmpty || publicKey.isEmpty) {
+        return null;
+      }
+
+      final amountCents = (amountInEgp * 100).round();
+      final firstName = userName.trim().isNotEmpty ? userName.trim().split(' ').first : 'Player';
+      final lastName = userName.trim().contains(' ') ? userName.trim().split(' ').sublist(1).join(' ') : 'VSP';
+      final phone = userPhone.trim().isNotEmpty ? userPhone.trim() : '+201000000000';
+      final email = userEmail.trim().isNotEmpty ? userEmail.trim() : 'player@vsp.app';
+
+      final activeIntegration = int.tryParse(integrationId ?? AppConfig.paymobCardIntegrationId) ?? 5772488;
+
+      final response = await http.post(
+        Uri.parse('https://accept.paymob.com/v1/intention/'),
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Token $secretKey',
+        },
+        body: jsonEncode({
+          'amount': amountCents,
+          'currency': 'EGP',
+          'payment_methods': [activeIntegration],
+          'special_reference': '${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
+          'billing_data': {
+            'first_name': firstName,
+            'last_name': lastName,
+            'email': email,
+            'phone_number': phone,
+          }
+        }),
+      );
+
+      if (response.statusCode == 200 || response.statusCode == 201) {
+        final data = jsonDecode(response.body);
+        final clientSecret = data['client_secret'];
+        if (clientSecret != null && clientSecret.toString().isNotEmpty) {
+          final checkoutUrl = 'https://accept.paymob.com/unifiedcheckout/?publicKey=$publicKey&clientSecret=$clientSecret';
+          debugPrint('✅ Paymob Unified Checkout URL Generated: $checkoutUrl');
+          return checkoutUrl;
+        }
+      }
+      debugPrint('⚠️ Paymob Intention Error (${response.statusCode}): ${response.body}');
+      return null;
+    } catch (e) {
+      debugPrint('🚨 Paymob getUnifiedCheckoutUrl Exception: $e');
+      return null;
+    }
+  }
 
   /// 🚀 Generate a real Paymob Payment Token for Iframe checkout
   static Future<String?> getPaymentToken({
@@ -161,4 +223,47 @@ class PaymobService {
       return null;
     }
   }
+
+  /// 🔒 Verify Paymob HMAC Signature for Webhooks (Security Audit)
+  static bool verifyPaymobHmac(Map<String, dynamic> data, String hmacHeader) {
+    try {
+      final hmacSecret = AppConfig.paymobHmac;
+      if (hmacSecret.isEmpty) return false;
+
+      final obj = data['obj'] as Map<String, dynamic>? ?? data;
+
+      final concatenatedValues = [
+        obj['amount_cents'],
+        obj['created_at'],
+        obj['currency'],
+        obj['error_occured'],
+        obj['has_parent_transaction'],
+        obj['id'],
+        obj['integration_id'],
+        obj['is_3d_secure'],
+        obj['is_auth'],
+        obj['is_capture'],
+        obj['is_refunded'],
+        obj['is_standalone_payment'],
+        obj['is_voided'],
+        obj['order']?['id'] ?? obj['order'],
+        obj['owner'],
+        obj['pending'],
+        obj['source_data']?['pan'],
+        obj['source_data']?['sub_type'],
+        obj['source_data']?['type'],
+        obj['success'],
+      ].map((e) => e?.toString() ?? '').join('');
+
+      final hmac = Hmac(sha512, utf8.encode(hmacSecret));
+      final digest = hmac.convert(utf8.encode(concatenatedValues));
+      final calculatedHmac = digest.toString();
+
+      return calculatedHmac.toLowerCase() == hmacHeader.toLowerCase();
+    } catch (e) {
+      debugPrint('⚠️ Error verifying Paymob HMAC: $e');
+      return false;
+    }
+  }
 }
+

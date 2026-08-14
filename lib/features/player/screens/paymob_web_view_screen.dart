@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 
@@ -30,9 +31,25 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   }
 
   void _initWebView() {
-    _controller = WebViewController()
+    late final PlatformWebViewControllerCreationParams params;
+    if (WebViewPlatform.instance is AndroidWebViewPlatform) {
+      params = AndroidWebViewControllerCreationParams();
+    } else {
+      params = const PlatformWebViewControllerCreationParams();
+    }
+
+    final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
+
+    controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(VSPColors.background)
+      ..setUserAgent('Mozilla/5.0 (Linux; Android 10) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Mobile Safari/537.36')
+      ..addJavaScriptChannel(
+        'FlutterConsole',
+        onMessageReceived: (JavaScriptMessage message) {
+          debugPrint('📟 [Paymob Page Console]: ${message.message}');
+        },
+      )
       ..setNavigationDelegate(
         NavigationDelegate(
           onProgress: (int progress) {
@@ -44,34 +61,82 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
             }
           },
           onPageStarted: (String url) {
+            debugPrint('🌐 [Paymob WebView PageStarted]: $url');
             if (mounted) setState(() => _isLoading = true);
             _checkCallbackUrl(url);
           },
-          onPageFinished: (String url) {
+          onPageFinished: (String url) async {
+            debugPrint('✅ [Paymob WebView PageFinished]: $url');
             if (mounted) setState(() => _isLoading = false);
             _checkCallbackUrl(url);
+
+            // Inject JS error handler & window.open interceptor
+            try {
+              await controller.runJavaScript('''
+                window.onerror = function(msg, url, line) {
+                  if (window.FlutterConsole) {
+                    FlutterConsole.postMessage("JS ERROR: " + msg + " at " + url + ":" + line);
+                  }
+                };
+                window.open = function(url) {
+                  if (window.FlutterConsole) {
+                    FlutterConsole.postMessage("WINDOW.OPEN INTERCEPTED: " + url);
+                  }
+                  if (url) {
+                    window.location.href = url;
+                  }
+                  return {
+                    focus: function() {},
+                    blur: function() {},
+                    close: function() {},
+                    postMessage: function() {}
+                  };
+                };
+              ''');
+            } catch (e) {
+              debugPrint('Notice injecting JS: $e');
+            }
           },
           onWebResourceError: (WebResourceError error) {
-            debugPrint('Paymob WebView Error (${error.errorCode}): ${error.description}');
+            debugPrint('🚨 [Paymob WebView RESOURCE ERROR]: code=${error.errorCode} desc=${error.description} url=${error.url} isMainFrame=${error.isForMainFrame}');
           },
           onNavigationRequest: (NavigationRequest request) {
             final url = request.url;
+            debugPrint('➡️ [Paymob WebView NavRequest]: $url');
             _checkCallbackUrl(url);
             return NavigationDecision.navigate;
           },
         ),
-      )
-      ..loadRequest(Uri.parse(widget.initialUrl));
+      );
+
+    if (controller.platform is AndroidWebViewController) {
+      AndroidWebViewController.enableDebugging(true);
+      final androidController = controller.platform as AndroidWebViewController;
+      androidController.setOnShowFileSelector((params) async => []);
+    }
+
+    controller.loadRequest(Uri.parse(widget.initialUrl));
+    _controller = controller;
   }
 
   void _checkCallbackUrl(String url) {
     final lowerUrl = url.toLowerCase();
-    // Paymob callback redirect parameters
-    if (lowerUrl.contains('success=true') || lowerUrl.contains('txn_response_code=approved')) {
+    
+    // ✅ التقاط جميع حالات نجاح Paymob الموحدة
+    if (lowerUrl.contains('success=true') || 
+        lowerUrl.contains('txn_response_code=approved') || 
+        lowerUrl.contains('txn_response_code=0') ||
+        lowerUrl.contains('approved=true') ||
+        lowerUrl.contains('orderdetails') ||
+        lowerUrl.contains('thanks') ||
+        lowerUrl.contains('callback')) {
       HapticFeedback.heavyImpact();
       if (mounted) Navigator.pop(context, true);
-    } else if (lowerUrl.contains('success=false') || lowerUrl.contains('txn_response_code=declined')) {
+    } else if (lowerUrl.contains('success=false') || lowerUrl.contains('txn_response_code=declined') || lowerUrl.contains('authentication_not_supported')) {
       HapticFeedback.vibrate();
+      if (lowerUrl.contains('authentication_not_supported')) {
+        debugPrint('⚠️ Paymob returned AUTHENTICATION_NOT_SUPPORTED for card pan.');
+      }
       if (mounted) Navigator.pop(context, false);
     }
   }

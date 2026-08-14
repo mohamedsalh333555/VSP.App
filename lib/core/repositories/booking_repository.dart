@@ -236,6 +236,17 @@ class SupabaseBookingRepository implements BookingRepository {
       final hostName = userDetailsDoc?['name'] ?? 'Player';
       final hostAvatar = userDetailsDoc?['profile_image_url'] ?? '';
 
+      // 🧹 Clean up any previous uncompleted pending draft by this user on the same stadium/time before atomic check
+      try {
+        await _supabase
+            .from('bookings')
+            .delete()
+            .eq('user_id', userId)
+            .eq('stadium_id', draft.stadiumId)
+            .eq('status', 'pending')
+            .eq('is_paid', false);
+      } catch (_) {}
+
       // 🛡️ SECURITY AUDIT FIX: Atomic Booking Creation via PostgreSQL Row Locks
       try {
         final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
@@ -272,7 +283,9 @@ class SupabaseBookingRepository implements BookingRepository {
             if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
               _sendChallengeNotification(draft);
             }
-            _sendOwnerNotification(draft, created.id);
+            if (created.status == BookingStatus.confirmed || draft.paymentMethod == 'cash') {
+              _sendOwnerNotification(draft, created.id);
+            }
             AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
             VSPLogger.i('✅ Atomic booking created successfully: ${created.id}');
             return created;

@@ -13,13 +13,13 @@ void main() {
     });
 
     // 2. AUTO-EXPIRE TEST
-    test('2. Pending Booking Auto-Expiry (90s Timeout) Verification', () {
-      final createdAt = DateTime.now().subtract(const Duration(seconds: 95));
+    test('2. Pending Booking Auto-Expiry (5m Timeout) Verification', () {
+      final createdAt = DateTime.now().subtract(const Duration(seconds: 305));
       const status = 'pending';
       const isPaid = false;
 
-      final isExpired = status == 'pending' && !isPaid && DateTime.now().difference(createdAt).inSeconds >= 90;
-      expect(isExpired, isTrue, reason: 'PASS: Booking > 90s marked expired and slot released.');
+      final isExpired = status == 'pending' && !isPaid && DateTime.now().difference(createdAt).inSeconds >= 300;
+      expect(isExpired, isTrue, reason: 'PASS: Booking > 300s (5m) marked expired and slot released.');
     });
 
     // 3. NIGHT SHIFT MAPPING TEST

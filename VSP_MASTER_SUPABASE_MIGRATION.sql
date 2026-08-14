@@ -127,6 +127,7 @@ BEGIN
   FROM bookings
   WHERE stadium_id = p_stadium_id
     AND status NOT IN ('cancelled', 'rejected')
+    AND NOT (user_id = p_user_id AND status = 'pending')
     AND (
       (p_start_time >= start_time AND p_start_time < end_time) OR
       (p_end_time > start_time AND p_end_time <= end_time) OR
@@ -294,4 +295,151 @@ END $$;
 -- ⚽ Ensure goal_details column exists on tournament_matches table
 ALTER TABLE public.tournament_matches 
 ADD COLUMN IF NOT EXISTS goal_details jsonb DEFAULT '[]'::jsonb;
+
+-- ==============================================================================
+-- 🚀 8. WEBHOOK-FIRST PAYMENT ARCHITECTURE SCHEMA & IDEMPOTENCY HANDLER
+-- ==============================================================================
+
+-- Add Webhook audit columns to bookings table
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS paymob_txn_id TEXT,
+ADD COLUMN IF NOT EXISTS paymob_order_id TEXT,
+ADD COLUMN IF NOT EXISTS webhook_processed_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS webhook_verified BOOLEAN DEFAULT FALSE;
+
+-- Create index on paymob_txn_id for fast idempotency lookups
+CREATE INDEX IF NOT EXISTS idx_bookings_paymob_txn_id ON public.bookings(paymob_txn_id);
+
+-- Create webhook_logs table for audit trail & debugging
+CREATE TABLE IF NOT EXISTS public.webhook_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  provider TEXT NOT NULL DEFAULT 'paymob',
+  event_type TEXT NOT NULL,
+  txn_id TEXT,
+  order_id TEXT,
+  booking_id UUID,
+  payload JSONB NOT NULL,
+  signature_verified BOOLEAN DEFAULT FALSE,
+  status TEXT NOT NULL DEFAULT 'received',
+  error_message TEXT,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
+
+-- RLS Policy for webhook_logs (Admin/Service Role only)
+ALTER TABLE public.webhook_logs ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Admins can view webhook logs" ON public.webhook_logs;
+CREATE POLICY "Admins can view webhook logs"
+ON public.webhook_logs FOR SELECT
+TO authenticated
+USING (
+  EXISTS (
+    SELECT 1 FROM public.users u
+    WHERE u.id::text = auth.uid()::text
+    AND u.role = 'admin'
+  )
+);
+
+-- PostgreSQL function to process Paymob Webhook atomically with Idempotency
+CREATE OR REPLACE FUNCTION public.process_paymob_webhook(
+  p_booking_id UUID,
+  p_txn_id TEXT,
+  p_order_id TEXT,
+  p_success BOOLEAN,
+  p_signature_verified BOOLEAN,
+  p_payload JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+  v_existing_booking RECORD;
+  v_already_processed BOOLEAN;
+BEGIN
+  -- 1. Audit Log Entry
+  INSERT INTO public.webhook_logs (
+    provider, event_type, txn_id, order_id, booking_id, payload, signature_verified, status
+  )
+  VALUES (
+    'paymob',
+    CASE WHEN p_success THEN 'payment_success' ELSE 'payment_failed' END,
+    p_txn_id, p_order_id, p_booking_id, p_payload, p_signature_verified,
+    CASE WHEN p_signature_verified THEN 'processed' ELSE 'unverified' END
+  );
+
+  -- 2. Check if transaction ID was already processed (Idempotency)
+  IF p_txn_id IS NOT NULL THEN
+    SELECT EXISTS (
+      SELECT 1 FROM public.bookings
+      WHERE paymob_txn_id = p_txn_id
+        AND status = 'confirmed'
+    ) INTO v_already_processed;
+
+    IF v_already_processed THEN
+      RETURN jsonb_build_object(
+        'success', TRUE,
+        'message', 'duplicate_webhook_ignored',
+        'booking_id', p_booking_id
+      );
+    END IF;
+  END IF;
+
+  -- 3. Lock & Fetch Target Booking Record
+  SELECT * INTO v_existing_booking
+  FROM public.bookings
+  WHERE id = p_booking_id
+  FOR UPDATE;
+
+  IF v_existing_booking.id IS NULL THEN
+    RETURN jsonb_build_object(
+      'success', FALSE,
+      'error', 'booking_not_found',
+      'message', 'No booking found matching the provided ID.'
+    );
+  END IF;
+
+  -- 4. Process Status Update
+  IF p_success THEN
+    UPDATE public.bookings
+    SET
+      status = 'confirmed',
+      is_paid = TRUE,
+      payment_status = 'paid',
+      payment_method = 'paymob_card',
+      paymob_txn_id = p_txn_id,
+      paymob_order_id = p_order_id,
+      webhook_processed_at = NOW(),
+      webhook_verified = p_signature_verified,
+      updated_at = NOW()
+    WHERE id = p_booking_id;
+
+    RETURN jsonb_build_object(
+      'success', TRUE,
+      'status', 'confirmed',
+      'booking_id', p_booking_id
+    );
+  ELSE
+    UPDATE public.bookings
+    SET
+      status = 'cancelled',
+      is_paid = FALSE,
+      payment_status = 'failed',
+      paymob_txn_id = p_txn_id,
+      paymob_order_id = p_order_id,
+      webhook_processed_at = NOW(),
+      webhook_verified = p_signature_verified,
+      notes = COALESCE(notes, '') || E'\n[SYSTEM: Payment declined via Paymob Webhook]',
+      updated_at = NOW()
+    WHERE id = p_booking_id;
+
+    RETURN jsonb_build_object(
+      'success', TRUE,
+      'status', 'cancelled',
+      'booking_id', p_booking_id
+    );
+  END IF;
+END;
+$$;
+
 

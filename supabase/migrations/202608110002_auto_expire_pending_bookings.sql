@@ -4,7 +4,7 @@
 
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
-CREATE OR REPLACE FUNCTION public.auto_expire_pending_bookings_90s()
+CREATE OR REPLACE FUNCTION public.auto_expire_pending_bookings_5m()
 RETURNS void
 LANGUAGE plpgsql
 SECURITY DEFINER
@@ -14,18 +14,18 @@ BEGIN
   SET 
     status = 'cancelled',
     updated_at = NOW(),
-    notes = COALESCE(notes, '') || E'\n[SYSTEM: Auto-expired due to 90-second payment timeout]'
+    notes = COALESCE(notes, '') || E'\n[SYSTEM: Auto-expired due to 5-minute payment timeout]'
   WHERE 
     status = 'pending'
     AND is_paid = FALSE
     AND payment_status NOT IN ('paid', 'completed')
-    AND created_at <= NOW() - INTERVAL '90 seconds';
+    AND created_at <= NOW() - INTERVAL '5 minutes';
 END;
 $$;
 
 -- Schedule job to run every minute
 SELECT cron.schedule(
-  'expire-pending-bookings-90s',
+  'expire-pending-bookings-5m',
   '* * * * *',
-  $$ SELECT public.auto_expire_pending_bookings_90s(); $$
+  $$ SELECT public.auto_expire_pending_bookings_5m(); $$
 );

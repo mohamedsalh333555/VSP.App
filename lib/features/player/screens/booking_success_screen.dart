@@ -8,10 +8,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../data/models.dart';
 
-import 'package:provider/provider.dart';
-import '../../../core/providers/auth_provider.dart';
-import '../../../core/services/notification_handler.dart';
-import '../../../core/repositories/team_repository.dart';
 import 'chat_screen.dart';
 import 'player_home_screen.dart';
 import 'bookings_screen.dart';
@@ -52,56 +48,13 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
     );
     _checkController.forward();
 
-    // 3. Trigger Post-Write Effects with a small delay for better UX
+    // 3. Trigger Confetti & Haptics
     Future.delayed(const Duration(milliseconds: 500), () {
       if (mounted) {
         _confettiController.play();
-        _showBookingNotification();
         HapticFeedback.heavyImpact();
       }
     });
-  }
-
-  Future<void> _showBookingNotification() async {
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final playerName = authProvider.userModel?.name ?? 'A player';
-
-    // 1. Notify Player (Local + Firestore)
-    await NotificationHandler.notifyBookingConfirmed(
-      userId: widget.booking.createdByUserId,
-      stadiumName: widget.booking.stadiumName,
-      bookingId: widget.booking.id,
-      timeSlot: widget.booking.formattedTimeRange,
-    );
-
-    // 2. Notify Owner (Firestore)
-    if (widget.booking.ownerId.isNotEmpty) {
-      await NotificationHandler.notifyNewBookingReceived(
-        ownerId: widget.booking.ownerId,
-        stadiumName: widget.booking.stadiumName,
-        playerName: playerName,
-        bookingId: widget.booking.id,
-        timeSlot: widget.booking.formattedTimeRange,
-      );
-    }
-
-    // 3. Notify Opponent (if Challenge)
-    if (widget.booking.bookingType == BookingType.challenge && widget.booking.opponentTeamId != null) {
-      try {
-        final opponentTeam = await TeamRepository().getTeam(widget.booking.opponentTeamId!);
-        if (opponentTeam != null && opponentTeam.memberUids.isNotEmpty) {
-          // The first member in memberUids is the captain
-          final captainId = opponentTeam.memberUids.first;
-          await NotificationHandler.notifyChallengeReceived(
-            opponentCaptainId: captainId, 
-            challengerTeamName: widget.booking.playerTeamName ?? 'A Team', 
-            bookingId: widget.booking.id,
-          );
-        }
-      } catch (e) {
-        debugPrint('Error sending challenge notification: $e');
-      }
-    }
   }
 
   @override

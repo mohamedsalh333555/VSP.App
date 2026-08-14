@@ -74,28 +74,28 @@ USING (true);
 -- ------------------------------------------------------------------------------
 CREATE EXTENSION IF NOT EXISTS pg_cron;
 
--- Function: Cancel unconfirmed pending bookings older than 90 seconds
-CREATE OR REPLACE FUNCTION public.auto_expire_pending_bookings_90s()
+-- Function: Cancel unconfirmed pending bookings older than 5 minutes
+CREATE OR REPLACE FUNCTION public.auto_expire_pending_bookings_5m()
 RETURNS void AS $$
 BEGIN
   UPDATE public.bookings
   SET 
     status = 'cancelled',
     updated_at = NOW(),
-    notes = COALESCE(notes, '') || E'\n[SYSTEM: Auto-expired due to 90-second timeout]'
+    notes = COALESCE(notes, '') || E'\n[SYSTEM: Auto-expired due to 5-minute timeout]'
   WHERE 
     status = 'pending'
     AND is_paid = FALSE
     AND payment_status NOT IN ('paid', 'completed')
-    AND created_at <= NOW() - INTERVAL '90 seconds';
+    AND created_at <= NOW() - INTERVAL '5 minutes';
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
 -- Schedule cron job every 1 minute
 SELECT cron.schedule(
-  'expire-pending-bookings-90s',
+  'expire-pending-bookings-5m',
   '* * * * *',
-  $$ SELECT public.auto_expire_pending_bookings_90s(); $$
+  $$ SELECT public.auto_expire_pending_bookings_5m(); $$
 );
 
 -- Function: Auto-approve match results after 24 hours

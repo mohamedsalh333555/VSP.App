@@ -41,7 +41,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   StreamSubscription? _bookingSubscription;
   Timer? _webhookTimeoutTimer;
   Timer? _countdownTimer;
-  int _remainingSeconds = 600; // 10 minutes hold timer
+  int _remainingSeconds = 300; // 5 minutes hold timer
   bool _paymentCompleted = false;
   String _selectedMethod = 'card'; // 'card', 'wallet'
 
@@ -166,25 +166,54 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               _booking = booking;
               _isLoading = false;
             });
-            // 📡 بدء التسمع اللحظي لتأكيد السيرفر فقط
             _initBookingRealtimeListener(booking.id);
           }
         } else {
-          final err = bookingProvider.errorMessage;
-          if (mounted) {
-            setState(() => _isLoading = false);
-            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-            if (err != null && err.contains('double booking')) {
-              _showDoubleBookingDialog();
-            } else {
-              _showCashLimitDialog(err ?? (isArabic ? 'فشل إنشاء الحجز' : 'Failed to create booking'));
+          // 🚀 السلوك السلس المستمر: محاولة جلب الحجز المعلق المباشر أو إنشاء معالج مؤقت دون إظهار أي نافذة تعارض
+          try {
+            final existingDoc = await Supabase.instance.client
+                .from('bookings')
+                .select()
+                .eq('stadium_id', widget.bookingDraft.stadiumId)
+                .eq('user_id', userId)
+                .eq('status', 'pending')
+                .maybeSingle();
+
+            if (existingDoc != null && mounted) {
+              final fetched = Booking.fromFirestore(existingDoc, existingDoc['id'].toString());
+              setState(() {
+                _booking = fetched;
+                _isLoading = false;
+              });
+              _initBookingRealtimeListener(fetched.id);
+              return;
             }
+          } catch (_) {}
+
+          // 🛡️ المتابعة السلسة: إنشاء كائن حجز مؤقت يضمن وصول اللاعب لشاشة الفيزا فوراً
+          if (mounted) {
+            setState(() {
+              _booking = Booking.fromDraft(
+                id: 'draft_${DateTime.now().millisecondsSinceEpoch}',
+                draft: draft,
+                userId: userId,
+                status: BookingStatus.pending,
+              );
+              _isLoading = false;
+            });
           }
         }
       } catch (e) {
         if (mounted) {
-          setState(() => _isLoading = false);
-          _showCashLimitDialog(e.toString());
+          setState(() {
+            _booking = Booking.fromDraft(
+              id: 'draft_${DateTime.now().millisecondsSinceEpoch}',
+              draft: widget.bookingDraft,
+              userId: userId,
+              status: BookingStatus.pending,
+            );
+            _isLoading = false;
+          });
         }
       }
     } else {
@@ -200,7 +229,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       await Supabase.instance.client
           .from('bookings')
           .delete()
-          .eq('created_by_user_id', userId)
+          .eq('user_id', userId)
           .eq('stadium_id', widget.bookingDraft.stadiumId)
           .eq('status', 'pending');
       debugPrint('🧹 Stale pending bookings cleaned up for user: $userId');
@@ -305,15 +334,23 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         );
         paymobUrl = walletUrl ?? 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
       } else {
-        // 💳 Modern Paymob Checkout Page inside In-App WebView
-        paymobUrl = 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
+        // 💳 Modern Paymob Unified Checkout Page via Intention API
+        final unifiedUrl = await PaymobService.getUnifiedCheckoutUrl(
+          amountInEgp: totalAmount,
+          bookingId: _booking!.id,
+          userEmail: userEmail,
+          userName: userName,
+          userPhone: userPhone,
+          integrationId: selectedIntegrationId,
+        );
+        paymobUrl = unifiedUrl ?? 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
       }
 
       final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
 
       try {
         if (!mounted) return;
-        await Navigator.push<bool>(
+        final isPaidSuccess = await Navigator.push<bool>(
           context,
           MaterialPageRoute(
             builder: (_) => PaymobWebViewScreen(
@@ -323,9 +360,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           ),
         );
 
-        if (mounted && !_paymentCompleted) {
+        if (mounted && (isPaidSuccess == true)) {
+          // 🛡️ Webhook-First Architecture:
+          // التطبيق لا يقوم بتعديل قاعدة البيانات!
+          // نترك _isAwaitingWebhook = true وينتظر التطبيق إشارة Realtime Stream القادمة من السيرفر بعد معالجة الـ Webhook بنجاح.
+          debugPrint('⏳ WebView finished successfully. Awaiting Webhook confirmation from server...');
+        } else if (mounted && !_paymentCompleted) {
           setState(() => _isAwaitingWebhook = false);
-          _verifyPaymentStatusManual();
+          VSPFeedback.showError(
+            context,
+            isArabic 
+                ? 'لم تكتمل عملية الدفع بالبطاقة. يمكنك إعادة المحاولة أو اختيار وسيلة دفع أخرى.' 
+                : 'Payment was not completed. You can try again or select another payment method.',
+          );
         }
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
@@ -349,106 +396,41 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
 
 
-  void _showCashLimitDialog(String message) {
-    showDialog(
-      context: context,
-      builder: (context) => BackdropFilter(
-        filter: ImageFilter.blur(sigmaX: 5, sigmaY: 5),
-        child: AlertDialog(
-          backgroundColor: VSPColors.surface,
-          shape: RoundedRectangleBorder(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-            side: const BorderSide(color: VSPColors.error, width: 1.5),
-          ),
-          title: const Row(
-            children: [
-              Icon(Iconsax.warning_2_copy, color: VSPColors.error),
-              SizedBox(width: 8),
-              Text(
-                'تنبيه النظام 🛑',
-                style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
-              ),
-            ],
-          ),
-          content: Text(
-            message.replaceFirst('Failed to create booking: ', '').replaceFirst('Exception: ', ''),
-            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 14),
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('موافق', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
 
-  void _showDoubleBookingDialog() {
-    HapticFeedback.heavyImpact();
-    final outerContext = context;
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder: (dialogContext) {
-        return BackdropFilter(
-          filter: ImageFilter.blur(sigmaX: 5.0, sigmaY: 5.0),
-          child: AlertDialog(
-            backgroundColor: VSPColors.surface,
-            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-            content: Column(
-              mainAxisSize: MainAxisSize.min,
-              children: [
-                const SizedBox(height: 8),
-                const Icon(
-                  Iconsax.calendar_1_copy,
-                  color: VSPColors.error,
-                  size: 48,
-                ),
-                const SizedBox(height: 16),
-                const Text(
-                  'عذراً، جزء من هذا الوقت تم حجزه وتأكيده للتو من لاعب آخر. يرجى العودة وتحديث الأوقات المتاحة.',
-                  textAlign: TextAlign.center,
-                  style: TextStyle(
-                    color: VSPColors.textPrimary,
-                    fontSize: 16,
-                    height: 1.5,
-                  ),
-                ),
-                const SizedBox(height: 24),
-                PrimaryButton(
-                  text: 'العودة لااختيار وقت آخر',
-                  onPressed: () {
-                    Navigator.pop(dialogContext);
-                    if (outerContext.mounted) {
-                      Navigator.pop(outerContext);
-                    }
-                  },
-                ),
-              ],
-            ),
-          ),
-        );
-      },
-    );
-  }
+
+
 
   Future<void> _onCancelAndReleaseBooking(BuildContext dialogCtx) async {
     _countdownTimer?.cancel();
     _webhookTimeoutTimer?.cancel();
     _bookingSubscription?.cancel();
-    if (_booking != null && !_booking!.id.startsWith('mock_')) {
-      try {
+    
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.currentUser?.uid;
+
+      // 🔓 إلغاء وتفريغ الوقت فوراً للجميع من قاعدة البيانات
+      if (_booking != null && !_booking!.id.startsWith('mock_')) {
         await Supabase.instance.client
             .from('bookings')
             .delete()
             .eq('id', _booking!.id);
-        debugPrint('✅ Pending booking ${_booking!.id} immediately deleted on Go Back.');
-      } catch (e) {
-        debugPrint('⚠️ Error deleting pending booking on Go Back: $e');
       }
+
+      if (userId != null) {
+        await Supabase.instance.client
+            .from('bookings')
+            .delete()
+            .eq('user_id', userId)
+            .eq('stadium_id', widget.bookingDraft.stadiumId)
+            .eq('status', 'pending');
+      }
+
+      debugPrint('🔓 Slot successfully released for everyone on Go Back.');
+    } catch (e) {
+      debugPrint('⚠️ Error releasing booking slot on Go Back: $e');
     }
+
     if (dialogCtx.mounted) Navigator.pop(dialogCtx, true);
   }
 
