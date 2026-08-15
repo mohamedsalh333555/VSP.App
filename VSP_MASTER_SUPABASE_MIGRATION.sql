@@ -586,5 +586,367 @@ BEFORE INSERT OR UPDATE ON public.bookings
 FOR EACH ROW
 EXECUTE FUNCTION public.sync_booking_user_ids();
 
+-- =========================================================================
+-- ⚽ VSP PUBLIC MATCH JOIN & APPROVAL RPC ENGINE
+-- =========================================================================
+
+-- 0. إسقاط الدوال القديمة لتفادي خطأ تغير نوع الإرجاع (42P13)
+DROP FUNCTION IF EXISTS public.request_join_public_match(UUID, UUID);
+DROP FUNCTION IF EXISTS public.accept_join_request(UUID, UUID);
+DROP FUNCTION IF EXISTS public.reject_join_request(UUID, UUID);
+
+-- 1. دالة الانضمام الفوري المباشر للمباراة (Instant Join Engine)
+CREATE OR REPLACE FUNCTION public.request_join_public_match(
+    p_booking_id UUID,
+    p_user_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_booking RECORD;
+    v_user_conflict INT;
+    v_user_blocked BOOLEAN;
+    v_capacity INT;
+BEGIN
+    -- 1. قفل السطر الخاص بالمباراة لمنع أي تضارب أو زيادة عن العدد المسموح (Race Condition)
+    SELECT * INTO v_booking
+    FROM public.bookings
+    WHERE id = p_booking_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'match_not_found';
+    END IF;
+
+    IF v_booking.status = 'cancelled' THEN
+        RAISE EXCEPTION 'match_cancelled';
+    END IF;
+
+    -- 2. التحقق من عدم حظر اللاعب
+    SELECT is_blocked INTO v_user_blocked FROM public.users WHERE id = p_user_id;
+    IF v_user_blocked IS TRUE THEN
+        RAISE EXCEPTION 'user_blocked';
+    END IF;
+
+    -- 3. التحقق من السعة الكلية للملعب
+    v_capacity := COALESCE(v_booking.total_field_capacity, 10);
+    IF v_booking.current_players >= v_capacity THEN
+        RAISE EXCEPTION 'match_is_full';
+    END IF;
+
+    -- 4. التحقق من عدم الانضمام مسبقاً لنفس المباراة
+    IF p_user_id::text = ANY(COALESCE(v_booking.joined_user_ids, ARRAY[]::text[])) THEN
+        RAISE EXCEPTION 'already_joined';
+    END IF;
+
+    -- 5. فحص التضارب الزمني مع مباريات وحجوزات أخرى للاعب في نفس الوقت
+    SELECT COUNT(*) INTO v_user_conflict
+    FROM public.bookings
+    WHERE status = 'confirmed'
+      AND (user_id::text = p_user_id::text OR p_user_id::text = ANY(joined_user_ids))
+      AND id != p_booking_id
+      AND (
+          (v_booking.start_time >= start_time AND v_booking.start_time < end_time) OR
+          (v_booking.end_time > start_time AND v_booking.end_time <= end_time)
+      );
+
+    IF v_user_conflict > 0 THEN
+        RAISE EXCEPTION 'time_conflict';
+    END IF;
+
+    -- 6. ✅ تسجيل وحجز المكان فورياً في قائمة المنضمين وزيادة العداد تلقائياً
+    UPDATE public.bookings
+    SET joined_user_ids = array_append(COALESCE(joined_user_ids, ARRAY[]::text[]), p_user_id::text),
+        pending_user_ids = array_remove(COALESCE(pending_user_ids, ARRAY[]::text[]), p_user_id::text),
+        current_players = current_players + 1,
+        updated_at = NOW()
+    WHERE id = p_booking_id;
+
+    RETURN jsonb_build_object(
+        'success', true, 
+        'message', 'Joined match instantly.'
+    );
+END;
+$$;
+
+-- 2. دالة قبول طلب الانضمام من قِبل المستضيف
+CREATE OR REPLACE FUNCTION public.accept_join_request(
+    p_booking_id UUID,
+    p_user_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_booking RECORD;
+BEGIN
+    SELECT * INTO v_booking
+    FROM public.bookings
+    WHERE id = p_booking_id
+    FOR UPDATE;
+
+    IF NOT FOUND THEN
+        RAISE EXCEPTION 'match_not_found';
+    END IF;
+
+    IF v_booking.current_players >= COALESCE(v_booking.total_field_capacity, 10) THEN
+        RAISE EXCEPTION 'match_is_full';
+    END IF;
+
+    -- إزالة من المعلقين وإضافة للمنضمين وزيادة العداد
+    UPDATE public.bookings
+    SET pending_user_ids = array_remove(COALESCE(pending_user_ids, ARRAY[]::text[]), p_user_id::text),
+        joined_user_ids = array_append(COALESCE(joined_user_ids, ARRAY[]::text[]), p_user_id::text),
+        current_players = current_players + 1,
+        updated_at = NOW()
+    WHERE id = p_booking_id;
+
+    RETURN jsonb_build_object('success', true, 'message', 'Player accepted successfully.');
+END;
+$$;
+
+-- 3. دالة رفض طلب الانضمام
+CREATE OR REPLACE FUNCTION public.reject_join_request(
+    p_booking_id UUID,
+    p_user_id UUID
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE public.bookings
+    SET pending_user_ids = array_remove(COALESCE(pending_user_ids, ARRAY[]::text[]), p_user_id::text),
+        updated_at = NOW()
+    WHERE id = p_booking_id;
+
+    RETURN jsonb_build_object('success', true, 'message', 'Request rejected.');
+END;
+$$;
+
+NOTIFY pgrst, 'reload schema';
+
+-- =========================================================================
+-- 🏆 VSP COMPLETE RPC MASTER PACK (STANDINGS, SEARCH, NO-SHOW & BADGES)
+-- =========================================================================
+
+DROP FUNCTION IF EXISTS public.get_championship_standings(TEXT, TEXT);
+DROP FUNCTION IF EXISTS public.global_search(TEXT);
+DROP FUNCTION IF EXISTS public.check_team_has_1v1_champion(TEXT);
+DROP FUNCTION IF EXISTS public.apply_no_show_penalty(TEXT);
+DROP FUNCTION IF EXISTS public.dispute_no_show_with_gps(TEXT, TEXT, NUMERIC, NUMERIC, NUMERIC);
+
+-- 1. دالة حساب جدول ترتيب الدوري والمجموعات تلقائياً
+CREATE OR REPLACE FUNCTION public.get_championship_standings(
+    p_championship_id TEXT,
+    p_group_name TEXT DEFAULT NULL
+)
+RETURNS TABLE (
+    team_id TEXT,
+    team_name TEXT,
+    played INT,
+    won INT,
+    drawn INT,
+    lost INT,
+    goals_for INT,
+    goals_against INT,
+    goal_difference INT,
+    points INT
+)
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    RETURN QUERY
+    WITH matches_data AS (
+        SELECT 
+            home_team_id AS t_id,
+            home_team_name AS t_name,
+            home_score AS gf,
+            away_score AS ga,
+            CASE 
+                WHEN home_score > away_score THEN 3
+                WHEN home_score = away_score THEN 1
+                ELSE 0 
+            END AS pts,
+            CASE WHEN home_score > away_score THEN 1 ELSE 0 END AS w,
+            CASE WHEN home_score = away_score THEN 1 ELSE 0 END AS d,
+            CASE WHEN home_score < away_score THEN 1 ELSE 0 END AS l
+        FROM public.tournament_matches
+        WHERE championship_id::text = p_championship_id
+          AND status = 'completed'
+          AND (p_group_name IS NULL OR group_name = p_group_name)
+
+        UNION ALL
+
+        SELECT 
+            away_team_id AS t_id,
+            away_team_name AS t_name,
+            away_score AS gf,
+            home_score AS ga,
+            CASE 
+                WHEN away_score > home_score THEN 3
+                WHEN away_score = home_score THEN 1
+                ELSE 0 
+            END AS pts,
+            CASE WHEN away_score > home_score THEN 1 ELSE 0 END AS w,
+            CASE WHEN away_score = home_score THEN 1 ELSE 0 END AS d,
+            CASE WHEN away_score < home_score THEN 1 ELSE 0 END AS l
+        FROM public.tournament_matches
+        WHERE championship_id::text = p_championship_id
+          AND status = 'completed'
+          AND (p_group_name IS NULL OR group_name = p_group_name)
+    )
+    SELECT 
+        m.t_id::text AS team_id,
+        MAX(m.t_name)::text AS team_name,
+        COUNT(*)::int AS played,
+        SUM(m.w)::int AS won,
+        SUM(m.d)::int AS drawn,
+        SUM(m.l)::int AS lost,
+        SUM(m.gf)::int AS goals_for,
+        SUM(m.ga)::int AS goals_against,
+        (SUM(m.gf) - SUM(m.ga))::int AS goal_difference,
+        SUM(m.pts)::int AS points
+    FROM matches_data m
+    WHERE m.t_id IS NOT NULL
+    GROUP BY m.t_id
+    ORDER BY points DESC, goal_difference DESC, goals_for DESC;
+END;
+$$;
+
+-- 2. دالة البحث الشامل الموحد (ملاعب، فرق، بطولات)
+CREATE OR REPLACE FUNCTION public.global_search(search_term TEXT)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_stadiums JSONB;
+    v_teams JSONB;
+    v_championships JSONB;
+BEGIN
+    SELECT COALESCE(jsonb_agg(to_jsonb(s)), '[]'::jsonb) INTO v_stadiums
+    FROM public.stadiums s
+    WHERE s.name ILIKE '%' || search_term || '%' OR s.location ILIKE '%' || search_term || '%';
+
+    SELECT COALESCE(jsonb_agg(to_jsonb(t)), '[]'::jsonb) INTO v_teams
+    FROM public.teams t
+    WHERE t.name ILIKE '%' || search_term || '%';
+
+    SELECT COALESCE(jsonb_agg(to_jsonb(c)), '[]'::jsonb) INTO v_championships
+    FROM public.championships c
+    WHERE c.name ILIKE '%' || search_term || '%';
+
+    RETURN jsonb_build_object(
+        'stadiums', v_stadiums,
+        'teams', v_teams,
+        'championships', v_championships
+    );
+END;
+$$;
+
+-- 3. دالة فحص وجود بطل 1 ضد 1 داخل الفريق
+CREATE OR REPLACE FUNCTION public.check_team_has_1v1_champion(p_team_id TEXT)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_has_champion BOOLEAN := FALSE;
+BEGIN
+    SELECT EXISTS (
+        SELECT 1
+        FROM public.team_members tm
+        JOIN public.vsp_1vs1_players p ON p.id::text = tm.user_id::text
+        WHERE tm.team_id::text = p_team_id
+          AND p.rank = 1
+    ) INTO v_has_champion;
+
+    RETURN v_has_champion;
+END;
+$$;
+
+-- 4. دالة تطبيق عقوبة عدم الحضور
+CREATE OR REPLACE FUNCTION public.apply_no_show_penalty(p_player_id TEXT)
+RETURNS VOID
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    UPDATE public.users
+    SET no_show_count = COALESCE(no_show_count, 0) + 1,
+        is_blocked = CASE WHEN COALESCE(no_show_count, 0) + 1 >= 3 THEN TRUE ELSE is_blocked END,
+        updated_at = NOW()
+    WHERE id::text = p_player_id;
+END;
+$$;
+
+-- 5. دالة الطعن على الغياب بالـ GPS
+CREATE OR REPLACE FUNCTION public.dispute_no_show_with_gps(
+    p_booking_id TEXT,
+    p_player_id TEXT,
+    p_lat NUMERIC,
+    p_lng NUMERIC,
+    p_accuracy NUMERIC
+)
+RETURNS BOOLEAN
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+    -- إذا كانت دقة الـ GPS مقبولة، يتم تصفير العقوبة
+    IF p_accuracy <= 50 THEN
+        UPDATE public.users
+        SET no_show_count = GREATEST(COALESCE(no_show_count, 0) - 1, 0),
+            is_blocked = FALSE,
+            updated_at = NOW()
+        WHERE id::text = p_player_id;
+
+        RETURN TRUE;
+    END IF;
+
+    RETURN FALSE;
+END;
+$$;
+
+NOTIFY pgrst, 'reload schema';
+
+-- =========================================================================
+-- 🛡️ PUBLIC TEAMS & TEAM MEMBERS RLS POLICIES (OPEN READ FOR STREAM & RPC)
+-- =========================================================================
+
+ALTER TABLE public.teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE public.team_members ENABLE ROW LEVEL SECURITY;
+
+DROP POLICY IF EXISTS "Public teams read access" ON public.teams;
+CREATE POLICY "Public teams read access"
+ON public.teams FOR SELECT
+TO authenticated, anon
+USING (true);
+
+DROP POLICY IF EXISTS "Public teams write access" ON public.teams;
+CREATE POLICY "Public teams write access"
+ON public.teams FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
+DROP POLICY IF EXISTS "Public team members read access" ON public.team_members;
+CREATE POLICY "Public team members read access"
+ON public.team_members FOR SELECT
+TO authenticated, anon
+USING (true);
+
+DROP POLICY IF EXISTS "Public team members write access" ON public.team_members;
+CREATE POLICY "Public team members write access"
+ON public.team_members FOR ALL
+TO authenticated
+USING (true)
+WITH CHECK (true);
+
 
 

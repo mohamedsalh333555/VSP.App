@@ -62,7 +62,8 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       final success = await MatchRepository().joinPublicMatch(widget.booking.id, userId);
       if (!context.mounted) return;
       if (success) {
-        VSPFeedback.showSuccess(context, "تم إرسال طلب الانضمام للمستضيف بنجاح! 📩");
+        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+        VSPFeedback.showSuccess(context, isArabic ? 'تم انضمامك للمباراة وتأكيد مكانك بنجاح! ⚽' : 'Joined match successfully! ⚽');
       } else {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
       }
@@ -117,15 +118,28 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     return timeRange;
   }
 
+  String _getLocalizedBookingType(BuildContext context, BookingType type) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    switch (type) {
+      case BookingType.personal:
+        return isArabic ? 'حجز عادي' : 'SOLO';
+      case BookingType.openJoin:
+        return isArabic ? 'تجميعي' : 'OPEN JOIN';
+      case BookingType.team:
+        return isArabic ? 'فريق' : 'TEAM';
+      case BookingType.challenge:
+        return isArabic ? 'تحدي' : 'CHALLENGE';
+    }
+  }
+
   Widget _buildTypeBadge(String text) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-      decoration: BoxDecoration(
-        color: VSPColors.accent.withValues(alpha: 0.1),
-        borderRadius: BorderRadius.circular(VSPRadius.xs),
-        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+    return Text(
+      text,
+      style: const TextStyle(
+        color: Colors.white,
+        fontSize: 13,
+        fontWeight: FontWeight.bold,
       ),
-      child: Text(text, style: const TextStyle(color: VSPColors.accent, fontSize: 9, fontWeight: FontWeight.w900, letterSpacing: 1.0)),
     );
   }
 
@@ -148,17 +162,27 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     );
   }
 
-  Widget _buildCompactInfo(IconData icon, String label) {
-    return Row(
+  Widget _buildCompactInfo(IconData? icon, String headerTitle, String value) {
+    return Column(
       mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
-        Icon(icon, color: VSPColors.accent, size: 14),
-        const SizedBox(width: 6),
+        Text(
+          headerTitle,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 3),
         Flexible(
           child: Directionality(
             textDirection: TextDirection.ltr,
             child: Text(
-              label,
+              value,
               maxLines: 1,
               overflow: TextOverflow.ellipsis,
               style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
@@ -169,7 +193,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     );
   }
 
-  Widget _buildDivider() => Container(width: 1, height: 14, color: Colors.white10);
+  Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
 
   Widget _buildRawButton({required String label, required Color color, required VoidCallback? onTap, bool isOutlined = false}) {
     return AbsorbPointer(
@@ -177,18 +201,18 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       child: GestureDetector(
         onTap: _isLoading ? null : onTap,
         child: Container(
-          height: 48.0,
-          padding: const EdgeInsets.symmetric(horizontal: 32),
+          height: 42.0,
+          padding: const EdgeInsets.symmetric(horizontal: 16),
           decoration: BoxDecoration(
             color: isOutlined ? Colors.transparent : color,
-            borderRadius: BorderRadius.circular(VSPRadius.md),
-            border: isOutlined ? Border.all(color: color, width: 2) : null,
+            borderRadius: BorderRadius.circular(12),
+            border: isOutlined ? Border.all(color: color, width: 1.5) : null,
             boxShadow: isOutlined ? null : [BoxShadow(color: color.withValues(alpha: 0.3), blurRadius: 8, offset: const Offset(0, 4))],
           ),
           child: Center(
             child: _isLoading 
-                ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) 
-                : Text(label, style: TextStyle(color: isOutlined ? color : Colors.black, fontWeight: FontWeight.w900, fontSize: 14, letterSpacing: 1.0)),
+                ? const SizedBox(width: 18, height: 18, child: CircularProgressIndicator(color: Colors.black, strokeWidth: 2)) 
+                : Text(label, style: TextStyle(color: isOutlined ? color : Colors.black, fontWeight: FontWeight.w900, fontSize: 13, letterSpacing: 0.5)),
           ),
         ),
       ),
@@ -230,7 +254,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+      padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VSPColors.surface, 
         borderRadius: BorderRadius.circular(VSPRadius.xl),
@@ -243,7 +267,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              _buildTypeBadge(booking.bookingType.name.toUpperCase()),
+              _buildTypeBadge(_getLocalizedBookingType(context, booking.bookingType)),
               if (isHost)
                 _buildStatusBadge(AppLocalizations.of(context)!.myMatch, VSPColors.accent)
               else if (hasJoined)
@@ -260,7 +284,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           Row(
             children: [
               Container(
-                width: 52, height: 52,
+                width: 48, height: 48,
                 decoration: BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle, border: Border.all(color: VSPColors.divider, width: 1)),
                 child: ClipOval(
                   child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
@@ -285,16 +309,16 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
           ),
           const SizedBox(height: 12),
           Container(
-            padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+            padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
             decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(VSPRadius.md)),
             child: Row(
               mainAxisAlignment: MainAxisAlignment.spaceAround,
               children: [
-                Expanded(child: Center(child: _buildCompactInfo(Iconsax.calendar_1_copy, booking.formattedDate))),
+                Expanded(child: Center(child: _buildCompactInfo(Iconsax.calendar_1_copy, isArabic ? 'التاريخ' : 'DATE', booking.formattedDate))),
                 _buildDivider(),
-                Expanded(child: Center(child: _buildCompactInfo(Iconsax.clock_copy, _formatTimeShort(booking.formattedTimeRange)))),
+                Expanded(child: Center(child: _buildCompactInfo(Iconsax.clock_copy, isArabic ? 'الوقت' : 'TIME', _formatTimeShort(booking.formattedTimeRange)))),
                 _buildDivider(),
-                Expanded(child: Center(child: _buildCompactInfo(Iconsax.wallet_1_copy, "$entryFee ${AppLocalizations.of(context)!.egCurrency}"))),
+                Expanded(child: Center(child: _buildCompactInfo(Iconsax.wallet_1_copy, isArabic ? 'رسوم الفرد' : 'PER PLAYER', "$entryFee ${AppLocalizations.of(context)!.egCurrency}"))),
               ],
             ),
           ),
@@ -314,7 +338,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
                 }
                 if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
-                return _buildRawButton(label: isArabic ? 'طلب انضمام' : 'Request Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
+                return _buildRawButton(label: isArabic ? 'انضمام ⚽' : 'Join ⚽', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
               }),
             ],
           ),

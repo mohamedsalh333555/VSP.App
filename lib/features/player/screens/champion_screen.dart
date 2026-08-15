@@ -387,20 +387,36 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _buildTeamsRankingStream() {
     return StreamBuilder<List<Team>>(
-      stream: TeamRepository().getTeams(governorate: _selectedLocation),
+      stream: TeamRepository().getTeams(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
 
-        final List<Team> teams = snapshot.data ?? [];
+        final List<Team> allTeams = snapshot.data ?? [];
+
+        final teams = allTeams.where((team) {
+          final matchesLocation = _selectedLocation == 'All' ||
+              team.governorate.toLowerCase() == _selectedLocation.toLowerCase() ||
+              EgyptGovernorates.resolveGoogleName(team.governorate) == _selectedLocation ||
+              (EgyptGovernorates.resolveGoogleName(team.governorate) != null &&
+                  EgyptGovernorates.resolveGoogleName(team.governorate) == EgyptGovernorates.resolveGoogleName(_selectedLocation));
+
+          final matchesSport = team.sportType.toLowerCase() == _selectedSport.toLowerCase();
+
+          return matchesLocation && matchesSport;
+        }).toList();
 
         if (teams.isEmpty) {
           return Center(
-          child: Text(
-            AppLocalizations.of(context)!.noTeamsInLoc(_selectedLocation), 
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-          ),
+            child: Padding(
+              padding: const EdgeInsets.all(24.0),
+              child: Text(
+                AppLocalizations.of(context)!.noTeamsInLoc(_translateItem(_selectedLocation)), 
+                textAlign: TextAlign.center,
+                style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+              ),
+            ),
           );
         }
 

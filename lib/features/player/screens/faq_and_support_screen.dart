@@ -70,32 +70,39 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Text(
-                    isOwner 
-                      ? (isArabic ? 'دعم أصحاب الملاعب المباشر' : 'Stadium Owner Direct Support')
-                      : (isArabic ? 'دعم VSP المباشر' : 'VSP Direct Support'),
-                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                  Row(
+                    children: [
+                      const Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 22),
+                      const SizedBox(width: 8),
+                      Text(
+                        isOwner 
+                          ? (isArabic ? 'دعم أصحاب الملاعب المباشر' : 'Stadium Owner Direct Support')
+                          : (isArabic ? 'دعم VSP المباشر' : 'VSP Direct Support'),
+                        style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                      ),
+                    ],
                   ),
                   const SizedBox(height: 14),
                   Row(
                     children: [
                       Expanded(
-                        child: ElevatedButton(
+                        child: ElevatedButton.icon(
                           onPressed: _launchWhatsApp,
-                          style: ElevatedButton.styleFrom(
-                            backgroundColor: const Color(0xFF25D366),
-                            foregroundColor: Colors.white,
-                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
-                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
-                            elevation: 0,
-                          ),
-                          child: FittedBox(
+                          icon: const Icon(Iconsax.headphones_copy, size: 16, color: Colors.white),
+                          label: FittedBox(
                             fit: BoxFit.scaleDown,
                             child: Text(
                               isArabic ? 'واتساب الدعم' : 'WhatsApp Support',
                               style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
                               maxLines: 1,
                             ),
+                          ),
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color(0xFF25D366),
+                            foregroundColor: Colors.white,
+                            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+                            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                            elevation: 0,
                           ),
                         ),
                       ),

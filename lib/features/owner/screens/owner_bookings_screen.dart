@@ -1081,6 +1081,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
   bool _isSaving = false;
   bool _isDeleting = false;
   int _selectedMinutes = 60;
+  int _playerCount = 1;
 
   @override
   void initState() {
@@ -1093,6 +1094,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     double initialAmount = 0.0;
     if (widget.isEdit && booking != null) {
       initialAmount = booking.depositPaid > 0 ? booking.depositPaid : (booking.isPaid ? booking.totalPrice : 0.0);
+      _playerCount = booking.currentPlayers;
     }
     _collectedAmountController = TextEditingController(text: initialAmount == 0.0 ? '' : initialAmount.toStringAsFixed(0));
 
@@ -1525,6 +1527,59 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                   _buildDurationSelector(),
                   const SizedBox(height: 14),
 
+                  _buildInputLabel(isArabic ? "عدد اللاعبين الحاضرين (تليفون / خارجي)" : "Joined Players Count"),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 6),
+                    decoration: BoxDecoration(
+                      color: VSPColors.surfaceAlt,
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.divider, width: 0.5),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Row(
+                          children: [
+                            const Icon(Iconsax.user_tag_copy, color: VSPColors.accent, size: 18),
+                            const SizedBox(width: 8),
+                            Text(
+                              isArabic ? "إجمالي اللاعبين:" : "Total Players:",
+                              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                            ),
+                          ],
+                        ),
+                        Row(
+                          children: [
+                            IconButton(
+                              icon: const Icon(Iconsax.minus_cirlce_copy, size: 20, color: VSPColors.textPrimary),
+                              onPressed: (isCompletedBooking || _playerCount <= 1) ? null : () {
+                                setState(() => _playerCount--);
+                              },
+                            ),
+                            Padding(
+                              padding: const EdgeInsets.symmetric(horizontal: 12),
+                              child: Text(
+                                '$_playerCount',
+                                style: const TextStyle(
+                                  color: VSPColors.accent,
+                                  fontWeight: FontWeight.w900,
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                            IconButton(
+                              icon: const Icon(Iconsax.add_circle_copy, size: 20, color: VSPColors.textPrimary),
+                              onPressed: (isCompletedBooking || _playerCount >= (widget.selectedStadium.playersPerTeam * 2)) ? null : () {
+                                setState(() => _playerCount++);
+                              },
+                            ),
+                          ],
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(height: 14),
+
                   _buildInputLabel(l10n.customerName),
                   _buildPillTextField(
                     controller: _nameController, 
@@ -1710,6 +1765,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
           isPrivate: true,
           rentBall: false,
           totalPrice: totalPrice,
+          currentPlayers: _playerCount,
           isPaid: collectedAmount >= totalPrice,
           depositPaid: collectedAmount,
           isDepositPaid: collectedAmount > 0,
@@ -1766,6 +1822,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
             'end_time': endTime.toUtc().toIso8601String(),
             'player_team_name': customerName,
             'notes': notes,
+            'current_players': _playerCount,
             'deposit_paid': collectedAmount,
             'is_deposit_paid': collectedAmount > 0,
             'is_paid': collectedAmount >= finalTotal,

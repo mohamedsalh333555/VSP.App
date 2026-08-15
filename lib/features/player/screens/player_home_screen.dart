@@ -313,6 +313,19 @@ class ChampionshipCard extends StatelessWidget {
             const SizedBox(height: 12),
             Row(
               children: [
+                Container(
+                  width: 48,
+                  height: 48,
+                  decoration: BoxDecoration(
+                    color: VSPColors.surfaceAlt,
+                    shape: BoxShape.circle,
+                    border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 1.5),
+                  ),
+                  child: const Center(
+                    child: Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 22),
+                  ),
+                ),
+                const SizedBox(width: 12),
                 Expanded(
                   child: Column(
                     crossAxisAlignment: CrossAxisAlignment.start,
@@ -323,14 +336,15 @@ class ChampionshipCard extends StatelessWidget {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 20), 
+                  visualDensity: VisualDensity.compact,
+                  icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18), 
                   onPressed: () => SharingService.shareChampionshipObject(context: context, championship: championship),
                 ),
               ],
             ),
             const SizedBox(height: 12),
             Container(
-              padding: const EdgeInsets.symmetric(vertical: 10, horizontal: 12),
+              padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 8),
               decoration: BoxDecoration(color: Colors.black.withValues(alpha: 0.4), borderRadius: BorderRadius.circular(12)),
               child: Row(
                 mainAxisAlignment: MainAxisAlignment.spaceAround,
@@ -338,12 +352,18 @@ class ChampionshipCard extends StatelessWidget {
                   Builder(builder: (context) {
                     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
                     final dateStr = AppDateFormatter.formatDayMonth(championship.startDate, isArabic ? 'ar' : 'en');
-                    return _buildCompactInfo(Iconsax.calendar_1_copy, dateStr);
+                    return _buildCompactInfo(Iconsax.calendar_1_copy, isArabic ? 'البداية' : 'START', dateStr);
                   }),
                   _buildDivider(),
-                  _buildCompactInfo(Iconsax.cup_copy, "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                  Builder(builder: (context) {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    return _buildCompactInfo(Iconsax.cup_copy, isArabic ? 'الجائزة' : 'PRIZE', "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}");
+                  }),
                   _buildDivider(),
-                  _buildCompactInfo(Iconsax.card_copy, "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}"),
+                  Builder(builder: (context) {
+                    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                    return _buildCompactInfo(Iconsax.card_copy, isArabic ? 'الاشتراك' : 'FEE', "${championship.entryFee.toInt()} ${AppLocalizations.of(context)!.egCurrency}");
+                  }),
                 ],
               ),
             ),
@@ -472,9 +492,35 @@ class ChampionshipCard extends StatelessWidget {
 
   Widget _buildStatusBadge(String text, Color color) => Container(padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4), decoration: BoxDecoration(color: color.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(20), border: Border.all(color: color.withValues(alpha: 0.4))), child: Row(mainAxisSize: MainAxisSize.min, children: [Container(width: 6, height: 6, decoration: BoxDecoration(color: color, shape: BoxShape.circle)), const SizedBox(width: 6), Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold))]));
 
-  Widget _buildCompactInfo(IconData icon, String label) => Row(mainAxisSize: MainAxisSize.min, children: [Icon(icon, color: VSPColors.accent, size: 14), const SizedBox(width: 6), Text(label, style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold))]);
+  Widget _buildCompactInfo(IconData? icon, String headerTitle, String value) {
+    return Column(
+      mainAxisSize: MainAxisSize.min,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      children: [
+        Text(
+          headerTitle,
+          style: TextStyle(
+            color: Colors.white.withValues(alpha: 0.5),
+            fontSize: 9.5,
+            fontWeight: FontWeight.w600,
+          ),
+          maxLines: 1,
+          overflow: TextOverflow.ellipsis,
+        ),
+        const SizedBox(height: 3),
+        Flexible(
+          child: Text(
+            value,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+          ),
+        ),
+      ],
+    );
+  }
 
-  Widget _buildDivider() => Container(width: 1, height: 14, color: Colors.white10);
+  Widget _buildDivider() => Container(width: 1, height: 22, color: Colors.white10);
 }
 
 class _HomeContent extends StatelessWidget {
@@ -549,26 +595,14 @@ class _HomeContent extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text('${AppLocalizations.of(context)!.hi} ${auth.userModel?.name?.split(' ').first ?? AppLocalizations.of(context)!.playerDefaultName}', style: Theme.of(context).textTheme.titleLarge),
-                      Row(
-                        children: [
-                          Container(
-                            padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                            decoration: BoxDecoration(
-                              color: VSPColors.accent.withValues(alpha: 0.15),
-                              borderRadius: BorderRadius.circular(4),
-                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
-                            ),
-                            child: Text(
-                              auth.userModel?.position ?? "ST",
-                              style: const TextStyle(
-                                color: VSPColors.accent,
-                                fontSize: 10,
-                                fontWeight: FontWeight.bold,
-                                letterSpacing: 1.0,
-                              ),
-                            ),
-                          ),
-                        ],
+                      Text(
+                        auth.userModel?.position ?? "ST",
+                        style: const TextStyle(
+                          color: Colors.white70,
+                          fontSize: 12,
+                          fontWeight: FontWeight.w600,
+                          letterSpacing: 0.5,
+                        ),
                       ),
                     ],
                   ),

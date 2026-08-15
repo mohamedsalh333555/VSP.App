@@ -104,7 +104,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               context,
               title: isAr ? 'محادثة الدعم' : 'Chat with Support',
               subtitle: isAr ? 'تحدث مباشرة مع فريقنا على واتساب' : 'Chat directly with our team on WhatsApp',
-              icon: Iconsax.messages_3_copy,
+              icon: Iconsax.headphones_copy,
               color: const Color(0xFF25D366),
               onTap: () => _launchWhatsApp(context),
             ),

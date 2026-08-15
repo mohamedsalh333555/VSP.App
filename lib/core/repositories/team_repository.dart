@@ -1,6 +1,7 @@
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import '../constants/egypt_governorates.dart';
 import '../repositories/notification_repository.dart';
 import '../utils/phone_utils.dart';
 
@@ -214,8 +215,17 @@ class TeamRepository {
         .stream(primaryKey: ['id'])
         .map((list) {
           return list.map((data) {
-            if (governorate != null && data['governorate'] != governorate) {
-              return null;
+            if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+              final dbGov = (data['governorate'] ?? '').toString().trim();
+              final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
+              final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+
+              final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
+                  dbGov.toLowerCase() == governorate.toLowerCase();
+
+              if (!matches) {
+                return null;
+              }
             }
             return Team.fromFirestore(data, data['id'].toString());
           }).whereType<Team>().toList();
