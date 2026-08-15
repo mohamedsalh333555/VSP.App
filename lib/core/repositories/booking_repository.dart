@@ -18,6 +18,9 @@ abstract class BookingRepository {
   /// Get all bookings for a user
   Stream<List<Booking>> getUserBookings(String userId);
 
+  /// Direct REST fetch for user bookings
+  Future<List<Booking>> getUserBookingsDirectly(String userId);
+
   /// Get all bookings for a stadium owner
   Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds});
 
@@ -523,6 +526,23 @@ class SupabaseBookingRepository implements BookingRepository {
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
         });
+  }
+
+  @override
+  Future<List<Booking>> getUserBookingsDirectly(String userId) async {
+    try {
+      final response = await _supabase.from('bookings').select();
+      final bookings = (response as List)
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
+          .toList();
+      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+      VSPLogger.i('⚡ getUserBookingsDirectly returned ${bookings.length} bookings');
+      return bookings;
+    } catch (e) {
+      VSPLogger.e('❌ Error in getUserBookingsDirectly: $e');
+      return [];
+    }
   }
 
   Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
@@ -1146,6 +1166,11 @@ class MockBookingRepository implements BookingRepository {
     yield* _controller.stream.map(
       (bookings) => bookings.where((b) => b.createdByUserId == userId).toList(),
     );
+  }
+
+  @override
+  Future<List<Booking>> getUserBookingsDirectly(String userId) async {
+    return _bookings.where((b) => b.createdByUserId == userId || b.userId == userId).toList();
   }
 
   @override

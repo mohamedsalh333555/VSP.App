@@ -166,17 +166,18 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
         if (mounted) {
           setState(() => _isSubmitting = false);
-          await Navigator.push(
+          final paymentResult = await Navigator.push<bool>(
             context,
             MaterialPageRoute(
               builder: (context) => PaymentGatewayScreen(
                 bookingDraft: draft,
                 forceFullPayment: true,
+                isTournamentPayment: true,
               ),
             ),
           );
 
-          if (mounted) {
+          if (paymentResult == true && mounted) {
             await _executeJoinChampionship();
           }
           return;

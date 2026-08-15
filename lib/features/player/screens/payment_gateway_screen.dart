@@ -22,11 +22,13 @@ import '../../../core/utils/vsp_feedback.dart';
 class PaymentGatewayScreen extends StatefulWidget {
   final BookingDraft bookingDraft;
   final bool forceFullPayment;
+  final bool isTournamentPayment;
 
   const PaymentGatewayScreen({
     super.key,
     required this.bookingDraft,
     this.forceFullPayment = false,
+    this.isTournamentPayment = false,
   });
 
   @override
@@ -346,6 +348,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
           // 2. الانتقال المباشر واللحظي لشاشة النجاح الخضراء والتذكرة
           if (mounted) {
+            HapticFeedback.heavyImpact();
+
+            if (widget.isTournamentPayment) {
+              Navigator.pop(context, true);
+              return;
+            }
+
             final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
             final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
             if (!mounted) return;
@@ -356,7 +365,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
               paymentStatus: 'paid',
             );
 
-            HapticFeedback.heavyImpact();
             Navigator.pushReplacement(
               context,
               MaterialPageRoute(

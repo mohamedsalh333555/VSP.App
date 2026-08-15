@@ -153,6 +153,32 @@ class BookingProvider with ChangeNotifier {
     _repository.autoReconcileSingleEntryResults();
     _repository.autoNudgePostMatchResults();
 
+    // ⚡ Direct REST API fetch to guarantee instant display even if Realtime Stream is delayed
+    try {
+      final repo = _repository;
+      if (repo is SupabaseBookingRepository) {
+        repo.getUserBookingsDirectly(userId).then((directList) {
+          if (directList.isNotEmpty) {
+            _userBookings = directList;
+            final now = DateTime.now();
+            _upcomingBookings = directList
+                .where((b) => (b.status == BookingStatus.confirmed || b.status == BookingStatus.pending) && b.endTime.isAfter(now))
+                .toList();
+            _pendingBookings = directList.where((b) {
+              final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
+              final isRecent = b.createdAt.isAfter(tenMinutesAgo);
+              final isFuture = b.startTime.isAfter(now);
+              return b.status == BookingStatus.pending && !b.isPaid && isRecent && isFuture;
+            }).take(1).toList();
+            _historyBookings = directList
+                .where((b) => b.status == BookingStatus.completed || b.status == BookingStatus.cancelled || (b.status == BookingStatus.confirmed && b.endTime.isBefore(now)))
+                .toList();
+            notifyListeners();
+          }
+        });
+      }
+    } catch (_) {}
+
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
         .getUserBookings(userId)
@@ -164,14 +190,17 @@ class BookingProvider with ChangeNotifier {
             _upcomingBookings = bookings
                 .where(
                   (b) =>
-                      b.status == BookingStatus.confirmed &&
+                      (b.status == BookingStatus.confirmed || b.status == BookingStatus.pending) &&
                       b.endTime.isAfter(now),
                 )
                 .toList();
+            final tenMinutesAgo = now.subtract(const Duration(minutes: 10));
             _pendingBookings = bookings.where((b) {
+              final isRecent = b.createdAt.isAfter(tenMinutesAgo);
+              final isFuture = b.startTime.isAfter(now);
               final hasConfirmedSameSlot = _upcomingBookings.any((u) => u.stadiumId == b.stadiumId && u.startTime == b.startTime);
-              return b.status == BookingStatus.pending && !b.isPaid && !hasConfirmedSameSlot;
-            }).toList();
+              return b.status == BookingStatus.pending && !b.isPaid && isRecent && isFuture && !hasConfirmedSameSlot;
+            }).take(1).toList();
 
             _historyBookings = bookings
                 .where(

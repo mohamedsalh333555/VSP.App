@@ -391,7 +391,7 @@ class _BookingCard extends StatelessWidget {
                     Row(
                       children: [
                         _buildTag(_getLocalizedBookingType(context, booking.bookingType)),
-                        if (booking.isPrivate) ...[
+                        if (booking.bookingType == BookingType.openJoin && booking.isPrivate) ...[
                           const SizedBox(width: VSPSpacing.sm),
                           _buildTag(l10n.private, color: VSPColors.warning),
                         ],
@@ -519,17 +519,16 @@ class _BookingCard extends StatelessWidget {
   }
 
   String _getLocalizedBookingType(BuildContext context, BookingType type) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     switch (type) {
       case BookingType.personal:
         return isArabic ? 'حجز عادي' : 'SOLO';
       case BookingType.openJoin:
-        return isArabic ? 'تجميعي' : 'GATHERING';
+        return isArabic ? 'تجميعي' : 'OPEN JOIN';
       case BookingType.team:
-        return l10n.teamType.toUpperCase();
+        return isArabic ? 'فريق' : 'TEAM';
       case BookingType.challenge:
-        return l10n.challengeType.toUpperCase();
+        return isArabic ? 'تحدي' : 'CHALLENGE';
     }
   }
 
@@ -706,20 +705,14 @@ class _BookingCard extends StatelessWidget {
     return const SizedBox.shrink();
   }
 
-  Widget _buildTag(String text, {Color color = VSPColors.accent}) {
-    return Container(
-      padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: VSPSpacing.xs),
-      decoration: BoxDecoration(
-        color: color.withValues(alpha: 0.2),
-        borderRadius: BorderRadius.circular(4),
-      ),
-      child: Text(
-        text,
-        style: TextStyle(
-          color: color,
-          fontSize: 10,
-          fontWeight: FontWeight.bold,
-        ),
+  Widget _buildTag(String text, {Color? color}) {
+    return Text(
+      text,
+      style: TextStyle(
+        color: color ?? Colors.white.withValues(alpha: 0.9),
+        fontSize: 11,
+        fontWeight: FontWeight.bold,
+        letterSpacing: 0.5,
       ),
     );
   }

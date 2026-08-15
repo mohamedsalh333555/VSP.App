@@ -261,20 +261,133 @@ ON storage.objects FOR SELECT
 TO authenticated
 USING (bucket_id = 'owner_documents' AND auth.uid()::text = (storage.foldername(name))[1]);
 
--- 6. Tightened RLS Policies for Bookings & Team Members (Security Hardening)
-DROP POLICY IF EXISTS "Player can update joined bookings" ON public.bookings;
-CREATE POLICY "Player can update joined bookings"
-ON public.bookings FOR UPDATE
-TO authenticated
-USING (auth.uid()::text = user_id::text OR auth.uid()::text = owner_id::text);
+-- =========================================================================
+-- 🛡️ VSP BOOKING PERMISSIONS & REALTIME ACTIVATION
+-- =========================================================================
 
-DROP POLICY IF EXISTS "Members can leave team" ON public.team_members;
-CREATE POLICY "Members can leave team"
-ON public.team_members FOR DELETE
-TO authenticated
-USING (auth.uid()::text = user_id::text);
+-- 1. تفعيل Realtime على جدول الحجوزات بأمان (فقط إذا لم يكن مضافاً مسبقاً)
+DO $$
+BEGIN
+    IF NOT EXISTS (
+        SELECT 1 FROM pg_publication_tables 
+        WHERE pubname = 'supabase_realtime' 
+          AND schemaname = 'public' 
+          AND tablename = 'bookings'
+    ) THEN
+        ALTER PUBLICATION supabase_realtime ADD TABLE public.bookings;
+    END IF;
+END $$;
 
--- 7. Real-Time Publication Setup
+-- 2. إعطاء صلاحيات الإدخال (INSERT) لجميع المستخدمين المسجلين
+DROP POLICY IF EXISTS "Users can insert their own bookings" ON public.bookings;
+CREATE POLICY "Users can insert their own bookings" ON public.bookings
+FOR INSERT WITH CHECK (
+    auth.uid() IS NOT NULL
+);
+
+-- 3. إعطاء صلاحيات التعديل (UPDATE) لصاحب الحجز أو مالك الملعب
+DROP POLICY IF EXISTS "Users and Owners can update relevant bookings" ON public.bookings;
+CREATE POLICY "Users and Owners can update relevant bookings" ON public.bookings
+FOR UPDATE USING (
+    auth.uid()::text = user_id::text OR
+    auth.uid()::text = created_by_user_id::text OR
+    auth.uid()::text = owner_id::text
+) WITH CHECK (
+    auth.uid()::text = user_id::text OR
+    auth.uid()::text = created_by_user_id::text OR
+    auth.uid()::text = owner_id::text
+);
+
+-- 4. إعطاء صلاحيات الحذف (DELETE) لصاحب الحجز والمالك
+DROP POLICY IF EXISTS "Users and Owners can delete relevant bookings" ON public.bookings;
+CREATE POLICY "Users and Owners can delete relevant bookings" ON public.bookings
+FOR DELETE USING (
+    auth.uid()::text = user_id::text OR
+    auth.uid()::text = created_by_user_id::text OR
+    auth.uid()::text = owner_id::text
+);
+
+-- 5. تحديث دالة الحجز الذري لتقبل نصوص المعرفات بدون انهيار UUID
+CREATE OR REPLACE FUNCTION public.create_booking_atomic(
+    p_stadium_id TEXT,
+    p_user_id TEXT,
+    p_owner_id TEXT,
+    p_start_time TIMESTAMPTZ,
+    p_end_time TIMESTAMPTZ,
+    p_booking_type TEXT,
+    p_total_price NUMERIC,
+    p_stadium_name TEXT DEFAULT '',
+    p_stadium_image_url TEXT DEFAULT '',
+    p_is_private BOOLEAN DEFAULT TRUE,
+    p_rent_ball BOOLEAN DEFAULT FALSE,
+    p_needs_deposit BOOLEAN DEFAULT FALSE,
+    p_deposit_amount NUMERIC DEFAULT 0,
+    p_payment_method TEXT DEFAULT 'cash',
+    p_payment_status TEXT DEFAULT 'pending',
+    p_player_team_id TEXT DEFAULT NULL,
+    p_player_team_name TEXT DEFAULT NULL,
+    p_opponent_team_id TEXT DEFAULT NULL,
+    p_opponent_team_name TEXT DEFAULT NULL
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_conflict_count INT;
+    v_new_booking_id UUID;
+BEGIN
+    -- قفل تزامني للملعب
+    PERFORM pg_advisory_xact_lock(hashtext(p_stadium_id));
+
+    -- فحص التضارب
+    SELECT COUNT(*) INTO v_conflict_count
+    FROM public.bookings
+    WHERE stadium_id::text = p_stadium_id
+      AND status != 'cancelled'
+      AND (
+          (p_start_time >= start_time AND p_start_time < end_time) OR
+          (p_end_time > start_time AND p_end_time <= end_time) OR
+          (p_start_time <= start_time AND p_end_time >= end_time)
+      );
+
+    IF v_conflict_count > 0 THEN
+        RETURN jsonb_build_object('success', false, 'message', 'عذراً، هذا الوقت محجوز بالفعل لمباراة أخرى.');
+    END IF;
+
+    -- الإدخال المباشر
+    INSERT INTO public.bookings (
+        stadium_id, user_id, created_by_user_id, owner_id,
+        start_time, end_time, booking_type, total_price,
+        stadium_name, stadium_image_url, is_private, rent_ball,
+        needs_deposit, deposit_amount, deposit_paid,
+        payment_method, payment_status, status, is_paid,
+        player_team_id, player_team_name, opponent_team_id, opponent_team_name,
+        joined_user_ids, created_at, updated_at
+    ) VALUES (
+        CASE WHEN p_stadium_id ~ '^[0-9a-fA-F-]{36}$' THEN p_stadium_id::uuid ELSE NULL END,
+        p_user_id, p_user_id, p_owner_id,
+        p_start_time, p_end_time, p_booking_type, p_total_price,
+        p_stadium_name, p_stadium_image_url, p_is_private, p_rent_ball,
+        p_needs_deposit, p_deposit_amount, CASE WHEN p_payment_status = 'paid' THEN p_deposit_amount ELSE 0 END,
+        p_payment_method, p_payment_status,
+        CASE WHEN p_payment_status = 'paid' OR p_payment_method = 'cash' THEN 'confirmed' ELSE 'pending' END,
+        CASE WHEN p_payment_status = 'paid' THEN TRUE ELSE FALSE END,
+        CASE WHEN p_player_team_id ~ '^[0-9a-fA-F-]{36}$' THEN p_player_team_id::uuid ELSE NULL END,
+        p_player_team_name,
+        CASE WHEN p_opponent_team_id ~ '^[0-9a-fA-F-]{36}$' THEN p_opponent_team_id::uuid ELSE NULL END,
+        p_opponent_team_name,
+        ARRAY[p_user_id], NOW(), NOW()
+    )
+    RETURNING id INTO v_new_booking_id;
+
+    RETURN jsonb_build_object(
+        'success', true,
+        'booking_id', v_new_booking_id,
+        'message', 'تم تأكيد الحجز بنجاح.'
+    );
+END;
+$$;
 DO $$
 DECLARE
     pub_exists boolean;
