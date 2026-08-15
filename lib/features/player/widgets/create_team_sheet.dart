@@ -10,6 +10,8 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/services/storage_service.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/roster_parser_utils.dart';
+import 'package:flutter/services.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -140,6 +142,111 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
             }
           });
         },
+      ),
+    );
+  }
+
+  Future<void> _pasteFromWhatsApp() async {
+    String textToParse = '';
+
+    try {
+      final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+        textToParse = data.text!;
+      }
+    } catch (e) {
+      debugPrint('Clipboard read notice: $e');
+    }
+
+    if (textToParse.trim().isEmpty && mounted) {
+      textToParse = await _showManualPasteDialog() ?? '';
+    }
+
+    if (textToParse.trim().isEmpty) return;
+
+    final parsedNames = RosterParserUtils.parseSquadText(textToParse);
+    if (parsedNames.isEmpty) {
+      if (mounted) VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
+      return;
+    }
+
+    int addedCount = 0;
+
+    setState(() {
+      for (int i = 0; i < parsedNames.length; i++) {
+        if (_teamMembers.length + 1 >= 12) break;
+        final name = parsedNames[i];
+        if (!_teamMembers.any((m) => m.name == name)) {
+          _teamMembers.add(UserModel(
+            uid: 'guest_${DateTime.now().microsecondsSinceEpoch}_$i',
+            name: name,
+            email: 'guest_$i@vsp.app',
+            role: 'player',
+            governorate: 'Cairo',
+          ));
+          addedCount++;
+        }
+      }
+    });
+
+    if (addedCount > 0 && mounted) {
+      HapticFeedback.mediumImpact();
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showSuccess(
+        context,
+        isArabic
+            ? 'تمت إضافة $addedCount أعضاء من نص التشكيلة بنجاح! ⚽'
+            : 'Successfully added $addedCount members from WhatsApp text! ⚽',
+      );
+    }
+  }
+
+  Future<String?> _showManualPasteDialog() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final controller = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: Text(
+          isArabic ? 'لصق نص تشكيلة واتساب 📋' : 'Paste WhatsApp Squad List 📋',
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isArabic ? 'انسخ القائمة من واتساب والصقها هنا مباشرة:' : 'Copy list from WhatsApp and paste here:',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 6,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: '1- أحمد\n2- علي\n3- محمود...',
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                filled: true,
+                fillColor: VSPColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(isArabic ? 'استخراج الأسماء ⚽' : 'Extract Names ⚽', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
       ),
     );
   }
@@ -307,10 +414,22 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary),
                         ),
                       ),
-                      TextButton.icon(
-                        onPressed: _showAddPlayerSheet,
-                        icon: Icon(Iconsax.add_circle_copy, size: 18, color: VSPColors.accent),
-                        label: Text(l10n.addMemberBtn, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                      Row(
+                        children: [
+                          TextButton.icon(
+                            onPressed: _pasteFromWhatsApp,
+                            icon: const Icon(Iconsax.copy_copy, size: 16, color: VSPColors.accent),
+                            label: Text(
+                              Localizations.localeOf(context).languageCode == 'ar' ? 'لصق واتساب 📋' : 'Paste WhatsApp 📋',
+                              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                            ),
+                          ),
+                          TextButton.icon(
+                            onPressed: _showAddPlayerSheet,
+                            icon: const Icon(Iconsax.add_circle_copy, size: 18, color: VSPColors.accent),
+                            label: Text(l10n.addMemberBtn, style: Theme.of(context).textTheme.labelMedium?.copyWith(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+                          ),
+                        ],
                       ),
                     ],
                   ),

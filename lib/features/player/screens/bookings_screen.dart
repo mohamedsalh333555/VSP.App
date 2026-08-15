@@ -915,7 +915,7 @@ class _BookingCard extends StatelessWidget {
     if (parts.length == 2) {
       final start = parts[0].replaceAll(':00', '');
       final end = parts[1].replaceAll(':00', '');
-      return '$start-$end';
+      return '$start - $end';
     }
     return timeRange;
   }

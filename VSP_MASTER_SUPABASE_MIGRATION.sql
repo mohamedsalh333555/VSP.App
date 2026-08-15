@@ -1106,6 +1106,120 @@ CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON public.notifications
 CREATE INDEX IF NOT EXISTS idx_team_members_user ON public.team_members(user_id);
 CREATE INDEX IF NOT EXISTS idx_tournament_matches_champ ON public.tournament_matches(championship_id);
 
+-- =========================================================================
+-- 🛡️ VSP BULLETPROOF PRECISION PATCH
+-- =========================================================================
+
+-- 1. ELO Double Calculation Prevention Trigger
+CREATE OR REPLACE FUNCTION public.calculate_elo_on_match_completion()
+RETURNS TRIGGER 
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    home_elo INT;
+    away_elo INT;
+    new_home_elo INT;
+    new_away_elo INT;
+    outcome FLOAT;
+BEGIN
+    IF NEW.status = 'completed' 
+       AND OLD.status != 'completed' 
+       AND NEW.booking_type = 'challenge' 
+       AND NEW.final_outcome IS NOT NULL 
+       AND COALESCE(NEW.elo_processed, false) = false THEN
+        
+        SELECT COALESCE(points, 1000) INTO home_elo FROM public.teams WHERE id = NEW.player_team_id;
+        SELECT COALESCE(points, 1000) INTO away_elo FROM public.teams WHERE id = NEW.opponent_team_id;
+
+        IF home_elo IS NOT NULL AND away_elo IS NOT NULL THEN
+            IF NEW.final_outcome = 'homeWin' THEN outcome := 1.0;
+            ELSIF NEW.final_outcome = 'draw' THEN outcome := 0.5;
+            ELSE outcome := 0.0;
+            END IF;
+
+            new_home_elo := round(home_elo + 32 * (outcome - (1 / (1 + power(10, (away_elo - home_elo)::float / 400)))));
+            new_away_elo := round(away_elo + 32 * ((1 - outcome) - (1 / (1 + power(10, (home_elo - away_elo)::float / 400)))));
+
+            UPDATE public.teams 
+            SET points = GREATEST(0, new_home_elo), 
+                matches_played = matches_played + 1,
+                wins = wins + (CASE WHEN outcome = 1.0 THEN 1 ELSE 0 END),
+                draws = draws + (CASE WHEN outcome = 0.5 THEN 1 ELSE 0 END),
+                losses = losses + (CASE WHEN outcome = 0.0 THEN 1 ELSE 0 END),
+                trend = (CASE WHEN outcome > 0.0 THEN 'up' ELSE 'down' END)
+            WHERE id = NEW.player_team_id;
+
+            UPDATE public.teams 
+            SET points = GREATEST(0, new_away_elo), 
+                matches_played = matches_played + 1,
+                wins = wins + (CASE WHEN outcome = 0.0 THEN 1 ELSE 0 END),
+                draws = draws + (CASE WHEN outcome = 0.5 THEN 1 ELSE 0 END),
+                losses = losses + (CASE WHEN outcome = 1.0 THEN 1 ELSE 0 END),
+                trend = (CASE WHEN outcome < 1.0 THEN 'up' ELSE 'down' END)
+            WHERE id = NEW.opponent_team_id;
+
+            -- Mark processed to prevent double calculation
+            NEW.elo_processed := true;
+        END IF;
+    END IF;
+    RETURN NEW;
+END;
+$$;
+
+-- 2. Paymob Webhook Clean UUID Extractor
+CREATE OR REPLACE FUNCTION public.process_paymob_webhook(
+    p_booking_id TEXT,
+    p_txn_id TEXT,
+    p_order_id TEXT,
+    p_success BOOLEAN,
+    p_signature_verified BOOLEAN,
+    p_payload JSONB
+)
+RETURNS JSONB
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+DECLARE
+    v_clean_id TEXT;
+    v_existing_booking RECORD;
+BEGIN
+    -- Extract clean UUID prefix before timestamp suffix
+    v_clean_id := split_part(p_booking_id, '_', 1);
+
+    SELECT * INTO v_existing_booking
+    FROM public.bookings
+    WHERE id::text = v_clean_id
+    FOR UPDATE;
+
+    IF v_existing_booking.id IS NULL THEN
+        RETURN jsonb_build_object('success', false, 'error', 'booking_not_found');
+    END IF;
+
+    IF p_success THEN
+        UPDATE public.bookings
+        SET status = 'confirmed',
+            is_paid = TRUE,
+            payment_status = 'paid',
+            payment_transaction_id = 'PAYMOB_' || p_txn_id,
+            updated_at = NOW()
+        WHERE id::text = v_clean_id;
+
+        RETURN jsonb_build_object('success', true, 'status', 'confirmed');
+    ELSE
+        UPDATE public.bookings
+        SET status = 'cancelled',
+            is_paid = FALSE,
+            payment_status = 'failed',
+            updated_at = NOW()
+        WHERE id::text = v_clean_id;
+
+        RETURN jsonb_build_object('success', true, 'status', 'cancelled');
+    END IF;
+END;
+$$;
+
+
 
 
 

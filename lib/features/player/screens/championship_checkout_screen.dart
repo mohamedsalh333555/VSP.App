@@ -8,6 +8,8 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
+import 'package:flutter/services.dart';
+import '../../../core/utils/roster_parser_utils.dart';
 import 'payment_gateway_screen.dart';
 
 class ChampionshipCheckoutScreen extends StatefulWidget {
@@ -98,6 +100,105 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       _offlineGuestNames.add(name);
       _guestController.clear();
     });
+  }
+
+  Future<void> _pasteFromWhatsApp() async {
+    String textToParse = '';
+
+    try {
+      final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+        textToParse = data.text!;
+      }
+    } catch (e) {
+      debugPrint('Clipboard read notice: $e');
+    }
+
+    if (textToParse.trim().isEmpty && mounted) {
+      textToParse = await _showManualPasteDialog() ?? '';
+    }
+
+    if (textToParse.trim().isEmpty) return;
+
+    final parsedNames = RosterParserUtils.parseSquadText(textToParse);
+    if (parsedNames.isEmpty) {
+      if (mounted) VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
+      return;
+    }
+
+    final maxPlayers = widget.championship.maxPlayersPerTeam;
+    int addedCount = 0;
+
+    setState(() {
+      for (final name in parsedNames) {
+        if (_selectedPlayerIds.length + _offlineGuestNames.length >= maxPlayers) break;
+        if (!_offlineGuestNames.contains(name)) {
+          _offlineGuestNames.add(name);
+          addedCount++;
+        }
+      }
+    });
+
+    if (addedCount > 0 && mounted) {
+      HapticFeedback.mediumImpact();
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      VSPFeedback.showSuccess(
+        context,
+        isArabic
+            ? 'تمت إضافة $addedCount لاعبين من نص التشكيلة بنجاح! ⚽'
+            : 'Successfully added $addedCount players from WhatsApp text! ⚽',
+      );
+    }
+  }
+
+  Future<String?> _showManualPasteDialog() {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final controller = TextEditingController();
+
+    return showDialog<String>(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        title: Text(
+          isArabic ? 'لصق نص تشكيلة واتساب 📋' : 'Paste WhatsApp Squad List 📋',
+          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              isArabic ? 'انسخ القائمة من واتساب والصقها هنا مباشرة:' : 'Copy list from WhatsApp and paste here:',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+            ),
+            const SizedBox(height: 12),
+            TextField(
+              controller: controller,
+              maxLines: 6,
+              style: const TextStyle(color: Colors.white, fontSize: 13),
+              decoration: InputDecoration(
+                hintText: '1- أحمد\n2- علي\n3- محمود...',
+                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                filled: true,
+                fillColor: VSPColors.background,
+                border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, null),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+          ),
+          ElevatedButton(
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+            onPressed: () => Navigator.pop(ctx, controller.text),
+            child: Text(isArabic ? 'استخراج الأسماء ⚽' : 'Extract Names ⚽', style: const TextStyle(fontWeight: FontWeight.bold)),
+          ),
+        ],
+      ),
+    );
   }
 
   Future<void> _handleConfirmAndPay() async {
@@ -454,20 +555,61 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             const SizedBox(height: VSPSpacing.lg),
 
             // 4. Add Guest Players Section
-            Text(
-              'إضافة أصدقاء من خارج التطبيق:',
-              style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+            Row(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  isArabic ? 'إضافة أصدقاء من خارج التطبيق:' : 'Add External Guests:',
+                  style: Theme.of(context).textTheme.titleMedium?.copyWith(color: Colors.white),
+                ),
+                TextButton.icon(
+                  onPressed: _pasteFromWhatsApp,
+                  icon: const Icon(Iconsax.copy_copy, size: 16, color: VSPColors.accent),
+                  label: Text(
+                    isArabic ? 'لصق من واتساب 📋' : 'Paste from WhatsApp 📋',
+                    style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                ),
+              ],
             ),
-            const SizedBox(height: VSPSpacing.sm),
+            const SizedBox(height: VSPSpacing.xs),
+
+            if (totalCount < minPlayers) ...[
+              Container(
+                margin: const EdgeInsets.only(bottom: 10),
+                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                decoration: BoxDecoration(
+                  color: Colors.amber.withValues(alpha: 0.12),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.info_circle_copy, color: Colors.amber, size: 18),
+                    const SizedBox(width: 8),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? 'متبقي [${minPlayers - totalCount}] لاعبين لاكتمال نصاب الفريق ⚽'
+                            : '[${minPlayers - totalCount}] more players needed to complete squad ⚽',
+                        style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
+            ],
 
             Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _guestController,
+                    textInputAction: TextInputAction.next,
+                    onSubmitted: (_) => _addGuestPlayer(),
                     style: const TextStyle(color: Colors.white, fontSize: 14),
                     decoration: InputDecoration(
-                      hintText: 'اسم الصديق',
+                      hintText: isArabic ? 'اسم الصديق (اضغط التالي للإضافة السريعة)' : 'Guest name (press Next to add)',
                       hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                       filled: true,
                       fillColor: VSPColors.surface,
@@ -490,7 +632,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                       borderRadius: BorderRadius.circular(VSPRadius.md),
                     ),
                   ),
-                  child: const Text('إضافة', style: TextStyle(fontWeight: FontWeight.bold)),
+                  child: Text(isArabic ? 'إضافة' : 'Add', style: const TextStyle(fontWeight: FontWeight.bold)),
                 ),
               ],
             ),

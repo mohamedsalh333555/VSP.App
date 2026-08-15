@@ -282,61 +282,82 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
   void _onTimeSlotTap(String slotKey, List<Booking> existingBookings) {
     setState(() {
-      if (_selectedTimeSlots.isEmpty) {
-        _selectedTimeSlots.add(slotKey);
+      final isAlreadySelected = _selectedTimeSlots.contains(slotKey);
+      final idxTapped = _timeSlots.indexWhere((s) => s.key == slotKey);
+
+      if (isAlreadySelected) {
+        if (_selectedTimeSlots.length <= 2) {
+          _selectedTimeSlots.clear();
+          return;
+        }
+      }
+
+      if (idxTapped == -1) return;
+
+      if (_selectedTimeSlots.isEmpty || isAlreadySelected) {
+        _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
       } else if (_selectedTimeSlots.length == 1) {
         final first = _selectedTimeSlots.first;
-        if (first == slotKey) {
-          _selectedTimeSlots.clear();
-        } else {
-          final idxFirst = _timeSlots.indexWhere((s) => s.key == first);
-          final idxTapped = _timeSlots.indexWhere((s) => s.key == slotKey);
-          
-          if (idxFirst == -1 || idxTapped == -1) {
-            _selectedTimeSlots.clear();
-            _selectedTimeSlots.add(slotKey);
-            return;
-          }
+        final idxFirst = _timeSlots.indexWhere((s) => s.key == first);
+        if (idxFirst == -1) {
+          _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+          return;
+        }
 
-          final startIdx = idxFirst < idxTapped ? idxFirst : idxTapped;
-          final endIdx = idxFirst > idxTapped ? idxFirst : idxTapped;
-          
-          bool hasInvalidSlot = false;
-          final List<String> tempRange = [];
-          for (int i = startIdx; i <= endIdx; i++) {
-            if (i > startIdx) {
-              final prevSlot = _timeSlots[i - 1];
-              final currSlot = _timeSlots[i];
-              if (currSlot.startMinutes != prevSlot.startMinutes + 30) {
-                hasInvalidSlot = true; // Break time gap detected!
-                break;
-              }
-            }
-            final checkItem = _timeSlots[i];
-            final slotDateTime = _getSlotDateTime(checkItem.key);
-            final isPast = slotDateTime.isBefore(DateTime.now());
-            final isBooked = _isSlotBooked(checkItem.key, existingBookings);
-            
-            if (isPast || isBooked) {
-              hasInvalidSlot = true;
+        final startIdx = idxFirst < idxTapped ? idxFirst : idxTapped;
+        final endIdx = idxFirst > idxTapped ? idxFirst : idxTapped;
+        
+        bool hasInvalidSlot = false;
+        final List<String> tempRange = [];
+        for (int i = startIdx; i <= endIdx; i++) {
+          if (i > startIdx) {
+            final prevSlot = _timeSlots[i - 1];
+            final currSlot = _timeSlots[i];
+            if (currSlot.startMinutes != prevSlot.startMinutes + 30) {
+              hasInvalidSlot = true; // Break time gap detected!
               break;
             }
-            tempRange.add(checkItem.key);
           }
+          final checkItem = _timeSlots[i];
+          final slotDateTime = _getSlotDateTime(checkItem.key);
+          final isPast = slotDateTime.isBefore(DateTime.now());
+          final isBooked = _isSlotBooked(checkItem.key, existingBookings);
           
-          if (hasInvalidSlot) {
-            _selectedTimeSlots.clear();
-            _selectedTimeSlots.add(slotKey);
-          } else {
-            _selectedTimeSlots.clear();
-            _selectedTimeSlots.addAll(tempRange);
+          if (isPast || isBooked) {
+            hasInvalidSlot = true;
+            break;
           }
+          tempRange.add(checkItem.key);
+        }
+        
+        if (hasInvalidSlot) {
+          _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+        } else {
+          _selectedTimeSlots.clear();
+          _selectedTimeSlots.addAll(tempRange);
         }
       } else {
-        _selectedTimeSlots.clear();
-        _selectedTimeSlots.add(slotKey);
+        _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
       }
     });
+  }
+
+  void _selectSlotWithAutoConsecutive(int startIdx, List<Booking> existingBookings) {
+    _selectedTimeSlots.clear();
+    final startSlot = _timeSlots[startIdx];
+    _selectedTimeSlots.add(startSlot.key);
+
+    if (startIdx + 1 < _timeSlots.length) {
+      final nextSlot = _timeSlots[startIdx + 1];
+      if (nextSlot.startMinutes == startSlot.startMinutes + 30) {
+        final nextDateTime = _getSlotDateTime(nextSlot.key);
+        final isPast = nextDateTime.isBefore(DateTime.now());
+        final isBooked = _isSlotBooked(nextSlot.key, existingBookings);
+        if (!isPast && !isBooked) {
+          _selectedTimeSlots.add(nextSlot.key);
+        }
+      }
+    }
   }
 
   void _showCalendarModal() {
@@ -566,13 +587,32 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         );
                       }
                       final existingBookings = snapshot.data ?? [];
+                      final now = DateTime.now();
+                      final bool isToday = _selectedDate.year == now.year && _selectedDate.month == now.month && _selectedDate.day == now.day;
+
+                      String? firstUpcomingSlotKey;
+                      if (isToday) {
+                        for (final item in _timeSlots) {
+                          final dt = _getSlotDateTime(item.key);
+                          final booked = _isSlotBooked(item.key, existingBookings);
+                          if (dt.isAfter(now) && !booked) {
+                            firstUpcomingSlotKey = item.key;
+                            break;
+                          }
+                        }
+                      }
+
                       return Column(
                         children: List.generate(_timeSlots.length, (index) {
                           final slotItem = _timeSlots[index];
                           final isBooked = _isSlotBooked(slotItem.key, existingBookings);
                           final isSelected = _selectedTimeSlots.contains(slotItem.key);
                           final slotDateTime = _getSlotDateTime(slotItem.key);
-                          final isPast = slotDateTime.isBefore(DateTime.now());
+                          final slotEndDateTime = slotDateTime.add(const Duration(minutes: 30));
+                          final isPast = slotDateTime.isBefore(now);
+                          final isCurrentOngoing = isToday && now.isAfter(slotDateTime) && now.isBefore(slotEndDateTime);
+                          final isNextAvailable = isToday && slotItem.key == firstUpcomingSlotKey;
+
                           final isOvernightSlot = slotItem.startMinutes >= 1440;
                           final bool isFirstOvernightSlot = isOvernightSlot && (index == 0 || _timeSlots[index - 1].startMinutes < 1440);
                           final String nextDayName = isOvernightSlot
@@ -598,7 +638,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       ? Colors.red.withValues(alpha: 0.3)
                                       : (isPast
                                           ? Colors.transparent
-                                          : (isSelected ? VSPColors.accent : VSPColors.divider)),
+                                          : (isSelected ? VSPColors.accent : (isNextAvailable ? VSPColors.accent.withValues(alpha: 0.5) : VSPColors.divider))),
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -671,9 +711,40 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                         ],
                                       ),
                                     ),
+                                  ] else if (isCurrentOngoing) ...[
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.amber.withValues(alpha: 0.2),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.amber),
+                                      ),
+                                      child: Text(
+                                        isArabic ? '⚡ الآن' : '⚡ NOW',
+                                        style: const TextStyle(color: Colors.amber, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
+                                  ] else if (isNextAvailable) ...[
+                                    const SizedBox(width: 12),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: VSPColors.accent.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.5)),
+                                      ),
+                                      child: Text(
+                                        isArabic ? '⚡ الأقرب' : '⚡ Next Available',
+                                        style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                                      ),
+                                    ),
                                   ] else if (isPast) ...[
                                     const SizedBox(width: 12),
-                                    Text(isArabic ? 'منقضي' : 'Past', style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold)),
+                                    Text(
+                                      isArabic ? 'منقضي' : 'Past',
+                                      style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.4), fontSize: 12, fontWeight: FontWeight.bold),
+                                    ),
                                   ],
                                 ],
                               ),
@@ -718,19 +789,31 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         children: [
                           Container(
                             padding: const EdgeInsets.all(12),
-                            decoration: BoxDecoration(color: VSPColors.error.withValues(alpha: 0.1), borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: VSPColors.error.withValues(alpha: 0.5))),
+                            decoration: BoxDecoration(
+                              color: VSPColors.accent.withValues(alpha: 0.12),
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
+                            ),
                             child: Column(
                               crossAxisAlignment: CrossAxisAlignment.start,
                               children: [
                                 Row(
                                   children: [
-                                    const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 18),
+                                    const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 18),
                                     const SizedBox(width: 8),
-                                    Text(isArabic ? "تقييد الحساب" : "Account Restricted", style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 13)),
+                                    Text(
+                                      isArabic ? "الدفع الإلكتروني المقترح 💳" : "Smart Online Payment 💳",
+                                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                                    ),
                                   ],
                                 ),
                                 const SizedBox(height: 6),
-                                Text(isArabic ? "تم تقييد حسابك مؤقتاً من الحجوزات النقدية بسبب تكرار عدم الحضور. للحجز، يجب دفع 100٪ من قيمة الحجز عبر الإنترنت." : "Account temporarily restricted from Cash bookings due to missed attendance. Must pay 100% online.", style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4)),
+                                Text(
+                                  isArabic
+                                      ? "الحجز النقدي مقيد مؤقتاً - ادفع أونلاين بالفيزا أو المحفظة لتأكيد مكانك فوراً واستعادة تقييمك 💳"
+                                      : "Cash booking is temporarily restricted - Pay online via card or mobile wallet to confirm your spot immediately and restore your rating 💳",
+                                  style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
+                                ),
                               ],
                             ),
                           ),

@@ -9,7 +9,7 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../data/models.dart';
 import '../screens/booking_confirmation_screen.dart';
 import '../screens/challenge_select_team_screen.dart';
-import '../screens/profile_subscreens/my_team_screen.dart';
+import 'create_team_sheet.dart';
 
 /// Modal Bottom Sheet لاختيار نوع الحجز بدون أي إيموجي (No Emojis)
 class BookingTypeModal extends StatefulWidget {
@@ -48,16 +48,17 @@ class _BookingTypeModalState extends State<BookingTypeModal> {
           final team = await TeamRepository().getUserTeam(uid);
           if (team == null || team.currentPlayers < 5) {
             if (!mounted) return;
-            Navigator.pop(context);
-            await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!.teamIncompleteError),
-                backgroundColor: VSPColors.warning,
-              ),
+            final created = await showModalBottomSheet<bool>(
+              context: context,
+              isScrollControlled: true,
+              backgroundColor: Colors.transparent,
+              builder: (_) => const CreateTeamSheet(),
             );
-            return;
+            if (!mounted) return;
+            if (created != true) {
+              setState(() => _isLoading = false);
+              return;
+            }
           }
         }
       }

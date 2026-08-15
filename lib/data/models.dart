@@ -1019,11 +1019,12 @@ class Booking {
     return '${months[startTime.month - 1]} ${startTime.day}';
   }
 
-  /// Get formatted time range
+  /// Get formatted time range (12-hour format with AM/PM)
   String get formattedTimeRange {
     String formatTime(DateTime dt) {
-      final hour = dt.hour > 12 ? dt.hour - 12 : dt.hour;
-      final period = dt.hour >= 12 ? 'PM' : 'AM';
+      final int rawHour = dt.hour;
+      final int hour = rawHour == 0 ? 12 : (rawHour > 12 ? rawHour - 12 : rawHour);
+      final String period = rawHour >= 12 ? 'PM' : 'AM';
       return '$hour:${dt.minute.toString().padLeft(2, '0')} $period';
     }
     return '${formatTime(startTime)} - ${formatTime(endTime)}';

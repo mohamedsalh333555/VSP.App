@@ -100,14 +100,14 @@ class SupabaseBookingRepository implements BookingRepository {
   int _parseTimeToMinutes(String timeStr) {
     if (timeStr.isEmpty) return 0;
     try {
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM)?', caseSensitive: false);
+      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
       final match = timeRegex.firstMatch(timeStr);
       if (match == null) return 0;
       int hour = int.parse(match.group(1)!);
       int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
       String? period = match.group(3)?.toUpperCase();
-      if (period == 'PM' && hour != 12) hour += 12;
-      if (period == 'AM' && hour == 12) hour = 0;
+      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
+      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
       return hour * 60 + minute;
     } catch (e) {
       return 0;
@@ -549,7 +549,10 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<List<Booking>> getUserBookingsDirectly(String userId) async {
     try {
-      final response = await _supabase.from('bookings').select();
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .or('user_id.eq.$userId,created_by_user_id.eq.$userId');
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))

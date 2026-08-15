@@ -431,6 +431,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             .eq('user_id', userId)
             .eq('stadium_id', widget.bookingDraft.stadiumId)
             .eq('status', 'pending');
+
+        if (mounted) {
+          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+          bookingProvider.loadUserBookings(userId);
+        }
       }
 
       debugPrint('🔓 Slot successfully released for everyone on Go Back.');

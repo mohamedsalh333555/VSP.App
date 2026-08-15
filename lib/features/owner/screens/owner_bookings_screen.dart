@@ -904,26 +904,30 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
   Widget _buildOwnerFinancialSummaryBox(List<Booking> dayBookings, bool isArabic) {
     double onlineCollected = 0.0;
-    double pitchCashRemaining = 0.0;
+    double pitchCashCollected = 0.0;
+    double pendingCash = 0.0;
 
     for (final b in dayBookings) {
       if (b.status == BookingStatus.cancelled) continue;
       final double price = b.totalPrice;
       final double dep = b.depositPaid;
+      final bool isCashMethod = b.paymentMethod == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true);
 
-      if (b.isPaid || b.paymentStatus == 'paid') {
+      if (!isCashMethod && (b.isPaid || b.paymentStatus == 'paid')) {
         onlineCollected += price;
-      } else if (b.isDepositPaid || dep > 0) {
+      } else if (!isCashMethod && (b.isDepositPaid || dep > 0)) {
         onlineCollected += dep;
         if (price > dep) {
-          pitchCashRemaining += (price - dep);
+          pendingCash += (price - dep);
         }
+      } else if (isCashMethod && (b.isPaid || b.paymentStatus == 'paid')) {
+        pitchCashCollected += price;
       } else {
-        pitchCashRemaining += price;
+        pendingCash += price;
       }
     }
 
-    final double totalDayRevenue = onlineCollected + pitchCashRemaining;
+    final double totalDayRevenue = onlineCollected + pitchCashCollected + pendingCash;
 
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
@@ -974,8 +978,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               const SizedBox(width: 6),
               Expanded(
                 child: _buildFinancialMetricTile(
-                  title: isArabic ? 'متبقي كاش 💵' : 'Cash Rem. 💵',
-                  amount: '${pitchCashRemaining.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                  title: isArabic ? 'كاش بالملعب 💵' : 'Pitch Cash 💵',
+                  amount: '${(pitchCashCollected + pendingCash).toInt()} ${isArabic ? "ج.م" : "EGP"}',
                   color: Colors.amber,
                 ),
               ),

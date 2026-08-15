@@ -54,6 +54,17 @@ class TournamentRepository {
         });
   }
 
+  Future<Championship?> getChampionshipById(String id) async {
+    try {
+      final data = await _supabase.from('championships').select().eq('id', id).maybeSingle();
+      if (data == null) return null;
+      return Championship.fromFirestore(data, data['id'].toString());
+    } catch (e) {
+      debugPrint('Error fetching championship by id: $e');
+      return null;
+    }
+  }
+
   List<Championship> _parseChampionshipsList(
     List<dynamic> list, {
     String? governorate,

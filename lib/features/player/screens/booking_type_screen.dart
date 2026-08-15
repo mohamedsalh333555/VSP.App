@@ -10,7 +10,7 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
-import 'profile_subscreens/my_team_screen.dart';
+import '../widgets/create_team_sheet.dart';
 
 class BookingTypeScreen extends StatefulWidget {
   final Stadium stadium;
@@ -143,17 +143,18 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     try {
       if (_selectedType == 'Challenge Match') {
         if (!_hasTeam || _teamPlayersCount < 5) {
-          await Navigator.push(context, MaterialPageRoute(builder: (_) => const MyTeamScreen()));
+          await showModalBottomSheet<bool>(
+            context: context,
+            isScrollControlled: true,
+            backgroundColor: Colors.transparent,
+            builder: (_) => const CreateTeamSheet(),
+          );
           await _checkUserTeam();
           
-          if (!_hasTeam || _teamPlayersCount < 5) {
-            if (!mounted) return;
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(
-                content: Text(AppLocalizations.of(context)!.teamIncompleteError), 
-                backgroundColor: VSPColors.warning
-              )
-            );
+          if (!_hasTeam) {
+            if (mounted) {
+              setState(() => _isNavigating = false);
+            }
             return;
           }
         }

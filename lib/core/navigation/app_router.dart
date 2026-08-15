@@ -17,6 +17,10 @@ import '../../features/admin/screens/admin_dashboard_screen.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
+import '../../features/player/screens/championship_details_screen.dart';
+import '../../core/repositories/tournament_repository.dart';
+import '../../data/models.dart';
+import '../../core/ui/tokens/vsp_tokens.dart';
 
 class AppRouter {
   static GoRouter createRouter(AuthProvider authProvider, GlobalKey<NavigatorState> navigatorKey) {
@@ -89,6 +93,24 @@ class AppRouter {
           builder: (context, state) {
             final teamId = state.pathParameters['teamId'] ?? '';
             return TeamProfileScreen(teamId: teamId);
+          },
+        ),
+        GoRoute(
+          path: '/championship/:championshipId',
+          builder: (context, state) {
+            final id = state.pathParameters['championshipId'] ?? '';
+            return FutureBuilder<Championship?>(
+              future: TournamentRepository().getChampionshipById(id),
+              builder: (context, snapshot) {
+                if (snapshot.hasData && snapshot.data != null) {
+                  return ChampionshipDetailsScreen(championship: snapshot.data!);
+                }
+                return const Scaffold(
+                  backgroundColor: VSPColors.background,
+                  body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+                );
+              },
+            );
           },
         ),
         GoRoute(

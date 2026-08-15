@@ -547,29 +547,8 @@ class BookingProvider with ChangeNotifier {
   }
 
   List<Booking> _normalizeBookings(List<Booking> rawBookings) {
-    return rawBookings.map((b) {
-      final bStartLocal = b.startTime.toLocal();
-      final bEndLocal = b.endTime.toLocal();
-      final int startMin = bStartLocal.hour * 60 + bStartLocal.minute;
-      final int endMin = bEndLocal.hour * 60 + bEndLocal.minute;
-
-      const int breakStartMin = 1110; // 6:30 PM (18:30)
-
-      if (startMin < breakStartMin && endMin > breakStartMin && bStartLocal.hour >= 12) {
-        final newEnd = DateTime(
-          bStartLocal.year,
-          bStartLocal.month,
-          bStartLocal.day,
-          18,
-          30,
-        );
-        return b.copyWith(
-          endTime: newEnd,
-          totalPrice: 100.0,
-        );
-      }
-      return b;
-    }).toList();
+    // إرجاع الحجوزات الأصلية كما هي من قاعدة البيانات دون أي تعديل يدوي
+    return rawBookings;
   }
 
   /// Clear error message
