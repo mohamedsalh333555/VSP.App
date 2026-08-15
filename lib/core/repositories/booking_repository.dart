@@ -779,45 +779,39 @@ class SupabaseBookingRepository implements BookingRepository {
         }
       }
 
-      if (currentMatchStatus == MatchResultStatus.noResult) {
+      // Case A: First submission (no result yet) OR Captain 1 editing/changing their submitted result
+      if (currentMatchStatus == MatchResultStatus.noResult || submittedBy == teamId) {
         await _supabase.from('bookings').update({
           'pending_outcome': outcome.name,
           'result_submitted_by_team_id': teamId,
           'match_result_status': MatchResultStatus.waitingOpponent.name,
+          'requires_admin_intervention': false,
+          'final_outcome': null,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', bookingId);
         await saveRating();
         return true;
-      } else if (currentMatchStatus == MatchResultStatus.waitingOpponent && submittedBy != teamId) {
+      } 
+      // Case B: Captain 2 responding (status is waitingOpponent or disputed)
+      else if (submittedBy != teamId) {
         final pendingOutcomeStr = booking.pendingOutcome?.name;
 
+        // Agreement by Captain 2 with Captain 1's claimed outcome
         if (pendingOutcomeStr == outcome.name) {
           await _supabase.from('bookings').update({
             'final_outcome': outcome.name,
             'match_result_status': MatchResultStatus.confirmed.name,
             'status': BookingStatus.completed.name,
+            'requires_admin_intervention': false, // 🛡️ Dispute automatically resolved!
             'pending_outcome': null,
             'result_submitted_by_team_id': null,
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           }).eq('id', bookingId);
 
-          // 🛡️ Squads & Challenges: Disable Automated Client-Side Elo updates
-          // Points/Elo calculation is completely offloaded to Supabase to execute only upon owner verification.
-          /*
-          final homeTeamId = booking.playerTeamId;
-          final awayTeamId = booking.opponentTeamId;
-          if (homeTeamId != null && awayTeamId != null) {
-            await TeamRepository().updateMatchResult(
-              bookingId, 
-              homeTeamId, 
-              awayTeamId, 
-              outcome
-            );
-          }
-          */
           await saveRating();
           return true;
         } else {
+          // Disagreement / Dispute by Captain 2
           await _supabase.from('bookings').update({
             'match_result_status': MatchResultStatus.disputed.name,
             'requires_admin_intervention': true,

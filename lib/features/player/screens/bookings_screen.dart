@@ -601,91 +601,173 @@ class _BookingCard extends StatelessWidget {
   }
 
   Widget _buildChallengeResultAction(BuildContext context) {
-    final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final currentTeamId = myTeamId ?? booking.playerTeamId;
     if (currentTeamId == null) return const SizedBox.shrink();
 
-    // ── 30-day deadline: hide result input if match ended > 30 days ago ──
-    final bool resultExpired = DateTime.now()
-        .isAfter(booking.endTime.add(const Duration(days: 30)));
+    final isHome = currentTeamId == booking.playerTeamId;
 
+    // 1. لم يدخل أحد النتيجة بعد
     if (booking.matchResultStatus == MatchResultStatus.noResult) {
-      if (resultExpired) {
+      return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
+    }
+
+    // 2. الكابتن الأول أدخل النتيجة وينتظر رد الطرف الثاني أو يوجد نزاع
+    if (booking.matchResultStatus == MatchResultStatus.waitingOpponent || booking.matchResultStatus == MatchResultStatus.disputed) {
+      if (booking.resultSubmittedByTeamId == currentTeamId) {
+        // 🔄 الكابتن الأول: يرى الانتظار وله خيار "تعديل النتيجة" في حال أخطأ
         return Container(
           width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
             color: VSPColors.surfaceAlt,
             borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: VSPColors.divider),
+            border: Border.all(color: Colors.white12),
           ),
           child: Row(
-            mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 16),
+              const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 16),
               const SizedBox(width: 8),
-              Text(
-                isArabic ? 'انتهت مهلة إدخال النتيجة (30 يوم)' : 'Result submission period expired (30 days)',
-                textAlign: TextAlign.center,
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                  color: VSPColors.textSecondary,
-                  fontStyle: FontStyle.italic,
+              Expanded(
+                child: Text(
+                  booking.matchResultStatus == MatchResultStatus.disputed
+                      ? (isArabic ? 'النتيجة قيد النزاع ⚠️' : 'Result under dispute ⚠️')
+                      : (isArabic ? 'في انتظار تأكيد الخصم ⏳' : 'Waiting opponent confirmation ⏳'),
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                 ),
+              ),
+              OutlinedButton.icon(
+                style: OutlinedButton.styleFrom(
+                  foregroundColor: Colors.white70,
+                  side: const BorderSide(color: Colors.white24),
+                  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                  visualDensity: VisualDensity.compact,
+                ),
+                icon: const Icon(Iconsax.edit_2_copy, size: 14),
+                label: Text(
+                  isArabic ? 'تعديل' : 'Edit',
+                  style: const TextStyle(fontSize: 11, fontWeight: FontWeight.bold),
+                ),
+                onPressed: () {
+                  showDialog(
+                    context: context,
+                    builder: (context) => MatchResultModal(
+                      booking: booking,
+                      submittingTeamId: currentTeamId,
+                      onConfirm: (outcome, rating, review) async {
+                        final provider = Provider.of<BookingProvider>(context, listen: false);
+                        final success = await provider.submitMatchResult(
+                          bookingId: booking.id,
+                          teamId: currentTeamId,
+                          outcome: outcome,
+                          rating: rating,
+                          review: review,
+                        );
+                        if (context.mounted && success) {
+                          VSPFeedback.showSuccess(context, isArabic ? 'تم تعديل النتيجة وإرسالها للخصم للموافقة ⚽' : 'Result updated & sent to opponent ⚽');
+                        }
+                      },
+                    ),
+                  );
+                },
               ),
             ],
           ),
         );
-      }
-      return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
-    } else if (booking.matchResultStatus == MatchResultStatus.waitingOpponent) {
-      if (booking.resultSubmittedByTeamId == currentTeamId) {
+      } else {
+        // ⚡ كابتن الفريق الثاني: يرى نتيجة الخصم ويوافق بضغطة واحدة أو يعترض (وتلغى الشكوى تلقائياً عند التأكيد)!
+        final pending = booking.pendingOutcome;
+        String claimText;
+        MatchOutcome agreeOutcome;
+        MatchOutcome disputeOutcome;
+
+        if (pending == MatchOutcome.draw) {
+          claimText = isArabic ? 'أدخل الخصم أن المباراة انتهت بالتعادل 🤝' : 'Opponent reported a DRAW 🤝';
+          agreeOutcome = MatchOutcome.draw;
+          disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+        } else if ((pending == MatchOutcome.homeWin && !isHome) || (pending == MatchOutcome.awayWin && isHome)) {
+          claimText = isArabic ? 'أدخل الخصم أن فريقه فاز بالمباراة 🏆' : 'Opponent reported THEY WON 🏆';
+          agreeOutcome = pending!;
+          disputeOutcome = isHome ? MatchOutcome.homeWin : MatchOutcome.awayWin;
+        } else {
+          claimText = isArabic ? 'أدخل الخصم أن فريقك هو الفائز 🏆' : 'Opponent reported YOU WON 🏆';
+          agreeOutcome = pending!;
+          disputeOutcome = isHome ? MatchOutcome.awayWin : MatchOutcome.homeWin;
+        }
+
         return Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 12),
+          padding: const EdgeInsets.all(12),
           decoration: BoxDecoration(
-            color: Colors.white.withValues(alpha: 0.05),
-            borderRadius: BorderRadius.circular(8),
-            border: Border.all(color: Colors.white12),
+            color: VSPColors.surfaceAlt,
+            borderRadius: BorderRadius.circular(10),
+            border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
           ),
-          child: Text(
-            l10n.waitingOpponent,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.bodySmall?.copyWith(
-              color: VSPColors.textSecondary,
-              fontStyle: FontStyle.italic,
-            ),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(
+                claimText,
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+              ),
+              const SizedBox(height: 10),
+              Row(
+                children: [
+                  Expanded(
+                    child: ElevatedButton(
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      onPressed: () async {
+                        final provider = Provider.of<BookingProvider>(context, listen: false);
+                        await provider.submitMatchResult(
+                          bookingId: booking.id,
+                          teamId: currentTeamId,
+                          outcome: agreeOutcome,
+                        );
+                        if (context.mounted) {
+                          VSPFeedback.showSuccess(context, isArabic ? 'تم تأكيد النتيجة، إنهاء النزاع وتحديث ترتيب الدوري! ✅' : 'Result confirmed & dispute resolved!');
+                        }
+                      },
+                      child: Text(
+                        isArabic ? '✅ تأكيد النتيجة' : '✅ Confirm',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: OutlinedButton(
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: VSPColors.error,
+                        side: const BorderSide(color: VSPColors.error),
+                        padding: const EdgeInsets.symmetric(vertical: 8),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(6)),
+                      ),
+                      onPressed: () async {
+                        final provider = Provider.of<BookingProvider>(context, listen: false);
+                        await provider.submitMatchResult(
+                          bookingId: booking.id,
+                          teamId: currentTeamId,
+                          outcome: disputeOutcome,
+                        );
+                        if (context.mounted) {
+                          VSPFeedback.showWarning(context, isArabic ? 'تم تسجيل النزاع للمراجعة الإدارية ⚠️' : 'Dispute recorded for review ⚠️');
+                        }
+                      },
+                      child: Text(
+                        isArabic ? '❌ اعتراض' : '❌ Dispute',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ],
           ),
         );
-      } else {
-        // Opponent hasn't responded — check deadline too
-        if (resultExpired) {
-          return Container(
-            width: double.infinity,
-            padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
-            decoration: BoxDecoration(
-              color: VSPColors.surfaceAlt,
-              borderRadius: BorderRadius.circular(8),
-              border: Border.all(color: VSPColors.divider),
-            ),
-            child: Row(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Icon(Iconsax.clock_copy, color: VSPColors.textSecondary, size: 16),
-                const SizedBox(width: 8),
-                Text(
-                  isArabic ? 'انتهت مهلة الرد على النتيجة' : 'Opponent response period expired',
-                  textAlign: TextAlign.center,
-                  style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                    color: VSPColors.textSecondary,
-                    fontStyle: FontStyle.italic,
-                  ),
-                ),
-              ],
-            ),
-          );
-        }
-        return _buildAddResultButton(context, currentTeamId, isPrimaryPopping: true);
       }
     }
 

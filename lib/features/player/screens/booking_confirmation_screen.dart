@@ -1121,18 +1121,14 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
                       setState(() => _isLoading = false);
 
-                      if (widget.stadium.needsDeposit && depositAmount > 0) {
-                        HapticFeedback.lightImpact();
-                        nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                        return;
-                      }
+                      final bool requiresDeposit = widget.stadium.needsDeposit && depositAmount > 0;
 
                       if (!context.mounted) return;
                       final isCashLocked = (currentUserModel.noShowCount) >= 2;
-                      if (isCashLocked) {
+                      if (isCashLocked && !requiresDeposit) {
                         HapticFeedback.vibrate();
                         VSPFeedback.showError(context, isArabic ? "حسابك مقيد من الحجز النقدي لعدم الحضور السابق. يرجى الدفع أونلاين 100٪." : "Cash bookings restricted due to missed attendance. Please pay 100% online.");
-                        nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
+                        nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft, forceFullPayment: true)));
                         return;
                       }
 
@@ -1165,63 +1161,138 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       ),
                                       const SizedBox(height: 14),
                                       Text(
-                                        isArabic ? 'اختر طريقة الدفع' : 'Select Payment Method',
+                                        isArabic ? 'اختر طريقة الدفع' : 'Select Payment Option',
                                         style: const TextStyle(color: VSPColors.textPrimary, fontSize: 18, fontWeight: FontWeight.bold),
                                       ),
                                       const SizedBox(height: 16),
-                                      ListTile(
-                                        leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
-                                        title: Text(
-                                          isArabic ? 'دفع إلكتروني' : 'Online Payment',
-                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+
+                                      // -------------------------------------------------------------
+                                      // حالة 1: الملعب يشترط عربوناً -> (دفع كامل أونلاين vs دفع العربون)
+                                      // -------------------------------------------------------------
+                                      if (requiresDeposit) ...[
+                                        // خيار 1: دفع كامل المبلغ أونلاين
+                                        ListTile(
+                                          leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                                          title: Text(
+                                            isArabic ? 'دفع كامل المبلغ أونلاين 💳' : 'Pay Full Amount Online 💳',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                            isArabic
+                                                ? 'سداد ${_totalPrice.toInt()} ج.م كاملاً بالفيزا/المحفظة (المتبقي بالملعب: 0 ج.م)'
+                                                : 'Pay full ${_totalPrice.toInt()} EGP online (Remaining at pitch: 0 EGP)',
+                                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                          ),
+                                          onTap: () {
+                                            HapticFeedback.lightImpact();
+                                            Navigator.pop(ctx);
+                                            final fullDraft = draft.copyWith(
+                                              needsDeposit: false,
+                                              depositPaid: 0.0,
+                                            );
+                                            nav.push(MaterialPageRoute(
+                                              builder: (_) => PaymentGatewayScreen(
+                                                bookingDraft: fullDraft,
+                                                forceFullPayment: true,
+                                              ),
+                                            ));
+                                          },
                                         ),
-                                        subtitle: Text(
-                                          isArabic ? 'فودافون كاش / إنستاباي / بطاقة بانكية' : 'Vodafone Cash / InstaPay / Card',
-                                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                        const Divider(color: VSPColors.divider),
+                                        // خيار 2: دفع العربون فقط أونلاين
+                                        ListTile(
+                                          leading: const Icon(Iconsax.lock_copy, color: Colors.amber),
+                                          title: Text(
+                                            isArabic ? 'دفع العربون فقط أونلاين 🔒' : 'Pay Deposit Only Online 🔒',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                            isArabic
+                                                ? 'سداد ${depositAmount.toInt()} ج.م عربون لتأكيد الحجز + سداد المتبقي (${(_totalPrice - depositAmount).toInt()} ج.م) كاش بالملعب'
+                                                : 'Pay ${depositAmount.toInt()} EGP deposit now + pay remaining (${(_totalPrice - depositAmount).toInt()} EGP) in cash',
+                                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                          ),
+                                          onTap: () {
+                                            HapticFeedback.lightImpact();
+                                            Navigator.pop(ctx);
+                                            final depositDraft = draft.copyWith(
+                                              needsDeposit: true,
+                                              depositPaid: depositAmount,
+                                            );
+                                            nav.push(MaterialPageRoute(
+                                              builder: (_) => PaymentGatewayScreen(
+                                                bookingDraft: depositDraft,
+                                              ),
+                                            ));
+                                          },
                                         ),
-                                        onTap: isCashSubmitting ? null : () {
-                                          HapticFeedback.lightImpact();
-                                          Navigator.pop(ctx);
-                                          nav.push(MaterialPageRoute(builder: (_) => PaymentGatewayScreen(bookingDraft: draft)));
-                                        },
-                                      ),
-                                      const Divider(color: VSPColors.divider),
-                                      ListTile(
-                                        leading: isCashSubmitting
-                                            ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
-                                            : const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
-                                        title: Text(
-                                          isArabic ? 'دفع نقدي في الملعب' : 'Pay Cash at Pitch',
-                                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                      ]
+
+                                      // -------------------------------------------------------------
+                                      // حالة 2: الملعب لا يشترط عربوناً -> (دفع كامل أونلاين vs دفع كاش)
+                                      // -------------------------------------------------------------
+                                      else ...[
+                                        // خيار 1: دفع إلكتروني
+                                        ListTile(
+                                          leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
+                                          title: Text(
+                                            isArabic ? 'دفع إلكتروني كامل 💳' : 'Full Online Payment 💳',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                            isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
+                                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                          ),
+                                          onTap: isCashSubmitting ? null : () {
+                                            HapticFeedback.lightImpact();
+                                            Navigator.pop(ctx);
+                                            nav.push(MaterialPageRoute(
+                                              builder: (_) => PaymentGatewayScreen(
+                                                bookingDraft: draft,
+                                                forceFullPayment: true,
+                                              ),
+                                            ));
+                                          },
                                         ),
-                                        subtitle: Text(
-                                          isArabic ? 'الدفع للمسؤول مباشرة عند الحضور للملعب' : 'Pay captain directly upon arrival',
-                                          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                                        ),
-                                        onTap: isCashSubmitting ? null : () async {
-                                          HapticFeedback.mediumImpact();
-                                          setSheetState(() => isCashSubmitting = true);
-                                          try {
-                                            final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
-                                            final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
-                                            if (booking != null && sheetContext.mounted) {
-                                              HapticFeedback.lightImpact();
-                                              Navigator.pop(ctx);
-                                              nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
-                                            } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
+                                        const Divider(color: VSPColors.divider),
+                                        // خيار 2: دفع نقدي
+                                        ListTile(
+                                          leading: isCashSubmitting
+                                              ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
+                                              : const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
+                                          title: Text(
+                                            isArabic ? 'دفع نقدي بالكامل في الملعب 💵' : 'Pay Full Cash at Pitch 💵',
+                                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+                                          ),
+                                          subtitle: Text(
+                                            isArabic ? 'سداد المبلغ كاملاً للمسؤول عند الحضور' : 'Pay total amount in cash upon arrival',
+                                            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                                          ),
+                                          onTap: isCashSubmitting ? null : () async {
+                                            HapticFeedback.mediumImpact();
+                                            setSheetState(() => isCashSubmitting = true);
+                                            try {
+                                              final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
+                                              final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
+                                              if (booking != null && sheetContext.mounted) {
+                                                HapticFeedback.lightImpact();
+                                                Navigator.pop(ctx);
+                                                nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
+                                              } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
+                                                HapticFeedback.vibrate();
+                                                setSheetState(() => isCashSubmitting = false);
+                                                VSPFeedback.showError(sheetContext, bookingProvider.errorMessage!);
+                                              }
+                                            } catch (e) {
                                               HapticFeedback.vibrate();
-                                              setSheetState(() => isCashSubmitting = false);
-                                              VSPFeedback.showError(sheetContext, bookingProvider.errorMessage!);
+                                              if (sheetContext.mounted) {
+                                                setSheetState(() => isCashSubmitting = false);
+                                                VSPFeedback.showError(sheetContext, e.toString().replaceAll('Exception: ', ''));
+                                              }
                                             }
-                                          } catch (e) {
-                                            HapticFeedback.vibrate();
-                                            if (sheetContext.mounted) {
-                                              setSheetState(() => isCashSubmitting = false);
-                                              VSPFeedback.showError(sheetContext, e.toString().replaceAll('Exception: ', ''));
-                                            }
-                                          }
-                                        },
-                                      ),
+                                          },
+                                        ),
+                                      ],
                                     ],
                                   ),
                                 ),
