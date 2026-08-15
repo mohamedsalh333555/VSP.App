@@ -86,11 +86,13 @@ serve(async (req: Request) => {
     const isSuccess = Boolean(obj.success) && !Boolean(obj.pending);
     const merchantOrderId = String(obj.order?.merchant_order_id || "");
 
-    // Extract booking_id from merchant_order_id (e.g. "VSP_BOOKING_uuid")
+    // Extract booking_id from merchant_order_id (e.g. "uuid_timestamp" or "VSP_BOOKING_uuid")
     let bookingId: string | null = null;
-    if (merchantOrderId.startsWith("VSP_BOOKING_")) {
-      bookingId = merchantOrderId.replace("VSP_BOOKING_", "");
-    } else if (merchantOrderId.length === 36) {
+    if (merchantOrderId.includes("_")) {
+      bookingId = merchantOrderId.startsWith("VSP_BOOKING_") 
+          ? merchantOrderId.replace("VSP_BOOKING_", "").split("_")[0]
+          : merchantOrderId.split("_")[0];
+    } else if (merchantOrderId.length > 0) {
       bookingId = merchantOrderId;
     }
 

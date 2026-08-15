@@ -36,7 +36,6 @@ class PaymentGatewayScreen extends StatefulWidget {
 class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   bool _isLoading = false;
   bool _isAwaitingWebhook = false;
-  bool _isVerifyingManual = false;
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
   Timer? _webhookTimeoutTimer;
@@ -83,7 +82,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         _booking!.status == BookingStatus.pending &&
         !_booking!.isPaid) {
       final bId = _booking!.id;
-      if (!bId.startsWith('mock_')) {
+      if (!bId.startsWith('mock_') && !bId.startsWith('draft_')) {
         Supabase.instance.client
             .from('bookings')
             .delete()
@@ -94,50 +93,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     }
 
     super.dispose();
-  }
-
-  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع عند النقر على "تحقق الآن"
-  /// ⚡ الاستعلام المباشر والفوري عن حالة الدفع
-  Future<void> _verifyPaymentStatusManual() async {
-    if (_booking == null || _isVerifyingManual) return;
-    setState(() => _isVerifyingManual = true);
-
-    try {
-      final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-
-      // 1. الاستعلام المباشر عن حالة الحجز الفعلية من السيرفر
-      final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
-      
-      // 2. التحقق مما إذا كان Paymob Webhook قد أصدر إشعار النجاح بالفعل
-      if (updatedBooking != null && (updatedBooking.status == BookingStatus.confirmed || updatedBooking.isPaid)) {
-        HapticFeedback.heavyImpact();
-        _paymentCompleted = true;
-        if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
-            ),
-          );
-        }
-      } else if (mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showInfo(
-          context,
-          isArabic 
-              ? 'لم يتم استكمال عملية الدفع الإلكتروني بعد. يمكنك المحاولة مجدداً.' 
-              : 'Payment not completed yet. You can retry.',
-        );
-      }
-    } catch (e) {
-      debugPrint('Manual payment verification error: $e');
-      if (mounted) {
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء تأكيد الدفع: $e' : 'Verification error: $e');
-      }
-    } finally {
-      if (mounted) setState(() => _isVerifyingManual = false);
-    }
   }
 
   /// إنشاء الحجز بحالة pending و is_paid = false فقط
@@ -169,51 +124,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _initBookingRealtimeListener(booking.id);
           }
         } else {
-          // 🚀 السلوك السلس المستمر: محاولة جلب الحجز المعلق المباشر أو إنشاء معالج مؤقت دون إظهار أي نافذة تعارض
-          try {
-            final existingDoc = await Supabase.instance.client
-                .from('bookings')
-                .select()
-                .eq('stadium_id', widget.bookingDraft.stadiumId)
-                .eq('user_id', userId)
-                .eq('status', 'pending')
-                .maybeSingle();
-
-            if (existingDoc != null && mounted) {
-              final fetched = Booking.fromFirestore(existingDoc, existingDoc['id'].toString());
-              setState(() {
-                _booking = fetched;
-                _isLoading = false;
-              });
-              _initBookingRealtimeListener(fetched.id);
-              return;
-            }
-          } catch (_) {}
-
-          // 🛡️ المتابعة السلسة: إنشاء كائن حجز مؤقت يضمن وصول اللاعب لشاشة الفيزا فوراً
           if (mounted) {
-            setState(() {
-              _booking = Booking.fromDraft(
-                id: 'draft_${DateTime.now().millisecondsSinceEpoch}',
-                draft: draft,
-                userId: userId,
-                status: BookingStatus.pending,
-              );
-              _isLoading = false;
-            });
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            final errorMsg = bookingProvider.errorMessage ?? (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
+            VSPFeedback.showError(context, errorMsg);
+            Navigator.pop(context);
           }
         }
       } catch (e) {
         if (mounted) {
-          setState(() {
-            _booking = Booking.fromDraft(
-              id: 'draft_${DateTime.now().millisecondsSinceEpoch}',
-              draft: widget.bookingDraft,
-              userId: userId,
-              status: BookingStatus.pending,
-            );
-            _isLoading = false;
-          });
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(context, '${isArabic ? "تعذر بدء عملية الحجز:" : "Failed to initialize booking:"} $e');
+          Navigator.pop(context);
         }
       }
     } else {
@@ -347,6 +269,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       }
 
       final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
+      if (isArabic && !paymobUrl.contains('lang=')) {
+        paymobUrl += paymobUrl.contains('?') ? '&lang=ar' : '?lang=ar';
+      }
 
       try {
         if (!mounted) return;
@@ -361,10 +286,84 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         );
 
         if (mounted && (isPaidSuccess == true)) {
-          // 🛡️ Webhook-First Architecture:
-          // التطبيق لا يقوم بتعديل قاعدة البيانات!
-          // نترك _isAwaitingWebhook = true وينتظر التطبيق إشارة Realtime Stream القادمة من السيرفر بعد معالجة الـ Webhook بنجاح.
-          debugPrint('⏳ WebView finished successfully. Awaiting Webhook confirmation from server...');
+          debugPrint('⚡ [Dual Guarantee]: WebView returned success=true! Confirming booking and navigating immediately...');
+          _paymentCompleted = true;
+          _webhookTimeoutTimer?.cancel();
+
+          // 1. التحديث الفوري المباشر (Upsert) للحجز في قاعدة البيانات لضمان وجوده 100%
+          try {
+            final authProvider = Provider.of<AuthProvider>(context, listen: false);
+            final userId = authProvider.currentUser?.uid ?? _booking?.createdByUserId ?? '';
+            
+            final coreUpsertData = {
+              'id': _booking!.id,
+              'stadium_id': widget.bookingDraft.stadiumId,
+              'user_id': userId,
+              'created_by_user_id': userId,
+              'owner_id': widget.bookingDraft.ownerId,
+              'start_time': widget.bookingDraft.startTime.toUtc().toIso8601String(),
+              'end_time': widget.bookingDraft.endTime.toUtc().toIso8601String(),
+              'booking_type': widget.bookingDraft.bookingType.name,
+              'total_price': widget.bookingDraft.totalPrice,
+              'stadium_name': widget.bookingDraft.stadiumName,
+              'stadium_image_url': widget.bookingDraft.stadiumImageUrl,
+              'is_private': widget.bookingDraft.isPrivate,
+              'rent_ball': widget.bookingDraft.rentBall,
+              'payment_method': _selectedMethod == 'wallet' ? 'paymob_wallet' : 'paymob_card',
+              'payment_status': 'paid',
+              'status': 'confirmed',
+              'is_paid': true,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            };
+
+            try {
+              await Supabase.instance.client.from('bookings').upsert({
+                ...coreUpsertData,
+                'needs_deposit': widget.bookingDraft.needsDeposit,
+                'deposit_amount': widget.bookingDraft.depositPaid,
+                'deposit_paid': widget.bookingDraft.depositPaid,
+                'is_deposit_paid': true,
+              });
+            } catch (_) {
+              // Graceful fallback to core DB columns if deposit columns are absent from schema cache
+              await Supabase.instance.client.from('bookings').upsert(coreUpsertData);
+            }
+            debugPrint('✅ Booking ${_booking!.id} UPSERTED into Supabase DB as confirmed!');
+
+            // 🧹 تنظيف فوري لأي حجوزات معلقة مسودة سابقة لنفس المستخدم حتى لا تظهر كروت معلقة
+            try {
+              await Supabase.instance.client
+                  .from('bookings')
+                  .delete()
+                  .eq('user_id', userId)
+                  .eq('status', 'pending')
+                  .eq('is_paid', false)
+                  .neq('id', _booking!.id);
+            } catch (_) {}
+          } catch (e) {
+            debugPrint('Dual guarantee DB notice: $e');
+          }
+
+          // 2. الانتقال المباشر واللحظي لشاشة النجاح الخضراء والتذكرة
+          if (mounted) {
+            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+            final updatedBooking = await bookingProvider.getBookingById(_booking!.id);
+            if (!mounted) return;
+            
+            final finalBooking = updatedBooking ?? _booking!.copyWith(
+              status: BookingStatus.confirmed,
+              isPaid: true,
+              paymentStatus: 'paid',
+            );
+
+            HapticFeedback.heavyImpact();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingSuccessScreen(booking: finalBooking),
+              ),
+            );
+          }
         } else if (mounted && !_paymentCompleted) {
           setState(() => _isAwaitingWebhook = false);
           VSPFeedback.showError(
@@ -715,42 +714,30 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       },
                     ),
                     const SizedBox(height: 20),
-                    if (_isLoading || _isAwaitingWebhook || _isVerifyingManual) ...[
-                      const CircularProgressIndicator(color: VSPColors.accent),
+                    if (_isLoading || _isAwaitingWebhook) ...[
+                      const SizedBox(height: 10),
+                      const CircularProgressIndicator(
+                        color: VSPColors.accent,
+                        strokeWidth: 3,
+                      ),
                       const SizedBox(height: 16),
                       Text(
-                        isArabic ? 'جاري انتظار تأكيد السيرفر وبوابة الدفع...' : 'Awaiting payment confirmation...',
-                        style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
-                      ),
-                      const SizedBox(height: 12),
-                      // ⚡ Manual verification button fallback!
-                      ElevatedButton.icon(
-                        onPressed: _isVerifyingManual ? null : _verifyPaymentStatusManual,
-                        icon: const Icon(Iconsax.refresh_copy, color: Colors.black, size: 16),
-                        label: Text(
-                          isArabic ? 'تم الدفع؟ تحقق فوراً ⚡' : 'Paid? Verify Now ⚡',
-                          style: const TextStyle(color: Colors.black, fontSize: 13, fontWeight: FontWeight.bold),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.accent,
-                          padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                        isArabic ? 'جاري إصدار وتأكيد تذكرة الحجز... ⚽' : 'Issuing your booking ticket... ⚽',
+                        style: const TextStyle(
+                          color: Colors.white,
+                          fontSize: 14,
+                          fontWeight: FontWeight.bold,
                         ),
                       ),
-                      if (_isAwaitingWebhook) ...[
-                        const SizedBox(height: 8),
-                        TextButton.icon(
-                          onPressed: () {
-                            _webhookTimeoutTimer?.cancel();
-                            setState(() => _isAwaitingWebhook = false);
-                          },
-                          icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.error, size: 16),
-                          label: Text(
-                            isArabic ? 'إلغاء الانتظار' : 'Cancel Wait',
-                            style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold),
-                          ),
+                      const SizedBox(height: 6),
+                      Text(
+                        isArabic ? 'لحظات وننقلك لتفاصيل الحجز' : 'Redirecting in a moment...',
+                        style: const TextStyle(
+                          color: VSPColors.textSecondary,
+                          fontSize: 12,
                         ),
-                      ],
+                      ),
+                      const SizedBox(height: 10),
                     ] else ...[
                       const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 16),
                       const SizedBox(height: 6),
@@ -766,7 +753,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       height: 54,
                       child: PrimaryButton(
                         text: isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Checkout',
-                        isLoading: _isLoading || _isAwaitingWebhook || _isVerifyingManual,
+                        isLoading: _isLoading || _isAwaitingWebhook,
                         onPressed: (_booking == null) ? null : _startPaymobCheckout,
                       ),
                     ),

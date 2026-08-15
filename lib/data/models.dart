@@ -716,7 +716,7 @@ class Booking {
         (e) => e.name == statusVal,
         orElse: () => BookingStatus.pending,
       ),
-      createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? '',
+      createdByUserId: data['createdByUserId'] ?? data['created_by_user_id'] ?? data['user_id'] ?? '',
       createdAt: createdAtVal != null 
           ? (createdAtVal is DateTime 
               ? createdAtVal.toLocal() 

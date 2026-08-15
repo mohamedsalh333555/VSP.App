@@ -144,6 +144,22 @@ class _BookingsScreenState extends State<BookingsScreen> {
                                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
                                 ),
                               ),
+                              IconButton(
+                                constraints: const BoxConstraints(),
+                                padding: EdgeInsets.zero,
+                                icon: const Icon(Iconsax.trash_copy, color: Colors.redAccent, size: 18),
+                                tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
+                                onPressed: () async {
+                                  final bp = Provider.of<BookingProvider>(context, listen: false);
+                                  await bp.cancelBooking(pendingBooking.id);
+                                  if (context.mounted) {
+                                    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                                    if (auth.currentUser?.uid != null) {
+                                      bp.loadUserBookings(auth.currentUser!.uid);
+                                    }
+                                  }
+                                },
+                              ),
                             ],
                           ),
                           const SizedBox(height: 6),

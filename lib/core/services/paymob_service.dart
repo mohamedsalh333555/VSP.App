@@ -55,7 +55,7 @@ class PaymobService {
         final data = jsonDecode(response.body);
         final clientSecret = data['client_secret'];
         if (clientSecret != null && clientSecret.toString().isNotEmpty) {
-          final checkoutUrl = 'https://accept.paymob.com/unifiedcheckout/?publicKey=$publicKey&clientSecret=$clientSecret';
+          final checkoutUrl = 'https://accept.paymob.com/unifiedcheckout/?publicKey=$publicKey&clientSecret=$clientSecret&lang=ar';
           debugPrint('✅ Paymob Unified Checkout URL Generated: $checkoutUrl');
           return checkoutUrl;
         }

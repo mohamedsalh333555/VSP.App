@@ -119,20 +119,31 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
     _controller = controller;
   }
 
+  bool _isPopped = false;
+
   void _checkCallbackUrl(String url) {
+    if (_isPopped) return;
+
     final lowerUrl = url.toLowerCase();
     
-    // ✅ التقاط جميع حالات نجاح Paymob الموحدة
-    if (lowerUrl.contains('success=true') || 
-        lowerUrl.contains('txn_response_code=approved') || 
-        lowerUrl.contains('txn_response_code=0') ||
-        lowerUrl.contains('approved=true') ||
-        lowerUrl.contains('orderdetails') ||
-        lowerUrl.contains('thanks') ||
-        lowerUrl.contains('callback')) {
+    // ✅ التقاط حالات نجاح Paymob الصريحة فقط (تجاهل كلمة callback الظاهرة في روابط الصفحة الأولى)
+    final isExplicitSuccess = (lowerUrl.contains('success=true') || 
+            lowerUrl.contains('txn_response_code=approved') || 
+            lowerUrl.contains('txn_response_code=0') ||
+            lowerUrl.contains('approved=true')) &&
+        !lowerUrl.contains('success=false') &&
+        !lowerUrl.contains('pending=true');
+
+    final isExplicitFailure = lowerUrl.contains('success=false') || 
+        lowerUrl.contains('txn_response_code=declined') || 
+        lowerUrl.contains('authentication_not_supported');
+
+    if (isExplicitSuccess) {
+      _isPopped = true;
       HapticFeedback.heavyImpact();
       if (mounted) Navigator.pop(context, true);
-    } else if (lowerUrl.contains('success=false') || lowerUrl.contains('txn_response_code=declined') || lowerUrl.contains('authentication_not_supported')) {
+    } else if (isExplicitFailure) {
+      _isPopped = true;
       HapticFeedback.vibrate();
       if (lowerUrl.contains('authentication_not_supported')) {
         debugPrint('⚠️ Paymob returned AUTHENTICATION_NOT_SUPPORTED for card pan.');

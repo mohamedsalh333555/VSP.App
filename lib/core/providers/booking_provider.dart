@@ -169,8 +169,8 @@ class BookingProvider with ChangeNotifier {
                 )
                 .toList();
             _pendingBookings = bookings.where((b) {
-              final ageInMinutes = now.difference(b.createdAt).inMinutes;
-              return b.status == BookingStatus.pending && !b.isPaid && ageInMinutes < 5;
+              final hasConfirmedSameSlot = _upcomingBookings.any((u) => u.stadiumId == b.stadiumId && u.startTime == b.startTime);
+              return b.status == BookingStatus.pending && !b.isPaid && !hasConfirmedSameSlot;
             }).toList();
 
             _historyBookings = bookings

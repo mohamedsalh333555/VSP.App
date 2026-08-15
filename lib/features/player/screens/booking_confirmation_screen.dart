@@ -268,10 +268,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   }
 
   bool _isSlotBooked(String slotKey, List<Booking> existingBookings) {
-    final slotStartTime = _getSlotDateTime(slotKey);
+    final slotStartTime = _getSlotDateTime(slotKey).toUtc();
     final slotEndTime = slotStartTime.add(const Duration(minutes: 30));
     for (var booking in existingBookings) {
-      if (slotStartTime.isBefore(booking.endTime) && slotEndTime.isAfter(booking.startTime)) {
+      final bStart = booking.startTime.toUtc();
+      final bEnd = booking.endTime.toUtc();
+      if (slotStartTime.isBefore(bEnd) && slotEndTime.isAfter(bStart)) {
         return true;
       }
     }
@@ -585,14 +587,18 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                               margin: const EdgeInsets.only(bottom: VSPSpacing.sm),
                               padding: const EdgeInsets.symmetric(vertical: VSPSpacing.md, horizontal: VSPSpacing.lg),
                               decoration: BoxDecoration(
-                                color: (isBooked || isPast)
-                                    ? VSPColors.surface.withValues(alpha: 0.3)
-                                    : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent),
+                                color: isBooked 
+                                    ? Colors.red.withValues(alpha: 0.08)
+                                    : (isPast
+                                        ? VSPColors.surface.withValues(alpha: 0.3)
+                                        : (isSelected ? VSPColors.accent.withValues(alpha: 0.18) : Colors.transparent)),
                                 borderRadius: BorderRadius.circular(VSPRadius.md),
                                 border: Border.all(
-                                  color: (isBooked || isPast)
-                                      ? Colors.transparent
-                                      : (isSelected ? VSPColors.accent : VSPColors.divider),
+                                  color: isBooked
+                                      ? Colors.red.withValues(alpha: 0.3)
+                                      : (isPast
+                                          ? Colors.transparent
+                                          : (isSelected ? VSPColors.accent : VSPColors.divider)),
                                   width: isSelected ? 2 : 1,
                                 ),
                               ),
@@ -606,9 +612,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       Text(
                                         slotItem.startTime,
                                         style: TextStyle(
-                                          color: (isBooked || isPast)
-                                              ? VSPColors.textSecondary.withValues(alpha: 0.4)
-                                              : (isSelected ? Colors.white : VSPColors.textPrimary),
+                                          color: isBooked
+                                              ? Colors.redAccent.withValues(alpha: 0.7)
+                                              : (isPast
+                                                  ? VSPColors.textSecondary.withValues(alpha: 0.4)
+                                                  : (isSelected ? Colors.white : VSPColors.textPrimary)),
                                           fontSize: 15,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                           decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
@@ -619,7 +627,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                         child: Text(
                                           '–',
                                           style: TextStyle(
-                                            color: isSelected ? VSPColors.accent : VSPColors.textSecondary,
+                                            color: isBooked 
+                                                ? Colors.redAccent.withValues(alpha: 0.7)
+                                                : (isSelected ? VSPColors.accent : VSPColors.textSecondary),
                                             fontSize: 15,
                                             fontWeight: FontWeight.bold,
                                           ),
@@ -628,9 +638,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                       Text(
                                         slotItem.endTime,
                                         style: TextStyle(
-                                          color: (isBooked || isPast)
-                                              ? VSPColors.textSecondary.withValues(alpha: 0.4)
-                                              : (isSelected ? Colors.white : VSPColors.textPrimary),
+                                          color: isBooked
+                                              ? Colors.redAccent.withValues(alpha: 0.7)
+                                              : (isPast
+                                                  ? VSPColors.textSecondary.withValues(alpha: 0.4)
+                                                  : (isSelected ? Colors.white : VSPColors.textPrimary)),
                                           fontSize: 15,
                                           fontWeight: isSelected ? FontWeight.bold : FontWeight.w500,
                                           decoration: (isBooked || isPast) ? TextDecoration.lineThrough : TextDecoration.none,
@@ -640,7 +652,25 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                   ),
                                   if (isBooked) ...[
                                     const SizedBox(width: 12),
-                                    Text(l10n.bookedStatus, style: const TextStyle(color: VSPColors.error, fontSize: 12, fontWeight: FontWeight.bold)),
+                                    Container(
+                                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 2),
+                                      decoration: BoxDecoration(
+                                        color: Colors.red.withValues(alpha: 0.15),
+                                        borderRadius: BorderRadius.circular(6),
+                                        border: Border.all(color: Colors.redAccent.withValues(alpha: 0.4)),
+                                      ),
+                                      child: Row(
+                                        mainAxisSize: MainAxisSize.min,
+                                        children: [
+                                          const Icon(Iconsax.lock_copy, size: 12, color: Colors.redAccent),
+                                          const SizedBox(width: 4),
+                                          Text(
+                                            isArabic ? '🔒 محجوز' : '🔒 Booked',
+                                            style: const TextStyle(color: Colors.redAccent, fontSize: 11, fontWeight: FontWeight.bold),
+                                          ),
+                                        ],
+                                      ),
+                                    ),
                                   ] else if (isPast) ...[
                                     const SizedBox(width: 12),
                                     Text(isArabic ? 'منقضي' : 'Past', style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 12, fontWeight: FontWeight.bold)),

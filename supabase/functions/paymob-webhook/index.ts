@@ -2,9 +2,11 @@ import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.0";
 import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
+declare const Deno: any;
+
 const HMAC_SECRET = Deno.env.get("PAYMOB_HMAC_SECRET") || "F3D831A6ABCF88F4A2FCFB8B92C92623";
 
-serve(async (req) => {
+serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
     return new Response("ok", {
       headers: {
@@ -101,7 +103,7 @@ serve(async (req) => {
           status: "confirmed",
           is_paid: true,
           payment_status: "paid",
-          paymob_txn_id: `PAYMOB_${obj.id}`,
+          payment_transaction_id: `PAYMOB_${obj.id}`,
           payment_method: obj.source_data?.sub_type || "paymob",
           updated_at: new Date().toISOString(),
         })
@@ -125,7 +127,7 @@ serve(async (req) => {
             is_read: false,
           },
           {
-            user_id: booking.created_by_user_id,
+            user_id: booking.user_id,
             title: "تأكيد الحجز والدفع ⚽",
             body: `تم سداد حجزك بنجاح في ${booking.stadium_name}`,
             type: "booking_confirmed",

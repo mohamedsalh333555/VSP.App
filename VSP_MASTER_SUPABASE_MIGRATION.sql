@@ -32,9 +32,43 @@ ADD COLUMN IF NOT EXISTS trial_ends_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS subscription_expires_at TIMESTAMPTZ,
 ADD COLUMN IF NOT EXISTS total_platform_fees NUMERIC DEFAULT 0;
 
--- Add platform_fee column to bookings (2% of total_price for online payments)
+-- Add platform_fee and deposit tracking columns to bookings
 ALTER TABLE public.bookings
-ADD COLUMN IF NOT EXISTS platform_fee NUMERIC DEFAULT 0;
+ADD COLUMN IF NOT EXISTS platform_fee NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS deposit_paid NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS is_deposit_paid BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS needs_deposit BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS payment_transaction_id TEXT,
+ADD COLUMN IF NOT EXISTS paymob_txn_id TEXT,
+ADD COLUMN IF NOT EXISTS currency TEXT DEFAULT 'EGP',
+ADD COLUMN IF NOT EXISTS host_name TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS host_avatar_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS player_team_logo_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS opponent_team_logo_url TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS notes TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS player_phone TEXT DEFAULT '',
+ADD COLUMN IF NOT EXISTS unread_counts JSONB DEFAULT '{}'::jsonb,
+ADD COLUMN IF NOT EXISTS last_message TEXT DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS last_message_time TIMESTAMPTZ DEFAULT NULL,
+ADD COLUMN IF NOT EXISTS deleted_for_users TEXT[] DEFAULT ARRAY[]::text[],
+ADD COLUMN IF NOT EXISTS pending_user_ids TEXT[] DEFAULT ARRAY[]::text[],
+ADD COLUMN IF NOT EXISTS is_official_match BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_dispute_approved BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS dispute_photo_url TEXT DEFAULT NULL;
+
+-- Add missing columns to stadiums
+ALTER TABLE public.stadiums
+ADD COLUMN IF NOT EXISTS deposit_amount NUMERIC DEFAULT 0,
+ADD COLUMN IF NOT EXISTS needs_deposit BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_deleted_by_owner BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS is_blocked BOOLEAN DEFAULT FALSE,
+ADD COLUMN IF NOT EXISTS opening_time TEXT DEFAULT '04:00 PM',
+ADD COLUMN IF NOT EXISTS closing_time TEXT DEFAULT '03:00 AM',
+ADD COLUMN IF NOT EXISTS images TEXT[] DEFAULT ARRAY[]::text[];
+
+-- Reload PostgREST schema cache
+NOTIFY pgrst, 'reload schema';
 
 -- Initialize trial period for all existing owners:
 -- Each owner gets a 90-day trial starting from their account creation date.
@@ -48,7 +82,8 @@ WHERE role = 'owner'
 -- Convenience view for admin: shows each owner's subscription status
 DROP VIEW IF EXISTS public.owner_subscription_status CASCADE;
 
-CREATE OR REPLACE VIEW public.owner_subscription_status AS
+CREATE OR REPLACE VIEW public.owner_subscription_status
+WITH (security_invoker = true) AS
 SELECT
   u.id,
   u.name,
@@ -88,135 +123,109 @@ DROP CONSTRAINT IF EXISTS unique_user_stadium_review;
 ALTER TABLE public.reviews
 ADD CONSTRAINT unique_user_stadium_review UNIQUE (user_id, stadium_id);
 
--- 3. Atomic Booking Creation Function (Prevents Double-Booking via Row Locks)
+-- Drop rigid legacy exclusion constraint on bookings table to allow atomic PL/pgSQL row locks
+ALTER TABLE public.bookings
+-- =========================================================================
+-- 🛡️ VSP PRODUCTION DATABASE INTEGRITY & SECURITY PACK (TYPE-SAFE FIX)
+-- =========================================================================
+
+-- 1. تفعيل الامتدادات الضرورية
+CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+-- 2. دالة الحجز الذري الآمنة مع أقفال المعاملات ومنع الـ Race Condition
 CREATE OR REPLACE FUNCTION public.create_booking_atomic(
-  p_stadium_id UUID,
-  p_user_id UUID,
-  p_owner_id UUID,
-  p_start_time TIMESTAMPTZ,
-  p_end_time TIMESTAMPTZ,
-  p_booking_type TEXT,
-  p_total_price NUMERIC,
-  p_stadium_name TEXT,
-  p_stadium_image_url TEXT,
-  p_is_private BOOLEAN DEFAULT TRUE,
-  p_rent_ball BOOLEAN DEFAULT FALSE,
-  p_needs_deposit BOOLEAN DEFAULT FALSE,
-  p_deposit_amount NUMERIC DEFAULT 0,
-  p_payment_method TEXT DEFAULT 'cash',
-  p_payment_status TEXT DEFAULT 'unpaid',
-  p_player_team_id UUID DEFAULT NULL,
-  p_player_team_name TEXT DEFAULT NULL,
-  p_opponent_team_id UUID DEFAULT NULL,
-  p_opponent_team_name TEXT DEFAULT NULL
+    p_stadium_id UUID,
+    p_user_id UUID,
+    p_owner_id UUID,
+    p_start_time TIMESTAMPTZ,
+    p_end_time TIMESTAMPTZ,
+    p_booking_type TEXT,
+    p_total_price NUMERIC,
+    p_stadium_name TEXT DEFAULT '',
+    p_stadium_image_url TEXT DEFAULT '',
+    p_is_private BOOLEAN DEFAULT TRUE,
+    p_rent_ball BOOLEAN DEFAULT FALSE,
+    p_needs_deposit BOOLEAN DEFAULT FALSE,
+    p_deposit_amount NUMERIC DEFAULT 0,
+    p_payment_method TEXT DEFAULT 'cash',
+    p_payment_status TEXT DEFAULT 'pending',
+    p_player_team_id UUID DEFAULT NULL,
+    p_player_team_name TEXT DEFAULT NULL,
+    p_opponent_team_id UUID DEFAULT NULL,
+    p_opponent_team_name TEXT DEFAULT NULL
 )
 RETURNS JSONB
 LANGUAGE plpgsql
 SECURITY DEFINER
 AS $$
 DECLARE
-  v_conflict_count INT;
-  v_new_booking_id UUID;
-  v_status TEXT;
-  v_is_paid BOOLEAN;
-  v_is_deposit_paid BOOLEAN;
+    v_conflict_count INT;
+    v_new_booking_id UUID;
+    v_stadium_verified BOOLEAN;
+    v_stadium_blocked BOOLEAN;
+    v_user_blocked BOOLEAN;
 BEGIN
-  -- Perform an explicit row-level lock check on existing bookings for this stadium
-  SELECT COUNT(*)
-  INTO v_conflict_count
-  FROM bookings
-  WHERE stadium_id = p_stadium_id
-    AND status NOT IN ('cancelled', 'rejected')
-    AND NOT (user_id = p_user_id AND status = 'pending')
-    AND (
-      (p_start_time >= start_time AND p_start_time < end_time) OR
-      (p_end_time > start_time AND p_end_time <= end_time) OR
-      (p_start_time <= start_time AND p_end_time >= end_time)
+    -- قفل مخصص للمعاملة لمنع حجز نفس الملعب في نفس اللحظة
+    PERFORM pg_advisory_xact_lock(hashtext(p_stadium_id::text));
+
+    -- أ. التحقق من حالة الملعب
+    SELECT is_verified, is_blocked INTO v_stadium_verified, v_stadium_blocked
+    FROM public.stadiums WHERE id::text = p_stadium_id::text;
+
+    IF v_stadium_verified IS NOT TRUE OR v_stadium_blocked IS TRUE THEN
+        RETURN jsonb_build_object('success', false, 'message', 'عذراً، هذا الملعب غير متاح للحجز حالياً.');
+    END IF;
+
+    -- ب. التحقق من عدم حظر المستخدم
+    SELECT is_blocked INTO v_user_blocked 
+    FROM public.users WHERE id::text = p_user_id::text;
+    
+    IF v_user_blocked IS TRUE THEN
+        RETURN jsonb_build_object('success', false, 'message', 'حسابك مقيد حالياً. يرجى التواصل مع الدعم الفني.');
+    END IF;
+
+    -- ج. فحص التضارب الزمني المباشر
+    SELECT COUNT(*) INTO v_conflict_count
+    FROM public.bookings
+    WHERE stadium_id::text = p_stadium_id::text
+      AND status != 'cancelled'
+      AND (
+          (p_start_time >= start_time AND p_start_time < end_time) OR
+          (p_end_time > start_time AND p_end_time <= end_time) OR
+          (p_start_time <= start_time AND p_end_time >= end_time)
+      );
+
+    IF v_conflict_count > 0 THEN
+        RETURN jsonb_build_object('success', false, 'message', 'عذراً، هذا الوقت محجوز بالفعل لمباراة أخرى.');
+    END IF;
+
+    -- د. إنشاء وتثبيت الحجز
+    INSERT INTO public.bookings (
+        stadium_id, user_id, created_by_user_id, owner_id,
+        start_time, end_time, booking_type, total_price,
+        stadium_name, stadium_image_url, is_private, rent_ball,
+        needs_deposit, deposit_amount, deposit_paid,
+        payment_method, payment_status, status, is_paid,
+        player_team_id, player_team_name, opponent_team_id, opponent_team_name,
+        joined_user_ids, created_at, updated_at
+    ) VALUES (
+        p_stadium_id, p_user_id, p_user_id, p_owner_id,
+        p_start_time, p_end_time, p_booking_type, p_total_price,
+        p_stadium_name, p_stadium_image_url, p_is_private, p_rent_ball,
+        p_needs_deposit, p_deposit_amount, CASE WHEN p_payment_status = 'paid' THEN p_deposit_amount ELSE 0 END,
+        p_payment_method, p_payment_status,
+        CASE WHEN p_payment_status = 'paid' OR p_payment_method = 'cash' THEN 'confirmed' ELSE 'pending' END,
+        CASE WHEN p_payment_status = 'paid' THEN TRUE ELSE FALSE END,
+        p_player_team_id, p_player_team_name, p_opponent_team_id, p_opponent_team_name,
+        ARRAY[p_user_id::text], NOW(), NOW()
     )
-  FOR UPDATE;
+    RETURNING id INTO v_new_booking_id;
 
-  IF v_conflict_count > 0 THEN
     RETURN jsonb_build_object(
-      'success', FALSE,
-      'error', 'double_booking',
-      'message', 'This time slot is already booked or currently being reserved by another player.'
+        'success', true,
+        'booking_id', v_new_booking_id,
+        'message', 'تم تأكيد الحجز بنجاح.'
     );
-  END IF;
-
-  IF p_payment_status = 'paid' OR p_payment_method = 'free' THEN
-    v_status := 'confirmed';
-    v_is_paid := TRUE;
-    v_is_deposit_paid := TRUE;
-  ELSIF p_needs_deposit AND p_deposit_amount > 0 THEN
-    v_status := 'pending';
-    v_is_paid := FALSE;
-    v_is_deposit_paid := FALSE;
-  ELSE
-    v_status := 'confirmed';
-    v_is_paid := FALSE;
-    v_is_deposit_paid := FALSE;
-  END IF;
-
-  INSERT INTO bookings (
-    stadium_id,
-    user_id,
-    owner_id,
-    start_time,
-    end_time,
-    booking_type,
-    total_price,
-    stadium_name,
-    stadium_image_url,
-    is_private,
-    rent_ball,
-    needs_deposit,
-    deposit_amount,
-    payment_method,
-    payment_status,
-    status,
-    is_paid,
-    is_deposit_paid,
-    player_team_id,
-    player_team_name,
-    opponent_team_id,
-    opponent_team_name,
-    created_at,
-    updated_at
-  )
-  VALUES (
-    p_stadium_id,
-    p_user_id,
-    p_owner_id,
-    p_start_time,
-    p_end_time,
-    p_booking_type,
-    p_total_price,
-    p_stadium_name,
-    p_stadium_image_url,
-    p_is_private,
-    p_rent_ball,
-    p_needs_deposit,
-    p_deposit_amount,
-    p_payment_method,
-    p_payment_status,
-    v_status,
-    v_is_paid,
-    v_is_deposit_paid,
-    p_player_team_id,
-    p_player_team_name,
-    p_opponent_team_id,
-    p_opponent_team_name,
-    NOW(),
-    NOW()
-  )
-  RETURNING id INTO v_new_booking_id;
-
-  RETURN jsonb_build_object(
-    'success', TRUE,
-    'booking_id', v_new_booking_id,
-    'status', v_status,
-    'is_paid', v_is_paid
-  );
 END;
 $$;
 
@@ -441,5 +450,28 @@ BEGIN
   END IF;
 END;
 $$;
+
+-- 5. Auto-sync user_id and created_by_user_id Guarantee Trigger
+CREATE OR REPLACE FUNCTION public.sync_booking_user_ids()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+AS $$
+BEGIN
+  IF NEW.created_by_user_id IS NULL AND NEW.user_id IS NOT NULL THEN
+    NEW.created_by_user_id := NEW.user_id;
+  END IF;
+  IF NEW.user_id IS NULL AND NEW.created_by_user_id IS NOT NULL THEN
+    NEW.user_id := NEW.created_by_user_id;
+  END IF;
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_sync_booking_user_ids ON public.bookings;
+CREATE TRIGGER trg_sync_booking_user_ids
+BEFORE INSERT OR UPDATE ON public.bookings
+FOR EACH ROW
+EXECUTE FUNCTION public.sync_booking_user_ids();
+
 
 

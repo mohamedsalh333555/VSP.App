@@ -181,6 +181,24 @@ class _BookingSuccessScreenState extends State<BookingSuccessScreen>
                               isArabic ? 'طريقة الدفع' : 'Payment', 
                               formattedPriceAndPayment,
                             ),
+                            if (widget.booking.depositPaid > 0) ...[
+                              const Divider(color: VSPColors.divider, height: 16),
+                              _buildDetailRow(
+                                Iconsax.card_pos_copy, 
+                                isArabic ? 'العربون المدفوع أونلاين' : 'Online Deposit Paid', 
+                                isArabic ? '${widget.booking.depositPaid.toInt()} ج.م ⚡' : '${widget.booking.depositPaid.toInt()} EGP ⚡',
+                              ),
+                              if (widget.booking.totalPrice > widget.booking.depositPaid) ...[
+                                const Divider(color: VSPColors.divider, height: 16),
+                                _buildDetailRow(
+                                  Iconsax.money_send_copy, 
+                                  isArabic ? 'المتبقي وسداده كاش بالملعب' : 'Remaining Pay at Pitch', 
+                                  isArabic 
+                                      ? '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} ج.م 💵' 
+                                      : '${(widget.booking.totalPrice - widget.booking.depositPaid).toInt()} EGP 💵',
+                                ),
+                              ],
+                            ],
                             if (widget.booking.bookingType == BookingType.challenge) ...[
                               const Divider(color: VSPColors.divider, height: 16),
                               _buildDetailRow(

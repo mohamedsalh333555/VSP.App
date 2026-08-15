@@ -339,6 +339,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                            bShiftDate.day == selectedDateOnly.day;
                   }).toList();
 
+                  final bool isArabicLocale = Localizations.localeOf(context).languageCode == 'ar';
+
                   List<Map<String, dynamic>> slots = [];
                   try {
                     final int startH = _parseTimeToHour(selectedStadium.openingTime);
@@ -519,16 +521,23 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     si = sj;
                   }
 
-                  return ListView.separated(
-                    controller: _scrollController,
-                    padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
-                    physics: const AlwaysScrollableScrollPhysics(),
-                    itemCount: mergedSlots.length,
-                    separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
-                    itemBuilder: (context, index) {
-                      final slot = mergedSlots[index];
-                      return _buildTimeSlotRow(slot, selectedStadium);
-                    },
+                  return Column(
+                    children: [
+                      _buildOwnerFinancialSummaryBox(dayBookings, isArabicLocale),
+                      Expanded(
+                        child: ListView.separated(
+                          controller: _scrollController,
+                          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
+                          physics: const AlwaysScrollableScrollPhysics(),
+                          itemCount: mergedSlots.length,
+                          separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
+                          itemBuilder: (context, index) {
+                            final slot = mergedSlots[index];
+                            return _buildTimeSlotRow(slot, selectedStadium);
+                          },
+                        ),
+                      ),
+                    ],
                   );
                },
             ),
@@ -889,6 +898,128 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     ).then((_) {
       if (mounted) setState(() {});
     });
+  }
+
+  Widget _buildOwnerFinancialSummaryBox(List<Booking> dayBookings, bool isArabic) {
+    double onlineCollected = 0.0;
+    double pitchCashRemaining = 0.0;
+
+    for (final b in dayBookings) {
+      if (b.status == BookingStatus.cancelled) continue;
+      final double price = b.totalPrice;
+      final double dep = b.depositPaid;
+
+      if (b.isPaid || b.paymentStatus == 'paid') {
+        onlineCollected += price;
+      } else if (b.isDepositPaid || dep > 0) {
+        onlineCollected += dep;
+        if (price > dep) {
+          pitchCashRemaining += (price - dep);
+        }
+      } else {
+        pitchCashRemaining += price;
+      }
+    }
+
+    final double totalDayRevenue = onlineCollected + pitchCashRemaining;
+
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      padding: const EdgeInsets.all(12),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3), width: 1.2),
+      ),
+      child: Column(
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 16),
+                  const SizedBox(width: 6),
+                  Text(
+                    isArabic ? 'الحصيلة المالية اليومية 💰' : 'Daily Financial Box 💰',
+                    style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                  ),
+                ],
+              ),
+              Container(
+                padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.15),
+                  borderRadius: BorderRadius.circular(6),
+                ),
+                child: Text(
+                  isArabic ? '${dayBookings.length} حجوزات' : '${dayBookings.length} Bookings',
+                  style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 10.5),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 8),
+          Row(
+            children: [
+              Expanded(
+                child: _buildFinancialMetricTile(
+                  title: isArabic ? 'أونلاين ⚡' : 'Online ⚡',
+                  amount: '${onlineCollected.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                  color: VSPColors.accent,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildFinancialMetricTile(
+                  title: isArabic ? 'متبقي كاش 💵' : 'Cash Rem. 💵',
+                  amount: '${pitchCashRemaining.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                  color: Colors.amber,
+                ),
+              ),
+              const SizedBox(width: 6),
+              Expanded(
+                child: _buildFinancialMetricTile(
+                  title: isArabic ? 'إجمالي اليوم 📊' : 'Total 📊',
+                  amount: '${totalDayRevenue.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                  color: Colors.white,
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildFinancialMetricTile({
+    required String title,
+    required String amount,
+    required Color color,
+  }) {
+    return Container(
+      padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 6),
+      decoration: BoxDecoration(
+        color: VSPColors.surfaceAlt,
+        borderRadius: BorderRadius.circular(8),
+        border: Border.all(color: color.withValues(alpha: 0.2)),
+      ),
+      child: Column(
+        children: [
+          Text(
+            title,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold),
+          ),
+          const SizedBox(height: 3),
+          Text(
+            amount,
+            style: TextStyle(color: color, fontSize: 12, fontWeight: FontWeight.w900),
+          ),
+        ],
+      ),
+    );
   }
 }
 

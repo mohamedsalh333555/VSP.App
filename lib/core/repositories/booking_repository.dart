@@ -312,7 +312,7 @@ class SupabaseBookingRepository implements BookingRepository {
       try {
         final existingCollision = await _supabase
             .from('bookings')
-            .select('id, created_by_user_id, status')
+            .select('id, created_by_user_id, user_id, status')
             .eq('stadium_id', booking.stadiumId)
             .eq('start_time', booking.startTime.toUtc().toIso8601String())
             .neq('status', 'cancelled')
@@ -320,7 +320,7 @@ class SupabaseBookingRepository implements BookingRepository {
 
         if (existingCollision != null) {
           final collisionStatus = existingCollision['status']?.toString();
-          final collisionUser = existingCollision['created_by_user_id']?.toString();
+          final collisionUser = existingCollision['created_by_user_id']?.toString() ?? existingCollision['user_id']?.toString();
           
           // إذا كان الحجز القديم معلق (pending) لنفس المستخدم، نحذفه ونفسح المجال للحجز الجديد
           if (collisionStatus == 'pending' && collisionUser == userId) {
@@ -361,6 +361,7 @@ class SupabaseBookingRepository implements BookingRepository {
         'payment_method': booking.paymentMethod,
         'payment_transaction_id': booking.paymentTransactionId,
         'status': booking.status.name,
+        'user_id': userId,
         'created_by_user_id': booking.createdByUserId,
         'created_at': DateTime.now().toUtc().toIso8601String(),
         'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -517,7 +518,7 @@ class SupabaseBookingRepository implements BookingRepository {
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) => b.userId == userId || b.joinedUserIds.contains(userId))
+              .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
               .toList();
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
@@ -531,6 +532,7 @@ class SupabaseBookingRepository implements BookingRepository {
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) {
+            if (b.ownerId.trim().toLowerCase() == ownerId.trim().toLowerCase()) return true;
             if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
               return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
             }
@@ -556,6 +558,7 @@ class SupabaseBookingRepository implements BookingRepository {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
+                if (b.ownerId.trim().toLowerCase() == ownerId.trim().toLowerCase()) return true;
                 if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
                   return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
                 }

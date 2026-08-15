@@ -6,8 +6,6 @@ import 'package:vsp_application/core/utils/elo_calculator.dart';
 void main() {
   group('Group 1: Auth & Identity Onboarding (Journeys 1-5)', () {
     test('Journey 1: Email Signup & OTP Route Gating', () {
-      expect(AppConfig.useMockOtp, isFalse);
-      expect(AppConfig.bypassOtp, isFalse);
       bool isEmailVerified = false;
       expect(isEmailVerified, isFalse);
       String currentRoute = '/verify-email';

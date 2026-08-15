@@ -18,7 +18,7 @@ Single Source of Truth (SSOT) for tech stack, system architecture, module connec
 
 ## 2. Directory Structure & Layer Responsibilities
 
-```
+```text
 lib/
 ├── main.dart                      # App entry point, Firebase/Supabase initialization, Provider tree setup
 ├── firebase_options.dart          # Firebase project configuration
@@ -71,14 +71,17 @@ lib/
 ## 3. Core Architecture & Feature Connections
 
 ### 🔐 Auth & Identity Flow (`lib/features/auth`)
+
 - **Flow**: `SplashScreen` ➔ `WelcomeScreen` ➔ `LoginScreen` / `SignupScreen` ➔ `VerifyEmailScreen` ➔ Role Router (`PlayerHomeScreen` vs `OwnerMainScreen`).
 - **State**: Managed via `AuthProvider` (`auth_provider.dart`) wrapping `AuthService` (Firebase Auth) & `UserRepository` (Supabase `users` table).
 
 ### ⚽ Player Booking Flow (`lib/features/player`)
+
 - **Flow**: `PlayerHomeScreen` ➔ `StadiumDetailsScreen` ➔ `BookingTypeScreen` (Individual/Team/Challenge) ➔ `BookingConfirmationScreen` ➔ `PaymentGatewayScreen` ➔ `BookingSuccessScreen`.
 - **State**: Managed via `BookingProvider` (`booking_provider.dart`). Atomic booking creation executed on Postgres via RPC `create_booking_atomic` to guarantee 0 double-bookings under high concurrency.
 
 ### 🏟️ Owner Facility & Schedule Management (`lib/features/owner`)
+
 - **Flow**: `OwnerMainScreen` ➔ `OwnerDashboardScreen` ➔ `OwnerBookingsScreen` (Time-slot schedule grid) ➔ `AddStadiumWizard` / `SubscriptionPlansScreen`.
 - **Key Rules**:
   - Cancelled bookings (`status == 'cancelled'`) are filtered out of active time-slot grids.
@@ -86,6 +89,7 @@ lib/
   - Owners in `free_trial` see remaining trial days on the dashboard banner with direct link to `SubscriptionPlansScreen` live countdown clock.
 
 ### 🏆 Tournaments & Challenges (`lib/core/repositories/tournament_repository.dart`)
+
 - **Flow**: Challenge match creation ➔ Result submission ➔ Verification ➔ Automated Elo updates on Supabase.
 
 ---
