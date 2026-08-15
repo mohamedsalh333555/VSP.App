@@ -35,7 +35,6 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
   // SUPABASE & FIREBASE SECURE INITIALIZATION
   try {
@@ -55,6 +54,12 @@ void main() async {
         options: DefaultFirebaseOptions.currentPlatform,
       ).then((_) => VSPLogger.i("✅ Firebase initialized successfully")),
     ]);
+
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      VSPLogger.w("⚠️ Firebase Messaging background handler registration notice: $e");
+    }
   } catch (e) {
     VSPLogger.e("⚠️ Backend initialization notice: $e");
   }
