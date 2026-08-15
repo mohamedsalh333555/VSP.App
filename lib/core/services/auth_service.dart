@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../utils/phone_utils.dart';
 import 'logger_service.dart';
+import 'secure_storage_service.dart';
 
 class AuthService {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -10,9 +11,23 @@ class AuthService {
   // Get current user
   User? get currentUser => _supabase.auth.currentUser;
 
+  /// ✅ دالة آمنة تضمن عدم الانهيار وتطالب بجلسة صالحة
+  Future<User> requireCurrentUser() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw const AuthException('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
+    }
+    return user;
+  }
+
   // Stream of auth state changes mapped to User?
   Stream<User?> get authStateChanges => 
-      _supabase.auth.onAuthStateChange.map((data) => data.session?.user);
+      _supabase.auth.onAuthStateChange.map((data) {
+        if (data.session != null) {
+          SecureStorageService.saveAuthToken(data.session!.accessToken);
+        }
+        return data.session?.user;
+      });
 
   // Internal logger for security auditing
   void _logSecurityEvent(String event, dynamic error) {
@@ -146,7 +161,9 @@ class AuthService {
     VSPLogger.i('🚪 Sign-Out Initiated');
     try {
       await _supabase.auth.signOut();
+      await SecureStorageService.clearAll();
     } catch (e) {
+      await SecureStorageService.clearAll();
       _logSecurityEvent('SUPABASE_SIGN_OUT_ERROR', e);
       VSPLogger.e('❌ Supabase signOut error', e);
     }

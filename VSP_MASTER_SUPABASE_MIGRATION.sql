@@ -989,5 +989,123 @@ $$;
 
 NOTIFY pgrst, 'reload schema';
 
+-- ============================================================================
+-- 🛡️ VSP PRODUCTION DATABASE SECURITY & PERFORMANCE HARDENING SCRIPT (PHASE 2)
+-- ============================================================================
+
+-- 1️⃣ Enable RLS on all system tables
+ALTER TABLE IF EXISTS public.users ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.stadiums ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.bookings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.teams ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.team_members ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.championships ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.tournament_matches ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.championship_rosters ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.chat_messages ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.notifications ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.reports ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.reviews ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.vsp_1vs1_players ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.vsp_1v1_registrations ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.app_settings ENABLE ROW LEVEL SECURITY;
+ALTER TABLE IF EXISTS public.transactions ENABLE ROW LEVEL SECURITY;
+
+-- 2️⃣ Row Level Security Policies
+
+-- A. Public Read Tables
+DROP POLICY IF EXISTS "Public can view stadiums" ON public.stadiums;
+CREATE POLICY "Public can view stadiums" ON public.stadiums FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view championships" ON public.championships;
+CREATE POLICY "Public can view championships" ON public.championships FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view teams" ON public.teams;
+CREATE POLICY "Public can view teams" ON public.teams FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view team members" ON public.team_members;
+CREATE POLICY "Public can view team members" ON public.team_members FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view tournament matches" ON public.tournament_matches;
+CREATE POLICY "Public can view tournament matches" ON public.tournament_matches FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view 1v1 standings" ON public.vsp_1vs1_players;
+CREATE POLICY "Public can view 1v1 standings" ON public.vsp_1vs1_players FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view reviews" ON public.reviews;
+CREATE POLICY "Public can view reviews" ON public.reviews FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Public can view app settings" ON public.app_settings;
+CREATE POLICY "Public can view app settings" ON public.app_settings FOR SELECT USING (true);
+
+-- B. Users Table (User Profile Isolation)
+DROP POLICY IF EXISTS "Users can read own and public profile" ON public.users;
+CREATE POLICY "Users can read own and public profile" ON public.users FOR SELECT USING (true);
+
+DROP POLICY IF EXISTS "Users can update only their own profile" ON public.users;
+CREATE POLICY "Users can update only their own profile" ON public.users FOR UPDATE 
+USING (auth.uid() = id) 
+WITH CHECK (auth.uid() = id);
+
+-- C. Bookings Table (Bookings Isolation)
+DROP POLICY IF EXISTS "Users can view bookings they are part of or public" ON public.bookings;
+CREATE POLICY "Users can view bookings they are part of or public" ON public.bookings FOR SELECT 
+USING (
+  auth.uid() = user_id OR 
+  auth.uid() = owner_id OR 
+  auth.uid() = created_by_user_id OR 
+  is_private = false OR 
+  auth.uid()::text = ANY(joined_user_ids)
+);
+
+DROP POLICY IF EXISTS "Users can insert bookings" ON public.bookings;
+CREATE POLICY "Users can insert bookings" ON public.bookings FOR INSERT 
+WITH CHECK (auth.uid() = user_id OR auth.uid() = created_by_user_id OR auth.uid() = owner_id);
+
+DROP POLICY IF EXISTS "Participants can update their booking" ON public.bookings;
+CREATE POLICY "Participants can update their booking" ON public.bookings FOR UPDATE 
+USING (auth.uid() = user_id OR auth.uid() = owner_id OR auth.uid() = created_by_user_id);
+
+-- D. Chat Messages (Isolation)
+DROP POLICY IF EXISTS "Participants can read chat messages" ON public.chat_messages;
+CREATE POLICY "Participants can read chat messages" ON public.chat_messages FOR SELECT 
+USING (
+  EXISTS (
+    SELECT 1 FROM public.bookings 
+    WHERE bookings.id = chat_messages.booking_id 
+    AND (
+      bookings.user_id = auth.uid() OR 
+      bookings.owner_id = auth.uid() OR 
+      bookings.created_by_user_id = auth.uid() OR
+      auth.uid()::text = ANY(bookings.joined_user_ids)
+    )
+  )
+);
+
+DROP POLICY IF EXISTS "Participants can send chat messages" ON public.chat_messages;
+CREATE POLICY "Participants can send chat messages" ON public.chat_messages FOR INSERT 
+WITH CHECK (auth.uid() = sender_id);
+
+-- E. Notifications (User Isolation)
+DROP POLICY IF EXISTS "Users can only read own notifications" ON public.notifications;
+CREATE POLICY "Users can only read own notifications" ON public.notifications FOR SELECT 
+USING (auth.uid() = user_id);
+
+DROP POLICY IF EXISTS "Users can update own notifications" ON public.notifications;
+CREATE POLICY "Users can update own notifications" ON public.notifications FOR UPDATE 
+USING (auth.uid() = user_id);
+
+-- 3️⃣ Performance Indexes
+CREATE INDEX IF NOT EXISTS idx_bookings_user_id ON public.bookings(user_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_owner_id ON public.bookings(owner_id);
+CREATE INDEX IF NOT EXISTS idx_bookings_stadium_start ON public.bookings(stadium_id, start_time);
+CREATE INDEX IF NOT EXISTS idx_stadiums_governorate ON public.stadiums(governorate);
+CREATE INDEX IF NOT EXISTS idx_stadiums_owner_id ON public.stadiums(owner_id);
+CREATE INDEX IF NOT EXISTS idx_chat_messages_booking ON public.chat_messages(booking_id, created_at DESC);
+CREATE INDEX IF NOT EXISTS idx_notifications_user_unread ON public.notifications(user_id, is_read);
+CREATE INDEX IF NOT EXISTS idx_team_members_user ON public.team_members(user_id);
+CREATE INDEX IF NOT EXISTS idx_tournament_matches_champ ON public.tournament_matches(championship_id);
+
+
 
 

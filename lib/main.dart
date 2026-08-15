@@ -23,6 +23,8 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigation/app_router.dart';
 import 'dart:async';
 
+import 'core/config/app_env.dart';
+
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
@@ -35,33 +37,20 @@ void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
   
-  // SUPABASE & FIREBASE PARALLEL INITIALIZATION
+  // SUPABASE & FIREBASE SECURE INITIALIZATION
   try {
-    const supabaseUrl = String.fromEnvironment(
-      'SUPABASE_URL',
-      defaultValue: 'https://mktqkddbcddrxjxabdua.supabase.co',
-    );
-    const supabaseAnonKey = String.fromEnvironment(
-      'SUPABASE_ANON_KEY',
-      defaultValue: 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
-    );
-
-    // 🔔 RELEASE SAFETY: Warn if falling back to compiled-in keys instead of
-    // build-time --dart-define overrides. In production CI/CD, always pass:
-    //   flutter build apk --dart-define=SUPABASE_URL=... --dart-define=SUPABASE_ANON_KEY=...
     if (kReleaseMode) {
-      const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL_INJECTED', defaultValue: false);
+      const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL');
       if (!urlWasInjected) {
-        VSPLogger.w('⚠️ RELEASE BUILD WARNING: Supabase credentials are using compiled-in defaults. '
-            'Pass --dart-define=SUPABASE_URL and --dart-define=SUPABASE_ANON_KEY at build time for production.');
+        VSPLogger.w('⚠️ WARNING: Release build running without explicit build-time --dart-define parameters.');
       }
     }
 
     await Future.wait([
       Supabase.initialize(
-        url: supabaseUrl,
-        publishableKey: supabaseAnonKey,
-      ).then((_) => VSPLogger.i("✅ Supabase initialized successfully")),
+        url: AppEnv.supabaseUrl,
+        publishableKey: AppEnv.supabaseAnonKey,
+      ).then((_) => VSPLogger.i("✅ Supabase initialized securely")),
       Firebase.initializeApp(
         options: DefaultFirebaseOptions.currentPlatform,
       ).then((_) => VSPLogger.i("✅ Firebase initialized successfully")),

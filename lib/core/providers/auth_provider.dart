@@ -370,6 +370,14 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
 
     try {
+      final user = _firebaseUser ?? _authService.currentUser;
+      if (user == null) {
+        _errorMessage = 'جلسة المستخدم غير صالحة، يرجى إعادة تسجيل الدخول.';
+        _isLoading = false;
+        notifyListeners();
+        return false;
+      }
+
       if (_password != null && _password!.isNotEmpty) {
         final success = await _authService.updatePassword(_password!);
         if (!success) {
@@ -381,21 +389,19 @@ class AuthProvider with ChangeNotifier {
       }
 
       final success = await _userRepository.updateUserProfile(
-        currentUser!.id, 
+        user.id, 
         {
           'name': _name,
           'phone': PhoneUtils.normalize(_phone ?? ''),
           'position': _position,
           'isRegistrationComplete': true,
         },
-        authUser: currentUser,
+        authUser: user,
         role: _userType ?? _userModel?.role,
       );
       
-      if (success) {
-        if (_userModel != null) {
-          _userModel = _userModel!.copyWith(isRegistrationComplete: true);
-        }
+      if (success && _userModel != null) {
+        _userModel = _userModel!.copyWith(isRegistrationComplete: true);
       }
 
       _isLoading = false;

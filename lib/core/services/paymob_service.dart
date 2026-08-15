@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:http/http.dart' as http;
@@ -6,8 +7,9 @@ import '../config/app_config.dart';
 
 class PaymobService {
   static const String _baseUrl = 'https://accept.paymob.com/api';
+  static const Duration _timeout = Duration(seconds: 25);
 
-  /// 🚀 Generate Paymob Unified Checkout URL using Intention API (Modern Standard)
+  /// 🚀 Generate Paymob Unified Checkout URL using Intention API
   static Future<String?> getUnifiedCheckoutUrl({
     required double amountInEgp,
     required String bookingId,
@@ -49,6 +51,9 @@ class PaymobService {
             'phone_number': phone,
           }
         }),
+      ).timeout(
+        _timeout,
+        onTimeout: () => throw TimeoutException('انتهت مهلة الاتصال ببوابة Paymob بعد ${_timeout.inSeconds} ثانية.'),
       );
 
       if (response.statusCode == 200 || response.statusCode == 201) {
@@ -60,7 +65,6 @@ class PaymobService {
           return checkoutUrl;
         }
       }
-      debugPrint('⚠️ Paymob Intention Error (${response.statusCode}): ${response.body}');
       return null;
     } catch (e) {
       debugPrint('🚨 Paymob getUnifiedCheckoutUrl Exception: $e');
@@ -80,7 +84,6 @@ class PaymobService {
     try {
       final apiKey = AppConfig.paymobApiKey;
       if (apiKey.isEmpty) {
-        debugPrint('⚠️ Paymob API Key is empty.');
         return null;
       }
 
@@ -89,19 +92,15 @@ class PaymobService {
         Uri.parse('$_baseUrl/auth/tokens'),
         headers: {'Content-Type': 'application/json'},
         body: jsonEncode({'api_key': apiKey}),
-      );
+      ).timeout(_timeout);
 
       if (authResponse.statusCode != 201 && authResponse.statusCode != 200) {
-        debugPrint('❌ Paymob Auth Error (${authResponse.statusCode}): ${authResponse.body}');
         return null;
       }
 
       final authData = jsonDecode(authResponse.body);
       final String authToken = authData['token'] ?? '';
-      if (authToken.isEmpty) {
-        debugPrint('❌ Paymob Auth Token empty.');
-        return null;
-      }
+      if (authToken.isEmpty) return null;
 
       // Step 2: Order Registration
       final amountCents = (amountInEgp * 100).round();
@@ -116,29 +115,21 @@ class PaymobService {
           'merchant_order_id': '${bookingId}_${DateTime.now().millisecondsSinceEpoch}',
           'items': [],
         }),
-      );
+      ).timeout(_timeout);
 
       if (orderResponse.statusCode != 201 && orderResponse.statusCode != 200) {
-        debugPrint('❌ Paymob Order Error (${orderResponse.statusCode}): ${orderResponse.body}');
         return null;
       }
 
       final orderData = jsonDecode(orderResponse.body);
       final dynamic orderId = orderData['id'];
-      if (orderId == null) {
-        debugPrint('❌ Paymob Order ID null.');
-        return null;
-      }
+      if (orderId == null) return null;
 
       // Step 3: Payment Key Request
       final firstName = userName.trim().isNotEmpty ? userName.trim().split(' ').first : 'Player';
-      final lastName = userName.trim().contains(' ') 
-          ? userName.trim().split(' ').sublist(1).join(' ') 
-          : 'VSP';
+      final lastName = userName.trim().contains(' ') ? userName.trim().split(' ').sublist(1).join(' ') : 'VSP';
       final phone = userPhone.trim().isNotEmpty ? userPhone.trim() : '+201000000000';
       final email = userEmail.trim().isNotEmpty ? userEmail.trim() : 'player@vsp.app';
-
-      // Integration ID: 5772488 (Card Integration) or 5772511 (Wallet Integration)
       final activeIntegrationId = (integrationId != null && integrationId.isNotEmpty) 
           ? integrationId 
           : AppConfig.paymobCardIntegrationId;
@@ -170,26 +161,21 @@ class PaymobService {
           'integration_id': activeIntegrationId,
           'lock_accept_token': 'false',
         }),
-      );
+      ).timeout(_timeout);
 
       if (paymentKeyResponse.statusCode != 201 && paymentKeyResponse.statusCode != 200) {
-        debugPrint('❌ Paymob Payment Key Error (${paymentKeyResponse.statusCode}): ${paymentKeyResponse.body}');
         return null;
       }
 
       final paymentKeyData = jsonDecode(paymentKeyResponse.body);
-      final String paymentToken = paymentKeyData['token'] ?? '';
-      if (paymentToken.isNotEmpty) {
-        debugPrint('✅ Paymob Payment Token Generated Successfully!');
-      }
-      return paymentToken.isNotEmpty ? paymentToken : null;
+      return paymentKeyData['token'];
     } catch (e) {
       debugPrint('🚨 PaymobService Exception: $e');
       return null;
     }
   }
 
-  /// 📱 Request Paymob Wallet Redirect URL for Vodafone/Orange/Etisalat Cash
+  /// 📱 Request Paymob Wallet Redirect URL
   static Future<String?> getWalletRedirectUrl({
     required String paymentToken,
     required String phone,
@@ -206,17 +192,15 @@ class PaymobService {
           },
           'payment_token': paymentToken,
         }),
-      );
+      ).timeout(_timeout);
 
       if (response.statusCode == 200 || response.statusCode == 201) {
         final data = jsonDecode(response.body);
         final redirectUrl = data['redirect_url'] ?? data['iframe_redirection_token'];
         if (redirectUrl != null && redirectUrl.toString().isNotEmpty) {
-          debugPrint('✅ Paymob Wallet Redirect URL Obtained Successfully!');
           return redirectUrl.toString();
         }
       }
-      debugPrint('❌ Paymob Wallet Pay Error (${response.statusCode}): ${response.body}');
       return null;
     } catch (e) {
       debugPrint('🚨 Paymob Wallet Pay Exception: $e');
@@ -224,7 +208,7 @@ class PaymobService {
     }
   }
 
-  /// 🔒 Verify Paymob HMAC Signature for Webhooks (Security Audit)
+  /// 🔒 Verify Paymob HMAC Signature
   static bool verifyPaymobHmac(Map<String, dynamic> data, String hmacHeader) {
     try {
       final hmacSecret = AppConfig.paymobHmac;
@@ -257,13 +241,9 @@ class PaymobService {
 
       final hmac = Hmac(sha512, utf8.encode(hmacSecret));
       final digest = hmac.convert(utf8.encode(concatenatedValues));
-      final calculatedHmac = digest.toString();
-
-      return calculatedHmac.toLowerCase() == hmacHeader.toLowerCase();
+      return digest.toString().toLowerCase() == hmacHeader.toLowerCase();
     } catch (e) {
-      debugPrint('⚠️ Error verifying Paymob HMAC: $e');
       return false;
     }
   }
 }
-
