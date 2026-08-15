@@ -33,6 +33,7 @@ class ChampionScreenState extends State<ChampionScreen>
   // Filter states
   String _selectedLocation = 'Cairo'; 
   String _selectedSport = 'Football'; 
+  bool _isLocationInitialized = false;
 
   @override
   void initState() {
@@ -43,15 +44,26 @@ class ChampionScreenState extends State<ChampionScreen>
         _selectedTabIndex = _tabController.index;
       });
     });
+  }
 
-    // Default to user's governorate
-    WidgetsBinding.instance.addPostFrameCallback((_) {
-      final rawGov = Provider.of<AuthProvider>(context, listen: false).governorate;
+  @override
+  void didChangeDependencies() {
+    super.didChangeDependencies();
+    if (!_isLocationInitialized) {
+      final auth = Provider.of<AuthProvider>(context);
+      final rawGov = auth.userModel?.governorate ?? auth.governorate;
       final resolvedGov = EgyptGovernorates.resolveGoogleName(rawGov) ?? rawGov;
-      if (resolvedGov.isNotEmpty && EgyptGovernorates.allGovernorates.contains(resolvedGov)) {
-        setState(() => _selectedLocation = resolvedGov);
+      if (resolvedGov.isNotEmpty) {
+        final matchedGov = EgyptGovernorates.allGovernorates.firstWhere(
+          (g) => g.toLowerCase() == resolvedGov.toLowerCase(),
+          orElse: () => resolvedGov,
+        );
+        if (EgyptGovernorates.allGovernorates.contains(matchedGov)) {
+          _selectedLocation = matchedGov;
+          _isLocationInitialized = true;
+        }
       }
-    });
+    }
   }
   
   void switchToTab(int index) {

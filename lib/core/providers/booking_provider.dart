@@ -312,11 +312,53 @@ class BookingProvider with ChangeNotifier {
       notifyListeners();
       return success;
     } catch (e) {
-      _cancellingIds.remove(bookingId);
-      _errorMessage = 'فشل إلغاء الحجز: $e';
-      notifyListeners();
       return false;
     }
+  }
+
+  /// 🔄 Request booking rescheduling (Owner)
+  Future<bool> requestReschedule({
+    required String bookingId,
+    required DateTime newStartTime,
+    required DateTime newEndTime,
+  }) async {
+    final success = await _repository.requestReschedule(
+      bookingId: bookingId,
+      newStartTime: newStartTime,
+      newEndTime: newEndTime,
+    );
+    if (success) notifyListeners();
+    return success;
+  }
+
+  /// 🤝 Respond to rescheduling request (Player)
+  Future<bool> respondToReschedule({
+    required String bookingId,
+    required bool accept,
+  }) async {
+    final success = await _repository.respondToReschedule(
+      bookingId: bookingId,
+      accept: accept,
+    );
+    if (success) notifyListeners();
+    return success;
+  }
+
+  /// 🚨 Request emergency stadium closure (Owner - 1 per 30 days)
+  Future<Map<String, dynamic>> requestEmergencyClosure({
+    required String stadiumId,
+    required String ownerId,
+    required String reason,
+    required int durationHours,
+  }) async {
+    final res = await _repository.requestEmergencyClosure(
+      stadiumId: stadiumId,
+      ownerId: ownerId,
+      reason: reason,
+      durationHours: durationHours,
+    );
+    notifyListeners();
+    return res;
   }
 
   /// Get a specific booking

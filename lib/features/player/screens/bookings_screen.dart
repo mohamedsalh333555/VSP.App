@@ -15,6 +15,8 @@ import '../../../data/models.dart';
 import '../widgets/match_result_modal.dart';
 import '../../../core/repositories/team_repository.dart';
 import 'payment_gateway_screen.dart';
+import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class BookingsScreen extends StatefulWidget {
   const BookingsScreen({super.key});
@@ -457,6 +459,72 @@ class _BookingCard extends StatelessWidget {
                       color: VSPColors.warning,
                       fontWeight: FontWeight.bold,
                     ),
+                  ),
+                ],
+              ),
+            ),
+          ],
+
+          if (booking.rescheduleStatus == 'pending' && booking.proposedStartTime != null) ...[
+            const SizedBox(height: VSPSpacing.sm),
+            Container(
+              padding: const EdgeInsets.all(VSPSpacing.md),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.15),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: Colors.amber, width: 1),
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    children: [
+                      const Icon(Iconsax.clock_copy, color: Colors.amber, size: 20),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: Text(
+                          Localizations.localeOf(context).languageCode == 'ar'
+                              ? '📢 اقتراح من المالك بنقل موعد المباراة:'
+                              : '📢 Pitch owner proposed a new match time:',
+                          style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const SizedBox(height: 6),
+                  Text(
+                    '${Localizations.localeOf(context).languageCode == 'ar' ? 'الموعد المقترح: ' : 'Proposed time: '}${AppDateFormatter.formatDayMonth(booking.proposedStartTime!, Localizations.localeOf(context).languageCode)} • ${AppDateFormatter.formatTime(booking.proposedStartTime!, Localizations.localeOf(context).languageCode)}',
+                    style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+                  ),
+                  const SizedBox(height: 10),
+                  Row(
+                    children: [
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+                          onPressed: () async {
+                            final success = await Provider.of<BookingProvider>(context, listen: false).respondToReschedule(bookingId: booking.id, accept: true);
+                            if (success && context.mounted) {
+                              VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تمت الموافقة وتعديل توقيت الحجز بنجاح ⚽' : 'Reschedule accepted successfully ⚽');
+                            }
+                          },
+                          child: Text(Localizations.localeOf(context).languageCode == 'ar' ? '✅ موافقة على الموعد' : '✅ Accept New Time', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                        ),
+                      ),
+                      const SizedBox(width: 8),
+                      Expanded(
+                        child: ElevatedButton(
+                          style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+                          onPressed: () async {
+                            final success = await Provider.of<BookingProvider>(context, listen: false).respondToReschedule(bookingId: booking.id, accept: false);
+                            if (success && context.mounted) {
+                              VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تم رفض الموعد وإلغاء الحجز وإعادة المبلغ 100% 💰' : 'Reschedule rejected & 100% refunded 💰');
+                            }
+                          },
+                          child: Text(Localizations.localeOf(context).languageCode == 'ar' ? '❌ رفض واسترداد كامل' : '❌ Reject & Refund', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
+                        ),
+                      ),
+                    ],
                   ),
                 ],
               ),

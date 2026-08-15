@@ -73,6 +73,24 @@ abstract class BookingRepository {
     required double depositPaid,
     required String paymentStatus,
   });
+
+  Future<bool> requestReschedule({
+    required String bookingId,
+    required DateTime newStartTime,
+    required DateTime newEndTime,
+  });
+
+  Future<bool> respondToReschedule({
+    required String bookingId,
+    required bool accept,
+  });
+
+  Future<Map<String, dynamic>> requestEmergencyClosure({
+    required String stadiumId,
+    required String ownerId,
+    required String reason,
+    required int durationHours,
+  });
 }
 
 /// Supabase implementation of BookingRepository
@@ -1129,12 +1147,136 @@ class SupabaseBookingRepository implements BookingRepository {
       return false;
     }
   }
+
+  /// 🔄 2. طلب ترحيل الموعد من قِبل المالك
+  @override
+  Future<bool> requestReschedule({
+    required String bookingId,
+    required DateTime newStartTime,
+    required DateTime newEndTime,
+  }) async {
+    try {
+      await _supabase.from('bookings').update({
+        'reschedule_status': 'pending',
+        'proposed_start_time': newStartTime.toUtc().toIso8601String(),
+        'proposed_end_time': newEndTime.toUtc().toIso8601String(),
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', bookingId);
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error requesting reschedule', e);
+      return false;
+    }
+  }
+
+  /// 🤝 3. استجابة اللاعب لطلب ترحيل الموعد
+  @override
+  Future<bool> respondToReschedule({
+    required String bookingId,
+    required bool accept,
+  }) async {
+    try {
+      final booking = await getBookingById(bookingId);
+      if (booking == null) return false;
+
+      if (accept && booking.proposedStartTime != null && booking.proposedEndTime != null) {
+        await _supabase.from('bookings').update({
+          'start_time': booking.proposedStartTime!.toUtc().toIso8601String(),
+          'end_time': booking.proposedEndTime!.toUtc().toIso8601String(),
+          'reschedule_status': 'accepted',
+          'proposed_start_time': null,
+          'proposed_end_time': null,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', bookingId);
+      } else {
+        await _supabase.from('bookings').update({
+          'status': 'cancelled',
+          'reschedule_status': 'rejected',
+          'cancelled_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', bookingId);
+      }
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error responding to reschedule', e);
+      return false;
+    }
+  }
+
+  /// 🚨 4. طلب الإغلاق الطارئ للملعب (مرة واحدة شهرياً للمالك)
+  @override
+  Future<Map<String, dynamic>> requestEmergencyClosure({
+    required String stadiumId,
+    required String ownerId,
+    required String reason,
+    required int durationHours,
+  }) async {
+    try {
+      final stadiumData = await _supabase
+          .from('stadiums')
+          .select('last_emergency_closure_at')
+          .eq('id', stadiumId)
+          .maybeSingle();
+
+      final now = DateTime.now();
+      if (stadiumData != null && stadiumData['last_emergency_closure_at'] != null) {
+        final lastAt = DateTime.parse(stadiumData['last_emergency_closure_at']);
+        if (now.difference(lastAt).inDays < 30) {
+          final remainingDays = 30 - now.difference(lastAt).inDays;
+          return {
+            'success': false,
+            'message': 'لقد استخدمت حق الإلغاء الطارئ لهذا الشهر مسبقاً. متبقي $remainingDays يوم لإعادة تفعيل الميزة.',
+          };
+        }
+      }
+
+      final maintenanceUntil = now.add(Duration(hours: durationHours));
+
+      await _supabase.from('stadiums').update({
+        'maintenance_until': maintenanceUntil.toUtc().toIso8601String(),
+        'maintenance_reason': reason,
+        'last_emergency_closure_at': now.toUtc().toIso8601String(),
+      }).eq('id', stadiumId);
+
+      await _supabase.from('bookings').update({
+        'emergency_cancel_status': 'pending_admin_approval',
+        'emergency_reason': reason,
+        'emergency_downtime_hours': durationHours,
+      }).eq('stadium_id', stadiumId).eq('status', 'confirmed').gte('start_time', now.toUtc().toIso8601String()).lte('start_time', maintenanceUntil.toUtc().toIso8601String());
+
+      return {'success': true};
+    } catch (e) {
+      VSPLogger.e('Error requesting emergency closure', e);
+      return {'success': false, 'message': e.toString()};
+    }
+  }
 }
 
 /// Mock implementation for demo/testing
 class MockBookingRepository implements BookingRepository {
   final List<Booking> _bookings = [];
   final _controller = StreamController<List<Booking>>.broadcast();
+
+  @override
+  Future<bool> requestReschedule({
+    required String bookingId,
+    required DateTime newStartTime,
+    required DateTime newEndTime,
+  }) async => true;
+
+  @override
+  Future<bool> respondToReschedule({
+    required String bookingId,
+    required bool accept,
+  }) async => true;
+
+  @override
+  Future<Map<String, dynamic>> requestEmergencyClosure({
+    required String stadiumId,
+    required String ownerId,
+    required String reason,
+    required int durationHours,
+  }) async => {'success': true};
 
   void _update() {
     _controller.add(List.from(_bookings));

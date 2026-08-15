@@ -118,20 +118,30 @@ class PrivacyPolicyScreen extends StatelessWidget {
             _buildSection(
               context,
               icon: Iconsax.share_copy,
-              title: isAr ? '٥. مشاركة البيانات' : '5. Data Sharing',
+              title: isAr ? '٥. مشاركة البيانات والبيئة السحابية' : '5. Data Sharing & Cloud Infrastructure',
               content: isAr
-                  ? 'لا نبيع بياناتك الشخصية لأي طرف ثالث. قد تُشارك بياناتك بشكل مُجمَّع وغير مُعرَّف مع شركائنا لأغراض التحليل وتحسين الخدمة.\n\nنستخدم خدمات Supabase (قاعدة البيانات)، Firebase (الإحصاءات)، وGoogle Mobile Ads لتشغيل التطبيق. لكل منهم سياسة خصوصية منفصلة ومستقلة.'
-                  : 'We do not sell your personal data to any third parties. Aggregated and anonymized data may be shared with our partners for analytics and service improvement. We use Supabase (database), Firebase (analytics), and Google Mobile Ads to operate the app, each governed by their own privacy policy.',
+                  ? 'لا نبيع بياناتك الشخصية لأي طرف ثالث نهائياً. تُخزن وتُعالج البيانات بأمان على خوادم Supabase السحابية المخصصة (قاعدة البيانات والتحقق)، مع استخدام Firebase لإحصاءات الأداء وتنبيهات الإشعارات اللحظية. لكل منها سياسة خصوصية وأمان سحابية مستقلة وخاضعة لشهادات الأمان العالمية.'
+                  : 'We do not sell your personal data to any third parties under any circumstances. Data is securely stored and processed using Supabase cloud infrastructure (Database & Authentication) and Firebase for performance analytics and instant push notification delivery.',
             ),
 
-            // Section 6: Your Rights
+            // Section 6: Your Rights & Account Deletion
             _buildSection(
               context,
               icon: Iconsax.user_tick_copy,
-              title: isAr ? '٦. حقوقك' : '6. Your Rights',
+              title: isAr ? '٦. حقوقك وتحديث أو حذف الحساب' : '6. Your Rights & Account Deletion',
               content: isAr
-                  ? 'يحق لك في أي وقت: طلب حذف بياناتك كاملاً، تصحيح معلوماتك الشخصية، أو إلغاء حسابك. للتواصل بشأن أي طلب خصوصية، يرجى التواصل مع فريق الدعم مباشرةً عبر WhatsApp على الرقم: 01100229462.'
-                  : 'At any time, you have the right to: request full data deletion, correct your personal data, or cancel your account. For any privacy request, please contact our support team directly via WhatsApp: +201100229462.',
+                  ? 'تطبيقاً لمتطلبات المتاجر الرسمية وقانون حماية البيانات، يمكنك في أي وقت:\n• حذف حسابك وكافة بياناتك الشخصية نهائياً ومباشرةً من داخل التطبيق عبر خيار (تعديل الملف الشخصي -> حذف الحساب).\n• تعديل بياناتك الشخصية بروفايلك أو إلغاء الاشتراك من الخدمة.\n• التواصل المباشر مع فريق الدعم الفني عبر WhatsApp على الرقم: 01100229462 لأي استفسارات تتعلق بالخصوصية.'
+                  : 'In compliance with official app store guidelines (Apple 5.1.1 & Google Play) and data protection regulations, you may at any time:\n• Permanently delete your account and all associated personal records directly within the app via (Edit Profile -> Delete Account).\n• Update or rectify your profile information.\n• Reach out directly to our support team via WhatsApp: +201100229462 for any privacy concerns.',
+            ),
+
+            // Section 7: Permissions, Chat Policy & Minimum Age
+            _buildSection(
+              context,
+              icon: Iconsax.shield_tick_copy,
+              title: isAr ? '٧. أذونات التطبيق وسلوك الدردشة والسن الأدنى' : '7. App Permissions, Chat Policy & Minimum Age',
+              content: isAr
+                  ? '• الأذونات (App Permissions): يطلب التطبيق أذونات الكاميرا/الصور لرفع صورة البروفايل وصور الملاعب ومستندات التوثيق، والموقع الجغرافي (GPS) لاقتراح الملاعب القريبة وطعون الغياب، والإشعارات لتأكيدات الحجز.\n• المحادثات والمحتوى (Chat & UGC Policy): تُحظر أي رسائل احتيالية أو مسيئة في الدردشة الفورية. يوفر التطبيق ميزة الحظر والإبلاغ الفوري، وللإدارة الحق في حظر الحساب المخالف نهائياً.\n• السن الأدنى للاستخدام: يُخصص التطبيق للاستخدام لمن هم بعمر 13 سنة فأكثر، أو بموافقة ولي الأمر للأنشطة الرياضية تحت السن القانوني.'
+                  : '• App Permissions: Requested solely for profile/stadium photo uploads (Camera/Gallery), nearby pitch detection & no-show verification (GPS), and booking notifications (FCM).\n• Chat & User Generated Content (UGC): Fraudulent, harassing, or inappropriate messaging is strictly prohibited. Instant block/report options are provided, and VSP reserves the right to terminate violating accounts.\n• Minimum Age: The platform is intended for users aged 13 and above, or with parental/guardian approval for minors participating in sports activities.',
             ),
 
             const SizedBox(height: 32),

@@ -55,6 +55,14 @@ class Stadium {
   final String ownerId; // ✅ Stadium owner's UID
   final bool isBlocked; // ✅ Administrative block flag for debt management
   
+  // Emergency Maintenance & Closure Fields
+  final DateTime? maintenanceUntil;
+  final String? maintenanceReason;
+  final DateTime? lastEmergencyClosureAt;
+
+  bool get isUnderMaintenance =>
+      maintenanceUntil != null && maintenanceUntil!.isAfter(DateTime.now());
+
   // Working Hours (Standardized)
   final String openingTime; 
   final String closingTime;
@@ -96,6 +104,9 @@ class Stadium {
     this.isFeatured = false, // ✅ Default to false
     this.ownerId = '', // ✅ Default empty ownerId
     this.isBlocked = false,
+    this.maintenanceUntil,
+    this.maintenanceReason,
+    this.lastEmergencyClosureAt,
     this.openingTime = '08:00 AM',
     this.closingTime = '12:00 AM',
     this.isSplitShift = false,
@@ -229,6 +240,9 @@ class Stadium {
       lng: (data['lng'] as num?)?.toDouble(),
       depositAmount: (data['deposit_amount'] ?? data['depositAmount'] ?? 0.0).toDouble(),
       needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
+      maintenanceUntil: data['maintenance_until'] != null ? DateTime.parse(data['maintenance_until'].toString()) : null,
+      maintenanceReason: data['maintenance_reason'],
+      lastEmergencyClosureAt: data['last_emergency_closure_at'] != null ? DateTime.parse(data['last_emergency_closure_at'].toString()) : null,
     );
   }
 
@@ -604,6 +618,14 @@ class Booking {
   final String? lastMessage;
   final DateTime? lastMessageTime;
 
+  // Emergency Cancellation & Rescheduling Fields
+  final String rescheduleStatus; // 'none', 'pending', 'accepted', 'rejected'
+  final DateTime? proposedStartTime;
+  final DateTime? proposedEndTime;
+  final String emergencyCancelStatus; // 'none', 'pending_admin_approval', 'approved', 'rejected'
+  final String? emergencyReason;
+  final int? emergencyDowntimeHours;
+
   // Backward compatibility getters
   int get maxPlayers => totalFieldCapacity;
   String get userId => createdByUserId;
@@ -658,6 +680,12 @@ class Booking {
     this.binanceId,
     this.lastMessage,
     this.lastMessageTime,
+    this.rescheduleStatus = 'none',
+    this.proposedStartTime,
+    this.proposedEndTime,
+    this.emergencyCancelStatus = 'none',
+    this.emergencyReason,
+    this.emergencyDowntimeHours,
   });
 
   /// Create Booking from Firestore/Supabase document
@@ -763,6 +791,16 @@ class Booking {
       lastMessageTime: (data['last_message_time'] ?? data['lastMessageTime']) != null 
           ? DateTime.parse((data['last_message_time'] ?? data['lastMessageTime']).toString())
           : null,
+      rescheduleStatus: data['reschedule_status'] ?? data['rescheduleStatus'] ?? 'none',
+      proposedStartTime: (data['proposed_start_time'] ?? data['proposedStartTime']) != null
+          ? DateTime.parse((data['proposed_start_time'] ?? data['proposedStartTime']).toString())
+          : null,
+      proposedEndTime: (data['proposed_end_time'] ?? data['proposedEndTime']) != null
+          ? DateTime.parse((data['proposed_end_time'] ?? data['proposedEndTime']).toString())
+          : null,
+      emergencyCancelStatus: data['emergency_cancel_status'] ?? data['emergencyCancelStatus'] ?? 'none',
+      emergencyReason: data['emergency_reason'] ?? data['emergencyReason'],
+      emergencyDowntimeHours: data['emergency_downtime_hours'] ?? data['emergencyDowntimeHours'],
     );
   }
 

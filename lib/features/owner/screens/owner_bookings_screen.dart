@@ -9,6 +9,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
+import '../../../core/repositories/booking_repository.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -56,6 +57,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       if (uid != null) {
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         bookingProvider.loadOwnerBookings(uid);
+        SupabaseBookingRepository().autoReconcilePastBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
       }
     });
@@ -1498,6 +1500,89 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
+                  if (widget.isEdit && booking != null && booking.status == BookingStatus.confirmed) ...[
+                    Row(
+                      children: [
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: Colors.amber,
+                              side: const BorderSide(color: Colors.amber),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            icon: const Icon(Iconsax.clock_copy, size: 16),
+                            label: Text(
+                              isArabic ? 'ترحيل موعد 🔄' : 'Reschedule 🔄',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            onPressed: () async {
+                              final pickedDate = await showDatePicker(
+                                context: context,
+                                initialDate: booking.startTime.add(const Duration(days: 1)),
+                                firstDate: DateTime.now(),
+                                lastDate: DateTime.now().add(const Duration(days: 60)),
+                              );
+                              if (pickedDate == null || !context.mounted) return;
+                              final pickedTime = await showTimePicker(
+                                context: context,
+                                initialTime: TimeOfDay.fromDateTime(booking.startTime),
+                              );
+                              if (pickedTime == null || !context.mounted) return;
+                              final newStart = DateTime(pickedDate.year, pickedDate.month, pickedDate.day, pickedTime.hour, pickedTime.minute);
+                              final duration = booking.endTime.difference(booking.startTime);
+                              final newEnd = newStart.add(duration);
+
+                              final ok = await Provider.of<BookingProvider>(context, listen: false).requestReschedule(
+                                bookingId: booking.id,
+                                newStartTime: newStart,
+                                newEndTime: newEnd,
+                              );
+                              if (ok && context.mounted) {
+                                VSPFeedback.showSuccess(context, isArabic ? 'تم إرسال اقتراح الموعد الجديد للاعب بنجاح 🔄' : 'Reschedule proposal sent to player 🔄');
+                                if (booking.playerPhone != null && booking.playerPhone!.isNotEmpty) {
+                                  launchUrl(Uri.parse('tel:${booking.playerPhone}'));
+                                }
+                                Navigator.pop(context);
+                              }
+                            },
+                          ),
+                        ),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: OutlinedButton.icon(
+                            style: OutlinedButton.styleFrom(
+                              foregroundColor: VSPColors.error,
+                              side: const BorderSide(color: VSPColors.error),
+                              padding: const EdgeInsets.symmetric(vertical: 8),
+                            ),
+                            icon: const Icon(Iconsax.danger_copy, size: 16),
+                            label: Text(
+                              isArabic ? 'إغلاق طارئ 🚨' : 'Emergency Close 🚨',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            onPressed: () async {
+                              final res = await Provider.of<BookingProvider>(context, listen: false).requestEmergencyClosure(
+                                stadiumId: booking.stadiumId,
+                                ownerId: booking.ownerId,
+                                reason: 'عطل طارئ وصيانة بالملعب',
+                                durationHours: 24,
+                              );
+                              if (context.mounted) {
+                                if (res['success'] == true) {
+                                  VSPFeedback.showSuccess(context, isArabic ? 'تم إغلاق الملعب مؤقتاً وتحويل طلبات الاسترداد للأدمن 🚨' : 'Stadium temporarily closed for emergency 🚨');
+                                  Navigator.pop(context);
+                                } else {
+                                  VSPFeedback.showError(context, res['message'] ?? 'فشل طلب الإغلاق الطارئ');
+                                }
+                              }
+                            },
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 14),
+                  ],
+
                   _buildInputLabel(l10n.timeAndStadium),
                   Container(
                     padding: const EdgeInsets.all(12),

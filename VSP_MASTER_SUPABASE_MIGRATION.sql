@@ -948,5 +948,46 @@ TO authenticated
 USING (true)
 WITH CHECK (true);
 
+-- =========================================================================
+-- 🚨 EMERGENCY CLOSURE, RESCHEDULING & AUTO-RECONCILIATION MIGRATION
+-- =========================================================================
+
+ALTER TABLE public.stadiums
+ADD COLUMN IF NOT EXISTS maintenance_until TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS maintenance_reason TEXT,
+ADD COLUMN IF NOT EXISTS last_emergency_closure_at TIMESTAMPTZ;
+
+ALTER TABLE public.bookings
+ADD COLUMN IF NOT EXISTS reschedule_status TEXT DEFAULT 'none',
+ADD COLUMN IF NOT EXISTS proposed_start_time TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS proposed_end_time TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS emergency_cancel_status TEXT DEFAULT 'none',
+ADD COLUMN IF NOT EXISTS emergency_reason TEXT,
+ADD COLUMN IF NOT EXISTS emergency_downtime_hours INT,
+ADD COLUMN IF NOT EXISTS cancelled_at TIMESTAMPTZ,
+ADD COLUMN IF NOT EXISTS refund_amount NUMERIC DEFAULT 0;
+
+-- 🔄 Database Function for Auto-Reconciling Past Bookings
+CREATE OR REPLACE FUNCTION public.auto_reconcile_past_bookings()
+RETURNS void
+LANGUAGE plpgsql
+SECURITY DEFINER
+AS $$
+BEGIN
+  UPDATE public.bookings
+  SET
+    is_paid = true,
+    payment_status = 'paid',
+    status = 'completed',
+    updated_at = NOW()
+  WHERE
+    end_time < NOW()
+    AND status != 'cancelled'
+    AND (is_paid = false OR status != 'completed');
+END;
+$$;
+
+NOTIFY pgrst, 'reload schema';
+
 
 
