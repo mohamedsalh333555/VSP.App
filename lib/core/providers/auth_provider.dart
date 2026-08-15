@@ -156,38 +156,12 @@ class AuthProvider with ChangeNotifier {
       }
 
       if (userData != null) {
-        final dbRole = userData['role']?.toString();
-
-        // ===== ROLE CONFLICT GUARD =====
-        // If the user chose a specific role on the sign-up screen (_userType is
-        // set) and their DB record has a DIFFERENT role:
-        if (_userType != null && dbRole != null && dbRole != _userType) {
-          final bool isRegComplete = userData['is_registration_complete'] == true ||
-              userData['isRegistrationComplete'] == true;
-
-          if (!isRegComplete) {
-            // 💡 NEW SIGN-UP: Registration is NOT complete.
-            // Do NOT block. Instead, update the role in the database to match _userType,
-            // update local role data, and let them proceed.
-            VSPLogger.i('🔄 Role mismatch during incomplete signup: Updating DB role from $dbRole to $_userType');
-            try {
-              // Direct query to public.users to update the role since the profile is incomplete
-              await Supabase.instance.client
-                  .from('users')
-                  .update({'role': _userType})
-                  .eq('id', user.id);
-              // Update the in-memory userData map to reflect the new role
-              userData['role'] = _userType;
-            } catch (e) {
-              VSPLogger.e('Failed to correct role in DB for incomplete signup', e);
-            }
-          } else {
-            // 💡 EXISTING USER WITH ROLE MISMATCH: Respect database role silently.
-            VSPLogger.w('⚠️ User clicked $_userType but is already registered as $dbRole. Respecting database role.');
-            _userType = null; // Let the system use the actual database role
-          }
-        }
-        // ===== END ROLE CONFLICT GUARD =====
+        // 🌟 SEAMLESS SMART ROLE ROUTING:
+        // If user profile already exists in DB, ALWAYS respect database role.
+        // DO NOT update DB role and clear temporary button override immediately.
+        _userType = null;
+        final prefs = await SharedPreferences.getInstance();
+        await prefs.remove('pending_oauth_role');
 
         _userModel = UserModel.fromFirestore(userData);
         

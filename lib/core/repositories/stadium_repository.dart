@@ -277,7 +277,9 @@ class StadiumRepository {
         }
       }
       
-      query = query.order('created_at', ascending: false);
+      query = query
+          .order('is_featured', ascending: false)
+          .order('created_at', ascending: false);
 
       final int startIndex = (startAfter is int) ? startAfter : 0;
       final int endIndex = startIndex + limit - 1;

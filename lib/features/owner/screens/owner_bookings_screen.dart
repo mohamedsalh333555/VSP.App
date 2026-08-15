@@ -1216,6 +1216,65 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     }
   }
 
+  Future<void> _sendWhatsAppReceipt(Booking b, bool isArabic) async {
+    final refCode = '#BK-${b.id.substring(0, b.id.length >= 6 ? 6 : b.id.length).toUpperCase()}';
+    final customerName = (b.playerTeamName != null && b.playerTeamName!.isNotEmpty)
+        ? b.playerTeamName!
+        : (b.hostName != null && b.hostName!.isNotEmpty ? b.hostName! : (isArabic ? 'عميل VSP' : 'VSP Customer'));
+    
+    final stadiumName = b.stadiumName.isNotEmpty ? b.stadiumName : (isArabic ? 'ملعب VSP' : 'VSP Pitch');
+    final dateStr = DateFormat('yyyy/MM/dd').format(b.startTime.toLocal());
+    final startTimeStr = DateFormat('hh:mm a').format(b.startTime.toLocal());
+    final endTimeStr = DateFormat('hh:mm a').format(b.endTime.toLocal());
+    
+    final totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
+    final depositPaid = b.depositPaid > 0 ? b.depositPaid : 0.0;
+    final remainingCash = (totalPrice - depositPaid).clamp(0.0, 999999.0);
+
+    final String receiptText = isArabic
+        ? '''
+📄 *وصل حجز إلكتروني رسمي - VSP Sports*
+═════════════════════════
+🏷️ *كود الحجز:* $refCode
+👤 *اسم العميل:* $customerName
+🏟️ *الملعب:* $stadiumName
+📅 *التاريخ:* $dateStr
+⏰ *التوقيت:* من $startTimeStr إلى $endTimeStr
+💰 *إجمالي المبلغ:* ${totalPrice.toInt()} ج.م
+💳 *العربون المدفوع أونلاين:* ${depositPaid.toInt()} ج.م
+💵 *المتبقي كاش بالملعب:* ${remainingCash.toInt()} ج.م
+═════════════════════════
+📍 *موقع الملعب على الخريطة:*
+https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
+
+نتمنى لكم مباراة ممتعة! ⚽🔥
+'''
+        : '''
+📄 *Official Digital Booking Receipt - VSP Sports*
+═════════════════════════
+🏷️ *Booking Ref:* $refCode
+👤 *Customer Name:* $customerName
+🏟️ *Stadium:* $stadiumName
+📅 *Date:* $dateStr
+⏰ *Time:* $startTimeStr - $endTimeStr
+💰 *Total Price:* ${totalPrice.toInt()} EGP
+💳 *Deposit Paid Online:* ${depositPaid.toInt()} EGP
+💵 *Remaining Cash Due:* ${remainingCash.toInt()} EGP
+═════════════════════════
+📍 *Location:*
+https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
+
+Enjoy your match! ⚽🔥
+''';
+
+    final String whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(receiptText)}';
+    try {
+      await launchUrl(Uri.parse(whatsappUrl), mode: LaunchMode.externalApplication);
+    } catch (e) {
+      if (mounted) VSPFeedback.showError(context, 'تعذر فتح الواتساب: $e');
+    }
+  }
+
   void _updateDuration(int newMins) {
     setState(() {
       _selectedMinutes = newMins;
@@ -1347,13 +1406,126 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     );
   }
 
+  Future<void> _handleConfirmCashPayment(Booking booking, bool isArabic) async {
+    setState(() => _isSaving = true);
+    try {
+      final parentCtx = widget.parentContext;
+      final totalPrice = booking.totalPrice > 0 ? booking.totalPrice : widget.selectedStadium.basePrice;
+      await Supabase.instance.client
+          .from('bookings')
+          .update({
+            'is_paid': true,
+            'payment_status': 'paid',
+            'deposit_paid': totalPrice,
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', booking.id);
+
+      if (mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز 💵' : 'Cash payment confirmed at pitch 💵',
+        );
+      }
+      if (parentCtx.mounted) {
+        final authProvider = Provider.of<AuthProvider>(parentCtx, listen: false);
+        final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid;
+        if (uid != null) {
+          await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        }
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        VSPFeedback.showError(context, '${isArabic ? "تعذر تأكيد الدفع:" : "Failed to confirm cash:"} $e');
+      }
+    }
+  }
+
+  Future<void> _handleExtendOngoingMatch(Booking booking, bool isArabic) async {
+    final parentCtx = widget.parentContext;
+    final newEndTime = booking.endTime.add(const Duration(minutes: 30));
+
+    setState(() => _isSaving = true);
+    try {
+      await Supabase.instance.client
+          .from('bookings')
+          .update({
+            'end_time': newEndTime.toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          })
+          .eq('id', booking.id);
+
+      if (mounted) {
+        VSPFeedback.showSuccess(
+          context,
+          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح ⏱️' : 'Match extended by +30 mins ⏱️',
+        );
+      }
+      if (parentCtx.mounted) {
+        final authProvider = Provider.of<AuthProvider>(parentCtx, listen: false);
+        final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid;
+        if (uid != null) {
+          await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+        }
+      }
+      if (mounted) Navigator.pop(context);
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isSaving = false);
+        VSPFeedback.showError(context, '${isArabic ? "تعذر تمديد المباراة:" : "Failed to extend match:"} $e');
+      }
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final l10n = AppLocalizations.of(context)!;
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
     final booking = widget.slot['booking'] as Booking?;
+    final now = DateTime.now();
 
-    final bool isCompletedBooking = widget.isEdit && booking != null && (DateTime.now().isAfter(booking.endTime) || booking.status == BookingStatus.completed);
+    // 🏆 5-STATE MODAL LOGIC MATRIX EVALUATION
+    final bool isEdit = widget.isEdit && booking != null;
+
+    // STATE 1: PAST / COMPLETED
+    final bool isPastCompleted = isEdit && (now.isAfter(booking.endTime) || booking.status == BookingStatus.completed);
+
+    // Manual vs Online Classification
+    final bool isManualBooking = isEdit && (booking.paymentTransactionId?.startsWith('MANUAL') == true || (booking.paymentMethod == 'cash' && booking.createdByUserId == booking.ownerId));
+    final bool isOnlinePaid = isEdit && !isManualBooking && (booking.isPaid || booking.paymentStatus == 'paid');
+
+    // STATE 2: UPCOMING ONLINE PAID
+    final bool isUpcomingOnlinePaid = isEdit && isOnlinePaid && !isPastCompleted;
+
+    // STATE 3: OWNER MANUAL BOOKING
+    final bool isOwnerManual = isEdit && isManualBooking;
+
+    // STATE 4: UPCOMING PENDING CASH FROM PLAYER
+    final bool isUpcomingPendingCash = isEdit && !isOnlinePaid && !isPastCompleted && !isOwnerManual;
+
+    // STATE 5: NEW EMPTY SLOT
+    final bool isNewSlot = !widget.isEdit || booking == null;
+
+    // Ongoing Active Match (+30m extension)
+    final bool isOngoingActiveMatch = isEdit && !isPastCompleted && now.isAfter(booking.startTime) && now.isBefore(booking.endTime);
+
+    // Read-Only Locking (Past matches & Online Paid matches protected from manual field edits)
+    final bool isReadOnly = isPastCompleted || isUpcomingOnlinePaid;
+
+    String modalTitle;
+    if (isNewSlot) {
+      modalTitle = l10n.manualBookingTitle;
+    } else if (isPastCompleted) {
+      modalTitle = isArabic ? 'تفاصيل الحجز (مكتمل)' : 'Booking Details (Completed)';
+    } else if (isUpcomingOnlinePaid) {
+      modalTitle = isArabic ? 'تفاصيل الحجز (أونلاين مؤكد ⚡)' : 'Booking Details (Online Paid ⚡)';
+    } else if (isUpcomingPendingCash) {
+      modalTitle = isArabic ? 'تفاصيل الحجز (كاش معلق 💵)' : 'Booking Details (Pending Cash 💵)';
+    } else {
+      modalTitle = isArabic ? 'تفاصيل الحجز اليدوي' : 'Manual Booking Details';
+    }
 
     final double systemBottomPadding = MediaQuery.of(context).padding.bottom;
     final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
@@ -1394,68 +1566,15 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               Text(
-                widget.isEdit 
-                    ? (isCompletedBooking ? (isArabic ? 'تفاصيل الحجز (مكتمل)' : 'Booking Details (Completed)') : l10n.bookingDetailsTitle)
-                    : l10n.manualBookingTitle,
+                modalTitle,
                 style: Theme.of(context).textTheme.displaySmall,
               ),
-              if (widget.isEdit && !isCompletedBooking)
+              if (isOwnerManual && !isPastCompleted || isUpcomingPendingCash)
                 IconButton(
-                  icon: Icon(
-                    (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash')
-                        ? Iconsax.trash_copy
-                        : Iconsax.warning_2_copy,
-                    color: VSPColors.error,
-                  ),
+                  icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
                   onPressed: _isDeleting ? null : () async {
                     final parentCtx = widget.parentContext;
                     final nav = Navigator.of(context);
-
-                    final bool isManualBooking = (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash');
-
-                    if (!isManualBooking && booking != null) {
-                      // 🛡️ ACTIVE ONLINE BOOKING: Disallow direct deletion & redirect to WhatsApp support report
-                      await showDialog(
-                        context: context,
-                        builder: (ctx) => AlertDialog(
-                          backgroundColor: VSPColors.surface,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                          title: Text(
-                            isArabic ? 'إبلاغ عن عدم حضور / مشكلة بالحجز ⚠️' : 'Report No-Show / Booking Issue ⚠️',
-                            style: Theme.of(context).textTheme.titleLarge,
-                          ),
-                          content: Text(
-                            isArabic
-                                ? 'لا يمكن حذف الحجوزات النشطة أونلاين مباشرة. في حال عدم حضور اللاعبين في الموعد، انقر زر الإبلاغ أدناه للتواصل المباشر مع الدعم الفني عبر واتساب وسيتولى الفريق معالجة الحالة فوراً.'
-                                : 'Active online bookings cannot be deleted directly. If players did not show up, tap report below to contact VSP support via WhatsApp.',
-                            style: Theme.of(context).textTheme.bodyMedium,
-                          ),
-                          actions: [
-                            TextButton(
-                              onPressed: () => Navigator.pop(ctx),
-                              child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-                            ),
-                            ElevatedButton(
-                              onPressed: () {
-                                Navigator.pop(ctx);
-                                _launchWhatsAppSupport(booking, isArabic);
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: VSPColors.error,
-                                foregroundColor: Colors.white,
-                              ),
-                              child: Text(
-                                isArabic ? 'إبلاغ وتواصل واتساب 💬' : 'Report via WhatsApp 💬',
-                                style: const TextStyle(fontWeight: FontWeight.bold),
-                              ),
-                            ),
-                          ],
-                        ),
-                      );
-                      return;
-                    }
-
-                    // 🗑️ Manual booking direct cancellation
                     final confirm = await showDialog<bool>(
                       context: context,
                       builder: (ctx) => AlertDialog(
@@ -1474,7 +1593,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     if (confirm == true && mounted) {
                       setState(() => _isDeleting = true);
                       if (!parentCtx.mounted) return;
-                      final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking!.id);
+                      final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking.id);
                       if (!success) {
                         if (!context.mounted) return;
                         final err = Provider.of<BookingProvider>(context, listen: false).errorMessage;
@@ -1487,7 +1606,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                       if (!parentCtx.mounted) return;
                       final uid = Provider.of<AuthProvider>(parentCtx, listen: false).currentUser?.uid;
                       if (uid != null) {
-                        await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid);
+                        await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid, forceRefresh: true);
                       }
                       if (mounted) nav.pop();
                     }
@@ -1504,7 +1623,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  if (widget.isEdit && booking != null && booking.status == BookingStatus.confirmed) ...[
+                  // ⚡ TOP ACTIONS: Render ONLY for State 2 (Upcoming Online Paid)
+                  if (isUpcomingOnlinePaid) ...[
                     Row(
                       children: [
                         Expanded(
@@ -1587,6 +1707,50 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     const SizedBox(height: 14),
                   ],
 
+                  // ⏱️ LIVE ONGOING MATCH (+30m Extension Button)
+                  if (isOngoingActiveMatch) ...[
+                    Container(
+                      width: double.infinity,
+                      margin: const EdgeInsets.only(bottom: 14),
+                      padding: const EdgeInsets.all(12),
+                      decoration: BoxDecoration(
+                        color: VSPColors.accent.withValues(alpha: 0.12),
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                        border: Border.all(color: VSPColors.accent, width: 1.0),
+                      ),
+                      child: Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          Row(
+                            children: [
+                              const Icon(Iconsax.timer_start_copy, color: VSPColors.accent, size: 18),
+                              const SizedBox(width: 8),
+                              Text(
+                                isArabic ? 'المباراة جارية الآن ⚽' : 'Match Ongoing Now ⚽',
+                                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                              ),
+                            ],
+                          ),
+                          ElevatedButton.icon(
+                            onPressed: _isSaving ? null : () => _handleExtendOngoingMatch(booking, isArabic),
+                            icon: const Icon(Iconsax.add_circle_copy, size: 14),
+                            label: Text(
+                              isArabic ? 'تمديد (+30د) ⏱️' : 'Extend (+30m) ⏱️',
+                              style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                            ),
+                            style: ElevatedButton.styleFrom(
+                              backgroundColor: VSPColors.accent,
+                              foregroundColor: Colors.black,
+                              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                              minimumSize: Size.zero,
+                              tapTargetSize: MaterialTapTargetSize.shrinkWrap,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ],
+
                   _buildInputLabel(l10n.timeAndStadium),
                   Container(
                     padding: const EdgeInsets.all(12),
@@ -1641,7 +1805,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                           children: [
                             IconButton(
                               icon: const Icon(Iconsax.minus_cirlce_copy, size: 20, color: VSPColors.textPrimary),
-                              onPressed: (isCompletedBooking || _playerCount <= 1) ? null : () {
+                              onPressed: (isReadOnly || _playerCount <= 1) ? null : () {
                                 setState(() => _playerCount--);
                               },
                             ),
@@ -1658,7 +1822,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                             ),
                             IconButton(
                               icon: const Icon(Iconsax.add_circle_copy, size: 20, color: VSPColors.textPrimary),
-                              onPressed: (isCompletedBooking || _playerCount >= (widget.selectedStadium.playersPerTeam * 2)) ? null : () {
+                              onPressed: (isReadOnly || _playerCount >= (widget.selectedStadium.playersPerTeam * 2)) ? null : () {
                                 setState(() => _playerCount++);
                               },
                             ),
@@ -1674,7 +1838,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     controller: _nameController, 
                     hint: isArabic ? 'اسم الفريق / اللاعب' : 'Customer / Team Name',
                     keyboardType: TextInputType.name,
-                    enabled: !isCompletedBooking,
+                    enabled: !isReadOnly,
                   ),
                   const SizedBox(height: 14),
 
@@ -1684,7 +1848,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     hint: isArabic ? "رقم الهاتف (اختياري)" : "Phone Number (Optional)",
                     keyboardType: TextInputType.phone,
                     inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    enabled: !isCompletedBooking,
+                    enabled: !isReadOnly,
                   ),
                   const SizedBox(height: 14),
 
@@ -1693,7 +1857,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     controller: _noteController, 
                     hint: isArabic ? 'أدخل أي ملاحظات إضافية عن الحجز...' : 'Enter internal notes...',
                     keyboardType: TextInputType.text,
-                    enabled: !isCompletedBooking,
+                    enabled: !isReadOnly,
                   ),
                   const SizedBox(height: 14),
 
@@ -1703,7 +1867,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار غير المدفوع)" : "Enter amount (0 for unpaid)",
                     keyboardType: const TextInputType.numberWithOptions(decimal: true),
                     inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                    enabled: !isCompletedBooking,
+                    enabled: !isReadOnly,
                   ),
                   const SizedBox(height: 16),
                 ],
@@ -1713,34 +1877,202 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
 
           const SizedBox(height: 16),
           
-          if (isCompletedBooking)
+          // ===== STATE-SPECIFIC BOTTOM ACTIONS =====
+          if (isPastCompleted) ...[
+            // STATE 1: Past / Completed
+            if (!booking.isPaid && booking.depositPaid < booking.totalPrice) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () => _launchWhatsAppSupport(booking, isArabic),
+                  icon: const Icon(Iconsax.user_remove_copy, size: 16),
+                  label: Text(
+                    isArabic ? 'تسجيل عدم حضور اللاعب (No-Show) ⚠️' : 'Report Player No-Show ⚠️',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                    foregroundColor: Colors.amber,
+                    side: const BorderSide(color: Colors.amber, width: 1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
+            Row(
+              children: [
+                ...[
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: ElevatedButton.icon(
+                        onPressed: () => _sendWhatsAppReceipt(booking, isArabic),
+                        icon: const Icon(Iconsax.document_text_copy, size: 16),
+                        label: Text(
+                          isArabic ? 'إرسال الوصل 📄' : 'Send Receipt 📄',
+                          style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green.withValues(alpha: 0.15),
+                          foregroundColor: Colors.green,
+                          side: const BorderSide(color: Colors.green, width: 1),
+                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 12),
+                ],
+                Expanded(
+                  child: SizedBox(
+                    height: 52,
+                    child: PrimaryButton(
+                      text: isArabic ? 'إغلاق ✖' : 'Close ✖',
+                      onPressed: () => Navigator.pop(context),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else if (isUpcomingPendingCash) ...[
+            // STATE 4: Upcoming Pending Cash From Player
             SizedBox(
               width: double.infinity,
-              height: 52,
-              child: PrimaryButton(
-                text: isArabic ? 'إغلاق' : 'Close',
-                onPressed: () => Navigator.pop(context),
+              height: 50,
+              child: ElevatedButton.icon(
+                onPressed: _isSaving ? null : () => _handleConfirmCashPayment(booking, isArabic),
+                icon: const Icon(Iconsax.money_send_copy, size: 18),
+                label: Text(
+                  isArabic ? 'تأكيد استلام الكاش بالملعب 💵' : 'Confirm Cash Payment at Pitch 💵',
+                  style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.green,
+                  foregroundColor: Colors.black,
+                  shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  elevation: 2,
+                ),
               ),
-            )
-          else
+            ),
+            const SizedBox(height: 10),
+            Row(
+              children: [
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: () {
+                        final phone = booking.playerPhone ?? '';
+                        if (phone.isNotEmpty) {
+                          launchUrl(Uri.parse('https://wa.me/${phone.replaceAll('+', '').replaceAll(' ', '')}'));
+                        } else {
+                          _launchWhatsAppSupport(booking, isArabic);
+                        }
+                      },
+                      icon: const Icon(Iconsax.message_copy, size: 16),
+                      label: Text(
+                        isArabic ? 'تأكيد عبر واتساب 💬' : 'Confirm via WhatsApp 💬',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: const Color(0xFF38BDF8),
+                        side: const BorderSide(color: Color(0xFF38BDF8)),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                      ),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 10),
+                Expanded(
+                  child: SizedBox(
+                    height: 48,
+                    child: OutlinedButton.icon(
+                      onPressed: _isDeleting ? null : () async {
+                        final parentCtx = widget.parentContext;
+                        final nav = Navigator.of(context);
+                        final confirm = await showDialog<bool>(
+                          context: context,
+                          builder: (ctx) => AlertDialog(
+                            backgroundColor: VSPColors.surface,
+                            title: Text(l10n.cancelBooking),
+                            content: Text(l10n.cancelBookingConfirm),
+                            actions: [
+                              TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancelBtn)),
+                              TextButton(
+                                onPressed: () => Navigator.pop(ctx, true),
+                                child: Text(l10n.confirmBtn, style: const TextStyle(color: VSPColors.error)),
+                              ),
+                            ],
+                          ),
+                        );
+                        if (confirm == true && mounted) {
+                          setState(() => _isDeleting = true);
+                          if (!parentCtx.mounted) return;
+                          final success = await Provider.of<BookingProvider>(parentCtx, listen: false).cancelBooking(booking.id);
+                          if (success && parentCtx.mounted) {
+                            final uid = Provider.of<AuthProvider>(parentCtx, listen: false).currentUser?.uid;
+                            if (uid != null) {
+                              await Provider.of<BookingProvider>(parentCtx, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+                            }
+                          }
+                          if (mounted) nav.pop();
+                        }
+                      },
+                      icon: const Icon(Iconsax.close_circle_copy, size: 16),
+                      label: Text(
+                        isArabic ? 'إلغاء الحجز ❌' : 'Cancel Slot ❌',
+                        style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                      ),
+                      style: OutlinedButton.styleFrom(
+                        foregroundColor: VSPColors.error,
+                        side: const BorderSide(color: VSPColors.error),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                      ),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+          ] else ...[
+            // STATE 2 (Upcoming Online Paid), STATE 3 (Owner Manual), STATE 5 (New Slot)
+            if (isEdit) ...[
+              SizedBox(
+                width: double.infinity,
+                height: 44,
+                child: ElevatedButton.icon(
+                  onPressed: () => _sendWhatsAppReceipt(booking, isArabic),
+                  icon: const Icon(Iconsax.document_text_copy, size: 16),
+                  label: Text(
+                    isArabic ? 'إرسال وصل الحجز الإلكتروني 📄' : 'Send WhatsApp Digital Receipt 📄',
+                    style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: Colors.green.withValues(alpha: 0.15),
+                    foregroundColor: Colors.green,
+                    side: const BorderSide(color: Colors.green, width: 1),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 10),
+            ],
             Row(
               children: [
                 Expanded(
                   child: SizedBox(
                     height: 52,
                     child: PrimaryButton(
-                      text: (widget.isEdit && booking != null && !(booking.paymentTransactionId?.startsWith('MANUAL') == true || booking.paymentMethod == 'cash'))
-                          ? (isArabic ? 'إبلاغ الدعم (واتساب)' : 'Report No-Show')
+                      text: (isEdit && isUpcomingOnlinePaid)
+                          ? (isArabic ? 'إبلاغ الدعم (واتساب)' : 'Report Issue')
                           : l10n.cancelBtn,
                       color: VSPColors.surfaceAlt,
-                      textColor: (widget.isEdit && booking != null && !(booking.paymentTransactionId?.startsWith('MANUAL') == true || booking.paymentMethod == 'cash'))
-                          ? Colors.amber
-                          : VSPColors.textPrimary,
+                      textColor: (isEdit && isUpcomingOnlinePaid) ? Colors.amber : VSPColors.textPrimary,
                       onPressed: _isSaving
                           ? null
                           : () {
-                              final bool isManual = (booking?.paymentTransactionId?.startsWith('MANUAL') == true || booking?.paymentMethod == 'cash');
-                              if (widget.isEdit && booking != null && !isManual) {
+                              if (isEdit && isUpcomingOnlinePaid) {
                                 _launchWhatsAppSupport(booking, isArabic);
                               } else {
                                 Navigator.pop(context);
@@ -1749,19 +2081,22 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
                     ),
                   ),
                 ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: SizedBox(
-                    height: 52,
-                    child: PrimaryButton(
-                      text: widget.isEdit ? l10n.update : l10n.confirmBtn,
-                      isLoading: _isSaving,
-                      onPressed: _isSaving ? null : () => _handleConfirmBooking(l10n, isArabic),
+                if (!isUpcomingOnlinePaid) ...[
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: SizedBox(
+                      height: 52,
+                      child: PrimaryButton(
+                        text: widget.isEdit ? l10n.update : l10n.confirmBtn,
+                        isLoading: _isSaving,
+                        onPressed: _isSaving ? null : () => _handleConfirmBooking(l10n, isArabic),
+                      ),
                     ),
                   ),
-                ),
+                ],
               ],
             ),
+          ],
         ],
       ),
     );

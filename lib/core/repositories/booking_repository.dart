@@ -912,7 +912,6 @@ class SupabaseBookingRepository implements BookingRepository {
           'is_paid': true,
           'payment_status': 'paid',
           'status': BookingStatus.completed.name,
-          'commission': 0.0,
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', booking.id);
       }

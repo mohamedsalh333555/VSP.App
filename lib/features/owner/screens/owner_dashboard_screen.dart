@@ -27,6 +27,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   bool _isPendingBannerDismissed = false;
   String _selectedTimePeriod = 'today'; // 'today' | 'week' | 'month' | 'all'
+  String _selectedStadiumFilter = 'all'; // 'all' or specific stadium.id
   StreamSubscription<List<Championship>>? _champSubscription;
   double _championshipDigitalRevenue = 0.0;
 
@@ -42,7 +43,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
         if (!mounted) return;
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        bookingProvider.loadOwnerBookings(uid);
+        bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
 
         _champSubscription?.cancel();
         _champSubscription = TournamentRepository()
@@ -147,6 +148,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 _buildOwnerStatusBanner(userModel, isArabic, isExpired),
                 const SizedBox(height: VSPSpacing.md),
               ],
+
+              // 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Bar)
+              _buildStadiumFilterBar(isArabic),
 
               // 🔹 شريط النطاق الزمني (Time-Filter Bar)
               _buildTimeFilterBar(isArabic),
@@ -569,6 +573,126 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
+  /// 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Selector Bar)
+  Widget _buildStadiumFilterBar(bool isArabic) {
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final stadiums = stadiumProvider.stadiums;
+
+    if (stadiums.length <= 1) return const SizedBox.shrink();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          children: [
+            const Icon(Iconsax.building_4_copy, color: VSPColors.accent, size: 14),
+            const SizedBox(width: 6),
+            Text(
+              isArabic ? 'اختر الملعب للمعاينة والتصفية:' : 'Select Stadium Filter:',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11.5, fontWeight: FontWeight.bold),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          width: double.infinity,
+          child: SingleChildScrollView(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            child: Row(
+              children: [
+                // 1. All Stadiums Chip
+                Padding(
+                  padding: const EdgeInsets.only(right: 8),
+                  child: InkWell(
+                    onTap: () => setState(() => _selectedStadiumFilter = 'all'),
+                    borderRadius: BorderRadius.circular(18),
+                    child: AnimatedContainer(
+                      duration: const Duration(milliseconds: 180),
+                      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                      decoration: BoxDecoration(
+                        color: _selectedStadiumFilter == 'all'
+                            ? VSPColors.accent
+                            : const Color(0xFF27272A).withValues(alpha: 0.6),
+                        borderRadius: BorderRadius.circular(18),
+                        border: Border.all(
+                          color: _selectedStadiumFilter == 'all' ? VSPColors.accent : VSPColors.divider,
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          Icon(
+                            Iconsax.buildings_copy,
+                            size: 13,
+                            color: _selectedStadiumFilter == 'all' ? Colors.black : VSPColors.textSecondary,
+                          ),
+                          const SizedBox(width: 5),
+                          Text(
+                            isArabic ? 'جميع الملاعب (${stadiums.length})' : 'All Stadiums (${stadiums.length})',
+                            style: TextStyle(
+                              color: _selectedStadiumFilter == 'all' ? Colors.black : VSPColors.textPrimary,
+                              fontSize: 11.5,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ),
+                  ),
+                ),
+
+                // 2. Individual Stadium Chips
+                ...stadiums.map((stadium) {
+                  final isSelected = _selectedStadiumFilter == stadium.id;
+                  final stadiumName = stadium.name.isNotEmpty ? stadium.name : (isArabic ? 'ملعب' : 'Pitch');
+                  return Padding(
+                    padding: const EdgeInsets.only(right: 8),
+                    child: InkWell(
+                      onTap: () => setState(() => _selectedStadiumFilter = stadium.id),
+                      borderRadius: BorderRadius.circular(18),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 180),
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 7),
+                        decoration: BoxDecoration(
+                          color: isSelected
+                              ? VSPColors.accent
+                              : const Color(0xFF27272A).withValues(alpha: 0.6),
+                          borderRadius: BorderRadius.circular(18),
+                          border: Border.all(
+                            color: isSelected ? VSPColors.accent : VSPColors.divider,
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              Iconsax.building_copy,
+                              size: 13,
+                              color: isSelected ? Colors.black : VSPColors.accent,
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              stadiumName,
+                              style: TextStyle(
+                                color: isSelected ? Colors.black : VSPColors.textPrimary,
+                                fontSize: 11.5,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ),
+                  );
+                }),
+              ],
+            ),
+          ),
+        ),
+        const SizedBox(height: 12),
+      ],
+    );
+  }
+
   /// 🧮 1️⃣ + 2️⃣ المحرك المالي والكارت الرئيسي (Financial Engine + Hero Revenue Card)
   Widget _buildStatsGrid(bool isArabic) {
     final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -595,9 +719,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       return true; // 'all'
     }).toList();
 
+    if (_selectedStadiumFilter != 'all') {
+      bookings.removeWhere((b) => b.stadiumId != _selectedStadiumFilter);
+    }
+
     double pitchCashRevenue = 0.0;
     double digitalVspBalance = 0.0;
-    double collectedRevenue = 0.0;
     double pendingReceivables = 0.0;
     double totalPipeline = 0.0;
     double totalHours = 0.0;
@@ -614,17 +741,24 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       
       final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
 
-      collectedRevenue += paidAmount;
       pendingReceivables += remainingAmount;
       totalPipeline += totalPrice;
 
-      final bool isManual = (b.paymentMethod == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
+      final String method = b.paymentMethod.toLowerCase().trim();
+      final bool isManual = (method == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
+      
       final bool isOnlinePayment = !isManual && (
-        b.paymentMethod == 'online' || 
-        b.paymentMethod == 'paymob' || 
-        b.paymentMethod == 'vodafone_cash' || 
-        b.paymentMethod == 'instapay' || 
-        (b.paymentTransactionId?.startsWith('PAYMOB') == true)
+        method.contains('paymob') ||
+        method.contains('card') ||
+        method.contains('visa') ||
+        method.contains('mastercard') ||
+        method.contains('wallet') ||
+        method.contains('online') ||
+        method.contains('instapay') ||
+        method.contains('vodafone') ||
+        (b.paymentTransactionId?.startsWith('PAYMOB') == true) ||
+        b.isPaid == true ||
+        b.paymentStatus == 'paid'
       );
 
       if (isOnlinePayment) {
@@ -641,7 +775,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     // 🏆 دمج إيرادات اشتراكات البطولات الأونلاين الحية
     digitalVspBalance += _championshipDigitalRevenue;
-    collectedRevenue += _championshipDigitalRevenue;
     totalPipeline += _championshipDigitalRevenue;
 
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
@@ -856,13 +989,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // الرقم المالي الرئيسي المباشر
+          // الرقم المالي الرئيسي المباشر (الكارت الكلاسيكي الفاخر)
           Column(
-            crossAxisAlignment: CrossAxisAlignment.end,
+            crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TweenAnimationBuilder<double>(
                 key: ValueKey('counter_$_selectedTimePeriod'),
-                tween: Tween(begin: 0.0, end: collectedRevenue),
+                tween: Tween(begin: 0.0, end: totalPipeline),
                 duration: const Duration(milliseconds: 800),
                 curve: Curves.easeOutCubic,
                 builder: (_, val, __) => Text(
@@ -889,36 +1022,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           const SizedBox(height: 16),
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 16),
-
-          // 📊 1. الصف الأول: القيمة الإجمالية + معلق
-          Row(
-            children: [
-              Expanded(
-                child: _buildGridStatCard(
-                  title: isArabic ? 'القيمة الإجمالية' : 'Total Value',
-                  value: '${totalPipeline.toInt()} $currencySymbol',
-                  valueColor: Colors.white,
-                  tooltipText: isArabic
-                      ? 'إجمالي القيمة المالية الكاملة لجميع الحجوزات (المدفوعة والمستحقة كاش) في الفترة المحددة، وتمثل القيمة الكاملة لنشاط الملعب.'
-                      : 'The total gross financial value of all bookings (both paid online and cash due) for the selected period.',
-                  isArabic: isArabic,
-                ),
-              ),
-              const SizedBox(width: 10),
-              Expanded(
-                child: _buildGridStatCard(
-                  title: isArabic ? 'معلق' : 'Pending',
-                  value: '${pendingReceivables.toInt()} $currencySymbol',
-                  valueColor: const Color(0xFFFFB800),
-                  tooltipText: isArabic
-                      ? 'المبالغ المتبقية من الحجوزات القادمة التي لم يتم تحصيلها بالكامل بعد، وتستحق الدفع كاش من اللاعبين عند حضورهم للملعب.'
-                      : 'Remaining amounts for upcoming bookings not yet paid in full. These will be collected in cash upon player arrival.',
-                  isArabic: isArabic,
-                ),
-              ),
-            ],
-          ),
-          const SizedBox(height: 10),
 
           // 💵 2. الصف الثاني: دفع مباشر + محفظة رقمية
           Row(
@@ -951,7 +1054,37 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 10),
 
-          // ⏱️ 3. الصف الثالث: عدد الحجوزات + ساعات التشغيل
+          // 📊 3. الصف الثالث: القيمة الإجمالية + معلق
+          Row(
+            children: [
+              Expanded(
+                child: _buildGridStatCard(
+                  title: isArabic ? 'إجمالي النشاط' : 'Total Pipeline',
+                  value: '${totalPipeline.toInt()} $currencySymbol',
+                  valueColor: Colors.white,
+                  tooltipText: isArabic
+                      ? 'إجمالي القيمة المالية الكاملة لجميع الحجوزات (المدفوعة والمستحقة كاش) في الفترة المحددة.'
+                      : 'The total gross financial value of all bookings (both paid online and cash due) for the selected period.',
+                  isArabic: isArabic,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: _buildGridStatCard(
+                  title: isArabic ? 'معلق عند الحضور' : 'Pending at Pitch',
+                  value: '${pendingReceivables.toInt()} $currencySymbol',
+                  valueColor: const Color(0xFFFFB800),
+                  tooltipText: isArabic
+                      ? 'المبالغ المتبقية من الحجوزات القادمة التي لم يتم تحصيلها بالكامل بعد، وتستحق الدفع كاش من اللاعبين عند حضورهم للملعب.'
+                      : 'Remaining amounts for upcoming bookings not yet paid in full. These will be collected in cash upon player arrival.',
+                  isArabic: isArabic,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 10),
+
+          // ⏱️ 4. الصف الرابع: عدد الحجوزات + ساعات التشغيل
           Row(
             children: [
               Expanded(
@@ -2064,17 +2197,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     final now = DateTime.now();
     final List<Booking> bookings = allBookings.where((b) {
+      final bStartLocal = b.startTime.toLocal();
       if (_selectedTimePeriod == 'today') {
-        return b.startTime.year == now.year && b.startTime.month == now.month && b.startTime.day == now.day;
+        return bStartLocal.year == now.year && bStartLocal.month == now.month && bStartLocal.day == now.day;
       } else if (_selectedTimePeriod == 'week') {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
         final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return b.startTime.isAfter(startOfWeek.subtract(const Duration(days: 1))) && b.startTime.isBefore(endOfWeek);
+        return bStartLocal.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bStartLocal.isBefore(endOfWeek);
       } else if (_selectedTimePeriod == 'month') {
-        return b.startTime.year == now.year && b.startTime.month == now.month;
+        return bStartLocal.year == now.year && bStartLocal.month == now.month;
       }
       return true; // 'all'
     }).toList();
+
+    if (_selectedStadiumFilter != 'all') {
+      bookings.removeWhere((b) => b.stadiumId != _selectedStadiumFilter);
+    }
 
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 

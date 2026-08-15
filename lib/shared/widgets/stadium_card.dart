@@ -142,7 +142,36 @@ class StadiumCard extends StatelessWidget {
                         ),
                       ),
                     ),
-                      const Spacer(),
+                    const Spacer(),
+                    if (stadium.isFeatured) ...[
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                        decoration: BoxDecoration(
+                          color: VSPColors.accent.withValues(alpha: 0.2),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(color: VSPColors.accent, width: 1.2),
+                          boxShadow: [
+                            BoxShadow(
+                              color: VSPColors.accent.withValues(alpha: 0.3),
+                              blurRadius: 8,
+                              spreadRadius: 1,
+                            ),
+                          ],
+                        ),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [
+                            const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 12),
+                            const SizedBox(width: 4),
+                            Text(
+                              Localizations.localeOf(context).languageCode == 'ar' ? 'مميز ⭐' : 'Featured ⭐',
+                              style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                      ),
+                      const SizedBox(width: 6),
+                    ],
                     if (!stadium.isVerified) ...[
                       Container(
                         padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),

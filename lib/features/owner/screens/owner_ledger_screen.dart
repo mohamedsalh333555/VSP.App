@@ -1,3 +1,4 @@
+import 'package:share_plus/share_plus.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -7,6 +8,52 @@ import '../../../core/ui/components/vsp_card.dart';
 
 class OwnerLedgerScreen extends StatelessWidget {
   const OwnerLedgerScreen({super.key});
+
+  Future<void> _exportLedgerCsv(BuildContext context, bool isAr) async {
+    try {
+      final list = await Supabase.instance.client
+          .from('transactions')
+          .select()
+          .order('created_at', ascending: false);
+
+      final transactions = List<Map<String, dynamic>>.from(list);
+      if (transactions.isEmpty) {
+        if (context.mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(isAr ? 'لا توجد معاملات لتصديرها.' : 'No transactions to export.')),
+          );
+        }
+        return;
+      }
+
+      final StringBuffer csv = StringBuffer();
+      csv.writeln('Date,Transaction_ID,Type,Amount_EGP,Payment_Method');
+
+      for (final tx in transactions) {
+        final dateStr = tx['created_at'] != null
+            ? DateFormat('yyyy-MM-dd HH:mm').format(DateTime.parse(tx['created_at'].toString()))
+            : '';
+        final id = tx['id']?.toString() ?? '';
+        final type = tx['type']?.toString() ?? 'cash';
+        final amount = tx['amount'] ?? 0;
+        final method = tx['payment_method'] ?? type;
+
+        csv.writeln('"$dateStr","$id","$type","$amount","$method"');
+      }
+
+      final String csvText = csv.toString();
+      await Share.share(
+        csvText,
+        subject: isAr ? "كشف حساب VSP المالي" : "VSP Financial Ledger",
+      );
+    } catch (e) {
+      if (context.mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Error exporting ledger: $e')),
+        );
+      }
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -21,6 +68,13 @@ class OwnerLedgerScreen extends StatelessWidget {
           icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
+        actions: [
+          IconButton(
+            icon: const Icon(Iconsax.export_3_copy, color: VSPColors.accent),
+            tooltip: isAr ? 'تصدير كشف الحساب (CSV)' : 'Export Ledger (CSV)',
+            onPressed: () => _exportLedgerCsv(context, isAr),
+          ),
+        ],
         title: Text(isAr ? 'السجل المالي والتسويات' : 'Financial Ledger', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),

@@ -103,10 +103,11 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               isCurrentPlan: userModel?.isProPlan == true,
               customButtonText: isArabic ? '🚀 فعّل الباقة الاحترافية وضاعف إيراداتك' : '🚀 Upgrade to Pro & Double Revenue',
               features: [
-                isArabic ? '🛡️ استيعاب التوسع ومنع رفض الفرق: تشغيل حتى 3 ملاعب كاملة دون تفويت حجز واحد' : 'Operate up to 3 stadiums to capture full capacity',
-                isArabic ? '📈 تحويل الساعات الميتة إلى أرباح: تحليلات دقيقة لأوقات الركود لملء الفترات الهادئة بعروض ذكية' : 'Turn off-peak hours into revenue with smart analytics',
-                isArabic ? '🏆 مضاعفة الدخل عبر البطولات: تنظيم بطولات مفتوحة لجذب عشرات الفرق وزيادة دخل الاشتراكات' : 'Host unlimited tournaments to maximize revenue',
-                isArabic ? '⚡ استقرار تشغيلي 24/7: دعم فني مخصص وأولوية قصوى لضمان عدم توقف الحجوزات لحظة واحدة' : '24/7 Priority support & operational stability',
+                isArabic ? '⭐ أولوية الظهور والتصدر في نتائج البحث للاعبين بالمحافظة' : '⭐ Priority search boost in governorate results',
+                isArabic ? '📄 إرسال وصل الحجز الإلكتروني الرسمي للعملاء عبر واتساب' : '📄 Send automated WhatsApp digital booking receipts',
+                isArabic ? '🏟️ تشغيل وتفعيل حتى 3 ملاعب كاملة دون تفويت حجز واحد' : '🏟️ Operate up to 3 stadiums to capture full capacity',
+                isArabic ? '📊 تصدير كشف الحساب والتقارير المالية بضغطة زر (CSV)' : '📊 1-Click financial ledger export (CSV)',
+                isArabic ? '⚡ دعم فني مخصص وأولوية تشغيلية على مدار 24 ساعة' : '⚡ 24/7 Priority support & operational stability',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
               isArabic: isArabic,
@@ -327,6 +328,31 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
               Expanded(child: Text('/ $periodText', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12))),
             ],
           ),
+          if (isProBorder) ...[
+            const SizedBox(height: 10),
+            Container(
+              padding: const EdgeInsets.all(10),
+              decoration: BoxDecoration(
+                color: Colors.amber.withValues(alpha: 0.12),
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: Colors.amber.withValues(alpha: 0.4)),
+              ),
+              child: Row(
+                children: [
+                  const Icon(Iconsax.lamp_charge_copy, color: Colors.amber, size: 18),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? '💡 ماتش واحد إضافي في الأسبوع يغطي قيمة اشتراكك بالكامل ويضاعف أرباحك باقي الشهر!'
+                          : '💡 Just 1 extra match per week covers your entire subscription cost and doubles profits for the month!',
+                      style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11.5, height: 1.3),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          ],
           const Divider(color: VSPColors.divider, height: 24),
           ...features.map((f) => Padding(
                 padding: const EdgeInsets.only(bottom: 8),
