@@ -675,32 +675,36 @@ class NotificationHandler {
       final booking = await SupabaseBookingRepository().getBookingById(bookingId);
       if (booking == null) return false;
 
-      // Validate selfie was taken within 60 minutes of match end
-      final diff = imageTimestamp.difference(booking.endTime).inMinutes;
-      if (diff > 60) return false;
+      // حساب المسافة الدقيقة بين الكاميرا والملعب
+      final double distanceMeters = Geolocator.distanceBetween(
+        imageLat,
+        imageLng,
+        stadiumLat,
+        stadiumLng,
+      );
 
-      // Validate selfie location is within 150m of stadium (approx degrees → meters)
-      final dLat = (imageLat - stadiumLat).abs() * 111000;
-      final dLng = (imageLng - stadiumLng).abs() * 111000;
-      if (dLat + dLng > 150.0) return false;
-
-      // 🛡️ BUG FIX: Removed non-existent column 'cash_booking_banned' which caused
-      // a PostgrestException: column "cash_booking_banned" does not exist — breaking
-      // all selfie dispute submissions silently.
-      // Also reset is_blocked=false since the approved dispute means the penalty was wrongful.
-      await Supabase.instance.client.from('users').update({
-        'no_show_count': 0,
-        'is_blocked': false,
-      }).eq('id', playerId);
+      // تسجيل النزاع في جدول reports لمراجعة الأدمن
+      await Supabase.instance.client.from('reports').insert({
+        'reporter_id': playerId,
+        'target_id': bookingId,
+        'target_type': 'no_show_dispute',
+        'reason': 'طعن غياب بصورة سيلفي موثقة جغرافياً',
+        'details': 'المسافة المحسوبة من الملعب: ${distanceMeters.toStringAsFixed(1)} متر. رابط الصورة: $photoUrl',
+        'status': 'pending',
+        'created_at': DateTime.now().toUtc().toIso8601String(),
+      });
 
       await Supabase.instance.client.from('bookings').update({
-        'is_dispute_approved': true,
         'dispute_photo_url': photoUrl,
+        'match_result_status': 'disputed',
+        'requires_admin_intervention': true,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', bookingId);
 
+      VSPLogger.i('✅ Geotagged selfie dispute submitted with real-time GPS coordinates (${distanceMeters.toStringAsFixed(1)} m).');
       return true;
     } catch (e) {
-      VSPLogger.e('disputeWithGeotaggedSelfie error', e);
+      VSPLogger.e('❌ Error submitting geotagged selfie dispute', e);
       return false;
     }
   }

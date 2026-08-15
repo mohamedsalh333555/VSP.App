@@ -105,171 +105,82 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
           ),
         ],
       ),
-      body: FutureBuilder<List<String>>(
-        future: ChatRepository.getDeletedChatIds(ownerId),
-        builder: (context, prefsSnap) {
-          final localDeleted = prefsSnap.data ?? [];
+      body: StreamBuilder<List<Map<String, dynamic>>>(
+        stream: _chatRepository.streamUserConversations(ownerId),
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
+            return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+          }
 
-          return StreamBuilder<List<Map<String, dynamic>>>(
-            stream: _chatRepository.streamBookingsChats(),
-            builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
-                return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
-              }
+          final conversations = snapshot.data ?? [];
 
-              final rawBookings = snapshot.data ?? [];
-              final now = DateTime.now();
+          if (conversations.isEmpty) {
+            return VSPEmptyState(
+              icon: Iconsax.messages_3_copy,
+              title: isArabic ? 'لا توجد محادثات نشطة' : 'No active chats',
+              subtitle: isArabic 
+                  ? 'ستظهر هنا المحادثات مع اللاعبين والدعم الفني.' 
+                  : 'Chats with players and support will appear here.',
+              buttonText: isArabic ? 'تواصل مع الدعم الفني' : 'Contact Support',
+              onButtonPressed: () => _openSupportChat(context),
+            );
+          }
 
-              final Map<String, List<Map<String, dynamic>>> groupedByContact = {};
+          return ListView.builder(
+            padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true),
+            itemCount: conversations.length,
+            itemBuilder: (context, index) {
+              final conv = conversations[index];
+              final convId = conv['id'].toString();
+              final type = conv['type']?.toString() ?? 'direct';
+              final participants = (conv['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];
+              final otherUserId = participants.firstWhere((uid) => uid != ownerId, orElse: () => '');
+              final unreadMap = conv['unread_counts'] as Map<String, dynamic>? ?? {};
+              final unreadCount = unreadMap[ownerId] as int? ?? 0;
+              final latestTime = DateTime.parse(conv['last_message_time'] ?? conv['created_at']);
 
-              for (final data in rawBookings) {
-                final bId = data['id'].toString();
-                final List<dynamic> deletedForUsers = data['deleted_for_users'] ?? [];
-
-                if (localDeleted.contains(bId) || deletedForUsers.map((e) => e.toString()).contains(ownerId)) {
-                  continue;
-                }
-
-                final b = Booking.fromFirestore(data, bId);
-
-                final isParticipant = b.ownerId == ownerId || 
-                                      b.createdByUserId == ownerId || 
-                                      b.joinedUserIds.contains(ownerId);
-                if (!isParticipant) continue;
-
-                final unreadMap = data['unread_counts'] as Map<String, dynamic>? ?? {};
-                final unreadCount = unreadMap[ownerId] as int? ?? 0;
-                final isRecent = b.endTime.add(const Duration(hours: 48)).isAfter(now);
-                final isGeneralChat = b.stadiumId == 'support_chat' || 
-                                      b.stadiumId == 'chat_thread' || 
-                                      b.notes == 'chat_thread' || 
-                                      b.notes == 'support_chat' || 
-                                      b.id.startsWith('support_chat_') || 
-                                      b.id.startsWith('chat_');
-
-                if (isGeneralChat || isRecent || unreadCount > 0) {
-                  String contactId = '';
-                  if (b.stadiumId == 'support_chat' || b.notes == 'support_chat' || b.id.startsWith('support_chat_')) {
-                    contactId = 'vsp_support_admin';
-                  } else {
-                    final otherJoined = b.joinedUserIds.firstWhere((uid) => uid != ownerId, orElse: () => '');
-                    if (otherJoined.isNotEmpty) {
-                      contactId = otherJoined;
-                    } else if (b.createdByUserId.isNotEmpty && b.createdByUserId != ownerId) {
-                      contactId = b.createdByUserId;
-                    } else {
-                      contactId = b.ownerId;
-                    }
-                  }
-
-                  if (localDeleted.contains(contactId)) {
-                    continue;
-                  }
-
-                  groupedByContact.putIfAbsent(contactId, () => []).add({
-                    'booking': b,
-                    'unread_count': unreadCount,
-                  });
-                }
-              }
-
-              final List<Map<String, dynamic>> consolidatedThreads = [];
-
-              groupedByContact.forEach((contactId, items) {
-                items.sort((a, b) {
-                  final b1 = a['booking'] as Booking;
-                  final b2 = b['booking'] as Booking;
-                  final t1 = b1.lastMessageTime ?? b1.updatedAt ?? b1.startTime;
-                  final t2 = b2.lastMessageTime ?? b2.updatedAt ?? b2.startTime;
-                  return t2.compareTo(t1);
-                });
-
-                final latestBooking = items.first['booking'] as Booking;
-                int totalUnread = 0;
-                for (final item in items) {
-                  totalUnread += (item['unread_count'] as int);
-                }
-
-                consolidatedThreads.add({
-                  'contactId': contactId,
-                  'booking': latestBooking,
-                  'unreadCount': totalUnread,
-                });
-              });
-
-              consolidatedThreads.sort((a, b) {
-                final b1 = a['booking'] as Booking;
-                final b2 = b['booking'] as Booking;
-                final t1 = b1.lastMessageTime ?? b1.updatedAt ?? b1.startTime;
-                final t2 = b2.lastMessageTime ?? b2.updatedAt ?? b2.startTime;
-                return t2.compareTo(t1);
-              });
-
-              if (consolidatedThreads.isEmpty) {
-                return VSPEmptyState(
-                  icon: Iconsax.messages_3_copy,
-                  title: isArabic ? 'لا توجد محادثات نشطة' : 'No active chats',
-                  subtitle: isArabic 
-                      ? 'ستظهر هنا المحادثات الواردة من اللاعبين بخصوص الحجوزات.' 
-                      : 'Chats from players regarding bookings will appear here.',
-                  buttonText: isArabic ? 'تواصل مع الدعم الفني' : 'Contact Support',
-                  onButtonPressed: () => _openSupportChat(context),
+              if (type == 'support' || otherUserId.isEmpty) {
+                return VSPFadeInItem(
+                  index: index,
+                  child: _buildChatRow(
+                    context: context,
+                    conversationId: convId,
+                    otherUserId: '',
+                    type: type,
+                    ownerId: ownerId,
+                    title: isArabic ? 'الدعم الفني VSP' : 'VSP Support',
+                    subtitle: conv['last_message'] ?? (isArabic ? 'مرحباً بك في الدعم الفني' : 'Welcome to Support'),
+                    timeStr: _formatTime(latestTime),
+                    avatar: null,
+                    latestTime: latestTime,
+                    hasUnread: unreadCount > 0,
+                    unreadCount: unreadCount,
+                  ),
                 );
               }
 
-              return ListView.builder(
-                padding: EdgeInsets.fromLTRB(
-                  VSPSpacing.md, 
-                  VSPSpacing.md, 
-                  VSPSpacing.md, 
-                  VSPScrollPadding.bottom(context, hasFloatingNavBar: true)
-                ),
-                itemCount: consolidatedThreads.length,
-                itemBuilder: (context, index) {
-                  final threadMap = consolidatedThreads[index];
-                  final contactId = threadMap['contactId'] as String;
-                  final booking = threadMap['booking'] as Booking;
-                  final unreadCount = threadMap['unreadCount'] as int;
-                  final hasUnread = unreadCount > 0;
-                  final latestTime = booking.lastMessageTime ?? booking.updatedAt ?? booking.startTime;
+              return FutureBuilder<Map<String, dynamic>?>(
+                future: UserRepository().getUserData(otherUserId),
+                builder: (context, userSnap) {
+                  final name = userSnap.data?['name'] ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
+                  final avatarUrl = userSnap.data?['profile_image_url'] ?? '';
 
-                  if (contactId == 'vsp_support_admin') {
-                    return VSPFadeInItem(
-                      index: index,
-                      child: _buildChatRow(
-                        context: context,
-                        title: isArabic ? 'الدعم الفني VSP' : 'VSP Support',
-                        subtitle: booking.lastMessage ?? (isArabic ? 'مرحباً بك في الدعم الفني' : 'Welcome to Support'),
-                        timeStr: _formatTime(latestTime),
-                        avatar: null,
-                        booking: booking,
-                        hasUnread: hasUnread,
-                        unreadCount: unreadCount,
-                      ),
-                    );
-                  }
-
-                  return FutureBuilder<Map<String, dynamic>?>(
-                    future: UserRepository().getUserData(contactId),
-                    builder: (context, userSnap) {
-                      final name = userSnap.data?['name'] ?? booking.hostName ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
-                      final avatarUrl = userSnap.data?['profile_image_url'] ?? booking.hostAvatarUrl ?? '';
-                      final subTitleText = booking.lastMessage ?? booking.stadiumName;
-
-                      return VSPFadeInItem(
-                        index: index,
-                        child: _buildChatRow(
-                          context: context,
-                          title: name,
-                          subtitle: subTitleText,
-                          timeStr: _formatTime(latestTime),
-                          avatar: avatarUrl.isNotEmpty ? avatarUrl : null,
-                          booking: booking,
-                          hasUnread: hasUnread,
-                          unreadCount: unreadCount,
-                        ),
-                      );
-                    },
+                  return VSPFadeInItem(
+                    index: index,
+                    child: _buildChatRow(
+                      context: context,
+                      conversationId: convId,
+                      otherUserId: otherUserId,
+                      type: type,
+                      ownerId: ownerId,
+                      title: name,
+                      subtitle: conv['last_message'] ?? (isArabic ? 'محادثة مباشرة' : 'Direct message'),
+                      timeStr: _formatTime(latestTime),
+                      avatar: avatarUrl.isNotEmpty ? avatarUrl : null,
+                      latestTime: latestTime,
+                      hasUnread: unreadCount > 0,
+                      unreadCount: unreadCount,
+                    ),
                   );
                 },
               );
@@ -282,11 +193,15 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
   Widget _buildChatRow({
     required BuildContext context,
+    required String conversationId,
+    required String otherUserId,
+    required String type,
+    required String ownerId,
     required String title,
     required String subtitle,
     required String timeStr,
     required String? avatar,
-    required Booking booking,
+    required DateTime latestTime,
     required bool hasUnread,
     required int unreadCount,
   }) {
@@ -294,9 +209,27 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
       padding: const EdgeInsets.only(bottom: VSPSpacing.sm),
       child: InkWell(
         onTap: () async {
+          final isSupport = type == 'support' || otherUserId.isEmpty;
+          final dummyBooking = Booking(
+            id: conversationId,
+            stadiumId: isSupport ? 'support_chat' : 'direct_chat',
+            stadiumName: title,
+            ownerId: ownerId,
+            startTime: latestTime,
+            endTime: latestTime.add(const Duration(hours: 1)),
+            bookingType: BookingType.personal,
+            isPrivate: false,
+            rentBall: false,
+            totalPrice: 0,
+            paymentMethod: 'none',
+            status: BookingStatus.confirmed,
+            createdByUserId: ownerId,
+            createdAt: latestTime,
+            joinedUserIds: [ownerId, if (otherUserId.isNotEmpty) otherUserId],
+          );
           await Navigator.push(
             context,
-            MaterialPageRoute(builder: (_) => ChatScreen(booking: booking)),
+            MaterialPageRoute(builder: (_) => ChatScreen(booking: dummyBooking)),
           );
           if (mounted) {
             setState(() {});
@@ -361,7 +294,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                   radius: 10,
                   backgroundColor: VSPColors.accent,
                   child: Text(
-                    unreadCount > 0 ? '' : '',
+                    unreadCount > 0 ? '$unreadCount' : '',
                     style: const TextStyle(color: Colors.black, fontSize: 10, fontWeight: FontWeight.bold),
                   ),
                 ),

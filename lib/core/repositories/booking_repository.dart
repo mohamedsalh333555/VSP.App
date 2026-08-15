@@ -152,10 +152,10 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     try {
-      // 🛡️ Mandatory Security Gate: Verify stadium approval status in DB before creating any booking
+      // 🛡️ 1. التحقق من حالة الملعب
       final stadiumCheck = await _supabase
           .from('stadiums')
-          .select('is_verified, is_blocked')
+          .select('is_verified, is_blocked, features, opening_time')
           .eq('id', draft.stadiumId)
           .maybeSingle();
 
@@ -165,69 +165,39 @@ class SupabaseBookingRepository implements BookingRepository {
         if (!isVerified || isBlocked) {
           throw Exception("عذراً، هذا الملعب غير متاح حالياً أو قيد المراجعة والتوثيق من قِبل إدارة التطبيق.");
         }
-      }
 
-      // 🛡️ Gating Safety: Check if booking falls inside stadium break hours
-      try {
+        // فحص أوقات الاستراحة
         final isChampionship = draft.stadiumName.startsWith('بطولة:');
         if (!isChampionship) {
-          final stadiumDoc = await _supabase
-              .from('stadiums')
-              .select('features, opening_time')
-              .eq('id', draft.stadiumId)
-              .maybeSingle();
-          if (stadiumDoc != null) {
-            final features = stadiumDoc['features'] as Map<String, dynamic>?;
-            if (features != null && features['breakTime'] != null) {
-              final breakTime = features['breakTime'] as Map<String, dynamic>?;
-              final openingTime = stadiumDoc['opening_time']?.toString() ?? '03:00 PM';
-              if (_isTimeInBreak(draft.startTime, draft.endTime, breakTime, openingTime)) {
-                throw Exception("عذراً، هذا الموعد يقع ضمن أوقات استراحة الملعب.");
-              }
+          final features = stadiumCheck['features'] as Map<String, dynamic>?;
+          if (features != null && features['breakTime'] != null) {
+            final breakTime = features['breakTime'] as Map<String, dynamic>?;
+            final openingTime = stadiumCheck['opening_time']?.toString() ?? '03:00 PM';
+            if (_isTimeInBreak(draft.startTime, draft.endTime, breakTime, openingTime)) {
+              throw Exception("عذراً، هذا الموعد يقع ضمن أوقات استراحة الملعب.");
             }
           }
         }
-      } catch (e) {
-        if (e.toString().contains("استراحة الملعب") || e.toString().contains("break hours")) {
-          rethrow;
+      }
+
+      // 🛡️ 2. التحقق من قيود عدم الحضور
+      final userDoc = await _supabase
+          .from('users')
+          .select('is_blocked, no_show_count')
+          .eq('id', userId)
+          .maybeSingle();
+
+      if (userDoc != null) {
+        final isBlocked = userDoc['is_blocked'] ?? false;
+        final noShowCount = userDoc['no_show_count'] ?? 0;
+        if (isBlocked || (noShowCount >= 2 && draft.paymentMethod == 'cash')) {
+          throw Exception("حسابك مقيد عن الحجز النقدي بسبب عدم الحضور. يرجى السداد إلكترونياً.");
         }
-        VSPLogger.w('Skip break hours database validation: $e');
       }
 
-      // Rule 2: Track no-shows on user profile
-      bool isBlocked = false;
-      int noShowCount = 0;
-      try {
-        final userDoc = await _supabase
-            .from('users')
-            .select('is_blocked, no_show_count')
-            .eq('id', userId)
-            .maybeSingle();
-        if (userDoc != null) {
-          isBlocked = userDoc['is_blocked'] ?? false;
-          noShowCount = userDoc['no_show_count'] ?? 0;
-        }
-      } catch (_) {
-        // Fallback if no_show_count column does not exist in DB
-        try {
-          final userDoc = await _supabase
-              .from('users')
-              .select('is_blocked')
-              .eq('id', userId)
-              .maybeSingle();
-          if (userDoc != null) {
-            isBlocked = userDoc['is_blocked'] ?? false;
-          }
-        } catch (_) {}
-      }
-
-      if (isBlocked || noShowCount >= 2) {
-        throw Exception("حسابك مقيد بسبب عدم الحضور للمباريات السابقة (No-Show).");
-      }
-
-      // Rule 1: Maximum of 1 active "unpaid" booking for PLAYERS (Exempt Stadium Owner Manual Walk-ins!)
+      // 🛡️ 3. قيد الحجز النقدي الواحد النشط للاعبين
       final bool isManualBooking = draft.paymentTransactionId?.startsWith('MANUAL') == true;
-      if (!isManualBooking) {
+      if (!isManualBooking && draft.paymentMethod == 'cash') {
         final unpaidBookings = await getUnpaidBookingsForUser(userId);
         final now = DateTime.now();
         final hasActiveUnpaid = unpaidBookings.any((b) => 
@@ -235,244 +205,62 @@ class SupabaseBookingRepository implements BookingRepository {
             b.status != BookingStatus.completed &&
             b.endTime.isAfter(now));
 
-        final bool isNewBookingUnpaid = !draft.isPaid && draft.paymentMethod == 'cash';
-        if (hasActiveUnpaid && isNewBookingUnpaid) {
+        if (hasActiveUnpaid) {
           throw Exception(
-            "حسابك مقيد بحد أقصى حجز نقدي واحد نشط في نفس الوقت. "
-            "يرجى سداد الحجز الآخر أو الدفع إلكترونياً (أونلاين) لهذا الحجز الجديد للمتابعة."
+            "حسابك مقيد بحد أقصى حجز نقدي واحد نشط. يرجى سداد الحجز السابق أو الدفع أونلاين للمتابعة."
           );
         }
       }
 
-      final status = (draft.paymentStatus == 'pending' || draft.paymentStatus == 'awaiting_verification')
-          ? BookingStatus.pending
-          : BookingStatus.confirmed;
+      // 🛡️ 4. إنشاء الحجز بشكل ذري مؤمّن (Postgres Atomic RPC Lock)
+      final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
+        'p_stadium_id': draft.stadiumId,
+        'p_user_id': userId,
+        'p_owner_id': draft.ownerId,
+        'p_start_time': draft.startTime.toUtc().toIso8601String(),
+        'p_end_time': draft.endTime.toUtc().toIso8601String(),
+        'p_booking_type': _dbBookingType(draft.bookingType),
+        'p_total_price': draft.totalPrice,
+        'p_stadium_name': draft.stadiumName,
+        'p_stadium_image_url': draft.stadiumImageUrl,
+        'p_is_private': draft.isPrivate,
+        'p_rent_ball': draft.rentBall,
+        'p_needs_deposit': draft.needsDeposit,
+        'p_deposit_amount': draft.depositPaid,
+        'p_payment_method': draft.paymentMethod ?? 'cash',
+        'p_payment_status': draft.paymentStatus ?? 'pending',
+        'p_player_team_id': draft.playerTeamId,
+        'p_player_team_name': draft.playerTeamName,
+        'p_opponent_team_id': draft.opponentTeamId,
+        'p_opponent_team_name': draft.opponentTeamName,
+      });
 
-      // ── Data Denormalization: Add host info to booking ──
-      final userDetailsDoc = await _supabase
-          .from('users')
-          .select('name, profile_image_url')
-          .eq('id', userId)
-          .maybeSingle();
-      final hostName = userDetailsDoc?['name'] ?? 'Player';
-      final hostAvatar = userDetailsDoc?['profile_image_url'] ?? '';
-
-      // 🧹 Clean up any previous uncompleted pending draft by this user on the same stadium/time before atomic check
-      try {
-        await _supabase
-            .from('bookings')
-            .delete()
-            .eq('user_id', userId)
-            .eq('stadium_id', draft.stadiumId)
-            .eq('status', 'pending')
-            .eq('is_paid', false);
-      } catch (_) {}
-
-      // 🛡️ SECURITY AUDIT FIX: Atomic Booking Creation via PostgreSQL Row Locks
-      try {
-        final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
-          'p_stadium_id': draft.stadiumId,
-          'p_user_id': userId,
-          'p_owner_id': draft.ownerId,
-          'p_start_time': draft.startTime.toUtc().toIso8601String(),
-          'p_end_time': draft.endTime.toUtc().toIso8601String(),
-          'p_booking_type': _dbBookingType(draft.bookingType),
-          'p_total_price': draft.totalPrice,
-          'p_stadium_name': draft.stadiumName,
-          'p_stadium_image_url': draft.stadiumImageUrl,
-          'p_is_private': draft.isPrivate,
-          'p_rent_ball': draft.rentBall,
-          'p_needs_deposit': draft.needsDeposit,
-          'p_deposit_amount': draft.depositPaid,
-          'p_payment_method': draft.paymentMethod,
-          'p_payment_status': draft.paymentStatus,
-          'p_player_team_id': draft.playerTeamId,
-          'p_player_team_name': draft.playerTeamName,
-          'p_opponent_team_id': draft.opponentTeamId,
-          'p_opponent_team_name': draft.opponentTeamName,
-        });
-
-        if (rpcResult is Map && rpcResult['success'] == false) {
-          final errorMsg = rpcResult['message']?.toString() ?? "This slot is already booked!";
-          throw Exception(errorMsg);
-        }
-
-        if (rpcResult is Map && rpcResult['success'] == true && rpcResult['booking_id'] != null) {
-          final bookingId = rpcResult['booking_id'].toString();
-          final created = await getBookingById(bookingId);
-          if (created != null) {
-            if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
-              _sendChallengeNotification(draft);
-            }
-            if (created.status == BookingStatus.confirmed || draft.paymentMethod == 'cash') {
-              _sendOwnerNotification(draft, created.id);
-            }
-            AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
-            VSPLogger.i('✅ Atomic booking created successfully: ${created.id}');
-            return created;
-          }
-        }
-      } catch (e) {
-        if (e.toString().contains("already booked") || e.toString().contains("double_booking") || e.toString().contains("Double booking")) {
-          rethrow;
-        }
-        VSPLogger.w('Atomic RPC creation skipped/failed, falling back to insert: $e');
+      if (rpcResult is Map && rpcResult['success'] == false) {
+        throw Exception(rpcResult['message']?.toString() ?? "عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
       }
 
-      final booking = Booking.fromDraft(
-        id: '', // Supabase/Postgres generates the UUID
-        draft: draft.copyWith(
-          hostName: hostName,
-          hostAvatarUrl: hostAvatar,
-        ),
-        userId: userId,
-        status: status,
-      );
-
-      // 🛡️ Double Booking Prevention Guard: Check for existing active booking in same slot
-      try {
-        final existingCollision = await _supabase
-            .from('bookings')
-            .select('id, created_by_user_id, user_id, status')
-            .eq('stadium_id', booking.stadiumId)
-            .eq('start_time', booking.startTime.toUtc().toIso8601String())
-            .neq('status', 'cancelled')
-            .maybeSingle();
-
-        if (existingCollision != null) {
-          final collisionStatus = existingCollision['status']?.toString();
-          final collisionUser = existingCollision['created_by_user_id']?.toString() ?? existingCollision['user_id']?.toString();
-          
-          // إذا كان الحجز القديم معلق (pending) لنفس المستخدم، نحذفه ونفسح المجال للحجز الجديد
-          if (collisionStatus == 'pending' && collisionUser == userId) {
-            await _supabase.from('bookings').delete().eq('id', existingCollision['id']);
-          } else {
-            throw Exception("عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
-          }
-        }
-      } catch (e) {
-        if (e.toString().contains("محجوز بالفعل")) {
-          rethrow;
-        }
+      final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
+      if (bookingId == null) {
+        throw Exception("فشل تسجيل الحجز في قاعدة البيانات.");
       }
 
-      final double platformFee = 0.0;
+      final created = await getBookingById(bookingId);
+      if (created == null) throw Exception("تعذر جلب تفاصيل الحجز بعد الإنشاء.");
 
-      final bookingMap = {
-        'stadium_id': booking.stadiumId,
-        'stadium_name': booking.stadiumName,
-        'stadium_image_url': booking.stadiumImageUrl,
-        'owner_id': booking.ownerId,
-        'start_time': booking.startTime.toUtc().toIso8601String(),
-        'end_time': booking.endTime.toUtc().toIso8601String(),
-        'booking_type': _dbBookingType(booking.bookingType),
-        'player_team_id': booking.playerTeamId,
-        'player_team_name': booking.playerTeamName,
-        'player_team_logo_url': booking.playerTeamLogoUrl,
-        'host_name': booking.hostName,
-        'host_avatar_url': booking.hostAvatarUrl,
-        'opponent_team_id': booking.opponentTeamId,
-        'opponent_team_name': booking.opponentTeamName,
-        'opponent_team_logo_url': booking.opponentTeamLogoUrl,
-        'is_private': booking.isPrivate,
-        'rent_ball': booking.rentBall,
-        'total_price': booking.totalPrice,
-        'platform_fee': platformFee,
-        'currency': booking.currency,
-        'payment_method': booking.paymentMethod,
-        'payment_transaction_id': booking.paymentTransactionId,
-        'status': booking.status.name,
-        'user_id': userId,
-        'created_by_user_id': booking.createdByUserId,
-        'created_at': DateTime.now().toUtc().toIso8601String(),
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-        'home_score': booking.homeScore,
-        'away_score': booking.awayScore,
-        'result_submitted_by_team_id': booking.resultSubmittedByTeamId,
-        'match_result_status': booking.matchResultStatus.name,
-        'pending_outcome': booking.pendingOutcome?.name,
-        'final_outcome': booking.finalOutcome?.name,
-        'requires_admin_intervention': booking.requiresAdminIntervention,
-        'current_players': booking.currentPlayers,
-        'max_players': booking.maxPlayers,
-        'joined_user_ids': [userId],
-        'is_paid': booking.isPaid,
-        'payment_status': (booking.paymentStatus == 'unpaid' || booking.paymentStatus.isEmpty) ? 'pending' : booking.paymentStatus,
-        'player_phone': booking.playerPhone,
-        'notes': booking.notes,
-        'deposit_paid': booking.depositPaid,
-        'is_deposit_paid': booking.isDepositPaid,
-      };
-
-      Map<String, dynamic> currentMap = Map.from(bookingMap);
-      dynamic response;
-      int retryCount = 0;
-      while (retryCount < 5) {
-        try {
-          response = await _supabase
-              .from('bookings')
-              .insert(currentMap)
-              .select()
-              .single();
-          break; // Success!
-        } on PostgrestException catch (e) {
-          VSPLogger.w('Postgres insert failed, checking for missing columns: ${e.message}');
-          String? missingColumn;
-          
-          // Pattern 1: Could not find the 'column_name' column of 'bookings' in the schema cache
-          final match1 = RegExp(r"Could not find the '([^']+)' column").firstMatch(e.message);
-          if (match1 != null) {
-            missingColumn = match1.group(1);
-          }
-          
-          // Pattern 2: column "column_name" does not exist
-          if (missingColumn == null) {
-            final match2 = RegExp(r'column "([^"]+)" does not exist').firstMatch(e.message);
-            if (match2 != null) {
-              missingColumn = match2.group(1);
-            }
-          }
-          
-          // Pattern 3: column bookings.column_name does not exist
-          if (missingColumn == null) {
-            final match3 = RegExp(r"column \w+\.?([a-zA-Z0-9_]+) does not exist").firstMatch(e.message);
-            if (match3 != null) {
-              missingColumn = match3.group(1);
-            }
-          }
-          
-          if (missingColumn != null && currentMap.containsKey(missingColumn)) {
-            VSPLogger.w('Removing missing column "$missingColumn" and retrying...');
-            currentMap.remove(missingColumn);
-            retryCount++;
-          } else {
-            // Not a missing column error or we can't extract it, rethrow
-            rethrow;
-          }
-        }
-      }
-      if (response == null) {
-        throw Exception("Failed to insert booking after retries.");
-      }
-
-      final createdBooking = Booking.fromFirestore(response, response['id'].toString());
-
-      // ── Challenge Notification Logic ──
       if (draft.bookingType == BookingType.challenge && draft.opponentTeamId != null) {
         _sendChallengeNotification(draft);
       }
-
-      // ── Owner Notification Logic ──
-      _sendOwnerNotification(draft, createdBooking.id);
+      if (created.status == BookingStatus.confirmed || draft.paymentMethod == 'cash') {
+        _sendOwnerNotification(draft, created.id);
+      }
 
       AnalyticsService.logStadiumBooked(draft.stadiumId, draft.totalPrice);
-      VSPLogger.i('✅ Booking created successfully: ${createdBooking.id}');
-      return createdBooking;
+      VSPLogger.i('✅ Atomic booking created: ${created.id}');
+      return created;
     } on PostgrestException catch (e) {
       if (e.code == '23P11' || e.message.contains('overlapping') || e.message.contains('exclude') || e.code == '23505') {
         throw Exception("عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
       }
-      VSPLogger.e('❌ Postgres error creating booking', e);
       rethrow;
     } catch (e) {
       VSPLogger.e('❌ Error creating booking', e);
