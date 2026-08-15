@@ -1,5 +1,4 @@
 import 'package:flutter_test/flutter_test.dart';
-import 'package:vsp_application/core/config/app_config.dart';
 import 'package:vsp_application/core/utils/phone_utils.dart';
 import 'package:vsp_application/core/utils/elo_calculator.dart';
 

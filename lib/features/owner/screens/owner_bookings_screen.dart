@@ -2125,7 +2125,7 @@ Enjoy your match! ⚽🔥
 
       if (!widget.isEdit) {
         final selectedDate = widget.baseDate.add(Duration(days: widget.selectedDayIndex));
-        final startTime = DateTime(
+        final DateTime startTime = (widget.slot['slotTime'] as DateTime?) ?? DateTime(
           selectedDate.year,
           selectedDate.month,
           selectedDate.day,

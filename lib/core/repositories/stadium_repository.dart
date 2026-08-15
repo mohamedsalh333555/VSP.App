@@ -163,7 +163,8 @@ class StadiumRepository {
       if (securedData.containsKey('name')) pgData['name'] = securedData['name'];
       if (securedData.containsKey('description') || securedData.containsKey('sportType') || securedData.containsKey('type')) {
         final String sport = securedData['sportType'] ?? securedData['type'] ?? 'Football';
-        final String desc = securedData['description'] ?? '';
+        String desc = securedData['description'] ?? '';
+        desc = desc.replaceAll(RegExp(r'\|Sport:[^|]*'), '').trim();
         pgData['description'] = '$desc|Sport:$sport';
       }
       if (securedData.containsKey('features')) {

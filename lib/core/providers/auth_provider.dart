@@ -47,7 +47,7 @@ class AuthProvider with ChangeNotifier {
   User? get firebaseUser => _firebaseUser;
   UserModel? get userModel => _userModel;
   String? get userType => _userType;
-  String get email => _email ?? '';
+  String get email => _email ?? _firebaseUser?.email ?? _userModel?.email ?? '';
   String? get name => _name ?? _userModel?.name;
   String? get phone => _phone;
   String get position => _userModel?.position ?? _position ?? 'GK';
@@ -278,8 +278,8 @@ class AuthProvider with ChangeNotifier {
       final token = await _notificationService.getToken();
       if (token != null) {
         await Supabase.instance.client.from('users').update({
-          'fcmToken': token,
-          'lastSeen': DateTime.now().toUtc().toIso8601String(),
+          'fcm_token': token,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', uid);
         VSPLogger.i('FCM Token sync status: SUCCESS');
       }
@@ -627,7 +627,7 @@ class AuthProvider with ChangeNotifier {
     if (_firebaseUser != null) {
       try {
         await Supabase.instance.client.from('users').update({
-          'fcmToken': null,
+          'fcm_token': null,
         }).eq('id', _firebaseUser!.id);
         VSPLogger.i('FCM Token cleared for logout');
       } catch (e) {
@@ -1039,7 +1039,7 @@ class AuthProvider with ChangeNotifier {
         if (stadiumIds.isNotEmpty) {
           final bookingsRes = await Supabase.instance.client
               .from('bookings')
-              .select('id, booking_date, start_time, status')
+              .select('id, start_time, end_time, status')
               .inFilter('stadium_id', stadiumIds)
               .inFilter('status', ['confirmed', 'pending']);
 
@@ -1064,7 +1064,7 @@ class AuthProvider with ChangeNotifier {
         // Player check: search bookings where created_by = uid OR joined_user_ids contains uid
         final bookingsRes = await Supabase.instance.client
             .from('bookings')
-            .select('id, booking_date, start_time, status, joined_user_ids, created_by_user_id')
+            .select('id, start_time, end_time, status, joined_user_ids, created_by_user_id')
             .inFilter('status', ['confirmed', 'pending']);
 
         for (final b in bookingsRes as List) {
@@ -1113,6 +1113,9 @@ class AuthProvider with ChangeNotifier {
 
   DateTime? _parseBookingDateTime(String dateStr, String timeStr) {
     try {
+      final parsedIso = DateTime.tryParse(dateStr);
+      if (parsedIso != null) return parsedIso;
+
       final dateParts = dateStr.split('-');
       if (dateParts.length != 3) return null;
       final year = int.parse(dateParts[0]);
@@ -1193,6 +1196,7 @@ class AuthProvider with ChangeNotifier {
         .onPostgresChanges(
           event: PostgresChangeEvent.all,
           schema: 'public',
+          table: 'users',
           filter: PostgresChangeFilter(
             type: PostgresChangeFilterType.eq,
             column: 'id',

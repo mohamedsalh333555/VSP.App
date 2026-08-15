@@ -151,6 +151,7 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
   late final GoRouter _router;
   late final AppLinks _appLinks;
   StreamSubscription<Uri>? _linkSubscription;
+  StreamSubscription<AuthState>? _authSub;
 
   @override
   void initState() {
@@ -160,7 +161,7 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
     _initDeepLinks();
 
     // Listen to Supabase Auth State changes for Password Recovery
-    Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
       if (data.event == AuthChangeEvent.passwordRecovery) {
         debugPrint('🔑 Password recovery event triggered! Routing to /set-new-password');
         _router.go('/set-new-password');
@@ -234,6 +235,8 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
           _router.push('/match/$id');
         } else if (type == 'team') {
           _router.push('/team/$id');
+        } else if (type == 'championship') {
+          _router.push('/championship/$id');
         }
       }
     } catch (e, stackTrace) {
@@ -245,6 +248,7 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
   @override
   void dispose() {
     _linkSubscription?.cancel();
+    _authSub?.cancel();
     super.dispose();
   }
 

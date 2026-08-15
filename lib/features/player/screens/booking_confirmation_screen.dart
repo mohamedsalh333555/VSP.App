@@ -1355,7 +1355,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                             HapticFeedback.mediumImpact();
                                             setSheetState(() => isCashSubmitting = true);
                                             try {
-                                              final cashDraft = draft.copyWith(paymentMethod: 'cash', isPaid: false);
+                                              final cashDraft = draft.copyWith(
+                                                paymentMethod: 'cash',
+                                                isPaid: false,
+                                                depositPaid: 0.0,
+                                                isDepositPaid: false,
+                                              );
                                               final booking = await bookingProvider.createBooking(cashDraft, currentUserModel.uid);
                                               if (booking != null && sheetContext.mounted) {
                                                 HapticFeedback.lightImpact();

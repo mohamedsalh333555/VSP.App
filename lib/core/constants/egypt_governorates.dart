@@ -80,7 +80,7 @@ class EgyptGovernorates {
     'matrouh': 'Matrouh',
     'minya': 'Minya',
     'new valley': 'New Valley',
-    'north Sinai': 'North Sinai',
+    'north sinai': 'North Sinai',
     'port said': 'Port Said',
     'qalyubia': 'Qalyubia',
     'qena': 'Qena',

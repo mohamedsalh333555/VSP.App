@@ -1037,11 +1037,30 @@ class TournamentRepository {
           .maybeSingle();
 
       if (roster != null) {
-        final playerIdsRaw = roster['player_ids'] ?? [];
+        final rosterId = roster['id'].toString();
+        List<String> playerIdsList = [];
+
+        try {
+          final playerRows = await _supabase
+              .from('championship_roster_players')
+              .select('player_id')
+              .eq('roster_id', rosterId);
+          if (playerRows.isNotEmpty) {
+            playerIdsList = playerRows.map((r) => r['player_id'].toString()).toList();
+          }
+        } catch (_) {}
+
+        if (playerIdsList.isEmpty) {
+          final playerIdsRaw = roster['player_ids'] ?? [];
+          if (playerIdsRaw is List) {
+            playerIdsList = List<String>.from(playerIdsRaw);
+          }
+        }
+
         final guestNamesRaw = roster['guest_names'] ?? roster['player_names'] ?? [];
 
         return {
-          'player_ids': playerIdsRaw is List ? List<String>.from(playerIdsRaw) : <String>[],
+          'player_ids': playerIdsList,
           'guest_names': guestNamesRaw is List ? List<String>.from(guestNamesRaw) : <String>[],
         };
       }
@@ -1066,23 +1085,49 @@ class TournamentRepository {
           .eq('team_id', teamId)
           .maybeSingle();
 
+      String rosterId;
       final payload = {
         'championship_id': championshipId,
         'team_id': teamId,
-        'player_ids': playerIds,
         'guest_names': guestNames,
       };
 
       if (existing != null) {
+        rosterId = existing['id'].toString();
         await _supabase
             .from('championship_rosters')
             .update(payload)
-            .eq('id', existing['id']);
+            .eq('id', rosterId);
       } else {
-        await _supabase
+        final inserted = await _supabase
             .from('championship_rosters')
-            .insert(payload);
+            .insert(payload)
+            .select('id')
+            .single();
+        rosterId = inserted['id'].toString();
       }
+
+      // Separate player_ids into championship_roster_players table
+      try {
+        await _supabase
+            .from('championship_roster_players')
+            .delete()
+            .eq('roster_id', rosterId);
+
+        if (playerIds.isNotEmpty) {
+          final rosterPlayerRows = playerIds.map((pId) => {
+            'roster_id': rosterId,
+            'player_id': pId,
+          }).toList();
+
+          await _supabase
+              .from('championship_roster_players')
+              .insert(rosterPlayerRows);
+        }
+      } catch (err) {
+        debugPrint('⚠️ championship_roster_players sync notice: $err');
+      }
+
       debugPrint('✅ Tournament roster updated successfully for team $teamId');
       return true;
     } catch (e) {
@@ -1508,12 +1553,23 @@ class TournamentRepository {
       int totalRounds = (log(targetCapacity) / log(2)).round();
       int startRoundIndex = totalRounds - 1;
 
+      final Map<String, String> matchUuidMap = {};
+      String getMatchId(int r, int m) {
+        final key = '${r}_$m';
+        if (!matchUuidMap.containsKey(key)) {
+          matchUuidMap[key] = const Uuid().v4();
+        }
+        return matchUuidMap[key]!;
+      }
+
       List<Map<String, dynamic>> knockoutMatches = [];
 
       for (int r = startRoundIndex; r >= 0; r--) {
         int matchCount = (pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
-          final matchId = const Uuid().v4();
+          final matchId = getMatchId(r, m);
+          final nextMatchId = (r > 0) ? getMatchId(r - 1, m ~/ 2) : null;
+
           knockoutMatches.add({
             'id': matchId,
             'championship_id': championshipId,
@@ -1522,6 +1578,7 @@ class TournamentRepository {
             'roundIndex': r,
             'match_index': m,
             'matchIndex': m,
+            'next_match_id': nextMatchId,
             'stage': 'knockout',
           });
         }

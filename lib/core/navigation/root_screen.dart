@@ -95,6 +95,8 @@ class _RootScreenState extends State<RootScreen> {
               GoRouter.of(context).push('/match/$id');
             } else if (type == 'team') {
               GoRouter.of(context).push('/team/$id');
+            } else if (type == 'championship') {
+              GoRouter.of(context).push('/championship/$id');
             }
           }
         }

@@ -552,7 +552,7 @@ class SupabaseBookingRepository implements BookingRepository {
       final response = await _supabase
           .from('bookings')
           .select()
-          .or('user_id.eq.$userId,created_by_user_id.eq.$userId');
+          .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}');
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
@@ -667,9 +667,9 @@ class SupabaseBookingRepository implements BookingRepository {
               })
               .eq('id', bookingId);
         } on PostgrestException catch (e) {
-          if (e.message.contains('cannot_cancel_within_2_hours') || e.code == 'P0001') {
-            // Owner override for last-minute cancellation: Hard delete row
-            await _supabase.from('bookings').delete().eq('id', bookingId);
+          if (e.message.contains('cannot_cancel_within_2_hours')) {
+            VSPLogger.w('Cannot cancel booking within 2 hours: ${e.message}');
+            return false;
           } else {
             rethrow;
           }

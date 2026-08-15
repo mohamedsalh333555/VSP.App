@@ -509,7 +509,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
       }
 
       if (query.isNotEmpty) {
-        dbQuery = dbQuery.ilike('name', '%%');
+        dbQuery = dbQuery.ilike('name', '%$query%');
       }
 
       final response = await dbQuery.limit(50);

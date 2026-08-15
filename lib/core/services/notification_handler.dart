@@ -531,10 +531,10 @@ class NotificationHandler {
               final bytes = await selfieFile.readAsBytes();
               final storagePath = 'disputes/selfie_${bookingId}_${DateTime.now().millisecondsSinceEpoch}.jpg';
               await Supabase.instance.client.storage
-                  .from('verification-documents')
+                  .from('owner_documents')
                   .uploadBinary(storagePath, bytes, fileOptions: const FileOptions(contentType: 'image/jpeg'));
               final publicUrl = Supabase.instance.client.storage
-                  .from('verification-documents')
+                  .from('owner_documents')
                   .getPublicUrl(storagePath);
 
               final booking = await SupabaseBookingRepository().getBookingById(bookingId);

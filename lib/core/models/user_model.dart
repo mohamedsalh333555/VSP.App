@@ -70,7 +70,7 @@ class UserModel {
 
   /// تاريخ نهاية الفترة التجريبية الفعلي (مع افتراض 60 يوماً من الإنشاء إذا كانت null)
   DateTime? get effectiveTrialEndsAt =>
-      trialEndsAt ?? (createdAt != null ? createdAt!.add(const Duration(days: 60)) : DateTime.now().add(const Duration(days: 60)));
+      trialEndsAt ?? createdAt?.add(const Duration(days: 60));
 
   /// هل المالك في فترة تجريبية نشطة؟ (يشترط عدم وجود أي اشتراك مدفوع مسبقاً)
   bool get isInActiveTrial =>

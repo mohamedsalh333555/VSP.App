@@ -339,7 +339,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
         const SizedBox(width: 8),
         // Rank 1
         Expanded(
-          flex: 12, // Using integer for flex
+          flex: 1,
           child: podiumOrder[1] != null 
             ? VSPFadeInItem(index: 0, child: _buildPodiumCard(context, podiumOrder[1]!, true))
             : const SizedBox.shrink(),

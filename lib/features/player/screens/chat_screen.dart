@@ -233,10 +233,13 @@ class _ChatScreenState extends State<ChatScreen> {
                 }
               }
 
+              final bool isValidUuid = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(otherUserId);
+              final String? sanitizedContactId = (otherUserId.isNotEmpty && otherUserId != 'vsp_support_admin' && isValidUuid) ? otherUserId : null;
+
               await ChatRepository().deleteConversationForUser(
                 widget.booking.id, 
                 currentUserId,
-                contactId: otherUserId.isNotEmpty ? otherUserId : null,
+                contactId: sanitizedContactId,
               );
 
               if (context.mounted) {

@@ -40,7 +40,7 @@ class NotificationRepository {
         'type': notification.type,
         'is_read': notification.isRead,
         'created_at': DateTime.now().toUtc().toIso8601String(),
-        'booking_id': notification.bookingId,
+        'booking_id': (notification.bookingId != null && notification.bookingId!.trim().isNotEmpty) ? notification.bookingId : null,
         'metadata': notification.metadata,
       });
     } catch (e) {
