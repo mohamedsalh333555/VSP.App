@@ -10,6 +10,8 @@ import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
+import '../../../core/services/logger_service.dart';
+import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
@@ -122,33 +124,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   double get _ballPrice => widget.stadium.ballPrice > 0 ? widget.stadium.ballPrice : 0;
 
   int _parseTimeToMinutes(String timeStr) {
-    if (timeStr.trim().isEmpty) return 0;
-    try {
-      final clean = timeStr.trim();
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(clean);
-      if (match == null) return 0;
-      int hour = int.parse(match.group(1)!);
-      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-      String? period = match.group(3)?.toUpperCase();
-      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
-      return hour * 60 + minute;
-    } catch (e) {
-      return 0;
-    }
+    return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
   String _formatMinutesToTime(int totalMinutes, bool isArabic) {
-    int hour = (totalMinutes ~/ 60) % 24;
-    int minute = totalMinutes % 60;
-    final period = isArabic
-        ? (hour >= 12 ? 'م' : 'ص')
-        : (hour >= 12 ? 'PM' : 'AM');
-    if (hour > 12) hour -= 12;
-    if (hour == 0) hour = 12;
-    final minStr = minute.toString().padLeft(2, '0');
-    return '$hour:$minStr $period';
+    return AppDateFormatter.formatMinutesToTime(totalMinutes, isArabic);
   }
 
   void _generateDynamicTimeSlots() {
@@ -1166,7 +1146,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                           }
                           return;
                         }
-                      } catch (_) {}
+                      } catch (e, stack) {
+                        VSPLogger.e('Error checking slot availability before booking', e, stack);
+                      }
 
                       HapticFeedback.mediumImpact();
 

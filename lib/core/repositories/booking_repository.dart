@@ -9,6 +9,7 @@ import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
+import '../utils/app_date_formatter.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -98,20 +99,7 @@ class SupabaseBookingRepository implements BookingRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   int _parseTimeToMinutes(String timeStr) {
-    if (timeStr.isEmpty) return 0;
-    try {
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(timeStr);
-      if (match == null) return 0;
-      int hour = int.parse(match.group(1)!);
-      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-      String? period = match.group(3)?.toUpperCase();
-      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
-      return hour * 60 + minute;
-    } catch (e) {
-      return 0;
-    }
+    return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
   bool _isTimeInBreak(DateTime startTime, DateTime endTime, Map<String, dynamic>? breakTime, String openingTime) {

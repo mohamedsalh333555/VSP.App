@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/match_repository.dart';
+import '../services/logger_service.dart';
 
 /// Booking Provider for state management
 class BookingProvider with ChangeNotifier {
@@ -177,7 +178,9 @@ class BookingProvider with ChangeNotifier {
           }
         });
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      VSPLogger.e('Error loading direct user bookings in BookingProvider', e, stack);
+    }
 
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository
@@ -245,7 +248,9 @@ class BookingProvider with ChangeNotifier {
           notifyListeners();
         }
       }
-    } catch (_) {}
+    } catch (e, stack) {
+      VSPLogger.e('Error loading direct owner bookings in BookingProvider', e, stack);
+    }
 
     _bookingSubscription?.cancel();
     _bookingSubscription = _repository

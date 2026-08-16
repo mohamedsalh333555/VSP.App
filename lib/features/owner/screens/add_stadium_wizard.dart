@@ -1,3 +1,4 @@
+import '../../../core/utils/app_date_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -395,18 +396,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   TimeOfDay? _parseTime(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return null;
+    if (timeStr == null || timeStr.trim().isEmpty) return null;
     try {
-      final parts = timeStr.trim().split(' ');
-      if (parts.length != 2) return null;
-      final timeParts = parts[0].split(':');
-      int hour = int.parse(timeParts[0]);
-      int minute = int.parse(timeParts[1]);
-      final period = parts[1].toUpperCase();
-      if ((period == 'PM' || period == 'م' || period == 'مساءً') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص' || period == 'صباحاً') && hour == 12) hour = 0;
-      return TimeOfDay(hour: hour, minute: minute);
-    } catch (e) {
+      final totalMin = AppDateFormatter.parseTimeToMinutes(timeStr);
+      return TimeOfDay(hour: (totalMin ~/ 60) % 24, minute: totalMin % 60);
+    } catch (e, stack) {
+      VSPLogger.e('Error parsing time string in AddStadiumWizard', e, stack);
       return null;
     }
   }
@@ -2270,7 +2265,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 })
                 .eq('id', widget.stadiumId!);
             success = true;
-          } catch (_) {}
+          } catch (e, stack) {
+            VSPLogger.e('Error deleting stadium permanently', e, stack);
+          }
         }
 
         if (!mounted) return;
@@ -2287,7 +2284,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   .neq('is_deleted_by_owner', true);
               final bool stillHas = (remaining as List).isNotEmpty;
               await auth.updateProfile({'hasStadium': stillHas});
-            } catch (_) {}
+            } catch (e, stack) {
+              VSPLogger.e('Error updating owner profile hasStadium flag', e, stack);
+            }
           }
 
           if (mounted) {

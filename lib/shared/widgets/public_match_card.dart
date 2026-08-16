@@ -12,6 +12,7 @@ import '../../data/models.dart';
 import '../../core/models/user_model.dart';
 import '../../core/repositories/match_repository.dart';
 import '../../core/repositories/user_repository.dart';
+import '../../core/services/logger_service.dart';
 import '../../core/services/notification_handler.dart';
 
 
@@ -369,16 +370,23 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
 
   Future<void> _fetchUsers() async {
     try {
-      final joined = await UserRepository().getUsersByIds(widget.booking.joinedUserIds);
-      final pend = await UserRepository().getUsersByIds(widget.booking.pendingUserIds);
+      final allUserIds = [...widget.booking.joinedUserIds, ...widget.booking.pendingUserIds];
+      if (allUserIds.isEmpty) {
+        if (mounted) setState(() => _isLoading = false);
+        return;
+      }
+
+      final users = await UserRepository().getUsersByIds(allUserIds);
+      
       if (mounted) {
         setState(() {
-          _participants = joined;
-          _pending = pend;
+          _participants = users.where((u) => widget.booking.joinedUserIds.contains(u.uid)).toList();
+          _pending = users.where((u) => widget.booking.pendingUserIds.contains(u.uid)).toList();
           _isLoading = false;
         });
       }
-    } catch (e) {
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching participants in bulk', e, stack);
       if (mounted) {
         setState(() => _isLoading = false);
         VSPFeedback.showError(context, e.toString());

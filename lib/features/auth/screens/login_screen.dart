@@ -11,6 +11,7 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
+import '../../../shared/widgets/social_auth_button.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
@@ -363,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       children: [
                          if (!kIsWeb && Platform.isIOS) ...[
                            Expanded(
-                             child: _SocialButton(
+                             child: SocialAuthButton(
                                height: 56,
                                iconWidget: Row(
                                  mainAxisSize: MainAxisSize.min,
@@ -409,7 +410,7 @@ class _LoginScreenState extends State<LoginScreen> {
                          ],
 
                          Expanded(
-                           child: _SocialButton(
+                           child: SocialAuthButton(
                              height: 56,
                              iconWidget: Row(
                                mainAxisSize: MainAxisSize.min,
@@ -478,86 +479,3 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 } // end _LoginScreenState
-
-/// زر تسجيل دخول اجتماعي موحد مع إطار متدرج وخلفية أسطح داكنة
-class _SocialButton extends StatelessWidget {
-  final Widget iconWidget;
-  final VoidCallback? onPressed;
-  final double? height;
-
-  const _SocialButton({
-    required this.iconWidget,
-    required this.onPressed,
-    this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: CustomPaint(
-        painter: _GradientBorderPainter(
-          strokeWidth: 1.5,
-          radius: VSPRadius.button,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: 0.30),
-              Colors.transparent,
-              Colors.white.withValues(alpha: 0.30),
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: Container(
-          width: double.infinity,
-          height: height ?? 56,
-          decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.button),
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: iconWidget,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// رسام الإطار المتدرج الاحترافي للأزرار والأسطح
-class _GradientBorderPainter extends CustomPainter {
-  final double strokeWidth;
-  final double radius;
-  final Gradient gradient;
-
-  _GradientBorderPainter({
-    required this.strokeWidth,
-    required this.radius,
-    required this.gradient,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(
-      rect.deflate(strokeWidth / 2),
-      Radius.circular(radius - strokeWidth / 2),
-    );
-    final paint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    canvas.drawRRect(rrect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _GradientBorderPainter oldDelegate) => false;
-}
-
-

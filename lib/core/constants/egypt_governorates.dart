@@ -154,6 +154,28 @@ class EgyptGovernorates {
     'Qalyubia': 'القليوبية',
   };
 
+  /// Get localized governorate name based on current language
+  static String getLocalizedName(String name, bool isArabic) {
+    if (!isArabic) return name;
+    return governorateToArabic[name] ?? name;
+  }
+
+  /// Central map for sport names translations
+  static const Map<String, String> sportsTranslations = {
+    'Football': 'كرة القدم',
+    'Basketball': 'كرة السلة',
+    'Padel': 'بادل',
+    'Volleyball': 'الكرة الطائرة',
+    'Handball': 'كرة اليد',
+    'Tennis': 'تنس',
+  };
+
+  /// Get localized sport name based on current language
+  static String getLocalizedSport(String sport, bool isArabic) {
+    if (!isArabic) return sport;
+    return sportsTranslations[sport] ?? sport;
+  }
+
   /// Takes a raw string from Google Maps Geocoding API and returns a standard Governorate, or null if unknown
   static String? resolveGoogleName(String? rawGeocodeName) {
     if (rawGeocodeName == null || rawGeocodeName.isEmpty) {

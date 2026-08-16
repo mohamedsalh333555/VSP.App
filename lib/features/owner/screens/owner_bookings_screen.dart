@@ -14,8 +14,8 @@ import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../data/models.dart';
-import '../../../core/utils/phone_utils.dart';
-import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
@@ -70,45 +70,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   }
 
   int _parseTimeToHour(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 16;
-    try {
-      final clean = timeStr.trim();
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(clean);
-      if (match == null) return 16;
-      int hour = int.parse(match.group(1)!);
-      String? period = match.group(3)?.toUpperCase();
-      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
-      return hour;
-    } catch (_) {
-      return 16;
-    }
+    return AppDateFormatter.parseTimeToHour(timeStr);
   }
 
   int _parseTimeToMinutes(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 0;
-    try {
-      final clean = timeStr.trim();
-      final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
-      final match = timeRegex.firstMatch(clean);
-      if (match == null) return 0;
-      int hour = int.parse(match.group(1)!);
-      int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-      String? period = match.group(3)?.toUpperCase();
-      if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
-      if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
-      return hour * 60 + minute;
-    } catch (_) {
-      return 0;
-    }
+    return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
   String _formatHourMin(int h, int m, bool isArabic) {
-    final hour = hour12(h);
-    final period = isArabic ? (h >= 12 ? 'م' : 'ص') : (h >= 12 ? 'PM' : 'AM');
-    final minute = m.toString().padLeft(2, '0');
-    return '$hour:$minute $period';
+    return AppDateFormatter.formatHourMin(h, m, isArabic);
   }
 
   int hour12(int h) {
@@ -1109,29 +1079,7 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     }
   }
 
-  int _parseTimeToMinutes(String? timeStr) {
-    if (timeStr == null || timeStr.isEmpty) return 0;
-    try {
-      final clean = timeStr.trim();
-      final format = DateFormat('hh:mm a');
-      final parsedTime = format.parse(clean);
-      return parsedTime.hour * 60 + parsedTime.minute;
-    } catch (e) {
-      try {
-        final RegExp timeRegex = RegExp(r'(\d+)(?::(\d+))?\s*(AM|PM|ص|م)?', caseSensitive: false);
-        final match = timeRegex.firstMatch(timeStr);
-        if (match == null) return 0;
-        int hour = int.parse(match.group(1)!);
-        int minute = match.group(2) != null ? int.parse(match.group(2)!) : 0;
-        String? period = match.group(3)?.toUpperCase();
-        if ((period == 'PM' || period == 'م') && hour != 12) hour += 12;
-        if ((period == 'AM' || period == 'ص') && hour == 12) hour = 0;
-        return hour * 60 + minute;
-      } catch (_) {
-        return 0;
-      }
-    }
-  }
+
 
   int _getMaxAvailableMinutes() {
     final stadium = widget.selectedStadium;

@@ -546,9 +546,6 @@ class NotificationHandler {
                 bookingId: bookingId,
                 playerId: playerId,
                 photoUrl: publicUrl,
-                imageLat: imageLat,
-                imageLng: imageLng,
-                imageTimestamp: imageTimestamp,
                 stadiumLat: stadiumLat,
                 stadiumLng: stadiumLng,
               );
@@ -665,31 +662,35 @@ class NotificationHandler {
     required String bookingId,
     required String playerId,
     required String photoUrl,
-    required double imageLat,
-    required double imageLng,
-    required DateTime imageTimestamp,
     required double stadiumLat,
     required double stadiumLng,
   }) async {
     try {
-      final booking = await SupabaseBookingRepository().getBookingById(bookingId);
-      if (booking == null) return false;
+      // 🛡️ Security Fix: Fetch real-time GPS location at photo capture moment
+      Position currentPos = await Geolocator.getCurrentPosition(
+        locationSettings: const LocationSettings(accuracy: LocationAccuracy.high),
+      );
 
-      // حساب المسافة الدقيقة بين الكاميرا والملعب
       final double distanceMeters = Geolocator.distanceBetween(
-        imageLat,
-        imageLng,
+        currentPos.latitude,
+        currentPos.longitude,
         stadiumLat,
         stadiumLng,
       );
 
-      // تسجيل النزاع في جدول reports لمراجعة الأدمن
+      // Verify distance threshold (must be within 200m of stadium)
+      if (distanceMeters > 200) {
+        VSPLogger.w('Dispute rejected: Player too far from stadium during selfie (${distanceMeters.toStringAsFixed(1)} m)');
+        return false;
+      }
+
+      // Record verified dispute report in Supabase
       await Supabase.instance.client.from('reports').insert({
         'reporter_id': playerId,
         'target_id': bookingId,
         'target_type': 'no_show_dispute',
-        'reason': 'طعن غياب بصورة سيلفي موثقة جغرافياً',
-        'details': 'المسافة المحسوبة من الملعب: ${distanceMeters.toStringAsFixed(1)} متر. رابط الصورة: $photoUrl',
+        'reason': 'Geotagged Selfie Dispute',
+        'details': 'Verified distance: ${distanceMeters.toStringAsFixed(1)}m. Lat: ${currentPos.latitude}, Lng: ${currentPos.longitude}. Photo: $photoUrl',
         'status': 'pending',
         'created_at': DateTime.now().toUtc().toIso8601String(),
       });
@@ -701,10 +702,10 @@ class NotificationHandler {
         'updated_at': DateTime.now().toUtc().toIso8601String(),
       }).eq('id', bookingId);
 
-      VSPLogger.i('✅ Geotagged selfie dispute submitted with real-time GPS coordinates (${distanceMeters.toStringAsFixed(1)} m).');
+      VSPLogger.i('✅ Verified Geotagged selfie dispute submitted (${distanceMeters.toStringAsFixed(1)} m from pitch).');
       return true;
     } catch (e) {
-      VSPLogger.e('❌ Error submitting geotagged selfie dispute', e);
+      VSPLogger.e('Error in secure selfie dispute', e);
       return false;
     }
   }

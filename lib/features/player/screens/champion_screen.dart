@@ -226,43 +226,12 @@ class ChampionScreenState extends State<ChampionScreen>
   }
 
   String _translateItem(String item) {
-    if (AppLocalizations.of(context)!.localeName != 'ar') return item;
-    
-    final translations = {
-      // Sports
-      'Football': 'كرة القدم',
-      'Basketball': 'كرة السلة',
-      'Padel': 'بادل',
-      'Tennis': 'تنس',
-      // Cities
-      'Cairo': 'القاهرة',
-      'Giza': 'الجيزة',
-      'Alexandria': 'الإسكندرية',
-      'Aswan': 'أسوان',
-      'Luxor': 'الأقصر',
-      'Red Sea': 'البحر الأحمر',
-      'Dakahlia': 'الدقهلية',
-      'Sharqia': 'الشرقية',
-      'Gharbia': 'الغربية',
-      'Monufia': 'المنوفية',
-      'Beheira': 'البحيرة',
-      'Suez': 'السويس',
-      'Port Said': 'بورسعيد',
-      'Ismailia': 'الإسماعيلية',
-      'Damietta': 'دمياط',
-      'Faiyum': 'الفيوم',
-      'Beni Suef': 'بني سويف',
-      'Minya': 'المنيا',
-      'Asyut': 'أسيوط',
-      'Sohag': 'سوهاج',
-      'Qena': 'قنا',
-      'South Sinai': 'جنوب سيناء',
-      'North Sinai': 'شمال سيناء',
-      'Matrouh': 'مطروح',
-      'New Valley': 'الوادي الجديد',
-    };
-    
-    return translations[item] ?? item;
+    final isArabic = AppLocalizations.of(context)!.localeName == 'ar';
+    if (!isArabic) return item;
+    if (EgyptGovernorates.sportsTranslations.containsKey(item)) {
+      return EgyptGovernorates.getLocalizedSport(item, true);
+    }
+    return EgyptGovernorates.getLocalizedName(item, true);
   }
 
   Widget _buildFunctionalDropdown({

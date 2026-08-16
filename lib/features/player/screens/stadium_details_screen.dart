@@ -974,7 +974,9 @@ class _RatingsTab extends StatelessWidget {
                 } else {
                   formattedTime = AppDateFormatter.formatDayMonth(dt, isArabic ? 'ar' : 'en');
                 }
-              } catch (_) {}
+              } catch (e, stack) {
+                VSPLogger.e('Error formatting review date', e, stack);
+              }
             }
 
             return _buildReviewItem(

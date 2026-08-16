@@ -6,6 +6,7 @@ import 'package:flutter/gestures.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/social_auth_button.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -172,8 +173,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     // Action Buttons
                     VSPFadeInItem(
                       index: 3,
-                      child: _NeonButton(
+                      child: PrimaryButton(
                         text: AppLocalizations.of(context)!.continueWithEmail,
+                        height: 60,
                         onPressed: () {
                           authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                           Navigator.push(
@@ -217,7 +219,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           // 🟢 زر Apple يظهر فقط إذا كان الجهاز آيفون أو ماك
                           if (!kIsWeb && Platform.isIOS) ...[
                             Expanded(
-                              child: _SocialButton(
+                              child: SocialAuthButton(
                                 height: 56,
                                 iconWidget: Row(
                                   mainAxisSize: MainAxisSize.min,
@@ -257,7 +259,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                           
                           // 🟢 زر Google يظهر للجميع
                           Expanded(
-                            child: _SocialButton(
+                            child: SocialAuthButton(
                               height: 56,
                               iconWidget: Row(
                                 mainAxisSize: MainAxisSize.min,
@@ -634,109 +636,5 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 } // end CreateAccountScreen
-
-/// زر أخضر نيون كبير
-class _NeonButton extends StatelessWidget {
-  final String text;
-  final VoidCallback onPressed;
-
-  const _NeonButton({
-    required this.text,
-    required this.onPressed,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return PrimaryButton(
-      text: text,
-      onPressed: onPressed,
-      height: 60,
-    );
-  }
-}
-
-/// زر تسجيل دخول اجتماعي مع إطار متدرج وخلفية أسطح داكنة
-class _SocialButton extends StatelessWidget {
-  final Widget iconWidget;
-  final VoidCallback? onPressed; // nullable: null = disabled
-  final double? height;
-
-  const _SocialButton({
-    required this.iconWidget,
-    required this.onPressed,
-    this.height,
-  });
-
-  @override
-  Widget build(BuildContext context) {
-    return GestureDetector(
-      onTap: onPressed,
-      child: CustomPaint(
-        painter: _GradientBorderPainter(
-          strokeWidth: 1.5,
-          radius: VSPRadius.button,
-          gradient: LinearGradient(
-            begin: Alignment.topLeft,
-            end: Alignment.bottomRight,
-            colors: [
-              Colors.white.withValues(alpha: 0.30),
-              Colors.transparent,
-              Colors.white.withValues(alpha: 0.30),
-            ],
-            stops: const [0.0, 0.5, 1.0],
-          ),
-        ),
-        child: Container(
-          // No hardcoded width — let the Expanded parent (in the Row) control the width.
-          // This prevents RenderFlex overflow on smaller devices.
-          width: double.infinity,
-          height: height ?? 56,
-          decoration: BoxDecoration(
-            color: VSPColors.surface,
-            borderRadius: BorderRadius.circular(VSPRadius.button),
-          ),
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: iconWidget,
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-/// رسام الإطار المتدرج الاحترافي للأزرار والأسطح
-class _GradientBorderPainter extends CustomPainter {
-  final double strokeWidth;
-  final double radius;
-  final Gradient gradient;
-
-  _GradientBorderPainter({
-    required this.strokeWidth,
-    required this.radius,
-    required this.gradient,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final rect = Offset.zero & size;
-    final rrect = RRect.fromRectAndRadius(
-      rect.deflate(strokeWidth / 2),
-      Radius.circular(radius - strokeWidth / 2),
-    );
-    final paint = Paint()
-      ..shader = gradient.createShader(rect)
-      ..style = PaintingStyle.stroke
-      ..strokeWidth = strokeWidth;
-
-    canvas.drawRRect(rrect, paint);
-  }
-
-  @override
-  bool shouldRepaint(covariant _GradientBorderPainter oldDelegate) => false;
-}
-
 
 
