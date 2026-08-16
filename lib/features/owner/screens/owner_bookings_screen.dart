@@ -15,6 +15,8 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
+import '../../../core/utils/phone_utils.dart';
+import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../shared/widgets/primary_button.dart';
 
@@ -2092,8 +2094,8 @@ Enjoy your match! ⚽🔥
         }).toList();
 
         if (stadium.isSplitShift) {
-          final int breakStartMin = _parseTimeToMinutes(stadium.breakStartTime);
-          final int breakEndMin = _parseTimeToMinutes(stadium.breakEndTime);
+          final int breakStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
+          final int breakEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
           final int startMin = startTime.hour * 60 + startTime.minute;
           final int endMin = endTime.hour * 60 + endTime.minute;
           bool overlapsBreak = false;
