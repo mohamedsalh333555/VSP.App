@@ -1,5 +1,3 @@
-import 'package:flutter/foundation.dart';
-
 /// 🔐 إدارة المتغيرات البيئية بأمان تام عند الـ Compile-Time
 class AppEnv {
   static String get supabaseUrl {

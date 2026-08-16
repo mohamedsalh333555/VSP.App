@@ -389,7 +389,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                  HapticFeedback.mediumImpact();
                                  setState(() => _isLoading = true);
                                  final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                                 final success = await authProvider.signInWithApple();
+                                 final success = await authProvider.signInWithApple(isLoginOnly: true);
 
                                  if (!context.mounted) return;
                                  setState(() => _isLoading = false);
@@ -434,7 +434,7 @@ class _LoginScreenState extends State<LoginScreen> {
                                HapticFeedback.mediumImpact();
                                setState(() => _isLoading = true);
                                final authProvider = Provider.of<AuthProvider>(context, listen: false);
-                               final success = await authProvider.signInWithGoogle();
+                               final success = await authProvider.signInWithGoogle(isLoginOnly: true);
 
                                if (!context.mounted) return;
                                setState(() => _isLoading = false);

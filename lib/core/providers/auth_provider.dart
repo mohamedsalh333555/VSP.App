@@ -155,12 +155,40 @@ class AuthProvider with ChangeNotifier {
         }
       }
 
+      final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
+
+      // ⚡ CHECK IF ACCOUNT IS FULLY REGISTERED IN DB
+      final bool isExistingCompleteUser = userData != null && 
+          (userData['is_registration_complete'] == true || userData['isRegistrationComplete'] == true) &&
+          (userData['phone'] != null && userData['phone'].toString().trim().isNotEmpty);
+
+      // 🔒 UNREGISTERED / INCOMPLETE ACCOUNT GUARD:
+      // If login was initiated from LoginScreen (isLoginOnly = true) and the account is not fully registered in DB,
+      // block login, delete transient DB row, terminate auth session, and display error message.
+      if (isLoginOnly && !isExistingCompleteUser) {
+        VSPLogger.w("⚠️ Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
+        await prefs.remove('pending_oauth_is_login_only');
+        try {
+          await Supabase.instance.client.from('users').delete().eq('id', user.id);
+        } catch (_) {}
+        await signOut();
+        _errorMessage = 'هذا الحساب غير مسجل مسبقاً. يرجى إنشاء حساب جديد أولاً.';
+        _isFetchingUser = false;
+        _isLoading = false;
+        _isInitializing = false;
+        notifyListeners();
+        return;
+      }
+
+      if (isLoginOnly) {
+        await prefs.remove('pending_oauth_is_login_only');
+      }
+
       if (userData != null) {
         // 🌟 SEAMLESS SMART ROLE ROUTING:
         // If user profile already exists in DB, ALWAYS respect database role.
         // DO NOT update DB role and clear temporary button override immediately.
         _userType = null;
-        final prefs = await SharedPreferences.getInstance();
         await prefs.remove('pending_oauth_role');
 
         _userModel = UserModel.fromFirestore(userData);
@@ -412,13 +440,14 @@ class AuthProvider with ChangeNotifier {
   /// On MOBILE: signInWithOAuth may also be async depending on the platform.
   /// The authStateChanges listener in AuthProvider() already handles session
   /// pickup for both platforms, so this method only needs to trigger the flow.
-  Future<bool> signInWithGoogle() async {
+  Future<bool> signInWithGoogle({bool isLoginOnly = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
       await prefs.setString('pending_oauth_role', _userType ?? 'player');
 
       final result = await _authService.signInWithGoogle(role: _userType);
@@ -457,13 +486,14 @@ class AuthProvider with ChangeNotifier {
 
   /// Sign In with Apple
   /// Same async pattern as signInWithGoogle — session arrives via authStateChanges.
-  Future<bool> signInWithApple() async {
+  Future<bool> signInWithApple({bool isLoginOnly = false}) async {
     _isLoading = true;
     _errorMessage = null;
     notifyListeners();
 
     try {
       final prefs = await SharedPreferences.getInstance();
+      await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
       await prefs.setString('pending_oauth_role', _userType ?? 'player');
 
       final result = await _authService.signInWithApple(role: _userType);
