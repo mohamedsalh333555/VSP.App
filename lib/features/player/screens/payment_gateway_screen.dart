@@ -416,7 +416,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           backgroundColor: VSPColors.background,
           elevation: 0,
           leading: IconButton(
-            icon: Icon(isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
+            icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
             onPressed: () async {
               final cancel = await showDialog<bool>(
                 context: context,

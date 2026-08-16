@@ -189,7 +189,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
                         _buildCircularIcon(
-                          icon: isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+                          icon: isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
                           onTap: () {
                             if (Navigator.canPop(context)) {
                               Navigator.pop(context);

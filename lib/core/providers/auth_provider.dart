@@ -140,8 +140,7 @@ class AuthProvider with ChangeNotifier {
       final prefs = await SharedPreferences.getInstance();
       final pendingRole = prefs.getString('pending_oauth_role');
       if (pendingRole != null) {
-        _userType = pendingRole; // استعادة الخيار المفقود
-        await prefs.remove('pending_oauth_role'); // حذفه فوراً
+        _userType = pendingRole;
       }
 
       Map<String, dynamic>? userData;
@@ -164,13 +163,10 @@ class AuthProvider with ChangeNotifier {
 
       // 🔒 UNREGISTERED / INCOMPLETE ACCOUNT GUARD:
       // If login was initiated from LoginScreen (isLoginOnly = true) and the account is not fully registered in DB,
-      // block login, delete transient DB row, terminate auth session, and display error message.
+      // block login, terminate auth session, and display error message.
       if (isLoginOnly && !isExistingCompleteUser) {
         VSPLogger.w("⚠️ Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
         await prefs.remove('pending_oauth_is_login_only');
-        try {
-          await Supabase.instance.client.from('users').delete().eq('id', user.id);
-        } catch (_) {}
         await signOut();
         _errorMessage = 'هذا الحساب غير مسجل مسبقاً. يرجى إنشاء حساب جديد أولاً.';
         _isFetchingUser = false;
@@ -185,11 +181,40 @@ class AuthProvider with ChangeNotifier {
       }
 
       if (userData != null) {
+        // ─── OAuth Role Override Fix ────────────────────────────────────────────
+        // Problem: Google OAuth doesn't pass custom 'role' param → trigger defaults to 'player'
+        // Fix: Read the role the user intentionally selected before OAuth redirect
+        final effectiveRole = pendingRole ?? _userType;
+
+        if (effectiveRole != null &&
+            !(userData['is_registration_complete'] as bool? ?? false) &&
+            userData['role'] != effectiveRole) {
+
+          VSPLogger.i("⚡ Overriding OAuth trigger role default from '${userData['role']}' to '$effectiveRole' for UID: ${user.id}");
+
+          // 1️⃣ Patch DB via repository — override the trigger's default 'player'
+          await _userRepository.updateUserProfile(
+            user.id,
+            {'role': effectiveRole},
+            authUser: user,
+            role: effectiveRole,
+          );
+
+          // 2️⃣ Patch local map before _userModel is built
+          userData['role'] = effectiveRole;
+          _userType = effectiveRole;
+
+          // 3️⃣ Consume — don't re-apply on next _fetchUserData call
+          await prefs.remove('pending_oauth_role');
+        }
+        // ────────────────────────────────────────────────────────────────────────
+
         // 🌟 SEAMLESS SMART ROLE ROUTING:
-        // If user profile already exists in DB, ALWAYS respect database role.
-        // DO NOT update DB role and clear temporary button override immediately.
-        _userType = null;
-        await prefs.remove('pending_oauth_role');
+        // If user profile already exists in DB, respect database role for existing users.
+        if (isExistingCompleteUser) {
+          _userType = null;
+          await prefs.remove('pending_oauth_role');
+        }
 
         _userModel = UserModel.fromFirestore(userData);
         

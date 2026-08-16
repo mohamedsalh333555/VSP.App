@@ -204,7 +204,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
-                        isAr ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                        isAr ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                         color: VSPColors.textMuted,
                         size: 14,
                       ),
@@ -220,7 +220,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
                     Padding(
                       padding: const EdgeInsets.symmetric(horizontal: 4),
                       child: Icon(
-                        isAr ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                        isAr ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                         color: VSPColors.textMuted,
                         size: 14,
                       ),

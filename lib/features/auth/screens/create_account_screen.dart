@@ -117,7 +117,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: languageProvider.isArabic ? Iconsax.arrow_right_copy : Iconsax.arrow_left_copy,
+                          icon: languageProvider.isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
                           onTap: () => Navigator.pop(context),
                         ),
                       ],

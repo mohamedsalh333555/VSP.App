@@ -413,7 +413,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                         Text(DateFormat('MMMM yyyy', Localizations.localeOf(context).toString()).format(currentMonth), style: Theme.of(context).textTheme.titleLarge),
                         IconButton(
-                          icon: Icon(Iconsax.arrow_right_3_copy, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
+                          icon: Icon(Iconsax.arrow_right_1_copy, color: currentMonth.isBefore(maxMonth) ? VSPColors.textSecondary : VSPColors.textSecondary.withValues(alpha: 0.25)),
                           onPressed: currentMonth.isBefore(maxMonth) ? () { setModalState(() { currentMonth = DateTime(currentMonth.year, currentMonth.month + 1); }); } : null,
                         ),
                       ],
@@ -482,7 +482,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
             size: 20,
           ),

@@ -75,7 +75,7 @@ class VSPMenuItem extends StatelessWidget {
             // Chevron (RTL Directional compliant)
             if (!isLogout)
               Icon(
-                Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                 color: VSPColors.textSecondary,
                 size: 22,
               ),

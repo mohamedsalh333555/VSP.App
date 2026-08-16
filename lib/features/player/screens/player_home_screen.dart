@@ -718,7 +718,7 @@ class ChampionshipCard extends StatelessWidget {
                           ),
                           const SizedBox(width: 6),
                           Icon(
-                            isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                            isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                             size: 16,
                             color: isClosed ? VSPColors.accent : Colors.black,
                           ),

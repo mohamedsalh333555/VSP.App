@@ -357,7 +357,7 @@ class _ManageTournamentRosterScreenState
         ),
         leading: IconButton(
           icon: Icon(
-            isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+            isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),

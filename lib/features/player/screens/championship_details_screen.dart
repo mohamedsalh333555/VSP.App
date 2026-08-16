@@ -328,7 +328,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
         ),
         leading: IconButton(
           icon: Icon(
-            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
           ),
           onPressed: () => Navigator.pop(context),

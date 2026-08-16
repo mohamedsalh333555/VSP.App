@@ -404,7 +404,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               ),
             ),
             Icon(
-              isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+              isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
               color: const Color(0xFFA1A1AA),
               size: 16,
             ),

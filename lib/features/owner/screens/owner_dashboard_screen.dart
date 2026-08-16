@@ -1327,7 +1327,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   )
                 else
                   Icon(
-                    isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy,
+                    isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy,
                     color: VSPColors.textSecondary,
                     size: 16,
                   ),

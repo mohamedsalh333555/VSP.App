@@ -1310,7 +1310,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           backgroundColor: VSPColors.background,
           leading: IconButton(
             icon: Icon(
-              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_copy,
+              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
               color: VSPColors.textPrimary,
             ),
             onPressed: _previousPage,
@@ -1555,7 +1555,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       else if (_locationController.text.isNotEmpty)
                         const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 18)
                       else
-                        Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary, size: 18),
+                        Icon(isArabic ? Iconsax.arrow_left_2_copy : Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 18),
                     ],
                   ),
                 ),

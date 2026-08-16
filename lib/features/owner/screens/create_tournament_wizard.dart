@@ -281,7 +281,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         leading: IconButton(
           icon: Icon(
             Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_3_copy
+                ? Iconsax.arrow_right_1_copy
                 : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
           ),

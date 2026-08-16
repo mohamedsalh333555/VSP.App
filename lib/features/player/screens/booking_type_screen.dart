@@ -73,7 +73,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, 
+            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, 
             color: VSPColors.textPrimary, 
             size: 20
           ), 

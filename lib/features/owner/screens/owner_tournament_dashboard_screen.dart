@@ -312,7 +312,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                   child: const Center(
                                     child: Padding(
                                       padding: EdgeInsets.symmetric(horizontal: 2),
-                                      child: Icon(Iconsax.arrow_right_3_copy, color: VSPColors.accent, size: 16),
+                                      child: Icon(Iconsax.arrow_right_1_copy, color: VSPColors.accent, size: 16),
                                     ),
                                   ),
                                 ),
@@ -1132,7 +1132,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         leading: IconButton(
           icon: Icon(
             Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_3_copy
+                ? Iconsax.arrow_right_1_copy
                 : Iconsax.arrow_left_2_copy,
             color: VSPColors.textPrimary,
           ),

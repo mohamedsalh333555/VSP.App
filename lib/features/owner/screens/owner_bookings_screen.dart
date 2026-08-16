@@ -137,7 +137,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         automaticallyImplyLeading: true,
         leading: Navigator.canPop(context) 
             ? IconButton(
-                icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
+                icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
                 onPressed: () => Navigator.pop(context),
               )
             : null,
@@ -837,7 +837,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               ),
             );
           }),
-          Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textSecondary, size: 14),
+          Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 14),
         ],
       ),
     );

@@ -67,7 +67,7 @@ class OnboardingScreen extends StatelessWidget {
       },
       showSkipButton: true,
       skip: Text(isAr ? "تخطي" : "Skip", style: const TextStyle(color: VSPColors.textSecondary)),
-      next: Icon(isAr ? Iconsax.arrow_left_copy : Iconsax.arrow_right_copy, color: VSPColors.accent),
+      next: Icon(isAr ? Iconsax.arrow_left_copy : Iconsax.arrow_right_1_copy, color: VSPColors.accent),
       done: Text(isAr ? "ابدأ الآن" : "Get Started", style: const TextStyle(fontWeight: FontWeight.w600, color: VSPColors.accent)),
       dotsDecorator: DotsDecorator(
         size: const Size(10.0, 10.0),

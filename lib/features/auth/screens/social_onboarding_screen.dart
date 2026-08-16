@@ -236,7 +236,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
           scrolledUnderElevation: 0, // ✅ منع تغيير اللون عند السكرول
           leading: IconButton(
             icon: Icon(
-              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_copy,
+              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
               color: VSPColors.textPrimary,
             ),
             onPressed: () => Navigator.maybePop(context),

@@ -231,7 +231,7 @@ class _SignupScreenState extends State<SignupScreen> {
                       children: [
                         _buildNavCircle(
                           context, 
-                          icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+                          icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
                           onTap: () => Navigator.pop(context),
                         ),
                         const Spacer(),

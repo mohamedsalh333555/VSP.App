@@ -20,7 +20,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
         elevation: 0,
         leading: IconButton(
           icon: Icon(
-            isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy,
+            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
             color: Colors.white,
           ),
           onPressed: () => Navigator.pop(context),

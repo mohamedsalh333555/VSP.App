@@ -129,18 +129,11 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                   // VSP Logo
                   Hero(
                     tag: 'app_logo',
-                    child: Container(
-                      padding: const EdgeInsets.all(12),
-                      decoration: BoxDecoration(
-                        color: VSPColors.glassSurface,
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.glassBorder),
-                      ),
-                      child: Image.asset(
-                        'assets/images/logo.png',
-                        width: 54,
-                        height: 54,
-                      ),
+                    child: Image.asset(
+                      'assets/images/logo.png',
+                      width: 64,
+                      height: 64,
+                      fit: BoxFit.contain,
                     ),
                   ),
                   const SizedBox(height: 16),

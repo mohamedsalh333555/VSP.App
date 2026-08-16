@@ -360,7 +360,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
         leading: IconButton(
           icon: Icon(
             Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_copy
+                ? Iconsax.arrow_right_1_copy
                 : Iconsax.arrow_left_copy,
             color: VSPColors.textPrimary,
           ),

@@ -81,7 +81,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                 ),
                 IconButton(
                   onPressed: () => _changeMonth(1),
-                  icon: Icon(Iconsax.arrow_right_3_copy, color: VSPColors.textPrimary),
+                  icon: Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textPrimary),
                 ),
               ],
             ),
