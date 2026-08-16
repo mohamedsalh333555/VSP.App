@@ -2,7 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:intl/intl.dart';
+import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -335,7 +335,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         b.status == BookingStatus.cancelled) {
                       return false;
                     }
-                    final bShiftDate = getShiftDate(b.startTime, startH);
+                    final bShiftDate = b.operationalDate ?? getShiftDate(b.startTime, startH);
                     return bShiftDate.year == selectedDateOnly.year &&
                            bShiftDate.month == selectedDateOnly.month &&
                            bShiftDate.day == selectedDateOnly.day;
@@ -2323,6 +2323,11 @@ Enjoy your match! ⚽🔥
         controller: controller,
         enabled: enabled,
         keyboardType: keyboardType,
+        textDirection: (keyboardType == TextInputType.phone ||
+                keyboardType == TextInputType.number ||
+                (keyboardType != null && keyboardType.toString().contains('number')))
+            ? TextDirection.ltr
+            : null,
         inputFormatters: inputFormatters,
         style: TextStyle(
           color: enabled ? Colors.white : VSPColors.textSecondary,

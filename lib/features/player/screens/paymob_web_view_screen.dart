@@ -1,18 +1,23 @@
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/repositories/booking_repository.dart';
+import '../../../data/models.dart';
 
 class PaymobWebViewScreen extends StatefulWidget {
   final String initialUrl;
   final String title;
+  final String? bookingId;
 
   const PaymobWebViewScreen({
     super.key,
     required this.initialUrl,
     this.title = 'سداد الحجز الآمن 💳',
+    this.bookingId,
   });
 
   @override
@@ -23,11 +28,177 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   late final WebViewController _controller;
   bool _isLoading = true;
   int _loadingProgress = 0;
+  bool _isPopped = false;
+
+  Timer? _initialTimeoutTimer;
+  Timer? _pollingTimer;
+  late final DateTime _sessionStartTime;
+  int _nextDialogThresholdSeconds = 180; // 3 minutes total ceiling from start
 
   @override
   void initState() {
     super.initState();
+    _sessionStartTime = DateTime.now();
     _initWebView();
+    _startInitial90sTimer();
+  }
+
+  void _cancelAllTimers() {
+    _initialTimeoutTimer?.cancel();
+    _initialTimeoutTimer = null;
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+  }
+
+  void _popSuccess() {
+    if (_isPopped) return;
+    _isPopped = true;
+    _cancelAllTimers();
+    HapticFeedback.heavyImpact();
+    if (mounted) Navigator.pop(context, true);
+  }
+
+  void _popFailure() {
+    if (_isPopped) return;
+    _isPopped = true;
+    _cancelAllTimers();
+    HapticFeedback.vibrate();
+    if (mounted) Navigator.pop(context, false);
+  }
+
+  void _startInitial90sTimer() {
+    _initialTimeoutTimer?.cancel();
+    _initialTimeoutTimer = Timer(const Duration(seconds: 90), _onInitialTimeoutFired);
+  }
+
+  Future<void> _onInitialTimeoutFired() async {
+    if (!mounted || _isPopped) return;
+
+    final isConfirmed = await _checkBookingStatusDb();
+    if (!mounted || _isPopped) return;
+
+    if (isConfirmed) {
+      _popSuccess();
+      return;
+    }
+
+    _showStillWaitingDialog();
+  }
+
+  Future<bool> _checkBookingStatusDb() async {
+    if (widget.bookingId == null ||
+        widget.bookingId!.isEmpty ||
+        widget.bookingId!.startsWith('mock_')) {
+      return false;
+    }
+    try {
+      final booking = await SupabaseBookingRepository().getBookingById(widget.bookingId!);
+      if (booking != null &&
+          (booking.status == BookingStatus.confirmed ||
+              booking.isPaid ||
+              booking.paymentStatus == 'paid')) {
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Notice checking booking DB status: $e');
+    }
+    return false;
+  }
+
+  void _start10sPolling() {
+    _pollingTimer?.cancel();
+    _pollingTimer = Timer.periodic(const Duration(seconds: 10), (_) => _pollBookingStatus());
+  }
+
+  Future<void> _pollBookingStatus() async {
+    if (!mounted || _isPopped) {
+      _cancelAllTimers();
+      return;
+    }
+
+    final isConfirmed = await _checkBookingStatusDb();
+    if (!mounted || _isPopped) return;
+
+    if (isConfirmed) {
+      _popSuccess();
+      return;
+    }
+
+    // Check 3-minute total ceiling from session start
+    final elapsedSeconds = DateTime.now().difference(_sessionStartTime).inSeconds;
+    if (elapsedSeconds >= _nextDialogThresholdSeconds) {
+      _pollingTimer?.cancel();
+      _pollingTimer = null;
+      _showStillWaitingDialog();
+    }
+  }
+
+  Future<void> _showStillWaitingDialog() async {
+    _pollingTimer?.cancel();
+    _pollingTimer = null;
+
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final result = await showDialog<bool>(
+      context: context,
+      barrierDismissible: false,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Row(
+          children: [
+            const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 22),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Text(
+                isArabic ? 'الدفع يستغرق وقتاً أطول من المتوقع ⏳' : 'Payment Taking Longer ⏳',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+              ),
+            ),
+          ],
+        ),
+        content: Text(
+          isArabic
+              ? 'عملية التأكيد مع بوابة الدفع تستغرق وقتاً إضافياً. يمكنك مواصلة الانتظار (سنتحقق تلقائياً كل 10 ثوانٍ) أو الإلغاء ورجوع لشاشة الحجز.'
+              : 'Payment confirmation is taking longer than expected. You can keep waiting (we will auto-check every 10s) or cancel.',
+          style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.pop(ctx, false), // Keep waiting
+            child: Text(
+              isArabic ? 'استمرار الانتظار' : 'Keep Waiting',
+              style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold),
+            ),
+          ),
+          ElevatedButton(
+            onPressed: () => Navigator.pop(ctx, true), // Cancel & pop
+            style: ElevatedButton.styleFrom(
+              backgroundColor: VSPColors.error,
+              foregroundColor: Colors.white,
+              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+            ),
+            child: Text(isArabic ? 'إلغاء' : 'Cancel'),
+          ),
+        ],
+      ),
+    );
+
+    if (!mounted || _isPopped) return;
+
+    if (result == true) {
+      _popFailure();
+    } else {
+      // Set next 3-minute ceiling threshold (e.g. 180s, 360s, 540s...)
+      final elapsed = DateTime.now().difference(_sessionStartTime).inSeconds;
+      _nextDialogThresholdSeconds = ((elapsed ~/ 180) + 1) * 180;
+      _start10sPolling();
+    }
+  }
+
+  @override
+  void dispose() {
+    _cancelAllTimers();
+    super.dispose();
   }
 
   void _initWebView() {
@@ -119,8 +290,6 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
     _controller = controller;
   }
 
-  bool _isPopped = false;
-
   void _checkCallbackUrl(String url) {
     if (_isPopped) return;
 
@@ -139,16 +308,12 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
         lowerUrl.contains('authentication_not_supported');
 
     if (isExplicitSuccess) {
-      _isPopped = true;
-      HapticFeedback.heavyImpact();
-      if (mounted) Navigator.pop(context, true);
+      _popSuccess();
     } else if (isExplicitFailure) {
-      _isPopped = true;
-      HapticFeedback.vibrate();
       if (lowerUrl.contains('authentication_not_supported')) {
         debugPrint('⚠️ Paymob returned AUTHENTICATION_NOT_SUPPORTED for card pan.');
       }
-      if (mounted) Navigator.pop(context, false);
+      _popFailure();
     }
   }
 
@@ -166,7 +331,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           icon: const Icon(Iconsax.close_circle_copy, color: Colors.white),
           onPressed: () {
             HapticFeedback.lightImpact();
-            Navigator.pop(context, false);
+            _popFailure();
           },
         ),
         title: Row(

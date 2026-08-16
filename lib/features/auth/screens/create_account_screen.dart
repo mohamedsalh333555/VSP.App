@@ -39,6 +39,10 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     super.initState();
     _termsRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
     _privacyRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Provider.of<AuthProvider>(context, listen: false).setUserType(widget.isOwner ? 'owner' : 'player');
+    });
   }
 
   void _onTermsOrPrivacyTap() {

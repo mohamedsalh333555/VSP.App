@@ -705,16 +705,18 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     final List<Booking> bookings = allBookings.where((b) {
       final bStartLocal = b.startTime.toLocal();
+      final bDate = b.operationalDate ?? bStartLocal;
+
       if (_selectedTimePeriod == 'today') {
-        return bStartLocal.year == now.year && bStartLocal.month == now.month && bStartLocal.day == now.day;
+        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
       } else if (_selectedTimePeriod == 'yesterday') {
-        return bStartLocal.year == yesterday.year && bStartLocal.month == yesterday.month && bStartLocal.day == yesterday.day;
+        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
       } else if (_selectedTimePeriod == 'week') {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
         final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bStartLocal.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bStartLocal.isBefore(endOfWeek);
+        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
       } else if (_selectedTimePeriod == 'month') {
-        return bStartLocal.year == now.year && bStartLocal.month == now.month;
+        return bDate.year == now.year && bDate.month == now.month;
       }
       return true; // 'all'
     }).toList();
@@ -2198,14 +2200,16 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final now = DateTime.now();
     final List<Booking> bookings = allBookings.where((b) {
       final bStartLocal = b.startTime.toLocal();
+      final bDate = b.operationalDate ?? bStartLocal;
+
       if (_selectedTimePeriod == 'today') {
-        return bStartLocal.year == now.year && bStartLocal.month == now.month && bStartLocal.day == now.day;
+        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
       } else if (_selectedTimePeriod == 'week') {
         final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
         final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bStartLocal.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bStartLocal.isBefore(endOfWeek);
+        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
       } else if (_selectedTimePeriod == 'month') {
-        return bStartLocal.year == now.year && bStartLocal.month == now.month;
+        return bDate.year == now.year && bDate.month == now.month;
       }
       return true; // 'all'
     }).toList();

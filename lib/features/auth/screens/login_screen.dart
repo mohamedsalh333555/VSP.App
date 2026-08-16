@@ -30,6 +30,10 @@ class _LoginScreenState extends State<LoginScreen> {
   @override
   void initState() {
     super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      if (!mounted) return;
+      Provider.of<AuthProvider>(context, listen: false).setUserType('player');
+    });
   }
 
   @override

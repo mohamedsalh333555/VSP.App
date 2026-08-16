@@ -300,15 +300,29 @@ class StadiumRepository {
     }
   }
 
-  // Stadium Deletion Safeguard via PostgreSQL cascade delete
+  // Stadium Deletion Safeguard (Handles ON DELETE RESTRICT with soft-delete fallback)
   Future<bool> deleteStadium(String stadiumId) async {
     try {
-      // CASCADE option on DB triggers handles associated bookings cancellation and notifications
+      // 1. Attempt Hard Delete (Permanent DB Removal)
       await _supabase.from('stadiums').delete().eq('id', stadiumId);
       return true;
     } catch (e) {
-      VSPLogger.e('Error during stadium deletion cascade', e);
-      return false;
+      VSPLogger.w('Hard delete failed (e.g. FK RESTRICT due to bookings). Falling back to soft-delete: $e');
+      try {
+        // 2. Fallback Soft-Delete if DB foreign key constraint prevents hard delete
+        await _supabase
+            .from('stadiums')
+            .update({
+              'is_deleted_by_owner': true,
+              'is_verified': false,
+              'is_blocked': true,
+            })
+            .eq('id', stadiumId);
+        return true;
+      } catch (softErr) {
+        VSPLogger.e('Error during stadium soft deletion fallback', softErr);
+        return false;
+      }
     }
   }
 

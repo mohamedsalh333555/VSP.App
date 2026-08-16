@@ -202,13 +202,15 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
 
   @override
   Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(isArabic ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         title: Text(

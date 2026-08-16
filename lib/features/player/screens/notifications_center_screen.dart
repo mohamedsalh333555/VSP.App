@@ -18,13 +18,15 @@ class NotificationsCenterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userId = context.read<AuthProvider>().currentUser?.uid ?? '';
 
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
         leading: IconButton(
-          icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
+          icon: Icon(isAr ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
           onPressed: () => Navigator.pop(context),
         ),
         centerTitle: true,

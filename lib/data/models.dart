@@ -561,6 +561,7 @@ class Booking {
   // Timing
   final DateTime startTime;
   final DateTime endTime;
+  final DateTime? operationalDate;
 
   // Booking type
   final BookingType bookingType;
@@ -638,6 +639,7 @@ class Booking {
     required this.ownerId,
     required this.startTime,
     required this.endTime,
+    this.operationalDate,
     required this.bookingType,
     this.playerTeamId,
     this.playerTeamName,
@@ -692,6 +694,7 @@ class Booking {
   factory Booking.fromFirestore(Map<String, dynamic> data, String id) {
     final startTimeVal = data['startTime'] ?? data['start_time'];
     final endTimeVal = data['endTime'] ?? data['end_time'];
+    final opDateVal = data['operationalDate'] ?? data['operational_date'];
     final createdAtVal = data['createdAt'] ?? data['created_at'];
     final updatedAtVal = data['updatedAt'] ?? data['updated_at'];
     final bookingTypeVal = data['bookingType'] ?? data['booking_type'];
@@ -719,6 +722,11 @@ class Booking {
               ? endTimeVal.toLocal() 
               : DateTime.parse(endTimeVal.toString()).toLocal())
           : DateTime.now(),
+      operationalDate: opDateVal != null
+          ? (opDateVal is DateTime
+              ? opDateVal
+              : DateTime.tryParse(opDateVal.toString()))
+          : null,
       bookingType: () {
         final val = bookingTypeVal?.toString().toLowerCase().replaceAll('_', '').replaceAll(' ', '') ?? '';
         if (val == 'openjoin' || val == 'openjoinmatch') return BookingType.openJoin;
@@ -813,6 +821,7 @@ class Booking {
       'ownerId': ownerId,
       'startTime': startTime.toIso8601String(),
       'endTime': endTime.toIso8601String(),
+      'operational_date': operationalDate?.toIso8601String().split('T').first,
       'bookingType': bookingType.name,
       'playerTeamId': playerTeamId,
       'playerTeamName': playerTeamName,

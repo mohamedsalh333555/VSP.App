@@ -48,7 +48,9 @@ class CustomTextField extends StatelessWidget {
       keyboardType: keyboardType,
       textDirection: (keyboardType == TextInputType.emailAddress ||
               keyboardType == TextInputType.url ||
-              keyboardType == TextInputType.phone)
+              keyboardType == TextInputType.phone ||
+              keyboardType == TextInputType.number ||
+              keyboardType.toString().contains('number'))
           ? TextDirection.ltr
           : null,
       obscureText: obscureText,

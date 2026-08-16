@@ -1308,7 +1308,13 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: VSPColors.background,
-          leading: IconButton(icon: Icon(Iconsax.arrow_left_copy, color: VSPColors.textPrimary), onPressed: _previousPage),
+          leading: IconButton(
+            icon: Icon(
+              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_3_copy : Iconsax.arrow_left_copy,
+              color: VSPColors.textPrimary,
+            ),
+            onPressed: _previousPage,
+          ),
           title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
           centerTitle: true,
           elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
@@ -2230,14 +2236,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           return;
         }
 
-        // 🗑️ Clean up associated reviews and non-blocking records first so foreign key constraints allow CASCADE delete
+        // 🗑️ Clean up non-critical optional records (reviews) before attempting hard delete
         try {
           await Supabase.instance.client
               .from('reviews')
-              .delete()
-              .eq('stadium_id', widget.stadiumId!);
-          await Supabase.instance.client
-              .from('bookings')
               .delete()
               .eq('stadium_id', widget.stadiumId!);
         } catch (e) {
@@ -2253,7 +2255,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
               .eq('id', widget.stadiumId!);
           success = true;
         } catch (e) {
-          debugPrint('Hard delete fallback to soft-delete: $e');
+          debugPrint('Hard delete fallback to soft-delete (FK RESTRICT): $e');
         }
 
         // 2. Fallback Soft-Delete if DB constraint prevents hard delete

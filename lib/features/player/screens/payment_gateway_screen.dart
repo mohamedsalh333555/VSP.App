@@ -283,6 +283,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             builder: (_) => PaymobWebViewScreen(
               initialUrl: paymobUrl,
               title: isArabic ? 'سداد الحجز بالفيزا 💳' : 'Pay via Card 💳',
+              bookingId: _booking?.id,
             ),
           ),
         );

@@ -198,6 +198,19 @@ class AuthProvider with ChangeNotifier {
           );
         }
 
+        // 🛡️ ROLE AUTO-CORRECTION: If profile was mistakenly created as 'owner'
+        // without a stadium or onboarding confirmation, but has a player position, revert to 'player'.
+        if (_userModel != null &&
+            _userModel!.role == 'owner' &&
+            !_userModel!.hasStadium &&
+            (_userModel!.additionalData?['isOnboardingConfirmed'] != true) &&
+            _userModel!.position != null &&
+            _userModel!.position!.isNotEmpty) {
+          VSPLogger.w("⚠️ Auto-correcting accidental 'owner' role to 'player' for UID: ${user.id}");
+          _userModel = _userModel!.copyWith(role: 'player');
+          _userRepository.completeRegistrationFlags(user.id, {'role': 'player'});
+        }
+
         // ===== AUTO-LOGIN REDIRECT =====
         // For an existing complete user (phone set + isRegistrationComplete),
         // clear _userType so GoRouter routes by their DB role, not the
@@ -1240,7 +1253,33 @@ class AuthProvider with ChangeNotifier {
     super.dispose();
   }
 
-  Future<bool> payRehabilitationFine() async { if (_firebaseUser == null) return false; _isLoading = true; notifyListeners(); try { final response = await Supabase.instance.client.rpc('pay_rehabilitation_fine', params: {'p_user_id': _firebaseUser!.id}); if (response == true) { if (_userModel != null) { _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false); } _isLoading = false; notifyListeners(); return true; } _isLoading = false; notifyListeners(); return false; } catch (e) { _isLoading = false; notifyListeners(); return false; } }
+  Future<bool> payRehabilitationFine() async {
+    if (_firebaseUser == null) return false;
+    _isLoading = true;
+    notifyListeners();
+    try {
+      final response = await Supabase.instance.client.rpc(
+        'pay_rehabilitation_fine',
+        params: {'p_user_id': _firebaseUser!.id},
+      );
+      if (response == true) {
+        if (_userModel != null) {
+          _userModel = _userModel!.copyWith(noShowCount: 0, isBlocked: false);
+        }
+        _isLoading = false;
+        notifyListeners();
+        return true;
+      }
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    } catch (e) {
+      VSPLogger.e('Error paying rehabilitation fine', e);
+      _isLoading = false;
+      notifyListeners();
+      return false;
+    }
+  }
 }
 
 extension SupabaseUserExtension on User {

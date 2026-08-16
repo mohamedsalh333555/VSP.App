@@ -670,6 +670,11 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       child: TextField(
         controller: controller,
         keyboardType: keyboardType,
+        textDirection: (keyboardType == TextInputType.phone ||
+                keyboardType == TextInputType.number ||
+                (keyboardType != null && keyboardType.toString().contains('number')))
+            ? TextDirection.ltr
+            : null,
         inputFormatters: inputFormatters,
         autofocus: autofocus,
         cursorColor: VSPColors.accent,
