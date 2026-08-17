@@ -105,15 +105,13 @@ class SupportService {
     final user = auth.userModel;
 
     final name = user?.name ?? 'Guest';
-    final userPhone = user?.phone ?? 'N/A';
-    final uid = user?.uid ?? 'N/A';
     final governorate = user?.governorate ?? 'N/A';
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final messageText = isArabic
-        ? "مرحباً دعم VSP، لدي مشكلة بخصوص $category. تفاصيل حسابي: الاسم: $name، الهاتف: $userPhone، الكود: $uid، المحافظة: $governorate."
-        : "Hi VSP Support, I need help with $category. Account Details: Name: $name, Phone: $userPhone, UID: $uid, Governorate: $governorate.";
+        ? "مرحباً فريق دعم VSP 👋\nأحتاج مساعدة بخصوص: $category\nالاسم: $name\nالمحافظة: $governorate"
+        : "Hi VSP Support 👋\nI need assistance regarding: $category\nName: $name\nGovernorate: $governorate";
 
     try {
       final settings = await AppSettingsRepository().getSettings();

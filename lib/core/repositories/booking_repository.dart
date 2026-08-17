@@ -325,6 +325,9 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<List<Booking>> getUserBookingsDirectly(String userId) async {
     try {
+      final bool isValidId = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(userId);
+      if (!isValidId) return [];
+
       final response = await _supabase
           .from('bookings')
           .select()

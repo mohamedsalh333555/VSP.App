@@ -17,7 +17,6 @@ import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/phone_utils.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import '../../../core/services/logger_service.dart';
 import '../../../shared/widgets/primary_button.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
@@ -73,10 +72,6 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
   int _parseTimeToHour(String? timeStr) {
     return AppDateFormatter.parseTimeToHour(timeStr);
-  }
-
-  int _parseTimeToMinutes(String? timeStr) {
-    return AppDateFormatter.parseTimeToMinutes(timeStr);
   }
 
   String _formatHourMin(int h, int m, bool isArabic) {

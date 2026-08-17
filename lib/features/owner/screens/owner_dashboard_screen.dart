@@ -29,7 +29,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   String _selectedTimePeriod = 'today'; // 'today' | 'week' | 'month' | 'all'
   String _selectedStadiumFilter = 'all'; // 'all' or specific stadium.id
   StreamSubscription<List<Championship>>? _champSubscription;
-  double _championshipDigitalRevenue = 0.0;
+  List<Championship> _ownerChampionships = [];
 
   @override
   void initState() {
@@ -50,15 +50,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             .getChampionshipsStream(isOwner: true, ownerId: uid)
             .listen((champs) {
           if (!mounted) return;
-          double total = 0.0;
-          for (var c in champs) {
-            if (c.entryFee > 0 && c.paidTeams.isNotEmpty) {
-              total += (c.paidTeams.length * c.entryFee);
-            }
-          }
-          if (_championshipDigitalRevenue != total) {
-            setState(() => _championshipDigitalRevenue = total);
-          }
+          setState(() {
+            _ownerChampionships = champs;
+          });
         });
       }
     });
@@ -774,9 +768,33 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       totalHours += (diffMinutes / 60.0);
     }
 
-    // 🏆 دمج إيرادات اشتراكات البطولات الأونلاين الحية
-    digitalVspBalance += _championshipDigitalRevenue;
-    totalPipeline += _championshipDigitalRevenue;
+    // 🏆 دمج إيرادات اشتراكات البطولات الأونلاين الحية المفلترة بالفترة الزمنية
+    double championshipRevenue = 0.0;
+    for (var c in _ownerChampionships) {
+      if (c.entryFee <= 0 || c.paidTeams.isEmpty) continue;
+      final cDate = c.startDate.toLocal();
+      bool inPeriod = false;
+      if (_selectedTimePeriod == 'today') {
+        inPeriod = cDate.year == now.year && cDate.month == now.month && cDate.day == now.day;
+      } else if (_selectedTimePeriod == 'yesterday') {
+        inPeriod = cDate.year == yesterday.year && cDate.month == yesterday.month && cDate.day == yesterday.day;
+      } else if (_selectedTimePeriod == 'week') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final endOfWeek = startOfWeek.add(const Duration(days: 7));
+        inPeriod = cDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && cDate.isBefore(endOfWeek);
+      } else if (_selectedTimePeriod == 'month') {
+        inPeriod = cDate.year == now.year && cDate.month == now.month;
+      } else {
+        inPeriod = true;
+      }
+
+      if (inPeriod) {
+        championshipRevenue += (c.paidTeams.length * c.entryFee);
+      }
+    }
+
+    digitalVspBalance += championshipRevenue;
+    totalPipeline += championshipRevenue;
 
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 

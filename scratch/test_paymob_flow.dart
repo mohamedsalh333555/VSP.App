@@ -6,7 +6,7 @@ void main() async {
   print('🚀 STARTING AUTOMATED PAYMOB TEST FLOW');
   print('====================================');
 
-  const apiKey = 'ZXlKaGJHY2lPaUpJVXpVeE1pSXNJblI1Y0NJNklrcFhWQ0o5LmV5SmpiR0Z6Y3lJNklrMWxjbU5vWVc1MElpd2ljSEp2Wm1sc1pWOXdheUk2TVRFNU5ETTFOeXdpYm1GdFpTSTZJbWx1YVhScFlXd2lmUS5td0FOSGhWbzB5a2N1R2swb3UwYk5zMlRveEpscWNwY2YwZUZxb1liOXlEaUU3MmV4TFEzVDNJTnBqREVleGNWQkE2VFQwYzk3OHZLWWRoOGtsbXFMUQ==';
+  final apiKey = const String.fromEnvironment('PAYMOB_API_KEY', defaultValue: '');
   const cardIntegrationId = '5772488';
   const walletIntegrationId = '5772511';
   const iframeId = '1059114';

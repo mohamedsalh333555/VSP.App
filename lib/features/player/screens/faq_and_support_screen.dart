@@ -1,9 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../core/repositories/app_settings_repository.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 
 class FAQAndSupportScreen extends StatefulWidget {
   const FAQAndSupportScreen({super.key});
@@ -14,17 +15,23 @@ class FAQAndSupportScreen extends StatefulWidget {
 
 class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   Future<void> _launchWhatsApp() async {
-    final Uri url = Uri.parse('https://wa.me/201100229462?text=${Uri.encodeComponent('أهلاً دعم VSP، أحتاج مساعدة بشأن التطبيق/الحجوزات.')}');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url, mode: LaunchMode.externalApplication);
-    }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final message = isArabic 
+        ? 'أهلاً دعم VSP، أحتاج مساعدة بشأن التطبيق/الحجوزات.' 
+        : 'Hi VSP Support, I need help regarding the app/bookings.';
+    try {
+      final settings = await AppSettingsRepository().getSettings();
+      final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
+      await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
+    } catch (_) {}
   }
 
   Future<void> _launchPhoneCall() async {
-    final Uri url = Uri.parse('tel:+201100229462');
-    if (await canLaunchUrl(url)) {
-      await launchUrl(url);
-    }
+    try {
+      final settings = await AppSettingsRepository().getSettings();
+      final phone = settings.supportPhone.isNotEmpty ? settings.supportPhone : '01100229462';
+      await VSPLauncherUtils.makePhoneCall(context, phone);
+    } catch (_) {}
   }
 
   @override

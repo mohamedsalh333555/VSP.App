@@ -1191,6 +1191,7 @@ class Team {
   Team copyWith({
     String? id,
     String? name,
+    String? captainId,
     String? captainName,
     String? captainImageUrl,
     String? date,
@@ -1218,6 +1219,7 @@ class Team {
     return Team(
       id: id ?? this.id,
       name: name ?? this.name,
+      captainId: captainId ?? this.captainId,
       captainName: captainName ?? this.captainName,
       captainImageUrl: captainImageUrl ?? this.captainImageUrl,
       date: date ?? this.date,
