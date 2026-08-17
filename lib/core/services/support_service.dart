@@ -1,9 +1,10 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import '../providers/auth_provider.dart';
+import '../repositories/app_settings_repository.dart';
+import '../utils/vsp_launcher_utils.dart';
 
 class SupportService {
   static final SupportService _instance = SupportService._internal();
@@ -104,24 +105,20 @@ class SupportService {
     final user = auth.userModel;
 
     final name = user?.name ?? 'Guest';
-    final phone = user?.phone ?? 'N/A';
+    final userPhone = user?.phone ?? 'N/A';
     final uid = user?.uid ?? 'N/A';
     final governorate = user?.governorate ?? 'N/A';
 
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     final messageText = isArabic
-        ? "مرحباً دعم VSP، لدي مشكلة بخصوص $category. تفاصيل حسابي: الاسم: $name، الهاتف: $phone، الكود: $uid، المحافظة: $governorate."
-        : "Hi VSP Support, I need help with $category. Account Details: Name: $name, Phone: $phone, UID: $uid, Governorate: $governorate.";
+        ? "مرحباً دعم VSP، لدي مشكلة بخصوص $category. تفاصيل حسابي: الاسم: $name، الهاتف: $userPhone، الكود: $uid، المحافظة: $governorate."
+        : "Hi VSP Support, I need help with $category. Account Details: Name: $name, Phone: $userPhone, UID: $uid, Governorate: $governorate.";
 
-    final encodedMessage = Uri.encodeComponent(messageText);
-    final url = 'https://wa.me/201100229462?text=$encodedMessage';
-    
     try {
-      await launchUrl(
-        Uri.parse(url), 
-        mode: LaunchMode.externalApplication
-      );
+      final settings = await AppSettingsRepository().getSettings();
+      final supportNumber = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
+      await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: messageText);
     } catch (e) {
       debugPrint('Could not launch WhatsApp support: $e');
     }

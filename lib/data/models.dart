@@ -1045,6 +1045,7 @@ class Booking {
 class Team {
   final String id;
   final String name;
+  final String captainId;
   final String captainName;
   final String captainImageUrl;
   final String logoUrl;
@@ -1081,6 +1082,7 @@ class Team {
   Team({
     required this.id,
     required this.name,
+    this.captainId = '',
     required this.captainName,
     required this.captainImageUrl,
     this.logoUrl = '',
@@ -1120,6 +1122,7 @@ class Team {
     return Team(
       id: docId,
       name: data['name'] ?? '',
+      captainId: data['captain_id'] ?? data['captainId'] ?? '',
       captainName: data['captainName'] ?? data['captain_name'] ?? 'Captain',
       captainImageUrl: data['captainImageUrl'] ?? data['captain_image_url'] ?? data['logoUrl'] ?? data['logo_url'] ?? '', 
       logoUrl: data['logoUrl'] ?? data['logo_url'] ?? data['captainImageUrl'] ?? data['captain_image_url'] ?? '',
@@ -1154,6 +1157,8 @@ class Team {
     return {
       'name': name,
       'name_lowercase': name.toLowerCase(),
+      'captain_id': captainId,
+      'captainId': captainId,
       'captainName': captainName,
       'captainImageUrl': captainImageUrl,
       'logoUrl': logoUrl,

@@ -326,7 +326,7 @@ class MatchRepository {
                                b.status == BookingStatus.upcoming;
             final isFuture = b.endTime.isAfter(now);
             final hasSpace = b.currentPlayers < b.totalFieldCapacity;
-            final isRightType = b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
+            final isRightType = b.bookingType == BookingType.openJoin || b.bookingType == BookingType.challenge || b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
             return isConfirmed && isFuture && hasSpace && isRightType;
           }).toList();
 

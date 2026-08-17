@@ -239,8 +239,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? AppConfig.paymobWalletIntegrationId 
         : AppConfig.paymobCardIntegrationId;
 
-    // 🚀 Generate authentic Paymob Payment Token
-    final paymentToken = await PaymobService.getPaymentToken(
+    final unifiedUrl = await PaymobService.getUnifiedCheckoutUrl(
       amountInEgp: totalAmount,
       bookingId: _booking!.id,
       userEmail: userEmail,
@@ -249,28 +248,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       integrationId: selectedIntegrationId,
     );
 
-    if (paymentToken != null && paymentToken.isNotEmpty) {
-      String paymobUrl;
-      if (_selectedMethod == 'wallet') {
-        final walletUrl = await PaymobService.getWalletRedirectUrl(
-          paymentToken: paymentToken,
-          phone: userPhone,
-        );
-        paymobUrl = walletUrl ?? 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
-      } else {
-        // 💳 Modern Paymob Unified Checkout Page via Intention API
-        final unifiedUrl = await PaymobService.getUnifiedCheckoutUrl(
-          amountInEgp: totalAmount,
-          bookingId: _booking!.id,
-          userEmail: userEmail,
-          userName: userName,
-          userPhone: userPhone,
-          integrationId: selectedIntegrationId,
-        );
-        paymobUrl = unifiedUrl ?? 'https://accept.paymob.com/api/acceptance/iframes/${AppConfig.paymobIframeId}?payment_token=$paymentToken';
-      }
+    String? paymobUrl = unifiedUrl;
+    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
 
-      final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
+    if (paymobUrl != null && paymobUrl.isNotEmpty) {
       if (isArabic && !paymobUrl.contains('lang=')) {
         paymobUrl += paymobUrl.contains('?') ? '&lang=ar' : '?lang=ar';
       }
@@ -281,7 +262,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           context,
           MaterialPageRoute(
             builder: (_) => PaymobWebViewScreen(
-              initialUrl: paymobUrl,
+              initialUrl: paymobUrl!,
               title: isArabic ? 'سداد الحجز بالفيزا 💳' : 'Pay via Card 💳',
               bookingId: _booking?.id,
             ),
@@ -309,7 +290,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     } else {
       if (mounted) {
         setState(() => _isAwaitingWebhook = false);
-        final isArabic = Localizations.localeOf(context).languageCode == 'ar';
         VSPFeedback.showError(
           context,
           isArabic 

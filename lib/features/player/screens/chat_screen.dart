@@ -432,8 +432,8 @@ class _ChatScreenState extends State<ChatScreen> {
                          widget.booking.id.startsWith('support_chat_') || 
                          widget.booking.id.startsWith('chat_');
 
-    final bool isExpired = !isSpecialChat && widget.booking.endTime.isBefore(now);
-    final bool isCancelled = !isSpecialChat && widget.booking.status == BookingStatus.cancelled;
+    final bool isExpired = isSpecialChat ? false : widget.booking.endTime.isBefore(now);
+    final bool isCancelled = isSpecialChat ? false : widget.booking.status == BookingStatus.cancelled;
 
     if (isExpired || isCancelled) {
       return Container(

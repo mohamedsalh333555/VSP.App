@@ -1112,9 +1112,8 @@ class AuthProvider with ChangeNotifier {
               .inFilter('status', ['confirmed', 'pending']);
 
           for (final b in bookingsRes as List) {
-            final dateStr = b['booking_date']?.toString() ?? '';
             final startStr = b['start_time']?.toString() ?? '';
-            final bookingDt = _parseBookingDateTime(dateStr, startStr);
+            final bookingDt = DateTime.tryParse(startStr)?.toLocal() ?? _parseBookingDateTime('', startStr);
             if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
               final diffMinutes = bookingDt.difference(now).inMinutes;
               if (diffMinutes <= 120 && diffMinutes >= -120) {
@@ -1140,9 +1139,8 @@ class AuthProvider with ChangeNotifier {
           final joinedUsers = List<String>.from(b['joined_user_ids'] ?? []);
           
           if (createdBy == uid || joinedUsers.contains(uid)) {
-            final dateStr = b['booking_date']?.toString() ?? '';
             final startStr = b['start_time']?.toString() ?? '';
-            final bookingDt = _parseBookingDateTime(dateStr, startStr);
+            final bookingDt = DateTime.tryParse(startStr)?.toLocal() ?? _parseBookingDateTime('', startStr);
 
             if (bookingDt != null && bookingDt.isAfter(now.subtract(const Duration(hours: 2)))) {
               final diffMinutes = bookingDt.difference(now).inMinutes;

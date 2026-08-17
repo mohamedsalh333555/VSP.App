@@ -344,18 +344,19 @@ class SupabaseBookingRepository implements BookingRepository {
 
   Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
     try {
-      final response = await _supabase.from('bookings').select();
-      final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
+      var query = _supabase.from('bookings').select();
+      
+      if (stadiumIds != null && stadiumIds.isNotEmpty) {
+        query = query.inFilter('stadium_id', stadiumIds);
+      } else {
+        query = query.eq('owner_id', ownerId);
+      }
+
+      final response = await query;
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .where((b) {
-            if (b.ownerId.trim().toLowerCase() == ownerId.trim().toLowerCase()) return true;
-            if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
-              return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
-            }
-            return true;
-          })
           .toList();
+          
       bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
       VSPLogger.i('⚡ Direct REST fetch returned ${bookings.length} bookings');
       return bookings;

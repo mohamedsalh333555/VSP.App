@@ -169,7 +169,11 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                   final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
 
                   bool isRightStatus = false;
-                  if (_selectedTab == 0) { // Coming (Upcoming)
+                  final isCompletedStatus = c.status.toLowerCase() == 'completed' || c.status.toLowerCase() == 'finished';
+
+                  if (isCompletedStatus) {
+                    isRightStatus = (_selectedTab == 2);
+                  } else if (_selectedTab == 0) { // Coming (Upcoming)
                     isRightStatus = c.startDate.isAfter(todayEnd);
                   } else if (_selectedTab == 1) { // Ongoing
                     isRightStatus = (c.startDate.isBefore(todayEnd) || c.startDate.isAtSameMomentAs(todayEnd)) &&

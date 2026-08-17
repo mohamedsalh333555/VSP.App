@@ -2,13 +2,14 @@ import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/models/user_model.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/repositories/app_settings_repository.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 
 class SubscriptionPlansScreen extends StatefulWidget {
   const SubscriptionPlansScreen({super.key});
@@ -402,15 +403,13 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Future<void> _contactAdminForUpgrade(BuildContext context, String planName, bool isArabic) async {
-    final Uri whatsappUri = Uri.parse('https://wa.me/201100229462?text=${Uri.encodeComponent(isArabic ? 'أهلاً إدارة VSP، يرغب مالك الملعب في الاشتراك / ترقية حسابه إلى باقة $planName.' : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.')}');
+    final message = isArabic 
+        ? 'أهلاً إدارة VSP، يرغب مالك الملعب في الاشتراك / ترقية حسابه إلى باقة $planName.' 
+        : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.';
     try {
-      if (await canLaunchUrl(whatsappUri)) {
-        await launchUrl(whatsappUri, mode: LaunchMode.externalApplication);
-      } else {
-        if (context.mounted) {
-          VSPFeedback.showSuccess(context, isArabic ? 'يرجى التواصل مع إدارة VSP لطلب الترقية.' : 'Please contact VSP support to request upgrade.');
-        }
-      }
+      final settings = await AppSettingsRepository().getSettings();
+      final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
+      await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
     } catch (_) {
       if (context.mounted) {
         VSPFeedback.showSuccess(context, isArabic ? 'يرجى التواصل مع إدارة VSP لطلب الترقية.' : 'Please contact VSP support to request upgrade.');

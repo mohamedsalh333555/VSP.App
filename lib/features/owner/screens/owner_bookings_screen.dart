@@ -319,8 +319,8 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   try {
                     final int startH = _parseTimeToHour(selectedStadium.openingTime);
                     final int endH = _parseTimeToHour(selectedStadium.closingTime);
-                    final int breakStartMin = selectedStadium.isSplitShift ? _parseTimeToMinutes(selectedStadium.breakStartTime) : -1;
-                    final int breakEndMin = selectedStadium.isSplitShift ? _parseTimeToMinutes(selectedStadium.breakEndTime) : -1;
+                    final int breakStartMin = selectedStadium.isSplitShift ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakStartTime) : -1;
+                    final int breakEndMin = selectedStadium.isSplitShift ? AppDateFormatter.parseTimeToMinutes(selectedStadium.breakEndTime) : -1;
                     
                     int currentH = startH;
                     int currentM = 0;
@@ -1092,8 +1092,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
     int maxMins = 720;
 
     // 1. Closing time constraint
-    final int closingMin = _parseTimeToMinutes(stadium.closingTime);
-    final int openingMin = _parseTimeToMinutes(stadium.openingTime);
+    final int closingMin = AppDateFormatter.parseTimeToMinutes(stadium.closingTime);
+    final int openingMin = AppDateFormatter.parseTimeToMinutes(stadium.openingTime);
     if (openingMin != closingMin) {
       int minsToClosing;
       if (closingMin > slotMin) {
@@ -1108,8 +1108,8 @@ class _BookingSheetContentState extends State<_BookingSheetContent> {
 
     // 2. Break time constraint
     if (stadium.isSplitShift) {
-      final int bStartMin = _parseTimeToMinutes(stadium.breakStartTime);
-      final int bEndMin = _parseTimeToMinutes(stadium.breakEndTime);
+      final int bStartMin = AppDateFormatter.parseTimeToMinutes(stadium.breakStartTime);
+      final int bEndMin = AppDateFormatter.parseTimeToMinutes(stadium.breakEndTime);
       if (bStartMin != bEndMin) {
         int minsToBreak;
         if (bStartMin > slotMin) {

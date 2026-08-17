@@ -734,8 +734,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
 
     for (var b in bookings) {
       final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      final bool isEnded = now.isAfter(b.endTime) || b.status == BookingStatus.completed;
-      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice) || isEnded;
+      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice);
 
       final double paidAmount = isPaidInFull 
           ? totalPrice 

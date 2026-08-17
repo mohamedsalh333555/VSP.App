@@ -64,14 +64,18 @@ class TeamRepository {
         return true;
       }
 
-      // ب. التثبت من وجود 5 أعضاء على الأقل بأرقام هواتف موثقة ومختلفة
+      // ب. التثبت من وجود 5 أعضاء على الأقل بأرقام هواتف موثقة ومختلفة باستخدام captainId الفريق
       final memberUids = await getTeamMemberUids(teamId);
-      if (memberUids.length < 5) return false;
+      final captainId = team.captainId.isNotEmpty ? team.captainId : (memberUids.isNotEmpty ? memberUids.first : '');
+      if (captainId.isEmpty) return false;
+
+      final allUids = memberUids.contains(captainId) ? memberUids : [captainId, ...memberUids];
+      if (allUids.length < 5) return false;
 
       final response = await _supabase
           .from('users')
           .select('phone')
-          .inFilter('id', memberUids);
+          .inFilter('id', allUids);
 
       final phones = (response as List)
           .map((row) => PhoneUtils.normalize(row['phone']?.toString() ?? ''))
