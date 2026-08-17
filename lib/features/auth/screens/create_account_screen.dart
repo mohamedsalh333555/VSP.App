@@ -12,7 +12,6 @@ import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
-import 'package:go_router/go_router.dart';
 
 import 'signup_screen.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -244,12 +243,8 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 onPressed: () async {
                                   authProvider.setUserType(isUserOwner ? 'owner' : 'player');
                                   final success = await authProvider.signInWithApple();
-                                  if (context.mounted) {
-                                    if (success) {
-                                      context.go('/');
-                                    } else {
-                                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
-                                    }
+                                  if (context.mounted && !success) {
+                                    VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
                                   }
                                 },
                               ),
@@ -281,16 +276,12 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 ],
                               ),
                               onPressed: () async {
-                                  authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                                  final success = await authProvider.signInWithGoogle();
-                                  if (context.mounted) {
-                                    if (success) {
-                                      context.go('/');
-                                    } else {
-                                      VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
-                                    }
-                                  }
-                               },
+                                authProvider.setUserType(isUserOwner ? 'owner' : 'player');
+                                final success = await authProvider.signInWithGoogle();
+                                if (context.mounted && !success) {
+                                  VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+                                }
+                              },
                             ),
                           ),
                         ],

@@ -537,11 +537,6 @@ class NotificationHandler {
                   .from('owner_documents')
                   .getPublicUrl(storagePath);
 
-              final booking = await SupabaseBookingRepository().getBookingById(bookingId);
-              final double imageLat = stadiumLat;
-              final double imageLng = stadiumLng;
-              final DateTime imageTimestamp = booking != null ? booking.endTime.add(const Duration(minutes: 5)) : DateTime.now();
-
               final bool selfieSuccess = await disputeWithGeotaggedSelfie(
                 bookingId: bookingId,
                 playerId: playerId,

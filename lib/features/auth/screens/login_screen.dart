@@ -162,7 +162,7 @@ class _LoginScreenState extends State<LoginScreen> {
     if (success) {
       if (mounted) {
         HapticFeedback.lightImpact();
-        context.go('/');
+        // ✅ GoRouter handles declarative navigation to /, /verify-email, /onboarding, or /owner
       }
     } else {
       if (mounted) {

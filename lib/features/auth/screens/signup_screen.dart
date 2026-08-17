@@ -12,7 +12,6 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:go_router/go_router.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
@@ -154,16 +153,10 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      final isAlreadyComplete = authProvider.userModel?.isRegistrationComplete == true &&
-          (authProvider.userModel?.phone?.isNotEmpty == true);
-
-      if (!isAlreadyComplete) {
-        final prefs = await SharedPreferences.getInstance();
-        await prefs.setString('pending_verification_email', email);
-
-        if (!mounted) return;
-        context.push('/verify-email', extra: email);
-      }
+      final prefs = await SharedPreferences.getInstance();
+      await prefs.setString('pending_verification_email', email);
+      // ✅ GoRouter handles declarative navigation to /verify-email, /onboarding, or /
+      // via authProvider's refreshListenable / redirectLogic once notifyListeners() fires.
     } else {
       if (mounted) {
         String errorMsg = authProvider.errorMessage ?? 'فشل إنشاء الحساب';
