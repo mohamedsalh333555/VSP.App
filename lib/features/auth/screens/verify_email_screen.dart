@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/services/secure_storage_service.dart';
 
 /// Screen shown after email signup (when bypassOtp == false).
 /// Allows the user to enter their 6-digit OTP, resend it (with a 60-second
@@ -92,8 +93,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
   }
 
   Future<void> _loadEmailFromPrefs() async {
-    final prefs = await SharedPreferences.getInstance();
-    final savedEmail = prefs.getString('pending_verification_email');
+    final savedEmail = await SecureStorageService.readSecure('pending_verification_email');
     if (savedEmail != null && savedEmail.isNotEmpty) {
       setState(() {
         _resolvedEmail = savedEmail;

@@ -13,6 +13,7 @@ import '../services/location_service.dart';
 import '../services/logger_service.dart';
 import '../utils/phone_utils.dart';
 import '../repositories/user_repository.dart';
+import '../services/secure_storage_service.dart';
 
 class AuthProvider with ChangeNotifier {
   final AuthService _authService = AuthService();
@@ -138,7 +139,7 @@ class AuthProvider with ChangeNotifier {
     
     try {
       final prefs = await SharedPreferences.getInstance();
-      final pendingRole = prefs.getString('pending_oauth_role');
+      final pendingRole = await SecureStorageService.readSecure('pending_oauth_role') ?? prefs.getString('pending_oauth_role');
       if (pendingRole != null) {
         _userType = pendingRole;
       }
@@ -251,18 +252,6 @@ class AuthProvider with ChangeNotifier {
           );
         }
 
-        // 🛡️ ROLE AUTO-CORRECTION: If profile was mistakenly created as 'owner'
-        // without a stadium or onboarding confirmation, but has a player position, revert to 'player'.
-        if (_userModel != null &&
-            _userModel!.role == 'owner' &&
-            !_userModel!.hasStadium &&
-            (_userModel!.additionalData?['isOnboardingConfirmed'] != true) &&
-            _userModel!.position != null &&
-            _userModel!.position!.isNotEmpty) {
-          VSPLogger.w("⚠️ Auto-correcting accidental 'owner' role to 'player' for UID: ${user.id}");
-          _userModel = _userModel!.copyWith(role: 'player');
-          _userRepository.completeRegistrationFlags(user.id, {'role': 'player'});
-        }
 
         // ===== AUTO-LOGIN REDIRECT =====
         // For an existing complete user (phone set + isRegistrationComplete),
@@ -291,6 +280,17 @@ class AuthProvider with ChangeNotifier {
           final newUserData = await _userRepository.getUserData(user.id);
           if (newUserData != null) {
             _userModel = UserModel.fromFirestore(newUserData);
+            // ⚡ OAUTH EMAIL VERIFICATION SYNC:
+            // Google/Apple users have emailConfirmedAt set by the OAuth provider automatically.
+            if (user.emailConfirmedAt != null && !_userModel!.isEmailVerified) {
+              _userModel = _userModel!.copyWith(isEmailVerified: true);
+              _userRepository.updateUserProfile(
+                user.id,
+                {'is_email_verified': true},
+                authUser: user,
+                role: newUserData['role']?.toString(),
+              );
+            }
             _isGhostUser = false;
             _dataFetchError = false;
           } else {
@@ -473,7 +473,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
-      await prefs.setString('pending_oauth_role', _userType ?? 'player');
+      await SecureStorageService.writeSecure('pending_oauth_role', _userType ?? 'player');
 
       final result = await _authService.signInWithGoogle(role: _userType);
 

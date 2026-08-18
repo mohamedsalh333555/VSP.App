@@ -42,13 +42,13 @@ class ImagePickService {
       sourcePath: picked.path,
       uiSettings: [
         AndroidUiSettings(
-          toolbarTitle: '',
-          toolbarColor: const Color(0xFF0D0D0D),
-          toolbarWidgetColor: Colors.white,
-          activeControlsWidgetColor: const Color(0xFF5FE3A1),
+          toolbarTitle: 'تعديل وقص الصورة',
+          toolbarColor: const Color(0xFF14171A),
+          toolbarWidgetColor: const Color(0xFF9FDF02), // 🌟 Bright VSP Accent Neon Green for checkmark & back icons
+          activeControlsWidgetColor: const Color(0xFF9FDF02), // Bright accent green for crop handles & sliders
           backgroundColor: const Color(0xFF0D0D0D),
           dimmedLayerColor: Colors.black87,
-          cropFrameColor: const Color(0xFF5FE3A1),
+          cropFrameColor: const Color(0xFF9FDF02),
           cropGridColor: Colors.white24,
           cropStyle: isSquare ? CropStyle.circle : CropStyle.rectangle,
           showCropGrid: true,
@@ -58,8 +58,8 @@ class ImagePickService {
           aspectRatioPresets: ratios,
         ),
         IOSUiSettings(
-          title: '',
-          doneButtonTitle: 'تم',
+          title: 'تعديل وقص الصورة',
+          doneButtonTitle: 'تم التعديل',
           cancelButtonTitle: 'إلغاء',
           aspectRatioLockEnabled: !isFree,
           aspectRatioPickerButtonHidden: !isFree,

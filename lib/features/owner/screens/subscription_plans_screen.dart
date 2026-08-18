@@ -408,6 +408,7 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
         : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.';
     try {
       final settings = await AppSettingsRepository().getSettings();
+      if (!context.mounted) return;
       final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
     } catch (_) {

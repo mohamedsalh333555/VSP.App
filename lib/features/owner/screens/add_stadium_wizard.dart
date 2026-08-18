@@ -490,7 +490,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       );
       final response = await http.get(url, headers: {
         'User-Agent': 'VSP_Application/1.0',
-      });
+      }).timeout(const Duration(seconds: 5));
       if (response.statusCode == 200) {
         final List data = json.decode(response.body);
         return data.map((item) => {

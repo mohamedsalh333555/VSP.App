@@ -11,8 +11,8 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
+import '../../../core/services/secure_storage_service.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -153,8 +153,7 @@ class _SignupScreenState extends State<SignupScreen> {
     if (!mounted) return;
 
     if (success) {
-      final prefs = await SharedPreferences.getInstance();
-      await prefs.setString('pending_verification_email', email);
+      await SecureStorageService.writeSecure('pending_verification_email', email);
       // ✅ GoRouter handles declarative navigation to /verify-email, /onboarding, or /
       // via authProvider's refreshListenable / redirectLogic once notifyListeners() fires.
     } else {

@@ -115,6 +115,7 @@ class SupportService {
 
     try {
       final settings = await AppSettingsRepository().getSettings();
+      if (!context.mounted) return;
       final supportNumber = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
       await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: messageText);
     } catch (e) {

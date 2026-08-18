@@ -21,6 +21,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
         : 'Hi VSP Support, I need help regarding the app/bookings.';
     try {
       final settings = await AppSettingsRepository().getSettings();
+      if (!mounted) return;
       final phone = settings.whatsappNumber.isNotEmpty ? settings.whatsappNumber : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
       await VSPLauncherUtils.openWhatsApp(context, phone: phone, message: message);
     } catch (_) {}
@@ -29,6 +30,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   Future<void> _launchPhoneCall() async {
     try {
       final settings = await AppSettingsRepository().getSettings();
+      if (!mounted) return;
       final phone = settings.supportPhone.isNotEmpty ? settings.supportPhone : '01100229462';
       await VSPLauncherUtils.makePhoneCall(context, phone);
     } catch (_) {}
