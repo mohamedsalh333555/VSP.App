@@ -37,9 +37,7 @@ import '../../../core/providers/booking_provider.dart';
 import 'global_search_screen.dart';
 import 'notifications_center_screen.dart';
 
-// المفتاح العالمي للتحكم في تبويبات صفحة البطل
-final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
-// المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة
+// المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
 final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
 
 class PlayerHomeScreen extends StatefulWidget {

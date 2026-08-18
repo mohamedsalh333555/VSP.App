@@ -40,6 +40,7 @@ class ChatRepository {
     try {
       await _supabase.from('chat_messages').insert({
         'conversation_id': conversationId,
+        'booking_id': conversationId, // Pass conversationId as booking_id to satisfy RLS policy
         'sender_id': message.senderId,
         'sender_name': message.senderName,
         'text': message.text,

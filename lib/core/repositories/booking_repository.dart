@@ -536,12 +536,14 @@ class SupabaseBookingRepository implements BookingRepository {
 
       Future<void> saveRating() async {
         if (rating != null && rating > 0) {
+          final effectiveUserId = _supabase.auth.currentUser?.id ?? booking.createdByUserId;
+
           // 1. تحقق من عدم تكرار التقييم لنفس الملعب والمستخدم في Supabase
           final existing = await _supabase
               .from('reviews')
               .select('id')
               .eq('stadium_id', booking.stadiumId)
-              .eq('user_id', teamId)
+              .eq('user_id', effectiveUserId)
               .maybeSingle();
 
           if (existing != null) {
@@ -552,7 +554,7 @@ class SupabaseBookingRepository implements BookingRepository {
           // 2. إدراج التقييم الجديد في جدول reviews في Supabase (سيتكفل الـ Trigger بتحديث الملعب تلقائياً)
           await _supabase.from('reviews').insert({
             'stadium_id': booking.stadiumId,
-            'user_id': teamId,
+            'user_id': effectiveUserId,
             'rating': rating.toInt(),
             'review_text': review ?? '',
             'created_at': DateTime.now().toUtc().toIso8601String(),

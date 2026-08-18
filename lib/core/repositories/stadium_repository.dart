@@ -134,6 +134,8 @@ class StadiumRepository {
         'reviews_count': 0,
         'deposit_amount': sanitizedData['depositAmount'] ?? sanitizedData['deposit_amount'] ?? 0.0,
         'needs_deposit': sanitizedData['needsDeposit'] ?? sanitizedData['needs_deposit'] ?? false,
+        'lat': sanitizedData['lat'],
+        'lng': sanitizedData['lng'],
       };
 
       final response = await _supabase
@@ -203,6 +205,8 @@ class StadiumRepository {
       if (securedData.containsKey('needsDeposit')) pgData['needs_deposit'] = securedData['needsDeposit'];
       if (securedData.containsKey('players_per_team')) pgData['players_per_team'] = securedData['players_per_team'];
       if (securedData.containsKey('total_field_capacity')) pgData['total_field_capacity'] = securedData['total_field_capacity'];
+      if (securedData.containsKey('lat')) pgData['lat'] = securedData['lat'];
+      if (securedData.containsKey('lng')) pgData['lng'] = securedData['lng'];
 
       // Keep base_price in sync with price_per_hour if modified
       if (pgData.containsKey('price_per_hour') && !pgData.containsKey('base_price')) {
@@ -234,6 +238,8 @@ class StadiumRepository {
     String? ownerIdUrl,
     double depositAmount = 0.0,
     bool needsDeposit = false,
+    double? lat,
+    double? lng,
     Map<String, dynamic>? features,
   }) async {
     return await addStadium({
@@ -250,6 +256,8 @@ class StadiumRepository {
       'notes': notes,
       'contractUrl': contractUrl,
       'ownerIdUrl': ownerIdUrl,
+      'lat': lat,
+      'lng': lng,
       'isVerified': true,
       'features': features ?? {},
     });

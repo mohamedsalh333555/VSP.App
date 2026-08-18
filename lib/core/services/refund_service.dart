@@ -52,7 +52,8 @@ class RefundService {
       }
 
       await _supabase.from('bookings').update({
-        'status': 'refund_processing',
+        'status': 'cancelled',
+        'payment_status': 'refunded',
         'cancelled_at': DateTime.now().toUtc().toIso8601String(),
         'refund_amount': refundAmount,
       }).eq('id', bookingId);

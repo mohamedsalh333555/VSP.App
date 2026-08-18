@@ -1,8 +1,10 @@
-﻿import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../providers/auth_provider.dart';
 import '../ui/tokens/vsp_tokens.dart';
+import '../repositories/app_settings_repository.dart';
+import '../utils/vsp_launcher_utils.dart';
 
 class SuspendedAccountScreen extends StatelessWidget {
   const SuspendedAccountScreen({super.key});
@@ -27,7 +29,8 @@ class SuspendedAccountScreen extends StatelessWidget {
                   shape: BoxShape.circle,
                   border: Border.all(color: Colors.redAccent.withValues(alpha: 0.2)),
                 ),
-                child: Icon(Iconsax.close_circle_copy,
+                child: const Icon(
+                  Iconsax.close_circle_copy,
                   color: Colors.redAccent,
                   size: 56,
                 ),
@@ -70,10 +73,24 @@ class SuspendedAccountScreen extends StatelessWidget {
                     ),
                     elevation: 0,
                   ),
-                  onPressed: () {
-                    // Launch WhatsApp or support contact link placeholder
+                  onPressed: () async {
+                    final user = auth.userModel;
+                    final message = isAr
+                        ? 'مرحباً فريق دعم VSP 👋\nأريد الاستفسار بخصوص تعليق حسابي.\nالاسم: ${user?.name ?? "غير متوفر"}\nمعرف الحساب (UID): ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nرقم الهاتف: ${user?.phone ?? "N/A"}'
+                        : 'Hi VSP Support 👋\nI would like to inquire about my suspended account.\nName: ${user?.name ?? "N/A"}\nUID: ${user?.uid ?? auth.currentUser?.id ?? "N/A"}\nPhone: ${user?.phone ?? "N/A"}';
+
+                    try {
+                      final settings = await AppSettingsRepository().getSettings();
+                      if (!context.mounted) return;
+                      final supportNumber = settings.whatsappNumber.isNotEmpty
+                          ? settings.whatsappNumber
+                          : (settings.supportPhone.isNotEmpty ? settings.supportPhone : '201100229462');
+                      await VSPLauncherUtils.openWhatsApp(context, phone: supportNumber, message: message);
+                    } catch (e) {
+                      debugPrint('Could not launch WhatsApp support: $e');
+                    }
                   },
-                  icon: Icon(Iconsax.headphones_copy, color: VSPColors.background),
+                  icon: const Icon(Iconsax.headphones_copy, color: VSPColors.background),
                   label: Text(
                     isAr ? 'التواصل مع الدعم' : 'Contact Support',
                     style: const TextStyle(

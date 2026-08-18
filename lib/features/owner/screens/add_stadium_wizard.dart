@@ -74,6 +74,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   final bool _isUploading = false;
   bool _isLocationLoading = false;
   bool _isSaving = false;
+  double? _latitude;
+  double? _longitude;
   // ignore: unused_field
   bool _isLoadingData = false;
   String? _governorate; // ✅ Extracted via Geocoding for filtering
@@ -122,6 +124,23 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _setupAutoSaveListeners();
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _nameController.dispose();
+    _priceController.dispose();
+    _capacityController.dispose();
+    _locationController.dispose();
+    _lengthController.dispose();
+    _widthController.dispose();
+    _seatsController.dispose();
+    _notesController.dispose();
+    _stadiumPhoneController.dispose();
+    _pageController.dispose();
+    _ballPriceController.dispose();
+    _depositController.dispose();
+    super.dispose();
   }
 
   Future<void> _saveToPrefs(String key, String value) async {
@@ -406,23 +425,6 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     }
   }
 
-  @override
-  void dispose() {
-    _nameController.dispose();
-    _priceController.dispose();
-    _capacityController.dispose();
-    _locationController.dispose();
-    _lengthController.dispose();
-    _widthController.dispose();
-    _seatsController.dispose();
-    _notesController.dispose();
-    _stadiumPhoneController.dispose();
-    _pageController.dispose();
-    _ballPriceController.dispose();
-    _depositController.dispose();
-    super.dispose();
-  }
-
   // --- Actions ---
 
   void _showError(String message) {
@@ -433,6 +435,11 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   Future<void> _resolveLocationAndAddress(double lat, double lng) async {
     try {
+      setState(() {
+        _latitude = lat;
+        _longitude = lng;
+      });
+
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng).timeout(const Duration(seconds: 5));
       if (placemarks.isNotEmpty) {
         final place = placemarks.first;
@@ -1220,6 +1227,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'features': stadiumFeatures,
             'opening_time': _formatTime(_startTime, '04:00 PM'),
             'closing_time': _formatTime(_endTime, '03:00 AM'),
+            'lat': _latitude,
+            'lng': _longitude,
           });
       } else {
           // Create Logic
@@ -1234,6 +1243,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             imageUrl: uploadedUrls.isNotEmpty ? uploadedUrls.first : '',
             images: uploadedUrls,
             ownerId: user.uid,
+            lat: _latitude,
+            lng: _longitude,
             notes: _notesController.text.trim().isEmpty 
               ? "We ensure a professional environment. Please arrive on time. Respect the facility and equipment. Late arrival may result in reduced playing time."
               : _notesController.text.trim(),
@@ -1273,13 +1284,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   String _formatTime(TimeOfDay? time, String defaultText) {
     if (time == null) return defaultText;
-    final hour = time.hourOfPeriod == 0 ? 12 : time.hourOfPeriod;
+    final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final period = time.period == DayPeriod.am
-        ? (isArabic ? 'ص' : 'AM')
-        : (isArabic ? 'م' : 'PM');
-    return '$hour:$minute $period';
+    return '$hour:$minute:00';
   }
 
   // --- UI Building ---
@@ -2133,7 +2140,22 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         child: Row(
           children: [
             if (thumbnail != null)
-              thumbnail
+              Stack(
+                clipBehavior: Clip.none,
+                children: [
+                  thumbnail,
+                  if (fileUrl != null)
+                    Positioned(
+                      right: -4,
+                      bottom: -4,
+                      child: Container(
+                        decoration: const BoxDecoration(color: Colors.white, shape: BoxShape.circle),
+                        padding: const EdgeInsets.all(1),
+                        child: const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
+                      ),
+                    ),
+                ],
+              )
             else
               Icon(
                 fileUrl != null ? Iconsax.tick_circle_copy : Iconsax.export_3_copy,
@@ -2151,9 +2173,47 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                   ),
                   const SizedBox(height: 4),
                   if (isUploading)
-                    Text(isArabic ? "جاري الرفع... $progress%" : "Uploading... $progress%", style: const TextStyle(color: Colors.orange, fontSize: 12))
+                    Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            const SizedBox(
+                              width: 12,
+                              height: 12,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.orange),
+                            ),
+                            const SizedBox(width: 6),
+                            Text(
+                              isArabic ? "جاري الرفع... $progress%" : "Uploading... $progress%",
+                              style: const TextStyle(color: Colors.orange, fontSize: 12, fontWeight: FontWeight.w600),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 6),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(4),
+                          child: LinearProgressIndicator(
+                            value: (progress <= 0) ? null : progress / 100.0,
+                            backgroundColor: Colors.orange.withValues(alpha: 0.2),
+                            color: Colors.orange,
+                            minHeight: 4,
+                          ),
+                        ),
+                      ],
+                    )
                   else if (fileUrl != null)
-                    Text(isArabic ? "تم الرفع بنجاح" : "Uploaded successfully", style: const TextStyle(color: Colors.green, fontSize: 12))
+                    Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 14),
+                        const SizedBox(width: 4),
+                        Text(
+                          isArabic ? "تم الرفع بنجاح" : "Uploaded successfully",
+                          style: const TextStyle(color: Colors.green, fontSize: 12, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    )
                   else
                     Text(
                       isArabic ? "اضغط للرفع" : "Tap to upload (JPG, PNG <10MB)",
@@ -2162,8 +2222,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 ],
               ),
             ),
+            if (fileUrl != null) ...[
+              const Icon(Iconsax.tick_circle_copy, color: Colors.green, size: 22),
+              const SizedBox(width: 8),
+            ],
             IconButton(
-              icon: Icon(Iconsax.trash_copy, color: Colors.red),
+              icon: const Icon(Iconsax.trash_copy, color: Colors.red),
               onPressed: onDelete,
             ),
           ],
