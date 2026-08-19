@@ -9,6 +9,7 @@ import 'package:file_picker/file_picker.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_upload_widgets.dart';
 import '../../../core/services/owner_document_service.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -357,15 +358,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_1_copy
-                : Iconsax.arrow_left_copy,
-            color: VSPColors.textPrimary,
-          ),
-          onPressed: _previousPage,
-        ),
+        leading: VSPBackButton(onTap: _previousPage),
         title: Text(
           AppLocalizations.of(context)!.ownerInformationTitle,
           style: Theme.of(context).textTheme.displaySmall,

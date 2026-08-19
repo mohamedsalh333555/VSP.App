@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/copyable_phone_text.dart';
 import '../../../data/models.dart';
 import '../../../core/models/user_model.dart';
@@ -166,10 +167,7 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(isArabic ? 'ملف الفريق' : 'Team Profile', style: Theme.of(context).textTheme.displaySmall),
         centerTitle: true,
       ),

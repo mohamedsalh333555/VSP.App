@@ -6,6 +6,7 @@ import 'dart:ui';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/constants/egypt_governorates.dart';
@@ -234,13 +235,7 @@ class _SocialOnboardingScreenState extends State<SocialOnboardingScreen> {
           backgroundColor: Colors.transparent,
           elevation: 0,
           scrolledUnderElevation: 0, // ✅ منع تغيير اللون عند السكرول
-          leading: IconButton(
-            icon: Icon(
-              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
-              color: VSPColors.textPrimary,
-            ),
-            onPressed: () => Navigator.maybePop(context),
-          ),
+          leading: const VSPBackButton(),
           actions: const [],
         ),
         body: SafeArea(

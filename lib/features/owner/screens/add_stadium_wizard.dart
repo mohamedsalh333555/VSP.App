@@ -10,6 +10,7 @@ import '../../../core/services/image_pick_service.dart';
 import 'package:geolocator/geolocator.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/services/storage_service.dart';
@@ -490,26 +491,88 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   Future<List<Map<String, dynamic>>> _searchLocation(String query, String langCode) async {
-    if (query.trim().isEmpty) return [];
+    final trimmedQuery = query.trim();
+    if (trimmedQuery.isEmpty) return [];
+
+    final List<Map<String, dynamic>> results = [];
+    final Set<String> seen = {};
+
+    // 1. Prioritize local search matches from EgyptGovernorates
     try {
-      final url = Uri.parse(
-        'https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(query)}&countrycodes=eg&accept-language=$langCode&limit=5'
-      );
-      final response = await http.get(url, headers: {
-        'User-Agent': 'VSP_Application/1.0',
-      }).timeout(const Duration(seconds: 5));
-      if (response.statusCode == 200) {
-        final List data = json.decode(response.body);
-        return data.map((item) => {
-          'display_name': item['display_name'] ?? '',
-          'lat': double.tryParse(item['lat']?.toString() ?? '') ?? 0.0,
-          'lon': double.tryParse(item['lon']?.toString() ?? '') ?? 0.0,
-        }).toList().cast<Map<String, dynamic>>();
+      final isAr = langCode == 'ar';
+      EgyptGovernorates.governorateToArabic.forEach((enName, arName) {
+        if (enName.toLowerCase().contains(trimmedQuery.toLowerCase()) ||
+            arName.contains(trimmedQuery)) {
+          final displayName = isAr ? 'محافظة $arName - مصر' : '$enName Governorate, Egypt';
+          if (!seen.contains(displayName)) {
+            seen.add(displayName);
+            results.add({
+              'display_name': displayName,
+              'governorate': enName,
+              'lat': 30.0444,
+              'lon': 31.2357,
+            });
+          }
+        }
+      });
+    } catch (e) {
+      debugPrint('Local governorate search notice: $e');
+    }
+
+    // 2. Native device geocoding first
+    try {
+      final locations = await locationFromAddress('$trimmedQuery, Egypt')
+          .timeout(const Duration(seconds: 5));
+      if (locations.isNotEmpty) {
+        for (var loc in locations.take(3)) {
+          final key = '${loc.latitude},${loc.longitude}';
+          if (!seen.contains(key)) {
+            seen.add(key);
+            results.add({
+              'display_name': '$trimmedQuery, مصر',
+              'lat': loc.latitude,
+              'lon': loc.longitude,
+            });
+          }
+        }
       }
     } catch (e) {
-      VSPLogger.e('Error searching location', e);
+      debugPrint('Native geocoding notice: $e');
     }
-    return [];
+
+    // 3. Fallback to OpenStreetMap Nominatim with 5s timeout and error handling
+    if (results.isEmpty) {
+      try {
+        final url = Uri.parse(
+          'https://nominatim.openstreetmap.org/search?format=json&q=${Uri.encodeComponent(trimmedQuery)}&countrycodes=eg&accept-language=$langCode&limit=5'
+        );
+        final response = await http.get(url, headers: {
+          'User-Agent': 'VSP_Application/1.0',
+        }).timeout(const Duration(seconds: 5));
+
+        if (response.statusCode == 200) {
+          final List data = json.decode(response.body);
+          for (var item in data) {
+            final lat = double.tryParse(item['lat']?.toString() ?? '') ?? 0.0;
+            final lon = double.tryParse(item['lon']?.toString() ?? '') ?? 0.0;
+            final name = item['display_name'] ?? '';
+            final key = '$lat,$lon';
+            if (!seen.contains(key) && lat != 0.0 && lon != 0.0) {
+              seen.add(key);
+              results.add({
+                'display_name': name,
+                'lat': lat,
+                'lon': lon,
+              });
+            }
+          }
+        }
+      } catch (e) {
+        VSPLogger.e('Error searching location via Nominatim', e);
+      }
+    }
+
+    return results;
   }
 
   Future<void> _openMapPicker() async {
@@ -1310,13 +1373,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         backgroundColor: VSPColors.background,
         appBar: AppBar(
           backgroundColor: VSPColors.background,
-          leading: IconButton(
-            icon: Icon(
-              Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
-              color: VSPColors.textPrimary,
-            ),
-            onPressed: _previousPage,
-          ),
+          leading: VSPBackButton(onTap: _previousPage),
           title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
           centerTitle: true,
           elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],

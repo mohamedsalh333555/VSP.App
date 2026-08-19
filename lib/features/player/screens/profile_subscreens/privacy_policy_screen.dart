@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 class PrivacyPolicyScreen extends StatelessWidget {
@@ -16,10 +17,7 @@ class PrivacyPolicyScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           isAr ? 'سياسة الخصوصية' : 'Privacy Policy',
           style: Theme.of(context).textTheme.displaySmall,

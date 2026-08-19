@@ -62,7 +62,23 @@ class NotificationService {
       VSPLogger.w('Failed to initialize token: $e');
     }
 
-    // 2. Foreground Handler
+    // 2. Token refresh listener
+    _firebaseMessaging.onTokenRefresh.listen((newToken) async {
+      final user = Supabase.instance.client.auth.currentUser;
+      if (user != null) {
+        try {
+          await Supabase.instance.client
+              .from('users')
+              .update({'fcm_token': newToken})
+              .eq('id', user.id);
+          VSPLogger.i('Silently updated refreshed FCM token for user: ${user.id}');
+        } catch (e) {
+          VSPLogger.w('Failed to silently update refreshed FCM token: $e');
+        }
+      }
+    });
+
+    // 3. Foreground Handler
     FirebaseMessaging.onMessage.listen((RemoteMessage message) async {
       final bookingId = message.data['bookingId']?.toString();
       final type = message.data['type']?.toString();

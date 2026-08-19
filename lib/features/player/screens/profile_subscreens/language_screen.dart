@@ -1,9 +1,9 @@
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/language_provider.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 
 class LanguageScreen extends StatefulWidget {
   const LanguageScreen({super.key});
@@ -27,10 +27,7 @@ class _LanguageScreenState extends State<LanguageScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(languageProvider.isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           AppLocalizations.of(context)!.language,
           style: Theme.of(context).textTheme.displaySmall,

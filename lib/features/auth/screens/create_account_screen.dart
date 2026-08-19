@@ -11,9 +11,10 @@ import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/providers/language_provider.dart';
-
 import 'signup_screen.dart';
+
+import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_icon_badge.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
@@ -58,7 +59,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final bool isUserOwner = widget.isOwner;
 
@@ -113,13 +113,9 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     const SizedBox(height: 12),
                     
                     // Header Nav
-                    Row(
+                    const Row(
                       children: [
-                        _buildNavCircle(
-                          context, 
-                          icon: languageProvider.isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy,
-                          onTap: () => Navigator.pop(context),
-                        ),
+                        VSPBackButton(),
                       ],
                     ),
 
@@ -341,21 +337,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
     );
   }
 
-  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: VSPColors.borderLight),
-        ),
-        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
-      ),
-    );
-  }
-
   /// pop-up Modal (Dialog) displaying Terms of Service & Privacy Policy matching VSP design system
   void _showTermsAndPrivacyModal(BuildContext context) {
     showDialog(
@@ -395,18 +376,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                     padding: const EdgeInsets.fromLTRB(20, 16, 16, 14),
                     child: Row(
                       children: [
-                        Container(
-                          padding: const EdgeInsets.all(8),
-                          decoration: BoxDecoration(
-                            color: VSPColors.accent.withValues(alpha: 0.15),
-                            shape: BoxShape.circle,
-                          ),
-                          child: const Icon(
-                            Iconsax.security_safe_copy,
-                            color: VSPColors.accent,
-                            size: 20,
-                          ),
-                        ),
+                        const VSPIconBadge(icon: Iconsax.security_safe_copy, color: VSPColors.accent, size: 36, iconSize: 20),
                         const SizedBox(width: 12),
                         Expanded(
                           child: Text(

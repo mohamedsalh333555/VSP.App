@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 
 class PaymentMethodsScreen extends StatefulWidget {
   const PaymentMethodsScreen({super.key});
@@ -21,10 +21,7 @@ class _PaymentMethodsScreenState extends State<PaymentMethodsScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           isArabic ? 'وسائل الدفع الإلكتروني' : 'Payment Methods',
           style: Theme.of(context).textTheme.displaySmall,

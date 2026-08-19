@@ -10,6 +10,7 @@ import '../../../core/providers/stadium_provider.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/services/sharing_service.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'create_tournament_wizard.dart';
@@ -67,7 +68,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false, 
+        leading: Navigator.canPop(context) ? const VSPBackButton() : null,
         centerTitle: true,
         title: Text(
           l10n.tournamentsTitle,

@@ -5,6 +5,8 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/app_settings_repository.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
+import '../../../../shared/widgets/vsp_icon_badge.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 
 class HelpCenterScreen extends StatefulWidget {
@@ -38,10 +40,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           l10n.helpCenter,
           style: Theme.of(context).textTheme.displaySmall,
@@ -169,11 +168,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
         ),
         child: Row(
           children: [
-            Container(
-              padding: const EdgeInsets.all(12),
-              decoration: BoxDecoration(color: color.withValues(alpha: 0.1), shape: BoxShape.circle),
-              child: Icon(icon, color: color),
-            ),
+            VSPIconBadge(icon: icon, color: color, size: 48, iconSize: 24, backgroundOpacity: 0.1),
             const SizedBox(width: VSPSpacing.md),
             Expanded(
               child: Column(

@@ -244,6 +244,10 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           validStadiumId = 'champ_stadium_${widget.championship.id}';
         }
 
+        final entryFee = widget.championship.entryFee;
+        final serviceFee = (entryFee * 0.0475) + 3.0;
+        final totalCheckoutPrice = entryFee + serviceFee;
+
         final draft = BookingDraft(
           stadiumId: validStadiumId,
           stadiumName: 'بطولة: ${widget.championship.name}',
@@ -254,13 +258,13 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           bookingType: BookingType.team,
           playerTeamId: widget.team.id,
           playerTeamName: widget.team.name,
-          totalPrice: entryFee,
+          totalPrice: totalCheckoutPrice,
           isPaid: false,
           isPrivate: false,
           rentBall: false,
           currentPlayers: totalCount,
           totalFieldCapacity: maxPlayers,
-          depositPaid: entryFee,
+          depositPaid: totalCheckoutPrice,
           isDepositPaid: false,
           needsDeposit: true,
         );
@@ -296,12 +300,17 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   }
 
   Future<void> _executeJoinChampionship() async {
+    final entryFee = widget.championship.entryFee;
+    final serviceFee = (entryFee * 0.0475) + 3.0;
+    final totalCheckoutPrice = entryFee + serviceFee;
+
     final success = await TournamentRepository().joinChampionship(
       widget.championship.id,
       widget.team.id,
       selectedPlayerIds: _selectedPlayerIds,
       offlineGuestNames: _offlineGuestNames,
       isPaid: true,
+      totalPaidAmount: totalCheckoutPrice,
     );
 
     if (success && mounted) {

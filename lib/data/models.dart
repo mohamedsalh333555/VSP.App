@@ -1700,6 +1700,8 @@ class TournamentMatch {
   final String? awayTeamName;
   final int? homeScore;
   final int? awayScore;
+  final int? homePenalties;
+  final int? awayPenalties;
   final String? winnerId;
   final String? nextMatchId; // ID of the match the winner advances to
   final DateTime? scheduledTime;
@@ -1708,7 +1710,7 @@ class TournamentMatch {
   // ⚡ New Fields for Groups & League
   final String? groupName; // 'A', 'B', 'C', 'D'...
   final int? weekNumber;   // 1, 2, 3...
-  final String stage;      // 'group_stage', 'knockout', 'league'
+  final String stage;      // 'preliminary', 'group_stage', 'knockout', 'league'
 
   TournamentMatch({
     required this.id,
@@ -1721,6 +1723,8 @@ class TournamentMatch {
     this.awayTeamName,
     this.homeScore,
     this.awayScore,
+    this.homePenalties,
+    this.awayPenalties,
     this.winnerId,
     this.nextMatchId,
     this.scheduledTime,
@@ -1734,6 +1738,7 @@ class TournamentMatch {
   bool get isReady => homeTeamId != null && awayTeamId != null;
 
   String get roundLabel {
+    if (stage == 'preliminary') return 'الجولة التمهيدية';
     if (stage == 'group_stage') return 'المجموعة ${groupName ?? "A"} - الأسبوع ${weekNumber ?? 1}';
     if (stage == 'league') return 'الأسبوع ${weekNumber ?? 1}';
     switch (roundIndex) {
@@ -1741,8 +1746,53 @@ class TournamentMatch {
       case 1: return 'Semi-Finals';
       case 2: return 'Quarter-Finals';
       case 3: return 'Round of 16';
+      case 4: return 'Round of 32';
       default: return 'Round ${roundIndex + 1}';
     }
+  }
+
+  TournamentMatch copyWith({
+    String? id,
+    String? championshipId,
+    int? roundIndex,
+    int? matchIndex,
+    String? homeTeamId,
+    String? homeTeamName,
+    String? awayTeamId,
+    String? awayTeamName,
+    int? homeScore,
+    int? awayScore,
+    int? homePenalties,
+    int? awayPenalties,
+    String? winnerId,
+    String? nextMatchId,
+    DateTime? scheduledTime,
+    List<GoalItem>? goalDetails,
+    String? groupName,
+    int? weekNumber,
+    String? stage,
+  }) {
+    return TournamentMatch(
+      id: id ?? this.id,
+      championshipId: championshipId ?? this.championshipId,
+      roundIndex: roundIndex ?? this.roundIndex,
+      matchIndex: matchIndex ?? this.matchIndex,
+      homeTeamId: homeTeamId ?? this.homeTeamId,
+      homeTeamName: homeTeamName ?? this.homeTeamName,
+      awayTeamId: awayTeamId ?? this.awayTeamId,
+      awayTeamName: awayTeamName ?? this.awayTeamName,
+      homeScore: homeScore ?? this.homeScore,
+      awayScore: awayScore ?? this.awayScore,
+      homePenalties: homePenalties ?? this.homePenalties,
+      awayPenalties: awayPenalties ?? this.awayPenalties,
+      winnerId: winnerId ?? this.winnerId,
+      nextMatchId: nextMatchId ?? this.nextMatchId,
+      scheduledTime: scheduledTime ?? this.scheduledTime,
+      goalDetails: goalDetails ?? this.goalDetails,
+      groupName: groupName ?? this.groupName,
+      weekNumber: weekNumber ?? this.weekNumber,
+      stage: stage ?? this.stage,
+    );
   }
 
   factory TournamentMatch.fromFirestore(Map<String, dynamic> data, String id) {
@@ -1763,6 +1813,8 @@ class TournamentMatch {
       awayTeamName: data['awayTeamName'] ?? data['away_team_name'],
       homeScore: data['homeScore'] ?? data['home_score'],
       awayScore: data['awayScore'] ?? data['away_score'],
+      homePenalties: data['homePenalties'] ?? data['home_penalties'],
+      awayPenalties: data['awayPenalties'] ?? data['away_penalties'],
       winnerId: data['winnerId'] ?? data['winner_id'],
       nextMatchId: data['nextMatchId'] ?? data['next_match_id'],
       scheduledTime: scheduledTimeVal != null
@@ -1788,6 +1840,8 @@ class TournamentMatch {
       'awayTeamName': awayTeamName,
       'homeScore': homeScore,
       'awayScore': awayScore,
+      'home_penalties': homePenalties,
+      'away_penalties': awayPenalties,
       'winnerId': winnerId,
       'nextMatchId': nextMatchId,
       'scheduledTime': scheduledTime?.toIso8601String(),

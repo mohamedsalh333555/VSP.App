@@ -339,7 +339,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   List<Widget>? buildActions(BuildContext context) {
     return [
       IconButton(
-        icon: const Icon(Icons.clear),
+        icon: const Icon(Iconsax.close_circle_copy),
         onPressed: () {
           query = '';
         },
@@ -350,7 +350,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
   @override
   Widget? buildLeading(BuildContext context) {
     return IconButton(
-      icon: Icon(Icons.adaptive.arrow_back),
+      icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy),
       onPressed: () {
         close(context, null);
       },
@@ -408,7 +408,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
                     ? NetworkImage(user.profileImageUrl!)
                     : null,
                 child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty)
-                    ? const Icon(Icons.person, color: VSPColors.accent)
+                    ? const Icon(Iconsax.user_copy, color: VSPColors.accent)
                     : null,
               ),
               title: Text(

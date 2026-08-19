@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../ui/tokens/vsp_tokens.dart';
 
@@ -112,7 +113,7 @@ class AppErrorHandler {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const Icon(Iconsax.warning_2_copy, color: Colors.white, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -145,7 +146,7 @@ class AppErrorHandler {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.check_circle_outline, color: Colors.white, size: 20),
+              const Icon(Iconsax.tick_circle_copy, color: Colors.white, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(
@@ -187,7 +188,7 @@ class AppErrorHandler {
         SnackBar(
           content: Row(
             children: [
-              const Icon(Icons.error_outline, color: Colors.white, size: 20),
+              const Icon(Iconsax.warning_2_copy, color: Colors.white, size: 20),
               const SizedBox(width: 12),
               Expanded(
                 child: Text(

@@ -18,6 +18,7 @@ import '../../../../data/models.dart';
 import '../../widgets/add_player_sheet.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/utils/phone_utils.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -242,10 +243,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(l10n.myTeam, style: Theme.of(context).textTheme.displaySmall),
         actions: [
           if (team != null)

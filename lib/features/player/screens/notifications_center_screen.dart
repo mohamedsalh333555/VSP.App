@@ -5,6 +5,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -18,17 +19,12 @@ class NotificationsCenterScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     final userId = context.read<AuthProvider>().currentUser?.uid ?? '';
 
-    final isAr = Localizations.localeOf(context).languageCode == 'ar';
-
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
           AppLocalizations.of(context)!.notifications,

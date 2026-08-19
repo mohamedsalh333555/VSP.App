@@ -16,8 +16,9 @@ import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/phone_utils.dart';
-import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../core/utils/vsp_feedback.dart';
 
 class OwnerBookingsScreen extends StatefulWidget {
   const OwnerBookingsScreen({super.key});
@@ -102,12 +103,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
         backgroundColor: VSPColors.background,
         elevation: 0,
         automaticallyImplyLeading: true,
-        leading: Navigator.canPop(context) 
-            ? IconButton(
-                icon: Icon(Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
-                onPressed: () => Navigator.pop(context),
-              )
-            : null,
+        leading: Navigator.canPop(context) ? const VSPBackButton() : null,
         centerTitle: true,
         title: Text(
           l10n.bookedTitle,

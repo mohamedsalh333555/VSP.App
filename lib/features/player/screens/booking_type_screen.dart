@@ -3,6 +3,8 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_icon_badge.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
@@ -71,14 +73,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
         backgroundColor: VSPColors.background,
         centerTitle: true,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, 
-            color: VSPColors.textPrimary, 
-            size: 20
-          ), 
-          onPressed: () => Navigator.pop(context)
-        ),
+        leading: const VSPBackButton(),
       ),
       body: Column(
         children: [
@@ -274,7 +269,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                           Expanded(
                             child: Row(
                               children: [
-                                if (iconData != null) Icon(iconData, color: accentColor, size: 28),
+                                if (iconData != null) VSPIconBadge(icon: iconData, color: accentColor, size: 44, iconSize: 24),
                                 const SizedBox(width: 12),
                                 Expanded(
                                   child: Text(

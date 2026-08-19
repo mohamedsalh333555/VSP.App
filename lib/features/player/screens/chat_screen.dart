@@ -13,6 +13,7 @@ import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -332,14 +333,7 @@ class _ChatScreenState extends State<ChatScreen> {
             );
           },
         ),
-        leading: IconButton(
-          icon: Icon(
-            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 20),

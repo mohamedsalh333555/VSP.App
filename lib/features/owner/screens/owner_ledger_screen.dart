@@ -5,6 +5,7 @@ import 'package:intl/intl.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 
 class OwnerLedgerScreen extends StatelessWidget {
   const OwnerLedgerScreen({super.key});
@@ -64,10 +65,7 @@ class OwnerLedgerScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         actions: [
           IconButton(
             icon: const Icon(Iconsax.export_3_copy, color: VSPColors.accent),

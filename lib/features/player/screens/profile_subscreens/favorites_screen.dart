@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../shared/widgets/stadium_card.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../shared/widgets/vsp_empty_state.dart';
 import '../../../../data/models.dart';
 import '../stadium_details_screen.dart';
@@ -22,10 +23,7 @@ class FavoritesScreen extends StatelessWidget {
         backgroundColor: Colors.transparent,
         elevation: 0,
         centerTitle: true,
-        leading: IconButton(
-          icon: Icon(isAr ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           isAr ? 'الملاعب المفضلة' : 'Favorite Stadiums',
           style: Theme.of(context).textTheme.displayMedium,

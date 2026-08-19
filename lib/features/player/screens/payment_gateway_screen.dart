@@ -77,23 +77,6 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     _webhookTimeoutTimer?.cancel();
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
-
-    // 🛑 تنظيف الحجز المعلق غير المدفوع عند الخروج قبل تأكيد الـ Webhook
-    if (!_paymentCompleted &&
-        _booking != null &&
-        _booking!.status == BookingStatus.pending &&
-        !_booking!.isPaid) {
-      final bId = _booking!.id;
-      if (!bId.startsWith('mock_') && !bId.startsWith('draft_')) {
-        Supabase.instance.client
-            .from('bookings')
-            .delete()
-            .eq('id', bId)
-            .then((_) => debugPrint('Pending booking cleaned up on exit.'))
-            .catchError((e) => debugPrint('Error cleaning pending booking: $e'));
-      }
-    }
-
     super.dispose();
   }
 

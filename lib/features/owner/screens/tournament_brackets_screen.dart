@@ -6,6 +6,7 @@ import '../../../core/repositories/tournament_repository.dart';
 import '../../../data/models.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 class TournamentBracketsScreen extends StatefulWidget {
@@ -51,7 +52,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         if (matches.isEmpty) {
           return Scaffold(
             backgroundColor: VSPColors.background,
-            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0),
+            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
             body: Center(child: Text(l10n.noBracketsYet, style: const TextStyle(color: VSPColors.textSecondary))),
           );
         }
@@ -72,16 +73,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               backgroundColor: Colors.transparent,
               elevation: 0,
               centerTitle: true,
-              leading: IconButton(
-                icon: Icon(
-                  Localizations.localeOf(context).languageCode == 'ar'
-                      ? Iconsax.arrow_right_1_copy
-                      : Iconsax.arrow_left_2_copy,
-                  color: VSPColors.textPrimary,
-                  size: 18,
-                ),
-                onPressed: () => Navigator.pop(context),
-              ),
+              leading: const VSPBackButton(),
               title: Text(l10n.tournamentBrackets, style: Theme.of(context).textTheme.displaySmall),
               bottom: TabBar(
                 isScrollable: true,
@@ -273,6 +265,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
     // حساب الأهداف الأولية بناءً على الأهداف المسجلة أو نتيجة المباراة الحالية
     int homeScore = match.homeScore ?? goalDetails.where((g) => g.teamId == match.homeTeamId).length;
     int awayScore = match.awayScore ?? goalDetails.where((g) => g.teamId == match.awayTeamId).length;
+    int homePenalties = match.homePenalties ?? 0;
+    int awayPenalties = match.awayPenalties ?? 0;
     String? selectedWinnerId = match.winnerId;
     bool isSubmitting = false;
 
@@ -301,7 +295,17 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
 
               return StatefulBuilder(
                 builder: (BuildContext context, StateSetter setModalState) {
-                  final isCupAndTied = widget.championship.type == 'Cup' && homeScore == awayScore;
+                  final isKnockoutOrCup = widget.championship.type == 'Cup' || match.stage == 'knockout' || match.stage == 'preliminary';
+                  final isCupAndTied = isKnockoutOrCup && homeScore == awayScore;
+
+                  if (isCupAndTied && homePenalties != awayPenalties) {
+                    if (homePenalties > awayPenalties) {
+                      selectedWinnerId = match.homeTeamId;
+                    } else if (awayPenalties > homePenalties) {
+                      selectedWinnerId = match.awayTeamId;
+                    }
+                  }
+
                   final bool isValidToSubmit = !isCupAndTied || selectedWinnerId != null;
 
                   final homeGoals = goalDetails.where((g) => g.teamId == match.homeTeamId).toList();
@@ -445,10 +449,10 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                               ),
                               const SizedBox(height: 20),
 
-                              // ⚔️ سيناريو التعادل في الكأس (ركلات الترجيح)
+                              // ⚔️ سيناريو التعادل في الكأس / الإقصائيات (ركلات الترجيح)
                               if (isCupAndTied) ...[
                                 Container(
-                                  padding: const EdgeInsets.all(12),
+                                  padding: const EdgeInsets.all(14),
                                   decoration: BoxDecoration(
                                     color: VSPColors.warning.withValues(alpha: 0.1),
                                     borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -459,16 +463,58 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                     children: [
                                       Text(
                                         isArabic 
-                                            ? '⚠️ لا يسمح بالتعادل في مباريات خروج المغلوب' 
-                                            : '⚠️ Draws not allowed in knockout matches',
+                                            ? '⚽ ركلات الترجيح / Penalties Shootout 🏆' 
+                                            : '⚽ Penalty Shootout (Knockout Draw) 🏆',
                                         style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
                                       const SizedBox(height: 4),
                                       Text(
                                         isArabic 
-                                            ? 'يرجى تحديد الفريق الفائز بركلات الترجيح لتصعيده:' 
-                                            : 'Please select the team that won on penalties to advance:',
+                                            ? 'أدخل أهداف ركلات الترجيح وحدد الفريق المتأهل:' 
+                                            : 'Enter penalty goals & select advancing team:',
                                         style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
+                                      ),
+                                      const SizedBox(height: 12),
+                                      Row(
+                                        children: [
+                                          Expanded(
+                                            child: _buildScoreCounterColumn(
+                                              teamName: '${match.homeTeamName ?? "Home"} (ركلات)',
+                                              score: homePenalties,
+                                              onIncrement: () => setModalState(() {
+                                                homePenalties++;
+                                                if (homePenalties > awayPenalties) selectedWinnerId = match.homeTeamId;
+                                              }),
+                                              onDecrement: () => setModalState(() {
+                                                if (homePenalties > 0) homePenalties--;
+                                                if (homePenalties > awayPenalties) {
+                                                  selectedWinnerId = match.homeTeamId;
+                                                } else if (awayPenalties > homePenalties) {
+                                                  selectedWinnerId = match.awayTeamId;
+                                                }
+                                              }),
+                                            ),
+                                          ),
+                                          const SizedBox(width: 8),
+                                          Expanded(
+                                            child: _buildScoreCounterColumn(
+                                              teamName: '${match.awayTeamName ?? "Away"} (ركلات)',
+                                              score: awayPenalties,
+                                              onIncrement: () => setModalState(() {
+                                                awayPenalties++;
+                                                if (awayPenalties > homePenalties) selectedWinnerId = match.awayTeamId;
+                                              }),
+                                              onDecrement: () => setModalState(() {
+                                                if (awayPenalties > 0) awayPenalties--;
+                                                if (homePenalties > awayPenalties) {
+                                                  selectedWinnerId = match.homeTeamId;
+                                                } else if (awayPenalties > homePenalties) {
+                                                  selectedWinnerId = match.awayTeamId;
+                                                }
+                                              }),
+                                            ),
+                                          ),
+                                        ],
                                       ),
                                       const SizedBox(height: 12),
                                       Row(
@@ -557,6 +603,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                       matchId: match.id,
                                       homeScore: homeScore,
                                       awayScore: awayScore,
+                                      homePenalties: isCupAndTied ? homePenalties : null,
+                                      awayPenalties: isCupAndTied ? awayPenalties : null,
                                       winnerId: finalWinnerId,
                                       winnerName: finalWinnerName,
                                       goalDetails: goalDetails,

@@ -8,6 +8,7 @@ import '../../../../core/services/image_pick_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
+import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../shared/widgets/custom_text_field.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/utils/vsp_feedback.dart';
@@ -107,17 +108,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   @override
   Widget build(BuildContext context) {
     final userProfileUrl = Provider.of<AuthProvider>(context).userModel?.profileImageUrl;
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary, size: 20),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         title: Text(
           AppLocalizations.of(context)!.editProfile,
           style: Theme.of(context).textTheme.displaySmall,

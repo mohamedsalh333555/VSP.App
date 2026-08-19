@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_icon_badge.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -387,19 +388,23 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               children: [
                 Row(
                   children: [
-                    Container(
-                      width: 50,
-                      height: 50,
-                      decoration: BoxDecoration(
-                        shape: BoxShape.circle,
-                        border: Border.all(color: VSPColors.accent, width: 1.5),
-                      ),
-                      child: ClipOval(
-                        child: championship.logoUrl.isNotEmpty
-                            ? Image.network(championship.logoUrl, fit: BoxFit.cover, errorBuilder: (_, __, ___) => const Icon(Iconsax.cup_copy, color: VSPColors.accent))
-                            : const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
-                      ),
-                    ),
+                    championship.logoUrl.isNotEmpty
+                        ? Container(
+                            width: 50,
+                            height: 50,
+                            decoration: BoxDecoration(
+                              shape: BoxShape.circle,
+                              border: Border.all(color: VSPColors.accent, width: 1.5),
+                            ),
+                            child: ClipOval(
+                              child: Image.network(
+                                championship.logoUrl,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) => const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
+                              ),
+                            ),
+                          )
+                        : const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
                     const SizedBox(width: 12),
                     Expanded(
                       child: Column(

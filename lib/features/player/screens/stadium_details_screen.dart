@@ -8,6 +8,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../widgets/booking_type_modal.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -188,14 +189,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     child: Row(
                       mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        _buildCircularIcon(
-                          icon: isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-                          onTap: () {
-                            if (Navigator.canPop(context)) {
-                              Navigator.pop(context);
-                            }
-                          },
-                        ),
+                        const VSPBackButton(),
                         Row(
                           children: [
                             _buildCircularIcon(
@@ -528,7 +522,7 @@ class _InformationTab extends StatelessWidget {
               height: 72,
               child: _FacilityTile(
                 item: _FacilityItem(
-                  icon: Icons.sports_soccer_rounded,
+                  icon: Iconsax.activity_copy,
                   label: isArabic ? 'كرة (${stadium.ballPrice.toInt()} ج.م)' : 'Ball (${stadium.ballPrice.toInt()} EGP)',
                   active: true,
                 ),
@@ -569,10 +563,10 @@ class _FacilitiesGrid extends StatelessWidget {
     final hasSeats = seats.isNotEmpty && seats != '0' && seats != 'null';
 
     final allFacilities = [
-      _FacilityItem(icon: Icons.shower_rounded, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
+      _FacilityItem(icon: Iconsax.drop, label: isArabic ? 'حمامات' : 'Bathrooms', active: hasBathroom),
       _FacilityItem(icon: Iconsax.car_copy, label: isArabic ? 'جراج' : 'Garage', active: hasGarage),
       _FacilityItem(icon: Iconsax.coffee_copy, label: isArabic ? 'كافتيريا' : 'Cafeteria', active: hasCafeteria),
-      _FacilityItem(icon: Icons.checkroom_rounded, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
+      _FacilityItem(icon: Iconsax.shop_copy, label: isArabic ? 'غرف تغيير' : 'Changing Rooms', active: hasChangingRoom),
       _FacilityItem(icon: Iconsax.home_copy, label: isArabic ? 'مقاعد' : 'Seats', active: hasSeats),
     ];
 
@@ -744,7 +738,7 @@ class _RatingsTab extends StatelessWidget {
                         final isSelected = starIndex <= selectedRating;
                         return IconButton(
                           icon: Icon(
-                            isSelected ? Icons.star_rounded : Icons.star_outline_rounded,
+                            isSelected ? Iconsax.star_1_copy : Iconsax.star_copy,
                             color: isSelected ? Colors.amber : VSPColors.textSecondary,
                             size: 36,
                           ),
@@ -890,7 +884,7 @@ class _RatingsTab extends StatelessWidget {
                               children: List.generate(
                                 5,
                                 (i) => Icon(
-                                  i < liveRating.round() ? Icons.star_rounded : Icons.star_outline_rounded,
+                                  i < liveRating.round() ? Iconsax.star_1_copy : Iconsax.star_copy,
                                   color: i < liveRating.round() ? Colors.amber : VSPColors.textSecondary,
                                   size: 18,
                                 ),
@@ -1012,7 +1006,7 @@ class _RatingsTab extends StatelessWidget {
                     Text(timeAgo, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
                   ],
                 ),
-                Row(children: List.generate(5, (i) => Icon(i < rating ? Icons.star_rounded : Icons.star_outline_rounded, size: 14, color: i < rating ? Colors.amber : VSPColors.textSecondary))),
+                Row(children: List.generate(5, (i) => Icon(i < rating ? Iconsax.star_1_copy : Iconsax.star_copy, size: 14, color: i < rating ? Colors.amber : VSPColors.textSecondary))),
                 const SizedBox(height: 8),
                 Text(comment, style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary, height: 1.4)),
                 const Padding(padding: EdgeInsets.symmetric(vertical: VSPSpacing.md), child: Divider(color: VSPColors.divider)),

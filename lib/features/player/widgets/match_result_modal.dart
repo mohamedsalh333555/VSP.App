@@ -216,7 +216,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                 });
               },
               child: Icon(
-                index < _rating ? Iconsax.star_copy : Iconsax.star_copy,
+                index < _rating ? Iconsax.star_1_copy : Iconsax.star_copy,
                 color: VSPColors.warning,
                 size: 32,
               ),

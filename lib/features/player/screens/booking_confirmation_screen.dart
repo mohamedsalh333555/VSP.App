@@ -6,6 +6,7 @@ import 'package:provider/provider.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -460,14 +461,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-            size: 20,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(l10n.bookNow, style: Theme.of(context).textTheme.displaySmall),
       ),
@@ -1042,7 +1036,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                         ),
                       ),
                       child: _isBallRented
-                          ? const Icon(Icons.check, size: 16, color: Colors.black)
+                          ? const Icon(Iconsax.tick_circle_copy, size: 16, color: Colors.black)
                           : null,
                     ),
                   ],

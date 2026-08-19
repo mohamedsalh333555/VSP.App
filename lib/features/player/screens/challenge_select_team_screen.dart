@@ -10,6 +10,7 @@ import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
@@ -129,19 +130,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_1_copy
-                : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-            size: 20,
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            Navigator.pop(context);
-          },
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
           AppLocalizations.of(context)!.selectOpponentTeam,

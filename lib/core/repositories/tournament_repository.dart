@@ -294,6 +294,7 @@ class TournamentRepository {
     List<String> offlineGuestNames = const [],
     bool skipMemberCheck = false,
     bool isPaid = false,
+    double? totalPaidAmount,
   }) async {
     try {
       final team = await TeamRepository().getTeam(teamId);
@@ -340,13 +341,19 @@ class TournamentRepository {
           })
           .eq('id', championshipId);
 
-      // 💳 تسجيل معاملة اشتراك البطولة في جدول المعاملات المالية
+      // 💳 تسجيل معاملة اشتراك البطولة بالمبلغ الإجمالي النهائي (المحدد أو المحسوب بالرسوم)
       if (isPaid && champ.entryFee > 0) {
         try {
+          final double serviceFee = (champ.entryFee * 0.0475) + 3.0;
+          final double fullAmount = totalPaidAmount ?? (champ.entryFee + serviceFee);
+
           await _supabase.from('transactions').insert({
             'championship_id': championshipId,
+            'team_id': teamId,
             'user_id': _supabase.auth.currentUser?.id,
-            'amount': champ.entryFee,
+            'amount': fullAmount,
+            'entry_fee': champ.entryFee,
+            'service_fee': serviceFee,
             'type': 'digital',
             'created_at': DateTime.now().toIso8601String(),
           });
@@ -743,6 +750,8 @@ class TournamentRepository {
     required String matchId,
     required int homeScore,
     required int awayScore,
+    int? homePenalties,
+    int? awayPenalties,
     String? winnerId,
     String? winnerName,
     List<GoalItem> goalDetails = const [],
@@ -759,25 +768,33 @@ class TournamentRepository {
       final int matchIndex = response['match_index'] ?? response['matchIndex'] ?? 0;
       final String championshipId = response['championship_id'] ?? response['championshipId'] ?? '';
 
+      final updatePayload = <String, dynamic>{
+        'home_score': homeScore,
+        'away_score': awayScore,
+        'winner_id': winnerId,
+        'goal_details': goalDetails.map((g) => g.toMap()).toList(),
+      };
+      if (homePenalties != null) updatePayload['home_penalties'] = homePenalties;
+      if (awayPenalties != null) updatePayload['away_penalties'] = awayPenalties;
+
       try {
         await _supabase
             .from('tournament_matches')
-            .update({
-              'home_score': homeScore,
-              'away_score': awayScore,
-              'winner_id': winnerId,
-              'goal_details': goalDetails.map((g) => g.toMap()).toList(),
-            })
+            .update(updatePayload)
             .eq('id', matchId);
       } catch (err) {
         debugPrint('⚠️ goal_details update fallback (column may be missing in DB): $err');
+        final fallbackPayload = <String, dynamic>{
+          'home_score': homeScore,
+          'away_score': awayScore,
+          'winner_id': winnerId,
+        };
+        if (homePenalties != null) fallbackPayload['home_penalties'] = homePenalties;
+        if (awayPenalties != null) fallbackPayload['away_penalties'] = awayPenalties;
+
         await _supabase
             .from('tournament_matches')
-            .update({
-              'home_score': homeScore,
-              'away_score': awayScore,
-              'winner_id': winnerId,
-            })
+            .update(fallbackPayload)
             .eq('id', matchId);
       }
 
@@ -1526,20 +1543,53 @@ class TournamentRepository {
       final int qualifyingPerGroup = int.tryParse((champDoc['qualifying_per_group'] ?? champDoc['qualifyingPerGroup'] ?? 2).toString()) ?? 2;
       final List<String> groupNames = ['A', 'B', 'C', 'D', 'E', 'F', 'G', 'H'];
 
-      List<Map<String, String>> qualifiedTeams = [];
-
+      // Map to store qualified teams per group in rank order
+      final Map<String, List<Map<String, String>>> groupQualifiersMap = {};
       for (int g = 0; g < numGroups; g++) {
         final groupName = groupNames[g];
         final standings = await getChampionshipStandings(championshipId, groupName: groupName);
 
+        final groupList = <Map<String, String>>[];
         for (int i = 0; i < min(qualifyingPerGroup, standings.length); i++) {
           final row = standings[i];
-          qualifiedTeams.add({
+          groupList.add({
             'id': row['team_id'].toString(),
             'name': row['team_name'].toString(),
             'group': groupName,
           });
         }
+        groupQualifiersMap[groupName] = groupList;
+      }
+
+      // Perform cross-group pairing (e.g. A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2)
+      List<Map<String, String>> qualifiedTeams = [];
+      if (numGroups >= 2 && qualifyingPerGroup >= 2) {
+        for (int g = 0; g < numGroups; g += 2) {
+          if (g + 1 < numGroups) {
+            final g1 = groupNames[g];
+            final g2 = groupNames[g + 1];
+
+            final g1_1st = (groupQualifiersMap[g1] != null && groupQualifiersMap[g1]!.isNotEmpty) ? groupQualifiersMap[g1]![0] : null;
+            final g1_2nd = (groupQualifiersMap[g1] != null && groupQualifiersMap[g1]!.length > 1) ? groupQualifiersMap[g1]![1] : null;
+            final g2_1st = (groupQualifiersMap[g2] != null && groupQualifiersMap[g2]!.isNotEmpty) ? groupQualifiersMap[g2]![0] : null;
+            final g2_2nd = (groupQualifiersMap[g2] != null && groupQualifiersMap[g2]!.length > 1) ? groupQualifiersMap[g2]![1] : null;
+
+            // Pair A1 vs B2
+            if (g1_1st != null) qualifiedTeams.add(g1_1st);
+            if (g2_2nd != null) qualifiedTeams.add(g2_2nd);
+
+            // Pair B1 vs A2
+            if (g2_1st != null) qualifiedTeams.add(g2_1st);
+            if (g1_2nd != null) qualifiedTeams.add(g1_2nd);
+          } else {
+            final g1 = groupNames[g];
+            if (groupQualifiersMap[g1] != null) {
+              qualifiedTeams.addAll(groupQualifiersMap[g1]!);
+            }
+          }
+        }
+      } else {
+        groupQualifiersMap.values.forEach(qualifiedTeams.addAll);
       }
 
       if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
@@ -1604,7 +1654,7 @@ class TournamentRepository {
         await _supabase.from('tournament_matches').insert(knockoutMatches);
       }
 
-      debugPrint('🚀 Successfully advanced group winners to Knockout stage!');
+      debugPrint('🚀 Successfully advanced group winners to Knockout stage with cross-group pairings!');
     } catch (e) {
       debugPrint('Error advancing groups to knockout: $e');
       rethrow;

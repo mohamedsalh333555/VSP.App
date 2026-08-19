@@ -7,12 +7,12 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import 'package:vsp_application/l10n/app_localizations.dart';
-
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/social_auth_button.dart';
 import 'package:go_router/go_router.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/utils/vsp_feedback.dart';
 
 class LoginScreen extends StatefulWidget {
@@ -225,11 +225,7 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Header Nav
                     Row(
                       children: [
-                        _buildNavCircle(
-                          context, 
-                          icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-                          onTap: () => Navigator.pop(context),
-                        ),
+                        const VSPBackButton(),
                         const Spacer(),
                         Image.asset(
                           'assets/images/logo.png',
@@ -463,19 +459,4 @@ class _LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-  Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
-    return GestureDetector(
-      onTap: onTap,
-      child: Container(
-        padding: const EdgeInsets.all(10),
-        decoration: BoxDecoration(
-          color: VSPColors.surface,
-          shape: BoxShape.circle,
-          border: Border.all(color: VSPColors.borderLight),
-        ),
-        child: Icon(icon, color: VSPColors.textPrimary, size: 20),
-      ),
-    );
-  }
-} // end _LoginScreenState
+}

@@ -7,6 +7,7 @@ import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/repositories/stadium_repository.dart';
@@ -278,18 +279,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            Localizations.localeOf(context).languageCode == 'ar'
-                ? Iconsax.arrow_right_1_copy
-                : Iconsax.arrow_left_2_copy,
-            color: VSPColors.textPrimary,
-          ),
-          onPressed: () {
-            HapticFeedback.lightImpact();
-            _prevStep();
-          },
-        ),
+        leading: VSPBackButton(onTap: _prevStep),
         centerTitle: true,
         title: Text(
           isEditing ? l10n.editTournamentTitle : l10n.createTournamentTitle,

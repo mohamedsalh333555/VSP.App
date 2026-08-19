@@ -12,6 +12,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../auth/screens/welcome_screen.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/repositories/stadium_repository.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
@@ -125,10 +126,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
       appBar: AppBar(
         backgroundColor: Colors.transparent,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_copy, color: VSPColors.textPrimary),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
           isArabic ? 'الحساب' : 'Account',

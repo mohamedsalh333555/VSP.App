@@ -38,6 +38,7 @@ class MatchRepository {
   // --- PUBLIC MATCHES (Modern Supabase Integration) ---
 
   Stream<List<Booking>> getPublicMatches() {
+    final cutoffDateTime = DateTime.now().subtract(const Duration(hours: 2));
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
@@ -47,6 +48,7 @@ class MatchRepository {
           final matches = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
+                final isNotExpired = b.endTime.isAfter(cutoffDateTime);
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
                 final isFuture = b.endTime.isAfter(now);
@@ -56,7 +58,7 @@ class MatchRepository {
                 
                 final uid = _supabase.auth.currentUser?.id;
                 final isParticipant = uid != null && b.joinedUserIds.contains(uid);
-                return isConfirmed && isFuture && (hasSpace || isParticipant);
+                return isNotExpired && isConfirmed && isFuture && (hasSpace || isParticipant);
               })
               .toList();
               
