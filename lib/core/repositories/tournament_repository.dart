@@ -1,4 +1,4 @@
-import 'package:flutter/material.dart';
+﻿import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
@@ -1684,18 +1684,26 @@ class TournamentRepository {
         groupQualifiersMap[groupName] = groupList;
       }
 
-      // Perform cross-group pairing (e.g. A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2)
+      // 🛡️ FIX: Perform cross-group pairing with correct odd-group handling.
+      // For an even number of groups (A,B,C,D): pair A1 vs B2, B1 vs A2, C1 vs D2, D1 vs C2.
+      // For an odd number of groups (A,B,C): A & B are cross-paired, C's teams are
+      // appended at the end and will automatically receive BYE slots in the first round.
       List<Map<String, String>> qualifiedTeams = [];
+
       if (numGroups >= 2 && qualifyingPerGroup >= 2) {
         for (int g = 0; g < numGroups; g += 2) {
           if (g + 1 < numGroups) {
+            // ─── Even pair: cross-seed groups g and g+1 ───
             final g1 = groupNames[g];
             final g2 = groupNames[g + 1];
 
-            final g1_1st = (groupQualifiersMap[g1] != null && groupQualifiersMap[g1]!.isNotEmpty) ? groupQualifiersMap[g1]![0] : null;
-            final g1_2nd = (groupQualifiersMap[g1] != null && groupQualifiersMap[g1]!.length > 1) ? groupQualifiersMap[g1]![1] : null;
-            final g2_1st = (groupQualifiersMap[g2] != null && groupQualifiersMap[g2]!.isNotEmpty) ? groupQualifiersMap[g2]![0] : null;
-            final g2_2nd = (groupQualifiersMap[g2] != null && groupQualifiersMap[g2]!.length > 1) ? groupQualifiersMap[g2]![1] : null;
+            final g1List = groupQualifiersMap[g1] ?? [];
+            final g2List = groupQualifiersMap[g2] ?? [];
+
+            final g1_1st = g1List.isNotEmpty ? g1List[0] : null;
+            final g1_2nd = g1List.length > 1 ? g1List[1] : null;
+            final g2_1st = g2List.isNotEmpty ? g2List[0] : null;
+            final g2_2nd = g2List.length > 1 ? g2List[1] : null;
 
             // Pair A1 vs B2
             if (g1_1st != null) qualifiedTeams.add(g1_1st);
@@ -1705,10 +1713,11 @@ class TournamentRepository {
             if (g2_1st != null) qualifiedTeams.add(g2_1st);
             if (g1_2nd != null) qualifiedTeams.add(g1_2nd);
           } else {
+            // ─── Odd group: no paired group. Append teams at end; they'll get BYE
+            //     slots in the first knockout round and advance automatically. ───
             final g1 = groupNames[g];
-            if (groupQualifiersMap[g1] != null) {
-              qualifiedTeams.addAll(groupQualifiersMap[g1]!);
-            }
+            final g1List = groupQualifiersMap[g1] ?? [];
+            qualifiedTeams.addAll(g1List);
           }
         }
       } else {
@@ -1717,14 +1726,18 @@ class TournamentRepository {
 
       if (qualifiedTeams.isEmpty) throw Exception('لا يوجد فرق متأهلة');
 
-      int totalKnockoutTeams = qualifiedTeams.length;
+      final int totalKnockoutTeams = qualifiedTeams.length;
+
+      // 🛡️ FIX: Dynamic bracket capacity — always nearest power of 2 ≥ totalKnockoutTeams.
+      // This ensures an odd number of qualifiers (e.g. 6 from 3 groups × 2 each)
+      // is correctly padded to 8 (next power of 2) with BYE slots, not left as 6.
       int targetCapacity = 2;
       while (targetCapacity < totalKnockoutTeams) {
         targetCapacity *= 2;
       }
 
-      int totalRounds = (log(targetCapacity) / log(2)).round();
-      int startRoundIndex = totalRounds - 1;
+      final int totalRounds = (log(targetCapacity) / log(2)).round();
+      final int startRoundIndex = totalRounds - 1;
 
       final Map<String, String> matchUuidMap = {};
       String getMatchId(int r, int m) {
@@ -1735,53 +1748,95 @@ class TournamentRepository {
         return matchUuidMap[key]!;
       }
 
-      List<Map<String, dynamic>> knockoutMatches = [];
+      // Build all rounds using a map (matchId → data) to allow BYE propagation
+      final Map<String, Map<String, dynamic>> matchesMap = {};
 
       for (int r = startRoundIndex; r >= 0; r--) {
-        int matchCount = (pow(2, r)).toInt();
+        final int matchCount = (pow(2, r)).toInt();
         for (int m = 0; m < matchCount; m++) {
           final matchId = getMatchId(r, m);
           final nextMatchId = (r > 0) ? getMatchId(r - 1, m ~/ 2) : null;
-
-          knockoutMatches.add({
+          matchesMap[matchId] = {
             'id': matchId,
             'championship_id': championshipId,
-            'championshipId': championshipId,
             'round_index': r,
-            'roundIndex': r,
             'match_index': m,
-            'matchIndex': m,
             'next_match_id': nextMatchId,
             'stage': 'knockout',
-          });
+            'home_team_id': null,
+            'home_team_name': null,
+            'away_team_id': null,
+            'away_team_name': null,
+            'winner_id': null,
+          };
         }
       }
 
-      int firstRoundMatchesCount = (pow(2, startRoundIndex)).toInt();
-      for (int m = 0; m < firstRoundMatchesCount; m++) {
-        if (m * 2 < qualifiedTeams.length) {
-          knockoutMatches[m]['home_team_id'] = qualifiedTeams[m * 2]['id'];
-          knockoutMatches[m]['homeTeamId'] = qualifiedTeams[m * 2]['id'];
-          knockoutMatches[m]['home_team_name'] = qualifiedTeams[m * 2]['name'];
-          knockoutMatches[m]['homeTeamName'] = qualifiedTeams[m * 2]['name'];
-        }
-        if (m * 2 + 1 < qualifiedTeams.length) {
-          knockoutMatches[m]['away_team_id'] = qualifiedTeams[m * 2 + 1]['id'];
-          knockoutMatches[m]['awayTeamId'] = qualifiedTeams[m * 2 + 1]['id'];
-          knockoutMatches[m]['away_team_name'] = qualifiedTeams[m * 2 + 1]['name'];
-          knockoutMatches[m]['awayTeamName'] = qualifiedTeams[m * 2 + 1]['name'];
+      // Seed first round with qualified teams (or null for BYE slots)
+      // qualifiedTeams are already in cross-paired order; remaining slots are BYEs.
+      final List<String?> slots = List.generate(targetCapacity, (i) {
+        return i < qualifiedTeams.length ? qualifiedTeams[i]['id'] : null;
+      });
+      final List<String?> slotNames = List.generate(targetCapacity, (i) {
+        return i < qualifiedTeams.length ? qualifiedTeams[i]['name'] : null;
+      });
+
+      final int firstRoundMatchCount = (pow(2, startRoundIndex)).toInt();
+      for (int m = 0; m < firstRoundMatchCount; m++) {
+        final matchId = getMatchId(startRoundIndex, m);
+        final matchData = matchesMap[matchId]!;
+        final String? homeId = slots[m * 2];
+        final String? awayId = slots[m * 2 + 1];
+
+        matchData['home_team_id'] = homeId;
+        matchData['home_team_name'] = slotNames[m * 2];
+        matchData['away_team_id'] = awayId;
+        matchData['away_team_name'] = slotNames[m * 2 + 1];
+
+        // 🛡️ BYE auto-advance: one team, no opponent → winner is determined immediately.
+        if (homeId != null && awayId == null) {
+          matchData['winner_id'] = homeId;
+          matchData['home_score'] = 0;
+          matchData['away_score'] = 0;
+          final nextMatchId = matchData['next_match_id'];
+          if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+            final nextMatch = matchesMap[nextMatchId]!;
+            if (m % 2 == 0) {
+              nextMatch['home_team_id'] = homeId;
+              nextMatch['home_team_name'] = slotNames[m * 2];
+            } else {
+              nextMatch['away_team_id'] = homeId;
+              nextMatch['away_team_name'] = slotNames[m * 2];
+            }
+          }
+        } else if (homeId == null && awayId != null) {
+          matchData['winner_id'] = awayId;
+          matchData['home_score'] = 0;
+          matchData['away_score'] = 0;
+          final nextMatchId = matchData['next_match_id'];
+          if (nextMatchId != null && matchesMap.containsKey(nextMatchId)) {
+            final nextMatch = matchesMap[nextMatchId]!;
+            if (m % 2 == 0) {
+              nextMatch['home_team_id'] = awayId;
+              nextMatch['home_team_name'] = slotNames[m * 2 + 1];
+            } else {
+              nextMatch['away_team_id'] = awayId;
+              nextMatch['away_team_name'] = slotNames[m * 2 + 1];
+            }
+          }
         }
       }
+
+      final List<Map<String, dynamic>> knockoutMatches = matchesMap.values.toList();
 
       if (knockoutMatches.isNotEmpty) {
         await _supabase.from('tournament_matches').insert(knockoutMatches);
       }
 
-      debugPrint('🚀 Successfully advanced group winners to Knockout stage with cross-group pairings!');
+      debugPrint('🚀 Successfully advanced group winners to Knockout stage with cross-group pairings (BYE-safe)!');
     } catch (e) {
       debugPrint('Error advancing groups to knockout: $e');
       rethrow;
     }
   }
 }
-

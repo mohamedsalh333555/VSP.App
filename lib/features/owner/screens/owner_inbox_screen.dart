@@ -6,7 +6,6 @@ import 'package:intl/intl.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/repositories/user_repository.dart';
 import '../../../core/repositories/chat_repository.dart';
 import '../../../core/models/user_model.dart';
 import '../../../data/models.dart';
@@ -25,6 +24,34 @@ class OwnerInboxScreen extends StatefulWidget {
 
 class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
   final ChatRepository _chatRepository = ChatRepository();
+
+  /// 🛡️ N+1 FIX: Local in-memory cache of user profiles keyed by user-id.
+  /// Populated via a single batch Supabase query whenever the conversation
+  /// list changes, so we never fire one getUserData() call per list row.
+  final Map<String, Map<String, dynamic>> _userCache = {};
+  bool _isFetchingUsers = false;
+
+  /// Batch-fetch profiles for all [userIds] that are not already cached.
+  Future<void> _prefetchUsers(List<String> userIds) async {
+    final missing = userIds.where((id) => id.isNotEmpty && !_userCache.containsKey(id)).toList();
+    if (missing.isEmpty || _isFetchingUsers) return;
+    _isFetchingUsers = true;
+    try {
+      final rows = await Supabase.instance.client
+          .from('users')
+          .select('id, name, profile_image_url')
+          .inFilter('id', missing);
+      for (final row in (rows as List<dynamic>)) {
+        final map = row as Map<String, dynamic>;
+        _userCache[map['id'].toString()] = map;
+      }
+      if (mounted) setState(() {});
+    } catch (e) {
+      debugPrint('⚠️ Owner inbox prefetch users notice: $e');
+    } finally {
+      _isFetchingUsers = false;
+    }
+  }
 
   void _openSupportChat(BuildContext context) {
     SupportService().openSupport(context);
@@ -114,6 +141,16 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
 
           final conversations = snapshot.data ?? [];
 
+          // 🛡️ N+1 FIX: Collect all other-user IDs and batch-fetch missing profiles once.
+          final otherUserIds = conversations
+              .map((c) {
+                final participants = (c['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];
+                return participants.firstWhere((uid) => uid != ownerId, orElse: () => '');
+              })
+              .where((id) => id.isNotEmpty)
+              .toList();
+          _prefetchUsers(otherUserIds);
+
           if (conversations.isEmpty) {
             return VSPEmptyState(
               icon: Iconsax.messages_3_copy,
@@ -159,30 +196,27 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                 );
               }
 
-              return FutureBuilder<Map<String, dynamic>?>(
-                future: UserRepository().getUserData(otherUserId),
-                builder: (context, userSnap) {
-                  final name = userSnap.data?['name'] ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
-                  final avatarUrl = userSnap.data?['profile_image_url'] ?? '';
+              // 🛡️ N+1 FIX: Read from cache — no FutureBuilder, no per-row network call.
+              final cachedUser = _userCache[otherUserId];
+              final name = cachedUser?['name'] ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
+              final avatarUrl = cachedUser?['profile_image_url'] ?? '';
 
-                  return VSPFadeInItem(
-                    index: index,
-                    child: _buildChatRow(
-                      context: context,
-                      conversationId: convId,
-                      otherUserId: otherUserId,
-                      type: type,
-                      ownerId: ownerId,
-                      title: name,
-                      subtitle: conv['last_message'] ?? (isArabic ? 'محادثة مباشرة' : 'Direct message'),
-                      timeStr: _formatTime(latestTime),
-                      avatar: avatarUrl.isNotEmpty ? avatarUrl : null,
-                      latestTime: latestTime,
-                      hasUnread: unreadCount > 0,
-                      unreadCount: unreadCount,
-                    ),
-                  );
-                },
+              return VSPFadeInItem(
+                index: index,
+                child: _buildChatRow(
+                  context: context,
+                  conversationId: convId,
+                  otherUserId: otherUserId,
+                  type: type,
+                  ownerId: ownerId,
+                  title: name,
+                  subtitle: conv['last_message'] ?? (isArabic ? 'محادثة مباشرة' : 'Direct message'),
+                  timeStr: _formatTime(latestTime),
+                  avatar: avatarUrl.isNotEmpty ? avatarUrl : null,
+                  latestTime: latestTime,
+                  hasUnread: unreadCount > 0,
+                  unreadCount: unreadCount,
+                ),
               );
             },
           );

@@ -181,7 +181,11 @@ class AppRouter {
     }
 
     // 6. Registration detail check (missing phone)
-    final bool hasPhone = userModel.phone != null && userModel.phone!.trim().isNotEmpty && userModel.phone!.trim().length >= 10;
+    // Accept 9–12 digit numbers to support international formats (e.g., 9-digit Gulf numbers,
+    // 10-digit Egyptian, 11-digit UK, 12-digit with country code prefix).
+    final rawPhone = userModel.phone?.trim() ?? '';
+    final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
+    final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
     if (!hasPhone) {
       if (path != '/onboarding') return '/onboarding';
       return null;
@@ -196,11 +200,15 @@ class AppRouter {
 
     if (userModel.isBlocked) {
       if (isOwner) {
-        // Suspended/Blocked owners proceed to owner dashboard with alert
-        if (path != '/owner') return '/owner';
+        // Suspended/Blocked owners are restricted to the owner dashboard only.
+        // Deep-link isolation: any non-owner path is redirected to /owner.
+        const allowedOwnerPaths = ['/owner', '/suspended'];
+        if (!allowedOwnerPaths.contains(path) && !path.startsWith('/owner')) return '/owner';
         return null;
       } else {
-        // Blocked players locked out completely
+        // 🛡️ Deep-link isolation: blocked players must ONLY see /suspended.
+        // Any attempt to navigate to /match/:id, /championship/:id, etc. via
+        // deep-link or programmatic push is blocked here.
         if (path != '/suspended') return '/suspended';
         return null;
       }

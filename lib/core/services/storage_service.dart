@@ -57,17 +57,27 @@ class StorageService {
         
         if (['.jpg', '.jpeg', '.png', '.heic'].contains(extension)) {
           final tempDir = await getTemporaryDirectory();
-          final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.jpg");
-          
-          if (uploadPath.toLowerCase().endsWith('.heic') || uploadPath.toLowerCase().endsWith('.png')) {
-            uploadPath = uploadPath.replaceAll(RegExp(r'\.(heic|png)$', caseSensitive: false), '.jpg');
+
+          // 🛡️ FIX: Preserve PNG transparency — use CompressFormat.png for .png files.
+          // Using CompressFormat.jpeg on a PNG with transparency fills the alpha channel
+          // with a solid black background. We must never convert .png to .jpeg.
+          final bool isPng = extension == '.png';
+          final CompressFormat compressFormat = isPng ? CompressFormat.png : CompressFormat.jpeg;
+          final String outputExt = isPng ? 'png' : 'jpg';
+          final int quality = isPng ? 100 : 70; // PNG is lossless; quality=100 retains all data.
+
+          final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.$outputExt");
+
+          // Only rename .heic → .jpg (not .png → .jpg)
+          if (uploadPath.toLowerCase().endsWith('.heic')) {
+            uploadPath = uploadPath.replaceAll(RegExp(r'\.heic$', caseSensitive: false), '.jpg');
           }
 
           final compressedXFile = await FlutterImageCompress.compressAndGetFile(
             finalFile.absolute.path,
             targetPath,
-            format: CompressFormat.jpeg,
-            quality: 70, // Significant savings with minimal loss
+            format: compressFormat,
+            quality: quality,
           );
           
           if (compressedXFile != null) {
