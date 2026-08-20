@@ -43,10 +43,15 @@ class ChatRepository {
           .eq('id', conversationId)
           .maybeSingle();
 
-      final String? rawBookingId = conv?['booking_id']?.toString();
+      final bool isDirectOrSupport = conversationId.startsWith('direct_') ||
+          conversationId.startsWith('support_') ||
+          conversationId.contains('support') ||
+          conversationId.contains('direct');
+
+      final String? rawBookingId = isDirectOrSupport ? null : conv?['booking_id']?.toString();
       final bool isValidBookingUuid = rawBookingId != null &&
           RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(rawBookingId);
-      final String? bookingId = isValidBookingUuid ? rawBookingId : null;
+      final String? bookingId = (isDirectOrSupport || !isValidBookingUuid) ? null : rawBookingId;
 
       await _supabase.from('chat_messages').insert({
         'conversation_id': conversationId,

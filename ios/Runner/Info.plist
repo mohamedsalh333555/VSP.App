@@ -44,13 +44,13 @@
 	<key>CADisableMinimumFrameDurationOnPhone</key>
 	<true/>
 	<key>NSLocationWhenInUseUsageDescription</key>
-	<string>This app needs access to location when open to automatically detect your governorate and show nearby stadiums and tournaments.</string>
+	<string>We need your location to find nearby stadiums and verify match attendance.</string>
 	<key>NSLocationAlwaysUsageDescription</key>
 	<string>This app needs access to location to show you relevant matches and stadiums in your area.</string>
 	<key>NSPhotoLibraryUsageDescription</key>
-	<string>This app needs photo library access so you can upload profile pictures, team logos, or stadium images.</string>
+	<string>We need photo library access to upload stadium images and profile avatars.</string>
 	<key>NSCameraUsageDescription</key>
-	<string>This app needs camera access so you can take and upload a photo directly.</string>
+	<string>We need camera access to capture pitch photos and verification documents.</string>
 	<key>UIApplicationSupportsIndirectInputEvents</key>
 	<true/>
 	<!-- 
