@@ -9,7 +9,6 @@ import 'package:url_launcher/url_launcher.dart';
 import 'dart:ui';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/booking_provider.dart';
-import '../../../core/repositories/booking_repository.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
@@ -59,7 +58,6 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       if (uid != null) {
         final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
         bookingProvider.loadOwnerBookings(uid);
-        SupabaseBookingRepository().autoReconcilePastBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
       }
     });

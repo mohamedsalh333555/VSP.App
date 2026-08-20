@@ -1184,7 +1184,7 @@ class MockBookingRepository implements BookingRepository {
         // Points/Elo calculation is completely offloaded to Supabase to execute only upon owner verification.
         /*
         if (booking.playerTeamId != null && booking.opponentTeamId != null) {
-          DatabaseService().updateMatchResult(
+          TeamRepository().updateMatchResult(
             bookingId, 
             booking.playerTeamId!, 
             booking.opponentTeamId!, 

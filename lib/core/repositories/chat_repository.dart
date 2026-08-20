@@ -1,5 +1,4 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import '../models/chat_model.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
@@ -38,9 +37,20 @@ class ChatRepository {
 
   Future<void> sendMessage(String conversationId, ChatMessage message) async {
     try {
+      final conv = await _supabase
+          .from('conversations')
+          .select('participant_ids, unread_counts, booking_id')
+          .eq('id', conversationId)
+          .maybeSingle();
+
+      final String? rawBookingId = conv?['booking_id']?.toString();
+      final bool isValidBookingUuid = rawBookingId != null &&
+          RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$').hasMatch(rawBookingId);
+      final String? bookingId = isValidBookingUuid ? rawBookingId : null;
+
       await _supabase.from('chat_messages').insert({
         'conversation_id': conversationId,
-        'booking_id': conversationId, // Pass conversationId as booking_id to satisfy RLS policy
+        'booking_id': bookingId,
         'sender_id': message.senderId,
         'sender_name': message.senderName,
         'text': message.text,
@@ -49,12 +59,6 @@ class ChatRepository {
         'is_edited': false,
         'deleted_for_users': [],
       });
-
-      final conv = await _supabase
-          .from('conversations')
-          .select('participant_ids, unread_counts, booking_id')
-          .eq('id', conversationId)
-          .maybeSingle();
 
       if (conv != null) {
         final List<dynamic> participants = conv['participant_ids'] ?? [];
@@ -129,28 +133,9 @@ class ChatRepository {
     }
   }
 
-  static Future<List<String>> getDeletedChatIds(String userId) async {
-    if (userId.isEmpty) return [];
-    try {
-      final prefs = await SharedPreferences.getInstance();
-      return prefs.getStringList('deleted_chats_$userId') ?? [];
-    } catch (_) {
-      return [];
-    }
-  }
-
   Future<void> deleteConversationForUser(String conversationId, String userId, {String? contactId}) async {
     if (userId.isEmpty) return;
     try {
-      final prefs = await SharedPreferences.getInstance();
-      final String userKey = 'deleted_chats_$userId';
-      final List<String> deletedList = prefs.getStringList(userKey) ?? [];
-      if (!deletedList.contains(conversationId)) deletedList.add(conversationId);
-      if (contactId != null && contactId.isNotEmpty && !deletedList.contains(contactId)) {
-        deletedList.add(contactId);
-      }
-      await prefs.setStringList(userKey, deletedList);
-
       final conv = await _supabase
           .from('conversations')
           .select('deleted_for_users')

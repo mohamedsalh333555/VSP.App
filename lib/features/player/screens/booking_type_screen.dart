@@ -137,7 +137,26 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
 
     try {
       if (_selectedType == 'Challenge Match') {
+        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+        final uid = auth.currentUser?.uid;
+        if (uid != null) {
+          final team = await TeamRepository().getUserTeam(uid);
+          if (team != null && team.fairPlayScore < 40) {
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(
+                  content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
+                  backgroundColor: VSPColors.error,
+                ),
+              );
+              setState(() => _isNavigating = false);
+            }
+            return;
+          }
+        }
+
         if (!_hasTeam || _teamPlayersCount < 5) {
+          if (!mounted) return;
           await showModalBottomSheet<bool>(
             context: context,
             isScrollControlled: true,

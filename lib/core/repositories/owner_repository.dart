@@ -4,7 +4,6 @@ import '../../data/models.dart';
 class OwnerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Support old constructor to avoid compile error in DatabaseService
   OwnerRepository({dynamic firestore});
 
   Stream<List<Booking>> getOwnerBookings(String ownerId) {
@@ -65,6 +64,33 @@ class OwnerRepository {
       return totalHours;
     } catch (e) {
       return 0;
+    }
+  }
+
+  Stream<List<Map<String, dynamic>>> getTransactionsStream() {
+    return _supabase
+        .from('transactions')
+        .stream(primaryKey: ['id'])
+        .map((list) {
+          final sorted = List<Map<String, dynamic>>.from(list);
+          sorted.sort((a, b) {
+            final dateA = DateTime.parse(a['created_at'].toString());
+            final dateB = DateTime.parse(b['created_at'].toString());
+            return dateB.compareTo(dateA);
+          });
+          return sorted;
+        });
+  }
+
+  Future<List<Map<String, dynamic>>> getTransactionsList() async {
+    try {
+      final list = await _supabase
+          .from('transactions')
+          .select()
+          .order('created_at', ascending: false);
+      return List<Map<String, dynamic>>.from(list);
+    } catch (e) {
+      return [];
     }
   }
 }

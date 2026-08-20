@@ -41,6 +41,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Booking? _booking;
   StreamSubscription? _bookingSubscription;
   Timer? _webhookTimeoutTimer;
+  Timer? _fallbackPollingTimer;
   Timer? _countdownTimer;
   int _remainingSeconds = 300; // 5 minutes hold timer
   bool _paymentCompleted = false;
@@ -75,6 +76,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   void dispose() {
     _countdownTimer?.cancel();
     _webhookTimeoutTimer?.cancel();
+    _fallbackPollingTimer?.cancel();
     _bookingSubscription?.cancel();
     _bookingSubscription = null;
     super.dispose();
@@ -183,6 +185,37 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     });
   }
 
+  void _startFallbackPollingTimer(String bookingId) {
+    _fallbackPollingTimer?.cancel();
+    _fallbackPollingTimer = Timer.periodic(const Duration(seconds: 10), (timer) async {
+      if (!mounted || _paymentCompleted) {
+        timer.cancel();
+        return;
+      }
+      try {
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        final booking = await bookingProvider.getBookingById(bookingId);
+        if (booking != null && (booking.status == BookingStatus.confirmed || booking.isPaid)) {
+          timer.cancel();
+          _webhookTimeoutTimer?.cancel();
+          _fallbackPollingTimer?.cancel();
+          if (mounted && !_paymentCompleted) {
+            _paymentCompleted = true;
+            HapticFeedback.heavyImpact();
+            Navigator.pushReplacement(
+              context,
+              MaterialPageRoute(
+                builder: (context) => BookingSuccessScreen(booking: booking),
+              ),
+            );
+          }
+        }
+      } catch (e) {
+        debugPrint('Fallback polling notice: $e');
+      }
+    });
+  }
+
   /// 🚀 فتح بوابة Paymob أو استدعاء المحاكاة الآمنة بالسيرفر (RPC) في الاختبار
   Future<void> _startPaymobCheckout() async {
     if (_booking == null) return;
@@ -254,7 +287,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
         if (mounted && (isPaidSuccess == true)) {
           debugPrint('⚡ [Server Verification]: WebView returned success. Awaiting Realtime Webhook confirmation from server...');
-          _isAwaitingWebhook = true;
+          setState(() => _isAwaitingWebhook = true);
+          if (_booking != null) {
+            _startFallbackPollingTimer(_booking!.id);
+          }
         } else if (mounted && !_paymentCompleted) {
           setState(() => _isAwaitingWebhook = false);
           VSPFeedback.showError(

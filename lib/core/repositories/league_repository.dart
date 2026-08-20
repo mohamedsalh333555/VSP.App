@@ -5,7 +5,6 @@ import '../../data/models.dart';
 class LeagueRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Support old constructor to avoid compile error in DatabaseService
   LeagueRepository({dynamic firestore});
 
   Stream<List<VSP1v1Player>> get1v1Standings() {

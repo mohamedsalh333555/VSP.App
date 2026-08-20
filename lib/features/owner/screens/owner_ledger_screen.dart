@@ -2,7 +2,7 @@ import 'package:share_plus/share_plus.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
-import 'package:supabase_flutter/supabase_flutter.dart';
+import '../../../core/repositories/owner_repository.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
@@ -12,12 +12,7 @@ class OwnerLedgerScreen extends StatelessWidget {
 
   Future<void> _exportLedgerCsv(BuildContext context, bool isAr) async {
     try {
-      final list = await Supabase.instance.client
-          .from('transactions')
-          .select()
-          .order('created_at', ascending: false);
-
-      final transactions = List<Map<String, dynamic>>.from(list);
+      final transactions = await OwnerRepository().getTransactionsList();
       if (transactions.isEmpty) {
         if (context.mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -77,18 +72,7 @@ class OwnerLedgerScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: Supabase.instance.client
-            .from('transactions')
-            .stream(primaryKey: ['id'])
-            .map((list) {
-              final sorted = List<Map<String, dynamic>>.from(list);
-              sorted.sort((a, b) {
-                final dateA = DateTime.parse(a['created_at'].toString());
-                final dateB = DateTime.parse(b['created_at'].toString());
-                return dateB.compareTo(dateA);
-              });
-              return sorted;
-            }),
+        stream: OwnerRepository().getTransactionsStream(),
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

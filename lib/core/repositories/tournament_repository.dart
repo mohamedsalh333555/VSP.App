@@ -499,6 +499,15 @@ class TournamentRepository {
 
   Future<void> generateFixtures(String championshipId) async {
     try {
+      try {
+        await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
+      } catch (e) {
+        debugPrint('prepare_tournament_bracket RPC notice: $e');
+        try {
+          await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
+        } catch (_) {}
+      }
+
       final champDoc = await _supabase
           .from('championships')
           .select()
@@ -801,13 +810,15 @@ class TournamentRepository {
       if (nextMatchId != null) {
         String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
 
-        await _supabase
-            .from('tournament_matches')
-            .update({
-              '${slotField}_team_id': winnerId,
-              '${slotField}_team_name': winnerName,
-            })
-            .eq('id', nextMatchId);
+        if (winnerId != null) {
+          await _supabase
+              .from('tournament_matches')
+              .update({
+                '${slotField}_team_id': winnerId,
+                '${slotField}_team_name': winnerName,
+              })
+              .eq('id', nextMatchId);
+        }
       } else {
         // ── Final Match: Crown the Champion ──
         if (winnerId != null) {
@@ -909,32 +920,48 @@ class TournamentRepository {
         });
   }
 
+  /// 🚪 انسحاب الفريق الذري من البطولة (Atomic Tournament Withdrawal)
   Future<bool> leaveChampionship(String championshipId, String teamId) async {
     try {
-      final champResponse = await _supabase
-          .from('championships')
-          .select('joined_teams, paid_teams')
-          .eq('id', championshipId)
-          .maybeSingle();
-      if (champResponse == null) throw Exception('البطولة لا توجد.');
+      try {
+        await _supabase.rpc('leave_championship_atomic', params: {
+          'p_championship_id': championshipId,
+          'p_team_id': teamId,
+        });
+        debugPrint('✅ Team $teamId left championship $championshipId via leave_championship_atomic RPC.');
+        return true;
+      } catch (rpcErr) {
+        debugPrint('⚠️ leave_championship_atomic RPC fallback notice: $rpcErr');
+        final champDoc = await _supabase
+            .from('championships')
+            .select('joined_teams, paid_teams, status')
+            .eq('id', championshipId)
+            .maybeSingle();
 
-      final List<String> joinedTeams = List<String>.from(champResponse['joined_teams'] ?? champResponse['joinedTeams'] ?? []);
-      final List<String> paidTeams = List<String>.from(champResponse['paid_teams'] ?? champResponse['paidTeams'] ?? []);
+        if (champDoc != null) {
+          final String status = (champDoc['status'] ?? 'open').toString();
+          if (status == 'ongoing' || status == 'completed') {
+            throw Exception('لا يمكن الانسحاب من بطولة جارية أو مكتملة.');
+          }
 
-      joinedTeams.remove(teamId);
-      paidTeams.remove(teamId);
+          final joinedTeams = List<String>.from(champDoc['joined_teams'] ?? [])..remove(teamId);
+          final paidTeams = List<String>.from(champDoc['paid_teams'] ?? [])..remove(teamId);
 
-      await _supabase
-          .from('championships')
-          .update({
+          await _supabase.from('championships').update({
             'joined_teams': joinedTeams,
             'paid_teams': paidTeams,
-          })
-          .eq('id', championshipId);
+          }).eq('id', championshipId);
 
-      return true;
+          try {
+            await _supabase.from('championship_rosters').delete().eq('championship_id', championshipId).eq('team_id', teamId);
+          } catch (_) {}
+
+          return true;
+        }
+        return false;
+      }
     } catch (e) {
-      debugPrint('Error leaving championship: $e');
+      debugPrint('❌ Error in leaveChampionship: $e');
       return false;
     }
   }
@@ -1005,42 +1032,120 @@ class TournamentRepository {
     }
   }
 
-  /// Fetch player rosters for home and away teams in a championship
+  /// Fetch player rosters for home and away teams in a championship (registered players + guests)
   Future<Map<String, List<String>>> fetchRosters(String championshipId, String homeTeamId, String awayTeamId) async {
-    List<String> homePlayers = [];
-    List<String> awayPlayers = [];
-
-    try {
-      final homeRoster = await _supabase
-          .from('championship_rosters')
-          .select()
-          .eq('championship_id', championshipId)
-          .eq('team_id', homeTeamId)
-          .maybeSingle();
-      if (homeRoster != null) {
-        final raw = homeRoster['guest_names'] ?? homeRoster['player_names'] ?? [];
-        if (raw is List) homePlayers = List<String>.from(raw);
-      }
-    } catch (e) {
-      debugPrint('Error fetching home roster: $e');
-    }
-
-    try {
-      final awayRoster = await _supabase
-          .from('championship_rosters')
-          .select()
-          .eq('championship_id', championshipId)
-          .eq('team_id', awayTeamId)
-          .maybeSingle();
-      if (awayRoster != null) {
-        final raw = awayRoster['guest_names'] ?? awayRoster['player_names'] ?? [];
-        if (raw is List) awayPlayers = List<String>.from(raw);
-      }
-    } catch (e) {
-      debugPrint('Error fetching away roster: $e');
-    }
-
+    final homePlayers = await _fetchTeamFullRosterNames(championshipId, homeTeamId);
+    final awayPlayers = await _fetchTeamFullRosterNames(championshipId, awayTeamId);
     return {'home': homePlayers, 'away': awayPlayers};
+  }
+
+  Future<List<String>> _fetchTeamFullRosterNames(String championshipId, String teamId) async {
+    if (teamId.isEmpty) return [];
+    final Set<String> names = {};
+
+    try {
+      final roster = await _supabase
+          .from('championship_rosters')
+          .select()
+          .eq('championship_id', championshipId)
+          .eq('team_id', teamId)
+          .maybeSingle();
+
+      if (roster != null) {
+        final rosterId = roster['id']?.toString();
+
+        // 1. Guests from championship_rosters flat arrays
+        final guestNamesRaw = roster['guest_names'] ?? roster['player_names'] ?? [];
+        if (guestNamesRaw is List) {
+          for (var g in guestNamesRaw) {
+            if (g != null && g.toString().trim().isNotEmpty) {
+              names.add(g.toString().trim());
+            }
+          }
+        }
+
+        // 2. Guests from championship_roster_guests table
+        if (rosterId != null) {
+          try {
+            final guestRows = await _supabase
+                .from('championship_roster_guests')
+                .select('guest_name')
+                .eq('roster_id', rosterId);
+            for (var row in guestRows) {
+              final gName = row['guest_name']?.toString().trim();
+              if (gName != null && gName.isNotEmpty) {
+                names.add(gName);
+              }
+            }
+          } catch (e) {
+            debugPrint('championship_roster_guests notice: $e');
+          }
+        }
+
+        // 3. Registered players from championship_roster_players joined with users table
+        List<String> playerIds = [];
+        if (rosterId != null) {
+          try {
+            final playerRows = await _supabase
+                .from('championship_roster_players')
+                .select('player_id')
+                .eq('roster_id', rosterId);
+            for (var row in playerRows) {
+              final pId = row['player_id']?.toString();
+              if (pId != null && pId.isNotEmpty) {
+                playerIds.add(pId);
+              }
+            }
+          } catch (e) {
+            debugPrint('championship_roster_players notice: $e');
+          }
+        }
+
+        if (playerIds.isEmpty) {
+          final pIdsRaw = roster['player_ids'];
+          if (pIdsRaw is List) {
+            playerIds = pIdsRaw.map((e) => e.toString()).where((e) => e.isNotEmpty).toList();
+          }
+        }
+
+        if (playerIds.isNotEmpty) {
+          try {
+            final userRows = await _supabase
+                .from('users')
+                .select('name')
+                .inFilter('id', playerIds);
+            for (var u in userRows) {
+              final uName = u['name']?.toString().trim();
+              if (uName != null && uName.isNotEmpty) {
+                names.add(uName);
+              }
+            }
+          } catch (e) {
+            debugPrint('Users fetch notice for roster: $e');
+          }
+        }
+      }
+    } catch (e) {
+      debugPrint('Error fetching roster for team $teamId: $e');
+    }
+
+    // 4. Fallback if roster table is unpopulated: fetch team member names from team_members/users
+    if (names.isEmpty && teamId.isNotEmpty) {
+      try {
+        final uids = await TeamRepository().getTeamMemberUids(teamId);
+        if (uids.isNotEmpty) {
+          final userRows = await _supabase.from('users').select('name').inFilter('id', uids);
+          for (var u in userRows) {
+            final uName = u['name']?.toString().trim();
+            if (uName != null && uName.isNotEmpty) {
+              names.add(uName);
+            }
+          }
+        }
+      } catch (_) {}
+    }
+
+    return names.toList();
   }
 
   /// Fetch player IDs and guest names for a single team in a championship roster
@@ -1344,6 +1449,15 @@ class TournamentRepository {
   // ─── 2. توليد مباريات الدوري الكامل (Round-Robin Algorithm) ───
   Future<void> generateLeagueFixtures(String championshipId) async {
     try {
+      try {
+        await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
+      } catch (e) {
+        debugPrint('prepare_tournament_bracket RPC notice: $e');
+        try {
+          await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
+        } catch (_) {}
+      }
+
       final champDoc = await _supabase.from('championships').select().eq('id', championshipId).maybeSingle();
       if (champDoc == null) throw Exception('البطولة غير موجودة');
 
@@ -1449,6 +1563,15 @@ class TournamentRepository {
   // ─── 3. توليد مباريات المجموعات ثم التصفيات (Groups + Knockout) ───
   Future<void> generateGroupsFixtures(String championshipId) async {
     try {
+      try {
+        await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
+      } catch (e) {
+        debugPrint('prepare_tournament_bracket RPC notice: $e');
+        try {
+          await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
+        } catch (_) {}
+      }
+
       final champDoc = await _supabase.from('championships').select().eq('id', championshipId).maybeSingle();
       if (champDoc == null) throw Exception('البطولة غير موجودة');
 

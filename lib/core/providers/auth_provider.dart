@@ -817,13 +817,21 @@ class AuthProvider with ChangeNotifier {
       }
       updatedAdditional['isOnboardingConfirmed'] = true;
 
-      await Supabase.instance.client.from('users').update({
-        'verification_status': verificationStatus,
-        'is_registration_complete': true,
-        'has_stadium': true,
-        'additional_data': updatedAdditional,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', _firebaseUser!.id);
+      try {
+        await Supabase.instance.client.rpc('submit_owner_verification', params: {
+          'p_owner_id': _firebaseUser!.id,
+          'p_additional_data': updatedAdditional,
+        });
+      } catch (rpcErr) {
+        VSPLogger.w('RPC submit_owner_verification fallback: $rpcErr');
+        await Supabase.instance.client.from('users').update({
+          'verification_status': verificationStatus,
+          'is_registration_complete': true,
+          'has_stadium': true,
+          'additional_data': updatedAdditional,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', _firebaseUser!.id);
+      }
 
       // ✅ Update local model immediately so GoRouter sees all required flags
       _userModel = _userModel!.copyWith(
@@ -948,8 +956,23 @@ class AuthProvider with ChangeNotifier {
         );
       }
 
-      await _userRepository.completeRegistrationFlags(currentUid!, updateData);
-      await updateProfile(updateData);
+      try {
+        await Supabase.instance.client.rpc('complete_user_registration', params: {
+          'p_user_id': currentUid,
+          'p_phone': PhoneUtils.normalize(phone),
+          'p_name': (name != null && name.isNotEmpty) ? name : (_userModel?.name ?? ''),
+          'p_position': position,
+          'p_governorate': governorate ?? _governorate,
+          'p_date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
+          'p2p_instapay': p2pInstapay,
+          'p2p_vodafone': p2pVodafone,
+          'p2p_bank': p2pBank,
+        });
+      } catch (rpcErr) {
+        VSPLogger.w('RPC complete_user_registration fallback: $rpcErr');
+        await _userRepository.completeRegistrationFlags(currentUid!, updateData);
+      }
+
       _isGhostUser = false;
 
       _isLoading = false;

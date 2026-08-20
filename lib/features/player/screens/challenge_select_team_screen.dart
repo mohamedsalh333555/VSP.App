@@ -272,18 +272,42 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                 onPressed: _selectedTeam == null
                     ? null
                     : () async {
+                        if (_selectedTeam != null && _selectedTeam!.fairPlayScore < 40) {
+                          if (context.mounted) {
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
+                                backgroundColor: VSPColors.error,
+                              ),
+                            );
+                          }
+                          return;
+                        }
+
                         final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
                         final uid = auth.currentUser?.uid;
                         if (uid != null) {
                           final team = await TeamRepository().getUserTeam(uid);
-                          if (team != null && context.mounted) {
-                            // Save opponent and player team to draft
-                            context.read<BookingProvider>().updateDraft(
-                              opponentTeamId: _selectedTeam!.id,
-                              opponentTeamName: _selectedTeam!.name,
-                              playerTeamId: team.id,
-                              playerTeamName: team.name, // specifically fetch team.name so it doesn't default to player name
-                            );
+                          if (team != null) {
+                            if (team.fairPlayScore < 40) {
+                              if (context.mounted) {
+                                ScaffoldMessenger.of(context).showSnackBar(
+                                  SnackBar(
+                                    content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
+                                    backgroundColor: VSPColors.error,
+                                  ),
+                                );
+                              }
+                              return;
+                            }
+                            if (context.mounted) {
+                              context.read<BookingProvider>().updateDraft(
+                                opponentTeamId: _selectedTeam!.id,
+                                opponentTeamName: _selectedTeam!.name,
+                                playerTeamId: team.id,
+                                playerTeamName: team.name,
+                              );
+                            }
                           }
                         } else if (context.mounted) {
                            context.read<BookingProvider>().updateDraft(

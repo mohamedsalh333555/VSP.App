@@ -11,6 +11,7 @@ class UserRepository {
   Future<UserModel?> getUserByPhone(String phone) async {
     try {
       final normalizedPhone = PhoneUtils.normalize(phone);
+      if (normalizedPhone == null || normalizedPhone.isEmpty) return null;
       final response = await _supabase
           .from('users')
           .select()
@@ -147,25 +148,42 @@ class UserRepository {
   /// Trusted method to complete user registration and persist is_registration_complete flag permanently in DB
   Future<bool> completeRegistrationFlags(String userId, Map<String, dynamic> additionalData) async {
     try {
-      final snakeData = _convertToSnakeCase(additionalData);
-      snakeData['is_registration_complete'] = true;
-      snakeData['is_email_verified'] = true;
-      snakeData['updated_at'] = DateTime.now().toUtc().toIso8601String();
+      try {
+        await _supabase.rpc('complete_user_registration', params: {
+          'p_user_id': userId,
+          'p_phone': additionalData['phone'] ?? additionalData['p_phone'],
+          'p_name': additionalData['name'] ?? additionalData['p_name'],
+          'p_position': additionalData['position'] ?? additionalData['p_position'],
+          'p_governorate': additionalData['governorate'] ?? additionalData['p_governorate'] ?? 'Cairo',
+          'p_date_of_birth': additionalData['date_of_birth'] ?? additionalData['p_date_of_birth'],
+          'p2p_instapay': additionalData['p2p_instapay'],
+          'p2p_vodafone': additionalData['p2p_vodafone'],
+          'p2p_bank': additionalData['p2p_bank'],
+        });
+        VSPLogger.i('✅ complete_user_registration RPC persisted successfully for $userId');
+        return true;
+      } catch (rpcErr) {
+        VSPLogger.w('RPC complete_user_registration fallback notice: $rpcErr');
+        final snakeData = _convertToSnakeCase(additionalData);
+        snakeData['is_registration_complete'] = true;
+        snakeData['is_email_verified'] = true;
+        snakeData['updated_at'] = DateTime.now().toUtc().toIso8601String();
 
-      // Ensure profile row exists
-      final exists = await getUserData(userId);
-      if (exists == null) {
-        final user = _supabase.auth.currentUser;
-        snakeData['id'] = userId;
-        snakeData['email'] = user?.email ?? '';
-        snakeData['role'] = user?.userMetadata?['role'] ?? 'player';
-        snakeData['created_at'] = DateTime.now().toUtc().toIso8601String();
-        await _supabase.from('users').insert(snakeData);
-      } else {
-        await _supabase.from('users').update(snakeData).eq('id', userId);
+        // Ensure profile row exists
+        final exists = await getUserData(userId);
+        if (exists == null) {
+          final user = _supabase.auth.currentUser;
+          snakeData['id'] = userId;
+          snakeData['email'] = user?.email ?? '';
+          snakeData['role'] = user?.userMetadata?['role'] ?? 'player';
+          snakeData['created_at'] = DateTime.now().toUtc().toIso8601String();
+          await _supabase.from('users').insert(snakeData);
+        } else {
+          await _supabase.from('users').update(snakeData).eq('id', userId);
+        }
+        VSPLogger.i('✅ completeRegistrationFlags persisted successfully for $userId');
+        return true;
       }
-      VSPLogger.i('✅ completeRegistrationFlags persisted successfully for $userId');
-      return true;
     } catch (e) {
       VSPLogger.e('Error completing registration flags for $userId', e);
       return false;

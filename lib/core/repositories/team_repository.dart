@@ -78,8 +78,9 @@ class TeamRepository {
           .inFilter('id', allUids);
 
       final phones = (response as List)
-          .map((row) => PhoneUtils.normalize(row['phone']?.toString() ?? ''))
-          .where((p) => p.isNotEmpty)
+          .map((row) => PhoneUtils.normalize(row['phone']?.toString()))
+          .where((p) => p != null && p.isNotEmpty)
+          .cast<String>()
           .toSet();
 
       // يجب وجود 5 أرقام هواتف فريدة ومختلفة

@@ -4,7 +4,6 @@ import '../services/logger_service.dart';
 class ReportRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  // Support old constructor to avoid compile error in DatabaseService
   ReportRepository({dynamic firestore});
 
   Future<bool> reportEntity({

@@ -91,7 +91,7 @@ class AuthService {
     // Duplicate Phone Check
     final rawPhone = userData['phone']?.toString() ?? '';
     final phone = PhoneUtils.normalize(rawPhone);
-    if (await isPhoneRegistered(phone)) {
+    if (phone != null && await isPhoneRegistered(phone)) {
        return {'success': false, 'message': 'رقم الهاتف مسجل مسبقاً.'};
     }
 
@@ -108,7 +108,7 @@ class AuthService {
           'role': role,
           'name': userData['name']?.toString().trim() ?? '',
           'position': userData['position'] ?? 'GK',
-          'phone': phone,
+          'phone': phone ?? '',
           'governorate': userData['governorate'],
         },
       );
@@ -287,6 +287,7 @@ class AuthService {
     if (phone.isEmpty) return false;
     try {
       final cleanPhone = PhoneUtils.normalize(phone);
+      if (cleanPhone == null || cleanPhone.isEmpty) return false;
       var query = _supabase
           .from('users')
           .select('id')

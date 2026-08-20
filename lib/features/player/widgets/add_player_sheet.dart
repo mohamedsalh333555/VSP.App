@@ -41,7 +41,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
     });
 
     final normalized = PhoneUtils.normalize(phone);
-    final user = await UserRepository().getUserByPhone(normalized);
+    final user = normalized != null ? await UserRepository().getUserByPhone(normalized) : null;
 
     if (mounted) {
       if (user != null) {

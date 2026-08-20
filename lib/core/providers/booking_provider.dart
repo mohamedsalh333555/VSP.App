@@ -150,10 +150,6 @@ class BookingProvider with ChangeNotifier {
 
   /// Load user's bookings
   void loadUserBookings(String userId) {
-    _repository.autoExpirePendingChallenges();
-    _repository.autoReconcileSingleEntryResults();
-    _repository.autoNudgePostMatchResults();
-
     // ⚡ Direct REST API fetch to guarantee instant display even if Realtime Stream is delayed
     try {
       final repo = _repository;
@@ -231,12 +227,6 @@ class BookingProvider with ChangeNotifier {
       return;
     }
     _activeOwnerId = ownerId;
-
-    Future.microtask(() {
-      _repository.autoExpirePendingChallenges();
-      _repository.autoReconcileSingleEntryResults();
-      _repository.autoNudgePostMatchResults();
-    });
 
     // ⚡ Direct REST API fetch to guarantee instant data load even if WebSocket stream is silent
     try {

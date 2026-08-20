@@ -225,28 +225,29 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
         String validStadiumId = '';
         String validOwnerId = uuidRegex.hasMatch(widget.championship.ownerId) ? widget.championship.ownerId : '';
 
-        try {
-          final res = await Supabase.instance.client
-              .from('stadiums')
-              .select('id, owner_id')
-              .limit(1)
-              .maybeSingle();
-
-          if (res != null) {
-            validStadiumId = res['id'].toString();
-            if (validOwnerId.isEmpty) validOwnerId = (res['owner_id'] ?? '').toString();
-          }
-        } catch (e) {
-          debugPrint('Error fetching stadium fallback: $e');
-        }
-
         if (validStadiumId.isEmpty) {
-          validStadiumId = 'champ_stadium_${widget.championship.id}';
+          try {
+            final res = await Supabase.instance.client
+                .from('stadiums')
+                .select('id, owner_id')
+                .limit(1)
+                .maybeSingle();
+
+            if (res != null) {
+              final fetchedId = res['id'].toString();
+              if (uuidRegex.hasMatch(fetchedId)) {
+                validStadiumId = fetchedId;
+              }
+              if (validOwnerId.isEmpty && uuidRegex.hasMatch((res['owner_id'] ?? '').toString())) {
+                validOwnerId = (res['owner_id'] ?? '').toString();
+              }
+            }
+          } catch (e) {
+            debugPrint('Error fetching stadium fallback: $e');
+          }
         }
 
         final entryFee = widget.championship.entryFee;
-        final serviceFee = (entryFee * 0.0475) + 3.0;
-        final totalCheckoutPrice = entryFee + serviceFee;
 
         final draft = BookingDraft(
           stadiumId: validStadiumId,
@@ -258,13 +259,13 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
           bookingType: BookingType.team,
           playerTeamId: widget.team.id,
           playerTeamName: widget.team.name,
-          totalPrice: totalCheckoutPrice,
+          totalPrice: entryFee,
           isPaid: false,
           isPrivate: false,
           rentBall: false,
           currentPlayers: totalCount,
           totalFieldCapacity: maxPlayers,
-          depositPaid: totalCheckoutPrice,
+          depositPaid: entryFee,
           isDepositPaid: false,
           needsDeposit: true,
         );

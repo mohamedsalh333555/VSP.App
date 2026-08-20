@@ -13,7 +13,7 @@ class DualCaptainHandshakeVerifier {
     final normA = PhoneUtils.normalize(captainAPhone);
     final normB = PhoneUtils.normalize(captainBPhone);
 
-    if (normA.isEmpty || normB.isEmpty || normA == normB) {
+    if (normA == null || normA.isEmpty || normB == null || normB.isEmpty || normA == normB) {
       throw Exception('dual_captain_phone_conflict');
     }
 

@@ -9,7 +9,6 @@ import '../../../../core/services/image_pick_service.dart';
 import '../../../../core/services/storage_service.dart';
 import 'dart:io';
 import '../../../../core/providers/auth_provider.dart';
-import '../../../../core/services/database_service.dart';
 import '../../../../core/repositories/team_repository.dart';
 import '../../../../core/repositories/user_repository.dart';
 import '../../../../core/models/user_model.dart';
@@ -119,7 +118,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             .eq('id', team.id)
             .listen((data) async {
               if (data.isNotEmpty && mounted) {
-                final updatedTeam = await DatabaseService().team.getTeam(team.id);
+                final updatedTeam = await TeamRepository().getTeam(team.id);
                 if (updatedTeam != null && mounted) {
                   setState(() {
                     _teamNameController.text = updatedTeam.name;

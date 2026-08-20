@@ -1,7 +1,8 @@
+import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode;
+import 'package:flutter/foundation.dart' show kReleaseMode, PlatformDispatcher;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -73,7 +74,18 @@ void main() async {
     systemNavigationBarDividerColor: Colors.transparent,
   ));
 
-  // Custom Error Boundary
+  // Global Crash Boundary & Logging Handlers
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    VSPLogger.e('Uncaught Platform Error: $error', error, stack);
+    return true;
+  };
+
+  // Custom Error Boundary Widget
   ErrorWidget.builder = (FlutterErrorDetails details) {
     return Scaffold(
       backgroundColor: VSPColors.background,

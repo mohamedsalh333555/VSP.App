@@ -611,6 +611,11 @@ class NotificationHandler {
               context,
               'فشل النزاع: أنت لست متواجداً في محيط الملعب حالياً! 📍 يرجى تفعيل الـ GPS والتواجد في أرضية الملعب للمحاولة.',
             );
+          } else if (errorMsg.contains('stadium_coordinates_missing')) {
+            VSPFeedback.showError(
+              context,
+              'إحداثيات الملعب الجغرافية غير مسجلة بالنظام. يرجى تقديم صورة سيلفي موثقة جغرافياً (Geotagged Selfie) أو التواصل مع الدعم الفني. 📍',
+            );
           } else if (errorMsg.contains('booking_not_found')) {
             VSPFeedback.showError(
               context,

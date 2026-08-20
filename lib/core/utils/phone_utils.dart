@@ -1,8 +1,9 @@
 class PhoneUtils {
   /// Normalizes a phone number to a consistent format for database storage and searching.
   /// Standardizes local and international phone formats (E.164 support).
-  static String normalize(String phone) {
-    if (phone.isEmpty) return '';
+  /// Returns null if phone is empty or contains no digits to prevent DB unique constraint conflicts.
+  static String? normalize(String? phone) {
+    if (phone == null || phone.isEmpty) return null;
 
     // 1. Convert Arabic/Eastern numerals to Western numerals
     String result = _convertEasternToWesternDigits(phone);
@@ -11,7 +12,7 @@ class PhoneUtils {
     final hasPlus = result.trim().startsWith('+');
     result = result.replaceAll(RegExp(r'\D'), '');
 
-    if (result.isEmpty) return '';
+    if (result.isEmpty) return null;
 
     // 3. Handle Egyptian national vs international formats
     if (result.startsWith('20') && result.length == 12) {
@@ -44,6 +45,7 @@ class PhoneUtils {
     if (phone1.isEmpty || phone2.isEmpty) return false;
     final n1 = normalize(phone1);
     final n2 = normalize(phone2);
+    if (n1 == null || n2 == null) return false;
     return n1 == n2 || toE164(phone1) == toE164(phone2);
   }
 
