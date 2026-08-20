@@ -1,5 +1,4 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'package:flutter/services.dart';
@@ -24,6 +23,7 @@ import '../../../core/ui/components/vsp_section_title.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'stadium_details_screen.dart';
 import 'team_dashboard_screen.dart';
@@ -956,7 +956,9 @@ class _HomeContent extends StatelessWidget {
                 backgroundColor: Colors.transparent,
                 isScrollControlled: true,
                 useSafeArea: true,
-                builder: (context) => const FilterBottomSheet(),
+                builder: (context) => FilterBottomSheet(
+                  initialFilters: context.read<StadiumProvider>().currentFilters,
+                ),
               );
               if (result != null && context.mounted) {
                 context.read<StadiumProvider>().applyFilters(result);
@@ -1066,18 +1068,9 @@ class _HomeContent extends StatelessWidget {
                 final message = isAr 
                     ? 'مرحباً VSP، أنا من محافظة $cityName وأريد اقتراح إضافة ملاعب في منطقتي!'
                     : 'Hello VSP, I am from $cityName and I want to suggest adding stadiums in my area!';
-                final encoded = Uri.encodeComponent(message);
                 final settings = await AppSettingsRepository().getSettings();
                 final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
-                final phone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
-                final whatsappUrl = Uri.parse('https://wa.me/$phone?text=$encoded');
-                try {
-                  if (await canLaunchUrl(whatsappUrl)) {
-                    await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-                  }
-                } catch (e) {
-                  debugPrint('Error launching WhatsApp support: $e');
-                }
+                await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
               },
             ),
           ],

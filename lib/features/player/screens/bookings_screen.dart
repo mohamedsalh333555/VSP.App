@@ -435,7 +435,10 @@ class _BookingCard extends StatelessWidget {
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
                 _buildInfoColumn(context, l10n.time, _formatTimeShort(booking.formattedTimeRange)),
                 Container(width: 1, height: 24, color: VSPColors.divider.withValues(alpha: 0.1)),
-                _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
+                Directionality(
+                  textDirection: TextDirection.ltr,
+                  child: _buildInfoColumn(context, l10n.price, '${booking.totalPrice.toInt()} ${l10n.egCurrency}'),
+                ),
               ],
             ),
           ),
@@ -705,6 +708,29 @@ class _BookingCard extends StatelessWidget {
           child: Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
+              Container(
+                margin: const EdgeInsets.only(bottom: 8),
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: VSPColors.warning.withValues(alpha: 0.1),
+                  borderRadius: BorderRadius.circular(6),
+                  border: Border.all(color: VSPColors.warning.withValues(alpha: 0.3)),
+                ),
+                child: Row(
+                  children: [
+                    const Icon(Iconsax.clock_copy, color: VSPColors.warning, size: 14),
+                    const SizedBox(width: 6),
+                    Expanded(
+                      child: Text(
+                        isArabic
+                            ? '⏳ يرجى تأكيد النتيجة خلال 24 ساعة؛ التجاهل يؤدي للاعتماد التلقائي وخصم 5 نقاط لعب نظيف.'
+                            : '⏳ Please confirm score within 24h. Inaction auto-approves result & deducts 5 Fair-Play pts.',
+                        style: const TextStyle(color: VSPColors.warning, fontSize: 11, fontWeight: FontWeight.bold),
+                      ),
+                    ),
+                  ],
+                ),
+              ),
               Text(
                 claimText,
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),

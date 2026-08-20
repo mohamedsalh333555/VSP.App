@@ -55,3 +55,4 @@ node_modules
 *.txt
 .venv/
 scratch_check.dart
+scratch/

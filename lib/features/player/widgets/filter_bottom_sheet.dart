@@ -8,7 +8,8 @@ import '../../../core/constants/egypt_governorates.dart';
 import '../../../core/providers/stadium_provider.dart';
 
 class FilterBottomSheet extends StatefulWidget {
-  const FilterBottomSheet({super.key});
+  final Map<String, dynamic>? initialFilters;
+  const FilterBottomSheet({super.key, this.initialFilters});
 
   @override
   State<FilterBottomSheet> createState() => _FilterBottomSheetState();
@@ -50,16 +51,65 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
     
     if (!_sportsInitialized) {
       final availableSports = stadiumProvider.availableSportTypes;
+      final List<dynamic> initSports = widget.initialFilters?['sports'] is List
+          ? widget.initialFilters!['sports'] as List
+          : [];
       for (final sport in availableSports) {
-        _sportsFilters[sport] = false;
+        _sportsFilters[sport] = initSports.contains(sport);
       }
       _sportsInitialized = true;
     }
 
     if (!_priceInitialized) {
       final maxPriceFromDb = stadiumProvider.maxStadiumPrice;
-      _priceRange = RangeValues(0, maxPriceFromDb);
+      final double startPrice = (widget.initialFilters?['minPrice'] as num?)?.toDouble() ?? 0.0;
+      final double endPrice = (widget.initialFilters?['maxPrice'] as num?)?.toDouble() ?? maxPriceFromDb;
+      _priceRange = RangeValues(
+        startPrice.clamp(0.0, maxPriceFromDb),
+        endPrice.clamp(0.0, maxPriceFromDb),
+      );
       _priceInitialized = true;
+    }
+
+    if (widget.initialFilters != null) {
+      if (_selectedGov == null && widget.initialFilters!['location'] is String) {
+        _selectedGov = widget.initialFilters!['location'] as String?;
+      }
+      if (widget.initialFilters!['noDepositOnly'] is bool) {
+        _noDepositOnly = widget.initialFilters!['noDepositOnly'] as bool;
+      }
+      if (widget.initialFilters!['sizes'] is List) {
+        final List<dynamic> initSizes = widget.initialFilters!['sizes'] as List;
+        for (final key in _sizeFilters.keys) {
+          if (initSizes.contains(key)) _sizeFilters[key] = true;
+        }
+      }
+      if (widget.initialFilters!['amenities'] is List) {
+        final List<dynamic> initAmenities = widget.initialFilters!['amenities'] as List;
+        for (final key in _amenitiesFilters.keys) {
+          if (initAmenities.contains(key)) _amenitiesFilters[key] = true;
+        }
+      }
+    }
+  }
+
+  int getCategoryBadgeCount(String categoryKey) {
+    final maxDb = context.read<StadiumProvider>().maxStadiumPrice;
+    switch (categoryKey) {
+      case 'Sports':
+        return _sportsFilters.values.where((v) => v).length;
+      case 'Location':
+        return _selectedGov != null ? 1 : 0;
+      case 'Pitch Specs':
+        return _sizeFilters.values.where((v) => v).length;
+      case 'Price & Deposit':
+        int c = _noDepositOnly ? 1 : 0;
+        if (_priceRange.start > 0 || _priceRange.end < maxDb) c++;
+        return c;
+      case 'Amenities':
+        return _amenitiesFilters.values.where((v) => v).length;
+      default:
+        return 0;
     }
   }
 
@@ -286,6 +336,7 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
 
   Widget _buildCategoryTab(String key, String title, IconData icon) {
     final isSelected = _selectedCategory == key;
+    final badgeCount = getCategoryBadgeCount(key);
 
     return InkWell(
       onTap: () => setState(() => _selectedCategory = key),
@@ -321,6 +372,17 @@ class _FilterBottomSheetState extends State<FilterBottomSheet> {
                 overflow: TextOverflow.ellipsis,
               ),
             ),
+            if (badgeCount > 0) ...[
+              const SizedBox(width: 4),
+              Container(
+                width: 7,
+                height: 7,
+                decoration: const BoxDecoration(
+                  color: VSPColors.accent,
+                  shape: BoxShape.circle,
+                ),
+              ),
+            ],
           ],
         ),
       ),

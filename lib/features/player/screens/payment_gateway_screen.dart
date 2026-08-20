@@ -43,7 +43,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Timer? _webhookTimeoutTimer;
   Timer? _fallbackPollingTimer;
   Timer? _countdownTimer;
-  int _remainingSeconds = 300; // 5 minutes hold timer
+  int _remainingSeconds = 180; // 3 minutes hold timer
   bool _paymentCompleted = false;
   String _selectedMethod = 'card'; // 'card', 'wallet'
 
@@ -274,6 +274,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
       try {
         if (!mounted) return;
+        setState(() {
+          _remainingSeconds += 300; // 5 minutes additional grace period for 3DS OTP entry
+        });
         final isPaidSuccess = await Navigator.push<bool>(
           context,
           MaterialPageRoute(

@@ -521,6 +521,49 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
            _showBookingModal(isEdit: true, slot: slot, stadium: selectedStadium);
         }
       },
+      onLongPress: () async {
+        if (slot['type'] == 'empty') {
+          HapticFeedback.mediumImpact();
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          final auth = Provider.of<AuthProvider>(context, listen: false);
+          final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+          if (uid == null) return;
+
+          final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
+          final startTime = (slot['slotTime'] as DateTime?) ?? DateTime(
+            selectedDate.year, selectedDate.month, selectedDate.day,
+            slot['hour'] as int, slot['minute'] as int,
+          );
+          final endTime = startTime.add(const Duration(minutes: 60));
+
+          final draft = BookingDraft(
+            stadiumId: selectedStadium.id,
+            stadiumName: selectedStadium.name,
+            stadiumImageUrl: selectedStadium.imageUrl,
+            ownerId: selectedStadium.ownerId.isNotEmpty ? selectedStadium.ownerId : uid,
+            startTime: startTime,
+            endTime: endTime,
+            bookingType: BookingType.personal,
+            playerTeamName: isAr ? 'حجز تليفوني سريع 📞' : 'Quick Phone Booking 📞',
+            isPrivate: true,
+            rentBall: false,
+            totalPrice: selectedStadium.pricePerHour,
+            paymentMethod: 'cash',
+            paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+            isPaid: false,
+          );
+
+          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+          final created = await bookingProvider.createBooking(draft, uid);
+          if (created != null && context.mounted) {
+            VSPFeedback.showSuccess(
+              context,
+              isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح! ⚡' : 'Quick phone booking confirmed! ⚡',
+            );
+            await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
+          }
+        }
+      },
       child: Row(
         crossAxisAlignment: isMerged ? CrossAxisAlignment.start : CrossAxisAlignment.center,
         children: [
@@ -953,6 +996,70 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          SizedBox(
+            width: double.infinity,
+            height: 42,
+            child: ElevatedButton.icon(
+              style: ElevatedButton.styleFrom(
+                backgroundColor: Colors.amber.withValues(alpha: 0.15),
+                foregroundColor: Colors.amber,
+                side: const BorderSide(color: Colors.amber, width: 1),
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+              ),
+              icon: const Icon(Iconsax.receipt_2_1_copy, size: 16),
+              label: Text(
+                isArabic ? 'تقفيل الوردية واستلام الكاش (${pendingCash.toInt()} ج.م) 💵' : 'End Shift & Settle Cash (${pendingCash.toInt()} EGP) 💵',
+                style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+              ),
+              onPressed: pendingCash <= 0 ? null : () async {
+                final confirm = await showDialog<bool>(
+                  context: context,
+                  builder: (ctx) => AlertDialog(
+                    backgroundColor: VSPColors.surface,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+                    title: Text(isArabic ? 'تأكيد تقفيل الوردية' : 'Confirm Shift Closeout'),
+                    content: Text(
+                      isArabic 
+                          ? 'هل استلمت كامل مبالغ الحجوزات النقدية في الدرج بقيمة ${pendingCash.toInt()} ج.م وتريد اعتمادها كمحصلة؟'
+                          : 'Have you collected the full cash amount of ${pendingCash.toInt()} EGP for this shift?',
+                      style: const TextStyle(color: VSPColors.textSecondary),
+                    ),
+                    actions: [
+                      TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
+                      ElevatedButton(
+                        style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+                        onPressed: () => Navigator.pop(ctx, true),
+                        child: Text(isArabic ? 'تأكيد التقفيل 💵' : 'Confirm Closeout 💵'),
+                      ),
+                    ],
+                  ),
+                );
+
+                if (confirm == true && context.mounted) {
+                  final auth = Provider.of<AuthProvider>(context, listen: false);
+                  final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
+                  if (uid != null) {
+                    final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
+                    final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
+                    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+                    final selectedStadium = _getEffectiveStadium(stadiumProvider.stadiums);
+                    if (selectedStadium == null) return;
+
+                    await Supabase.instance.client.rpc('close_owner_daily_shift', params: {
+                      'p_owner_id': uid,
+                      'p_stadium_id': selectedStadium.id,
+                      'p_operational_date': selectedDateOnly.toIso8601String().split('T').first,
+                    });
+                    if (context.mounted) {
+                      VSPFeedback.showSuccess(context, isArabic ? 'تم تقفيل الوردية وتصفية النقدية بنجاح!' : 'Shift closed successfully!');
+                      await Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+                    }
+                  }
+                }
+              },
+            ),
           ),
         ],
       ),

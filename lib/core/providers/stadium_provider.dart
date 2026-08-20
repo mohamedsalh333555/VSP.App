@@ -20,6 +20,8 @@ class StadiumProvider with ChangeNotifier {
   String? _selectedGovernorate;
   bool _isGeographicFallback = false;
 
+  Map<String, dynamic>? _currentFilters;
+
   // Getters
   List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
   List<Stadium> get allStadiums => _stadiums;
@@ -29,6 +31,7 @@ class StadiumProvider with ChangeNotifier {
   bool get hasMore => _hasMore;
   String? get errorMessage => _errorMessage;
   bool get isFilterActive => _isFilterActive;
+  Map<String, dynamic>? get currentFilters => _currentFilters;
   String? get selectedGovernorate => _selectedGovernorate;
   bool get isGeographicFallback => _isGeographicFallback;
 
@@ -288,6 +291,7 @@ class StadiumProvider with ChangeNotifier {
 
   // Apply complex filters
   void applyFilters(Map<String, dynamic> filters) {
+    _currentFilters = filters;
     _isFilterActive = true;
     
     final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
@@ -375,6 +379,7 @@ class StadiumProvider with ChangeNotifier {
   // Reset all filters
   void clearFilters() {
     _isFilterActive = false;
+    _currentFilters = null;
     _filteredStadiums = [];
     notifyListeners();
   }

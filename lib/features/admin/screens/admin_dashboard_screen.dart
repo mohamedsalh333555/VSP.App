@@ -3,6 +3,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
 import 'package:url_launcher/url_launcher.dart';
+import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/ui/components/vsp_stat_card.dart';
@@ -11,6 +12,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 
 class AdminDashboardScreen extends StatefulWidget {
@@ -38,6 +40,35 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   @override
   Widget build(BuildContext context) {
+    final auth = context.watch<AuthProvider>();
+    final role = auth.userModel?.role;
+    final isAdmin = role == 'admin' || role == 'co_founder';
+
+    if (!isAdmin) {
+      return Scaffold(
+        backgroundColor: VSPColors.background,
+        body: Center(
+          child: Padding(
+            padding: const EdgeInsets.all(VSPSpacing.xl),
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.center,
+              children: [
+                const Icon(Iconsax.security_user_copy, size: 64, color: VSPColors.error),
+                const SizedBox(height: 16),
+                Text(
+                  Localizations.localeOf(context).languageCode == 'ar'
+                      ? 'عذراً، هذه الصفحة مخصصة لإدارة النظام فقط.'
+                      : 'Unauthorized: Admin access required.',
+                  style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold, fontSize: 16),
+                  textAlign: TextAlign.center,
+                ),
+              ],
+            ),
+          ),
+        ),
+      );
+    }
+
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
@@ -145,6 +176,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPEmptyState(
+            icon: Iconsax.warning_2_copy,
+            title: isArabic ? 'تعذر تحميل الطلبات' : 'Error Loading Approvals',
+            subtitle: isArabic ? 'تأكد من الاتصال بالشبكة وأعد المحاولة.' : 'Check your network connection and try again.',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
@@ -256,6 +294,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPEmptyState(
+            icon: Iconsax.warning_2_copy,
+            title: isArabic ? 'تعذر تحميل الاشتراكات' : 'Error Loading Subscriptions',
+            subtitle: isArabic ? 'تأكد من الاتصال بالشبكة وأعد المحاولة.' : 'Check your network connection and try again.',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
@@ -438,6 +483,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase.from('bookings').stream(primaryKey: ['id']).eq('match_result_status', 'disputed'),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPEmptyState(
+            icon: Iconsax.warning_2_copy,
+            title: isArabic ? 'تعذر تحميل النزاعات' : 'Error Loading Disputes',
+            subtitle: isArabic ? 'تأكد من الاتصال بالشبكة وأعد المحاولة.' : 'Check your network connection and try again.',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
@@ -537,6 +589,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPEmptyState(
+            icon: Iconsax.warning_2_copy,
+            title: isArabic ? 'تعذر تحميل التسويات' : 'Error Loading Payouts',
+            subtitle: isArabic ? 'تأكد من الاتصال بالشبكة وأعد المحاولة.' : 'Check your network connection and try again.',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
@@ -619,6 +678,13 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     return StreamBuilder<List<Map<String, dynamic>>>(
       stream: _supabase.from('reports').stream(primaryKey: ['id']),
       builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          return VSPEmptyState(
+            icon: Iconsax.warning_2_copy,
+            title: isArabic ? 'تعذر تحميل البلاغات' : 'Error Loading Reports',
+            subtitle: isArabic ? 'تأكد من الاتصال بالشبكة وأعد المحاولة.' : 'Check your network connection and try again.',
+          );
+        }
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }

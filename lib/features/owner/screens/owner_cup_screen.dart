@@ -565,8 +565,8 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                     ],
                   ),
                 ),
-                InkWell(
-                  onTap: () {
+                IconButton(
+                  onPressed: () {
                     SharingService.shareChampionship(
                       id: tournament.id,
                       name: tournament.name,
@@ -581,16 +581,12 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                       isArabic: isArabic,
                     );
                   },
-                  borderRadius: BorderRadius.circular(20),
-                  child: Container(
-                    width: 36,
-                    height: 36,
-                    decoration: BoxDecoration(
-                      color: VSPColors.surfaceAlt,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.1)),
-                    ),
-                    child: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 18),
+                  icon: const Icon(Iconsax.share_copy, color: VSPColors.textSecondary, size: 20),
+                  style: IconButton.styleFrom(
+                    backgroundColor: VSPColors.surfaceAlt,
+                    padding: const EdgeInsets.all(10),
+                    minimumSize: const Size(48, 48),
+                    shape: const CircleBorder(side: BorderSide(color: VSPColors.divider, width: 0.5)),
                   ),
                 ),
               ],

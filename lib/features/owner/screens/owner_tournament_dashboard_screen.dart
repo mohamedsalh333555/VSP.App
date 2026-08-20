@@ -213,6 +213,9 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             child: ClipRRect(
               borderRadius: BorderRadius.circular(VSPRadius.md),
               child: InteractiveViewer(
+                transformationController: TransformationController(
+                  Matrix4.identity()..translate(0.0, 0.0),
+                ),
                 constrained: false,
                 scaleEnabled: true,
                 minScale: 0.5,
@@ -396,7 +399,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                     height: 44,
                     onPressed: () {
                       Navigator.pop(ctx);
-                      _executeStartTournament();
+                      _showInteractiveDrawRoom(context, teams);
                     },
                   ),
                 ),
@@ -405,6 +408,151 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ],
         );
       },
+    );
+  }
+
+  Future<void> _showInteractiveDrawRoom(BuildContext context, List<Team> teams) async {
+    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+    final shuffledTeams = List<Team>.from(teams)..shuffle(Random());
+    
+    final List<Map<String, String>> matchups = [];
+    for (int i = 0; i < shuffledTeams.length; i += 2) {
+      if (i + 1 < shuffledTeams.length) {
+        matchups.add({
+          'home': shuffledTeams[i].name,
+          'away': shuffledTeams[i + 1].name,
+        });
+      } else {
+        matchups.add({
+          'home': shuffledTeams[i].name,
+          'away': isAr ? 'BYE (تأهل تلقائي)' : 'BYE (Auto Qualify)',
+        });
+      }
+    }
+
+    int revealedCount = 0;
+    bool isRevealing = false;
+
+    await showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (dialogCtx) => StatefulBuilder(
+        builder: (ctx, setModalState) {
+          return AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+            title: Row(
+              children: [
+                const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
+                const SizedBox(width: 10),
+                Text(
+                  isAr ? 'غرفة سحب القرعة المباشر 🎲' : 'Live Draw Room 🎲',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
+                ),
+              ],
+            ),
+            content: SizedBox(
+              width: MediaQuery.of(context).size.width * 0.85,
+              height: 340,
+              child: Column(
+                children: [
+                  Text(
+                    isAr
+                        ? 'سحب موجه ومؤمن عشوائياً بدون أي تدخل بشري لضمان النزاهة التامة 🏆'
+                        : 'Fair automated live draw for all participating teams 🏆',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                  const SizedBox(height: 12),
+                  Expanded(
+                    child: ListView.builder(
+                      itemCount: matchups.length,
+                      itemBuilder: (c, idx) {
+                        final isRevealed = idx < revealedCount;
+                        final m = matchups[idx];
+
+                        return AnimatedOpacity(
+                          duration: const Duration(milliseconds: 300),
+                          opacity: isRevealed ? 1.0 : 0.2,
+                          child: Container(
+                            margin: const EdgeInsets.only(bottom: 8),
+                            padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                            decoration: BoxDecoration(
+                              color: isRevealed ? VSPColors.accent.withValues(alpha: 0.12) : VSPColors.surfaceAlt,
+                              borderRadius: BorderRadius.circular(VSPRadius.md),
+                              border: Border.all(
+                                color: isRevealed ? VSPColors.accent : VSPColors.divider,
+                                width: isRevealed ? 1.5 : 1,
+                              ),
+                            ),
+                            child: Row(
+                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                              children: [
+                                Expanded(
+                                  child: Text(
+                                    isRevealed ? m['home']! : '❓ (مستخفي)',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: isRevealed ? Colors.white : VSPColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                                const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 6),
+                                  child: Text('VS', style: TextStyle(color: VSPColors.accent, fontWeight: FontWeight.w900, fontSize: 12)),
+                                ),
+                                Expanded(
+                                  child: Text(
+                                    isRevealed ? m['away']! : '❓ (مستخفي)',
+                                    textAlign: TextAlign.center,
+                                    style: TextStyle(
+                                      color: isRevealed ? Colors.white : VSPColors.textSecondary,
+                                      fontWeight: FontWeight.bold,
+                                      fontSize: 13,
+                                    ),
+                                  ),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            actions: [
+              if (!isRevealing && revealedCount < matchups.length)
+                PrimaryButton(
+                  text: isAr ? 'بدء السحب الكاشف 🎲' : 'Start Live Reveal 🎲',
+                  height: 44,
+                  onPressed: () async {
+                    setModalState(() => isRevealing = true);
+                    for (int i = 0; i < matchups.length; i++) {
+                      await Future.delayed(const Duration(milliseconds: 450));
+                      HapticFeedback.mediumImpact();
+                      setModalState(() {
+                        revealedCount = i + 1;
+                      });
+                    }
+                    setModalState(() => isRevealing = false);
+                  },
+                )
+              else if (revealedCount >= matchups.length)
+                PrimaryButton(
+                  text: isAr ? 'اعتماد القرعة وبدء البطولة 🚀' : 'Confirm Draw & Start 🚀',
+                  height: 44,
+                  onPressed: () {
+                    Navigator.pop(dialogCtx);
+                    _executeStartTournament();
+                  },
+                ),
+            ],
+          );
+        },
+      ),
     );
   }
 

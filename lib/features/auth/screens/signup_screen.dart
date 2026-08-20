@@ -183,7 +183,10 @@ class _SignupScreenState extends State<SignupScreen> {
       ),
       child: Scaffold(
         backgroundColor: VSPColors.background,
-        body: Stack(
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: Stack(
           children: [
             // 1. Subtle Background Elements
             Positioned(
@@ -454,7 +457,8 @@ class _SignupScreenState extends State<SignupScreen> {
           ],
         ),
       ),
-    );
+    ),
+  );
   }
 
   Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {

@@ -118,8 +118,8 @@ class CustomTextField extends StatelessWidget {
       return fieldWidget;
     }
 
-    return SizedBox(
-      height: VSPSize.inputHeight,
+    return ConstrainedBox(
+      constraints: const BoxConstraints(minHeight: VSPSize.inputHeight),
       child: fieldWidget,
     );
   }

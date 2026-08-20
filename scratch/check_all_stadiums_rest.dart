@@ -2,7 +2,11 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 void main() async {
-  const apiKey = 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE';
+  const apiKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: '');
+  if (apiKey.isEmpty) {
+    print('Please pass --dart-define=SUPABASE_ANON_KEY=...');
+    return;
+  }
   final url = Uri.parse('https://mktqkddbcddrxjxabdua.supabase.co/rest/v1/stadiums?select=*');
   final response = await http.get(url, headers: {
     'apikey': apiKey,

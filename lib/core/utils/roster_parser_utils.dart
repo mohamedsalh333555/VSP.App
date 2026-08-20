@@ -1,3 +1,7 @@
+import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
+import '../ui/tokens/vsp_tokens.dart';
+
 class RosterParserUtils {
   /// Street-smart WhatsApp / Notes multiline squad list parser.
   /// Converts copied raw text lines like:
@@ -42,5 +46,59 @@ class RosterParserUtils {
     }
 
     return result;
+  }
+
+  /// Displays the squad import dialog and reads clipboard or manual input text.
+  static Future<List<String>> showImportSquadDialog(BuildContext context) async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    String textToParse = '';
+
+    try {
+      final data = await Clipboard.getData(Clipboard.kTextPlain);
+      if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
+        textToParse = data.text!;
+      }
+    } catch (_) {}
+
+    if (textToParse.trim().isEmpty && context.mounted) {
+      textToParse = await showDialog<String>(
+        context: context,
+        builder: (ctx) {
+          final controller = TextEditingController();
+          return AlertDialog(
+            backgroundColor: VSPColors.surface,
+            title: Text(
+              isArabic ? 'لصق نص تشكيلة واتساب 📋' : 'Paste WhatsApp Squad List 📋',
+              style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+            ),
+            content: Column(
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                TextField(
+                  controller: controller,
+                  maxLines: 6,
+                  style: const TextStyle(color: Colors.white, fontSize: 13),
+                  decoration: InputDecoration(
+                    hintText: isArabic ? '1- أحمد\n2- علي\n3- محمود...' : '1- Player 1\n2- Player 2...',
+                    filled: true,
+                    fillColor: VSPColors.background,
+                  ),
+                ),
+              ],
+            ),
+            actions: [
+              TextButton(onPressed: () => Navigator.pop(ctx, null), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
+              ElevatedButton(
+                style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+                onPressed: () => Navigator.pop(ctx, controller.text),
+                child: Text(isArabic ? 'استخراج الأسماء ⚽' : 'Extract Names ⚽'),
+              ),
+            ],
+          );
+        },
+      ) ?? '';
+    }
+
+    return parseSquadText(textToParse);
   }
 }

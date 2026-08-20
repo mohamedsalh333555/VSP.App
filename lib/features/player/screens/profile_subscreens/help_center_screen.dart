@@ -5,6 +5,7 @@ import 'package:url_launcher/url_launcher.dart';
 import 'package:provider/provider.dart';
 import '../../../../core/providers/auth_provider.dart';
 import '../../../../core/repositories/app_settings_repository.dart';
+import '../../../../core/utils/vsp_launcher_utils.dart';
 import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../shared/widgets/vsp_icon_badge.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -264,24 +265,6 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
     final settings = await AppSettingsRepository().getSettings();
     final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
-    final phone = rawPhone.replaceAll('+', '').replaceAll(' ', '');
-    final whatsappUrl = Uri.parse('https://wa.me/$phone?text=${Uri.encodeComponent(message)}');
-
-    try {
-      final success = await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-      if (!success && context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('يرجى تثبيت تطبيق واتساب أولاً / Please install WhatsApp first'),
-          ),
-        );
-      }
-    } catch (e) {
-      if (context.mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('تعذر فتح واتساب. يرجى المحاولة مجدداً.')),
-        );
-      }
-    }
+    await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
   }
 }

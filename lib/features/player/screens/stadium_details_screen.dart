@@ -300,12 +300,15 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       Text(l10n.pricePerHour, style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary)),
-                      RichText(
-                        text: TextSpan(
-                          children: [
-                            TextSpan(text: '${stadium.basePrice.toStringAsFixed(0)} ', style: Theme.of(context).textTheme.displayLarge),
-                            TextSpan(text: isArabic ? 'ج.م' : 'EGP', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
-                          ],
+                      Directionality(
+                        textDirection: TextDirection.ltr,
+                        child: RichText(
+                          text: TextSpan(
+                            children: [
+                              TextSpan(text: '${stadium.basePrice.toStringAsFixed(0)} ', style: Theme.of(context).textTheme.displayLarge),
+                              TextSpan(text: isArabic ? 'ج.م' : 'EGP', style: Theme.of(context).textTheme.labelSmall?.copyWith(fontWeight: FontWeight.bold)),
+                            ],
+                          ),
                         ),
                       ),
                       AnimatedSwitcher(

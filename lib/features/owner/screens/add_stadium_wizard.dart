@@ -1378,24 +1378,28 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           centerTitle: true,
           elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
         ),
-        body: SafeArea(
-          child: Column(
-            children: [
-              const SizedBox(height: 10),
-              _buildStepIndicator(),
-              const SizedBox(height: 20),
-              Expanded(
-                child: PageView(
-                  controller: _pageController,
-                  physics: const NeverScrollableScrollPhysics(),
-                  children: [
-                    _buildStep1Details(),
-                    _buildStep2Features(),
-                    _buildStep3Images(),
-                  ],
+        body: GestureDetector(
+          onTap: () => FocusScope.of(context).unfocus(),
+          behavior: HitTestBehavior.opaque,
+          child: SafeArea(
+            child: Column(
+              children: [
+                const SizedBox(height: 10),
+                _buildStepIndicator(),
+                const SizedBox(height: 20),
+                Expanded(
+                  child: PageView(
+                    controller: _pageController,
+                    physics: const NeverScrollableScrollPhysics(),
+                    children: [
+                      _buildStep1Details(),
+                      _buildStep2Features(),
+                      _buildStep3Images(),
+                    ],
+                  ),
                 ),
-              ),
-            ],
+              ],
+            ),
           ),
         ),
       ),

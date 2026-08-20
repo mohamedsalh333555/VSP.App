@@ -21,6 +21,7 @@ class TournamentBracketsScreen extends StatefulWidget {
 
 class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
   int _refreshKey = 0;
+  final TransformationController _transformController = TransformationController();
 
   Future<Map<String, List<String>>> _fetchRosters(String homeTeamId, String awayTeamId) async {
     return TournamentRepository().fetchRosters(widget.championship.id, homeTeamId, awayTeamId);
@@ -32,6 +33,12 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
         _refreshKey++;
       });
     }
+  }
+
+  @override
+  void dispose() {
+    _transformController.dispose();
+    super.dispose();
   }
 
   @override

@@ -42,12 +42,12 @@ dependencies:
   cached_network_image: ^3.4.1
   shimmer: ^3.0.0
   share_plus: ^12.0.1
-  webview_flutter: ^4.10.0
+  webview_flutter: ^4.13.1
   webview_flutter_android: ^4.10.1
   crypto: ^3.0.6
   
   # Supabase
-  supabase_flutter: ^2.9.1
+  supabase_flutter: ^2.15.4
   safe_device: ^1.1.2
   flutter_secure_storage: ^9.2.4
 
@@ -80,7 +80,7 @@ dependencies:
   introduction_screen: ^3.1.16
   logger: ^2.5.0
   sign_in_with_apple: ^7.0.1
-  uuid: ^4.5.1
+  uuid: ^4.6.0
   iconsax_flutter: ^1.0.1
 
 

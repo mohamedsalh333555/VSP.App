@@ -159,7 +159,7 @@ class AppRouter {
 
     // 4. User data loading check
     if (userModel == null) {
-      if (authProvider.isLoading || authProvider.isInitializing) {
+      if (authProvider.isLoading) {
         if (path != '/splash') return '/splash';
         return null;
       }
@@ -191,8 +191,11 @@ class AppRouter {
       return null;
     }
 
-    // 6.5 Admin role check
+    // 6.5 Admin role check & security boundary
     final bool isAdmin = userModel.role == 'admin' || userModel.role == 'co_founder';
+    if (path == '/admin' && !isAdmin) {
+      return '/'; // 🛡️ Immediate redirect for non-admins attempting to open admin route directly
+    }
     if (isAdmin) {
       if (path == '/admin') return null;
       if (path == '/welcome' || path == '/splash' || path == '/onboarding') return '/admin';

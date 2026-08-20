@@ -103,24 +103,7 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
   }
 
   Future<void> _pasteFromWhatsApp() async {
-    String textToParse = '';
-
-    try {
-      final ClipboardData? data = await Clipboard.getData(Clipboard.kTextPlain);
-      if (data != null && data.text != null && data.text!.trim().isNotEmpty) {
-        textToParse = data.text!;
-      }
-    } catch (e) {
-      debugPrint('Clipboard read notice: $e');
-    }
-
-    if (textToParse.trim().isEmpty && mounted) {
-      textToParse = await _showManualPasteDialog() ?? '';
-    }
-
-    if (textToParse.trim().isEmpty) return;
-
-    final parsedNames = RosterParserUtils.parseSquadText(textToParse);
+    final parsedNames = await RosterParserUtils.showImportSquadDialog(context);
     if (parsedNames.isEmpty) {
       if (mounted) VSPFeedback.showError(context, 'لم يتم العثور على أسماء واضحة في النص الملصوق.');
       return;
@@ -149,56 +132,6 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
             : 'Successfully added $addedCount players from WhatsApp text! ⚽',
       );
     }
-  }
-
-  Future<String?> _showManualPasteDialog() {
-    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final controller = TextEditingController();
-
-    return showDialog<String>(
-      context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        title: Text(
-          isArabic ? 'لصق نص تشكيلة واتساب 📋' : 'Paste WhatsApp Squad List 📋',
-          style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
-        ),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            Text(
-              isArabic ? 'انسخ القائمة من واتساب والصقها هنا مباشرة:' : 'Copy list from WhatsApp and paste here:',
-              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-            ),
-            const SizedBox(height: 12),
-            TextField(
-              controller: controller,
-              maxLines: 6,
-              style: const TextStyle(color: Colors.white, fontSize: 13),
-              decoration: InputDecoration(
-                hintText: '1- أحمد\n2- علي\n3- محمود...',
-                hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                filled: true,
-                fillColor: VSPColors.background,
-                border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
-              ),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, null),
-            child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-          ),
-          ElevatedButton(
-            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
-            onPressed: () => Navigator.pop(ctx, controller.text),
-            child: Text(isArabic ? 'استخراج الأسماء ⚽' : 'Extract Names ⚽', style: const TextStyle(fontWeight: FontWeight.bold)),
-          ),
-        ],
-      ),
-    );
   }
 
   Future<void> _handleConfirmAndPay() async {

@@ -1,5 +1,4 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
-import 'package:url_launcher/url_launcher.dart';
 import 'package:flutter/material.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -7,6 +6,7 @@ import '../../../core/models/user_model.dart';
 import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/utils/phone_utils.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 import 'package:provider/provider.dart';
 import '../../../core/repositories/user_repository.dart';
 
@@ -286,15 +286,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                   child: ElevatedButton.icon(
                     onPressed: () async {
                       const message = 'حمل تطبيق VSP الرياضي وادخل برقمك عشان أضيفك في تشكيلة فريقي ونبدأ نلعب مباريات! ⚽🏆 حمل التطبيق من هنا: https://vsp.app';
-                      final encoded = Uri.encodeComponent(message);
-                      final whatsappUrl = Uri.parse('https://wa.me/?text=$encoded');
-                      try {
-                        if (await canLaunchUrl(whatsappUrl)) {
-                          await launchUrl(whatsappUrl, mode: LaunchMode.externalApplication);
-                        }
-                      } catch (e) {
-                        debugPrint('Error launching WhatsApp: $e');
-                      }
+                      await VSPLauncherUtils.openWhatsApp(context, phone: '', message: message);
                     },
                     style: ElevatedButton.styleFrom(
                       backgroundColor: const Color(0xFF25D366),
