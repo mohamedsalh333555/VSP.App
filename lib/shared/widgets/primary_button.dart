@@ -44,62 +44,65 @@ class _PrimaryButtonState extends State<PrimaryButton> {
   @override
   Widget build(BuildContext context) {
     final bool isButtonDisabled = widget.isLoading || _isDebouncing || widget.onPressed == null;
-    return SizedBox(
-      width: widget.width ?? double.infinity,
-      height: widget.height ?? 56,
-      child: ElevatedButton(
-        onPressed: isButtonDisabled ? null : () {
-          HapticFeedback.mediumImpact();
-          setState(() => _isDebouncing = true);
-          widget.onPressed?.call();
-          _debounceTimer?.cancel();
-          _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
-            if (mounted) {
-              setState(() => _isDebouncing = false);
-            }
-          });
-        },
-        style: ElevatedButton.styleFrom(
-          backgroundColor: widget.color ?? VSPColors.accent,
-          foregroundColor: widget.textColor ?? VSPColors.background,
-          shape: const StadiumBorder(),
-          elevation: 0,
-          disabledBackgroundColor: VSPColors.surface,
-          padding: widget.padding,
-        ),
-        child: widget.isLoading
-            ? const SizedBox(
-                height: 24,
-                width: 24,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(
-                    VSPColors.background,
+    return AbsorbPointer(
+      absorbing: isButtonDisabled,
+      child: SizedBox(
+        width: widget.width ?? double.infinity,
+        height: widget.height ?? VSPSize.buttonHeight,
+        child: ElevatedButton(
+          onPressed: isButtonDisabled ? null : () {
+            HapticFeedback.mediumImpact();
+            setState(() => _isDebouncing = true);
+            widget.onPressed?.call();
+            _debounceTimer?.cancel();
+            _debounceTimer = Timer(const Duration(milliseconds: 1500), () {
+              if (mounted) {
+                setState(() => _isDebouncing = false);
+              }
+            });
+          },
+          style: ElevatedButton.styleFrom(
+            backgroundColor: widget.color ?? VSPColors.accent,
+            foregroundColor: widget.textColor ?? VSPColors.background,
+            shape: const StadiumBorder(),
+            elevation: 0,
+            disabledBackgroundColor: VSPColors.surface,
+            padding: widget.padding,
+          ),
+          child: widget.isLoading
+              ? const SizedBox(
+                  height: 24,
+                  width: 24,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      VSPColors.background,
+                    ),
                   ),
-                ),
-              )
-            : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  if (widget.icon != null) ...[
-                    Icon(widget.icon, size: 20),
-                    const SizedBox(width: 8),
-                  ],
-                  Flexible(
-                    child: FittedBox(
-                      fit: BoxFit.scaleDown,
-                      child: Text(
-                        widget.text,
-                        style: Theme.of(context).textTheme.titleLarge?.copyWith(
-                          color: widget.textColor ?? VSPColors.background,
-                          fontSize: 16,
+                )
+              : Row(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    if (widget.icon != null) ...[
+                      Icon(widget.icon, size: 20),
+                      const SizedBox(width: 8),
+                    ],
+                    Flexible(
+                      child: FittedBox(
+                        fit: BoxFit.scaleDown,
+                        child: Text(
+                          widget.text,
+                          style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                            color: widget.textColor ?? VSPColors.background,
+                            fontSize: 16,
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
-              ),
+                  ],
+                ),
+        ),
       ),
     );
   }

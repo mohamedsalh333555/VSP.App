@@ -410,6 +410,11 @@ class NotificationService {
     final context = _navigatorKey?.currentContext;
     if (context == null) return;
 
+    final String? notifBookingId = message.data['bookingId'] ?? message.data['booking_id'];
+    if (ChatScreen.activeBookingId != null && (notifBookingId == ChatScreen.activeBookingId || message.data['type'] == 'chat')) {
+      return; // 🛡️ Suppress foreground snackbar when user is inside the active chat screen
+    }
+
     try {
       final prefs = await SharedPreferences.getInstance();
       final soundEnabled = prefs.getBool('notif_sound') ?? true;

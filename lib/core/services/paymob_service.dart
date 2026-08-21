@@ -52,4 +52,14 @@ class PaymobService {
     // HMAC Verification is handled on Supabase Webhook Endpoint
     return true;
   }
+
+  /// 💰 Calculate platform service fee in EGP based on (amount * 0.0475) + 3.0 EGP rule
+  static double calculateServiceFee(double baseAmountEgp) {
+    return (baseAmountEgp * 0.0475) + 3.0;
+  }
+
+  /// 💰 Calculate total checkout price including platform fee
+  static double calculateTotalAmount(double baseAmountEgp) {
+    return baseAmountEgp + calculateServiceFee(baseAmountEgp);
+  }
 }

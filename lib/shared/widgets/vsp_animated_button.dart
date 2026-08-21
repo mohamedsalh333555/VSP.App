@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import '../../core/ui/components/vsp_button.dart';
 
 /// 🛡️ SECURITY: Thread-safe animated button with built-in debounce/throttle.
@@ -80,6 +81,8 @@ class _VSPAnimatedButtonState extends State<VSPAnimatedButton>
   void _handleThrottledTap() {
     // Reject if already loading or in cooldown
     if (widget.isLoading || _isCoolingDown || widget.onPressed == null) return;
+
+    HapticFeedback.mediumImpact();
 
     // Activate cooldown
     setState(() => _isCoolingDown = true);

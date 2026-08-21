@@ -474,12 +474,11 @@ class _SignupScreenState extends State<SignupScreen> {
 
   Widget _buildPositionSelector(LanguageProvider languageProvider) {
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final positions = [
-      {'code': 'GK', 'label': isAr ? 'حارس' : 'GK'},
-      {'code': 'DF', 'label': isAr ? 'مدافع' : 'DF'},
-      {'code': 'MF', 'label': isAr ? 'خط وسط' : 'MF'},
-      {'code': 'FW', 'label': isAr ? 'مهاجم' : 'FW'},
-    ];
+    final sportPositions = SportPositionsRegistry.getPositionsForSport('Football');
+    final positions = sportPositions.map((pos) => {
+      'code': pos.code,
+      'label': isAr ? pos.nameAr : pos.nameEn,
+    }).toList();
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [

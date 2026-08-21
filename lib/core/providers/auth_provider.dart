@@ -361,6 +361,7 @@ class AuthProvider with ChangeNotifier {
   /// Set user type (player/owner) - Step 1
   void setUserType(String type) {
     _userType = type;
+    SecureStorageService.writeSecure('pending_oauth_role', type);
     notifyListeners();
   }
 
@@ -1320,6 +1321,7 @@ class AuthProvider with ChangeNotifier {
   void _stopRealtimeUserListener() {
     if (_userChannel != null) {
       VSPLogger.i('📡 Stopping real-time subscription for user profile');
+      _userChannel?.unsubscribe();
       Supabase.instance.client.removeChannel(_userChannel!);
       _userChannel = null;
     }

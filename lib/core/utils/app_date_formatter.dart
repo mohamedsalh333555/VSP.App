@@ -121,4 +121,14 @@ class AppDateFormatter {
       default: return sport;
     }
   }
+
+  /// Calculates the business operational date for bookings.
+  /// Times between 12:00 AM and 05:59 AM belong to the previous day's operational shift.
+  static DateTime getOperationalDate(DateTime dateTime) {
+    if (dateTime.hour < 6) {
+      final prev = dateTime.subtract(const Duration(days: 1));
+      return DateTime(prev.year, prev.month, prev.day);
+    }
+    return DateTime(dateTime.year, dateTime.month, dateTime.day);
+  }
 }

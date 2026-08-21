@@ -26,8 +26,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
   String? _selectedPosition;
-  final List<String> _positions = ['GK', 'DF', 'MF', 'FW'];
-  
+  String _selectedSport = 'Football';
   bool _isLoading = false;
   bool _isDeleting = false;
   XFile? _newProfileImage;
@@ -38,11 +37,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     final user = Provider.of<AuthProvider>(context, listen: false).userModel;
     _nameController = TextEditingController(text: user?.name ?? '');
     _phoneController = TextEditingController(text: user?.phone ?? '');
-    if (user?.position != null && _positions.contains(user!.position)) {
-      _selectedPosition = user.position!;
-    } else {
-      _selectedPosition = user?.position;
-    }
+    _selectedSport = user?.favoriteSport ?? 'Football';
+    _selectedPosition = user?.position;
   }
 
   @override
@@ -219,35 +215,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 const SizedBox(height: VSPSpacing.xs),
                 
                 // Position Dropdown
-                Container(
-                  decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                  ),
-                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                  child: DropdownButtonHideUnderline(
-                    child: DropdownButton<String>(
-                      value: (_selectedPosition != null && _positions.contains(_selectedPosition)) ? _selectedPosition : null,
-                      hint: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
-                      dropdownColor: VSPColors.surface,
-                      icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
-                      isExpanded: true,
-                      style: Theme.of(context).textTheme.bodyMedium,
-                      items: _positions.map((String pos) {
-                        return DropdownMenuItem<String>(
-                          value: pos,
-                          child: Text(pos, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-                        );
-                      }).toList(),
-                      onChanged: (String? newValue) {
-                        if (newValue != null) {
-                          setState(() {
-                            _selectedPosition = newValue;
-                          });
-                        }
-                      },
-                    ),
-                  ),
+                Builder(
+                  builder: (context) {
+                    final isAr = Localizations.localeOf(context).languageCode == 'ar';
+                    final availablePositions = SportPositionsRegistry.getPositionsForSport(_selectedSport);
+                    final validPositionCodes = availablePositions.map((p) => p.code).toList();
+                    final selectedVal = (validPositionCodes.contains(_selectedPosition)) ? _selectedPosition : null;
+
+                    return Container(
+                      decoration: BoxDecoration(
+                        color: VSPColors.surface,
+                        borderRadius: BorderRadius.circular(VSPRadius.md),
+                      ),
+                      padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: selectedVal,
+                          hint: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
+                          dropdownColor: VSPColors.surface,
+                          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
+                          isExpanded: true,
+                          style: Theme.of(context).textTheme.bodyMedium,
+                          items: availablePositions.map((pos) {
+                            final label = isAr ? '${pos.code} - ${pos.nameAr}' : '${pos.code} - ${pos.nameEn}';
+                            return DropdownMenuItem<String>(
+                              value: pos.code,
+                              child: Text(label, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                            );
+                          }).toList(),
+                          onChanged: (String? newValue) {
+                            if (newValue != null) {
+                              setState(() {
+                                _selectedPosition = newValue;
+                              });
+                            }
+                          },
+                        ),
+                      ),
+                    );
+                  },
                 ),
               ],
 

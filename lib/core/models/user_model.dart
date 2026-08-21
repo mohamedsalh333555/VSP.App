@@ -34,6 +34,8 @@ class UserModel {
   final DateTime? trialEndsAt;           // free_trial ends at
   final DateTime? subscriptionExpiresAt; // paid plan expiry
 
+  final String favoriteSport;
+
   UserModel({
     required this.uid,
     required this.email,
@@ -60,7 +62,12 @@ class UserModel {
     this.subscriptionPlan = 'free_trial',
     this.trialEndsAt,
     this.subscriptionExpiresAt,
+    this.favoriteSport = 'Football',
   });
+
+  /// الصريحة لحالة الدور
+  bool get isOwner => role == 'owner';
+  bool get isPlayer => role == 'player';
 
   /// هل المستخدم مالك ملعب (سواء من حقل role أو امتلاك ملعب)؟
   bool get isOwnerRole => role == 'owner' || hasStadium;
@@ -173,6 +180,7 @@ class UserModel {
       subscriptionExpiresAt: (data['subscription_expires_at'] ?? data['subscriptionExpiresAt']) != null
           ? DateTime.tryParse((data['subscription_expires_at'] ?? data['subscriptionExpiresAt']).toString())
           : null,
+      favoriteSport: data['favorite_sport'] ?? data['favoriteSport'] ?? 'Football',
     );
   }
 
@@ -203,6 +211,7 @@ class UserModel {
       'subscription_plan': subscriptionPlan,
       'trial_ends_at': trialEndsAt?.toUtc().toIso8601String(),
       'subscription_expires_at': subscriptionExpiresAt?.toUtc().toIso8601String(),
+      'favorite_sport': favoriteSport,
     };
   }
 

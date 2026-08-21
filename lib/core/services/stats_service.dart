@@ -74,11 +74,64 @@ class StatsService {
     }
   }
 
-  /// Calculates radar chart data based on position and Elo
-  Map<String, double> getSkillMetrics(String? position, int elo) {
-    // Basic logic to generate 5-6 points for a radar chart
-    // Pace, Shooting, Passing, Dribbling, Defending, Physical
-    
+  /// Calculates radar chart data based on sport, position, and Elo
+  Map<String, double> getSkillMetrics(String? position, int elo, {String? sport = 'Football'}) {
+    final String currentSport = sport ?? 'Football';
+
+    if (currentSport == 'Padel') {
+      double serve = 60 + (elo / 100);
+      double volley = 55 + (elo / 110);
+      double smash = 50 + (elo / 120);
+      double defense = 60 + (elo / 105);
+      double speed = 55 + (elo / 125);
+      double power = 50 + (elo / 115);
+
+      if (position == 'Drive') {
+        defense += 15; serve += 10;
+      } else if (position == 'Revés') {
+        smash += 15; power += 15;
+      }
+
+      return {
+        'SER': serve.clamp(30, 99),
+        'VOL': volley.clamp(30, 99),
+        'SMA': smash.clamp(30, 99),
+        'DEF': defense.clamp(30, 99),
+        'SPD': speed.clamp(30, 99),
+        'PWR': power.clamp(30, 99),
+      };
+    } else if (currentSport == 'Basketball') {
+      double pts = 55 + (elo / 110);
+      double reb = 50 + (elo / 120);
+      double ast = 55 + (elo / 115);
+      double stl = 50 + (elo / 125);
+      double blk = 45 + (elo / 130);
+      double threePt = 50 + (elo / 120);
+
+      switch (position?.toUpperCase()) {
+        case 'PG':
+          ast += 20; stl += 15; reb -= 10;
+          break;
+        case 'SG':
+          threePt += 20; pts += 15;
+          break;
+        case 'C':
+        case 'PF':
+          reb += 25; blk += 20; threePt -= 20;
+          break;
+      }
+
+      return {
+        'PTS': pts.clamp(30, 99),
+        'REB': reb.clamp(30, 99),
+        'AST': ast.clamp(30, 99),
+        'STL': stl.clamp(30, 99),
+        'BLK': blk.clamp(30, 99),
+        '3PT': threePt.clamp(30, 99),
+      };
+    }
+
+    // Default: Football
     double pace = 60 + (elo / 100);
     double shooting = 50 + (elo / 120);
     double passing = 55 + (elo / 110);
@@ -89,17 +142,18 @@ class StatsService {
     // Bias based on position
     switch (position?.toUpperCase()) {
       case 'ST':
+      case 'FW':
       case 'CF':
         shooting += 20; pace += 10; defending -= 20;
         break;
       case 'GK':
         defending += 40; passing += 10; pace -= 20; shooting -= 30;
         break;
-      case 'DEF':
+      case 'DF':
       case 'CB':
         defending += 30; physical += 20; shooting -= 20;
         break;
-      case 'MID':
+      case 'MF':
       case 'CM':
         passing += 25; dribbling += 15;
         break;
