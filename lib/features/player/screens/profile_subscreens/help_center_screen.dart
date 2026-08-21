@@ -265,6 +265,8 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
 
     final settings = await AppSettingsRepository().getSettings();
     final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
-    await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
+    if (context.mounted) {
+      await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
+    }
   }
 }

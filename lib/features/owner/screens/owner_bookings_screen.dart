@@ -555,7 +555,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
 
           final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
           final created = await bookingProvider.createBooking(draft, uid);
-          if (created != null && context.mounted) {
+          if (created != null && mounted) {
             VSPFeedback.showSuccess(
               context,
               isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح! ⚡' : 'Quick phone booking confirmed! ⚡',
@@ -1037,13 +1037,14 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   ),
                 );
 
-                if (confirm == true && context.mounted) {
+                if (confirm == true && mounted) {
                   final auth = Provider.of<AuthProvider>(context, listen: false);
+                  final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
+                  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
                   final uid = auth.currentUser?.uid ?? auth.firebaseUser?.uid;
                   if (uid != null) {
                     final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
                     final selectedDateOnly = DateTime(selectedDate.year, selectedDate.month, selectedDate.day);
-                    final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
                     final selectedStadium = _getEffectiveStadium(stadiumProvider.stadiums);
                     if (selectedStadium == null) return;
 
@@ -1052,9 +1053,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       'p_stadium_id': selectedStadium.id,
                       'p_operational_date': selectedDateOnly.toIso8601String().split('T').first,
                     });
-                    if (context.mounted) {
+                    if (mounted) {
                       VSPFeedback.showSuccess(context, isArabic ? 'تم تقفيل الوردية وتصفية النقدية بنجاح!' : 'Shift closed successfully!');
-                      await Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid, forceRefresh: true);
+                      await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
                     }
                   }
                 }

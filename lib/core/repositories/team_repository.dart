@@ -138,6 +138,11 @@ class TeamRepository {
 
   Future<String?> createTeam(Map<String, dynamic> data) async {
     try {
+      final List memberUids = List.from(data['memberUids'] ?? []);
+      if (memberUids.length > 12) {
+        throw Exception("تنبيه: عذراً، اكتمل الحد الأقصى لأعضاء الفريق (12 لاعباً كحد أقصى).");
+      }
+
       final pgData = {
         'name': data['name'],
         'captain_id': (data['memberUids'] as List?)?.first?.toString(),
@@ -168,7 +173,6 @@ class TeamRepository {
       
       final teamId = response['id'].toString();
 
-      final List memberUids = List.from(data['memberUids'] ?? []);
       if (memberUids.isNotEmpty) {
         final List<Map<String, dynamic>> memberRows = memberUids.map((uid) => {
           'team_id': teamId,
@@ -354,14 +358,27 @@ class TeamRepository {
 
   Future<void> addMemberToTeam(String teamId, String userId, String imageUrl) async {
     try {
+      final memberUids = await getTeamMemberUids(teamId);
+      if (memberUids.length >= 12) {
+        throw Exception("تنبيه: عذراً، اكتمل الحد الأقصى لأعضاء الفريق (12 لاعباً كحد أقصى).");
+      }
+
+      final userTeamMemberships = await _supabase
+          .from('team_members')
+          .select('team_id')
+          .eq('user_id', userId);
+      if ((userTeamMemberships as List).length >= 3) {
+        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى).");
+      }
+
       await _supabase.from('team_members').insert({
         'team_id': teamId,
         'user_id': userId,
       });
       _sendJoinNotification(userId);
     } on PostgrestException catch (e) {
-      if (e.message.contains('الحد الأقصى') || e.message.contains('limit')) {
-        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى).");
+      if (e.message.contains('الحد الأقصى') || e.message.contains('limit') || e.message.contains('12')) {
+        throw Exception("تنبيه: اللاعب وصل للحد الأقصى للانضمام للفرق (3 فرق كحد أقصى) أو الفريق اكتمال (12 لاعباً).");
       }
       rethrow;
     } catch (e) {

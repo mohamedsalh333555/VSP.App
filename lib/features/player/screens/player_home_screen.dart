@@ -1070,7 +1070,9 @@ class _HomeContent extends StatelessWidget {
                     : 'Hello VSP, I am from $cityName and I want to suggest adding stadiums in my area!';
                 final settings = await AppSettingsRepository().getSettings();
                 final rawPhone = settings.whatsappNumber.isEmpty ? '201100229462' : settings.whatsappNumber;
-                await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
+                if (context.mounted) {
+                  await VSPLauncherUtils.openWhatsApp(context, phone: rawPhone, message: message);
+                }
               },
             ),
           ],

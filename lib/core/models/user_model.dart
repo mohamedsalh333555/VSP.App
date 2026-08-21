@@ -242,6 +242,7 @@ class UserModel {
     String? subscriptionPlan,
     DateTime? trialEndsAt,
     DateTime? subscriptionExpiresAt,
+    String? favoriteSport,
   }) {
     return UserModel(
       uid: uid ?? this.uid,
@@ -269,6 +270,7 @@ class UserModel {
       subscriptionPlan: subscriptionPlan ?? this.subscriptionPlan,
       trialEndsAt: trialEndsAt ?? this.trialEndsAt,
       subscriptionExpiresAt: subscriptionExpiresAt ?? this.subscriptionExpiresAt,
+      favoriteSport: favoriteSport ?? this.favoriteSport,
     );
   }
 }
