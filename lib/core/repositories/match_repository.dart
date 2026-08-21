@@ -83,7 +83,7 @@ class MatchRepository {
           .eq('id', bookingId)
           .single();
 
-      final hostId = finalDoc['owner_id'] ?? finalDoc['created_by_user_id'] ?? '';
+      final hostId = finalDoc['created_by_user_id'] ?? finalDoc['owner_id'] ?? '';
       final stadiumName = finalDoc['stadium_name'] ?? 'Match';
       final finalCurrent = finalDoc['current_players'] ?? 0;
       final ppt = finalDoc['players_per_team'] ?? finalDoc['playersPerTeam'];
@@ -168,7 +168,7 @@ class MatchRepository {
           .maybeSingle();
       if (doc == null) throw 'Match not found';
 
-      final hostId = doc['owner_id'] ?? doc['created_by_user_id'] ?? '';
+      final hostId = doc['created_by_user_id'] ?? doc['owner_id'] ?? '';
       final stadiumName = doc['stadium_name'] ?? 'Match';
       
       final joinedList = doc['joined_user_ids'];

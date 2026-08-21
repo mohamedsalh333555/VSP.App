@@ -327,7 +327,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _nameController.text = data['name'] ?? '';
         _locationController.text = data['location'] ?? '';
         _priceController.text = (data['pricePerHour'] ?? 0).toString();
-        _capacityController.text = (data['seatsCapacity'] ?? data['players_per_team'] ?? 0).toString();
+        _capacityController.text = (data['players_per_team'] ?? data['playersPerTeam'] ?? 5).toString();
         final depositVal = data['deposit_amount'] ?? 0.0;
         _depositController.text = depositVal == 0.0 ? '' : depositVal.toString();
         _requireDeposit = data['needs_deposit'] ?? data['needsDeposit'] ?? (depositVal > 0.0);
@@ -1330,9 +1330,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         final l10n = AppLocalizations.of(context)!;
         VSPFeedback.showSuccess(context, l10n.stadiumSubmitSuccess);
         Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
-            if (widget.stadiumId == null) {
-              await auth.updateProfile({'hasStadium': true});
-            }
+        if (widget.stadiumId == null) {
+          await auth.updateProfile({'hasStadium': true});
+        }
+        await auth.refreshProfile();
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);

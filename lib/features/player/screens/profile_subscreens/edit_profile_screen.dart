@@ -25,7 +25,7 @@ class EditProfileScreen extends StatefulWidget {
 class _EditProfileScreenState extends State<EditProfileScreen> {
   late TextEditingController _nameController;
   late TextEditingController _phoneController;
-  String _selectedPosition = 'GK';
+  String? _selectedPosition;
   final List<String> _positions = ['GK', 'DF', 'MF', 'FW'];
   
   bool _isLoading = false;
@@ -40,6 +40,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     _phoneController = TextEditingController(text: user?.phone ?? '');
     if (user?.position != null && _positions.contains(user!.position)) {
       _selectedPosition = user.position!;
+    } else {
+      _selectedPosition = user?.position;
     }
   }
 
@@ -82,11 +84,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       }
 
       // 2. Update other profile data
-      final success = await auth.updateProfile({
+      final Map<String, dynamic> updateData = {
         'name': name,
         'phone': PhoneUtils.normalize(phone),
-        'position': _selectedPosition,
-      });
+      };
+      if (auth.isPlayer && _selectedPosition != null) {
+        updateData['position'] = _selectedPosition;
+      }
+
+      final success = await auth.updateProfile(updateData);
 
       if (mounted) {
         setState(() => _isLoading = false);
@@ -203,44 +209,47 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 prefixIcon: Iconsax.call_copy,
               ),
 
-              const SizedBox(height: VSPSpacing.md),
+              if (Provider.of<AuthProvider>(context).isPlayer) ...[
+                const SizedBox(height: VSPSpacing.md),
 
-              Align(
-                alignment: AlignmentDirectional.centerStart,
-                child: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.labelMedium),
-              ),
-              const SizedBox(height: VSPSpacing.xs),
-              
-              // Position Dropdown
-              Container(
-                decoration: BoxDecoration(
-                  color: VSPColors.surface,
-                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                Align(
+                  alignment: AlignmentDirectional.centerStart,
+                  child: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.labelMedium),
                 ),
-                padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
-                child: DropdownButtonHideUnderline(
-                  child: DropdownButton<String>(
-                    value: _selectedPosition,
-                    dropdownColor: VSPColors.surface,
-                    icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
-                    isExpanded: true,
-                    style: Theme.of(context).textTheme.bodyMedium,
-                    items: _positions.map((String pos) {
-                      return DropdownMenuItem<String>(
-                        value: pos,
-                        child: Text(pos, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
-                      );
-                    }).toList(),
-                    onChanged: (String? newValue) {
-                      if (newValue != null) {
-                        setState(() {
-                          _selectedPosition = newValue;
-                        });
-                      }
-                    },
+                const SizedBox(height: VSPSpacing.xs),
+                
+                // Position Dropdown
+                Container(
+                  decoration: BoxDecoration(
+                    color: VSPColors.surface,
+                    borderRadius: BorderRadius.circular(VSPRadius.md),
+                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 4),
+                  child: DropdownButtonHideUnderline(
+                    child: DropdownButton<String>(
+                      value: (_selectedPosition != null && _positions.contains(_selectedPosition)) ? _selectedPosition : null,
+                      hint: Text(AppLocalizations.of(context)!.preferredPosition, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary)),
+                      dropdownColor: VSPColors.surface,
+                      icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
+                      isExpanded: true,
+                      style: Theme.of(context).textTheme.bodyMedium,
+                      items: _positions.map((String pos) {
+                        return DropdownMenuItem<String>(
+                          value: pos,
+                          child: Text(pos, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
+                        );
+                      }).toList(),
+                      onChanged: (String? newValue) {
+                        if (newValue != null) {
+                          setState(() {
+                            _selectedPosition = newValue;
+                          });
+                        }
+                      },
+                    ),
                   ),
                 ),
-              ),
+              ],
 
               const SizedBox(height: 24),
 

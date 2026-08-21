@@ -2218,7 +2218,9 @@ Enjoy your match! ⚽🔥
           throw Exception(isArabic ? "هذا الوقت متداخل مع حجز آخر نشط ⚠️" : "Time slot overlaps with another booking ⚠️");
         }
 
-        final double calculatedPrice = stadium.pricePerHour * (_selectedMinutes / 60.0);
+        final booking = widget.slot['booking'] as Booking?;
+        final double ballFee = (booking?.rentBall == true) ? stadium.ballPrice : 0.0;
+        final double calculatedPrice = (stadium.pricePerHour * (_selectedMinutes / 60.0)) + ballFee;
         final double totalPrice = calculatedPrice > 0 ? calculatedPrice : (collectedAmount > 0 ? collectedAmount : stadium.basePrice);
 
         final draft = BookingDraft(
@@ -2282,7 +2284,8 @@ Enjoy your match! ⚽🔥
             throw Exception(isArabic ? "مدة الحجز المعدلة تتداخل مع حجز آخر نشط ⚠️" : "Updated duration overlaps with another active booking ⚠️");
           }
 
-          final double calculatedPrice = stadium.pricePerHour * (_selectedMinutes / 60.0);
+          final double ballFee = booking.rentBall ? stadium.ballPrice : 0.0;
+          final double calculatedPrice = (stadium.pricePerHour * (_selectedMinutes / 60.0)) + ballFee;
           final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
           final double finalTotal = isManual 
               ? (calculatedPrice > 0 ? calculatedPrice : booking.totalPrice) 

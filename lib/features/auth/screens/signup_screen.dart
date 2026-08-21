@@ -13,6 +13,7 @@ import '../../../core/constants/egypt_governorates.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../../../core/services/secure_storage_service.dart';
+import '../../../core/utils/phone_utils.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -82,11 +83,12 @@ class _SignupScreenState extends State<SignupScreen> {
     final firstName = _firstNameController.text.trim();
     final lastName = _lastNameController.text.trim();
     final fullName = '$firstName $lastName';
-    final phone = _phoneController.text.trim();
+    final rawPhone = _phoneController.text.trim();
+    final normalizedPhone = PhoneUtils.normalize(rawPhone);
     final email = _emailController.text.trim();
     final password = _passwordController.text;
     final confirmPassword = _confirmPasswordController.text;
-    if (firstName.isEmpty || lastName.isEmpty || phone.isEmpty || email.isEmpty || password.isEmpty) {
+    if (firstName.isEmpty || lastName.isEmpty || rawPhone.isEmpty || email.isEmpty || password.isEmpty) {
       VSPFeedback.showError(
         context, 
         AppLocalizations.of(context)!.fillAllFields
@@ -98,13 +100,7 @@ class _SignupScreenState extends State<SignupScreen> {
       return;
     }
 
-    if (!widget.isOwner && _selectedPosition == null) {
-      final isAr = Localizations.localeOf(context).languageCode == 'ar';
-      VSPFeedback.showError(context, isAr ? 'يرجى اختيار مركزك المفضل ⚽' : 'Please select your preferred position ⚽');
-      return;
-    }
-
-    if (phone.length != 11 || !phone.startsWith("01")) {
+    if (normalizedPhone == null || normalizedPhone.length != 11 || !normalizedPhone.startsWith("01")) {
       VSPFeedback.showError(
         context, 
         AppLocalizations.of(context)!.invalidPhone
@@ -142,8 +138,8 @@ class _SignupScreenState extends State<SignupScreen> {
       role: role,
       userData: {
         'name': fullName,
-        'phone': phone,
-        'position': widget.isOwner ? null : _selectedPosition,
+        'phone': normalizedPhone,
+        'position': widget.isOwner ? null : (_selectedPosition ?? 'GK'),
         'date_of_birth': _dateOfBirth?.toUtc().toIso8601String(),
       },
     );

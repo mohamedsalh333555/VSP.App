@@ -159,17 +159,19 @@ class UserModel {
       favoriteStadiums: List<String>.from(data['favorite_stadiums'] ?? data['favoriteStadiums'] ?? []),
       verificationStatus: data['verification_status'] ?? data['verificationStatus'],
       noShowCount: data['no_show_count'] ?? data['noShowCount'] ?? 0,
-      dateOfBirth: data['date_of_birth'] != null ? DateTime.tryParse(data['date_of_birth']) : null,
+      dateOfBirth: (data['date_of_birth'] ?? data['dateOfBirth']) != null
+          ? DateTime.tryParse((data['date_of_birth'] ?? data['dateOfBirth']).toString())
+          : null,
       p2pInstapay: data['p2p_instapay'] ?? data['p2pInstapay'],
       p2pVodafone: data['p2p_vodafone'] ?? data['p2pVodafone'],
       p2pBank: data['p2p_bank'] ?? data['p2pBank'],
       // 💰 Subscription fields
-      subscriptionPlan: data['subscription_plan'] ?? 'free_trial',
-      trialEndsAt: data['trial_ends_at'] != null
-          ? DateTime.tryParse(data['trial_ends_at'].toString())
+      subscriptionPlan: data['subscription_plan'] ?? data['subscriptionPlan'] ?? 'free_trial',
+      trialEndsAt: (data['trial_ends_at'] ?? data['trialEndsAt']) != null
+          ? DateTime.tryParse((data['trial_ends_at'] ?? data['trialEndsAt']).toString())
           : null,
-      subscriptionExpiresAt: data['subscription_expires_at'] != null
-          ? DateTime.tryParse(data['subscription_expires_at'].toString())
+      subscriptionExpiresAt: (data['subscription_expires_at'] ?? data['subscriptionExpiresAt']) != null
+          ? DateTime.tryParse((data['subscription_expires_at'] ?? data['subscriptionExpiresAt']).toString())
           : null,
     );
   }

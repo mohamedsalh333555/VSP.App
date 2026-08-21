@@ -184,9 +184,14 @@ class TeamRepository {
       }
 
       return teamId;
+    } on PostgrestException catch (e) {
+      if (e.code == '23505' || e.message.contains('unique') || e.message.contains('duplicate')) {
+        throw Exception("اسم الفريق مستخدم بالفعل، يرجى اختيار اسم آخر.");
+      }
+      rethrow;
     } catch (e) {
       debugPrint('Error creating team: $e');
-      return null;
+      rethrow;
     }
   }
 
@@ -242,7 +247,7 @@ class TeamRepository {
       final response = await _supabase
           .from('teams')
           .select()
-          .ilike('name', '%$query%');
+          .or('name.ilike.%$query%,captain_phone.ilike.%$query%');
       
       final List<Team> teams = [];
       for (final doc in (response as List)) {
@@ -293,7 +298,42 @@ class TeamRepository {
   }
 
   Future<Map<String, int>> getHeadToHeadStats(String team1Id, String team2Id) async {
-    return {'teamAWins': 0, 'draws': 0, 'teamBWins': 0, 'totalMatches': 0};
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select('player_team_id, opponent_team_id, final_outcome, winner_team_id')
+          .eq('status', 'completed')
+          .or('and(player_team_id.eq.$team1Id,opponent_team_id.eq.$team2Id),and(player_team_id.eq.$team2Id,opponent_team_id.eq.$team1Id)');
+
+      int team1Wins = 0;
+      int draws = 0;
+      int team2Wins = 0;
+
+      for (var row in response as List) {
+        final winnerId = row['winner_team_id']?.toString() ?? '';
+        final outcome = row['final_outcome']?.toString() ?? '';
+        final pTeam = row['player_team_id']?.toString() ?? '';
+
+        if (winnerId == team1Id || (outcome == 'team_a_win' && pTeam == team1Id) || (outcome == 'team_b_win' && pTeam == team2Id)) {
+          team1Wins++;
+        } else if (winnerId == team2Id || (outcome == 'team_b_win' && pTeam == team1Id) || (outcome == 'team_a_win' && pTeam == team2Id)) {
+          team2Wins++;
+        } else if (outcome == 'draw' || outcome == 'tie') {
+          draws++;
+        }
+      }
+
+      final totalMatches = team1Wins + team2Wins + draws;
+      return {
+        'teamAWins': team1Wins,
+        'draws': draws,
+        'teamBWins': team2Wins,
+        'totalMatches': totalMatches,
+      };
+    } catch (e) {
+      debugPrint('Error getting head to head stats: $e');
+      return {'teamAWins': 0, 'draws': 0, 'teamBWins': 0, 'totalMatches': 0};
+    }
   }
 
   Future<Team?> getTeamByCaptainPhone(String phone) async {

@@ -11,10 +11,10 @@ class ChatRepository {
       return _supabase
           .from('chat_messages')
           .stream(primaryKey: ['id'])
-          .eq('conversation_id', conversationId)
           .map((list) {
             try {
               final messages = list
+                  .where((data) => data['conversation_id']?.toString() == conversationId || data['booking_id']?.toString() == conversationId)
                   .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
                   .where((msg) => currentUserId == null || !msg.deletedForUsers.contains(currentUserId))
                   .toList();
@@ -116,7 +116,7 @@ class ChatRepository {
       await _supabase
           .from('chat_messages')
           .update({'is_read': true})
-          .eq('conversation_id', conversationId)
+          .or('conversation_id.eq.$conversationId,booking_id.eq.$conversationId')
           .neq('sender_id', userId)
           .eq('is_read', false);
 

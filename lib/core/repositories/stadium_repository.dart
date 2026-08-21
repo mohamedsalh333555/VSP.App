@@ -274,7 +274,8 @@ class StadiumRepository {
           .from('stadiums')
           .select()
           .eq('is_verified', true)
-          .neq('is_blocked', true);
+          .neq('is_blocked', true)
+          .eq('is_deleted_by_owner', false);
       
       // 🛡️ Gating Safety: Rely on Supabase's Row Level Security (RLS) policy
       // Database will silently and securely omit unverified owner facilities from search results based on current user status.

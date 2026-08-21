@@ -243,7 +243,7 @@ class AppRouter {
       // Unverified owners who have not submitted documents MUST be routed to /documentation.
       if (!userModel.isIdentityVerified) {
         final status = userModel.verificationStatus?.toLowerCase();
-        if (status == null || status == 'unsubmitted' || status == 'none' || status.isEmpty) {
+        if (status != 'pending') {
           if (path != '/documentation') return '/documentation';
           return null;
         }

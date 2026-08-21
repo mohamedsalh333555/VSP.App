@@ -208,6 +208,16 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       // ✅ Use direct UID lookup to avoid phone international format mismatches
       final team = await TeamRepository().getUserTeam(auth.currentUser!.uid);
 
+      if (team != null && team.captainId != auth.currentUser!.uid) {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          _showErrorDialog(isArabic 
+              ? 'عذراً! قائد الفريق (الكابتن) فقط هو من يحق له تسجيل الفريق في البطولة 👑' 
+              : 'Only team captain is authorized to register team in tournaments 👑');
+        }
+        return;
+      }
+
       if (team == null || team.memberUids.length < 5) {
         if (mounted) {
           await _showIncompleteSquadBridgeSheet(

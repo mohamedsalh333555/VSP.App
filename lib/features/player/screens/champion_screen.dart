@@ -52,17 +52,17 @@ class ChampionScreenState extends State<ChampionScreen>
     if (!_isLocationInitialized) {
       final auth = Provider.of<AuthProvider>(context);
       final rawGov = auth.userModel?.governorate ?? auth.governorate;
-      final resolvedGov = EgyptGovernorates.resolveGoogleName(rawGov) ?? rawGov;
-      if (resolvedGov.isNotEmpty) {
+      final resolvedGov = EgyptGovernorates.resolveGoogleName(rawGov);
+      if (resolvedGov != null && EgyptGovernorates.allGovernorates.contains(resolvedGov)) {
+        _selectedLocation = resolvedGov;
+      } else {
         final matchedGov = EgyptGovernorates.allGovernorates.firstWhere(
-          (g) => g.toLowerCase() == resolvedGov.toLowerCase(),
-          orElse: () => resolvedGov,
+          (g) => g.toLowerCase() == rawGov.toLowerCase(),
+          orElse: () => 'Cairo',
         );
-        if (EgyptGovernorates.allGovernorates.contains(matchedGov)) {
-          _selectedLocation = matchedGov;
-          _isLocationInitialized = true;
-        }
+        _selectedLocation = matchedGov;
       }
+      _isLocationInitialized = true;
     }
   }
   

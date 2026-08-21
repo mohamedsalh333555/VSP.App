@@ -267,21 +267,33 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
       final idxTapped = _timeSlots.indexWhere((s) => s.key == slotKey);
 
       if (isAlreadySelected) {
-        if (_selectedTimeSlots.length <= 2) {
+        final tappedIdx = _selectedTimeSlots.indexOf(slotKey);
+        if (_selectedTimeSlots.length <= 1) {
           _selectedTimeSlots.clear();
-          return;
+        } else if (_selectedTimeSlots.length == 2) {
+          _selectedTimeSlots.remove(slotKey);
+        } else {
+          if (tappedIdx == 0) {
+            _selectedTimeSlots.removeAt(0);
+          } else if (tappedIdx == _selectedTimeSlots.length - 1) {
+            _selectedTimeSlots.removeLast();
+          } else {
+            _selectedTimeSlots.removeRange(tappedIdx, _selectedTimeSlots.length);
+          }
         }
+        return;
       }
 
       if (idxTapped == -1) return;
 
-      if (_selectedTimeSlots.isEmpty || isAlreadySelected) {
-        _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+      if (_selectedTimeSlots.isEmpty) {
+        _selectedTimeSlots.add(slotKey);
       } else if (_selectedTimeSlots.length == 1) {
         final first = _selectedTimeSlots.first;
         final idxFirst = _timeSlots.indexWhere((s) => s.key == first);
         if (idxFirst == -1) {
-          _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+          _selectedTimeSlots.clear();
+          _selectedTimeSlots.add(slotKey);
           return;
         }
 
@@ -312,34 +324,20 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
         }
         
         if (hasInvalidSlot) {
-          _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+          _selectedTimeSlots.clear();
+          _selectedTimeSlots.add(slotKey);
         } else {
           _selectedTimeSlots.clear();
           _selectedTimeSlots.addAll(tempRange);
         }
       } else {
-        _selectSlotWithAutoConsecutive(idxTapped, existingBookings);
+        _selectedTimeSlots.clear();
+        _selectedTimeSlots.add(slotKey);
       }
     });
   }
 
-  void _selectSlotWithAutoConsecutive(int startIdx, List<Booking> existingBookings) {
-    _selectedTimeSlots.clear();
-    final startSlot = _timeSlots[startIdx];
-    _selectedTimeSlots.add(startSlot.key);
 
-    if (startIdx + 1 < _timeSlots.length) {
-      final nextSlot = _timeSlots[startIdx + 1];
-      if (nextSlot.startMinutes == startSlot.startMinutes + 30) {
-        final nextDateTime = _getSlotDateTime(nextSlot.key);
-        final isPast = nextDateTime.isBefore(DateTime.now());
-        final isBooked = _isSlotBooked(nextSlot.key, existingBookings);
-        if (!isPast && !isBooked) {
-          _selectedTimeSlots.add(nextSlot.key);
-        }
-      }
-    }
-  }
 
   void _showCalendarModal() {
     final l10n = AppLocalizations.of(context)!;
@@ -959,7 +957,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                       IconButton(
                         visualDensity: VisualDensity.compact,
                         icon: const Icon(Iconsax.add_copy, size: 16, color: Colors.white),
-                        onPressed: _initialPlayersCount < widget.stadium.totalFieldCapacity 
+                        onPressed: _initialPlayersCount < (widget.stadium.totalFieldCapacity > 1 ? widget.stadium.totalFieldCapacity - 1 : 1) 
                             ? () {
                                 HapticFeedback.selectionClick();
                                 setState(() => _initialPlayersCount++);

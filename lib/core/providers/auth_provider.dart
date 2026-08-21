@@ -57,8 +57,8 @@ class AuthProvider with ChangeNotifier {
   bool get isLoading => _isLoading;
   String? get errorMessage => _errorMessage;
   bool get isAuthenticated => _firebaseUser != null;
-  bool get isPlayer => _userModel != null ? _userModel!.role == 'player' : _userType == 'player';
-  bool get isOwner => _userModel != null ? _userModel!.role == 'owner' : _userType == 'owner';
+  bool get isPlayer => _userModel != null ? !_userModel!.isOwnerRole : _userType == 'player';
+  bool get isOwner => _userModel != null ? _userModel!.isOwnerRole : _userType == 'owner';
   User? get currentUser => _firebaseUser; // Alias for convenience
   Position? get currentPosition => _currentPosition;
   bool get hasCompletedOnboarding => _hasCompletedOnboarding;
@@ -767,13 +767,13 @@ class AuthProvider with ChangeNotifier {
         _userModel = _userModel!.copyWith(
           name: sanitizedData['name'] ?? _userModel!.name,
           phone: sanitizedData['phone'] ?? _userModel!.phone,
-          profileImageUrl: sanitizedData['profileImageUrl'] ?? _userModel!.profileImageUrl,
+          profileImageUrl: sanitizedData['profile_image_url'] ?? sanitizedData['profileImageUrl'] ?? _userModel!.profileImageUrl,
           position: sanitizedData['position'] ?? _userModel!.position,
           hasStadium: sanitizedData['hasStadium'] ?? _userModel!.hasStadium,
           isRegistrationComplete: sanitizedData['isRegistrationComplete'] ?? _userModel!.isRegistrationComplete,
           isIdentityVerified: sanitizedData['isIdentityVerified'] ?? _userModel!.isIdentityVerified,
           governorate: sanitizedData['governorate'] ?? _userModel!.governorate,
-          favoriteStadiums: sanitizedData['favoriteStadiums'] ?? _userModel!.favoriteStadiums,
+          favoriteStadiums: sanitizedData['favorite_stadiums'] ?? sanitizedData['favoriteStadiums'] ?? _userModel!.favoriteStadiums,
           verificationStatus: sanitizedData['verificationStatus'] ?? _userModel!.verificationStatus,
           dateOfBirth: sanitizedData['date_of_birth'] != null
               ? DateTime.tryParse(sanitizedData['date_of_birth'])
@@ -1181,17 +1181,20 @@ class AuthProvider with ChangeNotifier {
       }
 
       // Safe deletion proceed if no active bookings block
-      final result = await _authService.deleteAccount(uid);
-      if (result['success']) {
-        await signOut();
-        _isLoading = false;
-        return true;
-      } else {
-        _errorMessage = result['message'];
-        _isLoading = false;
-        notifyListeners();
-        return false;
+      try {
+        await Supabase.instance.client.rpc('delete_user_permanently', params: {'p_user_id': uid});
+      } catch (rpcErr) {
+        final fallbackRes = await _authService.deleteAccount(uid);
+        if (fallbackRes['success'] != true) {
+          _errorMessage = fallbackRes['message'] ?? 'فشل حذف الحساب';
+          _isLoading = false;
+          notifyListeners();
+          return false;
+        }
       }
+      await signOut();
+      _isLoading = false;
+      return true;
     } catch (e) {
       _errorMessage = 'حدث خطأ أثناء محاولة حذف الحساب: ${e.toString()}';
       _isLoading = false;

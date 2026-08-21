@@ -26,7 +26,7 @@ class RefundService {
         return;
       }
 
-      final hoursBeforeBooking = bookingStartTime.difference(DateTime.now()).inHours;
+      final hoursBeforeBooking = bookingStartTime.toUtc().difference(DateTime.now().toUtc()).inHours;
       double refundAmount = 0.0;
       String refundReason = '';
 

@@ -18,7 +18,15 @@ class LeagueRepository {
           sortedList.sort((a, b) {
             final pointsA = (a['total_points'] ?? 0) as int;
             final pointsB = (b['total_points'] ?? 0) as int;
-            return pointsB.compareTo(pointsA);
+            if (pointsA != pointsB) return pointsB.compareTo(pointsA);
+
+            final skillA = (a['skill_points'] ?? 0) as int;
+            final skillB = (b['skill_points'] ?? 0) as int;
+            if (skillA != skillB) return skillB.compareTo(skillA);
+
+            final goalsA = (a['goals'] ?? 0) as int;
+            final goalsB = (b['goals'] ?? 0) as int;
+            return goalsB.compareTo(goalsA);
           });
 
           List<VSP1v1Player> players = [];

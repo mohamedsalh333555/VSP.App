@@ -14,6 +14,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/analytics_service.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../core/repositories/app_settings_repository.dart';
 import '../../../data/models.dart';
 
 class ChatScreen extends StatefulWidget {
@@ -46,16 +47,39 @@ class _ChatScreenState extends State<ChatScreen> {
   Future<void> _makeCallToOwner() async {
     try {
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-      String? ownerPhone;
-      
-      final ownerId = widget.booking.ownerId;
-      if (ownerId.isNotEmpty) {
-        final userData = await UserRepository().getUserData(ownerId);
-        ownerPhone = userData?['phone']?.toString().trim();
+      final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid ?? '';
+      String? targetPhone;
+
+      final isSupportChat = widget.booking.stadiumId == 'support_chat' ||
+          widget.booking.notes == 'support_chat' ||
+          widget.booking.id.startsWith('support_chat_');
+
+      final isDirectChat = widget.booking.stadiumId == 'chat_thread' ||
+          widget.booking.notes == 'chat_thread' ||
+          widget.booking.id.startsWith('chat_');
+
+      if (isSupportChat) {
+        final settings = await AppSettingsRepository().getSettings();
+        targetPhone = settings.supportPhone;
+      } else if (isDirectChat) {
+        final otherUserId = widget.booking.joinedUserIds.firstWhere(
+          (uid) => uid != currentUserId,
+          orElse: () => '',
+        );
+        if (otherUserId.isNotEmpty) {
+          final userData = await UserRepository().getUserData(otherUserId);
+          targetPhone = userData?['phone']?.toString().trim();
+        }
+      } else {
+        final ownerId = widget.booking.ownerId;
+        if (ownerId.isNotEmpty) {
+          final userData = await UserRepository().getUserData(ownerId);
+          targetPhone = userData?['phone']?.toString().trim();
+        }
       }
 
-      if (ownerPhone != null && ownerPhone.isNotEmpty) {
-        final cleanPhone = ownerPhone.replaceAll(RegExp(r'\D'), '');
+      if (targetPhone != null && targetPhone.isNotEmpty) {
+        final cleanPhone = targetPhone.replaceAll(RegExp(r'\D'), '');
         final path = cleanPhone.startsWith('0') && cleanPhone.length == 11 
             ? '+2$cleanPhone' 
             : (cleanPhone.startsWith('2') ? '+$cleanPhone' : cleanPhone);
@@ -65,7 +89,7 @@ class _ChatScreenState extends State<ChatScreen> {
         if (mounted) {
           VSPFeedback.showError(
             context, 
-            isArabic ? 'رقم هاتف المالك غير متاح حالياً.' : 'Owner phone number is not available.',
+            isArabic ? 'رقم الهاتف غير متاح حالياً.' : 'Phone number is not available.',
           );
         }
       }

@@ -310,24 +310,6 @@ class NotificationService {
       platformChannelSpecifics,
       payload: jsonEncode(message.data),
     );
-
-    final uid = Supabase.instance.client.auth.currentUser?.id;
-    if (uid != null && message.notification?.title != null) {
-      final appNotif = AppNotification(
-        id: '',
-        title: message.notification!.title!,
-        body: message.notification!.body ?? '',
-        type: message.data['type'] ?? 'info',
-        bookingId: message.data['bookingId'],
-        createdAt: DateTime.now(),
-        isRead: false,
-      );
-      try {
-        await NotificationRepository().sendNotification(uid, appNotif);
-      } catch (e) {
-        VSPLogger.e('Error saving FCM to Supabase', e);
-      }
-    }
   }
 
   static Future<void> showBookingConfirmation({

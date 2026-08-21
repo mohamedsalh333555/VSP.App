@@ -32,6 +32,7 @@ class AppSettings {
 
   Map<String, dynamic> toMap() {
     return {
+      'id': '00000000-0000-0000-0000-000000000001',
       'support_phone': supportPhone,
       'whatsapp_number': whatsappNumber,
       'support_email': supportEmail,

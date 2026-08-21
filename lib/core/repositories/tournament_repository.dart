@@ -1,4 +1,4 @@
-﻿import 'package:flutter/material.dart';
+import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
@@ -735,8 +735,9 @@ class TournamentRepository {
         }
       }
 
-      // 4. Bulk insert matches into database
+      // 4. Bulk insert matches into database (Round 0 -> Round 1 -> Round 2 to satisfy next_match_id FK constraint)
       final allMatchesToInsert = matchesMap.values.toList();
+      allMatchesToInsert.sort((a, b) => (a['round_index'] as int).compareTo(b['round_index'] as int));
       if (allMatchesToInsert.isNotEmpty) {
         await _supabase.from('tournament_matches').insert(allMatchesToInsert);
       }
@@ -781,6 +782,8 @@ class TournamentRepository {
         'home_score': homeScore,
         'away_score': awayScore,
         'winner_id': winnerId,
+        'status': 'completed',
+        'is_completed': true,
         'goal_details': goalDetails.map((g) => g.toMap()).toList(),
       };
       if (homePenalties != null) updatePayload['home_penalties'] = homePenalties;
@@ -797,6 +800,8 @@ class TournamentRepository {
           'home_score': homeScore,
           'away_score': awayScore,
           'winner_id': winnerId,
+          'status': 'completed',
+          'is_completed': true,
         };
         if (homePenalties != null) fallbackPayload['home_penalties'] = homePenalties;
         if (awayPenalties != null) fallbackPayload['away_penalties'] = awayPenalties;
@@ -822,6 +827,18 @@ class TournamentRepository {
       } else {
         // ── Final Match: Crown the Champion ──
         if (winnerId != null) {
+          final champRes = await _supabase
+              .from('championships')
+              .select('champion_team_id')
+              .eq('id', championshipId)
+              .maybeSingle();
+
+          final existingChamp = champRes?['champion_team_id'];
+          if (existingChamp != null && existingChamp.toString().isNotEmpty) {
+            // Already crowned champion — prevent double crowning
+            return;
+          }
+
           await _supabase
               .from('championships')
               .update({
@@ -1828,6 +1845,7 @@ class TournamentRepository {
       }
 
       final List<Map<String, dynamic>> knockoutMatches = matchesMap.values.toList();
+      knockoutMatches.sort((a, b) => (a['round_index'] as int).compareTo(b['round_index'] as int));
 
       if (knockoutMatches.isNotEmpty) {
         await _supabase.from('tournament_matches').insert(knockoutMatches);

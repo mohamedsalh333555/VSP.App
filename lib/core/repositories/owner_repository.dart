@@ -48,22 +48,23 @@ class OwnerRepository {
     }
   }
 
-  Future<int> calculateBookedHours(String ownerId) async {
+  Future<double> calculateBookedHours(String ownerId) async {
     try {
       final response = await _supabase
           .from('bookings')
-          .select('start_time, end_time')
-          .eq('owner_id', ownerId);
+          .select('start_time, end_time, status')
+          .eq('owner_id', ownerId)
+          .neq('status', 'cancelled');
 
-      int totalHours = 0;
+      double totalHours = 0.0;
       for (var row in (response as List)) {
         final start = DateTime.parse(row['start_time']);
         final end = DateTime.parse(row['end_time']);
-        totalHours += end.difference(start).inHours;
+        totalHours += end.difference(start).inMinutes / 60.0;
       }
       return totalHours;
     } catch (e) {
-      return 0;
+      return 0.0;
     }
   }
 
