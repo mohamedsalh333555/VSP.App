@@ -1,3 +1,5 @@
+import 'dart:convert';
+import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
 
@@ -13,7 +15,9 @@ class SearchRepository {
 
     try {
       final response = await _supabase.rpc('global_search', params: {'search_term': term});
-      final data = response as Map<String, dynamic>;
+      final Map<String, dynamic> data = response is String 
+          ? Map<String, dynamic>.from(json.decode(response)) 
+          : Map<String, dynamic>.from(response as Map);
 
       final stadiumsList = data['stadiums'] as List? ?? [];
       final teamsList = data['teams'] as List? ?? [];
@@ -37,6 +41,7 @@ class SearchRepository {
         'championships': championships,
       };
     } catch (e) {
+      debugPrint('Global search error: $e');
       return {'stadiums': [], 'teams': [], 'championships': []};
     }
   }

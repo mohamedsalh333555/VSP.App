@@ -33,6 +33,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
 
       if (hasError) {
         VSPFeedback.showError(context, auth.errorMessage!);
+        auth.clearError(); // ✅ تفريغ الخطأ فور عرضه لمنع التكرار
       }
     });
   }

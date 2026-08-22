@@ -81,6 +81,7 @@ class BookingProvider with ChangeNotifier {
         opponentTeamId: opponentTeamId,
         opponentTeamName: opponentTeamName,
         playerTeamId: playerTeamId,
+        playerTeamName: playerTeamName, // ✅ تم إضافة تمرير اسم الفريق
         currentPlayers: currentPlayers,
         totalFieldCapacity: maxPlayers,
       );

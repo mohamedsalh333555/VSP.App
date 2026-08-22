@@ -475,6 +475,20 @@ class SupabaseBookingRepository implements BookingRepository {
         }
       }
 
+      // إشعار مالك الملعب بإلغاء الحجز
+      if (booking.ownerId.isNotEmpty) {
+        try {
+          await NotificationHandler.notifyBookingCancelledByPlayer(
+            ownerId: booking.ownerId,
+            stadiumName: booking.stadiumName,
+            playerName: booking.playerTeamName ?? booking.hostName ?? 'اللاعب',
+            timeSlot: booking.formattedTimeRange,
+          );
+        } catch (e) {
+          VSPLogger.w('⚠️ Failed to send owner cancellation notification: $e');
+        }
+      }
+
       return true;
     } catch (e) {
       debugPrint('❌ Error cancelling booking: $e');
@@ -553,10 +567,23 @@ class SupabaseBookingRepository implements BookingRepository {
             return;
           }
 
-          // 2. إدراج التقييم الجديد في جدول reviews في Supabase (سيتكفل الـ Trigger بتحديث الملعب تلقائياً)
+          // جلب بيانات البروفايل لمنع التقييمات مجهولة الهوية
+          String userName = 'لاعب VSP';
+          String userImageUrl = '';
+          try {
+            final userDoc = await UserRepository().getUserData(effectiveUserId);
+            if (userDoc != null) {
+              userName = userDoc['name'] ?? userName;
+              userImageUrl = userDoc['profile_image_url'] ?? '';
+            }
+          } catch (_) {}
+
+          // 2. إدراج التقييم الجديد في جدول reviews في Supabase
           await _supabase.from('reviews').insert({
             'stadium_id': booking.stadiumId,
             'user_id': effectiveUserId,
+            'user_name': userName,
+            'user_image_url': userImageUrl,
             'rating': rating.toInt(),
             'review_text': review ?? '',
             'created_at': DateTime.now().toUtc().toIso8601String(),

@@ -7,6 +7,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/providers/stadium_provider.dart';
+import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -154,6 +155,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
               stream: TournamentRepository().getChampionshipsStream(
                 sportType: _selectedSport,
                 isOwner: true,
+                ownerId: Provider.of<AuthProvider>(context, listen: false).currentUser?.uid, // ✅ تمرير معرف المالك
               ),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
@@ -165,22 +167,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
                 final filtered = championships.where((c) {
                   final isRightCategory = _selectedCategory == 'All' || c.type.toLowerCase() == _selectedCategory.toLowerCase();
                   
-                  final now = DateTime.now();
-                  final todayStart = DateTime(now.year, now.month, now.day);
-                  final todayEnd = DateTime(now.year, now.month, now.day, 23, 59, 59);
-
+                  // ✅ تصنيف ذكي يعتمد أولاً على حالة البطولة status الفعلية
                   bool isRightStatus = false;
-                  final isCompletedStatus = c.status.toLowerCase() == 'completed' || c.status.toLowerCase() == 'finished';
+                  final status = c.status.toLowerCase();
 
-                  if (isCompletedStatus) {
-                    isRightStatus = (_selectedTab == 2);
-                  } else if (_selectedTab == 0) { // Coming (Upcoming)
-                    isRightStatus = c.startDate.isAfter(todayEnd);
-                  } else if (_selectedTab == 1) { // Ongoing
-                    isRightStatus = (c.startDate.isBefore(todayEnd) || c.startDate.isAtSameMomentAs(todayEnd)) &&
-                                    (c.endDate.isAfter(todayStart) || c.endDate.isAtSameMomentAs(todayStart));
-                  } else if (_selectedTab == 2) { // Finished
-                    isRightStatus = c.endDate.isBefore(todayStart);
+                  if (_selectedTab == 0) { // Coming (Upcoming / Open for registration)
+                    isRightStatus = status == 'open';
+                  } else if (_selectedTab == 1) { // Ongoing (Matches in progress)
+                    isRightStatus = status == 'ongoing';
+                  } else if (_selectedTab == 2) { // Finished (Completed / Archive)
+                    isRightStatus = status == 'completed' || status == 'finished';
                   }
                   
                   return isRightCategory && isRightStatus;

@@ -19,6 +19,7 @@ class FakeAuthProvider implements AuthProvider {
   final bool _isOwner;
   final bool _hasDataFetchError;
   final String _email;
+  final String? _userType;
 
   FakeAuthProvider({
     bool isInitializing = false,
@@ -28,13 +29,15 @@ class FakeAuthProvider implements AuthProvider {
     bool isOwner = false,
     bool hasDataFetchError = false,
     String email = 'test@vsp.app',
+    String? userType,
   })  : _isInitializing = isInitializing,
         _isAuthenticated = isAuthenticated,
         _isGhostUser = isGhostUser,
         _userModel = userModel,
         _isOwner = isOwner,
         _hasDataFetchError = hasDataFetchError,
-        _email = email;
+        _email = email,
+        _userType = userType;
 
   @override
   bool get isInitializing => _isInitializing;
@@ -56,6 +59,9 @@ class FakeAuthProvider implements AuthProvider {
 
   @override
   String get email => _email;
+
+  @override
+  String? get userType => _userType;
 
   @override
   dynamic noSuchMethod(Invocation invocation) => super.noSuchMethod(invocation);

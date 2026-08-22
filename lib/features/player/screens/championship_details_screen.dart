@@ -927,6 +927,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
 
               // Helper: Arabic round label
               String roundLabelAr(int roundIndex) {
+                if (widget.championship.type == 'GroupsAndKnockout' && roundIndex == 99) {
+                  return 'دور المجموعات';
+                }
+                if (widget.championship.type == 'League') {
+                  return 'مباريات الدوري';
+                }
                 switch (roundIndex) {
                   case 0: return 'المباراة النهائية';
                   case 1: return 'نصف النهائي';

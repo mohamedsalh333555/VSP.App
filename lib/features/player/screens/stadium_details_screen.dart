@@ -150,16 +150,23 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                           itemCount: _displayImages.length,
                           onPageChanged: (index) => setState(() => _currentImageIndex = index),
                           itemBuilder: (context, index) {
+                            final imageWidget = CachedNetworkImage(
+                              imageUrl: _displayImages[index],
+                              memCacheWidth: 800,
+                              memCacheHeight: 600,
+                              fit: BoxFit.cover,
+                              placeholder: (ctx, url) => Container(color: VSPColors.surface),
+                              errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
+                            );
+
                             return GestureDetector(
                               onTap: () => _openFullScreenGallery(index),
-                              child: CachedNetworkImage(
-                                imageUrl: _displayImages[index],
-                                memCacheWidth: 800,
-                                memCacheHeight: 600,
-                                fit: BoxFit.cover,
-                                placeholder: (ctx, url) => Container(color: VSPColors.surface),
-                                errorWidget: (ctx, url, _) => _buildVspLogoBackground(),
-                              ),
+                              child: index == 0
+                                  ? Hero(
+                                      tag: 'stadium-hero-${widget.stadium.id}',
+                                      child: imageWidget,
+                                    )
+                                  : imageWidget,
                             );
                           },
                         )

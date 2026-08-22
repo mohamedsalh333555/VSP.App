@@ -38,9 +38,11 @@ class OwnerLedgerScreen extends StatelessWidget {
       }
 
       final String csvText = csv.toString();
-      await Share.share(
-        csvText,
-        subject: isAr ? "كشف حساب VSP المالي" : "VSP Financial Ledger",
+      await SharePlus.instance.share(
+        ShareParams(
+          text: csvText,
+          subject: isAr ? "كشف حساب VSP المالي" : "VSP Financial Ledger",
+        ),
       );
     } catch (e) {
       if (context.mounted) {

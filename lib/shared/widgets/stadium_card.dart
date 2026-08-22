@@ -29,7 +29,10 @@ class StadiumCard extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return GestureDetector(
-      onTap: onTap,
+      onTap: () {
+        HapticFeedback.lightImpact();
+        onTap?.call();
+      },
       child: Container(
         height: isOwnerView ? 260 : 210,
         decoration: BoxDecoration(
@@ -48,13 +51,16 @@ class StadiumCard extends StatelessWidget {
           child: Stack(
             fit: StackFit.expand,
             children: [
-              // REAL PHOTOGRAPHY BACKGROUND
+              // REAL PHOTOGRAPHY BACKGROUND WITH HERO TRANSITION
               stadium.imageUrl.isNotEmpty
-                  ? ShimmerImage(
-                      imageUrl: stadium.imageUrl,
-                      fit: BoxFit.cover,
-                      memCacheWidth: 600,
-                      errorWidget: _buildVspLogoBackground(),
+                  ? Hero(
+                      tag: 'stadium-hero-${stadium.id}',
+                      child: ShimmerImage(
+                        imageUrl: stadium.imageUrl,
+                        fit: BoxFit.cover,
+                        memCacheWidth: 600,
+                        errorWidget: _buildVspLogoBackground(),
+                      ),
                     )
                   : _buildVspLogoBackground(),
 

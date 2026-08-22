@@ -320,29 +320,18 @@ class TournamentRepository {
         }
       }
 
-      if (champ.joinedTeams.length >= champ.maxTeams) {
-        throw Exception('عذراً، البطولة اكتمل عددها بالفعل.');
+      // 🛡️ استخدام الدالة الذرية الموثقة في السيرفر لتجاوز قيد RLS
+      final rpcRes = await _supabase.rpc('join_championship_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+        'p_is_paid': isPaid,
+      });
+
+      if (rpcRes is Map && rpcRes['success'] == false) {
+        throw Exception(rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
       }
 
-      if (champ.joinedTeams.contains(teamId)) {
-        throw Exception('لقد انضمت مجموعتك لهذه البطولة بالفعل.');
-      }
-
-      final updatedJoined = List<String>.from(champ.joinedTeams)..add(teamId);
-      final updatedPaid = List<String>.from(champ.paidTeams);
-      if (isPaid && !updatedPaid.contains(teamId)) {
-        updatedPaid.add(teamId);
-      }
-
-      await _supabase
-          .from('championships')
-          .update({
-            'joined_teams': updatedJoined,
-            'paid_teams': updatedPaid,
-          })
-          .eq('id', championshipId);
-
-      // 💳 تسجيل معاملة اشتراك البطولة بالمبلغ الإجمالي النهائي (المحدد أو المحسوب بالرسوم)
+      // تسجيل المعاملة المالية في حال السداد
       if (isPaid && champ.entryFee > 0) {
         try {
           final double serviceFee = (champ.entryFee * 0.0475) + 3.0;
@@ -350,20 +339,17 @@ class TournamentRepository {
 
           await _supabase.from('transactions').insert({
             'championship_id': championshipId,
-            'team_id': teamId,
             'user_id': _supabase.auth.currentUser?.id,
             'amount': fullAmount,
-            'entry_fee': champ.entryFee,
-            'service_fee': serviceFee,
             'type': 'digital',
-            'created_at': DateTime.now().toIso8601String(),
+            'created_at': DateTime.now().toUtc().toIso8601String(),
           });
         } catch (txErr) {
-          debugPrint('⚠️ Non-blocking transaction logging notice: $txErr');
+          debugPrint('⚠️ Transaction logging notice: $txErr');
         }
       }
 
-      // حفظ تشكيلة الفريق والأسماء الخارجية في الجدول
+      // حفظ تشكيلة الفريق
       try {
         await updateSingleTeamRoster(
           championshipId: championshipId,
@@ -372,22 +358,19 @@ class TournamentRepository {
           guestNames: offlineGuestNames,
         );
       } catch (rosterErr) {
-        debugPrint('⚠️ Non-blocking roster record notice: $rosterErr');
+        debugPrint('⚠️ Roster sync notice: $rosterErr');
       }
 
-      // 🔔 Notify tournament owner
-      final ownerId = champ.ownerId;
-      if (ownerId.isNotEmpty) {
+      // إشعار مالك البطولة
+      if (champ.ownerId.isNotEmpty) {
         try {
           await NotificationHandler.notifyTeamJoinedTournament(
-            ownerId: ownerId,
+            ownerId: champ.ownerId,
             teamName: team.name,
             tournamentName: champ.name,
             championshipId: championshipId,
           );
-        } catch (e) {
-          debugPrint('Error sending tournament joined notification: $e');
-        }
+        } catch (_) {}
       }
 
       return true;
@@ -1006,7 +989,6 @@ class TournamentRepository {
 
   Future<void> _sendDrawNotifications(String championshipId) async {
     try {
-      // 1. Get the championship name
       final champ = await _supabase
           .from('championships')
           .select('name')
@@ -1015,23 +997,34 @@ class TournamentRepository {
       if (champ == null) return;
       final champName = champ['name']?.toString() ?? 'البطولة';
 
-      // 2. Fetch all matches of this championship
       final response = await _supabase
           .from('tournament_matches')
-          .select()
+          .select('home_team_id, away_team_id, home_team_name, away_team_name')
           .eq('championship_id', championshipId);
       
-      final List<Map<String, dynamic>> notificationsToInsert = [];
       final matchesList = response as List;
+      final Set<String> teamIds = {};
+      for (final m in matchesList) {
+        if (m['home_team_id'] != null) teamIds.add(m['home_team_id'].toString());
+        if (m['away_team_id'] != null) teamIds.add(m['away_team_id'].toString());
+      }
+
+      if (teamIds.isEmpty) return;
+
+      // ⚡ جلب بيانات جميع الفرق دفعة واحدة (Batching)
+      final allTeams = await getTeamsByIds(teamIds.toList());
+      final Map<String, Team> teamMap = {for (var t in allTeams) t.id: t};
+
+      final List<Map<String, dynamic>> notificationsToInsert = [];
 
       for (final matchData in matchesList) {
-        final String? homeId = matchData['home_team_id'];
-        final String? awayId = matchData['away_team_id'];
-        final String? homeName = matchData['home_team_name'];
-        final String? awayName = matchData['away_team_name'];
+        final String? homeId = matchData['home_team_id']?.toString();
+        final String? awayId = matchData['away_team_id']?.toString();
+        final String homeName = matchData['home_team_name']?.toString() ?? '';
+        final String awayName = matchData['away_team_name']?.toString() ?? '';
 
-        if (homeId != null && homeId.isNotEmpty && awayId != null && awayId.isNotEmpty) {
-          final homeTeam = await TeamRepository().getTeam(homeId);
+        if (homeId != null && awayId != null) {
+          final homeTeam = teamMap[homeId];
           if (homeTeam != null) {
             for (final uid in homeTeam.memberUids) {
               notificationsToInsert.add({
@@ -1039,13 +1032,13 @@ class TournamentRepository {
                 'title': "🏆 تم إجراء قرعة البطولة!",
                 'body': "فريقك سيواجه فريق ($awayName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
                 'type': "info",
-                'created_at': DateTime.now().toIso8601String(),
+                'created_at': DateTime.now().toUtc().toIso8601String(),
                 'is_read': false,
               });
             }
           }
 
-          final awayTeam = await TeamRepository().getTeam(awayId);
+          final awayTeam = teamMap[awayId];
           if (awayTeam != null) {
             for (final uid in awayTeam.memberUids) {
               notificationsToInsert.add({
@@ -1053,7 +1046,7 @@ class TournamentRepository {
                 'title': "🏆 تم إجراء قرعة البطولة!",
                 'body': "فريقك سيواجه فريق ($homeName) في بطولة ($champName). تفقد جدول المباريات لمعرفة الموعد والتفاصيل!",
                 'type': "info",
-                'created_at': DateTime.now().toIso8601String(),
+                'created_at': DateTime.now().toUtc().toIso8601String(),
                 'is_read': false,
               });
             }
@@ -1061,7 +1054,6 @@ class TournamentRepository {
         }
       }
 
-      // 🚀 Bulk insert notifications in a single network query
       if (notificationsToInsert.isNotEmpty) {
         await _supabase.from('notifications').insert(notificationsToInsert);
       }
@@ -1535,22 +1527,14 @@ class TournamentRepository {
             matchesToInsert.add({
               'id': matchUuid,
               'championship_id': championshipId,
-              'championshipId': championshipId,
               'round_index': 0,
-              'roundIndex': 0,
               'match_index': matchesToInsert.length,
-              'matchIndex': matchesToInsert.length,
               'week_number': week + 1,
-              'weekNumber': week + 1,
               'stage': 'league',
               'home_team_id': homeId,
-              'homeTeamId': homeId,
               'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
-              'homeTeamName': teamMap[homeId] ?? 'فريق $homeId',
               'away_team_id': awayId,
-              'awayTeamId': awayId,
               'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
-              'awayTeamName': teamMap[awayId] ?? 'فريق $awayId',
             });
           }
         }
@@ -1566,22 +1550,14 @@ class TournamentRepository {
           matchesToInsert.add({
             'id': matchUuid,
             'championship_id': championshipId,
-            'championshipId': championshipId,
             'round_index': 0,
-            'roundIndex': 0,
             'match_index': matchesToInsert.length,
-            'matchIndex': matchesToInsert.length,
             'week_number': (m['week_number'] as int) + firstLegWeeks,
-            'weekNumber': (m['week_number'] as int) + firstLegWeeks,
             'stage': 'league',
             'home_team_id': m['away_team_id'],
-            'homeTeamId': m['away_team_id'],
             'home_team_name': m['away_team_name'],
-            'homeTeamName': m['away_team_name'],
             'away_team_id': m['home_team_id'],
-            'awayTeamId': m['home_team_id'],
             'away_team_name': m['home_team_name'],
-            'awayTeamName': m['home_team_name'],
           });
         }
       }
@@ -1658,24 +1634,15 @@ class TournamentRepository {
               matchesToInsert.add({
                 'id': const Uuid().v4(),
                 'championship_id': championshipId,
-                'championshipId': championshipId,
                 'round_index': 99,
-                'roundIndex': 99,
                 'match_index': matchesToInsert.length,
-                'matchIndex': matchesToInsert.length,
                 'group_name': groupName,
-                'groupName': groupName,
                 'week_number': week + 1,
-                'weekNumber': week + 1,
                 'stage': 'group_stage',
                 'home_team_id': homeId,
-                'homeTeamId': homeId,
                 'home_team_name': teamMap[homeId] ?? 'فريق $homeId',
-                'homeTeamName': teamMap[homeId] ?? 'فريق $homeId',
                 'away_team_id': awayId,
-                'awayTeamId': awayId,
                 'away_team_name': teamMap[awayId] ?? 'فريق $awayId',
-                'awayTeamName': teamMap[awayId] ?? 'فريق $awayId',
               });
             }
           }

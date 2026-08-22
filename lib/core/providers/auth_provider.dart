@@ -1253,8 +1253,13 @@ class AuthProvider with ChangeNotifier {
             VSPLogger.i('⚡ Real-time update received for user profile: ${payload.newRecord}');
             final newRecord = payload.newRecord;
             if (newRecord.isNotEmpty && _userModel != null) {
-              final newModel = UserModel.fromFirestore(newRecord);
+              var newModel = UserModel.fromFirestore(newRecord);
               
+              // 🛡️ الحفاظ على حالة التحقق من البريد إذا كان موثقاً في جلسة Supabase Auth
+              if (_firebaseUser?.emailConfirmedAt != null && !newModel.isEmailVerified) {
+                newModel = newModel.copyWith(isEmailVerified: true);
+              }
+
               final oldStatus = _userModel!.verificationStatus;
               final newStatus = newModel.verificationStatus;
               

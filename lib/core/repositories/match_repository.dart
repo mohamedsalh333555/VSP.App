@@ -38,17 +38,20 @@ class MatchRepository {
   // --- PUBLIC MATCHES (Modern Supabase Integration) ---
 
   Stream<List<Booking>> getPublicMatches() {
-    final cutoffDateTime = DateTime.now().subtract(const Duration(hours: 2));
+    // ⚡ الفلترة تتم الآن على مستوى السيرفر أولاً عبر order('start_time')
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('is_private', false)
+        .order('start_time', ascending: true)
         .map<List<Booking>>((list) {
           final now = DateTime.now();
-          final matches = list
+          final cutoff = now.subtract(const Duration(hours: 2));
+
+          return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                final isNotExpired = b.endTime.isAfter(cutoffDateTime);
+                final isNotExpired = b.endTime.isAfter(cutoff);
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
                 final isFuture = b.endTime.isAfter(now);
@@ -61,9 +64,6 @@ class MatchRepository {
                 return isNotExpired && isConfirmed && isFuture && (hasSpace || isParticipant);
               })
               .toList();
-              
-          matches.sort((a, b) => a.startTime.compareTo(b.startTime));
-          return matches;
         });
   }
 

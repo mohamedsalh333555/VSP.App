@@ -2295,6 +2295,7 @@ Enjoy your match! ⚽🔥
           final updateMap = <String, dynamic>{
             'end_time': endTime.toUtc().toIso8601String(),
             'player_team_name': customerName,
+            'player_phone': customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null, // ✅ يتم تحديث أو تصفير الرقم بأمان
             'notes': notes,
             'current_players': _playerCount,
             'deposit_paid': collectedAmount,
@@ -2303,10 +2304,6 @@ Enjoy your match! ⚽🔥
             'payment_status': collectedAmount >= finalTotal ? 'paid' : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
             'updated_at': DateTime.now().toUtc().toIso8601String(),
           };
-
-          if (customerPhone.isNotEmpty) {
-            updateMap['player_phone'] = PhoneUtils.normalize(customerPhone);
-          }
 
           if (finalTotal != booking.totalPrice) {
             updateMap['total_price'] = finalTotal;

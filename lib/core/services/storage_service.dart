@@ -107,16 +107,39 @@ class StorageService {
     try {
       if (url.isEmpty || !url.startsWith('http')) return true;
 
-      final storagePathMarker = '/storage/v1/object/public/';
-      if (url.contains(storagePathMarker)) {
-        final pathSegment = url.split(storagePathMarker).last;
-        final parts = pathSegment.split('/');
+      String? bucket;
+      String? path;
+
+      final publicMarker = '/storage/v1/object/public/';
+      final signMarker = '/storage/v1/object/sign/';
+      final authMarker = '/storage/v1/object/authenticated/';
+
+      if (url.contains(publicMarker)) {
+        final segment = url.split(publicMarker).last;
+        final parts = segment.split('/');
         if (parts.length > 1) {
-          final bucket = parts.first;
-          final path = parts.sublist(1).join('/');
-          await _storage.from(bucket).remove([path]);
-          return true;
+          bucket = parts.first;
+          path = parts.sublist(1).join('/');
         }
+      } else if (url.contains(signMarker)) {
+        final segment = url.split(signMarker).last.split('?').first;
+        final parts = segment.split('/');
+        if (parts.length > 1) {
+          bucket = parts.first;
+          path = parts.sublist(1).join('/');
+        }
+      } else if (url.contains(authMarker)) {
+        final segment = url.split(authMarker).last;
+        final parts = segment.split('/');
+        if (parts.length > 1) {
+          bucket = parts.first;
+          path = parts.sublist(1).join('/');
+        }
+      }
+
+      if (bucket != null && path != null) {
+        await _storage.from(bucket).remove([path]);
+        return true;
       }
       return true;
     } catch (e) {
