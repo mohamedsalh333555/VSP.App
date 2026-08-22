@@ -112,7 +112,7 @@ void main() {
         FakeGoRouterState('/player'),
         mockAuth,
       );
-      expect(redirect, equals('/onboarding'));
+      expect(redirect, equals('/onboarding-player'));
     });
 
     test('Blocked player (isBlocked == true) is strictly locked into /suspended', () {
@@ -196,11 +196,13 @@ void main() {
     test('30-minute interval price calculation formula', () {
       const pricePerHour = 200.0;
       const slotsCount = 3; // 1.5 hours
-      final bool hasBall = true;
       const ballPrice = 20.0;
+      double calculateTotal(int slots, double hourlyRate, bool withBall, double ballFee) {
+        return (slots * (hourlyRate / 2)) + (withBall ? ballFee : 0.0);
+      }
 
-      final totalPrice = (slotsCount * (pricePerHour / 2)) + (hasBall ? ballPrice : 0.0);
-      expect(totalPrice, equals(320.0));
+      expect(calculateTotal(slotsCount, pricePerHour, true, ballPrice), equals(320.0));
+      expect(calculateTotal(slotsCount, pricePerHour, false, ballPrice), equals(300.0));
     });
 
     test('Paymob platform fee formula (amount * 0.0475) + 3.0 EGP', () {

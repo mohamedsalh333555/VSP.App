@@ -4,7 +4,7 @@ import { crypto } from "https://deno.land/std@0.168.0/crypto/mod.ts";
 
 declare const Deno: any;
 
-const HMAC_SECRET = Deno.env.get("PAYMOB_HMAC_SECRET") || "F3D831A6ABCF88F4A2FCFB8B92C92623";
+const HMAC_SECRET = Deno.env.get("PAYMOB_HMAC_SECRET");
 
 serve(async (req: Request) => {
   if (req.method === "OPTIONS") {
@@ -18,6 +18,15 @@ serve(async (req: Request) => {
   }
 
   try {
+    // 🔒 1. التحقق الصارم من وجود المتغير السري في بيئة السيرفر (Fail-Closed)
+    if (!HMAC_SECRET) {
+      console.error("🚨 CRITICAL: PAYMOB_HMAC_SECRET environment variable is missing on server!");
+      return new Response(
+        JSON.stringify({ error: "Server Configuration Error: Missing PAYMOB_HMAC_SECRET" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
     const url = new URL(req.url);
     const body = await req.json();
     const obj = body.obj;
@@ -29,50 +38,59 @@ serve(async (req: Request) => {
       });
     }
 
-    // 1. فحص توقيع الـ HMAC لضمان أن الإشعار قادم من Paymob حصراً
+    // 🔒 2. فحص توقيع الـ HMAC الإلزامي عبر query parameter "hmac" (Fail-Closed)
     const receivedHmac = url.searchParams.get("hmac");
-    if (HMAC_SECRET && receivedHmac) {
-      const hmacString = [
-        obj.amount_cents,
-        obj.created_at,
-        obj.currency,
-        obj.error_occured,
-        obj.has_parent_transaction,
-        obj.id,
-        obj.integration_id,
-        obj.is_3d_secure,
-        obj.is_auth,
-        obj.is_capture,
-        obj.is_refunded,
-        obj.is_standalone_payment,
-        obj.is_voided,
-        obj.order?.id ?? obj.order,
-        obj.owner,
-        obj.pending,
-        obj.source_data?.pan ?? "",
-        obj.source_data?.sub_type ?? "",
-        obj.source_data?.type ?? "",
-        obj.success,
-      ].join("");
-
-      const keyBuf = new TextEncoder().encode(HMAC_SECRET);
-      const msgBuf = new TextEncoder().encode(hmacString);
-      const key = await crypto.subtle.importKey(
-        "raw",
-        keyBuf,
-        { name: "HMAC", hash: "SHA-512" },
-        false,
-        ["sign"]
+    if (!receivedHmac) {
+      console.error("❌ Rejected: Missing HMAC signature in webhook request parameters");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing HMAC signature query parameter" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
       );
-      const signature = await crypto.subtle.sign("HMAC", key, msgBuf);
-      const calculatedHmac = Array.from(new Uint8Array(signature))
-        .map((b) => b.toString(16).padStart(2, "0"))
-        .join("");
+    }
 
-      if (calculatedHmac.toLowerCase() !== receivedHmac.toLowerCase()) {
-        console.error("❌ HMAC mismatch!");
-        return new Response("Invalid HMAC signature", { status: 401 });
-      }
+    const hmacString = [
+      obj.amount_cents,
+      obj.created_at,
+      obj.currency,
+      obj.error_occured,
+      obj.has_parent_transaction,
+      obj.id,
+      obj.integration_id,
+      obj.is_3d_secure,
+      obj.is_auth,
+      obj.is_capture,
+      obj.is_refunded,
+      obj.is_standalone_payment,
+      obj.is_voided,
+      obj.order?.id ?? obj.order,
+      obj.owner,
+      obj.pending,
+      obj.source_data?.pan ?? "",
+      obj.source_data?.sub_type ?? "",
+      obj.source_data?.type ?? "",
+      obj.success,
+    ].join("");
+
+    const keyBuf = new TextEncoder().encode(HMAC_SECRET);
+    const msgBuf = new TextEncoder().encode(hmacString);
+    const key = await crypto.subtle.importKey(
+      "raw",
+      keyBuf,
+      { name: "HMAC", hash: "SHA-512" },
+      false,
+      ["sign"]
+    );
+    const signature = await crypto.subtle.sign("HMAC", key, msgBuf);
+    const calculatedHmac = Array.from(new Uint8Array(signature))
+      .map((b) => b.toString(16).padStart(2, "0"))
+      .join("");
+
+    if (calculatedHmac.toLowerCase() !== receivedHmac.toLowerCase()) {
+      console.error("❌ HMAC signature mismatch! Webhook rejected.");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid HMAC signature" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
     }
 
     // 2. التحقق من نجاح العملية

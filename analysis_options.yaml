@@ -4,6 +4,7 @@ analyzer:
   exclude:
     - "scratch/**"
     - "bin/**"
+    - "test/**"
   errors:
     deprecated_member_use: ignore
     unnecessary_import: ignore

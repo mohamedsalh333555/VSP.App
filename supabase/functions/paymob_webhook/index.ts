@@ -63,19 +63,35 @@ serve(async (req: Request) => {
       return new Response("Invalid Paymob payload", { status: 400 });
     }
 
-    // 1. Verify HMAC Signature
-    const url = new URL(req.url);
-    const receivedHmac = url.searchParams.get("hmac") || req.headers.get("x-paymob-hmac");
-    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET") || "";
-
-    if (hmacSecret && receivedHmac) {
-      const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
-      if (calculatedHmac.toLowerCase() !== receivedHmac.toLowerCase()) {
-        console.error("❌ Paymob Webhook HMAC Verification Failed!");
-        return new Response("Invalid HMAC signature", { status: 401 });
-      }
-      console.log("✅ HMAC Signature Verified Successfully!");
+    // 🔒 1. Verify HMAC Signature strictly (Fail-Closed)
+    const hmacSecret = Deno.env.get("PAYMOB_HMAC_SECRET");
+    if (!hmacSecret) {
+      console.error("🚨 CRITICAL: PAYMOB_HMAC_SECRET environment variable is missing on server!");
+      return new Response(
+        JSON.stringify({ error: "Server Configuration Error: Missing PAYMOB_HMAC_SECRET" }),
+        { status: 500, headers: { "Content-Type": "application/json" } }
+      );
     }
+
+    const url = new URL(req.url);
+    const receivedHmac = url.searchParams.get("hmac");
+    if (!receivedHmac) {
+      console.error("❌ Rejected: Missing HMAC signature in webhook request parameters");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Missing HMAC signature query parameter" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+
+    const calculatedHmac = await computePaymobHMAC(obj, hmacSecret);
+    if (calculatedHmac.toLowerCase() !== receivedHmac.toLowerCase()) {
+      console.error("❌ Paymob Webhook HMAC Verification Failed! Signatures do not match.");
+      return new Response(
+        JSON.stringify({ error: "Unauthorized: Invalid HMAC signature" }),
+        { status: 401, headers: { "Content-Type": "application/json" } }
+      );
+    }
+    console.log("✅ HMAC Signature Verified Successfully!");
 
     // 2. Initialize Supabase Client with Service Role Key
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
