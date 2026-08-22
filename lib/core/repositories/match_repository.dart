@@ -163,32 +163,18 @@ class MatchRepository {
     try {
       final doc = await _supabase
           .from('bookings')
-          .select()
+          .select('created_by_user_id, owner_id, stadium_name')
           .eq('id', bookingId)
           .maybeSingle();
-      if (doc == null) throw 'Match not found';
 
-      final hostId = doc['created_by_user_id'] ?? doc['owner_id'] ?? '';
-      final stadiumName = doc['stadium_name'] ?? 'Match';
-      
-      final joinedList = doc['joined_user_ids'];
-      final joined = joinedList != null 
-          ? List<String>.from((joinedList as List).map((e) => e.toString()))
-          : <String>[];
+      final hostId = doc?['created_by_user_id'] ?? doc?['owner_id'] ?? '';
+      final stadiumName = doc?['stadium_name'] ?? 'Match';
 
-      if (!joined.contains(userId)) throw 'Not a participant';
-
-      joined.remove(userId);
-      final current = doc['current_players'] ?? 0;
-
-      final response = await _supabase.from('bookings').update({
-        'current_players': current > 0 ? current - 1 : 0,
-        'joined_user_ids': joined,
-      }).eq('id', bookingId).eq('current_players', current).select();
-
-      if ((response as List).isEmpty) {
-        throw 'Race condition detected: current_players updated during transaction. Please try again.';
-      }
+      // 🛡️ PostgreSQL Atomic Leave Match RPC (Prevents Race Conditions)
+      await _supabase.rpc('leave_public_match_atomic', params: {
+        'p_booking_id': bookingId,
+        'p_user_id': userId,
+      });
 
       String leavingUserName = 'A player';
       try {
@@ -226,26 +212,17 @@ class MatchRepository {
     try {
       final doc = await _supabase
           .from('bookings')
-          .select()
+          .select('stadium_name')
           .eq('id', bookingId)
           .maybeSingle();
-      if (doc == null) throw 'Match not found';
 
-      final stadiumName = doc['stadium_name'] ?? 'Match';
-      final joinedList = doc['joined_user_ids'];
-      final joined = joinedList != null 
-          ? List<String>.from((joinedList as List).map((e) => e.toString()))
-          : <String>[];
+      final stadiumName = doc?['stadium_name'] ?? 'Match';
 
-      if (!joined.contains(userId)) throw 'User is not a participant';
-
-      joined.remove(userId);
-      final current = doc['current_players'] ?? 0;
-
-      await _supabase.from('bookings').update({
-        'current_players': current > 0 ? current - 1 : 0,
-        'joined_user_ids': joined,
-      }).eq('id', bookingId);
+      // 🛡️ PostgreSQL Atomic RPC
+      await _supabase.rpc('leave_public_match_atomic', params: {
+        'p_booking_id': bookingId,
+        'p_user_id': userId,
+      });
 
       await _notificationRepo.sendNotification(
         userId,
@@ -268,34 +245,13 @@ class MatchRepository {
 
   Future<bool> updatePublicMatchHostSpots(String bookingId, int newHostSpotsCount) async {
     try {
-      final doc = await _supabase
-          .from('bookings')
-          .select()
-          .eq('id', bookingId)
-          .maybeSingle();
-      if (doc == null) throw 'Match not found';
-
-      final ppt = doc['players_per_team'] ?? doc['playersPerTeam'];
-      final totalFieldCapacity = doc['total_field_capacity'] ?? doc['totalFieldCapacity'] ?? ((ppt != null) ? ppt * 2 : (doc['max_players'] != null ? doc['max_players'] * 2 : 10));
-      final joinedList = doc['joined_user_ids'];
-      final joined = joinedList != null 
-          ? List<String>.from((joinedList as List).map((e) => e.toString()))
-          : <String>[];
-
-      final newCurrentPlayers = joined.length + newHostSpotsCount;
-      final current = doc['current_players'] ?? 0;
-
-      if (newCurrentPlayers > totalFieldCapacity) {
-        throw 'Exceeds stadium capacity';
-      }
-
-      final response = await _supabase.from('bookings').update({
-        'current_players': newCurrentPlayers,
-      }).eq('id', bookingId).eq('current_players', current).select();
-
-      if ((response as List).isEmpty) {
-        throw 'Race condition detected: current_players updated during transaction. Please try again.';
-      }
+      final uid = _supabase.auth.currentUser?.id ?? '';
+      // 🛡️ PostgreSQL Atomic RPC
+      await _supabase.rpc('update_host_spots_atomic', params: {
+        'p_booking_id': bookingId,
+        'p_user_id': uid,
+        'p_new_host_spots': newHostSpotsCount,
+      });
 
       return true;
     } catch (e) {

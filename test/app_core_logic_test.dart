@@ -105,6 +105,42 @@ class MockSupabaseHttpClient extends http.BaseClient {
         statusCode = 404;
         responseBody = '{"message": "Match not found"}';
       }
+    } else if (uri.path.contains('rpc/leave_public_match_atomic')) {
+      final body = jsonDecode(requestBody);
+      final bookingId = body['p_booking_id'];
+      final userId = body['p_user_id'];
+      final booking = bookingsDb[bookingId];
+      if (booking != null) {
+        final joined = List<String>.from(booking['joined_user_ids'] ?? []);
+        if (!joined.contains(userId)) {
+          statusCode = 400;
+          responseBody = '{"message": "User is not a joined participant"}';
+        } else {
+          joined.remove(userId);
+          booking['joined_user_ids'] = joined;
+          final current = booking['current_players'] ?? 0;
+          booking['current_players'] = current > 0 ? current - 1 : 0;
+          statusCode = 200;
+          responseBody = 'true';
+        }
+      } else {
+        statusCode = 404;
+        responseBody = '{"message": "Booking not found"}';
+      }
+    } else if (uri.path.contains('rpc/update_host_spots_atomic')) {
+      final body = jsonDecode(requestBody);
+      final bookingId = body['p_booking_id'];
+      final newHostSpots = body['p_new_host_spots'] as int? ?? 0;
+      final booking = bookingsDb[bookingId];
+      if (booking != null) {
+        final joined = List<String>.from(booking['joined_user_ids'] ?? []);
+        booking['current_players'] = joined.length + newHostSpots;
+        statusCode = 200;
+        responseBody = 'true';
+      } else {
+        statusCode = 404;
+        responseBody = '{"message": "Booking not found"}';
+      }
     }
 
     print('HTTP RESPONSE: Status $statusCode (Body: $responseBody)');

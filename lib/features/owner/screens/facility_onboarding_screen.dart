@@ -467,11 +467,10 @@ class _UpgradeBottomSheet extends StatelessWidget {
             color: Colors.amber,
             textColor: Colors.black,
             onPressed: () async {
-              // أغلق الـ Bottom Sheet أولاً
-              Navigator.pop(context);
-              // ثم افتح شاشة الباقات مع await (يرجع تلقائياً لما يرجع)
-              await Navigator.push(
-                context,
+              // التقاط مرجع الـ Navigator قبل إغلاق الـ Bottom Sheet لمنع أخطاء الـ Deactivated Context
+              final navigator = Navigator.of(context);
+              navigator.pop();
+              await navigator.push(
                 MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
               );
               // بعد الرجوع: لو اشترك Pro الآن يقدر يضيف ملعب
