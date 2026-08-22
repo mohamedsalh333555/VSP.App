@@ -271,38 +271,10 @@ class AuthProvider with ChangeNotifier {
         _startRealtimeUserListener(user.id);
         _notificationService.listenToRealtimeNotifications(user.id);
       } else {
-        VSPLogger.w("⚠️ User profile missing in DB for UID: ${user.id}, auto-creating initial row...");
-        final created = await _userRepository.createUserProfile(user, {
-          'role': _userType ?? user.userMetadata?['role'] ?? 'player',
-          'name': user.userMetadata?['name'] ?? '',
-          'phone': user.phone ?? '',
-          'is_registration_complete': false,
-        });
-        if (created) {
-          final newUserData = await _userRepository.getUserData(user.id);
-          if (newUserData != null) {
-            _userModel = UserModel.fromFirestore(newUserData);
-            // ⚡ OAUTH EMAIL VERIFICATION SYNC:
-            // Google/Apple users have emailConfirmedAt set by the OAuth provider automatically.
-            if (user.emailConfirmedAt != null && !_userModel!.isEmailVerified) {
-              _userModel = _userModel!.copyWith(isEmailVerified: true);
-              _userRepository.updateUserProfile(
-                user.id,
-                {'is_email_verified': true},
-                authUser: user,
-                role: newUserData['role']?.toString(),
-              );
-            }
-            _isGhostUser = false;
-            _dataFetchError = false;
-          } else {
-            _isGhostUser = true;
-            _userModel = null;
-          }
-        } else {
-          _isGhostUser = true;
-          _userModel = null;
-        }
+        VSPLogger.w("⚠️ User profile row absent after retries for UID: ${user.id}. DB trigger may have failed.");
+        _isGhostUser = true;
+        _userModel = null;
+        _errorMessage = 'تعذر استرجاع بيانات حسابك. يرجى المحاولة مرة أخرى أو التواصل مع الدعم.';
       }
     } catch (e, stack) {
       VSPLogger.e("❌ AuthProvider: Supabase fetch exception", e, stack);
@@ -921,11 +893,9 @@ class AuthProvider with ChangeNotifier {
     _errorMessage = null;
     notifyListeners();
     
-    // 🛡️ BUG FIX: Exclude the current user's own record from the phone check.
-    // Without this, a social user who already has this phone number stored would
-    // get a false "phone already registered" error when re-entering onboarding.
     final currentUid = _firebaseUser?.id;
-    if (await _authService.isPhoneRegistered(phone, excludeUserId: currentUid)) {
+    final existingPhoneUser = await _userRepository.getUserByPhone(PhoneUtils.normalize(phone) ?? phone);
+    if (existingPhoneUser != null && existingPhoneUser.uid != currentUid) {
       _errorMessage = 'هذا الرقم مسجل مسبقاً، يرجى استخدام رقم آخر.';
       _isLoading = false;
       notifyListeners();
@@ -1238,20 +1208,6 @@ class AuthProvider with ChangeNotifier {
     }
   }
 
-  /// [DEVELOPER BYPASS] Manually verify email status
-  Future<bool> verifyEmailManual(String uid) async {
-    _isLoading = true;
-    notifyListeners();
-    
-    final success = await _authService.verifyEmailManual(uid);
-    if (success && _userModel != null) {
-      _userModel = _userModel!.copyWith(isEmailVerified: true);
-    }
-    
-    _isLoading = false;
-    notifyListeners();
-    return success;
-  }
 
   /// Verify OTP token via Supabase Auth
   Future<bool> verifyOtp({required String email, required String token}) async {

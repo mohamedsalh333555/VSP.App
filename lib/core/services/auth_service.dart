@@ -1,7 +1,6 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
-import '../utils/phone_utils.dart';
 import 'logger_service.dart';
 import 'secure_storage_service.dart';
 
@@ -34,16 +33,13 @@ class AuthService {
     debugPrint('[SECURITY_LOG] $event: $error');
   }
 
-  // Sign Up
-  Future<Map<String, dynamic>> signUpWithEmail({
+  /// ✅ دالة منفصلة للتحقق والدخول التلقائي في حالة وجود حساب سابق لنفس البريد والدور
+  Future<Map<String, dynamic>?> signInIfExistingSameRoleAccount({
     required String email,
     required String password,
     required String role,
-    required Map<String, dynamic> userData,
   }) async {
     final cleanEmail = email.trim().toLowerCase();
-
-    // Duplicate Email Check, Role Conflict Guard & Auto Login Fallback
     try {
       final emailCheck = await _supabase
           .from('users')
@@ -54,7 +50,6 @@ class AuthService {
       if (emailCheck != null) {
         final existingRole = emailCheck['role']?.toString();
 
-        // 🔴 Role conflict: same email registered under a different role
         if (existingRole != null && existingRole != role) {
           final arabicExistingRole = existingRole == 'player' ? 'لاعب' : 'مالك ملعب';
           return {
@@ -65,18 +60,16 @@ class AuthService {
           };
         }
 
-        // ✅ Same role — auto sign-in and return existing user directly to home
         try {
           final signInResponse = await _supabase.auth.signInWithPassword(
             email: cleanEmail,
             password: password,
           );
           if (signInResponse.user != null) {
-            VSPLogger.i('Existing $role re-signed in automatically via signup flow: $cleanEmail');
+            VSPLogger.i('Existing $role re-signed in automatically: $cleanEmail');
             return {'success': true, 'user': signInResponse.user};
           }
         } catch (_) {
-          // Wrong password for existing account
           return {
             'success': false,
             'message': 'البريد الإلكتروني مسجل بالفعل. تأكد من كلمة المرور الصحيحة أو سجّل دخولك.',
@@ -87,12 +80,26 @@ class AuthService {
     } catch (e) {
       _logSecurityEvent('EMAIL_CHECK_FAILED', e);
     }
-    
-    // Duplicate Phone Check
-    final rawPhone = userData['phone']?.toString() ?? '';
-    final phone = PhoneUtils.normalize(rawPhone);
-    if (phone != null && await isPhoneRegistered(phone)) {
-       return {'success': false, 'message': 'رقم الهاتف مسجل مسبقاً.'};
+    return null; // Account does not exist, proceed with sign up
+  }
+
+  // Sign Up - Pure new user creation
+  Future<Map<String, dynamic>> signUpWithEmail({
+    required String email,
+    required String password,
+    required String role,
+    required Map<String, dynamic> userData,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+
+    // Check for existing account first via helper
+    final existingCheck = await signInIfExistingSameRoleAccount(
+      email: cleanEmail,
+      password: password,
+      role: role,
+    );
+    if (existingCheck != null) {
+      return existingCheck;
     }
 
     final allowedRoles = ['player', 'owner'];
@@ -108,7 +115,7 @@ class AuthService {
           'role': role,
           'name': userData['name']?.toString().trim() ?? '',
           'position': userData['position'] ?? 'GK',
-          'phone': phone ?? '',
+          'phone': userData['phone']?.toString().trim() ?? '',
           'governorate': userData['governorate'],
         },
       );
@@ -271,50 +278,12 @@ class AuthService {
   // Delete Account
   Future<Map<String, dynamic>> deleteAccount(String uid) async {
     try {
-      // In Supabase, cascading triggers in PostgreSQL handles deleting related entries.
-      // We delete the user profile row, and then sign out.
       await _supabase.from('users').delete().eq('id', uid);
       await signOut();
       return {'success': true};
     } catch (e) {
       _logSecurityEvent('ACCOUNT_DELETION_FAILED', e);
       return {'success': false, 'message': 'فشل في حذف الحساب.'};
-    }
-  }
-
-  // Duplicate phone check
-  Future<bool> isPhoneRegistered(String phone, {String? excludeUserId}) async {
-    if (phone.isEmpty) return false;
-    try {
-      final cleanPhone = PhoneUtils.normalize(phone);
-      if (cleanPhone == null || cleanPhone.isEmpty) return false;
-      var query = _supabase
-          .from('users')
-          .select('id')
-          .eq('phone', cleanPhone);
-      // 🛡️ BUG FIX: Exclude the current user's own record to prevent false
-      // "phone already registered" errors during social onboarding.
-      if (excludeUserId != null && excludeUserId.isNotEmpty) {
-        query = query.neq('id', excludeUserId);
-      }
-      final response = await query;
-      return (response as List).isNotEmpty;
-    } catch (e) {
-      _logSecurityEvent('PHONE_CHECK_FAILED', e);
-      return false;
-    }
-  }
-
-  // Developer bypass manual verification
-  Future<bool> verifyEmailManual(String uid) async {
-    try {
-      await _supabase.from('users').update({
-        'isEmailVerified': true,
-      }).eq('id', uid);
-      return true;
-    } catch (e) {
-      _logSecurityEvent('MANUAL_VERIFICATION_BYPASS_FAILED', e);
-      return false;
     }
   }
 
