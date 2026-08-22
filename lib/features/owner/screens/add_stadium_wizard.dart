@@ -892,10 +892,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       initialTime: isMainStart
           ? (_startTime ?? const TimeOfDay(hour: 16, minute: 0))
           : (_endTime ?? const TimeOfDay(hour: 23, minute: 0)),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+      builder: (pickerCtx, child) => MediaQuery(
+        data: MediaQuery.of(pickerCtx).copyWith(alwaysUse24HourFormat: false),
         child: Theme(
-          data: Theme.of(context).copyWith(
+          data: Theme.of(pickerCtx).copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPColors.accent,
               onPrimary: Colors.black,
@@ -937,10 +937,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     final TimeOfDay? picked = await showTimePicker(
       context: context,
       initialTime: TimeOfDay.now(),
-      builder: (context, child) => MediaQuery(
-        data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
+      builder: (pickerCtx, child) => MediaQuery(
+        data: MediaQuery.of(pickerCtx).copyWith(alwaysUse24HourFormat: false),
         child: Theme(
-          data: Theme.of(context).copyWith(
+          data: Theme.of(pickerCtx).copyWith(
             colorScheme: const ColorScheme.dark(
               primary: VSPColors.accent,
               onPrimary: Colors.black,

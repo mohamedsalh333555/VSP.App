@@ -7,8 +7,10 @@ analyzer:
     - "test/**"
   errors:
     use_build_context_synchronously: error   # يحظر استخدام context بعد await بدون فحص mounted
-    unawaited_futures: warning               # ينبه عند وجود عمليات Future مهملة
     avoid_print: warning                     # يفرض استخدام VSPLogger
+    cancel_subscriptions: warning            # يفرض إلغاء اشتراكات Stream لمنع تسريب الذاكرة
+    close_sinks: warning                     # يفرض إغلاق Sinks/Controllers
+    unawaited_futures: ignore
     deprecated_member_use: ignore
     unnecessary_import: ignore
 
@@ -19,3 +21,5 @@ linter:
     prefer_const_constructors: true
     prefer_const_declarations: true
     avoid_unnecessary_containers: true
+    cancel_subscriptions: true
+    close_sinks: true

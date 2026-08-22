@@ -213,7 +213,10 @@ class _ChatScreenState extends State<ChatScreen> {
           ),
         ],
       ),
-    );
+    ).then((_) {
+      reasonController.dispose();
+      detailsController.dispose();
+    });
   }
 
   void _confirmDeleteConversation(BuildContext context, String currentUserId) {
@@ -676,7 +679,7 @@ class _ChatBubble extends StatelessWidget {
           ),
         ],
       ),
-    );
+    ).then((_) => editController.dispose());
   }
 
   @override

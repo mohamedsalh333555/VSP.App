@@ -26,9 +26,25 @@ class TournamentRepository {
     bool isOwner = false,
     String? ownerId,
   }) async* {
-    // 1. ⚡ Emit immediate results via REST API query so UI never stays empty or waits for WebSocket connection
+    // 1. ⚡ Emit immediate results via REST API query with DB-level filtering
     try {
-      final List<dynamic> response = await _supabase.from('championships').select();
+      dynamic query = _supabase.from('championships').select();
+      if (isOwner && ownerId != null) {
+        query = query.eq('owner_id', ownerId);
+      } else if (!isOwner) {
+        query = query.eq('is_approved', true);
+      }
+      if (sportType != null && sportType.isNotEmpty) {
+        query = query.eq('sport_type', sportType);
+      }
+      if (governorate != null && governorate.isNotEmpty) {
+        final stdGov = EgyptGovernorates.resolveGoogleName(governorate);
+        if (stdGov != null) {
+          query = query.eq('governorate', stdGov);
+        }
+      }
+      
+      final List<dynamic> response = await query;
       final items = _parseChampionshipsList(
         response,
         governorate: governorate,
@@ -41,19 +57,27 @@ class TournamentRepository {
       VSPLogger.e('Error fetching initial championships via REST', e, s);
     }
 
-    // 2. 📡 Listen to Real-time Stream for updates
-    yield* _supabase
-        .from('championships')
-        .stream(primaryKey: ['id'])
-        .map((list) {
-          return _parseChampionshipsList(
-            list,
-            governorate: governorate,
-            sportType: sportType,
-            isOwner: isOwner,
-            ownerId: ownerId,
-          );
-        });
+    // 2. 📡 Listen to Real-time Stream for updates with filter
+    try {
+      dynamic streamQuery = _supabase.from('championships').stream(primaryKey: ['id']);
+      if (isOwner && ownerId != null) {
+        streamQuery = streamQuery.eq('owner_id', ownerId);
+      } else if (!isOwner) {
+        streamQuery = streamQuery.eq('is_approved', true);
+      }
+
+      yield* streamQuery.map((list) {
+        return _parseChampionshipsList(
+          list,
+          governorate: governorate,
+          sportType: sportType,
+          isOwner: isOwner,
+          ownerId: ownerId,
+        );
+      });
+    } catch (e, s) {
+      VSPLogger.e('Error listening to championships stream', e, s);
+    }
   }
 
   Future<Championship?> getChampionshipById(String id) async {

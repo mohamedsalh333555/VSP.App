@@ -104,10 +104,12 @@ class _LoginScreenState extends State<LoginScreen> {
                           final success = await authProvider.resetPassword(email);
                           if (!dialogContext.mounted) return;
                           Navigator.pop(dialogContext);
-                          if (success) {
-                            VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
-                          } else {
-                            VSPFeedback.showError(context, authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError);
+                          if (context.mounted) {
+                            if (success) {
+                              VSPFeedback.showSuccess(context, AppLocalizations.of(context)!.resetPasswordSuccess);
+                            } else {
+                              VSPFeedback.showError(context, authProvider.errorMessage ?? AppLocalizations.of(context)!.resetPasswordError);
+                            }
                           }
                         },
                         style: ElevatedButton.styleFrom(
@@ -129,7 +131,7 @@ class _LoginScreenState extends State<LoginScreen> {
           },
         );
       },
-    );
+    ).then((_) => resetEmailController.dispose());
   }
 
   void _handleLogin() async {

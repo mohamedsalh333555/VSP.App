@@ -1,10 +1,9 @@
-// @ts-nocheck
 import { serve } from "https://deno.land/std@0.168.0/http/server.ts";
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2.39.3";
 
 declare const Deno: any;
 
-console.log("Paymob Webhook Edge Function Initialized!");
+console.log("⚡ Paymob Webhook Edge Function Initialized (Hardened & Unified)!");
 
 /**
  * Calculates Paymob SHA-512 HMAC signature
@@ -24,12 +23,12 @@ async function computePaymobHMAC(obj: any, hmacSecret: string): Promise<string> 
     obj.is_refunded,
     obj.is_standalone_payment,
     obj.is_voided,
-    obj.order?.id,
+    obj.order?.id ?? obj.order,
     obj.owner,
     obj.pending,
-    obj.source_data?.pan,
-    obj.source_data?.sub_type,
-    obj.source_data?.type,
+    obj.source_data?.pan ?? "",
+    obj.source_data?.sub_type ?? "",
+    obj.source_data?.type ?? "",
     obj.success,
   ].join("");
 
@@ -51,6 +50,17 @@ async function computePaymobHMAC(obj: any, hmacSecret: string): Promise<string> 
 }
 
 serve(async (req: Request) => {
+  // CORS Preflight
+  if (req.method === "OPTIONS") {
+    return new Response("ok", {
+      headers: {
+        "Access-Control-Allow-Origin": "*",
+        "Access-Control-Allow-Methods": "POST, GET, OPTIONS",
+        "Access-Control-Allow-Headers": "*",
+      },
+    });
+  }
+
   try {
     if (req.method !== "POST") {
       return new Response("Method not allowed", { status: 405 });
@@ -60,7 +70,10 @@ serve(async (req: Request) => {
     const obj = payload.obj || payload;
 
     if (!obj || !obj.id) {
-      return new Response("Invalid Paymob payload", { status: 400 });
+      return new Response(JSON.stringify({ error: "Invalid Paymob payload" }), {
+        status: 400,
+        headers: { "Content-Type": "application/json" },
+      });
     }
 
     // 🔒 1. Verify HMAC Signature strictly (Fail-Closed)
@@ -100,56 +113,99 @@ serve(async (req: Request) => {
 
     const transactionId = String(obj.id);
     const isSuccess = Boolean(obj.success) && !Boolean(obj.pending);
-    const merchantOrderId = String(obj.order?.merchant_order_id || "");
+    const specialReference = String(obj.special_reference || obj.order?.merchant_order_id || "");
 
-    // Extract booking_id from merchant_order_id (e.g. "uuid_timestamp" or "VSP_BOOKING_uuid")
+    // Extract booking_id
     let bookingId: string | null = null;
-    if (merchantOrderId.includes("_")) {
-      bookingId = merchantOrderId.startsWith("VSP_BOOKING_") 
-          ? merchantOrderId.replace("VSP_BOOKING_", "").split("_")[0]
-          : merchantOrderId.split("_")[0];
-    } else if (merchantOrderId.length > 0) {
-      bookingId = merchantOrderId;
+    if (specialReference.includes("_")) {
+      bookingId = specialReference.startsWith("VSP_BOOKING_")
+        ? specialReference.replace("VSP_BOOKING_", "").split("_")[0]
+        : specialReference.split("_")[0];
+    } else if (specialReference.length > 0) {
+      bookingId = specialReference;
     }
 
-    // 3. Idempotency Check: Try inserting transaction ID into deduplication table
-    const { error: insertTxError } = await supabase
-      .from("paymob_transactions")
-      .insert({
-        transaction_id: transactionId,
-        booking_id: bookingId,
-        amount_cents: obj.amount_cents || 0,
-        success: isSuccess,
-        currency: obj.currency || "EGP",
-        raw_payload: obj,
-      });
+    console.log(`🔔 Webhook received for Booking: ${bookingId} | Success: ${isSuccess} | Tx: ${transactionId}`);
 
-    if (insertTxError && insertTxError.code === "23505") { // Unique violation
-      console.log(`ℹ️ Transaction ${transactionId} already processed. Skipping duplicate webhook.`);
-      return new Response(JSON.stringify({ status: "duplicate_ignored" }), {
+    // 3. Log into webhook_logs
+    try {
+      await supabase.from("webhook_logs").insert({
+        provider: "paymob",
+        event_type: "transaction_response",
+        txn_id: transactionId,
+        order_id: String(obj.order?.id ?? obj.order ?? ""),
+        booking_id: bookingId && bookingId.length === 36 ? bookingId : null,
+        payload: obj,
+        signature_verified: true,
+        status: isSuccess ? "success" : "failed",
+      });
+    } catch (logErr) {
+      console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
+    }
+
+    if (!bookingId) {
+      return new Response(JSON.stringify({ message: "No booking ID in reference" }), {
         status: 200,
         headers: { "Content-Type": "application/json" },
       });
     }
 
     // 4. Update Booking Status atomically if transaction succeeded
-    if (isSuccess && bookingId) {
-      const { error: updateError } = await supabase
+    if (isSuccess) {
+      const { data: booking, error: updateError } = await supabase
         .from("bookings")
         .update({
           status: "confirmed",
-          payment_status: "paid",
           is_paid: true,
+          payment_status: "paid",
           is_deposit_paid: true,
+          payment_transaction_id: `PAYMOB_${transactionId}`,
+          paymob_txn_id: transactionId,
+          payment_method: obj.source_data?.sub_type || "paymob",
+          webhook_verified: true,
+          webhook_processed_at: new Date().toISOString(),
           updated_at: new Date().toISOString(),
         })
-        .eq("id", bookingId);
+        .eq("id", bookingId)
+        .select()
+        .single();
 
       if (updateError) {
         console.error(`❌ Failed to update booking ${bookingId}:`, updateError);
-      } else {
+      } else if (booking) {
         console.log(`🎉 Booking ${bookingId} confirmed successfully via Paymob payment!`);
+
+        // Send notifications
+        const amountEgp = ((obj.amount_cents || 0) / 100).toFixed(0);
+        await supabase.from("notifications").insert([
+          {
+            user_id: booking.owner_id,
+            title: "تم استلام دفعة حجز مؤكدة 💰",
+            body: `تم دفع مبلغ ${amountEgp} ج.م لحجز ${booking.stadium_name || "الملعب"}`,
+            type: "payment_received",
+            booking_id: bookingId,
+            is_read: false,
+          },
+          {
+            user_id: booking.user_id || booking.created_by_user_id,
+            title: "تأكيد الحجز والدفع ⚽",
+            body: `تم سداد حجزك بنجاح في ${booking.stadium_name || "الملعب"}`,
+            type: "booking_confirmed",
+            booking_id: bookingId,
+            is_read: false,
+          },
+        ]);
       }
+    } else {
+      // Payment failed
+      await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          payment_status: "failed",
+          updated_at: new Date().toISOString(),
+        })
+        .eq("id", bookingId);
     }
 
     return new Response(JSON.stringify({ status: "processed", success: isSuccess }), {
@@ -158,6 +214,9 @@ serve(async (req: Request) => {
     });
   } catch (error: any) {
     console.error("Paymob Webhook Error:", error);
-    return new Response(String(error?.message || error), { status: 500 });
+    return new Response(JSON.stringify({ error: error?.message || String(error) }), {
+      status: 500,
+      headers: { "Content-Type": "application/json" },
+    });
   }
 });

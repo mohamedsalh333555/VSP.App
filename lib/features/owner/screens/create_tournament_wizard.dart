@@ -121,16 +121,14 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     super.dispose();
   }
 
-
-
   Future<void> _selectDate(bool isStart) async {
     final picked = await showDatePicker(
       context: context,
       initialDate: isStart ? _startDate : _endDate,
       firstDate: DateTime.now().subtract(const Duration(days: 365)), // Allow past for editing old ones
       lastDate: DateTime.now().add(const Duration(days: 365)),
-      builder: (context, child) => Theme(
-        data: Theme.of(context).copyWith(
+      builder: (pickerCtx, child) => Theme(
+        data: Theme.of(pickerCtx).copyWith(
           colorScheme: const ColorScheme.dark(
             primary: VSPColors.accent,
             onPrimary: Colors.black,
@@ -141,10 +139,13 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         child: child!,
       ),
     );
-    if (picked != null) {
+    if (picked != null && mounted) {
       setState(() {
         if (isStart) {
           _startDate = picked;
+          if (_endDate.isBefore(_startDate)) {
+            _endDate = _startDate.add(const Duration(days: 14));
+          }
         } else {
           _endDate = picked;
         }
@@ -242,8 +243,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // UPDATE
         final success = await TournamentRepository().updateChampionship(widget.tournament!.id, champData);
         if (success && mounted) {
-            Navigator.pop(context);
-            VSPFeedback.showSuccess(context, 'Tournament updated successfully! 🏆');
+          VSPFeedback.showSuccess(context, 'Tournament updated successfully! 🏆');
+          Navigator.pop(context);
         } else if (!success && mounted) {
           VSPFeedback.showError(context, 'فشل تعديل البطولة. يرجى المحاولة مرة أخرى.');
         }
@@ -251,8 +252,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // CREATE
         final id = await TournamentRepository().createChampionship(champData);
         if (id != null && mounted) {
-          Navigator.pop(context);
           VSPFeedback.showSuccess(context, 'Tournament created successfully! 🏆');
+          Navigator.pop(context);
           
           try {
             final newChampList = await TournamentRepository().getChampionshipsStream(sportType: _selectedSport).first;

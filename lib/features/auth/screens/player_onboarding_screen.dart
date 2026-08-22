@@ -148,7 +148,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     return PopScope(
       canPop: false,
       onPopInvokedWithResult: (didPop, result) async {
-        if (didPop) return;
+        if (didPop || !context.mounted) return;
         final shouldSignOut = await _showExitDialog(context);
         if (shouldSignOut == true) await auth.signOut();
       },

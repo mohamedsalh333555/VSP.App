@@ -900,7 +900,10 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
           ),
         ],
       ),
-    );
+    ).then((_) {
+      refController.dispose();
+      amountController.dispose();
+    });
   }
 
   Future<void> _resolveMatchDispute(String bookingId, MatchOutcome outcome) async {

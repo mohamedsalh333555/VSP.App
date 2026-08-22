@@ -8,12 +8,14 @@ class StatsService {
     try {
       final response = await Supabase.instance.client
           .from('bookings')
-          .select()
-          .eq('status', 'completed');
+          .select('id, stadium_name, booking_type, player_team_id, joined_user_ids, final_outcome')
+          .eq('status', 'completed')
+          .contains('joined_user_ids', [userId])
+          .order('start_time', ascending: false)
+          .limit(100);
 
       final bookings = (response as List)
           .map((doc) => Booking.fromFirestore(doc, doc['id'].toString()))
-          .where((booking) => booking.joinedUserIds.contains(userId))
           .toList();
 
       if (bookings.isEmpty) {

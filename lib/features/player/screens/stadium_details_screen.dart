@@ -713,141 +713,131 @@ class _RatingsTab extends StatelessWidget {
     final commentController = TextEditingController();
     bool isSubmitting = false;
 
-    await showModalBottomSheet(
-      context: context,
-      useSafeArea: true,
-      isScrollControlled: true,
-      backgroundColor: Colors.transparent,
-      builder: (sheetCtx) {
-        return StatefulBuilder(
-          builder: (context, setSheetState) {
-            return Padding(
-              padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
-              child: Container(
-                padding: EdgeInsets.fromLTRB(
-                  VSPSpacing.md,
-                  VSPSpacing.md,
-                  VSPSpacing.md,
-                  VSPSpacing.md + MediaQuery.of(context).padding.bottom + 16,
-                ),
-                decoration: const BoxDecoration(
-                  color: VSPColors.background,
-                  borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
-                ),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2))),
-                    const SizedBox(height: 16),
-                    Text(
-                      isArabic ? 'تقييم وإبداء رأيك في الملعب' : 'Rate & Review Stadium',
-                      style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 16),
-                    // Star Picker
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
-                      children: List.generate(5, (index) {
-                        final starIndex = index + 1;
-                        final isSelected = starIndex <= selectedRating;
-                        return IconButton(
-                          icon: Icon(
-                            isSelected ? Iconsax.star_1_copy : Iconsax.star_copy,
-                            color: isSelected ? Colors.amber : VSPColors.textSecondary,
-                            size: 36,
+    try {
+      await showModalBottomSheet(
+        context: context,
+        useSafeArea: true,
+        isScrollControlled: true,
+        backgroundColor: Colors.transparent,
+        builder: (sheetCtx) {
+          return StatefulBuilder(
+            builder: (context, setSheetState) {
+              return Padding(
+                padding: EdgeInsets.only(bottom: MediaQuery.of(context).viewInsets.bottom),
+                child: Container(
+                  padding: EdgeInsets.fromLTRB(
+                    VSPSpacing.md,
+                    VSPSpacing.md,
+                    VSPSpacing.md,
+                    VSPSpacing.md + MediaQuery.of(context).padding.bottom + 16,
+                  ),
+                  decoration: const BoxDecoration(
+                    color: VSPColors.background,
+                    borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+                  ),
+                  child: Column(
+                    mainAxisSize: MainAxisSize.min,
+                    children: [
+                      Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2))),
+                      const SizedBox(height: 16),
+                      Text(
+                        isArabic ? 'تقييم وإبداء رأيك في الملعب' : 'Rate & Review Stadium',
+                        style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                      ),
+                      const SizedBox(height: 16),
+                      // Star Picker
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: List.generate(5, (index) {
+                          final starIndex = index + 1;
+                          final isSelected = starIndex <= selectedRating;
+                          return IconButton(
+                            icon: Icon(
+                              isSelected ? Iconsax.star_1_copy : Iconsax.star_copy,
+                              color: isSelected ? Colors.amber : VSPColors.textSecondary,
+                              size: 36,
+                            ),
+                            onPressed: () {
+                              setSheetState(() {
+                                selectedRating = starIndex;
+                              });
+                            },
+                          );
+                        }),
+                      ),
+                      const SizedBox(height: 16),
+                      TextField(
+                        controller: commentController,
+                        style: const TextStyle(color: Colors.white, fontSize: 14),
+                        maxLines: 3,
+                        decoration: InputDecoration(
+                          hintText: isArabic ? 'اكتب انطباعك عن جودة الملعب والإضاءة والمعاملة...' : 'Write your feedback...',
+                          hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                          filled: true,
+                          fillColor: VSPColors.surface,
+                          border: OutlineInputBorder(
+                            borderRadius: BorderRadius.circular(VSPRadius.md),
+                            borderSide: const BorderSide(color: VSPColors.divider),
                           ),
-                          onPressed: () {
-                            setSheetState(() {
-                              selectedRating = starIndex;
-                            });
-                          },
-                        );
-                      }),
-                    ),
-                    const SizedBox(height: 16),
-                    TextField(
-                      controller: commentController,
-                      style: const TextStyle(color: Colors.white, fontSize: 14),
-                      maxLines: 3,
-                      decoration: InputDecoration(
-                        hintText: isArabic ? 'اكتب انطباعك عن جودة الملعب والإضاءة والمعاملة...' : 'Write your feedback...',
-                        hintStyle: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
-                        filled: true,
-                        fillColor: VSPColors.surface,
-                        border: OutlineInputBorder(
-                          borderRadius: BorderRadius.circular(VSPRadius.md),
-                          borderSide: const BorderSide(color: VSPColors.divider),
                         ),
                       ),
-                    ),
-                    const SizedBox(height: 20),
-                    PrimaryButton(
-                      text: isArabic ? 'إرسال التقييم ⭐️' : 'Submit Review',
-                      isLoading: isSubmitting,
-                      onPressed: () async {
-                        final comment = commentController.text.trim();
-                        if (comment.isEmpty) {
-                          VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى كتابة تعليق' : 'Please enter a comment');
-                          return;
-                        }
-                        setSheetState(() => isSubmitting = true);
-                        try {
-                          final userModel = auth.userModel;
-                          final userId = userModel?.uid ?? auth.currentUser?.id;
-                          if (userId == null || userId.isEmpty) {
-                            VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى تسجيل الدخول أولاً لإضافة تقييم' : 'Please log in to submit a review');
-                            setSheetState(() => isSubmitting = false);
+                      const SizedBox(height: 20),
+                      PrimaryButton(
+                        text: isArabic ? 'إرسال التقييم ⭐️' : 'Submit Review',
+                        isLoading: isSubmitting,
+                        onPressed: () async {
+                          final comment = commentController.text.trim();
+                          if (comment.isEmpty) {
+                            VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى كتابة تعليق' : 'Please enter a comment');
                             return;
                           }
+                          setSheetState(() => isSubmitting = true);
+                          try {
+                            final userModel = auth.userModel;
+                            final userId = userModel?.uid ?? auth.currentUser?.id;
+                            if (userId == null || userId.isEmpty) {
+                              VSPFeedback.showError(sheetCtx, isArabic ? 'يرجى تسجيل الدخول أولاً لإضافة تقييم' : 'Please log in to submit a review');
+                              setSheetState(() => isSubmitting = false);
+                              return;
+                            }
 
-                          final userName = userModel?.name ?? auth.currentUser?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
-                          final userAvatar = userModel?.profileImageUrl ?? '';
+                            final userName = userModel?.name ?? auth.currentUser?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
+                            final userAvatar = userModel?.profileImageUrl ?? '';
 
-                          await Supabase.instance.client.from('reviews').insert({
-                            'stadium_id': stadium.id,
-                            'user_id': userId,
-                            'user_name': userName,
-                            'user_image_url': userAvatar,
-                            'rating': selectedRating,
-                            'review_text': comment,
-                            'created_at': DateTime.now().toIso8601String(),
-                          });
+                            await Supabase.instance.client.from('reviews').insert({
+                              'stadium_id': stadium.id,
+                              'user_id': userId,
+                              'user_name': userName,
+                              'user_image_url': userAvatar,
+                              'rating': selectedRating,
+                              'review_text': comment,
+                              'created_at': DateTime.now().toIso8601String(),
+                            });
 
-                          // Update average rating on stadium record safely
-                          final allReviews = await Supabase.instance.client.from('reviews').select('rating').eq('stadium_id', stadium.id);
-                          final count = (allReviews as List).length;
-                          double sum = 0;
-                          for (final r in allReviews) {
-                            sum += (r['rating'] as num?)?.toDouble() ?? 0.0;
+                            if (sheetCtx.mounted) Navigator.pop(sheetCtx);
+                            if (context.mounted) {
+                              VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
+                            }
+                          } catch (e, stack) {
+                            VSPLogger.e('❌ Error saving review to Supabase', e, stack);
+                            setSheetState(() => isSubmitting = false);
+                            if (sheetCtx.mounted) {
+                              VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
+                            }
                           }
-                          final newAvg = count > 0 ? (sum / count) : selectedRating.toDouble();
-
-                          await Supabase.instance.client.from('stadiums').update({
-                            'rating': newAvg,
-                            'reviews_count': count,
-                          }).eq('id', stadium.id);
-
-                          if (sheetCtx.mounted) Navigator.pop(sheetCtx);
-                          if (context.mounted) {
-                            VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
-                          }
-                        } catch (e, stack) {
-                          VSPLogger.e('❌ Error saving review to Supabase', e, stack);
-                          setSheetState(() => isSubmitting = false);
-                          if (sheetCtx.mounted) {
-                            VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
-                          }
-                        }
-                      },
-                    ),
-                  ],
+                        },
+                      ),
+                    ],
+                  ),
                 ),
-              ),
-            );
-          },
-        );
-      },
-    );
+              );
+            },
+          );
+        },
+      );
+    } finally {
+      commentController.dispose();
+    }
   }
 
   @override

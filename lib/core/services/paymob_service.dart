@@ -55,7 +55,7 @@ class PaymobService {
 
   /// 💰 Calculate platform service fee in EGP based on (amount * 0.0475) + 3.0 EGP rule
   static double calculateServiceFee(double baseAmountEgp) {
-    return (baseAmountEgp * 0.0475) + 3.0;
+    return double.parse(((baseAmountEgp * 0.0475) + 3.0).toStringAsFixed(2));
   }
 
   /// 💰 Calculate total checkout price including platform fee

@@ -9,6 +9,19 @@ console.log("FCM Push Notification Function Started!");
 
 serve(async (req: Request) => {
   try {
+    // 0. Security Guard: Verify Authorization Token
+    const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
+    const authHeader = req.headers.get("Authorization") || "";
+    const token = authHeader.replace(/^Bearer\s+/i, "").trim();
+
+    if (!token || (serviceRoleKey && token !== serviceRoleKey)) {
+      console.error("🚨 Unauthorized access attempt to fcm_push endpoint");
+      return new Response(JSON.stringify({ error: "Unauthorized: Invalid or missing bearer token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // 1. Parse Webhook Body
     const payload = await req.json();
     const record = payload.record || payload;

@@ -10,7 +10,6 @@ import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
 import '../services/paymob_service.dart';
-import '../utils/app_date_formatter.dart';
 
 /// Abstract BookingRepository interface
 abstract class BookingRepository {
@@ -99,32 +98,6 @@ abstract class BookingRepository {
 class SupabaseBookingRepository implements BookingRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  int _parseTimeToMinutes(String timeStr) {
-    return AppDateFormatter.parseTimeToMinutes(timeStr);
-  }
-
-  bool _isTimeInBreak(DateTime startTime, DateTime endTime, Map<String, dynamic>? breakTime, String openingTime) {
-    if (breakTime == null) return false;
-    final startStr = breakTime['start']?.toString() ?? '';
-    final endStr = breakTime['end']?.toString() ?? '';
-    if (startStr.isEmpty || endStr.isEmpty) return false;
-
-    final int startMin = _parseTimeToMinutes(startStr);
-    final int endMin = _parseTimeToMinutes(endStr);
-    
-    final int bookStartMin = startTime.hour * 60 + startTime.minute;
-    final int bookEndMin = endTime.hour * 60 + endTime.minute;
-
-    if (bookStartMin < bookEndMin) {
-      return (bookStartMin < endMin && bookEndMin > startMin);
-    } else {
-      final endMinNormalized = bookEndMin + 24 * 60;
-      final startMinNormalized = startMin < bookStartMin ? startMin + 24 * 60 : startMin;
-      final endMinBreakNormalized = endMin < bookStartMin ? endMin + 24 * 60 : endMin;
-      return (bookStartMin < endMinBreakNormalized && endMinNormalized > startMinNormalized);
-    }
-  }
-
   String _dbBookingType(BookingType type) {
     switch (type) {
       case BookingType.openJoin:
@@ -141,67 +114,7 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<Booking> createBooking(BookingDraft draft, String userId) async {
     try {
-      // 🛡️ 1. التحقق من حالة الملعب
-      final stadiumCheck = await _supabase
-          .from('stadiums')
-          .select('is_verified, is_blocked, features, opening_time')
-          .eq('id', draft.stadiumId)
-          .maybeSingle();
-
-      if (stadiumCheck != null) {
-        final bool isVerified = stadiumCheck['is_verified'] ?? false;
-        final bool isBlocked = stadiumCheck['is_blocked'] ?? false;
-        if (!isVerified || isBlocked) {
-          throw Exception("عذراً، هذا الملعب غير متاح حالياً أو قيد المراجعة والتوثيق من قِبل إدارة التطبيق.");
-        }
-
-        // فحص أوقات الاستراحة
-        final isChampionship = draft.stadiumName.startsWith('بطولة:');
-        if (!isChampionship) {
-          final features = stadiumCheck['features'] as Map<String, dynamic>?;
-          if (features != null && features['breakTime'] != null) {
-            final breakTime = features['breakTime'] as Map<String, dynamic>?;
-            final openingTime = stadiumCheck['opening_time']?.toString() ?? '03:00 PM';
-            if (_isTimeInBreak(draft.startTime, draft.endTime, breakTime, openingTime)) {
-              throw Exception("عذراً، هذا الموعد يقع ضمن أوقات استراحة الملعب.");
-            }
-          }
-        }
-      }
-
-      // 🛡️ 2. التحقق من قيود عدم الحضور
-      final userDoc = await _supabase
-          .from('users')
-          .select('is_blocked, no_show_count')
-          .eq('id', userId)
-          .maybeSingle();
-
-      if (userDoc != null) {
-        final isBlocked = userDoc['is_blocked'] ?? false;
-        final noShowCount = userDoc['no_show_count'] ?? 0;
-        if (isBlocked || (noShowCount >= 2 && draft.paymentMethod == 'cash')) {
-          throw Exception("حسابك مقيد عن الحجز النقدي بسبب عدم الحضور. يرجى السداد إلكترونياً.");
-        }
-      }
-
-      // 🛡️ 3. قيد الحجز النقدي الواحد النشط للاعبين
-      final bool isManualBooking = draft.paymentTransactionId?.startsWith('MANUAL') == true;
-      if (!isManualBooking && draft.paymentMethod == 'cash') {
-        final unpaidBookings = await getUnpaidBookingsForUser(userId);
-        final now = DateTime.now();
-        final hasActiveUnpaid = unpaidBookings.any((b) => 
-            b.status != BookingStatus.cancelled && 
-            b.status != BookingStatus.completed &&
-            b.endTime.isAfter(now));
-
-        if (hasActiveUnpaid) {
-          throw Exception(
-            "حسابك مقيد بحد أقصى حجز نقدي واحد نشط. يرجى سداد الحجز السابق أو الدفع أونلاين للمتابعة."
-          );
-        }
-      }
-
-      // 🛡️ 4. إنشاء الحجز بشكل ذري مؤمّن (Postgres Atomic RPC Lock)
+      // 🛡️ 1. إنشاء الحجز بشكل ذري مؤمّن ومباشر (Postgres Atomic RPC Lock)
       final platformFee = PaymobService.calculateServiceFee(draft.totalPrice);
       final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
         'p_stadium_id': draft.stadiumId,
@@ -334,12 +247,12 @@ class SupabaseBookingRepository implements BookingRepository {
       final response = await _supabase
           .from('bookings')
           .select()
-          .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}');
+          .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}')
+          .order('start_time', ascending: false);
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
           .toList();
-      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
       VSPLogger.i('⚡ getUserBookingsDirectly returned ${bookings.length} bookings');
       return bookings;
     } catch (e) {
@@ -358,12 +271,11 @@ class SupabaseBookingRepository implements BookingRepository {
         query = query.eq('owner_id', ownerId);
       }
 
-      final response = await query;
+      final response = await query.order('start_time', ascending: false);
       final bookings = (response as List)
           .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .toList();
           
-      bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
       VSPLogger.i('⚡ Direct REST fetch returned ${bookings.length} bookings');
       return bookings;
     } catch (e) {
@@ -651,11 +563,11 @@ class SupabaseBookingRepository implements BookingRepository {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
+        .eq('stadium_id', stadiumId)
         .map((list) {
           return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                if (b.stadiumId.toLowerCase() != stadiumId.toLowerCase()) return false;
                 if (b.status == BookingStatus.cancelled) return false;
 
                 // 🛑 Fix: If booking is pending and older than 3 minutes without payment, ignore it (does not block slot)

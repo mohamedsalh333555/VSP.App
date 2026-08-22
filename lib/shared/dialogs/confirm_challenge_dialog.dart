@@ -50,8 +50,9 @@ class ConfirmChallengeDialog extends StatelessWidget {
       actions: [
         TextButton(
           onPressed: () async {
-            Navigator.pop(context);
+            final nav = Navigator.of(context);
             await repository.confirmChallengeResult(context, resultId: result.id, approve: false);
+            nav.pop(false);
           },
           child: const Text("❌ اعتراض / النتيجة خاطئة", style: TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold)),
         ),
@@ -61,8 +62,9 @@ class ConfirmChallengeDialog extends StatelessWidget {
             shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
           ),
           onPressed: () async {
-            Navigator.pop(context);
+            final nav = Navigator.of(context);
             await repository.confirmChallengeResult(context, resultId: result.id, approve: true);
+            nav.pop(true);
           },
           child: const Text("✅ تأكيد النتيجة", style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold)),
         ),

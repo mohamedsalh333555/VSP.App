@@ -580,10 +580,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           backgroundColor: VSPColors.surface,
           surfaceTintColor: Colors.transparent,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
-          title: Text(AppLocalizations.of(context)!.forceStartTournament, style: Theme.of(context).textTheme.titleLarge),
+          title: Text(AppLocalizations.of(ctx)!.forceStartTournament, style: Theme.of(ctx).textTheme.titleLarge),
           content: Text(
-            AppLocalizations.of(context)!.forceStartWarning(teamCount, _currentChampionship.maxTeams),
-            style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+            AppLocalizations.of(ctx)!.forceStartWarning(teamCount, _currentChampionship.maxTeams),
+            style: Theme.of(ctx).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
           ),
           actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
           actions: [
@@ -591,7 +591,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
               children: [
                 Expanded(
                   child: PrimaryButton(
-                    text: AppLocalizations.of(context)!.cancel,
+                    text: AppLocalizations.of(ctx)!.cancel,
                     height: 44,
                     color: VSPColors.surfaceAlt,
                     textColor: VSPColors.textPrimary,
@@ -601,7 +601,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 const SizedBox(width: VSPSpacing.md),
                 Expanded(
                   child: PrimaryButton(
-                    text: AppLocalizations.of(context)!.forceStart,
+                    text: AppLocalizations.of(ctx)!.forceStart,
                     height: 44,
                     color: VSPColors.warning,
                     textColor: Colors.black,

@@ -75,7 +75,6 @@ dependencies:
   package_info_plus: ^9.0.0
   firebase_analytics: ^11.4.4
   firebase_crashlytics: ^4.3.4
-  introduction_screen: ^3.1.16
   logger: ^2.5.0
   sign_in_with_apple: ^7.0.1
   uuid: ^4.6.0

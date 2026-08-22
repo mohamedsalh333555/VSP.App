@@ -92,16 +92,16 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
           child: StadiumCard(
             stadium: stadiums[index],
             isOwnerView: true,
-            onEditTap: () async {
-              await Navigator.push(
+            onEditTap: () {
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => AddStadiumWizard(stadiumId: stadiums[index].id),
                 ),
               );
             },
-            onTap: () async {
-              await Navigator.push(
+            onTap: () {
+              Navigator.push(
                 context,
                 MaterialPageRoute(
                   builder: (context) => AddStadiumWizard(stadiumId: stadiums[index].id),
@@ -124,8 +124,8 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
             text: l10n.addStadiumLabel,
             color: VSPColors.accent.withValues(alpha: 0.1),
             textColor: VSPColors.accent,
-            onPressed: () async {
-              await Navigator.push(
+            onPressed: () {
+              Navigator.push(
                 context,
                 MaterialPageRoute(builder: (context) => const AddStadiumWizard()),
               );
