@@ -54,6 +54,7 @@ class StorageService {
         // Mobile/Desktop flow: compress and upload via File
         File finalFile = File(file.path);
         final extension = p.extension(file.path).toLowerCase();
+        String? tempPathToDelete;
         
         if (['.jpg', '.jpeg', '.png', '.heic'].contains(extension)) {
           final tempDir = await getTemporaryDirectory();
@@ -82,6 +83,7 @@ class StorageService {
           
           if (compressedXFile != null) {
             finalFile = File(compressedXFile.path);
+            tempPathToDelete = compressedXFile.path;
           }
         }
 
@@ -93,6 +95,15 @@ class StorageService {
             upsert: true,
           ),
         );
+
+        // CLEANUP: Prevent temporary files from leaking and bloating device storage
+        try {
+          if (tempPathToDelete != null && await File(tempPathToDelete).exists()) {
+            await File(tempPathToDelete).delete();
+          }
+        } catch (e) {
+          debugPrint('Temp image cleanup failed: $e');
+        }
       }
 
       final publicUrl = _storage.from(bucket).getPublicUrl(uploadPath);
@@ -110,31 +121,10 @@ class StorageService {
       String? bucket;
       String? path;
 
-      const publicMarker = '/storage/v1/object/public/';
-      const signMarker = '/storage/v1/object/sign/';
-      const authMarker = '/storage/v1/object/authenticated/';
-
-      if (url.contains(publicMarker)) {
-        final segment = url.split(publicMarker).last;
-        final parts = segment.split('/');
-        if (parts.length > 1) {
-          bucket = parts.first;
-          path = parts.sublist(1).join('/');
-        }
-      } else if (url.contains(signMarker)) {
-        final segment = url.split(signMarker).last.split('?').first;
-        final parts = segment.split('/');
-        if (parts.length > 1) {
-          bucket = parts.first;
-          path = parts.sublist(1).join('/');
-        }
-      } else if (url.contains(authMarker)) {
-        final segment = url.split(authMarker).last;
-        final parts = segment.split('/');
-        if (parts.length > 1) {
-          bucket = parts.first;
-          path = parts.sublist(1).join('/');
-        }
+      final match = RegExp(r'/object/(?:public|sign|authenticated)/([^/?]+)/([^?]+)').firstMatch(url);
+      if (match != null && match.groupCount >= 2) {
+        bucket = match.group(1);
+        path = match.group(2);
       }
 
       if (bucket != null && path != null) {

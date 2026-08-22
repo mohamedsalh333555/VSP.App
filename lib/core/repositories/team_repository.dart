@@ -409,26 +409,16 @@ class TeamRepository {
 
   Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
     try {
-      final bookings1 = await _supabase
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      final activeBookings = await _supabase
           .from('bookings')
-          .select('end_time')
+          .select('id')
           .eq('status', 'confirmed')
-          .eq('player_team_id', teamId);
-          
-      final bookings2 = await _supabase
-          .from('bookings')
-          .select('end_time')
-          .eq('status', 'confirmed')
-          .eq('opponent_team_id', teamId);
+          .or('player_team_id.eq.$teamId,opponent_team_id.eq.$teamId')
+          .gt('end_time', nowIso)
+          .limit(1);
 
-      bool hasActiveMatch = false;
-      for (var doc in [...bookings1 as List, ...bookings2 as List]) {
-        final endTime = DateTime.parse(doc['end_time']);
-        if (endTime.isAfter(DateTime.now())) {
-          hasActiveMatch = true;
-          break;
-        }
-      }
+      final bool hasActiveMatch = (activeBookings as List).isNotEmpty;
 
       final activeTournaments = await _supabase
           .from('championships')

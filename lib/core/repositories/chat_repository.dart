@@ -142,19 +142,10 @@ class ChatRepository {
   Future<void> deleteConversationForUser(String conversationId, String userId, {String? contactId}) async {
     if (userId.isEmpty) return;
     try {
-      final conv = await _supabase
-          .from('conversations')
-          .select('deleted_for_users')
-          .eq('id', conversationId)
-          .maybeSingle();
-
-      if (conv != null) {
-        final List<dynamic> current = conv['deleted_for_users'] ?? [];
-        final set = current.map((e) => e.toString()).toSet()..add(userId);
-        await _supabase.from('conversations').update({
-          'deleted_for_users': set.toList(),
-        }).eq('id', conversationId);
-      }
+      await _supabase.rpc('delete_chat_for_user_atomic', params: {
+        'p_booking_id': conversationId,
+        'p_user_id': userId,
+      });
     } catch (e) {
       VSPLogger.e('Error deleting conversation for user $userId', e);
     }

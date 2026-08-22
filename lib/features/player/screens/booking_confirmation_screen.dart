@@ -62,16 +62,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
   List<TimeSlotItem> _timeSlots = [];
 
   DateTime get _operationalBaseDate {
-    final now = DateTime.now();
-    final openMin = _parseTimeToMinutes(widget.stadium.openingTime);
-    final closeMin = _parseTimeToMinutes(widget.stadium.closingTime);
-    final openH = openMin ~/ 60;
-    final closeH = closeMin ~/ 60;
-    if (openH > closeH && now.hour < closeH) {
-      final prev = now.subtract(const Duration(days: 1));
-      return DateTime(prev.year, prev.month, prev.day);
-    }
-    return DateTime(now.year, now.month, now.day);
+    return AppDateFormatter.getOperationalDate(DateTime.now());
   }
 
   bool get _isOpenJoin {

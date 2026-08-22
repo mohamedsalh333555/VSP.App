@@ -123,7 +123,7 @@ class _ChatScreenState extends State<ChatScreen> {
       await ChatRepository().sendMessage(widget.booking.id, message);
       AnalyticsService.logChatMessageSent(widget.booking.bookingType.name);
 
-      if (_scrollController.hasClients) {
+      if (mounted && _scrollController.hasClients) {
         _scrollController.animateTo(
           0.0,
           duration: const Duration(milliseconds: 300),

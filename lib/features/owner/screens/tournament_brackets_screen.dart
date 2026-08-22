@@ -909,6 +909,11 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                         contentPadding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
                         border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: const BorderSide(color: VSPColors.divider)),
                       ),
+                      onChanged: (val) {
+                        if (selectedFromRoster != null && val != selectedFromRoster) {
+                          setDlgState(() => selectedFromRoster = null);
+                        }
+                      },
                     ),
                   ],
                 ),
@@ -943,7 +948,9 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           },
         );
       },
-    );
+    ).then((_) {
+      customNameController.dispose();
+    });
   }
 
   // زر تحديد الفائز بركلات الترجيح

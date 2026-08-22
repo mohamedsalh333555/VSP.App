@@ -36,8 +36,8 @@ class DefaultFirebaseOptions {
   // To get the real web appId: Firebase Console → Project Settings → Your apps → Web app
   // The apiKey for web is the same as Android for single-project setups
   static const FirebaseOptions web = FirebaseOptions(
-    apiKey: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM',
-    appId: '1:860837572098:web:5a9d7594b32d94b1e5c11b',
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY_WEB', defaultValue: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM'),
+    appId: String.fromEnvironment('FIREBASE_APP_ID_WEB', defaultValue: '1:860837572098:web:5a9d7594b32d94b1e5c11b'),
     messagingSenderId: '860837572098',
     projectId: 'vsp-app-103b1',
     storageBucket: 'vsp-app-103b1.firebasestorage.app',
@@ -45,16 +45,16 @@ class DefaultFirebaseOptions {
   );
 
   static const FirebaseOptions android = FirebaseOptions(
-    apiKey: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM',
-    appId: '1:860837572098:android:5a9d7594b32d94b1e5c11b',
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY_ANDROID', defaultValue: 'AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM'),
+    appId: String.fromEnvironment('FIREBASE_APP_ID_ANDROID', defaultValue: '1:860837572098:android:5a9d7594b32d94b1e5c11b'),
     messagingSenderId: '860837572098',
     projectId: 'vsp-app-103b1',
     storageBucket: 'vsp-app-103b1.firebasestorage.app',
   );
 
   static const FirebaseOptions ios = FirebaseOptions(
-    apiKey: 'AIzaSyDS8fA59czNAHzQzrZx6fnaiiJWsXJXWOM',
-    appId: '1:860837572098:ios:066a97a8bcad9a1ee5c11b',
+    apiKey: String.fromEnvironment('FIREBASE_API_KEY_IOS', defaultValue: 'AIzaSyDS8fA59czNAHzQzrZx6fnaiiJWsXJXWOM'),
+    appId: String.fromEnvironment('FIREBASE_APP_ID_IOS', defaultValue: '1:860837572098:ios:066a97a8bcad9a1ee5c11b'),
     messagingSenderId: '860837572098',
     projectId: 'vsp-app-103b1',
     storageBucket: 'vsp-app-103b1.firebasestorage.app',

@@ -132,14 +132,8 @@ class UserRepository {
       VSPLogger.i('✅ setUserRole persisted successfully for $userId with role: $role');
       return true;
     } catch (e) {
-      VSPLogger.w('⚠️ RPC set_user_role_on_signup fallback to direct update or notice: $e');
-      try {
-        await _supabase.from('users').update({'role': role}).eq('id', userId);
-        return true;
-      } catch (err) {
-        VSPLogger.e('Error setting user role for $userId', err);
-        return false;
-      }
+      VSPLogger.e('Error setting user role via RPC for $userId', e);
+      return false;
     }
   }
 

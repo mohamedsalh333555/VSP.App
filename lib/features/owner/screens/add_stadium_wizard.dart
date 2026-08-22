@@ -1331,10 +1331,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         }
         await auth.refreshProfile();
 
-        if (!mounted) return;
+        if (!mounted || !context.mounted) return;
         final l10n = AppLocalizations.of(context)!;
         VSPFeedback.showSuccess(context, l10n.stadiumSubmitSuccess);
-        Navigator.pop(context); // إغلاق الشاشة يتم في النهاية بأمان
+        if (context.mounted) {
+          Navigator.pop(context); // إغلاق الشاشة يتم في النهاية بأمان
+        }
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);
