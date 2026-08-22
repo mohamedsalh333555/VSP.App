@@ -369,7 +369,7 @@ class _BookingCard extends StatelessWidget {
                         )
                       : Container(
                           color: VSPColors.surface,
-                          child: Icon(Iconsax.location_copy, color: VSPColors.accent),
+                          child: const Icon(Iconsax.location_copy, color: VSPColors.accent),
                         ),
                 ),
               ),
@@ -454,7 +454,7 @@ class _BookingCard extends StatelessWidget {
               ),
               child: Row(
                 children: [
-                  Icon(Iconsax.cup_copy, color: VSPColors.warning, size: 20),
+                  const Icon(Iconsax.cup_copy, color: VSPColors.warning, size: 20),
                   const SizedBox(width: VSPSpacing.sm),
                   Text(
                     l10n.vsOpponent(booking.opponentTeamName ?? ""),
@@ -982,7 +982,7 @@ class _BookingCard extends StatelessWidget {
                 child: Row(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Icon(Iconsax.rotate_left_copy, color: VSPColors.accent, size: 18),
+                    const Icon(Iconsax.rotate_left_copy, color: VSPColors.accent, size: 18),
                     const SizedBox(width: 8),
                     Expanded(
                       child: Text(

@@ -282,7 +282,8 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
         ),
       );
 
-      if (result == true && mounted) {
+      if (!mounted) return;
+      if (result == true) {
         Navigator.pop(context);
       }
     } catch (e) {
@@ -429,7 +430,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                           const SizedBox(height: 2),
                           Row(
                             children: [
-                              Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 12),
+                              const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 12),
                               const SizedBox(width: 4),
                               Text(
                                 championship.governorate.isNotEmpty ? championship.governorate : (isArabic ? 'مصر' : 'Egypt'),
@@ -1022,9 +1023,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                                 // Match meta: match number + date
                                 Container(
                                   padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 6),
-                                  decoration: BoxDecoration(
+                                  decoration: const BoxDecoration(
                                     color: VSPColors.surfaceAlt,
-                                    borderRadius: const BorderRadius.only(
+                                    borderRadius: BorderRadius.only(
                                       topLeft: Radius.circular(VSPRadius.md),
                                       topRight: Radius.circular(VSPRadius.md),
                                     ),

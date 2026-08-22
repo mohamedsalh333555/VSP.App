@@ -1,7 +1,7 @@
 import 'dart:convert';
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import '../services/logger_service.dart';
 
 class SearchRepository {
   final SupabaseClient _supabase;
@@ -40,8 +40,8 @@ class SearchRepository {
         'teams': teams,
         'championships': championships,
       };
-    } catch (e) {
-      debugPrint('Global search error: $e');
+    } catch (e, stack) {
+      VSPLogger.e('Global search error for term "$term"', e, stack);
       return {'stadiums': [], 'teams': [], 'championships': []};
     }
   }

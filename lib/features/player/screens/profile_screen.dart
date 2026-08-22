@@ -66,7 +66,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
 
   void _showLocationPicker(BuildContext context, AuthProvider auth) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final governorates = EgyptGovernorates.allGovernorates;
+    const governorates = EgyptGovernorates.allGovernorates;
     final currentGov = auth.userModel?.governorate ?? 'Aswan';
 
     showModalBottomSheet(
@@ -258,7 +258,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                                 : null,
                             ),
                             child: (userProfileUrl == null || userProfileUrl.isEmpty)
-                                ? Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 40)
+                                ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 40)
                                 : null,
                           ),
                           const SizedBox(height: VSPSpacing.sm),

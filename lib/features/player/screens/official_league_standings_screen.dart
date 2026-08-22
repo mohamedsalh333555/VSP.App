@@ -714,9 +714,9 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
   }
 
   Widget _buildTrendIcon(String trend) {
-    if (trend == 'up') return Icon(Iconsax.arrow_up_1_copy, color: VSPColors.accent, size: 16);
-    if (trend == 'down') return Icon(Iconsax.arrow_down_1_copy, color: Colors.red, size: 16);
-    return Icon(Iconsax.minus_cirlce_copy, color: VSPColors.textSecondary, size: 12);
+    if (trend == 'up') return const Icon(Iconsax.arrow_up_1_copy, color: VSPColors.accent, size: 16);
+    if (trend == 'down') return const Icon(Iconsax.arrow_down_1_copy, color: Colors.red, size: 16);
+    return const Icon(Iconsax.minus_cirlce_copy, color: VSPColors.textSecondary, size: 12);
   }
 
   Widget _buildDetailStat(String label, String value, BuildContext context) {

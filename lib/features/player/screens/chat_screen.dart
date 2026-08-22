@@ -464,7 +464,7 @@ class _ChatScreenState extends State<ChatScreen> {
           child: Row(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 18),
+              const Icon(Iconsax.lock_copy, color: VSPColors.textSecondary, size: 18),
               const SizedBox(width: 8),
               Text(
                 isCancelled 

@@ -80,7 +80,7 @@ class TeamCardHero extends StatelessWidget {
                   child: ClipOval(
                     child: team.logoUrl.isNotEmpty 
                         ? Image.network(team.logoUrl, fit: BoxFit.cover)
-                        : Icon(Iconsax.security_safe_copy, size: 80, color: VSPColors.white),
+                        : const Icon(Iconsax.security_safe_copy, size: 80, color: VSPColors.white),
                   ),
                 ),
                 

@@ -102,7 +102,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
+                icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               ),
             ],
           ),
@@ -144,7 +144,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
                           padding: EdgeInsets.all(VSPSpacing.sm),
                           child: CircularProgressIndicator(color: VSPColors.background, strokeWidth: 2),
                         )
-                      : Icon(Iconsax.search_normal_copy, color: VSPColors.background),
+                      : const Icon(Iconsax.search_normal_copy, color: VSPColors.background),
                 ),
               ),
             ],
@@ -203,7 +203,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
               ),
               child: Row(
                 children: [
-                   Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
+                   const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
                    const SizedBox(width: 4),
                    Text(isArabic ? 'منضم' : 'Joined', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
                 ],
@@ -242,7 +242,7 @@ class _AddPlayerSheetState extends State<AddPlayerSheet> {
         children: [
           Row(
             children: [
-              Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 24),
+              const Icon(Iconsax.user_add_copy, color: VSPColors.accent, size: 24),
               const SizedBox(width: 8),
               Text(
                 "رقم غير مسجل في VSP",

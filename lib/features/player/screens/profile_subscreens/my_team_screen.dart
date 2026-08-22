@@ -237,7 +237,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
         actions: [
           if (team != null)
             IconButton(
-              icon: Icon(Iconsax.share_copy, color: VSPColors.accent),
+              icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
               onPressed: () {
                 SharingService.shareTeam(
                   context,
@@ -365,7 +365,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                 if (isCaptain && (1 + _teamMembers.length) < 12)
                   TextButton.icon(
                     onPressed: () => _showAddPlayerSheet(team),
-                    icon: Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.accent),
+                    icon: const Icon(Iconsax.add_circle_copy, size: 16, color: VSPColors.accent),
                     label: Text(l10n.addMember, style: const TextStyle(color: VSPColors.accent, fontSize: 12, fontWeight: FontWeight.bold)),
                   ),
               ],
@@ -649,7 +649,7 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
             CircleAvatar(
               radius: 12, backgroundColor: VSPColors.surface,
               backgroundImage: (user.profileImageUrl?.isNotEmpty ?? false) ? NetworkImage(user.profileImageUrl!) : null,
-              child: (user.profileImageUrl?.isEmpty ?? true) ? Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 12) : null,
+              child: (user.profileImageUrl?.isEmpty ?? true) ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 12) : null,
             ),
             const SizedBox(width: VSPSpacing.sm),
             Text(user.name ?? 'Player', style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w600)),

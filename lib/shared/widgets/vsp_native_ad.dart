@@ -47,7 +47,7 @@ class VSPNativeAd extends StatelessWidget {
                   ),
                 ),
               ),
-              Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 16),
+              const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 16),
             ],
           ),
           const Spacer(),

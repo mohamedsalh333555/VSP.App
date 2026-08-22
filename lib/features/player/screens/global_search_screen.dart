@@ -93,7 +93,7 @@ class _GlobalSearchScreenState extends State<GlobalSearchScreen> {
         actions: [
           if (_searchController.text.isNotEmpty)
             IconButton(
-              icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
+              icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               onPressed: () {
                 _searchController.clear();
                 _performSearch('');

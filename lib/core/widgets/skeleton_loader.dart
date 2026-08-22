@@ -44,16 +44,16 @@ class CardSkeleton extends StatelessWidget {
         color: VSPColors.surface,
         borderRadius: BorderRadius.circular(VSPRadius.md),
       ),
-      child: Column(
+      child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Row(
             children: [
-              const VSPSkeleton(width: 50, height: 50, borderRadius: 25),
-              const SizedBox(width: 12),
+              VSPSkeleton(width: 50, height: 50, borderRadius: 25),
+              SizedBox(width: 12),
               Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
-                children: const [
+                children: [
                   VSPSkeleton(width: 120, height: 16),
                   SizedBox(height: 8),
                   VSPSkeleton(width: 80, height: 12),
@@ -61,12 +61,12 @@ class CardSkeleton extends StatelessWidget {
               ),
             ],
           ),
-          const SizedBox(height: 24),
-          const VSPSkeleton(width: double.infinity, height: 40),
-          const SizedBox(height: 16),
-          const VSPSkeleton(width: 100, height: 12),
-          const SizedBox(height: 8),
-          const VSPSkeleton(width: double.infinity, height: 4),
+          SizedBox(height: 24),
+          VSPSkeleton(width: double.infinity, height: 40),
+          SizedBox(height: 16),
+          VSPSkeleton(width: 100, height: 12),
+          SizedBox(height: 8),
+          VSPSkeleton(width: double.infinity, height: 4),
         ],
       ),
     );

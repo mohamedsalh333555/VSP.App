@@ -162,9 +162,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                                     memCacheHeight: 250,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => const CircularProgressIndicator(color: VSPColors.accent),
-                                    errorWidget: (context, url, error) => Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
+                                    errorWidget: (context, url, error) => const Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
                                   )
-                                : Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
+                                : const Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),
                       ),
                     ),
                     Container(
@@ -174,7 +174,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                         shape: BoxShape.circle,
                         border: Border.all(color: VSPColors.background, width: 3),
                       ),
-                      child: Icon(Iconsax.image_copy, size: 16, color: Colors.black),
+                      child: const Icon(Iconsax.image_copy, size: 16, color: Colors.black),
                     ),
                   ],
                 ),

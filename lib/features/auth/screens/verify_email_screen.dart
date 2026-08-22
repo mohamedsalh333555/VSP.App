@@ -234,7 +234,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
                     border: Border.all(
                         color: VSPColors.accent.withValues(alpha: 0.3)),
                   ),
-                  child: Icon(
+                  child: const Icon(
                     Iconsax.sms_copy,
                     color: VSPColors.accent,
                     size: 36,

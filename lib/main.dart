@@ -95,7 +95,7 @@ void main() async {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
+              const Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
               const SizedBox(height: VSPSpacing.xl),
               const Text(
                 'Something went wrong! 🎮',

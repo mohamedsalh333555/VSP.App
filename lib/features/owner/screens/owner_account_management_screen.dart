@@ -214,7 +214,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'البريد الإلكتروني' : 'Email Address'),
-                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: Icon(Iconsax.lock_copy, size: 18, color: VSPColors.textSecondary)),
+                   CustomTextField(controller: _emailController, hintText: isArabic ? 'أدخل بريدك الإلكتروني' : 'Enter your email', suffixIcon: const Icon(Iconsax.lock_copy, size: 18, color: VSPColors.textSecondary)),
                    const SizedBox(height: 16),
                    
                    _buildInputLabel(isArabic ? 'الموقع' : 'Location'),
@@ -227,7 +227,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                      ),
                      child: Row(
                        children: [
-                         Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
+                         const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
                          const SizedBox(width: 12),
                          Expanded(
                            child: Column(
@@ -247,7 +247,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
                          _isLocating 
                          ? const SizedBox(width: 24, height: 24, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                          : IconButton(
-                           icon: Icon(Iconsax.gps_copy, color: VSPColors.accent),
+                           icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent),
                            onPressed: () async {
                              setState(() => _isLocating = true);
                              await authProvider.updateUserLocation();

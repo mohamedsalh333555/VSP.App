@@ -9,6 +9,7 @@ import '../repositories/team_repository.dart';
 import '../services/analytics_service.dart';
 import '../services/logger_service.dart';
 import '../services/notification_handler.dart';
+import '../services/paymob_service.dart';
 import '../utils/app_date_formatter.dart';
 
 /// Abstract BookingRepository interface
@@ -201,7 +202,7 @@ class SupabaseBookingRepository implements BookingRepository {
       }
 
       // 🛡️ 4. إنشاء الحجز بشكل ذري مؤمّن (Postgres Atomic RPC Lock)
-      final platformFee = (draft.totalPrice * 0.0475) + 3.0;
+      final platformFee = PaymobService.calculateServiceFee(draft.totalPrice);
       final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
         'p_stadium_id': draft.stadiumId,
         'p_user_id': userId,
@@ -314,10 +315,10 @@ class SupabaseBookingRepository implements BookingRepository {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
-              .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
               .toList();
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
@@ -377,11 +378,11 @@ class SupabaseBookingRepository implements BookingRepository {
     return _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
+        .eq('owner_id', ownerId)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                if (b.ownerId.trim().toLowerCase() == ownerId.trim().toLowerCase()) return true;
                 if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
                   return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
                 }

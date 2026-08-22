@@ -325,14 +325,14 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
                         const SizedBox(height: 4),
                         Row(
                           children: [
-                            Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
+                            const Icon(Iconsax.location_copy, color: VSPColors.textSecondary, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               widget.championship.governorate,
                               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                             ),
                             const SizedBox(width: 12),
-                            Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 14),
+                            const Icon(Iconsax.people_copy, color: VSPColors.textSecondary, size: 14),
                             const SizedBox(width: 4),
                             Text(
                               widget.team.name,

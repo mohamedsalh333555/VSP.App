@@ -127,7 +127,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Row(
             children: [
-              Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
+              const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 28),
               const SizedBox(width: 8),
               Text(
                 title,
@@ -1009,7 +1009,7 @@ class _HomeContent extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Opacity(
+            const Opacity(
               opacity: 0.3,
               child: Icon(Iconsax.location_copy, color: VSPColors.accent, size: 64),
             ),
@@ -1065,7 +1065,7 @@ class _HomeContent extends StatelessWidget {
             ),
             child: Row(
               children: [
-                Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
+                const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
                 const SizedBox(width: 8),
                 Expanded(
                   child: Text(
@@ -1221,7 +1221,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
       borderRadius: BorderRadius.vertical(top: Radius.circular(20))
     ), 
     builder: (context) {
-      final governorates = EgyptGovernorates.allGovernorates;
+      const governorates = EgyptGovernorates.allGovernorates;
       return Container(
         padding: const EdgeInsets.all(16), 
         child: Column(
@@ -1250,7 +1250,7 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
                         fontWeight: isSelected ? FontWeight.bold : FontWeight.normal
                       )
                     ), 
-                    trailing: isSelected ? Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null, 
+                    trailing: isSelected ? const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent) : null, 
                     onTap: () { 
                       auth.updateProfile({'governorate': gov}); 
                       context.read<StadiumProvider>().applyGovernorateFilter(gov); 

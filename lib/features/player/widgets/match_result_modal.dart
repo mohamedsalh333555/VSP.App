@@ -79,7 +79,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
                   ),
                   IconButton(
                     onPressed: () => Navigator.pop(context),
-                    icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
+                    icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary),
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
                     visualDensity: VisualDensity.compact,
@@ -290,7 +290,7 @@ class _MatchResultModalState extends State<MatchResultModal> {
             shape: BoxShape.circle,
             border: Border.all(color: VSPColors.divider),
           ),
-          child: Icon(Iconsax.cup_copy, color: VSPColors.textSecondary),
+          child: const Icon(Iconsax.cup_copy, color: VSPColors.textSecondary),
         ),
         const SizedBox(height: VSPSpacing.sm),
         SizedBox(

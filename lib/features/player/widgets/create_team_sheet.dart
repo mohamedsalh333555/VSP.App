@@ -231,7 +231,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
               ),
               IconButton(
                 onPressed: () => Navigator.pop(context),
-                icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
+                icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary),
               ),
             ],
           ),
@@ -306,7 +306,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                                 : null,
                           ),
                           child: _selectedLogo == null 
-                              ? Icon(Iconsax.image_copy, color: VSPColors.accent)
+                              ? const Icon(Iconsax.image_copy, color: VSPColors.accent)
                               : null,
                         ),
                         const SizedBox(width: VSPSpacing.md),
@@ -320,7 +320,7 @@ class _CreateTeamSheetState extends State<CreateTeamSheet> {
                             child: Row(
                               mainAxisAlignment: MainAxisAlignment.center,
                               children: [
-                                 Icon(Iconsax.export_3_copy, color: VSPColors.background),
+                                 const Icon(Iconsax.export_3_copy, color: VSPColors.background),
                                  const SizedBox(width: VSPSpacing.sm),
                                  Text(
                                   _selectedLogo == null ? l10n.uploadLogo : l10n.changeLogo,

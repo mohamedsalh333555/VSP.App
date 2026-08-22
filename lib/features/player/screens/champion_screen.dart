@@ -342,7 +342,7 @@ class ChampionScreenState extends State<ChampionScreen>
                     radius: 18, 
                     backgroundColor: VSPColors.surfaceAlt, 
                     backgroundImage: player.avatarUrl.isNotEmpty ? NetworkImage(player.avatarUrl) : null,
-                    child: player.avatarUrl.isEmpty ? Icon(Iconsax.user_copy, size: 20, color: VSPColors.accent) : null,
+                    child: player.avatarUrl.isEmpty ? const Icon(Iconsax.user_copy, size: 20, color: VSPColors.accent) : null,
                   ),
                   const SizedBox(width: 12),
                   Expanded(

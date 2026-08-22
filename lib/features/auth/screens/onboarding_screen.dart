@@ -87,11 +87,11 @@ class OnboardingScreen extends StatelessWidget {
     return Center(
       child: Container(
         padding: const EdgeInsets.all(VSPSpacing.xl),
-        decoration: BoxDecoration(
+        decoration: const BoxDecoration(
           color: VSPColors.surface,
           shape: BoxShape.circle,
         ),
-        child: Icon(Iconsax.cup_copy, size: 100, color: VSPColors.accent), // Placeholder icons for now
+        child: const Icon(Iconsax.cup_copy, size: 100, color: VSPColors.accent), // Placeholder icons for now
       ),
     );
   }

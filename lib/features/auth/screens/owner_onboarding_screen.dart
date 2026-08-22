@@ -272,7 +272,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
           border: Border.all(color: VSPColors.accent.withValues(alpha: 0.1)),
         ),
         child: Row(children: [
-          Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
+          const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 18),
           const SizedBox(width: 12),
           Text(
             _dateOfBirth != null
@@ -281,7 +281,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
             style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: _dateOfBirth != null ? VSPColors.textPrimary : VSPColors.textSecondary),
           ),
           const Spacer(),
-          if (_dateOfBirth != null) Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
+          if (_dateOfBirth != null) const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent, size: 16),
         ]),
       ),
     );
@@ -314,7 +314,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
   }
 
   Widget _buildGovernorateDropdown() {
-    final govs = EgyptGovernorates.allGovernorates;
+    const govs = EgyptGovernorates.allGovernorates;
     return Container(
       height: VSPSize.inputHeight,
       padding: const EdgeInsets.symmetric(horizontal: 16),
@@ -327,7 +327,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
         child: DropdownButton<String>(
           value: _selectedGovernorate,
           dropdownColor: VSPColors.surface,
-          icon: Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
+          icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium,
           onChanged: (v) {

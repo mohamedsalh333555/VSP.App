@@ -192,7 +192,7 @@ class _SuccessScreenState extends State<SuccessScreen> with TickerProviderStateM
           color: VSPColors.accent.withValues(alpha: 0.15),
           border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4), width: 2),
         ),
-        child: Icon(Iconsax.tick_circle_copy,
+        child: const Icon(Iconsax.tick_circle_copy,
           size: 64,
           color: VSPColors.accent,
         ),

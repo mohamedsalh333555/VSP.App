@@ -110,9 +110,9 @@ class StorageService {
       String? bucket;
       String? path;
 
-      final publicMarker = '/storage/v1/object/public/';
-      final signMarker = '/storage/v1/object/sign/';
-      final authMarker = '/storage/v1/object/authenticated/';
+      const publicMarker = '/storage/v1/object/public/';
+      const signMarker = '/storage/v1/object/sign/';
+      const authMarker = '/storage/v1/object/authenticated/';
 
       if (url.contains(publicMarker)) {
         final segment = url.split(publicMarker).last;
@@ -173,8 +173,8 @@ class StorageService {
   Future<String?> getOwnerDocumentSignedUrl(String path, {int expiresIn = 3600}) async {
     try {
       String cleanPath = path;
-      final storagePathMarker = '/storage/v1/object/public/owner_documents/';
-      final signedMarker = '/storage/v1/object/sign/owner_documents/';
+      const storagePathMarker = '/storage/v1/object/public/owner_documents/';
+      const signedMarker = '/storage/v1/object/sign/owner_documents/';
       if (cleanPath.contains(storagePathMarker)) {
         cleanPath = cleanPath.split(storagePathMarker).last;
       } else if (cleanPath.contains(signedMarker)) {

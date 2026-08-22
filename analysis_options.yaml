@@ -6,9 +6,16 @@ analyzer:
     - "bin/**"
     - "test/**"
   errors:
+    use_build_context_synchronously: error   # يحظر استخدام context بعد await بدون فحص mounted
+    unawaited_futures: warning               # ينبه عند وجود عمليات Future مهملة
+    avoid_print: warning                     # يفرض استخدام VSPLogger
     deprecated_member_use: ignore
     unnecessary_import: ignore
 
 linter:
   rules:
     avoid_print: true
+    use_build_context_synchronously: true
+    prefer_const_constructors: true
+    prefer_const_declarations: true
+    avoid_unnecessary_containers: true

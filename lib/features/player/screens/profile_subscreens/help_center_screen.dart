@@ -74,7 +74,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
-                  Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 32),
+                  const Icon(Iconsax.headphones_copy, color: VSPColors.accent, size: 32),
                   const SizedBox(height: 12),
                   Text(
                     isAr ? 'كيف يمكننا مساعدتك اليوم؟' : 'How can we help you today?',
@@ -193,7 +193,7 @@ class _HelpCenterScreenState extends State<HelpCenterScreen> {
                 ],
               ),
             ),
-            Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 16),
+            const Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 16),
           ],
         ),
       ),

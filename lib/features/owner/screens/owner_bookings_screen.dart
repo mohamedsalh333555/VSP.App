@@ -183,7 +183,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           ),
                         ),
                         const SizedBox(width: 8),
-                        Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 16),
+                        const Icon(Iconsax.calendar_1_copy, color: VSPColors.textSecondary, size: 16),
                       ],
                     ),
                   ),
@@ -841,7 +841,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
               ),
             );
           }),
-          Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 14),
+          const Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textSecondary, size: 14),
         ],
       ),
     );

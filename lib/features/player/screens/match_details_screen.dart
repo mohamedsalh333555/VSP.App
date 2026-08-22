@@ -212,7 +212,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
       ),
       child: Row(
         children: [
-          Icon(Iconsax.star_copy, color: VSPColors.accent),
+          const Icon(Iconsax.star_copy, color: VSPColors.accent),
           const SizedBox(width: 12),
           Expanded(
             child: Text(
@@ -254,7 +254,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 48),
+                  const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 48),
                   const SizedBox(height: 16),
                   Text(AppLocalizations.of(context)!.matchNotFound, style: const TextStyle(color: Colors.white)),
                   TextButton(
@@ -281,7 +281,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                 backgroundColor: VSPColors.background,
                 actions: [
                   IconButton(
-                    icon: Icon(Iconsax.share_copy, color: Colors.white),
+                    icon: const Icon(Iconsax.share_copy, color: Colors.white),
                     onPressed: () {
                       if (_booking != null) {
                         SharingService.shareMatch(
@@ -294,7 +294,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                     },
                   ),
                   IconButton(
-                    icon: Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
+                    icon: const Icon(Iconsax.warning_2_copy, color: VSPColors.textSecondary),
                     onPressed: _onReport,
                   ),
                   const SizedBox(width: 8),

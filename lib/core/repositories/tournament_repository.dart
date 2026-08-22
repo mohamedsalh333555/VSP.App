@@ -8,6 +8,7 @@ import '../repositories/team_repository.dart';
 import '../utils/app_date_formatter.dart';
 import '../constants/egypt_governorates.dart';
 import '../services/notification_handler.dart';
+import '../services/paymob_service.dart';
 import '../../data/models.dart';
 
 class TournamentRepository {
@@ -331,11 +332,10 @@ class TournamentRepository {
         throw Exception(rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
       }
 
-      // تسجيل المعاملة المالية في حال السداد
+      // تسجيل المعاملة المالية في حال السداد (استخدام PaymobService الموحد)
       if (isPaid && champ.entryFee > 0) {
         try {
-          final double serviceFee = (champ.entryFee * 0.0475) + 3.0;
-          final double fullAmount = totalPaidAmount ?? (champ.entryFee + serviceFee);
+          final double fullAmount = totalPaidAmount ?? PaymobService.calculateTotalAmount(champ.entryFee);
 
           await _supabase.from('transactions').insert({
             'championship_id': championshipId,
@@ -345,7 +345,7 @@ class TournamentRepository {
             'created_at': DateTime.now().toUtc().toIso8601String(),
           });
         } catch (txErr) {
-          debugPrint('⚠️ Transaction logging notice: $txErr');
+          VSPLogger.w('⚠️ Transaction logging notice: $txErr');
         }
       }
 

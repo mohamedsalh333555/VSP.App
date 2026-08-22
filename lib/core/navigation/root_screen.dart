@@ -199,7 +199,7 @@ class MaintenanceScreen extends StatelessWidget {
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
-              Icon(Iconsax.setting_2_copy, size: 80, color: VSPColors.accent),
+              const Icon(Iconsax.setting_2_copy, size: 80, color: VSPColors.accent),
               const SizedBox(height: VSPSpacing.xl),
               Text(
                 'We’ll be back soon!',

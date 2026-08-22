@@ -28,7 +28,7 @@ class StadiumRepository {
     return str;
   }
 
-  // Get all stadiums (with expanded limit)
+  // Get all verified stadiums with server-side filtering
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
     return _supabase
         .from('stadiums')
@@ -36,7 +36,6 @@ class StadiumRepository {
         .eq('is_deleted_by_owner', false)
         .limit(limit)
         .map((list) => list
-            .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
             .where((stadium) => stadium.isVerified && !stadium.isBlocked)
             .toList());

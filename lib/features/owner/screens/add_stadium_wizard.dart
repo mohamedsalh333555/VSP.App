@@ -665,7 +665,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                       alignment: Alignment.center,
                       child: Container(
                         transform: Matrix4.translationValues(0, -20, 0),
-                        child: Icon(Iconsax.location_copy,
+                        child: const Icon(Iconsax.location_copy,
                           color: VSPColors.accent,
                           size: 48,
                           shadows: [
@@ -703,7 +703,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                             ),
                             child: Row(
                               children: [
-                                Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 22),
+                                const Icon(Iconsax.search_normal_copy, color: VSPColors.accent, size: 22),
                                 const SizedBox(width: 8),
                                 Expanded(
                                   child: TextField(
@@ -728,7 +728,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   )
                                 else if (searchController.text.isNotEmpty)
                                   IconButton(
-                                    icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
+                                    icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textSecondary, size: 18),
                                     onPressed: () {
                                       searchController.clear();
                                       setSheetState(() {
@@ -757,7 +757,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                                   final result = searchResults[index];
                                   return ListTile(
                                     dense: true,
-                                    leading: Icon(Iconsax.location_copy, color: VSPColors.accent, size: 18),
+                                    leading: const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 18),
                                     title: Text(
                                       result['display_name'],
                                       maxLines: 2,
@@ -791,7 +791,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           border: Border.all(color: VSPColors.divider),
                         ),
                         child: IconButton(
-                          icon: Icon(Iconsax.close_circle_copy, color: Colors.white, size: 20),
+                          icon: const Icon(Iconsax.close_circle_copy, color: Colors.white, size: 20),
                           onPressed: () => Navigator.pop(sheetContext),
                         ),
                       ),
@@ -815,7 +815,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                           ],
                         ),
                         child: IconButton(
-                          icon: Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 24),
+                          icon: const Icon(Iconsax.gps_copy, color: VSPColors.accent, size: 24),
                           onPressed: () async {
                             setSheetState(() {
                               isSearching = true;
@@ -896,7 +896,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         data: MediaQuery.of(context).copyWith(alwaysUse24HourFormat: false),
         child: Theme(
           data: Theme.of(context).copyWith(
-            colorScheme: ColorScheme.dark(
+            colorScheme: const ColorScheme.dark(
               primary: VSPColors.accent,
               onPrimary: Colors.black,
               surface: VSPColors.surface,
@@ -1378,7 +1378,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           leading: VSPBackButton(onTap: _previousPage),
           title: Text(AppLocalizations.of(context)!.addStadium, style: Theme.of(context).textTheme.displaySmall),
           centerTitle: true,
-          elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
+          elevation: 0, actions: [ if (widget.stadiumId != null) IconButton(icon: const Icon(Iconsax.trash_copy, color: VSPColors.error), onPressed: () => _showDeleteConfirmationDialog()) ],
         ),
         body: GestureDetector(
           onTap: () => FocusScope.of(context).unfocus(),
@@ -1671,7 +1671,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             Row(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
+                const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 14),
                 const SizedBox(width: 6),
                 Expanded(
                   child: Builder(
@@ -1729,7 +1729,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                         IconButton(
                           padding: EdgeInsets.zero,
                           constraints: const BoxConstraints(),
-                          icon: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
+                          icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                           onPressed: () {
                             setState(() {
                               _breakTimes.removeAt(index);
@@ -1756,7 +1756,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                     _breakTimes.add({'start': null, 'end': null});
                   });
                 },
-                icon: Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),
+                icon: const Icon(Iconsax.add_circle_copy, color: VSPColors.accent, size: 18),
                 label: Text(
                   isArabic ? 'إضافة فترة راحة أخرى' : 'Add Another Break', 
                   style: const TextStyle(color: VSPColors.accent, fontSize: 13),
@@ -1914,7 +1914,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
                 children: [
                   Row(
                     children: [
-                      Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 18),
+                      const Icon(Iconsax.lock_copy, color: VSPColors.accent, size: 18),
                       const SizedBox(width: 8),
                       Text(
                         isArabic ? 'اشتراط عربون حجز' : 'Require Booking Deposit',

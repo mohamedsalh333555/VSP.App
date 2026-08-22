@@ -291,7 +291,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
                             style: ElevatedButton.styleFrom(
                               backgroundColor: VSPColors.surfaceAlt,
                               foregroundColor: Colors.white,
-                              side: BorderSide(color: VSPColors.divider),
+                              side: const BorderSide(color: VSPColors.divider),
                               shape: RoundedRectangleBorder(
                                 borderRadius: BorderRadius.circular(VSPRadius.xl),
                               ),

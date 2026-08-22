@@ -77,11 +77,11 @@ class VSPCard extends StatelessWidget {
                 width: 1,
               ),
               boxShadow: [
-                BoxShadow(
+                const BoxShadow(
                   color: VSPColors.glassGlow,
                   blurRadius: 16,
                   spreadRadius: 0,
-                  offset: const Offset(0, 4),
+                  offset: Offset(0, 4),
                 ),
               ],
             ),

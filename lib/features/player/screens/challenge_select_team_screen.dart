@@ -173,7 +173,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                       decoration: InputDecoration(
                         hintText: AppLocalizations.of(context)!.searchTeamPlaceholder,
                         hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                        prefixIcon: Icon(Iconsax.search_normal_copy, color: VSPColors.accent),
+                        prefixIcon: const Icon(Iconsax.search_normal_copy, color: VSPColors.accent),
                         border: InputBorder.none,
                         contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
                       ),
@@ -432,7 +432,7 @@ class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
                   ),
                 ),
                 if (isSelected)
-                  Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
+                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
                 else
                   Icon(Iconsax.tick_circle_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
               ],

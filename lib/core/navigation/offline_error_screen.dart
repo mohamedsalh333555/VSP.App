@@ -118,7 +118,7 @@ class _OfflineErrorScreenState extends State<OfflineErrorScreen> with SingleTick
                                   )
                                 ],
                               ),
-                              child: Icon(
+                              child: const Icon(
                                 Iconsax.wifi_square_copy,
                                 color: VSPColors.accent,
                                 size: 48,

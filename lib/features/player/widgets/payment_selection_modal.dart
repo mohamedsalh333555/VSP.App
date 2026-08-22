@@ -48,7 +48,7 @@ class PaymentSelectionModal extends StatelessWidget {
             Align(
               alignment: isArabic ? Alignment.topLeft : Alignment.topRight,
               child: IconButton(
-                icon: Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary, size: 24),
+                icon: const Icon(Iconsax.close_circle_copy, color: VSPColors.textPrimary, size: 24),
                 onPressed: () => Navigator.pop(context),
                 padding: EdgeInsets.zero,
                 constraints: const BoxConstraints(),
@@ -63,7 +63,7 @@ class PaymentSelectionModal extends StatelessWidget {
                 color: VSPColors.accent.withValues(alpha: 0.2),
                 shape: BoxShape.circle,
               ),
-              child: Icon(Iconsax.tick_circle_copy,
+              child: const Icon(Iconsax.tick_circle_copy,
                 color: VSPColors.accent,
                 size: 40,
               ),

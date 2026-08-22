@@ -124,7 +124,7 @@ class StadiumCard extends StatelessWidget {
                           child: Row(
                             mainAxisSize: MainAxisSize.min,
                             children: [
-                              Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
+                              const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Flexible(
                                 child: Text(
@@ -211,7 +211,7 @@ class StadiumCard extends StatelessWidget {
                             shape: BoxShape.circle,
                             border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
                           ),
-                          child: Icon(
+                          child: const Icon(
                             Iconsax.edit_copy,
                             color: VSPColors.accent,
                             size: 18,
@@ -301,17 +301,17 @@ class StadiumCard extends StatelessWidget {
                         return Row(
                           children: [
                             if (hasBaths) ...[
-                              Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
+                              const Icon(Iconsax.drop, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'حمامات 🚻  ' : 'Baths 🚻  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasCafe) ...[
-                              Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
+                              const Icon(Iconsax.coffee_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'كافتيريا ☕  ' : 'Cafeteria ☕  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
                             if (hasGarage) ...[
-                              Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
+                              const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
                               const SizedBox(width: 4),
                               Text(isArabic ? 'جراج 🅿️  ' : 'Garage 🅿️  ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
                             ],
@@ -432,7 +432,7 @@ class StadiumCard extends StatelessWidget {
       child: Row(
         mainAxisSize: MainAxisSize.min,
         children: [
-          Icon(Iconsax.gps_copy, color: Colors.black, size: 12),
+          const Icon(Iconsax.gps_copy, color: Colors.black, size: 12),
           const SizedBox(width: 4),
           Text(
             GeoHelper.formatDistance(distance),

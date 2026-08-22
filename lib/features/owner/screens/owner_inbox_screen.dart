@@ -121,12 +121,12 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
         ),
         actions: [
           IconButton(
-            icon: Icon(Iconsax.headphone_copy, color: VSPColors.accent),
+            icon: const Icon(Iconsax.headphone_copy, color: VSPColors.accent),
             onPressed: () => _openSupportChat(context),
             tooltip: isArabic ? 'الاتصال بالدعم' : 'Contact Support',
           ),
           IconButton(
-            icon: Icon(Iconsax.search_normal_1_copy, color: VSPColors.accent),
+            icon: const Icon(Iconsax.search_normal_1_copy, color: VSPColors.accent),
             onPressed: () => _startNewChat(context, ownerId),
             tooltip: isArabic ? 'بحث عن لاعبين' : 'Search Players',
           ),
@@ -281,7 +281,7 @@ class _OwnerInboxScreenState extends State<OwnerInboxScreen> {
                 backgroundColor: VSPColors.surfaceAlt,
                 backgroundImage: avatar != null ? NetworkImage(avatar) : null,
                 child: avatar == null
-                    ? Icon(Iconsax.user_copy, color: VSPColors.accent)
+                    ? const Icon(Iconsax.user_copy, color: VSPColors.accent)
                     : null,
               ),
               const SizedBox(width: 14),

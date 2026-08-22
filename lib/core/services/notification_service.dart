@@ -345,7 +345,7 @@ class NotificationService {
       iOS: darwinPlatformChannelSpecifics,
     );
 
-    final title = 'Booking Confirmed! ⚽';
+    const title = 'Booking Confirmed! ⚽';
     final bodyStr = 'You booked $stadiumName on ${bookingDate.month}/${bookingDate.day} at $timeSlot.';
 
     await NotificationService()._localNotifications.show(

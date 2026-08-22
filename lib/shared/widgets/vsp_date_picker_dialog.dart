@@ -171,7 +171,7 @@ class _VSPDatePickerDialogState extends State<VSPDatePickerDialog> {
                       },
                       icon: Container(
                         padding: const EdgeInsets.all(6),
-                        decoration: BoxDecoration(
+                        decoration: const BoxDecoration(
                           color: VSPColors.surfaceAlt,
                           shape: BoxShape.circle,
                         ),

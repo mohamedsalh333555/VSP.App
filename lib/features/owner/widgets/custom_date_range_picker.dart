@@ -1,4 +1,4 @@
-﻿import 'package:vsp_application/l10n/app_localizations.dart';
+import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
@@ -71,7 +71,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
               children: [
                 IconButton(
                   onPressed: () => _changeMonth(-1),
-                  icon: Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
+                  icon: const Icon(Iconsax.arrow_left_2_copy, color: VSPColors.textPrimary),
                 ),
                 Text(
                   DateFormat('MMMM yyyy').format(_focusedMonth),
@@ -81,7 +81,7 @@ class _CustomDateRangePickerState extends State<CustomDateRangePicker> {
                 ),
                 IconButton(
                   onPressed: () => _changeMonth(1),
-                  icon: Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textPrimary),
+                  icon: const Icon(Iconsax.arrow_right_1_copy, color: VSPColors.textPrimary),
                 ),
               ],
             ),

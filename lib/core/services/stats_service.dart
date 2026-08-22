@@ -1,6 +1,6 @@
-import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import 'logger_service.dart';
 
 class StatsService {
   /// Aggregates stats for a specific player
@@ -64,8 +64,8 @@ class StatsService {
         'favoriteStadium': favStadium,
         'matchesPlayed': bookings.length,
       };
-    } catch (e) {
-      debugPrint('Error calculating stats: $e');
+    } catch (e, stack) {
+      VSPLogger.e('Error calculating stats for player $userId', e, stack);
       return {
         'winRate': '0.0',
         'favoriteStadium': 'Error',

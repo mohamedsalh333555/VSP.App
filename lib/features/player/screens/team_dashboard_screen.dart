@@ -62,11 +62,11 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         actions: [
           if (_userTeam != null)
             IconButton(
-              icon: Icon(Iconsax.share_copy, color: VSPColors.accent),
+              icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
               onPressed: () => _showTeamCard(context, _userTeam!),
             ),
           IconButton(
-            icon: Icon(Iconsax.headphones_copy, color: VSPColors.textSecondary),
+            icon: const Icon(Iconsax.headphones_copy, color: VSPColors.textSecondary),
             onPressed: () => SupportService().openSupport(context),
           ),
           const SizedBox(width: 8),
@@ -163,7 +163,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
               children: [
                 ElevatedButton.icon(
                   onPressed: () => Navigator.pop(context),
-                  icon: Icon(Iconsax.close_circle_copy),
+                  icon: const Icon(Iconsax.close_circle_copy),
                   label: Text(AppLocalizations.of(context)!.close),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.surfaceAlt,
@@ -177,7 +177,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                       AppLocalizations.of(context)!.shareTeamText(team.name, team.rankTitle),
                     );
                   },
-                  icon: Icon(Iconsax.share_copy),
+                  icon: const Icon(Iconsax.share_copy),
                   label: Text(AppLocalizations.of(context)!.shareLink),
                   style: ElevatedButton.styleFrom(
                     backgroundColor: VSPColors.accent,

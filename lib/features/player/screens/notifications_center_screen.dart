@@ -77,7 +77,7 @@ class NotificationsCenterScreen extends StatelessWidget {
                       color: VSPColors.error.withValues(alpha: 0.2),
                       borderRadius: BorderRadius.circular(VSPRadius.lg),
                     ),
-                    child: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
+                    child: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
                     NotificationRepository().deleteNotification(userId, notification.id);

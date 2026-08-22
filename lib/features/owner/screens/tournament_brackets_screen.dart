@@ -1026,7 +1026,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
           children: [
             Container(
               padding: const EdgeInsets.all(8),
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration(
                 color: Colors.white10,
                 shape: BoxShape.circle,
               ),

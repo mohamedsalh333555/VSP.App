@@ -148,11 +148,11 @@ class VspUploadedItemRow extends StatelessWidget {
           if (thumbnailUrl != null || imageFile != null)
             Row(
               children: [
-                Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
+                const Icon(Iconsax.tick_circle_copy, color: VSPColors.success, size: 20),
                 if (onDelete != null) ...[
                   const SizedBox(width: 8),
                   IconButton(
-                    icon: Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
+                    icon: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 20),
                     onPressed: onDelete,
                     padding: EdgeInsets.zero,
                     constraints: const BoxConstraints(),
@@ -167,7 +167,7 @@ class VspUploadedItemRow extends StatelessWidget {
               child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.warning),
             )
           else
-            Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),
+            const Icon(Iconsax.warning_2_copy, color: VSPColors.error, size: 20),
         ],
       ),
     );

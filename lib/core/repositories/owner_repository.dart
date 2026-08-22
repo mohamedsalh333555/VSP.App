@@ -1,5 +1,6 @@
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import '../services/logger_service.dart';
 
 class OwnerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -43,8 +44,9 @@ class OwnerRepository {
         total += (row['total_price'] ?? 0).toDouble();
       }
       return total;
-    } catch (e) {
-      return 0;
+    } catch (e, stack) {
+      VSPLogger.e('Error calculating owner revenue for $ownerId', e, stack);
+      return 0.0;
     }
   }
 
@@ -63,7 +65,8 @@ class OwnerRepository {
         totalHours += end.difference(start).inMinutes / 60.0;
       }
       return totalHours;
-    } catch (e) {
+    } catch (e, stack) {
+      VSPLogger.e('Error calculating booked hours for $ownerId', e, stack);
       return 0.0;
     }
   }
@@ -90,7 +93,8 @@ class OwnerRepository {
           .select()
           .order('created_at', ascending: false);
       return List<Map<String, dynamic>>.from(list);
-    } catch (e) {
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching transactions list', e, stack);
       return [];
     }
   }

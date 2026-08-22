@@ -70,7 +70,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
             ),
             const SizedBox(height: VSPSpacing.md),
             ListTile(
-              leading: Icon(Iconsax.image_copy, color: VSPColors.accent),
+              leading: const Icon(Iconsax.image_copy, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.camera, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -78,7 +78,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: Icon(Iconsax.image_copy, color: VSPColors.accent),
+              leading: const Icon(Iconsax.image_copy, color: VSPColors.accent),
               title: Text(AppLocalizations.of(context)!.gallery, style: const TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);
@@ -86,7 +86,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
               },
             ),
             ListTile(
-              leading: Icon(Iconsax.document_text_copy, color: VSPColors.accent),
+              leading: const Icon(Iconsax.document_text_copy, color: VSPColors.accent),
               title: const Text('الملفات (PDF / صور)', style: TextStyle(color: VSPColors.textPrimary)),
               onTap: () {
                 Navigator.pop(context);

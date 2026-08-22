@@ -139,7 +139,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
                       border: Border.all(
                           color: VSPColors.accent.withValues(alpha: 0.3)),
                     ),
-                    child: Icon(Iconsax.lock_1_copy,
+                    child: const Icon(Iconsax.lock_1_copy,
                       color: VSPColors.accent,
                       size: 32,
                     ),
