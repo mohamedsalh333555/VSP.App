@@ -840,28 +840,37 @@ class TournamentRepository {
             return;
           }
 
-          await _supabase
-              .from('championships')
-              .update({
-                'status': 'completed',
-                'champion_team_id': winnerId,
-                'champion_team_name': winnerName,
-              })
-              .eq('id', championshipId);
-
-          final team = await TeamRepository().getTeam(winnerId);
-          if (team != null) {
-            final badges = List<String>.from(team.unlockedBadges);
-            if (!badges.contains('cup_winner')) {
-              badges.add('cup_winner');
-            }
+          try {
+            await _supabase.rpc('crown_tournament_champion_atomic', params: {
+              'p_championship_id': championshipId,
+              'p_champion_team_id': winnerId,
+              'p_champion_team_name': winnerName ?? '',
+            });
+          } catch (rpcErr) {
+            debugPrint('crown_tournament_champion_atomic fallback: $rpcErr');
             await _supabase
-                .from('teams')
+                .from('championships')
                 .update({
-                  'championships_won': team.championshipsWon + 1,
-                  'unlocked_badges': badges,
+                  'status': 'completed',
+                  'champion_team_id': winnerId,
+                  'champion_team_name': winnerName,
                 })
-                .eq('id', winnerId);
+                .eq('id', championshipId);
+
+            final team = await TeamRepository().getTeam(winnerId);
+            if (team != null) {
+              final badges = List<String>.from(team.unlockedBadges);
+              if (!badges.contains('cup_winner')) {
+                badges.add('cup_winner');
+              }
+              await _supabase
+                  .from('teams')
+                  .update({
+                    'championships_won': team.championshipsWon + 1,
+                    'unlocked_badges': badges,
+                  })
+                  .eq('id', winnerId);
+            }
           }
 
           // ── Celebration Notifications (Final Match) ──

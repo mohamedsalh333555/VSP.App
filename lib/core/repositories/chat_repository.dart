@@ -80,6 +80,7 @@ class ChatRepository {
           'last_message': message.text,
           'last_message_time': DateTime.now().toUtc().toIso8601String(),
           'unread_counts': unreadCounts,
+          'deleted_for_users': [], // Resurfaces chat for both participants
           'updated_at': DateTime.now().toUtc().toIso8601String(),
         }).eq('id', conversationId);
 

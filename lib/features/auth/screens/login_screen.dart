@@ -222,7 +222,15 @@ class _LoginScreenState extends State<LoginScreen> {
                     // Header Nav
                     Row(
                       children: [
-                        const VSPBackButton(),
+                        VSPBackButton(
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/welcome');
+                            }
+                          },
+                        ),
                         const Spacer(),
                         Image.asset(
                           'assets/images/logo.png',

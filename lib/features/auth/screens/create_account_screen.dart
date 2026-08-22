@@ -3,15 +3,17 @@ import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:flutter/gestures.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/services/secure_storage_service.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/social_auth_button.dart';
 import 'dart:io' show Platform;
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
-import 'signup_screen.dart';
 
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/vsp_icon_badge.dart';
@@ -173,12 +175,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                         height: 60,
                         onPressed: () {
                           authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => SignupScreen(isOwner: isUserOwner),
-                            ),
-                          );
+                          context.push(isUserOwner ? '/signup-owner' : '/signup-player');
                         },
                       ),
                     ),
@@ -237,8 +234,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                   ],
                                 ),
                                 onPressed: () async {
-                                  authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                                  final success = await authProvider.signInWithApple();
+                                  final role = isUserOwner ? 'owner' : 'player';
+                                  authProvider.setUserType(role);
+                                  await SecureStorageService.writeSecure('pending_oauth_role', role);
+                                  final prefs = await SharedPreferences.getInstance();
+                                  await prefs.setString('pending_oauth_role', role);
+                                  await prefs.setBool('pending_oauth_is_login_only', false);
+                                  final success = await authProvider.signInWithApple(isLoginOnly: false);
                                   if (context.mounted && !success) {
                                     VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
                                   }
@@ -272,8 +274,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                                 ],
                               ),
                               onPressed: () async {
-                                authProvider.setUserType(isUserOwner ? 'owner' : 'player');
-                                final success = await authProvider.signInWithGoogle();
+                                final role = isUserOwner ? 'owner' : 'player';
+                                authProvider.setUserType(role);
+                                await SecureStorageService.writeSecure('pending_oauth_role', role);
+                                final prefs = await SharedPreferences.getInstance();
+                                await prefs.setString('pending_oauth_role', role);
+                                await prefs.setBool('pending_oauth_is_login_only', false);
+                                final success = await authProvider.signInWithGoogle(isLoginOnly: false);
                                 if (context.mounted && !success) {
                                   VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
                                 }

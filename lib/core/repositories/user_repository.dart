@@ -122,6 +122,27 @@ class UserRepository {
     }
   }
 
+  /// Securely set user role on signup via dedicated RPC set_user_role_on_signup
+  Future<bool> setUserRole(String userId, String role) async {
+    try {
+      await _supabase.rpc('set_user_role_on_signup', params: {
+        'p_user_id': userId,
+        'p_role': role,
+      });
+      VSPLogger.i('✅ setUserRole persisted successfully for $userId with role: $role');
+      return true;
+    } catch (e) {
+      VSPLogger.w('⚠️ RPC set_user_role_on_signup fallback to direct update or notice: $e');
+      try {
+        await _supabase.from('users').update({'role': role}).eq('id', userId);
+        return true;
+      } catch (err) {
+        VSPLogger.e('Error setting user role for $userId', err);
+        return false;
+      }
+    }
+  }
+
   /// Trusted method to complete user registration via RPC complete_user_registration
   Future<bool> completeRegistrationFlags(String userId, Map<String, dynamic> additionalData) async {
     try {

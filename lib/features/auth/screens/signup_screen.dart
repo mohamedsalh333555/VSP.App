@@ -2,6 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -223,7 +224,13 @@ class _SignupScreenState extends State<SignupScreen> {
                         _buildNavCircle(
                           context, 
                           icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-                          onTap: () => Navigator.pop(context),
+                          onTap: () {
+                            if (context.canPop()) {
+                              context.pop();
+                            } else {
+                              context.go('/welcome');
+                            }
+                          },
                         ),
                         const Spacer(),
                         Image.asset(

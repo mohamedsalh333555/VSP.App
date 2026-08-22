@@ -80,6 +80,11 @@ class LeagueRepository {
 
   Future<bool> registerFor1v1(String userId) async {
     try {
+      final currentCount = await get1v1RegistrationsCount();
+      if (currentCount >= 32) {
+        throw Exception('roster_full_32');
+      }
+
       await _supabase.from('vsp_1v1_registrations').insert({
         'user_id': userId,
         'status': 'pending',
@@ -87,7 +92,7 @@ class LeagueRepository {
       return true;
     } catch (e) {
       debugPrint('Error registering for 1v1: $e');
-      return false;
+      rethrow;
     }
   }
 

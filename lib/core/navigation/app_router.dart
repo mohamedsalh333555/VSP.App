@@ -3,6 +3,9 @@ import 'package:go_router/go_router.dart';
 import '../providers/auth_provider.dart';
 import '../../features/auth/screens/splash_screen.dart';
 import '../../features/auth/screens/welcome_screen.dart';
+import '../../features/auth/screens/login_screen.dart';
+import '../../features/auth/screens/create_account_screen.dart';
+import '../../features/auth/screens/signup_screen.dart';
 import '../../features/auth/screens/player_onboarding_screen.dart';
 import '../../features/auth/screens/owner_onboarding_screen.dart';
 import '../../features/auth/screens/verify_email_screen.dart';
@@ -41,6 +44,26 @@ class AppRouter {
         GoRoute(
           path: '/welcome',
           builder: (context, state) => const WelcomeScreen(),
+        ),
+        GoRoute(
+          path: '/login',
+          builder: (context, state) => const LoginScreen(),
+        ),
+        GoRoute(
+          path: '/create-account-player',
+          builder: (context, state) => const CreateAccountScreen(isOwner: false),
+        ),
+        GoRoute(
+          path: '/create-account-owner',
+          builder: (context, state) => const CreateAccountScreen(isOwner: true),
+        ),
+        GoRoute(
+          path: '/signup-player',
+          builder: (context, state) => const SignupScreen(isOwner: false),
+        ),
+        GoRoute(
+          path: '/signup-owner',
+          builder: (context, state) => const SignupScreen(isOwner: true),
         ),
         GoRoute(
           path: '/onboarding-player',
@@ -152,7 +175,16 @@ class AppRouter {
 
     // 2. Unauthenticated check
     if (!isAuthenticated) {
-      if (path != '/welcome') return '/welcome';
+      const allowedAuthPaths = [
+        '/welcome',
+        '/login',
+        '/create-account-player',
+        '/create-account-owner',
+        '/signup-player',
+        '/signup-owner',
+        '/verify-email',
+      ];
+      if (!allowedAuthPaths.contains(path)) return '/welcome';
       return null;
     }
 
@@ -189,7 +221,7 @@ class AppRouter {
     final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
     final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
     if (!hasPhone) {
-      final role = userModel.role;
+      final role = authProvider.userType ?? userModel.role;
       final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
       if (path != targetPath) return targetPath;
       return null;
@@ -202,7 +234,7 @@ class AppRouter {
     }
     if (isAdmin) {
       if (path == '/admin') return null;
-      if (path == '/welcome' || path == '/splash' || path == '/onboarding-player' || path == '/onboarding-owner') return '/admin';
+      if (path == '/welcome' || path == '/splash' || path == '/login' || path.startsWith('/create-account') || path.startsWith('/signup') || path == '/onboarding-player' || path == '/onboarding-owner') return '/admin';
     }
 
     if (userModel.isBlocked) {
@@ -241,14 +273,14 @@ class AppRouter {
         }
       }
       
-      if (path == '/welcome' || path == '/splash' || path == '/onboarding-player' || path == '/onboarding-owner' || path == '/verify-email' || path == '/owner' || path == '/player' || path == '/offline') {
+      if (path == '/welcome' || path == '/splash' || path == '/login' || path.startsWith('/create-account') || path.startsWith('/signup') || path == '/onboarding-player' || path == '/onboarding-owner' || path == '/verify-email' || path == '/owner' || path == '/player' || path == '/offline') {
         return '/';
       }
       return null;
     }
 
     // 8. Player flow gating
-    if (path == '/welcome' || path == '/splash' || path == '/onboarding-player' || path == '/onboarding-owner' || path == '/suspended' || path == '/verify-email' || path == '/player') {
+    if (path == '/welcome' || path == '/splash' || path == '/login' || path.startsWith('/create-account') || path.startsWith('/signup') || path == '/onboarding-player' || path == '/onboarding-owner' || path == '/suspended' || path == '/verify-email' || path == '/player') {
       return '/';
     }
 

@@ -1051,7 +1051,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                     await Supabase.instance.client.rpc('close_owner_daily_shift', params: {
                       'p_owner_id': uid,
                       'p_stadium_id': selectedStadium.id,
-                      'p_operational_date': selectedDateOnly.toIso8601String().split('T').first,
+                      'p_operational_date': DateFormat('yyyy-MM-dd').format(selectedDateOnly),
                     });
                     if (mounted) {
                       VSPFeedback.showSuccess(context, isArabic ? 'تم تقفيل الوردية وتصفية النقدية بنجاح!' : 'Shift closed successfully!');

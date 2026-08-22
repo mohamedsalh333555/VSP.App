@@ -7,11 +7,33 @@ import '../constants/egypt_governorates.dart';
 class StadiumRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
+  String? _formatTimeToHms(dynamic timeVal) {
+    if (timeVal == null) return null;
+    final str = timeVal.toString().trim();
+    if (str.isEmpty) return null;
+    final parts = str.split(':');
+    if (parts.length == 1) {
+      final h = int.tryParse(parts[0]) ?? 0;
+      return '${h.toString().padLeft(2, '0')}:00:00';
+    } else if (parts.length == 2) {
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:00';
+    } else if (parts.length >= 3) {
+      final h = int.tryParse(parts[0]) ?? 0;
+      final m = int.tryParse(parts[1]) ?? 0;
+      final s = int.tryParse(parts[2]) ?? 0;
+      return '${h.toString().padLeft(2, '0')}:${m.toString().padLeft(2, '0')}:${s.toString().padLeft(2, '0')}';
+    }
+    return str;
+  }
+
   // Get all stadiums (with expanded limit)
   Stream<List<Stadium>> getStadiums({int limit = 50}) {
-    final query = _supabase.from('stadiums').stream(primaryKey: ['id']);
-    
-    return query
+    return _supabase
+        .from('stadiums')
+        .stream(primaryKey: ['id'])
+        .eq('is_deleted_by_owner', false)
         .limit(limit)
         .map((list) => list
             .where((data) => data['is_deleted_by_owner'] != true)
@@ -27,6 +49,7 @@ class StadiumRepository {
           .from('stadiums')
           .select()
           .eq('id', stadiumId)
+          .eq('is_deleted_by_owner', false)
           .maybeSingle();
       if (response != null && response['is_deleted_by_owner'] != true) {
         return Stadium.fromFirestore(response, response['id'].toString());
@@ -79,7 +102,7 @@ class StadiumRepository {
                 .from('stadiums')
                 .select('id')
                 .eq('owner_id', ownerId)
-                .neq('is_deleted_by_owner', true);
+                .eq('is_deleted_by_owner', false);
             final currentCount = (existingStadiums as List).length;
             if (currentCount >= userModel.maxStadiums) {
               throw Exception(
@@ -110,6 +133,17 @@ class StadiumRepository {
       final imagesList = sanitizedData['images'] ?? (sanitizedData['imageUrl'] != null ? [sanitizedData['imageUrl']] : []);
       final firstImage = (imagesList is List && imagesList.isNotEmpty) ? imagesList.first : null;
 
+      final bool isSplitShift = sanitizedData['isSplitShift'] == true ||
+          sanitizedData['is_split_shift'] == true ||
+          (features is Map && features['isSplitShift'] == true);
+
+      dynamic rawBreakStart = sanitizedData['breakStartTime'] ??
+          sanitizedData['break_start_time'] ??
+          ((features is Map && features['breakTime'] is Map) ? features['breakTime']['start'] : null);
+      dynamic rawBreakEnd = sanitizedData['breakEndTime'] ??
+          sanitizedData['break_end_time'] ??
+          ((features is Map && features['breakTime'] is Map) ? features['breakTime']['end'] : null);
+
       final pgData = {
         'name': sanitizedData['name'],
         'owner_id': sanitizedData['ownerId'] ?? sanitizedData['owner_id'],
@@ -118,6 +152,9 @@ class StadiumRepository {
         'features': features,
         'opening_time': sanitizedData['openingTime'] ?? sanitizedData['opening_time'] ?? ((features is Map && features['workingHours'] is Map) ? features['workingHours']['start'] : null),
         'closing_time': sanitizedData['closingTime'] ?? sanitizedData['closing_time'] ?? ((features is Map && features['workingHours'] is Map) ? features['workingHours']['end'] : null),
+        'is_split_shift': isSplitShift,
+        'break_start_time': isSplitShift ? _formatTimeToHms(rawBreakStart) : null,
+        'break_end_time': isSplitShift ? _formatTimeToHms(rawBreakEnd) : null,
         'players_per_team': ppt,
         'total_field_capacity': tfc,
         'governorate': sanitizedData['governorate'] ?? 'Cairo',
@@ -176,7 +213,29 @@ class StadiumRepository {
           if (feat['workingHours']['start'] != null) pgData['opening_time'] = feat['workingHours']['start'];
           if (feat['workingHours']['end'] != null) pgData['closing_time'] = feat['workingHours']['end'];
         }
+        if (feat is Map && feat.containsKey('isSplitShift')) {
+          pgData['is_split_shift'] = feat['isSplitShift'] == true;
+          if (feat['isSplitShift'] == true && feat['breakTime'] is Map) {
+            pgData['break_start_time'] = _formatTimeToHms(feat['breakTime']['start']);
+            pgData['break_end_time'] = _formatTimeToHms(feat['breakTime']['end']);
+          } else if (feat['isSplitShift'] == false) {
+            pgData['break_start_time'] = null;
+            pgData['break_end_time'] = null;
+          }
+        }
       }
+      if (securedData.containsKey('isSplitShift') || securedData.containsKey('is_split_shift')) {
+        final bool isSplit = securedData['isSplitShift'] == true || securedData['is_split_shift'] == true;
+        pgData['is_split_shift'] = isSplit;
+        if (!isSplit) {
+          pgData['break_start_time'] = null;
+          pgData['break_end_time'] = null;
+        }
+      }
+      if (securedData.containsKey('breakStartTime')) pgData['break_start_time'] = _formatTimeToHms(securedData['breakStartTime']);
+      if (securedData.containsKey('break_start_time')) pgData['break_start_time'] = _formatTimeToHms(securedData['break_start_time']);
+      if (securedData.containsKey('breakEndTime')) pgData['break_end_time'] = _formatTimeToHms(securedData['breakEndTime']);
+      if (securedData.containsKey('break_end_time')) pgData['break_end_time'] = _formatTimeToHms(securedData['break_end_time']);
       if (securedData.containsKey('openingTime')) pgData['opening_time'] = securedData['openingTime'];
       if (securedData.containsKey('opening_time')) pgData['opening_time'] = securedData['opening_time'];
       if (securedData.containsKey('closingTime')) pgData['closing_time'] = securedData['closingTime'];

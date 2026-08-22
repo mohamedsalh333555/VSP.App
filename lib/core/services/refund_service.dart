@@ -14,52 +14,31 @@ class RefundService {
     required bool isPaid,
   }) async {
     try {
-      if (!isPaid) {
-        await _supabase.from('bookings').update({
-          'status': 'cancelled',
-          'cancelled_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', bookingId);
+      final response = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
+        'p_booking_id': bookingId,
+        'p_user_id': _supabase.auth.currentUser?.id,
+      });
 
+      if (response is Map && response['success'] == false) {
         if (context.mounted) {
-          VSPFeedback.showSuccess(context, "تم إلغاء الحجز غير المدفوع بنجاح.");
+          VSPFeedback.showError(context, response['message']?.toString() ?? "فشل إلغاء الحجز.");
         }
         return;
       }
 
-      final minutesBeforeBooking = bookingStartTime.toUtc().difference(DateTime.now().toUtc()).inMinutes;
-      double refundAmount = 0.0;
-      String refundReason = '';
-
-      if (minutesBeforeBooking >= 1440) {
-        refundAmount = amountPaid;
-        refundReason = 'full_refund';
-      } else if (minutesBeforeBooking >= 120) {
-        refundAmount = amountPaid * 0.75;
-        refundReason = 'partial_refund_75';
-      } else {
-        refundAmount = 0.0;
-        refundReason = 'no_refund_too_late';
-      }
-
-      try {
-        await _supabase.functions.invoke('process_refund', body: {
-          'booking_id': bookingId,
-          'refund_amount': refundAmount,
-          'refund_reason': refundReason,
-        });
-      } catch (e) {
-        debugPrint('Refund Function invoke notice: $e');
-      }
-
-      await _supabase.from('bookings').update({
-        'status': 'cancelled',
-        'payment_status': 'refunded',
-        'cancelled_at': DateTime.now().toUtc().toIso8601String(),
-        'refund_amount': refundAmount,
-      }).eq('id', bookingId);
+      final refundAmount = (response is Map && response['refund_amount'] != null)
+          ? (response['refund_amount'] as num).toDouble()
+          : (isPaid ? amountPaid : 0.0);
+      final refundReason = (response is Map && response['refund_reason'] != null)
+          ? response['refund_reason'].toString()
+          : (isPaid ? 'full_refund' : 'unpaid_cancellation');
 
       if (context.mounted) {
-        _showRefundDialog(context, refundAmount, refundReason);
+        if (!isPaid) {
+          VSPFeedback.showSuccess(context, "تم إلغاء الحجز غير المدفوع بنجاح.");
+        } else {
+          _showRefundDialog(context, refundAmount, refundReason);
+        }
       }
     } catch (e) {
       if (context.mounted) {

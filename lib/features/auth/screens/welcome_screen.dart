@@ -3,15 +3,13 @@ import 'dart:ui';
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-
-import 'create_account_screen.dart';
-import 'login_screen.dart';
 
 /// Welcome Screen - State-of-the-Art Glassmorphic Onboarding Experience.
 class WelcomeScreen extends StatefulWidget {
@@ -32,14 +30,9 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
       if (!mounted) return;
       final auth = Provider.of<AuthProvider>(context, listen: false);
       final hasError = auth.errorMessage != null && auth.errorMessage!.isNotEmpty;
-      final hasStaleData = auth.userType != null || auth.errorMessage != null || auth.email.isNotEmpty;
 
       if (hasError) {
         VSPFeedback.showError(context, auth.errorMessage!);
-      }
-
-      if (hasStaleData) {
-        auth.reset();
       }
     });
   }
@@ -180,12 +173,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onPressed: () {
                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
                             authProvider.setUserType('owner');
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CreateAccountScreen(isOwner: true),
-                              ),
-                            );
+                            context.push('/create-account-owner');
                           },
                           child: Container(
                             height: 52,
@@ -214,12 +202,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                           onPressed: () {
                             final authProvider = Provider.of<AuthProvider>(context, listen: false);
                             authProvider.setUserType('player');
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => const CreateAccountScreen(isOwner: false),
-                              ),
-                            );
+                            context.push('/create-account-player');
                           },
                           child: Container(
                             height: 52,
@@ -266,12 +249,7 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
                       const SizedBox(width: 6),
                       GestureDetector(
                         onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => const LoginScreen(),
-                            ),
-                          );
+                          context.push('/login');
                         },
                         child: Text(
                           AppLocalizations.of(context)!.login,

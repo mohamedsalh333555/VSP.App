@@ -298,17 +298,36 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
 
     final lowerUrl = url.toLowerCase();
     
-    // ✅ التقاط حالات نجاح Paymob الصريحة فقط (تجاهل كلمة callback الظاهرة في روابط الصفحة الأولى)
-    final isExplicitSuccess = (lowerUrl.contains('success=true') || 
-            lowerUrl.contains('txn_response_code=approved') || 
-            lowerUrl.contains('txn_response_code=0') ||
-            lowerUrl.contains('approved=true')) &&
+    // 🛡️ FIX: Ignore bank 3DS ACS domains (e.g. NBE, Banque Misr, CIB, MPGS, etc.)
+    // to prevent premature false success/failure triggers during OTP input.
+    final isBank3DsDomain = lowerUrl.contains('nbe.com.eg') ||
+        lowerUrl.contains('banquemisr.com') ||
+        lowerUrl.contains('cibeg.com') ||
+        lowerUrl.contains('mpgs') ||
+        lowerUrl.contains('acs') ||
+        lowerUrl.contains('3dsecure') ||
+        lowerUrl.contains('cardholder');
+    if (isBank3DsDomain) return;
+
+    final isPaymobEndpoint = lowerUrl.contains('/post_pay') || 
+        lowerUrl.contains('accept.paymob.com') || 
+        lowerUrl.contains('paymob.com') ||
+        lowerUrl.contains('vsp_payment_callback');
+
+    // ✅ التقاط حالات نجاح Paymob الصريحة فقط
+    final isExplicitSuccess = isPaymobEndpoint &&
+        (lowerUrl.contains('success=true') || 
+         lowerUrl.contains('txn_response_code=approved') || 
+         lowerUrl.contains('txn_response_code=00') ||
+         lowerUrl.contains('txn_response_code=0') ||
+         lowerUrl.contains('approved=true')) &&
         !lowerUrl.contains('success=false') &&
         !lowerUrl.contains('pending=true');
 
-    final isExplicitFailure = lowerUrl.contains('success=false') || 
-        lowerUrl.contains('txn_response_code=declined') || 
-        lowerUrl.contains('authentication_not_supported');
+    final isExplicitFailure = isPaymobEndpoint &&
+        (lowerUrl.contains('success=false') || 
+         lowerUrl.contains('txn_response_code=declined') || 
+         lowerUrl.contains('authentication_not_supported'));
 
     if (isExplicitSuccess) {
       _popSuccess();

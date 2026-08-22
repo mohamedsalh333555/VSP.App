@@ -34,6 +34,9 @@ lib/firebase_options.dart
 # Env / Secrets
 .env
 .env.*
+env.json
+env.*.json
+!env.json.example
 
 # Miscellaneous
 *.class

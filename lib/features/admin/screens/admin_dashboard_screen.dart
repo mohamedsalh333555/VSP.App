@@ -657,9 +657,7 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
                     child: PrimaryButton(
                       text: isArabic ? 'تأكيد إرسال الأرباح والتصفية 💸' : 'Mark Settled & Paid 💸',
                       height: 40,
-                      onPressed: () {
-                        VSPFeedback.showSuccess(context, isArabic ? 'تم تسجيل التسوية بنجاح!' : 'Settlement recorded!');
-                      },
+                      onPressed: () => _showPayoutSettlementDialog(owner, isArabic),
                     ),
                   ),
                 ],
@@ -763,23 +761,28 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Future<void> _approveOwner(String ownerId) async {
     try {
-      // 1. Mark owner as verified in users table
-      await _supabase.from('users').update({
-        'verification_status': 'approved',
-      }).eq('id', ownerId);
-
-      // 2. Verify all stadiums belonging to this owner
       try {
-        await _supabase.from('stadiums').update({'is_verified': true}).eq('owner_id', ownerId);
-      } catch (_) {}
+        await _supabase.rpc('admin_approve_owner_atomic', params: {
+          'p_owner_id': ownerId,
+        });
+      } catch (rpcErr) {
+        debugPrint('admin_approve_owner_atomic fallback: $rpcErr');
+        // Fallback to manual updates if RPC not present
+        await _supabase.from('users').update({
+          'verification_status': 'approved',
+        }).eq('id', ownerId);
 
-      // 3. 🏆 AUTO-APPROVE: Activate all championships created by this owner so they show to players
-      try {
-        await _supabase
-            .from('championships')
-            .update({'is_approved': true})
-            .eq('owner_id', ownerId);
-      } catch (_) {}
+        try {
+          await _supabase.from('stadiums').update({'is_verified': true}).eq('owner_id', ownerId);
+        } catch (_) {}
+
+        try {
+          await _supabase
+              .from('championships')
+              .update({'is_approved': true})
+              .eq('owner_id', ownerId);
+        } catch (_) {}
+      }
 
       if (mounted) {
         VSPFeedback.showSuccess(context, 'تم قبول وتوثيق المالك بنجاح! 🏆\nملاعبه وبطولاته أصبحت ظاهرة للاعبين.');
@@ -831,16 +834,93 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
     );
   }
 
+  void _showPayoutSettlementDialog(Map<String, dynamic> owner, bool isArabic) {
+    final refController = TextEditingController();
+    final amountController = TextEditingController(text: '0.00');
+    String selectedMethod = 'InstaPay';
+    if (owner['p2p_instapay'] != null && owner['p2p_instapay'].toString().isNotEmpty) {
+      selectedMethod = 'InstaPay (${owner['p2p_instapay']})';
+    } else if (owner['p2p_vodafone'] != null && owner['p2p_vodafone'].toString().isNotEmpty) {
+      selectedMethod = 'Wallet (${owner['p2p_vodafone']})';
+    } else if (owner['p2p_bank'] != null && owner['p2p_bank'].toString().isNotEmpty) {
+      selectedMethod = 'Bank (${owner['p2p_bank']})';
+    }
+
+    showDialog(
+      context: context,
+      builder: (ctx) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text(
+          isArabic ? 'تسوية أرباح المالك 💸' : 'Record Payout Settlement 💸',
+          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
+        ),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text('المالك: ${owner['name'] ?? 'Owner'}', style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold)),
+            Text(isArabic ? 'مبلغ التحويل (ج.م):' : 'Amount (EGP):', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+            const SizedBox(height: 4),
+            CustomTextField(
+              controller: amountController,
+              hintText: isArabic ? 'مبلغ التحويل (ج.م)' : 'Amount (EGP)',
+              keyboardType: const TextInputType.numberWithOptions(decimal: true),
+            ),
+            const SizedBox(height: 12),
+            Text(isArabic ? 'رقم الحوالة / المرجع البنكي:' : 'Transfer Reference #:', style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12)),
+            const SizedBox(height: 4),
+            CustomTextField(
+              controller: refController,
+              hintText: isArabic ? 'رقم الحوالة (مثال: IPN-984321)' : 'Transfer Ref (e.g. IPN-984321)',
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(onPressed: () => Navigator.pop(ctx), child: Text(isArabic ? 'إلغاء' : 'Cancel')),
+          ElevatedButton(
+            onPressed: () async {
+              final ref = refController.text.trim();
+              final amount = double.tryParse(amountController.text.trim()) ?? 0.0;
+              Navigator.pop(ctx);
+              try {
+                await _supabase.rpc('admin_record_payout_settlement_atomic', params: {
+                  'p_owner_id': owner['id'],
+                  'p_amount': amount,
+                  'p_payment_method': selectedMethod,
+                  'p_reference': ref,
+                });
+                if (mounted) VSPFeedback.showSuccess(context, isArabic ? 'تم تسجيل التسوية المالية بنجاح!' : 'Payout settlement recorded successfully!');
+              } catch (e) {
+                if (mounted) VSPFeedback.showError(context, 'فشل تسجيل التسوية: $e');
+              }
+            },
+            style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+            child: Text(isArabic ? 'تأكيد التحويل' : 'Confirm Payout'),
+          ),
+        ],
+      ),
+    );
+  }
+
   Future<void> _resolveMatchDispute(String bookingId, MatchOutcome outcome) async {
     try {
-      await _supabase.from('bookings').update({
-        'status': BookingStatus.completed.name,
-        'final_outcome': outcome.name,
-        'match_result_status': MatchResultStatus.confirmed.name,
-        'pending_outcome': null,
-        'requires_admin_intervention': false,
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', bookingId);
+      try {
+        await _supabase.rpc('admin_resolve_dispute_atomic', params: {
+          'p_booking_id': bookingId,
+          'p_final_outcome': outcome.name,
+        });
+      } catch (rpcErr) {
+        debugPrint('admin_resolve_dispute_atomic fallback: $rpcErr');
+        await _supabase.from('bookings').update({
+          'status': BookingStatus.completed.name,
+          'final_outcome': outcome.name,
+          'match_result_status': MatchResultStatus.confirmed.name,
+          'pending_outcome': null,
+          'requires_admin_intervention': false,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        }).eq('id', bookingId);
+      }
 
       if (mounted) VSPFeedback.showSuccess(context, 'تم فض النزاع وتأكيد النتيجة بنجاح! 🏆');
     } catch (e) {

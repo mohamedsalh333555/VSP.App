@@ -56,12 +56,24 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   void _startCountdownTimer() {
     _countdownTimer?.cancel();
-    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) {
+    _countdownTimer = Timer.periodic(const Duration(seconds: 1), (timer) async {
       if (!mounted) return;
       if (_remainingSeconds > 0) {
         setState(() => _remainingSeconds--);
       } else {
         _countdownTimer?.cancel();
+        if (!_paymentCompleted && _booking != null) {
+          final authProvider = Provider.of<AuthProvider>(context, listen: false);
+          final userId = authProvider.currentUser?.uid;
+          if (userId != null) {
+            await _cleanupStalePendingBookings(userId);
+          }
+          if (mounted) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            VSPFeedback.showError(context, isArabic ? 'انتهت مهلة حجز الوقت (3 دقائق).' : 'Booking reservation timeout (3 mins).');
+            Navigator.pop(context);
+          }
+        }
       }
     });
   }

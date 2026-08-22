@@ -250,14 +250,24 @@ class TeamRepository {
     try {
       final response = await _supabase
           .from('teams')
-          .select()
+          .select('*, team_members(user_id, users(profile_image_url))')
           .or('name.ilike.%$query%,captain_phone.ilike.%$query%');
       
       final List<Team> teams = [];
       for (final doc in (response as List)) {
         final teamId = doc['id'].toString();
-        final memberUids = await getTeamMemberUids(teamId);
-        final playerImages = await getTeamPlayerImages(memberUids);
+        final membersList = doc['team_members'] as List? ?? [];
+        final List<String> memberUids = [];
+        final List<String> playerImages = [];
+        
+        for (var m in membersList) {
+          final uid = m['user_id']?.toString();
+          if (uid != null) memberUids.add(uid);
+          final userMap = m['users'];
+          if (userMap is Map && userMap['profile_image_url'] != null) {
+            playerImages.add(userMap['profile_image_url'].toString());
+          }
+        }
         
         final data = Map<String, dynamic>.from(doc);
         data['memberUids'] = memberUids;
@@ -279,14 +289,24 @@ class TeamRepository {
       
       final response = await _supabase
           .from('teams')
-          .select()
+          .select('*, team_members(user_id, users(profile_image_url))')
           .inFilter('id', team.playedOpponents);
           
       final List<Team> teams = [];
       for (final doc in (response as List)) {
         final id = doc['id'].toString();
-        final memberUids = await getTeamMemberUids(id);
-        final playerImages = await getTeamPlayerImages(memberUids);
+        final membersList = doc['team_members'] as List? ?? [];
+        final List<String> memberUids = [];
+        final List<String> playerImages = [];
+        
+        for (var m in membersList) {
+          final uid = m['user_id']?.toString();
+          if (uid != null) memberUids.add(uid);
+          final userMap = m['users'];
+          if (userMap is Map && userMap['profile_image_url'] != null) {
+            playerImages.add(userMap['profile_image_url'].toString());
+          }
+        }
         
         final data = Map<String, dynamic>.from(doc);
         data['memberUids'] = memberUids;
@@ -410,19 +430,12 @@ class TeamRepository {
         }
       }
 
-      final championshipsResponse = await _supabase
+      final activeTournaments = await _supabase
           .from('championships')
-          .select('joined_teams')
-          .inFilter('status', ['open', 'ongoing']);
-
-      bool hasActiveTournament = false;
-      for (var row in championshipsResponse as List) {
-        final List joined = List.from(row['joined_teams'] ?? []);
-        if (joined.contains(teamId)) {
-          hasActiveTournament = true;
-          break;
-        }
-      }
+          .select('id')
+          .inFilter('status', ['open', 'ongoing'])
+          .contains('joined_teams', [teamId]);
+      final bool hasActiveTournament = (activeTournaments as List).isNotEmpty;
     
       if (hasActiveMatch || hasActiveTournament) {
         throw Exception("active_match_or_tournament_error");

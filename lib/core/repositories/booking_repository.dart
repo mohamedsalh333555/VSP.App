@@ -201,6 +201,7 @@ class SupabaseBookingRepository implements BookingRepository {
       }
 
       // 🛡️ 4. إنشاء الحجز بشكل ذري مؤمّن (Postgres Atomic RPC Lock)
+      final platformFee = (draft.totalPrice * 0.0475) + 3.0;
       final rpcResult = await _supabase.rpc('create_booking_atomic', params: {
         'p_stadium_id': draft.stadiumId,
         'p_user_id': userId,
@@ -209,6 +210,7 @@ class SupabaseBookingRepository implements BookingRepository {
         'p_end_time': draft.endTime.toUtc().toIso8601String(),
         'p_booking_type': _dbBookingType(draft.bookingType),
         'p_total_price': draft.totalPrice,
+        'p_platform_fee': platformFee,
         'p_stadium_name': draft.stadiumName,
         'p_stadium_image_url': draft.stadiumImageUrl,
         'p_is_private': draft.isPrivate,
@@ -628,10 +630,10 @@ class SupabaseBookingRepository implements BookingRepository {
                 if (b.stadiumId.toLowerCase() != stadiumId.toLowerCase()) return false;
                 if (b.status == BookingStatus.cancelled) return false;
 
-                // 🛑 Fix: If booking is pending and older than 10 minutes without payment, ignore it (does not block slot)
+                // 🛑 Fix: If booking is pending and older than 3 minutes without payment, ignore it (does not block slot)
                 if (b.status == BookingStatus.pending) {
                   final createdAtLocal = b.createdAt.toLocal();
-                  final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 10;
+                  final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 3;
                   if (isExpired) return false;
                 }
 

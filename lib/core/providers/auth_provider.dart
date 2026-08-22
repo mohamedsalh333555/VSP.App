@@ -157,15 +157,9 @@ class AuthProvider with ChangeNotifier {
 
       final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
 
-      // ⚡ CHECK IF ACCOUNT IS FULLY REGISTERED IN DB
-      final bool isExistingCompleteUser = userData != null && 
-          (userData['is_registration_complete'] == true || userData['isRegistrationComplete'] == true) &&
-          (userData['phone'] != null && userData['phone'].toString().trim().isNotEmpty);
-
-      // 🔒 UNREGISTERED / INCOMPLETE ACCOUNT GUARD:
-      // If login was initiated from LoginScreen (isLoginOnly = true) and the account is not fully registered in DB,
-      // block login, terminate auth session, and display error message.
-      if (isLoginOnly && !isExistingCompleteUser) {
+      // 🔒 UNREGISTERED ACCOUNT GUARD:
+      // Only trigger signOut() if isLoginOnly == true AND userData == null (user has no DB record at all).
+      if (isLoginOnly && userData == null) {
         VSPLogger.w("⚠️ Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
         await prefs.remove('pending_oauth_is_login_only');
         await signOut();
@@ -193,13 +187,8 @@ class AuthProvider with ChangeNotifier {
 
           VSPLogger.i("⚡ Overriding OAuth trigger role default from '${userData['role']}' to '$effectiveRole' for UID: ${user.id}");
 
-          // 1️⃣ Patch DB via repository — override the trigger's default 'player'
-          await _userRepository.updateUserProfile(
-            user.id,
-            {'role': effectiveRole},
-            authUser: user,
-            role: effectiveRole,
-          );
+          // 1️⃣ Patch DB via repository setUserRole RPC
+          await _userRepository.setUserRole(user.id, effectiveRole);
 
           // 2️⃣ Patch local map before _userModel is built
           userData['role'] = effectiveRole;
@@ -210,6 +199,9 @@ class AuthProvider with ChangeNotifier {
           await SecureStorageService.deleteSecure('pending_oauth_role');
         }
         // ────────────────────────────────────────────────────────────────────────
+
+        final bool isExistingCompleteUser = (userData['is_registration_complete'] == true || userData['isRegistrationComplete'] == true) &&
+            (userData['phone'] != null && userData['phone'].toString().trim().isNotEmpty);
 
         // 🌟 SEAMLESS SMART ROLE ROUTING:
         // If user profile already exists in DB, respect database role for existing users.

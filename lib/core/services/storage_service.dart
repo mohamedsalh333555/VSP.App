@@ -146,4 +146,21 @@ class StorageService {
       path: '$ownerId/documents/$documentType$ext'
     );
   }
+
+  Future<String?> getOwnerDocumentSignedUrl(String path, {int expiresIn = 3600}) async {
+    try {
+      String cleanPath = path;
+      final storagePathMarker = '/storage/v1/object/public/owner_documents/';
+      final signedMarker = '/storage/v1/object/sign/owner_documents/';
+      if (cleanPath.contains(storagePathMarker)) {
+        cleanPath = cleanPath.split(storagePathMarker).last;
+      } else if (cleanPath.contains(signedMarker)) {
+        cleanPath = cleanPath.split(signedMarker).last.split('?').first;
+      }
+      return await _storage.from('owner_documents').createSignedUrl(cleanPath, expiresIn);
+    } catch (e) {
+      debugPrint('Error generating owner document signed URL: $e');
+      return null;
+    }
+  }
 }
