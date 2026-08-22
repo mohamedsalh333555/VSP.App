@@ -10,6 +10,7 @@ import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'package:flutter/services.dart';
 import '../../../core/utils/roster_parser_utils.dart';
+import '../../../core/services/paymob_service.dart';
 import 'payment_gateway_screen.dart';
 
 class ChampionshipCheckoutScreen extends StatefulWidget {
@@ -235,8 +236,8 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
 
   Future<void> _executeJoinChampionship() async {
     final entryFee = widget.championship.entryFee;
-    final serviceFee = (entryFee * 0.0475) + 3.0;
-    final totalCheckoutPrice = entryFee + serviceFee;
+    // 🛡️ DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
+    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
 
     final success = await TournamentRepository().joinChampionship(
       widget.championship.id,
@@ -265,9 +266,9 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
     final isSelectionValid = totalCount >= minPlayers && totalCount <= maxPlayers;
 
     final entryFee = widget.championship.entryFee;
-    // Unified Platform & Processing Service Fee: 4.75% + 3 EGP fixed
-    final serviceFee = (entryFee * 0.0475) + 3.0;
-    final totalCheckoutPrice = entryFee + serviceFee;
+    // 🛡️ DUP-FIX: استخدام الدالة المركزية
+    final serviceFee = PaymobService.calculateServiceFee(entryFee);
+    final totalCheckoutPrice = PaymobService.calculateTotalAmount(entryFee);
 
     return Scaffold(
       backgroundColor: VSPColors.background,

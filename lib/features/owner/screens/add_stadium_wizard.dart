@@ -1323,17 +1323,17 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
       
       if (mounted) {
+        // 🛡️ CONTEXT-FIX: إتمام كافة العمليات غير المتزامنة قبل إغلاق الشاشة
         if (widget.stadiumId == null) {
           await _clearPersistedForm();
-        }
-        if (!mounted) return;
-        final l10n = AppLocalizations.of(context)!;
-        VSPFeedback.showSuccess(context, l10n.stadiumSubmitSuccess);
-        Navigator.pop(context); // Return to FacilityOnboardingScreen — StreamBuilder will auto-refresh
-        if (widget.stadiumId == null) {
           await auth.updateProfile({'hasStadium': true});
         }
         await auth.refreshProfile();
+
+        if (!mounted) return;
+        final l10n = AppLocalizations.of(context)!;
+        VSPFeedback.showSuccess(context, l10n.stadiumSubmitSuccess);
+        Navigator.pop(context); // إغلاق الشاشة يتم في النهاية بأمان
       }
     } catch (e) {
       if (mounted) VSPFeedback.showError(context, AppLocalizations.of(context)!.stadiumSaveFailed);

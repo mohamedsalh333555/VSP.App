@@ -242,31 +242,39 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
             if (mounted) setState(() => _isLoading = false);
             _checkCallbackUrl(url);
 
-            // Inject JS error handler & window.open interceptor
-            try {
-              await controller.runJavaScript('''
-                window.onerror = function(msg, url, line) {
-                  if (window.FlutterConsole) {
-                    FlutterConsole.postMessage("JS ERROR: " + msg + " at " + url + ":" + line);
-                  }
-                };
-                window.open = function(url) {
-                  if (window.FlutterConsole) {
-                    FlutterConsole.postMessage("WINDOW.OPEN INTERCEPTED: " + url);
-                  }
-                  if (url) {
-                    window.location.href = url;
-                  }
-                  return {
-                    focus: function() {},
-                    blur: function() {},
-                    close: function() {},
-                    postMessage: function() {}
+            // 🛡️ SEC-FIX: لا تحقن أكواد JS إلا إذا كان النطاق يتبع بوابة الدفع أو البنك الآمن
+            final lowerUrl = url.toLowerCase();
+            final isSafeDomain = lowerUrl.contains('paymob.com') || 
+                                 lowerUrl.contains('nbe.com.eg') || 
+                                 lowerUrl.contains('banquemisr.com') || 
+                                 lowerUrl.contains('cibeg.com');
+
+            if (isSafeDomain) {
+              try {
+                await controller.runJavaScript('''
+                  window.onerror = function(msg, url, line) {
+                    if (window.FlutterConsole) {
+                      FlutterConsole.postMessage("JS ERROR: " + msg + " at " + url + ":" + line);
+                    }
                   };
-                };
-              ''');
-            } catch (e) {
-              debugPrint('Notice injecting JS: $e');
+                  window.open = function(url) {
+                    if (window.FlutterConsole) {
+                      FlutterConsole.postMessage("WINDOW.OPEN INTERCEPTED: " + url);
+                    }
+                    if (url) {
+                      window.location.href = url;
+                    }
+                    return {
+                      focus: function() {},
+                      blur: function() {},
+                      close: function() {},
+                      postMessage: function() {}
+                    };
+                  };
+                ''');
+              } catch (e) {
+                debugPrint('Notice injecting JS: $e');
+              }
             }
           },
           onWebResourceError: (WebResourceError error) {

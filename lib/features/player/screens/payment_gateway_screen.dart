@@ -260,8 +260,8 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
     final baseAmount = widget.bookingDraft.needsDeposit && widget.bookingDraft.depositPaid > 0 
         ? widget.bookingDraft.depositPaid 
         : widget.bookingDraft.totalPrice;
-    final serviceFee = (baseAmount * 0.0475) + 3.0;
-    final totalAmount = baseAmount + serviceFee;
+    // 🛡️ DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
+    final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
 
     final selectedIntegrationId = _selectedMethod == 'wallet' 
         ? AppConfig.paymobWalletIntegrationId 
@@ -578,9 +578,9 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                     // 💰 Financial Breakdown Card
                     Builder(
                       builder: (context) {
-                        // Unified Platform & Processing Service Fee: 4.75% + 3 EGP fixed
-                        final double serviceFee = (amountToPay * 0.0475) + 3.0;
-                        final double totalWithFees = amountToPay + serviceFee;
+                        // 🛡️ DUP-FIX: استخدام الدالة المركزية
+                        final double serviceFee = PaymobService.calculateServiceFee(amountToPay);
+                        final double totalWithFees = PaymobService.calculateTotalAmount(amountToPay);
 
                         final String displayStadiumName = (widget.bookingDraft.stadiumName.trim().isEmpty || widget.bookingDraft.stadiumName.trim() == 'Mo')
                             ? (isArabic ? 'الملعب الرئيسي' : 'Main Pitch')

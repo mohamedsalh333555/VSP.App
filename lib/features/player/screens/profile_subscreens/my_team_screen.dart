@@ -21,6 +21,7 @@ import '../../../../shared/widgets/vsp_back_button.dart';
 import '../../../../core/services/sharing_service.dart';
 import '../../../../core/utils/phone_utils.dart';
 import '../../../../core/utils/vsp_feedback.dart';
+import '../../../../core/constants/egypt_governorates.dart';
 
 class MyTeamScreen extends StatefulWidget {
   const MyTeamScreen({super.key});
@@ -84,17 +85,6 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
     super.dispose();
   }
 
-  String _getLocalizedSport(String sport, bool isArabic) {
-    if (!isArabic) return sport;
-    switch (sport.trim()) {
-      case 'Football': return 'كرة القدم';
-      case 'Basketball': return 'كرة السلة';
-      case 'Padel': return 'بادل';
-      case 'Volleyball': return 'الكرة الطائرة';
-      case 'Handball': return 'كرة اليد';
-      default: return sport;
-    }
-  }
 
   Future<void> _initialLoad() async {
     _teamSubscription?.cancel();
@@ -323,7 +313,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
                   icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.accent, size: 16),
                   items: VSPConstants.sports.map((s) => DropdownMenuItem(
                     value: s, 
-                    child: Text(_getLocalizedSport(s, isArabic), style: const TextStyle(color: VSPColors.textPrimary)),
+                    // 🛡️ DUP-FIX: توحيد الترجمة من الكلاس المركزي
+                    child: Text(EgyptGovernorates.getLocalizedSport(s, isArabic), style: const TextStyle(color: VSPColors.textPrimary)),
                   )).toList(),
                   onChanged: !isCaptain ? null : (val) => setState(() => _selectedSport = val!),
                 ),

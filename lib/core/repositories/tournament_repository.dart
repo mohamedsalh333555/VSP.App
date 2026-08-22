@@ -471,16 +471,27 @@ class TournamentRepository {
   Future<List<Team>> getTeamsByIds(List<String> ids) async {
     if (ids.isEmpty) return [];
     try {
+      // 🛡️ PERF-FIX: استخدام JOIN (العلاقات المدمجة) لجلب جميع البيانات في طلب HTTP واحد فقط بدلاً من 65 طلب!
       final response = await _supabase
           .from('teams')
-          .select()
+          .select('*, team_members(user_id, users(profile_image_url))')
           .inFilter('id', ids);
       
       final List<Team> teams = [];
       for (final doc in (response as List)) {
         final teamId = doc['id'].toString();
-        final memberUids = await TeamRepository().getTeamMemberUids(teamId);
-        final playerImages = await TeamRepository().getTeamPlayerImages(memberUids);
+        final membersList = doc['team_members'] as List? ?? [];
+        final List<String> memberUids = [];
+        final List<String> playerImages = [];
+        
+        for (var m in membersList) {
+          final uid = m['user_id']?.toString();
+          if (uid != null) memberUids.add(uid);
+          final userMap = m['users'];
+          if (userMap is Map && userMap['profile_image_url'] != null) {
+            playerImages.add(userMap['profile_image_url'].toString());
+          }
+        }
         
         final data = Map<String, dynamic>.from(doc);
         data['memberUids'] = memberUids;

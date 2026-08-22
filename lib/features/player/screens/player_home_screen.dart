@@ -991,41 +991,12 @@ class _HomeContent extends StatelessWidget {
 
   Widget _buildStadiumsList(BuildContext context, StadiumProvider provider) {
     if (provider.stadiums.isEmpty && !provider.isLoading) {
+      // 🛡️ DUP-FIX: استخدام القاموس المركزي بدلاً من التكرار المحلي المهدر للذاكرة
       final rawCityName = context.read<AuthProvider>().userModel?.governorate ?? 'منطقتك';
       final isAr = AppLocalizations.of(context)!.localeName == 'ar';
-      final String cityName;
-      if (isAr && rawCityName != 'منطقتك') {
-        final Map<String, String> translations = {
-          'Cairo': 'القاهرة',
-          'Giza': 'الجيزة',
-          'Alexandria': 'الإسكندرية',
-          'Aswan': 'أسوان',
-          'Luxor': 'الأقصر',
-          'Red Sea': 'البحر الأحمر',
-          'Dakahlia': 'الدقهلية',
-          'Sharqia': 'الشرقية',
-          'Gharbia': 'الغربية',
-          'Monufia': 'المنوفية',
-          'Beheira': 'البحيرة',
-          'Suez': 'السويس',
-          'Port Said': 'بورسعيد',
-          'Ismailia': 'الإسماعيلية',
-          'Damietta': 'دمياط',
-          'Faiyum': 'الفيوم',
-          'Beni Suef': 'بني سويف',
-          'Minya': 'المنيا',
-          'Asyut': 'أسيوط',
-          'Sohag': 'سوهاج',
-          'Qena': 'قنا',
-          'South Sinai': 'جنوب سيناء',
-          'North Sinai': 'شمال سيناء',
-          'Matrouh': 'مطروح',
-          'New Valley': 'الوادي الجديد',
-        };
-        cityName = translations[rawCityName] ?? rawCityName;
-      } else {
-        cityName = rawCityName;
-      }
+      final String cityName = (isAr && rawCityName != 'منطقتك')
+          ? (EgyptGovernorates.governorateToArabic[rawCityName] ?? rawCityName)
+          : rawCityName;
 
       return Container(
         padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 32),
