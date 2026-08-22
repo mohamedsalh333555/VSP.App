@@ -158,6 +158,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                             : (userProfileUrl != null && userProfileUrl.isNotEmpty)
                                 ? CachedNetworkImage(
                                     imageUrl: userProfileUrl,
+                                    memCacheWidth: 250,
+                                    memCacheHeight: 250,
                                     fit: BoxFit.cover,
                                     placeholder: (context, url) => const CircularProgressIndicator(color: VSPColors.accent),
                                     errorWidget: (context, url, error) => Icon(Iconsax.user_copy, size: 50, color: VSPColors.textSecondary),

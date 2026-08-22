@@ -196,10 +196,10 @@ void main() {
     test('30-minute interval price calculation formula', () {
       const pricePerHour = 200.0;
       const slotsCount = 3; // 1.5 hours
-      const hasBall = true;
+      final bool hasBall = true;
       const ballPrice = 20.0;
 
-      final totalPrice = (slotsCount * (pricePerHour / 2)) + (hasBall ? ballPrice : 0);
+      final totalPrice = (slotsCount * (pricePerHour / 2)) + (hasBall ? ballPrice : 0.0);
       expect(totalPrice, equals(320.0));
     });
 

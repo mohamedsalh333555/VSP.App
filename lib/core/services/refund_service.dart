@@ -26,14 +26,14 @@ class RefundService {
         return;
       }
 
-      final hoursBeforeBooking = bookingStartTime.toUtc().difference(DateTime.now().toUtc()).inHours;
+      final minutesBeforeBooking = bookingStartTime.toUtc().difference(DateTime.now().toUtc()).inMinutes;
       double refundAmount = 0.0;
       String refundReason = '';
 
-      if (hoursBeforeBooking >= 24) {
+      if (minutesBeforeBooking >= 1440) {
         refundAmount = amountPaid;
         refundReason = 'full_refund';
-      } else if (hoursBeforeBooking >= 2) {
+      } else if (minutesBeforeBooking >= 120) {
         refundAmount = amountPaid * 0.75;
         refundReason = 'partial_refund_75';
       } else {

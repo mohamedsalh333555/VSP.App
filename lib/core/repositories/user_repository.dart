@@ -104,22 +104,28 @@ class UserRepository {
     securedData.remove('uid');
     securedData.remove('email');
     securedData.remove('created_at');
+    securedData.remove('createdAt');
     // Allow 'is_email_verified' to be updated if explicitly passed in data (e.g. during auth synchronization)
     if (!data.containsKey('is_email_verified') && !data.containsKey('isEmailVerified')) {
       securedData.remove('is_email_verified');
+      securedData.remove('isEmailVerified');
     }
     securedData.remove('points');
     securedData.remove('wallet_balance');
-    // 🛡️ SECURITY FIX: Also block server-side to prevent privilege escalation
-    // even if AuthProvider's client-side check is bypassed.
+    securedData.remove('walletBalance');
+    // 🛡️ SECURITY FIX: Block all sensitive role escalation & moderation keys
     securedData.remove('is_blocked');
+    securedData.remove('isBlocked');
     securedData.remove('no_show_count');
+    securedData.remove('noShowCount');
     securedData.remove('is_identity_verified');
+    securedData.remove('isIdentityVerified');
     securedData.remove('verification_status');
+    securedData.remove('verificationStatus');
     securedData.remove('has_stadium');
-    // 🛡️ SECURITY FIX: Prevent direct manipulation of the registration-complete flag
-    // from any client-side update path. This flag is set by trusted server-side triggers only.
+    securedData.remove('hasStadium');
     securedData.remove('is_registration_complete');
+    securedData.remove('isRegistrationComplete');
     
     // Standardize Governorate
     if (securedData.containsKey('governorate')) {

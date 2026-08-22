@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'owner_tournament_dashboard_screen.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -84,10 +85,13 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     }
   }
 
+  StreamSubscription? _stadiumSubscription;
+
   void _loadOwnerSports() {
     final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
     if (uid != null) {
-      StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
+      _stadiumSubscription?.cancel();
+      _stadiumSubscription = StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
         if (stadiums.isNotEmpty && mounted) {
           final sports = stadiums
               .map((s) => s.sportType)
@@ -109,6 +113,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   @override
   void dispose() {
+    _stadiumSubscription?.cancel();
     _nameController.dispose();
     _feeController.dispose();
     _durationController.dispose();

@@ -1254,8 +1254,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         'hasBall': _hasBall ?? false,
         'ballPrice': (_hasBall == true) ? (double.tryParse(_ballPriceController.text) ?? 0.0) : 0.0,
         'workingHours': {
-          'start': _formatTime(_startTime, '04:00 PM'),
-          'end': _formatTime(_endTime, '11:00 PM'),
+          'start': _formatTime(_startTime, '16:00:00'),
+          'end': _formatTime(_endTime, '23:00:00'),
         },
         'isSplitShift': _isSplitShift,
         'breakTimes': _isSplitShift 
@@ -1288,8 +1288,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
             'images': uploadedUrls,
             'notes': _notesController.text.trim(),
             'features': stadiumFeatures,
-            'opening_time': _formatTime(_startTime, '04:00 PM'),
-            'closing_time': _formatTime(_endTime, '03:00 AM'),
+            'opening_time': _formatTime(_startTime, '16:00:00'),
+            'closing_time': _formatTime(_endTime, '03:00:00'),
             'lat': _latitude,
             'lng': _longitude,
           });
@@ -1346,8 +1346,8 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
 
   // use VSPFeedback directly instead of _showError helper
 
-  String _formatTime(TimeOfDay? time, String defaultText) {
-    if (time == null) return defaultText;
+  String _formatTime(TimeOfDay? time, String defaultTime24) {
+    if (time == null) return defaultTime24;
     final hour = time.hour.toString().padLeft(2, '0');
     final minute = time.minute.toString().padLeft(2, '0');
     return '$hour:$minute:00';

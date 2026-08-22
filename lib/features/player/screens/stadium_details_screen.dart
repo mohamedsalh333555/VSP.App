@@ -86,6 +86,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                     return InteractiveViewer(
                       child: CachedNetworkImage(
                         imageUrl: _displayImages[i],
+                        memCacheWidth: 1080,
+                        memCacheHeight: 1080,
                         fit: BoxFit.contain,
                       ),
                     );
@@ -152,6 +154,8 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
                               onTap: () => _openFullScreenGallery(index),
                               child: CachedNetworkImage(
                                 imageUrl: _displayImages[index],
+                                memCacheWidth: 800,
+                                memCacheHeight: 600,
                                 fit: BoxFit.cover,
                                 placeholder: (ctx, url) => Container(color: VSPColors.surface),
                                 errorWidget: (ctx, url, _) => _buildVspLogoBackground(),

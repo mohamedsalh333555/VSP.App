@@ -289,9 +289,9 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                 decoration: BoxDecoration(color: VSPColors.surfaceAlt, shape: BoxShape.circle, border: Border.all(color: VSPColors.divider, width: 1)),
                 child: ClipOval(
                   child: (booking.hostAvatarUrl != null && booking.hostAvatarUrl!.isNotEmpty)
-                      ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+                      ? CachedNetworkImage(imageUrl: booking.hostAvatarUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
                       : (booking.playerTeamLogoUrl != null && booking.playerTeamLogoUrl!.isNotEmpty)
-                          ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
+                          ? CachedNetworkImage(imageUrl: booking.playerTeamLogoUrl!, memCacheWidth: 200, memCacheHeight: 200, fit: BoxFit.cover, errorWidget: (_, __, ___) => const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20), placeholder: (_, __) => Container(color: VSPColors.surfaceAlt))
                           : const Icon(Iconsax.user_copy, color: VSPColors.accent, size: 20),
                 ),
               ),
@@ -466,6 +466,8 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
         child: (profileImageUrl != null && profileImageUrl.isNotEmpty)
             ? CachedNetworkImage(
                 imageUrl: profileImageUrl,
+                memCacheWidth: (radius * 4).round(),
+                memCacheHeight: (radius * 4).round(),
                 fit: BoxFit.cover,
                 errorWidget: (_, __, ___) => Icon(Iconsax.user_copy, color: badgeColor, size: radius),
                 placeholder: (_, __) => Container(color: VSPColors.surfaceAlt),

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'dart:math';
 import 'package:uuid/uuid.dart';
+import '../services/logger_service.dart';
 import '../repositories/notification_repository.dart';
 import '../repositories/team_repository.dart';
 import '../utils/app_date_formatter.dart';
@@ -35,8 +36,8 @@ class TournamentRepository {
         ownerId: ownerId,
       );
       yield items;
-    } catch (e) {
-      debugPrint('Error fetching initial championships via REST: $e');
+    } catch (e, s) {
+      VSPLogger.e('Error fetching initial championships via REST', e, s);
     }
 
     // 2. 📡 Listen to Real-time Stream for updates
@@ -59,8 +60,8 @@ class TournamentRepository {
       final data = await _supabase.from('championships').select().eq('id', id).maybeSingle();
       if (data == null) return null;
       return Championship.fromFirestore(data, data['id'].toString());
-    } catch (e) {
-      debugPrint('Error fetching championship by id: $e');
+    } catch (e, s) {
+      VSPLogger.e('Error fetching championship by id', e, s);
       return null;
     }
   }
@@ -182,8 +183,8 @@ class TournamentRepository {
         }
         rethrow;
       }
-    } catch (e) {
-      debugPrint('Error creating championship: $e');
+    } catch (e, stack) {
+      VSPLogger.e('Error creating championship', e, stack);
       rethrow;
     }
   }
@@ -196,10 +197,10 @@ class TournamentRepository {
         'is_approved': true,
         'creation_fee_paid': true,
       }).eq('id', championshipId);
-      debugPrint('✅ Championship $championshipId activated successfully (100% Free).');
+      VSPLogger.i('✅ Championship $championshipId activated successfully (100% Free).');
       return true;
-    } catch (e) {
-      debugPrint('❌ Error activating championship: $e');
+    } catch (e, stack) {
+      VSPLogger.e('❌ Error activating championship', e, stack);
       return false;
     }
   }

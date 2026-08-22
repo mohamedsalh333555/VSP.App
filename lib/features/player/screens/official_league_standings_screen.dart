@@ -128,9 +128,11 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
   }
 
   Future<void> _launchHighlights() async {
-    final Uri url = Uri.parse('https://instagram.com/vsp.app');
-    if (!await launchUrl(url, mode: LaunchMode.externalApplication)) {
-      debugPrint('Could not launch $url');
+    final String linkStr = RemoteConfigService().vsp1v1Link.trim();
+    if (linkStr.isEmpty) return;
+    final Uri? url = Uri.tryParse(linkStr);
+    if (url != null && await canLaunchUrl(url)) {
+      await launchUrl(url, mode: LaunchMode.externalApplication);
     }
   }
 
@@ -146,19 +148,38 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
       );
     }
 
+    if (!_isRegistrationOpen) {
+      final hasLink = RemoteConfigService().vsp1v1Link.trim().isNotEmpty;
+      final buttonColor = hasLink ? VSPColors.accent : VSPColors.surfaceAlt;
+      final textColor = hasLink ? Colors.black : VSPColors.textSecondary;
+
+      return ElevatedButton.icon(
+        onPressed: hasLink ? _launchHighlights : null,
+        icon: Icon(Iconsax.video_play_copy, color: textColor, size: 20),
+        label: Text(
+          isArabic ? 'رؤية البطولة 🎬' : 'Watch Tournament 🎬',
+          style: TextStyle(
+            color: textColor,
+            fontWeight: FontWeight.bold,
+            letterSpacing: 0.5,
+          ),
+        ),
+        style: ElevatedButton.styleFrom(
+          backgroundColor: buttonColor,
+          disabledBackgroundColor: VSPColors.surfaceAlt,
+          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+        ),
+      );
+    }
+
     String labelText;
     IconData iconData;
     VoidCallback? onPressed;
     Color buttonColor;
     Color textColor;
 
-    if (!_isRegistrationOpen) {
-      labelText = isArabic ? 'التسجيل مغلق حالياً 🛑' : 'Registration Closed 🛑';
-      iconData = Iconsax.slash_copy;
-      onPressed = null;
-      buttonColor = VSPColors.surfaceAlt;
-      textColor = VSPColors.textSecondary;
-    } else if (_hasUserRegistered) {
+    if (_hasUserRegistered) {
       labelText = isArabic ? 'تم إرسال الطلب ⏳' : 'Request Sent ⏳';
       iconData = Iconsax.clock_copy;
       onPressed = null;
@@ -171,7 +192,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
       buttonColor = VSPColors.surfaceAlt;
       textColor = VSPColors.textSecondary;
     } else {
-      labelText = isArabic ? 'سجل الآن' : 'Register Now';
+      labelText = isArabic ? 'إنضم لبطولة 1ضد1 ⚽' : 'Join 1v1 Tournament ⚽';
       iconData = Iconsax.user_add_copy;
       onPressed = _isSubmitting ? null : _handleRegistration;
       buttonColor = VSPColors.accent;
@@ -241,7 +262,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
           return CustomScrollView(
             physics: const BouncingScrollPhysics(),
             slivers: [
-              // Header Banner
+              // Header Banner with Single Smart Button
               SliverToBoxAdapter(
                 child: Container(
                   width: double.infinity,
@@ -261,20 +282,6 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                             ),
                       ),
                       const SizedBox(height: VSPSpacing.md),
-                      ElevatedButton.icon(
-                        onPressed: _launchHighlights,
-                        icon: Icon(Iconsax.play_circle_copy, color: Colors.black, size: 20),
-                        label: const Text(
-                          'WATCH HIGHLIGHTS',
-                          style: TextStyle(color: Colors.black, fontWeight: FontWeight.bold, letterSpacing: 1.0),
-                        ),
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: VSPColors.textPrimary,
-                          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
-                          padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
-                        ),
-                      ),
-                      const SizedBox(height: 12),
                       _buildRegistrationButton(context),
                     ],
                   ),
@@ -419,16 +426,6 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                           letterSpacing: 1.0,
                         ),
                       ),
-                      if (player.titles > 0)
-                        Row(
-                          children: List.generate(
-                            player.titles, 
-                            (i) => const Padding(
-                              padding: EdgeInsets.only(right: 4, top: 4),
-                              child: Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 18),
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),
@@ -609,16 +606,6 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
                 ),
               ),
             ),
-            if (player.titles > 0) ...[
-                const SizedBox(height: 6),
-                Row(
-                  mainAxisAlignment: MainAxisAlignment.center,
-                  children: List.generate(player.titles, (i) => const Padding(
-                    padding: EdgeInsets.symmetric(horizontal: 1),
-                    child: Icon(Iconsax.cup_copy, color: Colors.black, size: 14),
-                  )),
-                )
-            ]
           ]
         ],
       ),
@@ -683,16 +670,6 @@ class _PlayerStandingRowState extends State<_PlayerStandingRow> {
                               ),
                         ),
                       ),
-                      if (widget.player.titles > 0)
-                        Padding(
-                          padding: const EdgeInsets.only(left: 6),
-                          child: Row(
-                            children: List.generate(
-                              widget.player.titles, 
-                              (i) => Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 12)
-                            ),
-                          ),
-                        ),
                     ],
                   ),
                 ),

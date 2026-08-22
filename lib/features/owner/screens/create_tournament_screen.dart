@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'owner_tournament_dashboard_screen.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
@@ -30,8 +31,11 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   final _prizeController = TextEditingController();
   final _instructionsController = TextEditingController();
 
+  StreamSubscription? _stadiumSubscription;
+
   @override
   void dispose() {
+    _stadiumSubscription?.cancel();
     _nameController.dispose();
     _winningPointsController.dispose();
     _breakEvenPointsController.dispose();
@@ -73,7 +77,8 @@ class _CreateTournamentScreenState extends State<CreateTournamentScreen> {
   void _loadOwnerSports() {
     final uid = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
     if (uid != null) {
-      StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
+      _stadiumSubscription?.cancel();
+      _stadiumSubscription = StadiumRepository().getOwnerStadiums(uid).listen((stadiums) {
         if (stadiums.isNotEmpty && mounted) {
           final sports = stadiums
               .map((s) => s.sportType)

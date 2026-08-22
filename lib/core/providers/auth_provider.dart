@@ -207,6 +207,7 @@ class AuthProvider with ChangeNotifier {
 
           // 3️⃣ Consume — don't re-apply on next _fetchUserData call
           await prefs.remove('pending_oauth_role');
+          await SecureStorageService.deleteSecure('pending_oauth_role');
         }
         // ────────────────────────────────────────────────────────────────────────
 
@@ -215,6 +216,7 @@ class AuthProvider with ChangeNotifier {
         if (isExistingCompleteUser) {
           _userType = null;
           await prefs.remove('pending_oauth_role');
+          await SecureStorageService.deleteSecure('pending_oauth_role');
         }
 
         _userModel = UserModel.fromFirestore(userData);
@@ -520,7 +522,7 @@ class AuthProvider with ChangeNotifier {
     try {
       final prefs = await SharedPreferences.getInstance();
       await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
-      await prefs.setString('pending_oauth_role', _userType ?? 'player');
+      await SecureStorageService.writeSecure('pending_oauth_role', _userType ?? 'player');
 
       final result = await _authService.signInWithApple(role: _userType);
 
@@ -725,11 +727,15 @@ class AuthProvider with ChangeNotifier {
       'role',
       'points',
       'walletBalance',
+      'wallet_balance',
       'isVerified',
+      'is_verified',
       'isEmailVerified',
+      'is_email_verified',
       'lastSeen',
+      'last_seen',
       'fcmToken',
-      // 🛡️ SECURITY FIX: Prevent self-unblocking / self-verification / self-registration-bypass
+      'fcm_token',
       'isBlocked',
       'is_blocked',
       'noShowCount',
