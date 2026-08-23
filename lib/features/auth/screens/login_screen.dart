@@ -1,7 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -365,7 +364,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                     Row(
                       children: [
-                         if (!kIsWeb && Platform.isIOS) ...[
+                         if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                            Expanded(
                              child: SocialAuthButton(
                                height: 56,

@@ -1,6 +1,7 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
+import 'package:flutter/foundation.dart' show kIsWeb;
 import 'dart:io';
 
 class VspUploadMainCard extends StatelessWidget {
@@ -114,7 +115,7 @@ class VspUploadedItemRow extends StatelessWidget {
               color: VSPColors.background,
               borderRadius: BorderRadius.circular(VSPRadius.sm),
               image: DecorationImage(
-                image: imageFile != null
+                image: (!kIsWeb && imageFile != null)
                     ? FileImage(imageFile!)
                     : (thumbnailUrl != null
                             ? NetworkImage(thumbnailUrl!)

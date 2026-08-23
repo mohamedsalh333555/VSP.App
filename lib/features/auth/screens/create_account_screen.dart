@@ -10,8 +10,7 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/services/secure_storage_service.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/social_auth_button.dart';
-import 'dart:io' show Platform;
-import 'package:flutter/foundation.dart' show kIsWeb;
+import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 
@@ -209,7 +208,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
                       child: Row(
                         children: [
                           // 🟢 زر Apple يظهر فقط إذا كان الجهاز آيفون أو ماك
-                          if (!kIsWeb && Platform.isIOS) ...[
+                          if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
                             Expanded(
                               child: SocialAuthButton(
                                 height: 56,
