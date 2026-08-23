@@ -32,6 +32,7 @@ class AppRouter {
       navigatorKey: navigatorKey,
       initialLocation: '/splash',
       refreshListenable: authProvider,
+      errorBuilder: (context, state) => const RootScreen(),
       routes: [
         GoRoute(
           path: '/',

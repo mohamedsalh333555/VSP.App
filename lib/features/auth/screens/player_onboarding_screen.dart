@@ -54,7 +54,7 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     setState(() => _isFetchingLocation = true);
     try {
       final result = await Provider.of<AuthProvider>(context, listen: false).determineGPSGovernorate(force: true);
-      if (result != null && mounted) {
+      if (result != null && EgyptGovernorates.allGovernorates.contains(result) && mounted) {
         setState(() {
           _selectedGovernorate = result;
           _isLocationFallbackActive = false;

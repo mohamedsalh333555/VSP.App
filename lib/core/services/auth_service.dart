@@ -220,15 +220,13 @@ class AuthService {
   // Sign In with Google
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
     try {
-      final success = await _supabase.auth.signInWithOAuthSecure(
+      final success = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        options: SignInWithOAuthOptions(
-          redirectTo: kIsWeb 
-              ? '${Uri.base.origin}/' 
-              : 'io.supabase.fluttervsp://login-callback/',
-          queryParams: const {'prompt': 'select_account'},
-          data: {'role': role ?? 'player'},
-        ),
+        redirectTo: kIsWeb 
+            ? '${Uri.base.origin}/' 
+            : 'io.supabase.fluttervsp://login-callback/',
+        queryParams: const {'prompt': 'select_account'},
+        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
       );
       if (success) {
         return {'success': true, 'user': _supabase.auth.currentUser};
@@ -236,21 +234,19 @@ class AuthService {
       return {'success': false, 'message': 'فشل الدخول عبر جوجل.'};
     } catch (e) {
       _logSecurityEvent('GOOGLE_AUTH_ERROR', e);
-      return {'success': false, 'message': 'حدث خطأ في خدمة جوجل.'};
+      return {'success': false, 'message': 'حدث خطأ في خدمة جوجل: $e'};
     }
   }
 
   // Sign In with Apple
   Future<Map<String, dynamic>> signInWithApple({String? role}) async {
     try {
-      final success = await _supabase.auth.signInWithOAuthSecure(
+      final success = await _supabase.auth.signInWithOAuth(
         OAuthProvider.apple,
-        options: SignInWithOAuthOptions(
-          redirectTo: kIsWeb 
-              ? '${Uri.base.origin}/' 
-              : 'io.supabase.fluttervsp://login-callback/',
-          data: {'role': role ?? 'player'},
-        ),
+        redirectTo: kIsWeb 
+            ? '${Uri.base.origin}/' 
+            : 'io.supabase.fluttervsp://login-callback/',
+        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
       );
       if (success) {
         return {'success': true, 'user': _supabase.auth.currentUser};
@@ -258,7 +254,7 @@ class AuthService {
       return {'success': false, 'message': 'فشل تسجيل الدخول عبر آبل.'};
     } catch (e) {
       _logSecurityEvent('APPLE_AUTH_ERROR', e);
-      return {'success': false, 'message': 'حدث خطأ في خدمة آبل.'};
+      return {'success': false, 'message': 'حدث خطأ في خدمة آبل: $e'};
     }
   }
 

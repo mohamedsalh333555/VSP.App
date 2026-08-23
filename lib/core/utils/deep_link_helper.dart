@@ -13,7 +13,18 @@ class DeepLinkHelper {
 
   /// التحقق من روابط OAuth العائدة من مزودي الخدمة (Google / Apple)
   static bool isOAuthCallback(Uri uri) {
-    return uri.scheme == 'io.supabase.fluttervsp' && uri.host == 'login-callback';
+    if (uri.scheme == 'io.supabase.fluttervsp' && uri.host == 'login-callback') {
+      return true;
+    }
+    if (uri.fragment.contains('access_token') ||
+        uri.fragment.contains('refresh_token') ||
+        uri.fragment.contains('error') ||
+        uri.queryParameters.containsKey('code') ||
+        uri.queryParameters.containsKey('error') ||
+        uri.path.contains('login-callback')) {
+      return true;
+    }
+    return false;
   }
 
   /// تحليل وفحص أمان المعرف داخل الرابط العميق

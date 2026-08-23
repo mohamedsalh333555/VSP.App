@@ -138,6 +138,7 @@ class UserRepository {
     try {
       await _supabase.rpc('set_user_role_on_signup', params: {
         'p_role': role,
+        'p_user_id': userId,
       });
       VSPLogger.i('✅ setUserRole persisted successfully for $userId with role: $role');
       return true;

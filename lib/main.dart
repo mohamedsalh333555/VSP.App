@@ -25,6 +25,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigation/app_router.dart';
 import 'dart:async';
 
+import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
 
@@ -38,6 +39,7 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  usePathUrlStrategy();
   
   // SUPABASE & FIREBASE SECURE INITIALIZATION
   try {
@@ -109,6 +111,11 @@ void main() async {
                 'Something went wrong! 🎮',
                 style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
                 textAlign: TextAlign.center,
+              ),
+              Text(
+                details.exceptionAsString(),
+                textAlign: TextAlign.center,
+                style: const TextStyle(color: VSPColors.error, fontSize: 13, fontFamily: 'monospace'),
               ),
               const SizedBox(height: VSPSpacing.md),
               const Text(
