@@ -144,58 +144,185 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     super.dispose();
   }
 
+  String _getDraftPrefix() {
+    try {
+      final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+      final uid = auth.userModel?.uid ?? auth.currentUser?.uid ?? auth.firebaseUser?.id ?? '';
+      return uid.isNotEmpty ? 'vsp_draft_stadium_${uid}_' : 'temp_stadium_';
+    } catch (_) {
+      return 'temp_stadium_';
+    }
+  }
+
   Future<void> _saveToPrefs(String key, String value) async {
     final prefs = await SharedPreferences.getInstance();
-    await prefs.setString(key, value);
+    final prefix = _getDraftPrefix();
+    await prefs.setString('$prefix$key', value);
   }
 
   Future<void> _saveBoolToPrefs(String key, bool? value) async {
     final prefs = await SharedPreferences.getInstance();
+    final prefix = _getDraftPrefix();
     if (value == null) {
-      await prefs.remove(key);
+      await prefs.remove('$prefix$key');
     } else {
-      await prefs.setBool(key, value);
+      await prefs.setBool('$prefix$key', value);
     }
+  }
+
+  Future<void> _saveDoubleToPrefs(String key, double? value) async {
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = _getDraftPrefix();
+    if (value == null) {
+      await prefs.remove('$prefix$key');
+    } else {
+      await prefs.setDouble('$prefix$key', value);
+    }
+  }
+
+  Future<void> _saveStepToPrefs(int step) async {
+    if (widget.stadiumId != null) return;
+    final prefs = await SharedPreferences.getInstance();
+    final prefix = _getDraftPrefix();
+    await prefs.setInt('${prefix}current_step', step);
+  }
+
+  Future<void> _saveWorkingHoursToPrefs() async {
+    if (widget.stadiumId != null) return;
+    if (_startTime != null) {
+      await _saveToPrefs('start_time', '${_startTime!.hour}:${_startTime!.minute}');
+    }
+    if (_endTime != null) {
+      await _saveToPrefs('end_time', '${_endTime!.hour}:${_endTime!.minute}');
+    }
+    if (_breakTimes.isNotEmpty) {
+      final list = _breakTimes.map((bt) => {
+        'start': bt['start'] != null ? '${bt['start']!.hour}:${bt['start']!.minute}' : null,
+        'end': bt['end'] != null ? '${bt['end']!.hour}:${bt['end']!.minute}' : null,
+      }).toList();
+      await _saveToPrefs('break_times', json.encode(list));
+    }
+  }
+
+  Future<void> _saveImagesToPrefs() async {
+    if (widget.stadiumId != null) return;
+    final savedList = _images
+        .where((img) => img['url'] != null && img['url'].toString().isNotEmpty)
+        .map((img) => {'url': img['url'], 'progress': 100, 'isUploading': false})
+        .toList();
+    await _saveToPrefs('images', json.encode(savedList));
   }
 
   Future<void> _loadPersistedForm() async {
     if (widget.stadiumId != null) return;
     try {
       final prefs = await SharedPreferences.getInstance();
-      final savedName = prefs.getString('temp_stadium_name') ?? '';
-      final savedPhone = prefs.getString('temp_stadium_phone') ?? '';
-      final savedWidth = prefs.getString('temp_stadium_width') ?? '';
+      final prefix = _getDraftPrefix();
 
-      // Clear legacy mock test data if present
-      if (savedName == 'Al_Champions_Stadium' || savedName.contains('Stadium') || savedPhone == '01011112222' || savedWidth == '350') {
-        await _clearPersistedForm();
-        return;
-      }
+      String getStr(String key) => prefs.getString('$prefix$key') ?? prefs.getString('temp_stadium_$key') ?? '';
+      bool? getBool(String key) => prefs.getBool('$prefix$key') ?? prefs.getBool('temp_stadium_$key');
+      double? getDouble(String key) => prefs.getDouble('$prefix$key') ?? prefs.getDouble('temp_stadium_$key');
+      int? getInt(String key) => prefs.getInt('${prefix}current_step') ?? prefs.getInt('temp_stadium_current_step');
+
+      final savedName = getStr('name');
+      final savedPhone = getStr('phone');
+      final savedWidth = getStr('width');
+      final savedStep = getInt('current_step') ?? 0;
 
       setState(() {
         _nameController.text = savedName;
-        _locationController.text = prefs.getString('temp_stadium_location') ?? '';
-        _priceController.text = prefs.getString('temp_stadium_price') ?? '';
-        _capacityController.text = prefs.getString('temp_stadium_capacity') ?? '';
+        _locationController.text = getStr('location');
+        _priceController.text = getStr('price');
+        _capacityController.text = getStr('capacity');
         _stadiumPhoneController.text = savedPhone;
-        _notesController.text = prefs.getString('temp_stadium_notes') ?? '';
-        _lengthController.text = prefs.getString('temp_stadium_length') ?? '';
+        _notesController.text = getStr('notes');
+        _lengthController.text = getStr('length');
         _widthController.text = savedWidth;
-        _seatsController.text = prefs.getString('temp_stadium_seats') ?? '';
-        _ballPriceController.text = prefs.getString('temp_stadium_ball_price') ?? '';
-        _depositController.text = prefs.getString('temp_stadium_deposit') ?? '';
+        _seatsController.text = getStr('seats');
+        _ballPriceController.text = getStr('ball_price');
+        _depositController.text = getStr('deposit');
 
-        _governorate = prefs.getString('temp_stadium_governorate');
-        _selectedSportType = prefs.getString('temp_stadium_sport_type');
-        _selectedFloorType = prefs.getString('temp_stadium_floor_type');
-        _selectedBathOption = prefs.getString('temp_stadium_bath_option');
+        final savedGov = getStr('governorate');
+        _governorate = savedGov.isNotEmpty ? savedGov : null;
 
-        _cafeteria = prefs.getBool('temp_stadium_cafeteria');
-        _garage = prefs.getBool('temp_stadium_garage');
-        _changingRoom = prefs.getBool('temp_stadium_changing_room');
-        _hasBall = prefs.getBool('temp_stadium_has_ball');
-        _requireDeposit = prefs.getBool('temp_stadium_require_deposit') ?? false;
-        _isSplitShift = prefs.getBool('temp_stadium_is_split_shift') ?? false;
+        final savedSport = getStr('sport_type');
+        _selectedSportType = savedSport.isNotEmpty ? savedSport : null;
+
+        final savedFloor = getStr('floor_type');
+        _selectedFloorType = savedFloor.isNotEmpty ? savedFloor : null;
+
+        final savedBath = getStr('bath_option');
+        _selectedBathOption = savedBath.isNotEmpty ? savedBath : null;
+
+        _cafeteria = getBool('cafeteria');
+        _garage = getBool('garage');
+        _changingRoom = getBool('changing_room');
+        _hasBall = getBool('has_ball');
+        _requireDeposit = getBool('require_deposit') ?? false;
+        _isSplitShift = getBool('is_split_shift') ?? false;
+
+        _latitude = getDouble('lat');
+        _longitude = getDouble('lng');
+
+        final startTimeStr = getStr('start_time');
+        if (startTimeStr.isNotEmpty) {
+          final parts = startTimeStr.split(':');
+          if (parts.length >= 2) {
+            _startTime = TimeOfDay(hour: int.tryParse(parts[0]) ?? 16, minute: int.tryParse(parts[1]) ?? 0);
+          }
+        }
+
+        final endTimeStr = getStr('end_time');
+        if (endTimeStr.isNotEmpty) {
+          final parts = endTimeStr.split(':');
+          if (parts.length >= 2) {
+            _endTime = TimeOfDay(hour: int.tryParse(parts[0]) ?? 23, minute: int.tryParse(parts[1]) ?? 0);
+          }
+        }
+
+        final breakTimesStr = getStr('break_times');
+        if (breakTimesStr.isNotEmpty) {
+          try {
+            final List decoded = json.decode(breakTimesStr);
+            _breakTimes = decoded.map((item) {
+              TimeOfDay? start;
+              TimeOfDay? end;
+              if (item['start'] != null) {
+                final sp = item['start'].toString().split(':');
+                if (sp.length >= 2) start = TimeOfDay(hour: int.tryParse(sp[0]) ?? 0, minute: int.tryParse(sp[1]) ?? 0);
+              }
+              if (item['end'] != null) {
+                final ep = item['end'].toString().split(':');
+                if (ep.length >= 2) end = TimeOfDay(hour: int.tryParse(ep[0]) ?? 0, minute: int.tryParse(ep[1]) ?? 0);
+              }
+              return {'start': start, 'end': end};
+            }).toList();
+          } catch (_) {}
+        }
+
+        final imagesStr = getStr('images');
+        if (imagesStr.isNotEmpty) {
+          try {
+            final List decoded = json.decode(imagesStr);
+            _images.clear();
+            for (var item in decoded) {
+              if (item is Map) {
+                _images.add(Map<String, dynamic>.from(item));
+              } else if (item is String && item.isNotEmpty) {
+                _images.add({'url': item, 'progress': 100, 'isUploading': false});
+              }
+            }
+          } catch (_) {}
+        }
+
+        if (savedStep > 0 && savedStep <= 2) {
+          _currentStep = savedStep;
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (_pageController.hasClients) {
+              _pageController.jumpToPage(savedStep);
+            }
+          });
+        }
       });
     } catch (e) {
       debugPrint('Error loading persisted form data: $e');
@@ -203,47 +330,56 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
   }
 
   void _setupAutoSaveListeners() {
-    _nameController.addListener(() => _saveToPrefs('temp_stadium_name', _nameController.text));
-    _locationController.addListener(() => _saveToPrefs('temp_stadium_location', _locationController.text));
-    _priceController.addListener(() => _saveToPrefs('temp_stadium_price', _priceController.text));
-    _capacityController.addListener(() => _saveToPrefs('temp_stadium_capacity', _capacityController.text));
-    _stadiumPhoneController.addListener(() => _saveToPrefs('temp_stadium_phone', _stadiumPhoneController.text));
-    _notesController.addListener(() => _saveToPrefs('temp_stadium_notes', _notesController.text));
-    _lengthController.addListener(() => _saveToPrefs('temp_stadium_length', _lengthController.text));
-    _widthController.addListener(() => _saveToPrefs('temp_stadium_width', _widthController.text));
-    _seatsController.addListener(() => _saveToPrefs('temp_stadium_seats', _seatsController.text));
-    _ballPriceController.addListener(() => _saveToPrefs('temp_stadium_ball_price', _ballPriceController.text));
-    _depositController.addListener(() => _saveToPrefs('temp_stadium_deposit', _depositController.text));
+    _nameController.addListener(() => _saveToPrefs('name', _nameController.text));
+    _locationController.addListener(() => _saveToPrefs('location', _locationController.text));
+    _priceController.addListener(() => _saveToPrefs('price', _priceController.text));
+    _capacityController.addListener(() => _saveToPrefs('capacity', _capacityController.text));
+    _stadiumPhoneController.addListener(() => _saveToPrefs('phone', _stadiumPhoneController.text));
+    _notesController.addListener(() => _saveToPrefs('notes', _notesController.text));
+    _lengthController.addListener(() => _saveToPrefs('length', _lengthController.text));
+    _widthController.addListener(() => _saveToPrefs('width', _widthController.text));
+    _seatsController.addListener(() => _saveToPrefs('seats', _seatsController.text));
+    _ballPriceController.addListener(() => _saveToPrefs('ball_price', _ballPriceController.text));
+    _depositController.addListener(() => _saveToPrefs('deposit', _depositController.text));
   }
 
   Future<void> _clearPersistedForm() async {
     try {
       final prefs = await SharedPreferences.getInstance();
-      final keys = [
-        'temp_stadium_name',
-        'temp_stadium_location',
-        'temp_stadium_price',
-        'temp_stadium_capacity',
-        'temp_stadium_phone',
-        'temp_stadium_notes',
-        'temp_stadium_length',
-        'temp_stadium_width',
-        'temp_stadium_seats',
-        'temp_stadium_ball_price',
-        'temp_stadium_deposit',
-        'temp_stadium_governorate',
-        'temp_stadium_sport_type',
-        'temp_stadium_floor_type',
-        'temp_stadium_bath_option',
-        'temp_stadium_cafeteria',
-        'temp_stadium_garage',
-        'temp_stadium_changing_room',
-        'temp_stadium_has_ball',
-        'temp_stadium_require_deposit',
-        'temp_stadium_is_split_shift',
+      final prefix = _getDraftPrefix();
+      final suffixes = [
+        'current_step',
+        'name',
+        'location',
+        'lat',
+        'lng',
+        'governorate',
+        'price',
+        'capacity',
+        'phone',
+        'notes',
+        'length',
+        'width',
+        'seats',
+        'ball_price',
+        'deposit',
+        'sport_type',
+        'floor_type',
+        'bath_option',
+        'cafeteria',
+        'garage',
+        'changing_room',
+        'has_ball',
+        'require_deposit',
+        'is_split_shift',
+        'start_time',
+        'end_time',
+        'break_times',
+        'images',
       ];
-      for (final key in keys) {
-        await prefs.remove(key);
+      for (final s in suffixes) {
+        await prefs.remove('$prefix$s');
+        await prefs.remove('temp_stadium_$s');
       }
     } catch (e) {
       debugPrint('Error clearing persisted form data: $e');
@@ -255,7 +391,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       _selectedBathOption = val ? 'Yes' : 'No';
     });
     if (widget.stadiumId == null) {
-      _saveToPrefs('temp_stadium_bath_option', _selectedBathOption!);
+      _saveToPrefs('bath_option', _selectedBathOption!);
     }
   }
 
@@ -264,7 +400,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       _cafeteria = val;
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_cafeteria', val);
+      _saveBoolToPrefs('cafeteria', val);
     }
   }
 
@@ -273,7 +409,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       _garage = val;
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_garage', val);
+      _saveBoolToPrefs('garage', val);
     }
   }
 
@@ -282,7 +418,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       _changingRoom = val;
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_changing_room', val);
+      _saveBoolToPrefs('changing_room', val);
     }
   }
 
@@ -291,7 +427,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       _hasBall = val;
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_has_ball', val);
+      _saveBoolToPrefs('has_ball', val);
     }
   }
 
@@ -303,7 +439,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_require_deposit', val);
+      _saveBoolToPrefs('require_deposit', val);
     }
   }
 
@@ -315,7 +451,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       }
     });
     if (widget.stadiumId == null) {
-      _saveBoolToPrefs('temp_stadium_is_split_shift', val);
+      _saveBoolToPrefs('is_split_shift', val);
     }
   }
 
@@ -441,6 +577,10 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _latitude = lat;
         _longitude = lng;
       });
+      if (widget.stadiumId == null) {
+        _saveDoubleToPrefs('lat', lat);
+        _saveDoubleToPrefs('lng', lng);
+      }
 
       List<Placemark> placemarks = await placemarkFromCoordinates(lat, lng).timeout(const Duration(seconds: 5));
       if (placemarks.isNotEmpty) {
@@ -467,9 +607,9 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           VSPLogger.i('📍 Address resolved to: $readableAddress, Governorate: ${_governorate ?? "Unassigned"}');
         });
         if (widget.stadiumId == null) {
-          _saveToPrefs('temp_stadium_location', readableAddress);
+          _saveToPrefs('location', readableAddress);
           if (_governorate != null) {
-            _saveToPrefs('temp_stadium_governorate', _governorate!);
+            _saveToPrefs('governorate', _governorate!);
           }
         }
       } else {
@@ -477,7 +617,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           _locationController.text = 'Lat: $lat, Long: $lng';
         });
         if (widget.stadiumId == null) {
-          _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
+          _saveToPrefs('location', 'Lat: $lat, Long: $lng');
         }
       }
     } catch (e) {
@@ -486,7 +626,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         _locationController.text = 'Lat: $lat, Long: $lng';
       });
       if (widget.stadiumId == null) {
-        _saveToPrefs('temp_stadium_location', 'Lat: $lat, Long: $lng');
+        _saveToPrefs('location', 'Lat: $lat, Long: $lng');
       }
     }
   }
@@ -930,6 +1070,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           _endTime = picked;
         }
       });
+      _saveWorkingHoursToPrefs();
     }
   }
 
@@ -968,18 +1109,21 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
       ),
     );
     if (picked != null && mounted) {
-      int minutes = picked.minute;
-      int roundedMinute;
-      int hour = picked.hour;
+      final hour = picked.hour;
+      final minute = picked.minute;
 
-      // تقريب الدقائق تلقائياً لأقرب 30 دقيقة (00 أو 30)
-      if (minutes < 15) {
-        roundedMinute = 0;
-      } else if (minutes < 45) {
-        roundedMinute = 30;
-      } else {
-        roundedMinute = 0;
-        hour = (hour + 1) % 24; // الانتقال للساعة التالية
+      final roundedMinute = (minute / 15).round() * 15;
+      if (roundedMinute == 60) {
+        final roundedTime = TimeOfDay(hour: (hour + 1) % 24, minute: 0);
+        setState(() {
+          if (isStart) {
+            _breakTimes[index]['start'] = roundedTime;
+          } else {
+            _breakTimes[index]['end'] = roundedTime;
+          }
+        });
+        _saveWorkingHoursToPrefs();
+        return;
       }
 
       final roundedTime = TimeOfDay(hour: hour, minute: roundedMinute);
@@ -991,6 +1135,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
           _breakTimes[index]['end'] = roundedTime;
         }
       });
+      _saveWorkingHoursToPrefs();
     }
   }
 
@@ -1050,6 +1195,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
         imageEntry['progress'] = 100;
         imageEntry['isUploading'] = false;
       });
+      _saveImagesToPrefs();
     } catch (e) {
       progressTimer?.cancel();
       if (mounted) {
@@ -1175,6 +1321,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     if (_currentStep < 2) {
       _pageController.nextPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       setState(() => _currentStep++);
+      _saveStepToPrefs(_currentStep);
     }
   }
 
@@ -1214,6 +1361,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
     if (_currentStep > 0) {
       _pageController.previousPage(duration: const Duration(milliseconds: 300), curve: Curves.easeInOut);
       setState(() => _currentStep--);
+      _saveStepToPrefs(_currentStep);
     } else {
       final shouldLeave = await _showDiscardConfirmation();
       if (shouldLeave && mounted) {

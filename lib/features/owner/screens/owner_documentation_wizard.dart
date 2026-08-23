@@ -44,6 +44,48 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
   };
 
   @override
+  void initState() {
+    super.initState();
+    WidgetsBinding.instance.addPostFrameCallback((_) {
+      _hydrateExistingDocuments();
+    });
+  }
+
+  void _hydrateExistingDocuments() {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    if (user == null) return;
+
+    final addData = user.additionalData;
+    final docs = (addData['verificationDocuments'] as Map<String, dynamic>?) ?? addData;
+
+    final String? cr = (docs['commercialRegister'] ?? user.contractUrl)?.toString();
+    final String? tc = docs['taxCard']?.toString();
+    final String? idF = (docs['idFront'] ?? user.ownerIdUrl)?.toString();
+    final String? idB = docs['idBack']?.toString();
+
+    setState(() {
+      if (cr != null && cr.isNotEmpty) _uploadedDocUrls['commercialRegister'] = cr;
+      if (tc != null && tc.isNotEmpty) _uploadedDocUrls['taxCard'] = tc;
+      if (idF != null && idF.isNotEmpty) _uploadedDocUrls['idFront'] = idF;
+      if (idB != null && idB.isNotEmpty) _uploadedDocUrls['idBack'] = idB;
+
+      // Smart Step Auto-Advance:
+      if (_uploadedDocUrls['commercialRegister'] != null && _uploadedDocUrls['taxCard'] == null) {
+        _currentStep = 1;
+      } else if (_uploadedDocUrls['commercialRegister'] != null &&
+          _uploadedDocUrls['taxCard'] != null &&
+          (_uploadedDocUrls['idFront'] == null || _uploadedDocUrls['idBack'] == null)) {
+        _currentStep = 2;
+      }
+
+      if (_currentStep > 0 && _pageController.hasClients) {
+        _pageController.jumpToPage(_currentStep);
+      }
+    });
+  }
+
+  @override
   void dispose() {
     _pageController.dispose();
     super.dispose();

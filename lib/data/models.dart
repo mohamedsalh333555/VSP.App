@@ -584,6 +584,75 @@ class BookingDraft {
       'binanceId': binanceId,
     };
   }
+
+  factory BookingDraft.fromMap(Map<String, dynamic> map) {
+    BookingType parsedType = BookingType.regular;
+    final rawType = map['bookingType']?.toString();
+    if (rawType != null) {
+      for (final val in BookingType.values) {
+        if (val.name == rawType || val.toString() == rawType) {
+          parsedType = val;
+          break;
+        }
+      }
+    }
+
+    DateTime parsedStart = DateTime.now();
+    if (map['startTime'] != null) {
+      parsedStart = DateTime.tryParse(map['startTime'].toString()) ?? DateTime.now();
+    }
+
+    DateTime parsedEnd = parsedStart.add(const Duration(hours: 1));
+    if (map['endTime'] != null) {
+      parsedEnd = DateTime.tryParse(map['endTime'].toString()) ?? parsedEnd;
+    }
+
+    final rawTotalPrice = map['totalPrice'] ?? 0.0;
+    final double parsedTotalPrice = (rawTotalPrice is num) ? rawTotalPrice.toDouble() : (double.tryParse(rawTotalPrice.toString()) ?? 0.0);
+
+    final rawDeposit = map['deposit_paid'] ?? map['depositPaid'] ?? 0.0;
+    final double parsedDeposit = (rawDeposit is num) ? rawDeposit.toDouble() : (double.tryParse(rawDeposit.toString()) ?? 0.0);
+
+    final int ppt = map['players_per_team'] ?? map['playersPerTeam'] ?? 5;
+    final int tfc = map['total_field_capacity'] ?? map['totalFieldCapacity'] ?? map['max_players'] ?? (ppt * 2);
+
+    return BookingDraft(
+      stadiumId: map['stadiumId']?.toString() ?? '',
+      stadiumName: map['stadiumName']?.toString() ?? '',
+      stadiumImageUrl: map['stadiumImageUrl']?.toString() ?? '',
+      ownerId: map['ownerId']?.toString() ?? '',
+      startTime: parsedStart,
+      endTime: parsedEnd,
+      bookingType: parsedType,
+      playerTeamId: map['playerTeamId']?.toString(),
+      playerTeamName: map['playerTeamName']?.toString(),
+      playerTeamLogoUrl: map['playerTeamLogoUrl']?.toString(),
+      hostName: map['hostName']?.toString(),
+      hostAvatarUrl: map['hostAvatarUrl']?.toString(),
+      opponentTeamId: map['opponentTeamId']?.toString(),
+      opponentTeamName: map['opponentTeamName']?.toString(),
+      opponentTeamLogoUrl: map['opponentTeamLogoUrl']?.toString(),
+      isPrivate: map['isPrivate'] == true,
+      rentBall: map['rentBall'] == true,
+      totalPrice: parsedTotalPrice,
+      currency: map['currency']?.toString() ?? 'EGP',
+      paymentMethod: map['paymentMethod']?.toString(),
+      paymentTransactionId: map['paymentTransactionId']?.toString(),
+      currentPlayers: map['currentPlayers'] is int ? map['currentPlayers'] : (int.tryParse(map['currentPlayers']?.toString() ?? '') ?? 1),
+      playersPerTeam: ppt,
+      totalFieldCapacity: tfc,
+      playerPhone: map['playerPhone']?.toString(),
+      notes: map['notes']?.toString(),
+      isPaid: map['isPaid'] == true,
+      depositPaid: parsedDeposit,
+      isDepositPaid: map['is_deposit_paid'] == true || map['isDepositPaid'] == true,
+      paymentStatus: map['payment_status']?.toString() ?? map['paymentStatus']?.toString(),
+      needsDeposit: map['needs_deposit'] == true || map['needsDeposit'] == true,
+      instapay: map['instapay']?.toString(),
+      vodafoneCash: map['vodafoneCash']?.toString(),
+      binanceId: map['binanceId']?.toString(),
+    );
+  }
 }
 
 /// Booking data model - Full booking record stored in DB
