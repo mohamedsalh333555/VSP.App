@@ -15,6 +15,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_date_picker_dialog.dart';
 import '../../../core/services/secure_storage_service.dart';
 import '../../../core/utils/phone_utils.dart';
+import '../../../core/repositories/user_repository.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -126,6 +127,27 @@ class _SignupScreenState extends State<SignupScreen> {
     }
 
     setState(() => _isLoading = true);
+
+    // Pre-check phone uniqueness to give instant, friendly feedback
+    try {
+      final existingPhoneUser = await UserRepository().getUserByPhone(normalizedPhone);
+      if (existingPhoneUser != null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isAr ? 'رقم الهاتف مسجل مسبقاً بحساب آخر 📱' : 'This phone number is already registered to another account 📱',
+          );
+        }
+        return;
+      }
+    } catch (_) {
+      // Continue to signUp if network pre-check fails
+    }
+
+    if (!mounted) return;
+
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     
     // Store email in provider for display purposes in verification screen

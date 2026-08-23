@@ -580,22 +580,25 @@ class AuthProvider with ChangeNotifier {
 
       if (result['success']) {
         _firebaseUser = result['user'];
+        
+        final profileData = {
+          'name': userData?['name'],
+          'phone': userData?['phone'],
+          'position': userData?['position'] ?? 'GK',
+          'governorate': userData?['governorate'] ?? _governorate,
+          'date_of_birth': userData?['date_of_birth'],
+          'is_registration_complete': true,
+          'is_email_verified': true,
+        };
+
+        // 🛡️ PERSISTENCE FIX: Save complete profile to DB so user isn't stuck or routed to onboarding
+        await _userRepository.completeRegistrationFlags(_firebaseUser!.id, profileData);
+
         final existingData = await _userRepository.getUserData(_firebaseUser!.id);
         if (existingData != null) {
           _userModel = UserModel.fromFirestore(existingData);
-          // ⚡ TIMING FIX: If this is an already-registered user signing in via
-          // the signup flow (duplicate email), their DB row might have
-          // isRegistrationComplete=false. Force it to true locally BEFORE
-          // notifyListeners fires so GoRouter doesn't redirect to /onboarding.
           if (!_userModel!.isRegistrationComplete) {
             _userModel = _userModel!.copyWith(isRegistrationComplete: true);
-            // Persist fix to DB silently in the background.
-            _userRepository.updateUserProfile(
-              _firebaseUser!.id,
-              {'isRegistrationComplete': true},
-              authUser: _firebaseUser,
-              role: existingData['role'] ?? role,
-            );
           }
         } else {
           _userModel = UserModel(
@@ -605,6 +608,9 @@ class AuthProvider with ChangeNotifier {
             name: userData?['name'],
             phone: userData?['phone'],
             position: userData?['position'] ?? 'GK',
+            governorate: userData?['governorate'] ?? _governorate,
+            isRegistrationComplete: true,
+            isEmailVerified: true,
             dateOfBirth: userData?['date_of_birth'] != null
                 ? DateTime.tryParse(userData!['date_of_birth'])
                 : null,
