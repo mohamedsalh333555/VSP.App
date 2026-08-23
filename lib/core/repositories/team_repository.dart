@@ -146,23 +146,24 @@ class TeamRepository {
       final pgData = {
         'name': data['name'],
         'captain_id': (data['memberUids'] as List?)?.first?.toString(),
-        'captain_name': data['captainName'] ?? 'Captain',
-        'captain_phone': PhoneUtils.normalize(data['captainPhone'] ?? ''),
-        'logo_url': data['logoUrl'] ?? '',
-        'date': data['date'] ?? 'Upcoming',
-        'stadium': data['stadium'] ?? 'TBD',
-        'price_per_person': data['pricePerPerson'] ?? 50.0,
+        'logo_url': data['logoUrl'] ?? data['logo_url'] ?? '',
+        'primary_color': data['primaryColor'] ?? data['primary_color'] ?? '#FFFFFF',
+        'secondary_color': data['secondaryColor'] ?? data['secondary_color'] ?? '#000000',
+        'city': data['city'],
+        'governorate': data['governorate'] ?? 'Cairo',
+        'bio': data['bio'],
+        'preferred_formation': data['preferredFormation'] ?? data['preferred_formation'] ?? '2-2-1',
+        'elo_rating': 1200,
         'points': 0,
         'wins': 0,
         'draws': 0,
         'losses': 0,
         'matches_played': 0,
         'current_winning_streak': 0,
-        'unlocked_badges': ['explorer'],
-        'played_opponents': [],
         'championships_won': 0,
-        'governorate': data['governorate'] ?? 'Cairo',
-        'sport_type': data['sportType'] ?? 'Football',
+        'is_active': true,
+        'is_blocked': false,
+        'is_verified': false,
       };
 
       final response = await _supabase
@@ -446,30 +447,28 @@ class TeamRepository {
     try {
       final pgData = <String, dynamic>{};
       if (data.containsKey('name')) pgData['name'] = data['name'];
-      if (data.containsKey('captainName')) pgData['captain_name'] = data['captainName'];
-      if (data.containsKey('captainImageUrl')) pgData['captain_image_url'] = data['captainImageUrl'];
       if (data.containsKey('logoUrl')) pgData['logo_url'] = data['logoUrl'];
-      if (data.containsKey('date')) pgData['date'] = data['date'];
-      if (data.containsKey('stadium')) pgData['stadium'] = data['stadium'];
-      if (data.containsKey('pricePerPerson')) pgData['price_per_person'] = data['pricePerPerson'];
-      if (data.containsKey('points')) pgData['points'] = data['points'];
-      if (data.containsKey('wins')) pgData['wins'] = data['wins'];
-      if (data.containsKey('draws')) pgData['draws'] = data['draws'];
-      if (data.containsKey('losses')) pgData['losses'] = data['losses'];
-      if (data.containsKey('matchesPlayed')) pgData['matches_played'] = data['matchesPlayed'];
-      if (data.containsKey('currentWinningStreak')) pgData['current_winning_streak'] = data['currentWinningStreak'];
-      if (data.containsKey('unlockedBadges')) pgData['unlocked_badges'] = data['unlockedBadges'];
-      if (data.containsKey('playedOpponents')) pgData['played_opponents'] = data['playedOpponents'];
-      if (data.containsKey('beatenOpponents')) pgData['beaten_opponents'] = data['beatenOpponents'];
-      if (data.containsKey('championshipsWon')) pgData['championships_won'] = data['championshipsWon'];
+      if (data.containsKey('logo_url')) pgData['logo_url'] = data['logo_url'];
+      if (data.containsKey('primaryColor')) pgData['primary_color'] = data['primaryColor'];
+      if (data.containsKey('primary_color')) pgData['primary_color'] = data['primary_color'];
+      if (data.containsKey('secondaryColor')) pgData['secondary_color'] = data['secondaryColor'];
+      if (data.containsKey('secondary_color')) pgData['secondary_color'] = data['secondary_color'];
+      if (data.containsKey('customLogoBase64')) pgData['custom_logo_base64'] = data['customLogoBase64'];
+      if (data.containsKey('custom_logo_base64')) pgData['custom_logo_base64'] = data['custom_logo_base64'];
+      if (data.containsKey('city')) pgData['city'] = data['city'];
       if (data.containsKey('governorate')) pgData['governorate'] = data['governorate'];
-      if (data.containsKey('sportType')) pgData['sport_type'] = data['sportType'];
+      if (data.containsKey('bio')) pgData['bio'] = data['bio'];
+      if (data.containsKey('preferredFormation')) pgData['preferred_formation'] = data['preferredFormation'];
+      if (data.containsKey('preferred_formation')) pgData['preferred_formation'] = data['preferred_formation'];
+      if (data.containsKey('isActive')) pgData['is_active'] = data['isActive'];
+      if (data.containsKey('is_active')) pgData['is_active'] = data['is_active'];
 
       if (pgData.isEmpty) return true;
 
       await _supabase.from('teams').update(pgData).eq('id', teamId);
       return true;
     } catch (e) {
+      debugPrint('Error updating team: $e');
       return false;
     }
   }

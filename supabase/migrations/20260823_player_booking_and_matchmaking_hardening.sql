@@ -7,11 +7,9 @@
 BEGIN;
 
 -- ------------------------------------------------------------------------------
--- 1️⃣ دالة حجز اللاعب الذرية مع فحص التضارب التلقائي (player_create_booking_atomic)
+-- 1️⃣ دالة حجز اللاعب الذرية مع فحص التضارب التلقائي وإشعار المالك
 -- ------------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.player_create_booking_atomic(
-    UUID, UUID, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, TEXT, TEXT, NUMERIC, NUMERIC, BOOLEAN, TEXT, TEXT, INT, INT
-);
+DROP FUNCTION IF EXISTS public.player_create_booking_atomic CASCADE;
 
 CREATE OR REPLACE FUNCTION public.player_create_booking_atomic(
     p_player_id UUID,
@@ -153,10 +151,9 @@ END;
 $$;
 
 -- ------------------------------------------------------------------------------
--- 2️⃣ دالة الانضمام الذرية للمباريات العامة والـ 5v5 (request_join_public_match)
+-- 2️⃣ دالة الانضمام الذرية للمباريات العامة والـ 5v5
 -- ------------------------------------------------------------------------------
-DROP FUNCTION IF EXISTS public.request_join_public_match(TEXT, TEXT);
-DROP FUNCTION IF EXISTS public.request_join_public_match(UUID, UUID);
+DROP FUNCTION IF EXISTS public.request_join_public_match CASCADE;
 
 CREATE OR REPLACE FUNCTION public.request_join_public_match(
     p_booking_id TEXT,
@@ -235,9 +232,9 @@ END;
 $$;
 
 -- ------------------------------------------------------------------------------
--- 3️⃣ منح الصلاحيات
+-- 3️⃣ منح صلاحيات التنفيذ
 -- ------------------------------------------------------------------------------
-GRANT EXECUTE ON FUNCTION public.player_create_booking_atomic(UUID, UUID, TIMESTAMPTZ, TIMESTAMPTZ, TEXT, TEXT, TEXT, NUMERIC, NUMERIC, BOOLEAN, TEXT, TEXT, INT, INT) TO authenticated, service_role;
-GRANT EXECUTE ON FUNCTION public.request_join_public_match(TEXT, TEXT) TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.player_create_booking_atomic TO authenticated, service_role;
+GRANT EXECUTE ON FUNCTION public.request_join_public_match TO authenticated, service_role;
 
 COMMIT;

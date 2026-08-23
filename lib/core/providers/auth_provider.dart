@@ -155,6 +155,34 @@ class AuthProvider with ChangeNotifier {
         }
       }
 
+      if (userData == null) {
+        // 🛠️ SELF-HEALING FALLBACK: If DB trigger did not fire or row is absent, create it directly
+        final effectiveRole = pendingRole ?? _userType ?? 'player';
+        final userMeta = user.userMetadata ?? {};
+        final name = (userMeta['full_name'] ?? userMeta['name'] ?? user.email?.split('@').first ?? 'مستخدم جديد').toString();
+        final avatar = (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
+
+        try {
+          await Supabase.instance.client.from('users').upsert({
+            'id': user.id,
+            'email': user.email,
+            'name': name,
+            'role': effectiveRole,
+            'profile_image_url': avatar,
+            'is_email_verified': true,
+            'is_registration_complete': false,
+            'fair_play_score': 100,
+            'points': 0,
+            'subscription_plan': effectiveRole == 'owner' ? 'free_trial' : null,
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          });
+          userData = await _userRepository.getUserData(user.id);
+        } catch (e) {
+          VSPLogger.w("⚠️ Direct user row creation fallback failed: $e");
+        }
+      }
+
       final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
 
       // 🔒 UNREGISTERED ACCOUNT GUARD:
@@ -933,9 +961,9 @@ class AuthProvider with ChangeNotifier {
           'p_position': position,
           'p_governorate': governorate ?? _governorate,
           'p_date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
-          'p2p_instapay': p2pInstapay,
-          'p2p_vodafone': p2pVodafone,
-          'p2p_bank': p2pBank,
+          'p_p2p_instapay': p2pInstapay,
+          'p_p2p_vodafone': p2pVodafone,
+          'p_p2p_bank': p2pBank,
         });
       } catch (rpcErr) {
         VSPLogger.w('RPC complete_user_registration fallback: $rpcErr');

@@ -599,30 +599,35 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {
     try {
-      await _supabase.from('bookings').update({
-        'is_paid': isPaid,
-        'payment_status': isPaid ? 'paid' : 'pending',
-        'updated_at': DateTime.now().toUtc().toIso8601String(),
-      }).eq('id', bookingId);
+      final b = await getBookingById(bookingId);
+      if (b == null) return false;
 
       if (isPaid) {
+        final rpcRes = await _supabase.rpc('confirm_cash_booking_atomic', params: {
+          'p_booking_id': bookingId,
+          'p_owner_id': b.ownerId,
+          'p_total_price': b.totalPrice,
+        });
+
+        if (rpcRes is Map && rpcRes['success'] == false) {
+          VSPLogger.w('RPC confirm_cash_booking_atomic returned error: ${rpcRes['message']}');
+          return false;
+        }
+
         try {
-          final b = await getBookingById(bookingId);
-          if (b != null) {
-            await NotificationHandler.notifyPaymentReceived(
-              recipientId: b.ownerId,
-              userName: b.hostName ?? 'لاعب',
-              amount: b.totalPrice,
-              bookingId: bookingId,
-            );
-          }
+          await NotificationHandler.notifyPaymentReceived(
+            recipientId: b.ownerId,
+            userName: b.hostName ?? 'لاعب',
+            amount: b.totalPrice,
+            bookingId: bookingId,
+          );
         } catch (e) {
           VSPLogger.w('Skip payment notification: $e');
         }
       }
       return true;
     } catch (e) {
-      debugPrint('❌ Error updating payment status: $e');
+      debugPrint('❌ Error updating payment status via RPC: $e');
       return false;
     }
   }
@@ -630,29 +635,10 @@ class SupabaseBookingRepository implements BookingRepository {
   @override
   Future<void> autoReconcilePastBookings(String ownerId) async {
     try {
-      final response = await _supabase
-          .from('bookings')
-          .select()
-          .eq('owner_id', ownerId)
-          .eq('is_paid', false);
-
-      final bookings = (response as List)
-          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
-          .toList();
-
-      final now = DateTime.now();
-      for (final booking in bookings) {
-        if (booking.endTime.add(const Duration(hours: 24)).isAfter(now) || booking.status == BookingStatus.cancelled) continue;
-        
-        await _supabase.from('bookings').update({
-          'is_paid': true,
-          'payment_status': 'paid',
-          'status': BookingStatus.completed.name,
-          'updated_at': DateTime.now().toUtc().toIso8601String(),
-        }).eq('id', booking.id);
-      }
+      await _supabase.rpc('auto_reconcile_past_bookings');
+      VSPLogger.i('✅ auto_reconcile_past_bookings RPC executed successfully');
     } catch (e) {
-      VSPLogger.e('❌ Error in autoReconcilePastBookings', e);
+      VSPLogger.e('❌ Error in autoReconcilePastBookings RPC', e);
     }
   }
 
