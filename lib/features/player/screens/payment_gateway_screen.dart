@@ -43,7 +43,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Timer? _webhookTimeoutTimer;
   Timer? _fallbackPollingTimer;
   Timer? _countdownTimer;
-  int _remainingSeconds = 180; // 3 minutes hold timer
+  int _remainingSeconds = 300; // 5 minutes hold timer
   bool _paymentCompleted = false;
   String _selectedMethod = 'card'; // 'card', 'wallet'
 
@@ -70,7 +70,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
           }
           if (mounted) {
             final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-            VSPFeedback.showError(context, isArabic ? 'انتهت مهلة حجز الوقت (3 دقائق).' : 'Booking reservation timeout (3 mins).');
+            VSPFeedback.showError(context, isArabic ? 'انتهت مهلة حجز الوقت (5 دقائق).' : 'Booking reservation timeout (5 mins).');
             Navigator.pop(context);
           }
         }
