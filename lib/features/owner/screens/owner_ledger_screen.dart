@@ -107,6 +107,8 @@ class OwnerLedgerScreen extends StatelessWidget {
       return;
     }
 
+    bool isSubmitting = false;
+
     showDialog(
       context: context,
       builder: (ctx) => AlertDialog(
@@ -167,25 +169,76 @@ class OwnerLedgerScreen extends StatelessWidget {
         ),
         actionsPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
         actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(ctx),
-            child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              Navigator.pop(ctx);
-              VSPFeedback.showSuccess(
-                context,
-                isAr
-                    ? 'تم إرسال طلب التسوية للإدارة بنجاح! 🚀\nسيتم إشعارك فور إتمام التحويل.'
-                    : 'Payout request submitted successfully! 🚀',
+          StatefulBuilder(
+            builder: (btnCtx, setBtnState) {
+              final String destinationMethod = (user?.p2pInstapay?.isNotEmpty ?? false)
+                  ? 'instapay'
+                  : ((user?.p2pVodafone?.isNotEmpty ?? false)
+                      ? 'wallet'
+                      : ((user?.p2pBank?.isNotEmpty ?? false) ? 'bank' : 'unknown'));
+
+              final String destinationVal = (user?.p2pInstapay?.isNotEmpty ?? false)
+                  ? user!.p2pInstapay!
+                  : ((user?.p2pVodafone?.isNotEmpty ?? false)
+                      ? user!.p2pVodafone!
+                      : ((user?.p2pBank?.isNotEmpty ?? false) ? user!.p2pBank! : ''));
+
+              return Row(
+                children: [
+                  Expanded(
+                    child: TextButton(
+                      onPressed: isSubmitting ? null : () => Navigator.pop(ctx),
+                      child: Text(isAr ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Expanded(
+                    child: ElevatedButton(
+                      onPressed: isSubmitting
+                          ? null
+                          : () async {
+                              setBtnState(() => isSubmitting = true);
+                              final res = await OwnerRepository().requestPayoutSettlement(
+                                amount: digitalBalance,
+                                method: destinationMethod,
+                                destination: destinationVal,
+                              );
+
+                              if (!ctx.mounted) return;
+                              Navigator.pop(ctx);
+
+                              if (context.mounted) {
+                                if (res['success'] == true) {
+                                  VSPFeedback.showSuccess(
+                                    context,
+                                    isAr
+                                        ? 'تم إرسال طلب التسوية للإدارة بنجاح! 🚀\nسيتم إشعارك فور إتمام التحويل.'
+                                        : 'Payout request submitted successfully! 🚀',
+                                  );
+                                } else {
+                                  VSPFeedback.showError(
+                                    context,
+                                    res['error']?.toString() ?? (isAr ? 'فشل إرسال طلب التسوية' : 'Failed to submit request'),
+                                  );
+                                }
+                              }
+                            },
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                      ),
+                      child: isSubmitting
+                          ? const SizedBox(
+                              width: 18,
+                              height: 18,
+                              child: CircularProgressIndicator(strokeWidth: 2, color: Colors.black),
+                            )
+                          : Text(isAr ? 'تأكيد إرسال الطلب' : 'Confirm Request', style: const TextStyle(fontWeight: FontWeight.bold)),
+                    ),
+                  ),
+                ],
               );
             },
-            style: ElevatedButton.styleFrom(
-              backgroundColor: VSPColors.accent,
-              foregroundColor: Colors.black,
-            ),
-            child: Text(isAr ? 'تأكيد إرسال الطلب' : 'Confirm Request'),
           ),
         ],
       ),

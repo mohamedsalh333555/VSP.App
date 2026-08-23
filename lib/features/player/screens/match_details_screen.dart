@@ -216,7 +216,9 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
           const SizedBox(width: 12),
           Expanded(
             child: Text(
-              isArabic ? 'أنت مستضيف هذه المباراة. يمكنك إدارة اللاعبين من القائمة بالأسفل.' : 'You are the host of this match. You can manage players from the list below.',
+              isArabic 
+                  ? 'أنت مستضيف هذه المباراة ⭐ يمكنك مشاركة رابط المباراة ودعوة أصدقائك لاكتمال الفريق.' 
+                  : 'You are the host of this match ⭐ Share the link to invite friends and complete your squad.',
               style: const TextStyle(color: VSPColors.accent, fontSize: 13, fontWeight: FontWeight.bold),
             ),
           ),
@@ -268,7 +270,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
         }
 
         final isHost = _booking!.createdByUserId == currentUserId;
-        final isFull = _booking!.joinedUserIds.length >= _booking!.maxPlayers;
+        final isFull = _booking!.currentPlayers >= _booking!.maxPlayers || _booking!.joinedUserIds.length >= _booking!.maxPlayers;
         final alreadyJoined = _booking!.joinedUserIds.contains(currentUserId);
 
         return Scaffold(
@@ -349,7 +351,12 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
                       ],
                       const Divider(color: VSPColors.divider, height: 40),
                       Text(
-                        AppLocalizations.of(context)!.playersCount(_booking!.joinedUserIds.length, _booking!.maxPlayers),
+                        AppLocalizations.of(context)!.playersCount(
+                          _booking!.currentPlayers > _booking!.joinedUserIds.length
+                              ? _booking!.currentPlayers
+                              : _booking!.joinedUserIds.length,
+                          _booking!.maxPlayers,
+                        ),
                         style: Theme.of(context).textTheme.titleLarge,
                       ),
                       const SizedBox(height: VSPSpacing.md),

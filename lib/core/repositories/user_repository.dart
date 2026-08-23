@@ -137,7 +137,6 @@ class UserRepository {
   Future<bool> setUserRole(String userId, String role) async {
     try {
       await _supabase.rpc('set_user_role_on_signup', params: {
-        'p_user_id': userId,
         'p_role': role,
       });
       VSPLogger.i('✅ setUserRole persisted successfully for $userId with role: $role');
@@ -148,7 +147,7 @@ class UserRepository {
     }
   }
 
-  /// Trusted method to complete user registration via RPC complete_user_registration
+  /// Trusted method to complete user registration via RPC complete_user_registration with fallback
   Future<bool> completeRegistrationFlags(String userId, Map<String, dynamic> additionalData) async {
     try {
       await _supabase.rpc('complete_user_registration', params: {
@@ -158,15 +157,35 @@ class UserRepository {
         'p_position': additionalData['position'] ?? additionalData['p_position'],
         'p_governorate': additionalData['governorate'] ?? additionalData['p_governorate'] ?? 'Cairo',
         'p_date_of_birth': additionalData['date_of_birth'] ?? additionalData['p_date_of_birth'],
-        'p2p_instapay': additionalData['p2p_instapay'],
-        'p2p_vodafone': additionalData['p2p_vodafone'],
-        'p2p_bank': additionalData['p2p_bank'],
+        'p_p2p_instapay': additionalData['p2p_instapay'],
+        'p_p2p_vodafone': additionalData['p2p_vodafone'],
+        'p_p2p_bank': additionalData['p2p_bank'],
       });
       VSPLogger.i('✅ complete_user_registration RPC persisted successfully for $userId');
       return true;
     } catch (e) {
-      VSPLogger.e('RPC complete_user_registration failed for $userId', e);
-      return false;
+      VSPLogger.w('RPC complete_user_registration fallback to direct update for $userId: $e');
+      try {
+        final updateMap = <String, dynamic>{
+          'is_registration_complete': true,
+          'is_email_verified': true,
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        };
+        if (additionalData['phone'] != null) updateMap['phone'] = additionalData['phone'];
+        if (additionalData['name'] != null) updateMap['name'] = additionalData['name'];
+        if (additionalData['position'] != null) updateMap['position'] = additionalData['position'];
+        if (additionalData['governorate'] != null) updateMap['governorate'] = additionalData['governorate'];
+        if (additionalData['date_of_birth'] != null) updateMap['date_of_birth'] = additionalData['date_of_birth'];
+        if (additionalData['p2p_instapay'] != null) updateMap['p2p_instapay'] = additionalData['p2p_instapay'];
+        if (additionalData['p2p_vodafone'] != null) updateMap['p2p_vodafone'] = additionalData['p2p_vodafone'];
+        if (additionalData['p2p_bank'] != null) updateMap['p2p_bank'] = additionalData['p2p_bank'];
+
+        await _supabase.from('users').update(updateMap).eq('id', userId);
+        return true;
+      } catch (innerErr) {
+        VSPLogger.e('Direct update fallback failed for $userId', innerErr);
+        return false;
+      }
     }
   }
 

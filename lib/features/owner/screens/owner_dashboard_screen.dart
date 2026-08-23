@@ -1,7 +1,7 @@
 import 'dart:async';
-import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -10,11 +10,14 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
 import '../../../features/player/screens/notifications_center_screen.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
+import 'create_tournament_wizard.dart';
+import 'owner_ledger_screen.dart';
 import '../widgets/owner_booking_sheet.dart';
 import '../../../core/utils/app_date_formatter.dart';
 
@@ -285,32 +288,48 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
-                // 1. الهيدر العلوي
+                // 1. الهيدر العلوي مع شارة الباقة الذكية
                 _buildHeader(auth, isArabic),
                 const SizedBox(height: VSPSpacing.md),
 
-                // 2. بانر التنبيه والاشتراك
+                // 2. بانر التنبيه وحالة التوثيق والاشتراك
                 if (userModel != null) ...[
                   _buildOwnerStatusBanner(userModel, isArabic, isExpired),
                   const SizedBox(height: VSPSpacing.md),
                 ],
 
-                // 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Bar)
+                // 3. الرادار اللحظي لحالة إشغال الملاعب (Enhancement #1)
+                _buildPitchOccupancyRadar(context, allBookings, isProOwner, isArabic),
+                const SizedBox(height: VSPSpacing.md),
+
+                // 4. بطاقة أقرب مباراة قادمة اليوم مع أزرار الاتصال وتذكير الواتساب (Enhancement #2)
+                _buildNextMatchHeroCard(context, allBookings, isProOwner, isArabic),
+                const SizedBox(height: VSPSpacing.md),
+
+                // 5. شريط الإجراءات السريعة بلمسة واحدة (Enhancement #3)
+                _buildQuickActionDock(context, isArabic, isExpired, isProOwner),
+                const SizedBox(height: VSPSpacing.lg),
+
+                // 6. مبدل الملاعب الذكي للمالكين المحترفين (Multi-Stadium Bar)
                 _buildStadiumFilterBar(isArabic),
 
-                // 🔹 شريط النطاق الزمني (Time-Filter Bar)
+                // 7. شريط النطاق الزمني (Time-Filter Bar)
                 _buildTimeFilterBar(isArabic),
                 const SizedBox(height: VSPSpacing.sm),
 
-                // 🧮 3. المحرك المالي والكارت الرئيسي
+                // 8. المحرك المالي وكارت الإيرادات المتكيف
                 _buildStatsGrid(metrics, isProOwner, isArabic),
+                const SizedBox(height: VSPSpacing.md),
+
+                // 9. ويدجت طقس الملعب وموعد تشغيل الكشافات (Enhancement #9)
+                _buildPitchWeatherAndSunsetWidget(isArabic),
                 const SizedBox(height: VSPSpacing.lg),
 
-                // 💡 4. شارات اللمحات الذكية
+                // 10. شارات اللمحات الذكية وأدوات التسويق
                 _buildInsightBadges(isProOwner, isArabic),
                 const SizedBox(height: VSPSpacing.xl),
 
-                // 📋 5. قائمة الحجوزات الديناميكية
+                // 11. قائمة الحجوزات الديناميكية
                 Text(
                   _selectedTimePeriod == 'today'
                       ? (isArabic ? 'حجوزات اليوم' : "Today's Bookings")
@@ -325,7 +344,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 _buildBookedTodayList(metrics.periodBookings, isArabic),
                 const SizedBox(height: VSPSpacing.md),
 
-                // ⚡ 6. زر الحجز السريع المباشر
+                // 12. زر الحجز السريع المباشر
                 _buildQuickWalkInCTA(isArabic, isExpired),
               ],
             ),
@@ -335,11 +354,38 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 1. الهيدر الموحد لغوياً
+  /// 1. الهيدر الموحد لغوياً مع شارة الباقة الذكية
   Widget _buildHeader(AuthProvider auth, bool isArabic) {
     final firstName = (auth.userModel?.name ?? 'Owner').split(' ').first;
     final isProOwner = auth.userModel?.isProPlan == true;
     final isTrial = auth.userModel?.isInActiveTrial == true;
+    final isBasic = auth.userModel?.isBasicOrHigher == true && !isProOwner;
+    final isExpired = auth.userModel?.isPlanExpired == true;
+
+    Color badgeColor = Colors.amber;
+    IconData badgeIcon = Iconsax.crown_copy;
+    String badgeLabel = 'Pro VIP';
+
+    if (isExpired) {
+      badgeColor = Colors.redAccent;
+      badgeIcon = Iconsax.security_safe_copy;
+      badgeLabel = isArabic ? 'منتهية' : 'Expired';
+    } else if (isProOwner) {
+      badgeColor = Colors.amber;
+      badgeIcon = Iconsax.crown_copy;
+      badgeLabel = 'Pro VIP';
+    } else if (isBasic) {
+      badgeColor = const Color(0xFF38BDF8);
+      badgeIcon = Iconsax.star_1_copy;
+      badgeLabel = 'Basic';
+    } else if (isTrial) {
+      final days = auth.userModel?.effectiveTrialEndsAt != null
+          ? auth.userModel!.effectiveTrialEndsAt!.difference(DateTime.now()).inDays
+          : 60;
+      badgeColor = VSPColors.accent;
+      badgeIcon = Iconsax.flash_1_copy;
+      badgeLabel = isArabic ? 'تجريبي ($days يوم)' : 'Trial ($days d)';
+    }
 
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
@@ -353,35 +399,33 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   isArabic ? 'أهلاً $firstName' : 'Hi $firstName', 
                   style: Theme.of(context).textTheme.displayMedium,
                 ),
-                if (isProOwner || isTrial) ...[
-                  const SizedBox(width: 8),
-                  InkWell(
-                    onTap: () => _showProUpgradeSheet(context),
-                    child: Container(
-                      padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                      decoration: BoxDecoration(
-                        color: Colors.amber.withValues(alpha: 0.15),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(color: Colors.amber.withValues(alpha: 0.4), width: 1),
-                      ),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          const Icon(Iconsax.crown_copy, color: Colors.amber, size: 12),
-                          const SizedBox(width: 4),
-                          Text(
-                            isTrial ? (isArabic ? 'تجريبي' : 'Trial') : 'Pro',
-                            style: const TextStyle(color: Colors.amber, fontSize: 10, fontWeight: FontWeight.bold),
-                          ),
-                        ],
-                      ),
+                const SizedBox(width: 8),
+                InkWell(
+                  onTap: () => _showProUpgradeSheet(context),
+                  child: Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: badgeColor.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(12),
+                      border: Border.all(color: badgeColor.withValues(alpha: 0.4), width: 1),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Icon(badgeIcon, color: badgeColor, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          badgeLabel,
+                          style: TextStyle(color: badgeColor, fontSize: 10.5, fontWeight: FontWeight.bold),
+                        ),
+                      ],
                     ),
                   ),
-                ],
+                ),
               ],
             ),
             Text(
-              isArabic ? 'لوحة تحكم الملعب' : 'Facility Dashboard', 
+              isArabic ? 'لوحة تحكم المنشأة' : 'Facility Dashboard', 
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
             ),
           ],
@@ -429,7 +473,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 2. البانر الأمني الموحد لغوياً
+  /// 2. البانر الأمني وحالة التوثيق
   Widget _buildOwnerStatusBanner(dynamic userModel, bool isArabic, bool isExpired) {
     final String? verificationStatus = userModel.verificationStatus as String?;
     final bool isUnderReview = verificationStatus == 'pending' || verificationStatus == 'under_review';
@@ -523,17 +567,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String trialEndDateStr = trialEnd != null ? AppDateFormatter.formatFullDate(trialEnd, isArabic ? 'ar' : 'en') : '';
 
     final String planLabel = isExpired
-        ? (isArabic ? 'انتهت الباقة - ادفع الآن ⚠️' : 'Plan Expired - Renew Now ⚠️')
+        ? (isArabic ? 'انتهت الباقة - يرجى التجديد' : 'Plan Expired - Please Renew')
         : (isTrial
             ? (isArabic ? 'فترة تجريبية (متبقي $remainingDays يوم)' : 'Free Trial ($remainingDays days left)')
             : (remainingDays <= 7
-                ? (isArabic ? 'تجديد قريب (متبقي $remainingDays يوم ⏳)' : 'Renewal Due ($remainingDays days left ⏳)')
-                : (isArabic ? 'احترافية (Pro)' : 'Pro Plan')));
+                ? (isArabic ? 'تجديد قريب (متبقي $remainingDays يوم)' : 'Renewal Due ($remainingDays days left)')
+                : (isArabic ? 'الباقة الاحترافية' : 'Pro Plan')));
 
     final String subtitleText = isExpired
         ? (isArabic ? 'انتهت فترة الاشتراك. يرجى التجديد لتشغيل الحجوزات.' : 'Subscription ended. Renew to enable bookings.')
         : (isTrial
-            ? (isArabic ? 'ينتهي التجريبي في $trialEndDateStr | الملاعب: ${userModel.maxStadiums}' : 'Ends on $trialEndDateStr | Stadiums: ${userModel.maxStadiums}')
+            ? (isArabic ? 'ينتهي التجريبي في $trialEndDateStr | الملاعب المسموحة: ${userModel.maxStadiums}' : 'Ends on $trialEndDateStr | Allowed pitches: ${userModel.maxStadiums}')
             : (remainingDays <= 7
                 ? (isArabic ? 'يرجى التجديد قبل انتهاء المدة لتجنب توقف الحجوزات.' : 'Please renew to prevent service interruption.')
                 : '${isArabic ? "الملاعب المسموحة:" : "Allowed Stadiums:"} ${userModel.maxStadiums}'));
@@ -541,7 +585,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String buttonLabel = isExpired
         ? (isArabic ? 'ادفع الآن' : 'Pay Now')
         : (remainingDays <= 7
-            ? (isArabic ? 'تجديد ⚡' : 'Renew ⚡')
+            ? (isArabic ? 'تجديد' : 'Renew')
             : (isArabic ? 'ترقية' : 'Upgrade'));
 
     final Color statusColor = isExpired ? Colors.redAccent : Colors.amber;
@@ -631,6 +675,401 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ),
           ],
         ),
+      ),
+    );
+  }
+
+  /// 3. الرادار اللحظي لإشغال الملاعب (Enhancement #1)
+  Widget _buildPitchOccupancyRadar(BuildContext context, List<Booking> allBookings, bool isProOwner, bool isArabic) {
+    final stadiumProvider = Provider.of<StadiumProvider>(context);
+    final stadiums = stadiumProvider.stadiums;
+    if (stadiums.isEmpty) return const SizedBox.shrink();
+
+    final now = DateTime.now();
+
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Row(
+              children: [
+                const Icon(Iconsax.radar_2_copy, color: VSPColors.accent, size: 15),
+                const SizedBox(width: 6),
+                Text(
+                  isArabic ? 'الرادار اللحظي لحالة الملاعب' : 'Live Pitch Radar',
+                  style: const TextStyle(color: Colors.white, fontSize: 13, fontWeight: FontWeight.bold),
+                ),
+              ],
+            ),
+            Container(
+              padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
+              decoration: BoxDecoration(
+                color: const Color(0xFF27272A),
+                borderRadius: BorderRadius.circular(8),
+              ),
+              child: Text(
+                '${stadiums.length} ${isArabic ? "ملعب نشط" : "Active"}',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.w600),
+              ),
+            ),
+          ],
+        ),
+        const SizedBox(height: 8),
+        SizedBox(
+          height: 82,
+          child: ListView.separated(
+            scrollDirection: Axis.horizontal,
+            physics: const BouncingScrollPhysics(),
+            itemCount: isProOwner ? stadiums.length : (stadiums.isNotEmpty ? 1 : 0),
+            separatorBuilder: (_, __) => const SizedBox(width: 10),
+            itemBuilder: (ctx, index) {
+              final stadium = stadiums[index];
+              
+              // تحديد حالة الملعب الحالية
+              final stadiumBookings = allBookings.where((b) => 
+                b.stadiumId == stadium.id && 
+                b.status != BookingStatus.cancelled &&
+                b.startTime.year == now.year &&
+                b.startTime.month == now.month &&
+                b.startTime.day == now.day
+              ).toList();
+
+              final isCurrentlyPlaying = stadiumBookings.any((b) => now.isAfter(b.startTime) && now.isBefore(b.endTime));
+              final isStartingSoon = !isCurrentlyPlaying && stadiumBookings.any((b) => b.startTime.isAfter(now) && b.startTime.difference(now).inMinutes <= 30);
+
+              Color statusColor = const Color(0xFF22C55E); // Green (Available)
+              String statusText = isArabic ? 'متاح الآن' : 'Available';
+
+              if (isCurrentlyPlaying) {
+                statusColor = const Color(0xFFEF4444); // Red (In Match)
+                statusText = isArabic ? 'جاري اللعب' : 'Match Live';
+              } else if (isStartingSoon) {
+                statusColor = const Color(0xFFF59E0B); // Amber (Starting soon)
+                statusText = isArabic ? 'يبدأ قريباً' : 'Starting Soon';
+              }
+
+              return Container(
+                width: isProOwner ? 160 : MediaQuery.of(context).size.width - 32,
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 10),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF18181B),
+                  borderRadius: BorderRadius.circular(VSPRadius.md),
+                  border: Border.all(color: statusColor.withValues(alpha: 0.35), width: 1.2),
+                ),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                      children: [
+                        Expanded(
+                          child: Text(
+                            stadium.name,
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                        Container(
+                          width: 8,
+                          height: 8,
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            shape: BoxShape.circle,
+                            boxShadow: [
+                              BoxShadow(color: statusColor.withValues(alpha: 0.8), blurRadius: 6, spreadRadius: 1),
+                            ],
+                          ),
+                        ),
+                      ],
+                    ),
+                    const SizedBox(height: 6),
+                    Row(
+                      children: [
+                        Icon(Iconsax.activity_copy, color: statusColor, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          statusText,
+                          style: TextStyle(color: statusColor, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              );
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  /// 4. بطاقة أقرب مباراة قادمة اليوم مع أزرار الاتصال وتذكير الواتساب (Enhancement #2)
+  Widget _buildNextMatchHeroCard(BuildContext context, List<Booking> allBookings, bool isProOwner, bool isArabic) {
+    final now = DateTime.now();
+
+    // البحث عن أقرب حجز قادم اليوم
+    final upcomingToday = allBookings.where((b) {
+      if (b.status == BookingStatus.cancelled) return false;
+      return b.startTime.year == now.year &&
+             b.startTime.month == now.month &&
+             b.startTime.day == now.day &&
+             b.endTime.isAfter(now);
+    }).toList();
+
+    if (upcomingToday.isEmpty) return const SizedBox.shrink();
+
+    upcomingToday.sort((a, b) => a.startTime.compareTo(b.startTime));
+    final nextBooking = upcomingToday.first;
+
+    final totalPrice = nextBooking.totalPrice > 0 ? nextBooking.totalPrice : nextBooking.depositPaid;
+    final remainingCash = (totalPrice - nextBooking.depositPaid).clamp(0.0, 999999.0);
+    final startTimeStr = AppDateFormatter.formatTime(nextBooking.startTime, isArabic ? 'ar' : 'en');
+    final playerName = nextBooking.userName?.isNotEmpty == true ? nextBooking.userName! : (isArabic ? 'كابتن الحجز' : 'Booking Captain');
+    final playerPhone = nextBooking.userPhone ?? '';
+
+    return Container(
+      width: double.infinity,
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.accent.withValues(alpha: 0.35), width: 1.2),
+        boxShadow: [
+          BoxShadow(
+            color: VSPColors.accent.withValues(alpha: 0.05),
+            blurRadius: 15,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(6),
+                    ),
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        const Icon(Iconsax.timer_1_copy, color: VSPColors.accent, size: 12),
+                        const SizedBox(width: 4),
+                        Text(
+                          isArabic ? 'المباراة القادمة' : 'Next Match',
+                          style: const TextStyle(color: VSPColors.accent, fontSize: 11, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
+                  ),
+                ],
+              ),
+              Text(
+                startTimeStr,
+                style: const TextStyle(color: Colors.white, fontSize: 15, fontWeight: FontWeight.w900),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            mainAxisAlignment: MainAxisAlignment.spaceBetween,
+            children: [
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Text(
+                    playerName,
+                    style: const TextStyle(color: Colors.white, fontSize: 14, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    nextBooking.stadiumName ?? '',
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
+              Column(
+                crossAxisAlignment: CrossAxisAlignment.end,
+                children: [
+                  Text(
+                    remainingCash > 0
+                        ? '${remainingCash.toInt()} ${isArabic ? "ج.م متبقي كاش" : "EGP due"}'
+                        : (isArabic ? 'مسدد بالكامل' : 'Paid in full'),
+                    style: TextStyle(
+                      color: remainingCash > 0 ? const Color(0xFFFFB800) : const Color(0xFF22C55E),
+                      fontSize: 12,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+            ],
+          ),
+          const SizedBox(height: 14),
+          const Divider(color: VSPColors.divider, height: 1),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              if (playerPhone.isNotEmpty)
+                Expanded(
+                  child: OutlinedButton.icon(
+                    onPressed: () => VSPLauncherUtils.makePhoneCall(context, playerPhone),
+                    icon: const Icon(Iconsax.call_copy, size: 14, color: Colors.white),
+                    label: Text(
+                      isArabic ? 'اتصال بالكابتن' : 'Call Captain',
+                      style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    style: OutlinedButton.styleFrom(
+                      side: const BorderSide(color: Color(0xFF3F3F46)),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                    ),
+                  ),
+                ),
+              if (playerPhone.isNotEmpty && isProOwner) ...[
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton.icon(
+                    onPressed: () {
+                      final reminderMsg = isArabic
+                          ? 'أهلاً كابتن $playerName، تذكير بموعد مباراتك اليوم الساعة $startTimeStr في ${nextBooking.stadiumName ?? "الملعب"}. ننتظر تشريفكم في الموعد المحدد.'
+                          : 'Hi Captain $playerName, reminder for your match today at $startTimeStr at ${nextBooking.stadiumName ?? "the pitch"}.';
+                      VSPLauncherUtils.openWhatsApp(context, phone: playerPhone, message: reminderMsg);
+                    },
+                    icon: const Icon(Iconsax.message_text_copy, size: 14, color: Colors.black),
+                    label: Text(
+                      isArabic ? 'تذكير واتساب' : 'WhatsApp',
+                      style: const TextStyle(color: Colors.black, fontSize: 12, fontWeight: FontWeight.bold),
+                    ),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: const Color(0xFF22C55E),
+                      padding: const EdgeInsets.symmetric(vertical: 8),
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                    ),
+                  ),
+                ),
+              ],
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 5. شريط الإجراءات السريعة بلمسة واحدة (Enhancement #3)
+  Widget _buildQuickActionDock(BuildContext context, bool isArabic, bool isExpired, bool isProOwner) {
+    return Row(
+      children: [
+        Expanded(
+          child: _buildActionDockItem(
+            icon: Iconsax.add_square_copy,
+            label: isArabic ? 'حجز يدوي' : 'Manual',
+            color: VSPColors.accent,
+            onTap: () => _navigateToWalkInBooking(context, isExpired),
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionDockItem(
+            icon: Iconsax.cup_copy,
+            label: isArabic ? 'إنشاء بطولة' : 'Tournament',
+            color: const Color(0xFF38BDF8),
+            onTap: () {
+              if (isExpired) {
+                _showProUpgradeSheet(context);
+                return;
+              }
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const CreateTournamentWizard()));
+            },
+          ),
+        ),
+        const SizedBox(width: 8),
+        Expanded(
+          child: _buildActionDockItem(
+            icon: Iconsax.receipt_2_1_copy,
+            label: isArabic ? 'الخزينة والأرباح' : 'Ledger',
+            color: Colors.amber,
+            onTap: () {
+              Navigator.push(context, MaterialPageRoute(builder: (_) => const OwnerLedgerScreen()));
+            },
+          ),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildActionDockItem({
+    required IconData icon,
+    required String label,
+    required Color color,
+    required VoidCallback onTap,
+  }) {
+    return InkWell(
+      onTap: onTap,
+      borderRadius: BorderRadius.circular(VSPRadius.md),
+      child: Container(
+        padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 8),
+        decoration: BoxDecoration(
+          color: const Color(0xFF18181B),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(color: const Color(0xFF27272A)),
+        ),
+        child: Column(
+          children: [
+            Icon(icon, color: color, size: 20),
+            const SizedBox(height: 6),
+            Text(
+              label,
+              style: const TextStyle(color: Colors.white, fontSize: 11, fontWeight: FontWeight.bold),
+              maxLines: 1,
+              overflow: TextOverflow.ellipsis,
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// 9. ويدجت طقس الملعب وموعد تشغيل الكشافات (Enhancement #9)
+  Widget _buildPitchWeatherAndSunsetWidget(bool isArabic) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: const Color(0xFF27272A)),
+      ),
+      child: Row(
+        children: [
+          const Icon(Iconsax.sun_1_copy, color: Colors.amber, size: 20),
+          const SizedBox(width: 10),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  isArabic ? 'أجواء مناسبة للعب الليلة' : 'Clear playing conditions tonight',
+                  style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.bold),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isArabic ? 'موعد غروب الشمس وتشغيل الإضاءة: 6:40 مساءً' : 'Sunset & floodlights switch-on: 6:40 PM',
+                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10.5),
+                ),
+              ],
+            ),
+          ),
+        ],
       ),
     );
   }
@@ -1692,16 +2131,39 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                                     final auth = Provider.of<AuthProvider>(context, listen: false);
                                     final owner = auth.userModel;
 
-                                    await NotificationRepository().sendNotification(
-                                      'vsp_admin',
-                                      AppNotification(
-                                        id: '',
-                                        title: 'طلب تسوية مالية جديد من مالك ملعب',
-                                        body: 'المالك ${owner?.name ?? "مالك ملعب"} يطلب تسوية بمبلغ ${amount.toInt()} $currency عبر $selectedMethod ($acc).',
-                                        type: 'info',
-                                        createdAt: DateTime.now(),
-                                      ),
-                                    );
+                                    // 1. Record pending payout transaction in database
+                                    try {
+                                      await Supabase.instance.client.from('transactions').insert({
+                                        'user_id': owner?.uid ?? auth.currentUser?.uid,
+                                        'amount': amount,
+                                        'type': 'payout',
+                                        'status': 'pending',
+                                        'payment_method': selectedMethod,
+                                        'description': 'طلب تسوية مالية عبر $selectedMethod ($acc)',
+                                        'created_at': DateTime.now().toUtc().toIso8601String(),
+                                      });
+                                    } catch (_) {}
+
+                                    // 2. Send notification to admin users
+                                    try {
+                                      final adminUsers = await Supabase.instance.client
+                                          .from('users')
+                                          .select('id')
+                                          .inFilter('role', ['admin', 'co_founder']);
+                                      
+                                      for (final admin in adminUsers) {
+                                        await NotificationRepository().sendNotification(
+                                          admin['id'].toString(),
+                                          AppNotification(
+                                            id: '',
+                                            title: 'طلب تسوية مالية جديد من مالك ملعب',
+                                            body: 'المالك ${owner?.name ?? "مالك ملعب"} يطلب تسوية بمبلغ ${amount.toInt()} $currency عبر $selectedMethod ($acc).',
+                                            type: 'info',
+                                            createdAt: DateTime.now(),
+                                          ),
+                                        );
+                                      }
+                                    } catch (_) {}
 
                                     if (!context.mounted) return;
                                     Navigator.pop(ctx);

@@ -404,6 +404,52 @@ class TournamentRepository {
     }
   }
 
+  /// 🛡️ إنشاء طلب سداد بطولة مسبق في قاعدة البيانات
+  Future<Map<String, dynamic>?> createTournamentOrder({
+    required String championshipId,
+    required String teamId,
+    required double amount,
+    List<String> playerIds = const [],
+    List<String> guestNames = const [],
+  }) async {
+    try {
+      final res = await _supabase.rpc('create_tournament_order_atomic', params: {
+        'p_championship_id': championshipId,
+        'p_team_id': teamId,
+        'p_player_ids': playerIds,
+        'p_guest_names': guestNames,
+        'p_amount': amount,
+      });
+      if (res is Map && res['success'] == true) {
+        return Map<String, dynamic>.from(res);
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error creating tournament order: $e');
+      return null;
+    }
+  }
+
+  /// 🛡️ تأكيد سداد البطولة برقم المرجع ومعاملة Paymob
+  Future<bool> confirmTournamentOrder({
+    required String orderReference,
+    required String paymobTransactionId,
+  }) async {
+    try {
+      final res = await _supabase.rpc('confirm_tournament_order_atomic', params: {
+        'p_order_reference': orderReference,
+        'p_paymob_transaction_id': paymobTransactionId,
+      });
+      if (res is Map && res['success'] == true) {
+        return true;
+      }
+      return false;
+    } catch (e) {
+      debugPrint('Error confirming tournament order: $e');
+      return false;
+    }
+  }
+
   // TOURNAMENT Logic: Update championship status
   Future<void> updateChampionshipStatus(String championshipId, String status) async {
     try {
@@ -1007,6 +1053,25 @@ class TournamentRepository {
       }
     } catch (e) {
       debugPrint('❌ Error in leaveChampionship: $e');
+      return false;
+    }
+  }
+
+  Future<bool> removeTournamentTeam(String championshipId, String teamId) async {
+    try {
+      try {
+        await _supabase.rpc('remove_tournament_team_atomic', params: {
+          'p_championship_id': championshipId,
+          'p_team_id': teamId,
+        });
+        debugPrint('✅ Team $teamId removed via remove_tournament_team_atomic RPC.');
+        return true;
+      } catch (rpcErr) {
+        debugPrint('⚠️ remove_tournament_team_atomic fallback: $rpcErr');
+        return await leaveChampionship(championshipId, teamId);
+      }
+    } catch (e) {
+      debugPrint('❌ Error in removeTournamentTeam: $e');
       return false;
     }
   }

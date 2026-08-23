@@ -804,25 +804,37 @@ class _RatingsTab extends StatelessWidget {
                             final userName = userModel?.name ?? auth.currentUser?.email?.split('@').first ?? (isArabic ? 'لاعب VSP' : 'VSP Player');
                             final userAvatar = userModel?.profileImageUrl ?? '';
 
-                            await Supabase.instance.client.from('reviews').insert({
-                              'stadium_id': stadium.id,
-                              'user_id': userId,
-                              'user_name': userName,
-                              'user_image_url': userAvatar,
-                              'rating': selectedRating,
-                              'review_text': comment,
-                              'created_at': DateTime.now().toIso8601String(),
-                            });
+                            await Supabase.instance.client.rpc('submit_stadium_review_atomic', params: {
+                                'p_stadium_id': stadium.id,
+                                'p_user_id': userId,
+                                'p_user_name': userName,
+                                'p_user_image_url': userAvatar,
+                                'p_rating': selectedRating,
+                                'p_comment': comment,
+                              });
 
                             if (sheetCtx.mounted) Navigator.pop(sheetCtx);
                             if (context.mounted) {
-                              VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح' : 'Review submitted successfully!');
+                              VSPFeedback.showSuccess(context, isArabic ? 'شكراً لك! تم إرسال تقييمك بنجاح ⭐️' : 'Review submitted successfully ⭐️');
                             }
                           } catch (e, stack) {
                             VSPLogger.e('❌ Error saving review to Supabase', e, stack);
                             setSheetState(() => isSubmitting = false);
                             if (sheetCtx.mounted) {
-                              VSPFeedback.showError(sheetCtx, isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review');
+                              final errStr = e.toString().toLowerCase();
+                              String msg;
+                              if (errStr.contains('must_have_completed_booking')) {
+                                msg = isArabic 
+                                    ? 'يجب أن يكون لديك حجز سابق مكتمل في هذا الملعب لتتمكن من تقييمه ⚽' 
+                                    : 'You must have a completed booking at this stadium to add a review ⚽';
+                              } else if (errStr.contains('cannot_review_own_stadium')) {
+                                msg = isArabic 
+                                    ? 'لا يمكن لصاحب الملعب إضافة تقييم لملعبه الخاص ⚠️' 
+                                    : 'Stadium owner cannot review their own stadium ⚠️';
+                              } else {
+                                msg = isArabic ? 'حدث خطأ أثناء حفظ التقييم' : 'Error saving review';
+                              }
+                              VSPFeedback.showError(sheetCtx, msg);
                             }
                           }
                         },

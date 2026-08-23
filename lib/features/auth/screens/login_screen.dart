@@ -445,7 +445,7 @@ class _LoginScreenState extends State<LoginScreen> {
 
                                if (success) {
                                  HapticFeedback.lightImpact();
-                                 context.go('/');
+                                 // ✅ GoRouter handles declarative navigation to /, /verify-email, /onboarding, or /owner
                                } else {
                                  HapticFeedback.vibrate();
                                  final isAr = Localizations.localeOf(context).languageCode == 'ar';

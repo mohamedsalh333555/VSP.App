@@ -17,7 +17,21 @@ class PaymobService {
       if (publicKey.isEmpty) return null;
 
       final activeIntegration = int.tryParse(integrationId ?? AppConfig.paymobCardIntegrationId) ?? 5772488;
-      final checkoutUrl = 'https://accept.paymob.com/unifiedcheckout/?publicKey=$publicKey&integration_id=$activeIntegration&special_reference=$bookingId&lang=ar';
+      final amountInCents = (amountInEgp * 100).round();
+      final firstName = userName.trim().isNotEmpty ? Uri.encodeComponent(userName.trim().split(' ').first) : 'Player';
+      final lastName = userName.trim().contains(' ') ? Uri.encodeComponent(userName.trim().split(' ').sublist(1).join(' ')) : 'VSP';
+      final safePhone = userPhone.trim().isNotEmpty ? Uri.encodeComponent(userPhone.trim()) : '01000000000';
+      final safeEmail = userEmail.trim().isNotEmpty ? Uri.encodeComponent(userEmail.trim()) : 'customer@vsp.eg';
+
+      final checkoutUrl = 'https://accept.paymob.com/unifiedcheckout/?publicKey=$publicKey'
+          '&integration_id=$activeIntegration'
+          '&special_reference=$bookingId'
+          '&amount=$amountInCents'
+          '&billing_data.first_name=$firstName'
+          '&billing_data.last_name=$lastName'
+          '&billing_data.phone_number=$safePhone'
+          '&billing_data.email=$safeEmail'
+          '&lang=ar';
       debugPrint('✅ Paymob Unified Checkout URL Generated: $checkoutUrl');
       return checkoutUrl;
     } catch (e) {

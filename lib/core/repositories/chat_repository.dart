@@ -8,16 +8,15 @@ class ChatRepository {
 
   Stream<List<ChatMessage>> getChatMessages(String conversationId, {String? currentUserId}) {
     try {
-      final bool isUuid = RegExp(r'^[0-9a-fA-F-]{36}$').hasMatch(conversationId);
-      final streamQuery = isUuid
-          ? _supabase.from('chat_messages').stream(primaryKey: ['id']).eq('conversation_id', conversationId)
-          : _supabase.from('chat_messages').stream(primaryKey: ['id']);
+      final streamQuery = _supabase
+          .from('chat_messages')
+          .stream(primaryKey: ['id'])
+          .eq('conversation_id', conversationId);
 
       return streamQuery
           .map((list) {
             try {
               final messages = list
-                  .where((data) => data['conversation_id']?.toString() == conversationId || data['booking_id']?.toString() == conversationId)
                   .map((data) => ChatMessage.fromJson(data, data['id']?.toString() ?? ''))
                   .where((msg) => currentUserId == null || !msg.deletedForUsers.contains(currentUserId))
                   .toList();

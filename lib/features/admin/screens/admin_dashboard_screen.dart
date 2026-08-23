@@ -451,22 +451,30 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
 
   Future<void> _updateOwnerPlan(String ownerId, String plan, int days) async {
     try {
-      final now = DateTime.now().toUtc();
-      final expiresAt = now.add(Duration(days: days));
+      try {
+        await _supabase.rpc('admin_upgrade_owner_subscription_atomic', params: {
+          'p_owner_id': ownerId,
+          'p_plan': plan,
+          'p_days': days,
+        });
+      } catch (rpcErr) {
+        final now = DateTime.now().toUtc();
+        final expiresAt = now.add(Duration(days: days));
 
-      final Map<String, dynamic> updateData = {
-        'subscription_plan': plan,
-        'updated_at': now.toIso8601String(),
-      };
+        final Map<String, dynamic> updateData = {
+          'subscription_plan': plan,
+          'updated_at': now.toIso8601String(),
+        };
 
-      if (plan == 'free_trial') {
-        updateData['trial_ends_at'] = expiresAt.toIso8601String();
-        updateData['subscription_expires_at'] = null;
-      } else {
-        updateData['subscription_expires_at'] = expiresAt.toIso8601String();
+        if (plan == 'free_trial') {
+          updateData['trial_ends_at'] = expiresAt.toIso8601String();
+          updateData['subscription_expires_at'] = null;
+        } else {
+          updateData['subscription_expires_at'] = expiresAt.toIso8601String();
+        }
+
+        await _supabase.from('users').update(updateData).eq('id', ownerId);
       }
-
-      await _supabase.from('users').update(updateData).eq('id', ownerId);
 
       if (mounted) {
         VSPFeedback.showSuccess(context, 'تم تحديث باقة المالك بنجاح إلى $plan! 🏆');

@@ -98,4 +98,34 @@ class OwnerRepository {
       return [];
     }
   }
+
+  /// 💸 إرسال طلب تسوية وصرف مستحقات المالك إلكترونياً
+  Future<Map<String, dynamic>> requestPayoutSettlement({
+    required double amount,
+    required String method,
+    required String destination,
+  }) async {
+    try {
+      final uid = _supabase.auth.currentUser?.id;
+      if (uid == null) {
+        return {'success': false, 'error': 'User not authenticated'};
+      }
+
+      final response = await _supabase.rpc('request_owner_payout_settlement_atomic', params: {
+        'p_owner_id': uid,
+        'p_amount': amount,
+        'p_method': method,
+        'p_destination': destination,
+      });
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e, stack) {
+      VSPLogger.e('Error requesting payout settlement', e, stack);
+      return {'success': false, 'error': e.toString()};
+    }
+  }
 }
+

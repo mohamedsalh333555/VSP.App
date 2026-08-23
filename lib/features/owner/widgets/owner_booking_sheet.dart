@@ -384,15 +384,40 @@ Enjoy your match! ⚽🔥
     try {
       final parentCtx = widget.parentContext;
       final totalPrice = booking.totalPrice > 0 ? booking.totalPrice : widget.selectedStadium.basePrice;
-      await Supabase.instance.client
-          .from('bookings')
-          .update({
-            'is_paid': true,
-            'payment_status': 'paid',
-            'deposit_paid': totalPrice,
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          })
-          .eq('id', booking.id);
+      final authProvider = Provider.of<AuthProvider>(parentCtx, listen: false);
+      final uid = authProvider.currentUser?.uid ?? authProvider.firebaseUser?.uid ?? booking.ownerId;
+
+      try {
+        await Supabase.instance.client.rpc('confirm_cash_booking_atomic', params: {
+          'p_booking_id': booking.id,
+          'p_owner_id': uid,
+          'p_total_price': totalPrice,
+        });
+      } catch (rpcErr) {
+        debugPrint('confirm_cash_booking_atomic fallback: $rpcErr');
+        await Supabase.instance.client
+            .from('bookings')
+            .update({
+              'is_paid': true,
+              'payment_status': 'paid',
+              'deposit_paid': totalPrice,
+              'updated_at': DateTime.now().toUtc().toIso8601String(),
+            })
+            .eq('id', booking.id);
+
+        try {
+          await Supabase.instance.client.from('transactions').insert({
+            'user_id': uid,
+            'booking_id': booking.id,
+            'amount': totalPrice,
+            'type': 'cash_settlement',
+            'status': 'completed',
+            'payment_method': 'cash',
+            'currency': 'EGP',
+            'created_at': DateTime.now().toUtc().toIso8601String(),
+          });
+        } catch (_) {}
+      }
 
       if (mounted) {
         VSPFeedback.showSuccess(

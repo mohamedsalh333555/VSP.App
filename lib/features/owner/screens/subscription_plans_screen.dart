@@ -92,23 +92,23 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 20),
 
-            // 👑 1. كارت الباقة الاحترافية (Pro Plan - محرك الأرباح وحماية الدخل)
+            // 1. كارت الباقة الاحترافية (Pro Plan)
             _buildPlanCard(
               title: isArabic ? 'الباقة الاحترافية' : 'Pro Plan',
               priceText: isArabic ? '1000 ج.م' : '1000 EGP',
               periodText: isArabic ? 'شهرياً' : 'Monthly',
               stadiumsCount: 3,
-              badgeText: isArabic ? '👑 الخيار الاستثماري الأعلى عائداً' : '👑 Highest ROI Plan',
+              badgeText: isArabic ? 'الخيار الأعلى عائداً' : 'Highest ROI Plan',
               badgeColor: Colors.amber,
               isProBorder: true,
               isCurrentPlan: userModel?.isProPlan == true,
-              customButtonText: isArabic ? '🚀 فعّل الباقة الاحترافية وضاعف إيراداتك' : '🚀 Upgrade to Pro & Double Revenue',
+              customButtonText: isArabic ? 'تفعيل الباقة الاحترافية' : 'Upgrade to Pro Plan',
               features: [
-                isArabic ? '⭐ أولوية الظهور والتصدر في نتائج البحث للاعبين بالمحافظة' : '⭐ Priority search boost in governorate results',
-                isArabic ? '📄 إرسال وصل الحجز الإلكتروني الرسمي للعملاء عبر واتساب' : '📄 Send automated WhatsApp digital booking receipts',
-                isArabic ? '🏟️ تشغيل وتفعيل حتى 3 ملاعب كاملة دون تفويت حجز واحد' : '🏟️ Operate up to 3 stadiums to capture full capacity',
-                isArabic ? '📊 تصدير كشف الحساب والتقارير المالية بضغطة زر (CSV)' : '📊 1-Click financial ledger export (CSV)',
-                isArabic ? '⚡ دعم فني مخصص وأولوية تشغيلية على مدار 24 ساعة' : '⚡ 24/7 Priority support & operational stability',
+                isArabic ? 'أولوية الظهور والتصدر في نتائج البحث للاعبين بالمحافظة' : 'Priority search boost in governorate results',
+                isArabic ? 'إرسال وصل الحجز الإلكتروني الرسمي للعملاء عبر واتساب' : 'Send automated WhatsApp digital booking receipts',
+                isArabic ? 'تشغيل وتفعيل حتى 3 ملاعب كاملة دون تفويت حجز واحد' : 'Operate up to 3 stadiums to capture full capacity',
+                isArabic ? 'تصدير كشف الحساب والتقارير المالية بضغطة زر (CSV)' : '1-Click financial ledger export (CSV)',
+                isArabic ? 'دعم فني مخصص وأولوية تشغيلية على مدار 24 ساعة' : '24/7 Priority support & operational stability',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Pro (1000 EGP)', isArabic),
               isArabic: isArabic,
@@ -116,21 +116,21 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
 
             const SizedBox(height: 16),
 
-            // 💳 2. كارت الباقة الأساسية (Basic Plan - الدخول الآمن)
+            // 2. كارت الباقة الأساسية (Basic Plan)
             _buildPlanCard(
               title: isArabic ? 'الباقة الأساسية' : 'Basic Plan',
               priceText: isArabic ? '500 ج.م' : '500 EGP',
               periodText: isArabic ? 'شهرياً (مجاناً لأول شهرين)' : 'Monthly (Free 1st 2 months)',
               stadiumsCount: 1,
-              badgeText: isArabic ? '🎁 ابدأ بتجربة مجانية كاملة' : '🎁 Full Free Trial',
+              badgeText: isArabic ? 'فترة تجربة مجانية' : 'Full Free Trial',
               badgeColor: VSPColors.accent,
               isCurrentPlan: userModel?.isInActiveTrial == true || (userModel?.subscriptionPlan == 'basic' && userModel?.hasActiveSubscription == true),
               customButtonText: isArabic ? 'المتابعة بالباقة الأساسية لملعب واحد فقط' : 'Continue with Basic (1 Stadium)',
               features: [
-                isArabic ? '✅ تشغيل وإدارة كاملة لملعب واحد (1)' : 'Full operation for 1 stadium',
-                isArabic ? '✅ استقبال الحجوزات الفورية (كاش وأونلاين) ومنع التضارب اليدوي' : 'Accept Cash & Online bookings',
-                isArabic ? '⏱️ فترة تجريبية مجانية (شهرين) لتقييم العائد على استثمارك' : '2 Months free trial to evaluate ROI',
-                isArabic ? '🏆 إنشاء وتنظيم البطولات مجاناً لجميع الملاك بدون قيود' : 'Free Tournament creation for all owners',
+                isArabic ? 'تشغيل وإدارة كاملة لملعب واحد (1)' : 'Full operation for 1 stadium',
+                isArabic ? 'استقبال الحجوزات الفورية (كاش وأونلاين) ومنع التضارب اليدوي' : 'Accept Cash & Online bookings',
+                isArabic ? 'فترة تجريبية مجانية (شهرين) لتقييم العائد على استثمارك' : '2 Months free trial to evaluate ROI',
+                isArabic ? 'إنشاء وتنظيم البطولات مجاناً لجميع الملاك بدون قيود' : 'Free Tournament creation for all owners',
               ],
               onSelect: () => _contactAdminForUpgrade(context, 'Basic (500 EGP)', isArabic),
               isArabic: isArabic,
@@ -345,8 +345,8 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
                   Expanded(
                     child: Text(
                       isArabic
-                          ? '💡 ماتش واحد إضافي في الأسبوع يغطي قيمة اشتراكك بالكامل ويضاعف أرباحك باقي الشهر!'
-                          : '💡 Just 1 extra match per week covers your entire subscription cost and doubles profits for the month!',
+                          ? 'مباراة واحدة إضافية في الأسبوع تغطي قيمة اشتراكك بالكامل وتضاعف أرباحك باقي الشهر.'
+                          : 'Just 1 extra match per week covers your entire subscription cost and doubles profits.',
                       style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 11.5, height: 1.3),
                     ),
                   ),
@@ -403,9 +403,15 @@ class _SubscriptionPlansScreenState extends State<SubscriptionPlansScreen> {
   }
 
   Future<void> _contactAdminForUpgrade(BuildContext context, String planName, bool isArabic) async {
+    final auth = Provider.of<AuthProvider>(context, listen: false);
+    final user = auth.userModel;
+    final ownerName = user?.name ?? 'المالك';
+    final ownerPhone = user?.phone ?? '';
+    final ownerId = user?.uid ?? '';
+
     final message = isArabic 
-        ? 'أهلاً إدارة VSP، يرغب مالك الملعب في الاشتراك / ترقية حسابه إلى باقة $planName.' 
-        : 'Hi VSP Admin, owner wants to subscribe / upgrade account to $planName plan.';
+        ? 'أهلاً إدارة VSP، يرغب المالك: $ownerName (هاتف: $ownerPhone - معرف: $ownerId) في تفعيل / ترقية حسابه إلى باقة $planName.' 
+        : 'Hi VSP Admin, owner: $ownerName (Phone: $ownerPhone - ID: $ownerId) wants to subscribe / upgrade to $planName plan.';
     try {
       final settings = await AppSettingsRepository().getSettings();
       if (!context.mounted) return;

@@ -354,19 +354,31 @@ class SupabaseBookingRepository implements BookingRepository {
         await _supabase.from('bookings').delete().eq('id', bookingId);
       } else {
         try {
-          await _supabase
-              .from('bookings')
-              .update({
-                'status': BookingStatus.cancelled.name,
-                'updated_at': DateTime.now().toUtc().toIso8601String(),
-              })
-              .eq('id', bookingId);
-        } on PostgrestException catch (e) {
-          if (e.message.contains('cannot_cancel_within_2_hours')) {
-            VSPLogger.w('Cannot cancel booking within 2 hours: ${e.message}');
-            return false;
-          } else {
-            rethrow;
+          final rpcRes = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
+            'p_booking_id': bookingId,
+            'p_user_id': _supabase.auth.currentUser?.id,
+            'p_reason': 'User requested cancellation from app',
+          });
+          if (rpcRes is Map && rpcRes['success'] == false) {
+            VSPLogger.w('cancel_booking_with_refund_atomic message: ${rpcRes['message']}');
+          }
+        } catch (e) {
+          VSPLogger.w('cancel_booking_with_refund_atomic fallback to update: $e');
+          try {
+            await _supabase
+                .from('bookings')
+                .update({
+                  'status': BookingStatus.cancelled.name,
+                  'updated_at': DateTime.now().toUtc().toIso8601String(),
+                })
+                .eq('id', bookingId);
+          } on PostgrestException catch (pe) {
+            if (pe.message.contains('cannot_cancel_within_2_hours')) {
+              VSPLogger.w('Cannot cancel booking within 2 hours: ${pe.message}');
+              return false;
+            } else {
+              rethrow;
+            }
           }
         }
       }

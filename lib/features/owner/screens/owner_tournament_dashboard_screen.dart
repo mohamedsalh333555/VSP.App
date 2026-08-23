@@ -694,7 +694,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
     if (confirm == true && mounted) {
       setState(() => _isLoading = true);
       try {
-        final success = await TournamentRepository().leaveChampionship(_currentChampionship.id, team.id);
+        final success = await TournamentRepository().removeTournamentTeam(_currentChampionship.id, team.id);
         if (success) {
           setState(() {
             final updatedList = List<String>.from(_currentChampionship.joinedTeams)..remove(team.id);

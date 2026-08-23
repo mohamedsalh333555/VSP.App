@@ -36,6 +36,7 @@ import '../widgets/match_result_modal.dart';
 import '../../../core/providers/booking_provider.dart';
 import 'global_search_screen.dart';
 import 'notifications_center_screen.dart';
+import '../../../shared/widgets/live_match_radar_widget.dart';
 
 // المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
 final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
@@ -100,6 +101,12 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
             debugPrint('Silent startup GPS check failed: $e');
           }
         }
+        // ⚽ Load user bookings to populate Live Match Radar
+        final userId = auth.currentUser?.uid;
+        if (userId != null && mounted) {
+          Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
+        }
+
         // ⚽ Check for any pending challenge match result popup automatically on app launch
         if (mounted) _checkPendingChallengeResultPopup(context);
       } else {
@@ -796,7 +803,10 @@ class _HomeContent extends StatelessWidget {
               padding: EdgeInsets.only(bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
               child: Column(
                 children: [
-                  const SizedBox(height: 12),
+                  const SizedBox(height: 8),
+                  // ⚡ رادار المباراة القادمة الحي مع العد التنازلي واللوكيشن وتذكير واتساب
+                  LiveMatchRadarWidget(onNavigate: onNavigate),
+                  const SizedBox(height: 4),
                   _buildPromos(),
                   const SizedBox(height: 14),
                   _buildStadiumsList(context, stadiumProvider),
