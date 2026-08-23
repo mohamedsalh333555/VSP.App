@@ -5,7 +5,7 @@ import '../../data/models.dart';
 class LeagueRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  LeagueRepository({dynamic firestore});
+  LeagueRepository();
 
   Stream<List<VSP1v1Player>> get1v1Standings() {
     return _supabase

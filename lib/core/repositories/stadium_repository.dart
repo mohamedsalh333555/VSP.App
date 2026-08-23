@@ -321,28 +321,54 @@ class StadiumRepository {
     });
   }
 
-  /// Fetch stadiums in batches
+  /// Fetch stadiums in batches with Server-Side SQL Filtering
   Future<Map<String, dynamic>> getStadiumsPaginated({
     int limit = 10,
     dynamic startAfter,
     String? governorate,
+    String? sportType,
+    String? pitchSize,
+    double? minPrice,
+    double? maxPrice,
+    bool? noDepositOnly,
   }) async {
     try {
       dynamic query = _supabase
           .from('stadiums')
           .select()
           .eq('is_verified', true)
-          .neq('is_blocked', true)
+          .eq('is_blocked', false)
           .eq('is_deleted_by_owner', false);
-      
-      // 🛡️ Gating Safety: Rely on Supabase's Row Level Security (RLS) policy
-      // Database will silently and securely omit unverified owner facilities from search results based on current user status.
 
-      if (governorate != null && governorate.isNotEmpty) {
+      // 1. Governorate Filter
+      if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
         final String? standardGov = EgyptGovernorates.resolveGoogleName(governorate);
         if (standardGov != null) {
           query = query.eq('governorate', standardGov);
         }
+      }
+
+      // 2. Sport Type Filter
+      if (sportType != null && sportType.isNotEmpty && sportType != 'All') {
+        query = query.or('type.ilike.%$sportType%,description.ilike.%|Sport:$sportType%');
+      }
+
+      // 3. Pitch Size Filter
+      if (pitchSize != null && pitchSize.isNotEmpty) {
+        query = query.eq('size', pitchSize);
+      }
+
+      // 4. Price Range Filter
+      if (minPrice != null && minPrice > 0) {
+        query = query.gte('price_per_hour', minPrice);
+      }
+      if (maxPrice != null && maxPrice > 0) {
+        query = query.lte('price_per_hour', maxPrice);
+      }
+
+      // 5. No Deposit Filter
+      if (noDepositOnly == true) {
+        query = query.eq('needs_deposit', false);
       }
       
       query = query
@@ -363,7 +389,7 @@ class StadiumRepository {
       };
     } catch (e) {
       VSPLogger.e('FAILED TO FETCH STADIUMS', e);
-      return {'items': [], 'lastDoc': null};
+      return {'items': <Stadium>[], 'lastDoc': null};
     }
   }
 

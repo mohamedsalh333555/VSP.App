@@ -3,7 +3,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
-import 'package:webview_flutter_android/webview_flutter_android.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
@@ -203,15 +202,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   }
 
   void _initWebView() {
-    late final PlatformWebViewControllerCreationParams params;
-    if (WebViewPlatform.instance is AndroidWebViewPlatform) {
-      params = AndroidWebViewControllerCreationParams();
-    } else {
-      params = const PlatformWebViewControllerCreationParams();
-    }
-
-    final WebViewController controller = WebViewController.fromPlatformCreationParams(params);
-
+    final WebViewController controller = WebViewController();
     controller
       ..setJavaScriptMode(JavaScriptMode.unrestricted)
       ..setBackgroundColor(VSPColors.background)
@@ -288,14 +279,6 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           },
         ),
       );
-
-    if (controller.platform is AndroidWebViewController) {
-      if (!kReleaseMode) {
-        AndroidWebViewController.enableDebugging(true);
-      }
-      final androidController = controller.platform as AndroidWebViewController;
-      androidController.setOnShowFileSelector((params) async => []);
-    }
 
     controller.loadRequest(Uri.parse(widget.initialUrl));
     _controller = controller;

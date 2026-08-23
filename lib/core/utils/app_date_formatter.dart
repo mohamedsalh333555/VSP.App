@@ -1,37 +1,41 @@
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
+import '../constants/egypt_governorates.dart';
 
 /// Standardized Date & Time Formatter and Parser for VSP Application
 class AppDateFormatter {
   /// Format date as day and month (e.g., "15 أغسطس" in AR, "15 Aug" in EN)
   static String formatDayMonth(DateTime date, String locale) {
+    final localDate = date.toLocal();
     if (locale.toLowerCase().startsWith('ar')) {
-      final day = date.day;
-      final monthName = DateFormat('MMMM', 'ar').format(date);
+      final day = localDate.day;
+      final monthName = DateFormat('MMMM', 'ar').format(localDate);
       return '$day $monthName';
     } else {
-      return DateFormat('d MMM', 'en').format(date);
+      return DateFormat('d MMM', 'en').format(localDate);
     }
   }
 
   /// Format date as day, month, and year (e.g., "15 أغسطس 2026" in AR, "15 Aug 2026" in EN)
   static String formatFullDate(DateTime date, String locale) {
+    final localDate = date.toLocal();
     if (locale.toLowerCase().startsWith('ar')) {
-      final day = date.day;
-      final monthName = DateFormat('MMMM', 'ar').format(date);
-      final year = date.year;
+      final day = localDate.day;
+      final monthName = DateFormat('MMMM', 'ar').format(localDate);
+      final year = localDate.year;
       return '$day $monthName $year';
     } else {
-      return DateFormat('d MMM yyyy', 'en').format(date);
+      return DateFormat('d MMM yyyy', 'en').format(localDate);
     }
   }
 
   /// Format time as hour and minute (e.g., "08:30 م" in AR, "08:30 PM" in EN)
   static String formatTime(DateTime date, String locale) {
+    final localDate = date.toLocal();
     if (locale.toLowerCase().startsWith('ar')) {
-      return DateFormat('hh:mm a', 'ar').format(date);
+      return DateFormat('hh:mm a', 'ar').format(localDate);
     } else {
-      return DateFormat('hh:mm a', 'en').format(date);
+      return DateFormat('hh:mm a', 'en').format(localDate);
     }
   }
 
@@ -108,27 +112,19 @@ class AppDateFormatter {
     return timeRange;
   }
 
-  /// Localize common sport names
+  /// Localize common sport names using the central registry
   static String getLocalizedSport(String sport, bool isArabic) {
-    if (!isArabic) return sport;
-    switch (sport.trim()) {
-      case 'Football': return 'كرة القدم';
-      case 'Basketball': return 'كرة السلة';
-      case 'Volleyball': return 'الكرة الطائرة';
-      case 'Padel': return 'بادل';
-      case 'Handball': return 'كرة اليد';
-      case 'Tennis': return 'تنس';
-      default: return sport;
-    }
+    return EgyptGovernorates.getLocalizedSport(sport, isArabic);
   }
 
   /// Calculates the business operational date for bookings.
-  /// Times between 12:00 AM and 05:59 AM belong to the previous day's operational shift.
-  static DateTime getOperationalDate(DateTime dateTime) {
-    if (dateTime.hour < 6) {
-      final prev = dateTime.subtract(const Duration(days: 1));
+  /// Times between 12:00 AM and [shiftStartHour] (default 6:00 AM) belong to the previous day's operational shift.
+  static DateTime getOperationalDate(DateTime dateTime, {int shiftStartHour = 6}) {
+    final local = dateTime.toLocal();
+    if (local.hour < shiftStartHour) {
+      final prev = local.subtract(const Duration(days: 1));
       return DateTime(prev.year, prev.month, prev.day);
     }
-    return DateTime(dateTime.year, dateTime.month, dateTime.day);
+    return DateTime(local.year, local.month, local.day);
   }
 }

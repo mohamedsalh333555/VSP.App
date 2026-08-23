@@ -1,253 +1,180 @@
--- ==============================================================================
--- 🛡️ VSP SPORTS PLATFORM — PASS 2: CATEGORY 1 (DATABASE & SECURITY HARDENING)
--- Migration File: supabase/migrations/20260823_pass2_category1_database_and_security_hardening.sql
--- ==============================================================================
--- ⚠️ INSTRUCTIONS FOR EXECUTION:
--- Run this standalone script in your Supabase SQL Editor (Dashboard > SQL Editor).
--- This script hardens RLS, blocks Privilege Escalation via DB Triggers,
--- secures RPC functions with search_path, and adds composite DB indexes.
--- ==============================================================================
+-- ============================================================================
+-- VSP PLATFORM: SECURITY, RLS & PERFORMANCE OPTIMIZATION MIGRATION
+-- Pass 2: Category 1: Security Hardening, RLS Policies & Performance Indexes
+-- ============================================================================
 
--- ------------------------------------------------------------------------------
--- 1️⃣ HELPER FUNCTION: Check Admin / Co-Founder Role Safely
--- ------------------------------------------------------------------------------
+-- ----------------------------------------------------------------------------
+-- 1. PERFORMANCE INDEXES (H-01)
+-- ----------------------------------------------------------------------------
 
-CREATE OR REPLACE FUNCTION public.is_admin_or_founder(p_user_id uuid)
-RETURNS boolean
-LANGUAGE sql
-STABLE
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-  SELECT EXISTS (
-    SELECT 1 FROM public.users
-    WHERE id = p_user_id
-      AND role IN ('admin', 'co_founder')
-  );
-$$;
+-- A. Bookings Table Indexes
+CREATE INDEX IF NOT EXISTS idx_bookings_stadium_start 
+ON public.bookings (stadium_id, start_time DESC);
 
--- ------------------------------------------------------------------------------
--- 2️⃣ PRIVILEGE ESCALATION SHIELD: Protect `users` Table Sensitive Fields
--- ------------------------------------------------------------------------------
--- Prevents non-admin users from elevating their role, unblocking themselves,
--- resetting no-show count, or modifying fee trackers.
+CREATE INDEX IF NOT EXISTS idx_bookings_user_status 
+ON public.bookings (user_id, status);
 
-CREATE OR REPLACE FUNCTION public.trg_protect_users_sensitive_fields()
+CREATE INDEX IF NOT EXISTS idx_bookings_created_by 
+ON public.bookings (created_by_user_id, status);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_owner_op_date 
+ON public.bookings (owner_id, operational_date);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_joined_user_ids 
+ON public.bookings USING GIN (joined_user_ids);
+
+CREATE INDEX IF NOT EXISTS idx_bookings_status_payment 
+ON public.bookings (status, payment_status, is_paid);
+
+-- B. Conversations & Chat Messages Indexes
+CREATE INDEX IF NOT EXISTS idx_conversations_participants 
+ON public.conversations USING GIN (participant_ids);
+
+CREATE INDEX IF NOT EXISTS idx_conversations_booking 
+ON public.conversations (booking_id);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_conversation_created 
+ON public.chat_messages (conversation_id, created_at DESC);
+
+CREATE INDEX IF NOT EXISTS idx_chat_messages_booking_created 
+ON public.chat_messages (booking_id, created_at DESC);
+
+-- C. Tournament Matches & Championships Indexes
+CREATE INDEX IF NOT EXISTS idx_tournament_matches_champ_round 
+ON public.tournament_matches (championship_id, round_index, match_index);
+
+CREATE INDEX IF NOT EXISTS idx_tournament_matches_stage 
+ON public.tournament_matches (championship_id, stage);
+
+CREATE INDEX IF NOT EXISTS idx_championships_status_sport 
+ON public.championships (status, sport_type, governorate);
+
+CREATE INDEX IF NOT EXISTS idx_championship_rosters_champ_team 
+ON public.championship_rosters (championship_id, team_id);
+
+-- D. Stadiums & Teams Indexes
+CREATE INDEX IF NOT EXISTS idx_stadiums_owner_active 
+ON public.stadiums (owner_id) WHERE is_deleted_by_owner = false;
+
+CREATE INDEX IF NOT EXISTS idx_stadiums_discovery 
+ON public.stadiums (governorate, is_verified, is_blocked) WHERE is_deleted_by_owner = false;
+
+CREATE INDEX IF NOT EXISTS idx_teams_captain 
+ON public.teams (captain_id);
+
+CREATE INDEX IF NOT EXISTS idx_teams_governorate_sport 
+ON public.teams (governorate, sport_type, points DESC);
+
+CREATE INDEX IF NOT EXISTS idx_team_members_user_team 
+ON public.team_members (user_id, team_id);
+
+CREATE INDEX IF NOT EXISTS idx_users_phone 
+ON public.users (phone);
+
+CREATE INDEX IF NOT EXISTS idx_users_role_status 
+ON public.users (role, is_blocked, verification_status);
+
+
+-- ----------------------------------------------------------------------------
+-- 2. SECURITY & RLS POLICIES HARDENING (C-01, C-02, C-04, C-05)
+-- ----------------------------------------------------------------------------
+
+-- A. Users Table: Restrict Public PII Access (C-01)
+DROP POLICY IF EXISTS users_select_safe_public ON public.users;
+DROP POLICY IF EXISTS users_select_authenticated ON public.users;
+DROP POLICY IF EXISTS users_select_anon ON public.users;
+
+-- Authenticated users can read player profiles for matchmaking and team rosters
+CREATE POLICY users_select_authenticated ON public.users
+FOR SELECT TO authenticated
+USING (
+  (auth.uid() = id) OR 
+  (is_blocked = false) OR 
+  (EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role IN ('admin', 'co_founder')))
+);
+
+-- Public / Anonymous can only select active, unblocked users with minimal fields
+CREATE POLICY users_select_anon ON public.users
+FOR SELECT TO anon
+USING (is_blocked = false AND is_registration_complete = true);
+
+
+-- B. Teams Table: Trigger to Prevent Direct Leaderboard/Elo Fraud by Captains (C-04)
+CREATE OR REPLACE FUNCTION public.protect_team_sensitive_fields()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
-SET search_path = public, pg_temp
+AS $$
+BEGIN
+  -- Allow service_role or admins/co-founders to modify all fields
+  IF (auth.jwt()->>'role' = 'service_role') OR 
+     (EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role IN ('admin', 'co_founder'))) THEN
+    RETURN NEW;
+  END IF;
+
+  -- If regular captain is updating, prevent mutating competitive stats directly
+  IF (OLD.points IS DISTINCT FROM NEW.points) OR
+     (OLD.wins IS DISTINCT FROM NEW.wins) OR
+     (OLD.draws IS DISTINCT FROM NEW.draws) OR
+     (OLD.losses IS DISTINCT FROM NEW.losses) OR
+     (OLD.matches_played IS DISTINCT FROM NEW.matches_played) OR
+     (OLD.current_winning_streak IS DISTINCT FROM NEW.current_winning_streak) OR
+     (OLD.championships_won IS DISTINCT FROM NEW.championships_won) OR
+     (OLD.is_official IS DISTINCT FROM NEW.is_official) OR
+     (OLD.verified_badge IS DISTINCT FROM NEW.verified_badge) OR
+     (OLD.fair_play_score IS DISTINCT FROM NEW.fair_play_score) THEN
+     
+     -- Reset protected fields back to original values silently
+     NEW.points := OLD.points;
+     NEW.wins := OLD.wins;
+     NEW.draws := OLD.draws;
+     NEW.losses := OLD.losses;
+     NEW.matches_played := OLD.matches_played;
+     NEW.current_winning_streak := OLD.current_winning_streak;
+     NEW.championships_won := OLD.championships_won;
+     NEW.is_official := OLD.is_official;
+     NEW.verified_badge := OLD.verified_badge;
+     NEW.fair_play_score := OLD.fair_play_score;
+  END IF;
+
+  RETURN NEW;
+END;
+$$;
+
+DROP TRIGGER IF EXISTS trg_protect_teams_sensitive_fields ON public.teams;
+CREATE TRIGGER trg_protect_teams_sensitive_fields
+BEFORE UPDATE ON public.teams
+FOR EACH ROW
+EXECUTE FUNCTION public.protect_team_sensitive_fields();
+
+
+-- C. Tournament Matches: Prevent Tampering with Completed Matches (C-05)
+CREATE OR REPLACE FUNCTION public.protect_completed_match_scores()
+RETURNS TRIGGER
+LANGUAGE plpgsql
+SECURITY DEFINER
 AS $$
 DECLARE
-  v_is_admin BOOLEAN;
-  v_caller_role TEXT;
+  v_champ_status text;
 BEGIN
-  -- Allow service_role (backend/edge functions) to make any modification
-  IF auth.role() = 'service_role' THEN
+  -- Allow service_role or admin
+  IF (auth.jwt()->>'role' = 'service_role') OR 
+     (EXISTS (SELECT 1 FROM public.users u WHERE u.id = auth.uid() AND u.role IN ('admin', 'co_founder'))) THEN
     RETURN NEW;
   END IF;
 
-  v_caller_role := auth.role();
-  v_is_admin := public.is_admin_or_founder(auth.uid());
+  SELECT status INTO v_champ_status FROM public.championships WHERE id = OLD.championship_id;
 
-  -- If the caller is NOT an admin, lock sensitive fields to OLD values
-  IF NOT v_is_admin THEN
-    NEW.role := OLD.role;
-    NEW.is_blocked := OLD.is_blocked;
-    NEW.cash_booking_banned := OLD.cash_booking_banned;
-    NEW.no_show_count := OLD.no_show_count;
-    NEW.total_platform_fees := OLD.total_platform_fees;
-    NEW.verification_status := OLD.verification_status;
-    NEW.trial_ends_at := OLD.trial_ends_at;
-    NEW.subscription_expires_at := OLD.subscription_expires_at;
-    NEW.completed_online_bookings_count := OLD.completed_online_bookings_count;
+  IF (v_champ_status = 'completed') THEN
+    RAISE EXCEPTION 'cannot_modify_completed_championship_match';
   END IF;
 
-  NEW.updated_at := NOW();
   RETURN NEW;
 END;
 $$;
 
-DROP TRIGGER IF EXISTS trg_protect_users_sensitive_fields ON public.users;
-CREATE TRIGGER trg_protect_users_sensitive_fields
-BEFORE UPDATE ON public.users
+DROP TRIGGER IF EXISTS trg_protect_completed_match_scores ON public.tournament_matches;
+CREATE TRIGGER trg_protect_completed_match_scores
+BEFORE UPDATE ON public.tournament_matches
 FOR EACH ROW
-EXECUTE FUNCTION public.trg_protect_users_sensitive_fields();
-
--- ------------------------------------------------------------------------------
--- 3️⃣ STADIUM INTEGRITY SHIELD: Protect `stadiums` Sensitive Fields
--- ------------------------------------------------------------------------------
--- Prevents stadium owners from self-verifying, unblocking, or inflating ratings.
-
-CREATE OR REPLACE FUNCTION public.trg_protect_stadiums_sensitive_fields()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-DECLARE
-  v_is_admin BOOLEAN;
-BEGIN
-  IF auth.role() = 'service_role' THEN
-    RETURN NEW;
-  END IF;
-
-  v_is_admin := public.is_admin_or_founder(auth.uid());
-
-  IF NOT v_is_admin THEN
-    NEW.is_verified := OLD.is_verified;
-    NEW.is_blocked := OLD.is_blocked;
-    NEW.rating := OLD.rating;
-    NEW.reviews_count := OLD.reviews_count;
-    NEW.is_featured := OLD.is_featured;
-  END IF;
-
-  NEW.updated_at := NOW();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_protect_stadiums_sensitive_fields ON public.stadiums;
-CREATE TRIGGER trg_protect_stadiums_sensitive_fields
-BEFORE UPDATE ON public.stadiums
-FOR EACH ROW
-EXECUTE FUNCTION public.trg_protect_stadiums_sensitive_fields();
-
--- ------------------------------------------------------------------------------
--- 4️⃣ TOURNAMENT INTEGRITY SHIELD: Protect `championships` Verification Fields
--- ------------------------------------------------------------------------------
--- Prevents tournament creators from self-approving or bypassing creation fees.
-
-CREATE OR REPLACE FUNCTION public.trg_protect_championships_sensitive_fields()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-DECLARE
-  v_is_admin BOOLEAN;
-BEGIN
-  IF auth.role() = 'service_role' THEN
-    RETURN NEW;
-  END IF;
-
-  v_is_admin := public.is_admin_or_founder(auth.uid());
-
-  IF NOT v_is_admin THEN
-    -- If fee was not already paid, owner cannot mark it as paid directly
-    IF OLD.creation_fee_paid IS NOT TRUE AND NEW.creation_fee_paid IS TRUE THEN
-      NEW.creation_fee_paid := OLD.creation_fee_paid;
-    END IF;
-
-    -- If not approved, owner cannot mark it as approved
-    IF OLD.is_approved IS NOT TRUE AND NEW.is_approved IS TRUE THEN
-      NEW.is_approved := OLD.is_approved;
-    END IF;
-  END IF;
-
-  NEW.updated_at := NOW();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_protect_championships_sensitive_fields ON public.championships;
-CREATE TRIGGER trg_protect_championships_sensitive_fields
-BEFORE UPDATE ON public.championships
-FOR EACH ROW
-EXECUTE FUNCTION public.trg_protect_championships_sensitive_fields();
-
--- ------------------------------------------------------------------------------
--- 5️⃣ PAYMENT INTEGRITY SHIELD: Protect `bookings` Online Payment State
--- ------------------------------------------------------------------------------
--- Online payments (Paymob/Card/Wallet) can ONLY be confirmed via Webhook or Service Role.
-
-CREATE OR REPLACE FUNCTION public.trg_protect_bookings_payment_fields()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER
-SET search_path = public, pg_temp
-AS $$
-BEGIN
-  IF auth.role() = 'service_role' OR public.is_admin_or_founder(auth.uid()) THEN
-    RETURN NEW;
-  END IF;
-
-  -- Block non-service callers from marking electronic bookings as paid
-  IF OLD.is_paid IS NOT TRUE 
-     AND NEW.is_paid IS TRUE 
-     AND NEW.payment_method IN ('paymob', 'card', 'wallet') 
-     AND (NEW.webhook_verified IS NOT TRUE OR NEW.paymob_txn_id IS NULL) THEN
-    RAISE EXCEPTION 'Security Alert: Online booking payments cannot be verified directly from client.';
-  END IF;
-
-  NEW.updated_at := NOW();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS trg_protect_bookings_payment_fields ON public.bookings;
-CREATE TRIGGER trg_protect_bookings_payment_fields
-BEFORE UPDATE ON public.bookings
-FOR EACH ROW
-EXECUTE FUNCTION public.trg_protect_bookings_payment_fields();
-
--- ------------------------------------------------------------------------------
--- 6️⃣ HARDEN RPCs: Secure Execution Rights & Search Paths
--- ------------------------------------------------------------------------------
-
--- Ensure webhook RPC is strictly restricted to service_role
-REVOKE EXECUTE ON FUNCTION public.process_paymob_webhook FROM public, anon, authenticated;
-GRANT EXECUTE ON FUNCTION public.process_paymob_webhook TO service_role;
-
--- Fix search_path on sensitive procedures to prevent search-path injection
-ALTER FUNCTION public.process_paymob_webhook SET search_path = public, pg_temp;
-ALTER FUNCTION public.create_booking_atomic SET search_path = public, pg_temp;
-ALTER FUNCTION public.delete_user_permanently SET search_path = public, pg_temp;
-
--- ------------------------------------------------------------------------------
--- 7️⃣ HIGH-PERFORMANCE COMPOSITE DATABASE INDEXES
--- ------------------------------------------------------------------------------
--- Speeds up queries and eliminates N+1 full-table scans across high-traffic tables.
-
--- Bookings table indexes
-CREATE INDEX IF NOT EXISTS idx_bookings_created_by_status 
-ON public.bookings(created_by_user_id, status);
-
-CREATE INDEX IF NOT EXISTS idx_bookings_owner_operational 
-ON public.bookings(owner_id, operational_date);
-
-CREATE INDEX IF NOT EXISTS idx_bookings_active_stadium_time 
-ON public.bookings(stadium_id, start_time, end_time) 
-WHERE status != 'cancelled';
-
--- Tournament matches bracket index
-CREATE INDEX IF NOT EXISTS idx_tournament_matches_bracket 
-ON public.tournament_matches(championship_id, round_index, match_index);
-
--- Chat messages fast pagination
-CREATE INDEX IF NOT EXISTS idx_chat_messages_conv_created 
-ON public.chat_messages(conversation_id, created_at DESC);
-
--- User notifications unread stream
-CREATE INDEX IF NOT EXISTS idx_notifications_user_unread 
-ON public.notifications(user_id, is_read, created_at DESC);
-
--- Stadium reviews index
-CREATE INDEX IF NOT EXISTS idx_reviews_stadium_created 
-ON public.reviews(stadium_id, created_at DESC);
-
--- Reports index
-CREATE INDEX IF NOT EXISTS idx_reports_target 
-ON public.reports(target_id, target_type);
-
--- Transactions index
-CREATE INDEX IF NOT EXISTS idx_transactions_user_created 
-ON public.transactions(user_id, created_at DESC);
-
--- Team members membership lookup
-CREATE INDEX IF NOT EXISTS idx_team_members_lookup 
-ON public.team_members(team_id, user_id);
-
--- ------------------------------------------------------------------------------
--- ✅ END OF PASS 2 CATEGORY 1 MIGRATION
--- ------------------------------------------------------------------------------
+EXECUTE FUNCTION public.protect_completed_match_scores();

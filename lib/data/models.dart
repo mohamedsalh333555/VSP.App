@@ -150,6 +150,9 @@ class Stadium {
     return result;
   }
 
+  factory Stadium.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Stadium.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory Stadium.fromFirestore(Map<String, dynamic> data, String id) {
     int parsedPPT = 5;
     final sizeStr = data['size']?.toString() ?? '5 VS 5';
@@ -245,6 +248,8 @@ class Stadium {
       lastEmergencyClosureAt: data['last_emergency_closure_at'] != null ? DateTime.parse(data['last_emergency_closure_at'].toString()) : null,
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -709,6 +714,9 @@ class Booking {
   });
 
   /// Create Booking from Firestore/Supabase document
+  factory Booking.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Booking.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory Booking.fromFirestore(Map<String, dynamic> data, String id) {
     final startTimeVal = data['startTime'] ?? data['start_time'];
     final endTimeVal = data['endTime'] ?? data['end_time'];
@@ -829,6 +837,8 @@ class Booking {
       emergencyDowntimeHours: data['emergency_downtime_hours'] ?? data['emergencyDowntimeHours'],
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   /// Convert Booking to Firestore map
   Map<String, dynamic> toFirestore() {
@@ -1165,6 +1175,9 @@ class Team {
 
   String get rankTitle => EloCalculator.getRankTitle(points);
 
+  factory Team.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Team.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory Team.fromFirestore(Map<String, dynamic> data, String docId) {
     final matches = data['matchesPlayed'] ?? data['matches_played'] ?? 0;
     final members = List<String>.from(data['memberUids'] ?? data['member_uids'] ?? []);
@@ -1203,6 +1216,8 @@ class Team {
       isOfficial: data['is_official'] ?? data['isOfficial'] ?? calculatedOfficial,
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -1325,6 +1340,9 @@ class VSP1v1Player {
     this.trend = 'stable',
   });
 
+  factory VSP1v1Player.fromMap(Map<String, dynamic> data, [String? id]) =>
+      VSP1v1Player.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory VSP1v1Player.fromFirestore(Map<String, dynamic> data, String id) {
     return VSP1v1Player(
       id: id,
@@ -1339,6 +1357,8 @@ class VSP1v1Player {
       trend: data['trend'] ?? 'stable',
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -1446,6 +1466,9 @@ class Championship {
   });
 
   // SECURITY PATCH: Robust type parsing with crash prevention for malicious or corrupted data payloads.
+  factory Championship.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Championship.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory Championship.fromFirestore(Map<String, dynamic> data, String id) {
     try {
       final settings = data['settings'] as Map<String, dynamic>? ?? {};
@@ -1578,6 +1601,8 @@ class Championship {
     );
   }
 
+  Map<String, dynamic> toMap() => toFirestore();
+
   Map<String, dynamic> toFirestore() {
     return {
       'name': name,
@@ -1676,6 +1701,9 @@ class AppNotification {
     this.metadata,
   });
 
+  factory AppNotification.fromMap(Map<String, dynamic> data, [String? id]) =>
+      AppNotification.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory AppNotification.fromFirestore(Map<String, dynamic> data, String id) {
     return AppNotification(
       id: id,
@@ -1692,6 +1720,8 @@ class AppNotification {
       metadata: data['metadata'] is Map<String, dynamic> ? Map<String, dynamic>.from(data['metadata']) : null,
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -1846,6 +1876,9 @@ class TournamentMatch {
     );
   }
 
+  factory TournamentMatch.fromMap(Map<String, dynamic> data, [String? id]) =>
+      TournamentMatch.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory TournamentMatch.fromFirestore(Map<String, dynamic> data, String id) {
     final scheduledTimeVal = data['scheduledTime'] ?? data['scheduled_time'];
     final rawGoals = data['goal_details'] ?? data['goalDetails'] ?? [];
@@ -1879,6 +1912,8 @@ class TournamentMatch {
       stage: data['stage'] ?? 'knockout',
     );
   }
+
+  Map<String, dynamic> toMap() => toFirestore();
 
   Map<String, dynamic> toFirestore() {
     return {
@@ -1934,6 +1969,9 @@ class Promotion {
     this.isActive = true,
   });
 
+  factory Promotion.fromMap(Map<String, dynamic> data, [String? id]) =>
+      Promotion.fromFirestore(data, id ?? (data['id']?.toString() ?? ''));
+
   factory Promotion.fromFirestore(Map<String, dynamic> data, String id) {
     return Promotion(
       id: id,
@@ -1944,6 +1982,16 @@ class Promotion {
       isActive: data['isActive'] ?? data['is_active'] ?? true,
     );
   }
+
+  Map<String, dynamic> toMap() => {
+    'title': title,
+    'imageUrl': imageUrl,
+    'deepLink': deepLink,
+    'type': type,
+    'isActive': isActive,
+  };
+
+  Map<String, dynamic> toFirestore() => toMap();
 }
 
 // === VSP OFFICIAL 1v1 LEAGUE MODELS ===

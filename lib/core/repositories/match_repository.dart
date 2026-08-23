@@ -10,8 +10,8 @@ class MatchRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
   final NotificationRepository _notificationRepo;
 
-  MatchRepository({dynamic firestore, NotificationRepository? notificationRepo})
-      : _notificationRepo = notificationRepo ?? NotificationRepository(firestore: firestore);
+  MatchRepository({NotificationRepository? notificationRepo})
+      : _notificationRepo = notificationRepo ?? NotificationRepository();
 
   // Get all matches (Live stream)
   Stream<List<Map<String, dynamic>>> getMatches() {
@@ -37,24 +37,54 @@ class MatchRepository {
 
   // --- PUBLIC MATCHES (Modern Supabase Integration) ---
 
-  Stream<List<Booking>> getPublicMatches() {
-    // ⚡ الفلترة تتم الآن على مستوى السيرفر أولاً عبر order('start_time')
-    return _supabase
+  Stream<List<Booking>> getPublicMatches() async* {
+    final now = DateTime.now();
+    final cutoffIso = now.subtract(const Duration(hours: 2)).toUtc().toIso8601String();
+
+    // 1. ⚡ جلب أولي سريع ومفلتر على مستوى قاعدة البيانات (Server-side Filtered REST Query)
+    try {
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('is_private', false)
+          .inFilter('status', ['confirmed', 'upcoming'])
+          .gte('end_time', cutoffIso)
+          .order('start_time', ascending: true)
+          .limit(50);
+
+      final initialList = (response as List)
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .where((b) {
+            final totalCapacity = b.totalFieldCapacity;
+            final hasSpace = b.currentPlayers < totalCapacity;
+            final uid = _supabase.auth.currentUser?.id;
+            final isParticipant = uid != null && b.joinedUserIds.contains(uid);
+            return b.endTime.isAfter(now) && (hasSpace || isParticipant);
+          })
+          .toList();
+
+      yield initialList;
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching initial public matches via REST', e, stack);
+    }
+
+    // 2. 📡 التسمع اللحظي للتحديثات (Realtime Stream)
+    yield* _supabase
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('is_private', false)
         .order('start_time', ascending: true)
         .map<List<Booking>>((list) {
-          final now = DateTime.now();
-          final cutoff = now.subtract(const Duration(hours: 2));
+          final currentNow = DateTime.now();
+          final currentCutoff = currentNow.subtract(const Duration(hours: 2));
 
           return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
               .where((b) {
-                final isNotExpired = b.endTime.isAfter(cutoff);
+                final isNotExpired = b.endTime.isAfter(currentCutoff);
                 final isConfirmed = b.status == BookingStatus.confirmed || 
                                    b.status == BookingStatus.upcoming;
-                final isFuture = b.endTime.isAfter(now);
+                final isFuture = b.endTime.isAfter(currentNow);
                 
                 final totalCapacity = b.totalFieldCapacity;
                 final hasSpace = b.currentPlayers < totalCapacity;
@@ -70,7 +100,6 @@ class MatchRepository {
   Future<bool> joinPublicMatch(String bookingId, String userId) async {
     try {
       // 🛡️ Public Matchmaking: Atomic RPC Database Lock & Time-Conflict check
-      // Offloads calculations from client-side loops to PostgreSQL atomic trigger.
       await _supabase.rpc('request_join_public_match', params: {
         'p_booking_id': bookingId,
         'p_user_id': userId,
@@ -144,7 +173,6 @@ class MatchRepository {
     }
   }
 
-  
   Future<bool> acceptJoinRequest(String bookingId, String userId) async {
     try {
       await _supabase.rpc('accept_join_request', params: {'p_booking_id': bookingId, 'p_user_id': userId});
@@ -266,36 +294,38 @@ class MatchRepository {
   }) async {
     try {
       final now = DateTime.now();
+      final cutoffIso = now.subtract(const Duration(hours: 2)).toUtc().toIso8601String();
       int offset = 0;
       if (startAfter is int) {
         offset = startAfter;
       }
       
+      // ⚡ الفلترة تتم الآن على مستوى الخادم أولاً قبل التقسيم الصفحي
       final response = await _supabase
           .from('bookings')
           .select()
           .eq('is_private', false)
+          .inFilter('status', ['confirmed', 'upcoming'])
+          .gte('end_time', cutoffIso)
+          .order('start_time', ascending: true)
           .range(offset, offset + limit - 1);
 
       final items = (response as List)
-          .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
           .where((b) {
-            final isConfirmed = b.status == BookingStatus.confirmed || 
-                               b.status == BookingStatus.upcoming;
             final isFuture = b.endTime.isAfter(now);
             final hasSpace = b.currentPlayers < b.totalFieldCapacity;
-            final isRightType = b.bookingType == BookingType.openJoin || b.bookingType == BookingType.challenge || b.bookingType == BookingType.team || b.bookingType == BookingType.personal;
-            return isConfirmed && isFuture && hasSpace && isRightType;
+            final uid = _supabase.auth.currentUser?.id;
+            final isParticipant = uid != null && b.joinedUserIds.contains(uid);
+            return isFuture && (hasSpace || isParticipant);
           }).toList();
-
-      items.sort((a, b) => a.startTime.compareTo(b.startTime));
 
       return {
         'items': items,
-        'lastDoc': offset + limit,
+        'lastDoc': offset + items.length,
       };
-    } catch (e) {
-      VSPLogger.e('Error fetching paginated matches', e);
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching paginated matches', e, stack);
       return {'items': [], 'lastDoc': null};
     }
   }

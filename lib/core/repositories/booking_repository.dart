@@ -932,41 +932,19 @@ class SupabaseBookingRepository implements BookingRepository {
     required int durationHours,
   }) async {
     try {
-      final stadiumData = await _supabase
-          .from('stadiums')
-          .select('last_emergency_closure_at')
-          .eq('id', stadiumId)
-          .maybeSingle();
+      final rpcResult = await _supabase.rpc('request_emergency_stadium_closure', params: {
+        'p_stadium_id': stadiumId,
+        'p_owner_id': ownerId,
+        'p_reason': reason,
+        'p_duration_hours': durationHours,
+      });
 
-      final now = DateTime.now();
-      if (stadiumData != null && stadiumData['last_emergency_closure_at'] != null) {
-        final lastAt = DateTime.parse(stadiumData['last_emergency_closure_at']);
-        if (now.difference(lastAt).inDays < 30) {
-          final remainingDays = 30 - now.difference(lastAt).inDays;
-          return {
-            'success': false,
-            'message': 'لقد استخدمت حق الإلغاء الطارئ لهذا الشهر مسبقاً. متبقي $remainingDays يوم لإعادة تفعيل الميزة.',
-          };
-        }
+      if (rpcResult is Map) {
+        return Map<String, dynamic>.from(rpcResult);
       }
-
-      final maintenanceUntil = now.add(Duration(hours: durationHours));
-
-      await _supabase.from('stadiums').update({
-        'maintenance_until': maintenanceUntil.toUtc().toIso8601String(),
-        'maintenance_reason': reason,
-        'last_emergency_closure_at': now.toUtc().toIso8601String(),
-      }).eq('id', stadiumId);
-
-      await _supabase.from('bookings').update({
-        'emergency_cancel_status': 'pending_admin_approval',
-        'emergency_reason': reason,
-        'emergency_downtime_hours': durationHours,
-      }).eq('stadium_id', stadiumId).eq('status', 'confirmed').gte('start_time', now.toUtc().toIso8601String()).lte('start_time', maintenanceUntil.toUtc().toIso8601String());
-
       return {'success': true};
     } catch (e) {
-      VSPLogger.e('Error requesting emergency closure', e);
+      VSPLogger.e('Error requesting emergency closure via RPC', e);
       return {'success': false, 'message': e.toString()};
     }
   }

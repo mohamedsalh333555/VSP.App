@@ -10,6 +10,7 @@ import '../../core/ui/tokens/vsp_tokens.dart';
 import 'dart:async';
 import '../services/remote_config_service.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import '../utils/deep_link_helper.dart';
 
 import 'package:go_router/go_router.dart';
 import 'package:url_launcher/url_launcher.dart';
@@ -65,40 +66,11 @@ class _RootScreenState extends State<RootScreen> {
       if (pendingLink != null && mounted) {
         debugPrint('🔗 Recovering pending deep link: $pendingLink');
         await prefs.remove('pending_deep_link'); // حذف الرابط فوراً لمنع التكرار
-        
+
         final uri = Uri.parse(pendingLink);
-        String? type;
-        String? id;
-
-        if (uri.scheme == 'io.supabase.fluttervsp') {
-          type = uri.host;
-          if (uri.pathSegments.isNotEmpty) {
-            id = uri.pathSegments.first;
-          }
-        } else {
-          if (uri.pathSegments.length >= 2) {
-            type = uri.pathSegments[0]; // match or team
-            id = uri.pathSegments[1];
-          }
-        }
-
-        if (type != null && id != null && id.isNotEmpty) {
-          // التحقق من سلامة وصحة المعرف لمنع الاختراق
-          final bool isValidId = RegExp(r'^[a-zA-Z0-9\-_\s]+$').hasMatch(id);
-          if (!isValidId) {
-            debugPrint('⚠️ Malicious or garbage ID detected in pending deep link: $id. Redirecting to safe fallback.');
-            return;
-          }
-
-          if (mounted) {
-            if (type == 'match') {
-              GoRouter.of(context).push('/match/$id');
-            } else if (type == 'team') {
-              GoRouter.of(context).push('/team/$id');
-            } else if (type == 'championship') {
-              GoRouter.of(context).push('/championship/$id');
-            }
-          }
+        final parsed = DeepLinkHelper.parse(uri);
+        if (parsed != null && mounted) {
+          GoRouter.of(context).push(parsed.routePath);
         }
       }
     } catch (e) {

@@ -150,8 +150,48 @@ serve(async (req: Request) => {
       });
     }
 
+    // Fetch existing booking to verify expected amount
+    const { data: existingBooking, error: fetchError } = await supabase
+      .from("bookings")
+      .select("id, total_price, deposit_amount, needs_deposit, owner_id, user_id, created_by_user_id, stadium_name")
+      .eq("id", bookingId)
+      .maybeSingle();
+
+    if (fetchError || !existingBooking) {
+      console.error(`❌ Booking ${bookingId} not found in database.`);
+      return new Response(JSON.stringify({ error: "Booking not found" }), {
+        status: 404,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     // 4. Update Booking Status atomically if transaction succeeded
     if (isSuccess) {
+      const paidAmountEgp = (obj.amount_cents || 0) / 100;
+      const expectedAmount = (existingBooking.needs_deposit && Number(existingBooking.deposit_amount) > 0)
+        ? Number(existingBooking.deposit_amount)
+        : Number(existingBooking.total_price);
+
+      // Verify that the paid amount satisfies the expected amount
+      if (paidAmountEgp < (expectedAmount - 0.5)) {
+        console.error(`🚨 Security Alert: Paid amount (${paidAmountEgp} EGP) is less than expected (${expectedAmount} EGP) for booking ${bookingId}`);
+        await supabase.from("webhook_logs").insert({
+          provider: "paymob",
+          event_type: "underpayment_fraud_alert",
+          txn_id: transactionId,
+          order_id: String(obj.order?.id ?? obj.order ?? ""),
+          booking_id: bookingId,
+          payload: obj,
+          signature_verified: true,
+          status: "fraud_detected",
+          error_message: `Paid ${paidAmountEgp} EGP, expected ${expectedAmount} EGP`,
+        });
+        return new Response(JSON.stringify({ error: "Payment amount does not match booking price" }), {
+          status: 400,
+          headers: { "Content-Type": "application/json" },
+        });
+      }
+
       const { data: booking, error: updateError } = await supabase
         .from("bookings")
         .update({
@@ -176,7 +216,7 @@ serve(async (req: Request) => {
         console.log(`🎉 Booking ${bookingId} confirmed successfully via Paymob payment!`);
 
         // Send notifications
-        const amountEgp = ((obj.amount_cents || 0) / 100).toFixed(0);
+        const amountEgp = paidAmountEgp.toFixed(0);
         await supabase.from("notifications").insert([
           {
             user_id: booking.owner_id,

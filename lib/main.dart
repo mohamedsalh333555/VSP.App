@@ -19,12 +19,14 @@ import 'package:vsp_application/l10n/app_localizations.dart';
 import 'core/services/logger_service.dart';
 import 'package:go_router/go_router.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'core/navigation/app_router.dart';
 import 'dart:async';
 
 import 'core/config/app_env.dart';
+import 'core/utils/deep_link_helper.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -78,10 +80,16 @@ void main() async {
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
     VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
+    try {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    } catch (_) {}
   };
 
   PlatformDispatcher.instance.onError = (error, stack) {
     VSPLogger.e('Uncaught Platform Error: $error', error, stack);
+    try {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    } catch (_) {}
     return true;
   };
 
@@ -204,61 +212,26 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
     debugPrint('🔗 Handling deep link: $uri');
     final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
-    // ✅ CRITICAL: Supabase OAuth callbacks (login-callback) MUST be forwarded
-    // directly to Supabase — never blocked or saved as "pending". Supabase's own
-    // internal listener (SupabaseAuth._handleIncomingLinks) handles these.
-    final isOAuthCallback = uri.scheme == 'io.supabase.fluttervsp' &&
-        uri.host == 'login-callback';
-    if (isOAuthCallback) {
+    // 1. Supabase OAuth callback bypass
+    if (DeepLinkHelper.isOAuthCallback(uri)) {
       debugPrint('🔐 OAuth callback detected — forwarding to Supabase auth handler.');
-      // Supabase SDK handles this automatically via its own stream listener.
-      // We must NOT intercept or block it here.
       return;
     }
 
-    // 🛡️ AUTH GUARD: For app-level deep links (e.g. /match/ID), require auth.
+    // 2. Auth Guard: حفظ الرابط لوقت لاحق إن لم يكن مسجلاً
     if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
       debugPrint('💾 Saving pending deep link for after login: $uri');
       SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
       return;
     }
 
-    try {
-      String? type;
-      String? id;
-
-      if (uri.scheme == 'io.supabase.fluttervsp') {
-        type = uri.host;
-        if (uri.pathSegments.isNotEmpty) {
-          id = uri.pathSegments.first;
-        }
-      } else {
-        if (uri.pathSegments.length >= 2) {
-          type = uri.pathSegments[0]; // match or team
-          id = uri.pathSegments[1];
-        }
-      }
-
-      if (type != null && id != null && id.isNotEmpty) {
-        // Validate ID format (alphanumeric, dashes, underscores) to prevent path injection or invalid characters
-        final bool isValidId = RegExp(r'^[a-zA-Z0-9\-_\s]+$').hasMatch(id);
-        if (!isValidId) {
-          debugPrint('⚠️ Malicious or garbage ID detected in deep link: $id. Redirecting to safe fallback.');
-          _router.go('/');
-          return;
-        }
-
-        if (type == 'match') {
-          _router.push('/match/$id');
-        } else if (type == 'team') {
-          _router.push('/team/$id');
-        } else if (type == 'championship') {
-          _router.push('/championship/$id');
-        }
-      }
-    } catch (e, stackTrace) {
-      debugPrint('🚨 Error processing deep link: $e\n$stackTrace');
-      _router.go('/'); // Safe fallback on error
+    // 3. التحليل والتوجيه الآمن
+    final parsed = DeepLinkHelper.parse(uri);
+    if (parsed != null) {
+      _router.push(parsed.routePath);
+    } else {
+      debugPrint('⚠️ Invalid or unrecognized deep link: $uri');
+      _router.go('/');
     }
   }
 

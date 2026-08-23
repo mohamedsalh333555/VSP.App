@@ -1142,7 +1142,10 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
           ),
         );
       },
-    );
+    ).whenComplete(() {
+      nameCtrl.dispose();
+      playerInputCtrl.dispose();
+    });
   }
 
   Widget _buildInputLabel(String label) {
@@ -1296,12 +1299,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             icon: const Icon(Iconsax.share_copy, color: VSPColors.accent),
             onPressed: () {
               final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-              final String startDateStr = isArabic
-                  ? '${_currentChampionship.startDate.day} ${_getArabicMonth(_currentChampionship.startDate.month)}'
-                  : DateFormat('MMM d').format(_currentChampionship.startDate);
-              final String endDateStr = isArabic
-                  ? '${_currentChampionship.endDate.day} ${_getArabicMonth(_currentChampionship.endDate.month)}'
-                  : DateFormat('MMM d').format(_currentChampionship.endDate);
+              final String startDateStr = AppDateFormatter.formatDayMonth(
+                _currentChampionship.startDate,
+                isArabic ? 'ar' : 'en',
+              );
+              final String endDateStr = AppDateFormatter.formatDayMonth(
+                _currentChampionship.endDate,
+                isArabic ? 'ar' : 'en',
+              );
 
               SharingService.shareChampionship(
                 id: _currentChampionship.id,
@@ -1502,14 +1507,6 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
         },
       ),
     );
-  }
-
-  String _getArabicMonth(int month) {
-    const months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ];
-    return months[month - 1];
   }
 
   Widget _buildInfoItem(String label, String value, {Color? color, bool isLtr = false}) {

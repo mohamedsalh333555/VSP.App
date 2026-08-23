@@ -43,7 +43,6 @@ dependencies:
   shimmer: ^3.0.0
   share_plus: ^12.0.1
   webview_flutter: ^4.13.1
-  webview_flutter_android: ^4.10.1
   crypto: ^3.0.6
   
   # Supabase
@@ -64,7 +63,6 @@ dependencies:
   latlong2: ^0.9.1
   http: ^1.3.0
   path: ^1.9.1
-  timeago: ^3.7.0
   image: ^4.8.0
   google_fonts: ^6.3.2
   app_links: ^6.4.1
@@ -97,10 +95,9 @@ flutter_launcher_icons:
   android: true
   ios: true
   image_path: "assets/images/logo.png"
-  # Ø¥Ø¹Ø¯Ø§Ø¯Ø§Øª Adaptive Icon (Ø£Ù†Ø¯Ø±ÙˆÙŠØ¯ 8+)
-  adaptive_icon_background: "#000000"  # Ø®Ù„ÙÙŠØ© Ø³ÙˆØ¯Ø§Ø¡ (Ù…Ø«Ù„ Ø«ÙŠÙ… Ø§Ù„ØªØ·Ø¨ÙŠÙ‚)
+  # Adaptive Icon Settings (Android 8+)
+  adaptive_icon_background: "#000000"
   adaptive_icon_foreground: "assets/images/logo_foreground.png"
-  # Ù‡Ø°Ø§ Ø§Ù„Ø±Ù‚Ù… Ù‡Ùˆ Ø§Ù„Ø³Ø±: ÙƒÙ„Ù…Ø§ Ù‚Ù„ Ø§Ù„Ø±Ù‚Ù…ØŒ ÙƒØ¨Ø± Ø§Ù„Ù„ÙˆØ¬Ùˆ. (Ø§Ù„Ø§ÙØªØ±Ø§Ø¶ÙŠ 160ØŒ Ø³Ù†Ø¬Ø¹Ù„Ù‡ 80)
   adaptive_icon_foreground_inset: 80 
   min_sdk_android: 21
 

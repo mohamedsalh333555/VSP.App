@@ -6,7 +6,7 @@ import '../../data/models.dart';
 class NotificationRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  NotificationRepository({dynamic firestore});
+  NotificationRepository();
 
   Map<String, dynamic> _mapToCamelCase(Map<String, dynamic> data) {
     return {

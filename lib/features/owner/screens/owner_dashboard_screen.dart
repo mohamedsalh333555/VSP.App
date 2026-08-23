@@ -2,7 +2,6 @@ import 'dart:async';
 import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -17,6 +16,147 @@ import '../../../core/repositories/tournament_repository.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import '../widgets/owner_booking_sheet.dart';
+import '../../../core/utils/app_date_formatter.dart';
+
+/// 🧮 كائن البيانات المالية المجمعة للوحة تحكم المالك
+class OwnerFinancialMetrics {
+  final double pitchCashRevenue;
+  final double digitalVspBalance;
+  final double pendingReceivables;
+  final double totalPipeline;
+  final double totalHours;
+  final int activeBookingsCount;
+  final List<Booking> periodBookings;
+
+  const OwnerFinancialMetrics({
+    required this.pitchCashRevenue,
+    required this.digitalVspBalance,
+    required this.pendingReceivables,
+    required this.totalPipeline,
+    required this.totalHours,
+    required this.activeBookingsCount,
+    required this.periodBookings,
+  });
+}
+
+/// ⚙️ محرك الحسابات المالية المفصول عن واجهة المستخدم
+class OwnerFinancialCalculator {
+  static OwnerFinancialMetrics calculate({
+    required List<Booking> allBookings,
+    required List<Championship> ownerChampionships,
+    required String timePeriod,
+    required String stadiumFilter,
+  }) {
+    final now = DateTime.now();
+    final yesterday = now.subtract(const Duration(days: 1));
+
+    // 1. فلترة الحجوزات حسب الفترة الزمنية والملعب
+    final List<Booking> filteredBookings = allBookings.where((b) {
+      if (b.status == BookingStatus.cancelled) return false;
+      if (stadiumFilter != 'all' && b.stadiumId != stadiumFilter) return false;
+
+      final bStartLocal = b.startTime.toLocal();
+      final bDate = b.operationalDate ?? bStartLocal;
+
+      if (timePeriod == 'today') {
+        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
+      } else if (timePeriod == 'yesterday') {
+        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
+      } else if (timePeriod == 'week') {
+        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+        final endOfWeek = startOfWeek.add(const Duration(days: 7));
+        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
+      } else if (timePeriod == 'month') {
+        return bDate.year == now.year && bDate.month == now.month;
+      }
+      return true; // 'all'
+    }).toList();
+
+    double pitchCashRevenue = 0.0;
+    double digitalVspBalance = 0.0;
+    double pendingReceivables = 0.0;
+    double totalPipeline = 0.0;
+    double totalHours = 0.0;
+
+    for (final b in filteredBookings) {
+      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
+      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice);
+
+      final double paidAmount = isPaidInFull ? totalPrice : (b.depositPaid > 0 ? b.depositPaid : 0.0);
+      final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
+
+      pendingReceivables += remainingAmount;
+      totalPipeline += totalPrice;
+
+      final String method = b.paymentMethod.toLowerCase().trim();
+      final bool isManual = (method == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
+
+      final bool isOnlinePayment = !isManual && (
+        method.contains('paymob') ||
+        method.contains('card') ||
+        method.contains('visa') ||
+        method.contains('mastercard') ||
+        method.contains('wallet') ||
+        method.contains('online') ||
+        method.contains('instapay') ||
+        method.contains('vodafone') ||
+        (b.paymentTransactionId?.startsWith('PAYMOB') == true) ||
+        b.isPaid == true ||
+        b.paymentStatus == 'paid'
+      );
+
+      if (isOnlinePayment) {
+        final onlinePaid = (b.depositPaid > 0 ? b.depositPaid : paidAmount);
+        digitalVspBalance += onlinePaid;
+        pitchCashRevenue += (paidAmount - onlinePaid).clamp(0.0, 999999.0);
+      } else {
+        pitchCashRevenue += paidAmount;
+      }
+
+      final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
+      totalHours += (diffMinutes / 60.0);
+    }
+
+    // دمج إيرادات البطولات عند اختيار "جميع الملاعب"
+    if (stadiumFilter == 'all') {
+      for (final c in ownerChampionships) {
+        if (c.entryFee <= 0 || c.paidTeams.isEmpty) continue;
+        final cDate = c.startDate.toLocal();
+        bool inPeriod = false;
+
+        if (timePeriod == 'today') {
+          inPeriod = cDate.year == now.year && cDate.month == now.month && cDate.day == now.day;
+        } else if (timePeriod == 'yesterday') {
+          inPeriod = cDate.year == yesterday.year && cDate.month == yesterday.month && cDate.day == yesterday.day;
+        } else if (timePeriod == 'week') {
+          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
+          final endOfWeek = startOfWeek.add(const Duration(days: 7));
+          inPeriod = cDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && cDate.isBefore(endOfWeek);
+        } else if (timePeriod == 'month') {
+          inPeriod = cDate.year == now.year && cDate.month == now.month;
+        } else {
+          inPeriod = true;
+        }
+
+        if (inPeriod) {
+          final revenue = c.paidTeams.length * c.entryFee;
+          digitalVspBalance += revenue;
+          totalPipeline += revenue;
+        }
+      }
+    }
+
+    return OwnerFinancialMetrics(
+      pitchCashRevenue: pitchCashRevenue,
+      digitalVspBalance: digitalVspBalance,
+      pendingReceivables: pendingReceivables,
+      totalPipeline: totalPipeline,
+      totalHours: totalHours,
+      activeBookingsCount: filteredBookings.length,
+      periodBookings: filteredBookings,
+    );
+  }
+}
 
 class OwnerDashboardScreen extends StatefulWidget {
   const OwnerDashboardScreen({super.key});
@@ -27,7 +167,7 @@ class OwnerDashboardScreen extends StatefulWidget {
 
 class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
   bool _isPendingBannerDismissed = false;
-  String _selectedTimePeriod = 'today'; // 'today' | 'week' | 'month' | 'all'
+  String _selectedTimePeriod = 'today'; // 'today' | 'yesterday' | 'week' | 'month' | 'all'
   String _selectedStadiumFilter = 'all'; // 'all' or specific stadium.id
   StreamSubscription<List<Championship>>? _champSubscription;
   List<Championship> _ownerChampionships = [];
@@ -113,6 +253,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       }
     }
 
+    final bookingProvider = Provider.of<BookingProvider>(context);
+    final allBookings = bookingProvider.userBookings;
+
+    // 🧮 إجراء الحسابات المالية مرة واحدة بشكل نظيف
+    final metrics = OwnerFinancialCalculator.calculate(
+      allBookings: allBookings,
+      ownerChampionships: _ownerChampionships,
+      timePeriod: _selectedTimePeriod,
+      stadiumFilter: _selectedStadiumFilter,
+    );
+
     return Scaffold(
       backgroundColor: VSPColors.background,
       body: SafeArea(
@@ -132,58 +283,59 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             physics: const AlwaysScrollableScrollPhysics(parent: BouncingScrollPhysics()),
             padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md, horizontal: VSPSpacing.md),
             child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // 1. الهيدر العلوي
-              _buildHeader(auth, isArabic),
-              const SizedBox(height: VSPSpacing.md),
-
-              // 2. بانر التنبيه والاشتراك
-              if (userModel != null) ...[
-                _buildOwnerStatusBanner(userModel, isArabic, isExpired),
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                // 1. الهيدر العلوي
+                _buildHeader(auth, isArabic),
                 const SizedBox(height: VSPSpacing.md),
+
+                // 2. بانر التنبيه والاشتراك
+                if (userModel != null) ...[
+                  _buildOwnerStatusBanner(userModel, isArabic, isExpired),
+                  const SizedBox(height: VSPSpacing.md),
+                ],
+
+                // 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Bar)
+                _buildStadiumFilterBar(isArabic),
+
+                // 🔹 شريط النطاق الزمني (Time-Filter Bar)
+                _buildTimeFilterBar(isArabic),
+                const SizedBox(height: VSPSpacing.sm),
+
+                // 🧮 3. المحرك المالي والكارت الرئيسي
+                _buildStatsGrid(metrics, isProOwner, isArabic),
+                const SizedBox(height: VSPSpacing.lg),
+
+                // 💡 4. شارات اللمحات الذكية
+                _buildInsightBadges(isProOwner, isArabic),
+                const SizedBox(height: VSPSpacing.xl),
+
+                // 📋 5. قائمة الحجوزات الديناميكية
+                Text(
+                  _selectedTimePeriod == 'today'
+                      ? (isArabic ? 'حجوزات اليوم' : "Today's Bookings")
+                      : (_selectedTimePeriod == 'week'
+                          ? (isArabic ? 'حجوزات هذا الأسبوع' : "This Week's Bookings")
+                          : (_selectedTimePeriod == 'month'
+                              ? (isArabic ? 'حجوزات هذا الشهر' : "This Month's Bookings")
+                              : (isArabic ? 'جميع الحجوزات' : 'All Bookings'))),
+                  style: Theme.of(context).textTheme.displaySmall,
+                ),
+                const SizedBox(height: VSPSpacing.md),
+                _buildBookedTodayList(metrics.periodBookings, isArabic),
+                const SizedBox(height: VSPSpacing.md),
+
+                // ⚡ 6. زر الحجز السريع المباشر
+                _buildQuickWalkInCTA(isArabic, isExpired),
               ],
-
-              // 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Bar)
-              _buildStadiumFilterBar(isArabic),
-
-              // 🔹 شريط النطاق الزمني (Time-Filter Bar)
-              _buildTimeFilterBar(isArabic),
-              const SizedBox(height: VSPSpacing.sm),
-
-              // 🧮 3. المحرك المالي والكارت الرئيسي (Hero Revenue Card)
-              _buildStatsGrid(isArabic),
-              const SizedBox(height: VSPSpacing.lg),
-
-              // 💡 4. شارات اللمحات الذكية
-              _buildInsightBadges(isProOwner, isArabic),
-              const SizedBox(height: VSPSpacing.xl),
-
-              // 📋 5. قائمة الحجوزات الديناميكية
-              Text(
-                _selectedTimePeriod == 'today'
-                    ? (isArabic ? 'حجوزات اليوم' : "Today's Bookings")
-                    : (_selectedTimePeriod == 'week'
-                        ? (isArabic ? 'حجوزات هذا الأسبوع' : "This Week's Bookings")
-                        : (_selectedTimePeriod == 'month'
-                            ? (isArabic ? 'حجوزات هذا الشهر' : "This Month's Bookings")
-                            : (isArabic ? 'جميع الحجوزات' : 'All Bookings'))),
-                style: Theme.of(context).textTheme.displaySmall,
-              ),
-              const SizedBox(height: VSPSpacing.md),
-              _buildBookedTodayList(isArabic),
-              const SizedBox(height: VSPSpacing.md),
-
-              // ⚡ 6. زر الحجز السريع المباشر
-              _buildQuickWalkInCTA(isArabic, isExpired),
-            ],
+            ),
           ),
         ),
       ),
-    ),
-  );
-}
-  /// 1. الهيدر الموحد لغوياً مع شارة الباقة الذهبية الهادئة
+    );
+  }
+
+  /// 1. الهيدر الموحد لغوياً
   Widget _buildHeader(AuthProvider auth, bool isArabic) {
     final firstName = (auth.userModel?.name ?? 'Owner').split(' ').first;
     final isProOwner = auth.userModel?.isProPlan == true;
@@ -364,19 +516,11 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       remainingDays = subEnd.difference(now).inDays;
     }
 
-    // 🌟 DYNAMIC STATE MACHINE ARCHITECTURE:
-    // 1. ACTIVE & HEALTHY (> 7 days left on Pro/Paid plan):
-    //    -> HIDE BANNER COMPLETELY! User has subtle gold Pro badge in header.
-    // 2. RENEWAL WARNING (<= 7 days left or in active trial):
-    //    -> Show Amber Warning Banner ("متبقي X أيام على تجديد الاشتراك - تجديد الآن ⚡")
-    // 3. EXPIRED:
-    //    -> Show Red Danger Banner ("انتهت الباقة! ادفع الآن لتفعيل الملاعب ⚠️")
-
     if (!isExpired && isPro && !isTrial && remainingDays > 7) {
       return const SizedBox.shrink();
     }
 
-    final String trialEndDateStr = trialEnd != null ? DateFormat('yyyy/MM/dd').format(trialEnd) : '';
+    final String trialEndDateStr = trialEnd != null ? AppDateFormatter.formatFullDate(trialEnd, isArabic ? 'ar' : 'en') : '';
 
     final String planLabel = isExpired
         ? (isArabic ? 'انتهت الباقة - ادفع الآن ⚠️' : 'Plan Expired - Renew Now ⚠️')
@@ -400,9 +544,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ? (isArabic ? 'تجديد ⚡' : 'Renew ⚡')
             : (isArabic ? 'ترقية' : 'Upgrade'));
 
-    final Color statusColor = isExpired
-        ? Colors.redAccent
-        : Colors.amber;
+    final Color statusColor = isExpired ? Colors.redAccent : Colors.amber;
 
     return InkWell(
       onTap: () => _showProUpgradeSheet(context),
@@ -516,7 +658,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 🎨 Component 1: Period Tabs (UX Spec: 14px, 12x20px padding, 10px spacing, single row)
   Widget _buildTimeFilterBar(bool isArabic) {
     final filters = [
       {'key': 'today', 'labelAr': 'اليوم', 'labelEn': 'Today'},
@@ -533,42 +674,41 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         physics: const BouncingScrollPhysics(),
         child: Row(
           children: filters.map((f) {
-          final isSelected = _selectedTimePeriod == f['key'];
-          return Padding(
-            padding: const EdgeInsets.only(right: 8),
-            child: InkWell(
-              onTap: () => setState(() => _selectedTimePeriod = f['key'] as String),
-              borderRadius: BorderRadius.circular(18),
-              child: AnimatedContainer(
-                duration: const Duration(milliseconds: 180),
-                curve: Curves.easeInOut,
-                padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
-                decoration: BoxDecoration(
-                  color: isSelected
-                      ? const Color(0xFFC8FF00)
-                      : const Color(0xFF27272A).withValues(alpha: 0.6),
-                  borderRadius: BorderRadius.circular(18),
-                ),
-                child: Text(
-                  isArabic ? f['labelAr'] as String : f['labelEn'] as String,
-                  style: TextStyle(
+            final isSelected = _selectedTimePeriod == f['key'];
+            return Padding(
+              padding: const EdgeInsets.only(right: 8),
+              child: InkWell(
+                onTap: () => setState(() => _selectedTimePeriod = f['key'] as String),
+                borderRadius: BorderRadius.circular(18),
+                child: AnimatedContainer(
+                  duration: const Duration(milliseconds: 180),
+                  curve: Curves.easeInOut,
+                  padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
+                  decoration: BoxDecoration(
                     color: isSelected
-                        ? const Color(0xFF09090B)
-                        : const Color(0xFFA1A1AA),
-                    fontSize: 12.5,
-                    fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                        ? const Color(0xFFC8FF00)
+                        : const Color(0xFF27272A).withValues(alpha: 0.6),
+                    borderRadius: BorderRadius.circular(18),
+                  ),
+                  child: Text(
+                    isArabic ? f['labelAr'] as String : f['labelEn'] as String,
+                    style: TextStyle(
+                      color: isSelected
+                          ? const Color(0xFF09090B)
+                          : const Color(0xFFA1A1AA),
+                      fontSize: 12.5,
+                      fontWeight: isSelected ? FontWeight.w700 : FontWeight.w500,
+                    ),
                   ),
                 ),
               ),
-            ),
-          );
-        }).toList(),
+            );
+          }).toList(),
         ),
       ),
     );
   }
 
-  /// 🏟️ مبدل الملاعب الذكي للمالكين (Multi-Stadium Selector Bar)
   Widget _buildStadiumFilterBar(bool isArabic) {
     final stadiumProvider = Provider.of<StadiumProvider>(context);
     final stadiums = stadiumProvider.stadiums;
@@ -596,7 +736,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             physics: const BouncingScrollPhysics(),
             child: Row(
               children: [
-                // 1. All Stadiums Chip
                 Padding(
                   padding: const EdgeInsets.only(right: 8),
                   child: InkWell(
@@ -635,8 +774,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     ),
                   ),
                 ),
-
-                // 2. Individual Stadium Chips
                 ...stadiums.map((stadium) {
                   final isSelected = _selectedStadiumFilter == stadium.id;
                   final stadiumName = stadium.name.isNotEmpty ? stadium.name : (isArabic ? 'ملعب' : 'Pitch');
@@ -688,130 +825,20 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 🧮 1️⃣ + 2️⃣ المحرك المالي والكارت الرئيسي (Financial Engine + Hero Revenue Card)
-  Widget _buildStatsGrid(bool isArabic) {
-    final auth = Provider.of<AuthProvider>(context, listen: false);
-    final isProOwner = auth.userModel?.isProPlan == true;
-    final bookingProvider = Provider.of<BookingProvider>(context);
-    final allBookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
-
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    final List<Booking> bookings = allBookings.where((b) {
-      final bStartLocal = b.startTime.toLocal();
-      final bDate = b.operationalDate ?? bStartLocal;
-
-      if (_selectedTimePeriod == 'today') {
-        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
-      } else if (_selectedTimePeriod == 'yesterday') {
-        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
-      } else if (_selectedTimePeriod == 'week') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
-      } else if (_selectedTimePeriod == 'month') {
-        return bDate.year == now.year && bDate.month == now.month;
-      }
-      return true; // 'all'
-    }).toList();
-
-    if (_selectedStadiumFilter != 'all') {
-      bookings.removeWhere((b) => b.stadiumId != _selectedStadiumFilter);
-    }
-
-    double pitchCashRevenue = 0.0;
-    double digitalVspBalance = 0.0;
-    double pendingReceivables = 0.0;
-    double totalPipeline = 0.0;
-    double totalHours = 0.0;
-    final int activeBookingsCount = bookings.length;
-
-    for (var b in bookings) {
-      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice);
-
-      final double paidAmount = isPaidInFull 
-          ? totalPrice 
-          : (b.depositPaid > 0 ? b.depositPaid : 0.0);
-      
-      final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
-
-      pendingReceivables += remainingAmount;
-      totalPipeline += totalPrice;
-
-      final String method = b.paymentMethod.toLowerCase().trim();
-      final bool isManual = (method == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
-      
-      final bool isOnlinePayment = !isManual && (
-        method.contains('paymob') ||
-        method.contains('card') ||
-        method.contains('visa') ||
-        method.contains('mastercard') ||
-        method.contains('wallet') ||
-        method.contains('online') ||
-        method.contains('instapay') ||
-        method.contains('vodafone') ||
-        (b.paymentTransactionId?.startsWith('PAYMOB') == true) ||
-        b.isPaid == true ||
-        b.paymentStatus == 'paid'
-      );
-
-      if (isOnlinePayment) {
-        final onlinePaid = (b.depositPaid > 0 ? b.depositPaid : paidAmount);
-        digitalVspBalance += onlinePaid;
-        pitchCashRevenue += (paidAmount - onlinePaid).clamp(0.0, 999999.0);
-      } else {
-        pitchCashRevenue += paidAmount;
-      }
-
-      final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-      totalHours += (diffMinutes / 60.0);
-    }
-
-    // 🏆 دمج إيرادات اشتراكات البطولات فقط عند اختيار "جميع الملاعب"
-    double championshipRevenue = 0.0;
-    if (_selectedStadiumFilter == 'all') {
-      for (var c in _ownerChampionships) {
-        if (c.entryFee <= 0 || c.paidTeams.isEmpty) continue;
-        final cDate = c.startDate.toLocal();
-        bool inPeriod = false;
-        if (_selectedTimePeriod == 'today') {
-          inPeriod = cDate.year == now.year && cDate.month == now.month && cDate.day == now.day;
-        } else if (_selectedTimePeriod == 'yesterday') {
-          inPeriod = cDate.year == yesterday.year && cDate.month == yesterday.month && cDate.day == yesterday.day;
-        } else if (_selectedTimePeriod == 'week') {
-          final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-          final endOfWeek = startOfWeek.add(const Duration(days: 7));
-          inPeriod = cDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && cDate.isBefore(endOfWeek);
-        } else if (_selectedTimePeriod == 'month') {
-          inPeriod = cDate.year == now.year && cDate.month == now.month;
-        } else {
-          inPeriod = true;
-        }
-
-        if (inPeriod) {
-          championshipRevenue += (c.paidTeams.length * c.entryFee);
-        }
-      }
-
-      digitalVspBalance += championshipRevenue;
-      totalPipeline += championshipRevenue;
-    }
-
+  /// 🧮 المحرك المالي وكارت الإيرادات
+  Widget _buildStatsGrid(OwnerFinancialMetrics metrics, bool isProOwner, bool isArabic) {
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
-    // Format human-friendly operating hours (e.g. 30 mins / 1.5 hrs)
     String formattedHoursStr;
-    if (totalHours == 0) {
+    if (metrics.totalHours == 0) {
       formattedHoursStr = isArabic ? '0 دقيقة' : '0 mins';
-    } else if (totalHours < 1.0) {
-      final mins = (totalHours * 60).toInt();
+    } else if (metrics.totalHours < 1.0) {
+      final mins = (metrics.totalHours * 60).toInt();
       formattedHoursStr = isArabic ? '$mins دقيقة' : '$mins mins';
-    } else if (totalHours == 1.0) {
+    } else if (metrics.totalHours == 1.0) {
       formattedHoursStr = isArabic ? 'ساعة واحدة' : '1 hr';
     } else {
-      final hoursStr = (totalHours % 1 == 0) ? totalHours.toInt().toString() : totalHours.toStringAsFixed(1);
+      final hoursStr = (metrics.totalHours % 1 == 0) ? metrics.totalHours.toInt().toString() : metrics.totalHours.toStringAsFixed(1);
       formattedHoursStr = '$hoursStr ${isArabic ? "ساعة" : "hrs"}';
     }
 
@@ -825,7 +852,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     ? (isArabic ? 'إجمالي إيرادات الشهر' : 'Monthly Revenue')
                     : (isArabic ? 'إجمالي الإيرادات الكلي' : 'All-time Revenue'))));
 
-    // 🛡️ باقة الـ 500 ج.م والفترة التجريبية (الكارت الداكن الفاخر والمتقن 100%)
     if (!isProOwner) {
       return Container(
         padding: const EdgeInsets.all(20),
@@ -888,13 +914,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ],
             ),
             const SizedBox(height: 12),
-            
             Row(
               crossAxisAlignment: CrossAxisAlignment.baseline,
               textBaseline: TextBaseline.alphabetic,
               children: [
                 Text(
-                  '${totalPipeline.toInt()}',
+                  '${metrics.totalPipeline.toInt()}',
                   style: const TextStyle(
                     color: VSPColors.accent,
                     fontSize: 38,
@@ -913,12 +938,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
               ],
             ),
-            
             const SizedBox(height: 16),
             const Divider(color: VSPColors.divider, height: 1),
             const SizedBox(height: 14),
-
-            // 🔒 تلميح قفل تحليل الحجوزات والساعات للباقة المحترفة 1000ج
             InkWell(
               onTap: () => _showProUpgradeSheet(context),
               borderRadius: BorderRadius.circular(VSPRadius.md),
@@ -970,7 +992,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          // العنوان + شارة "محدّث الآن"
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
@@ -1010,14 +1031,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
             ],
           ),
           const SizedBox(height: 16),
-
-          // الرقم المالي الرئيسي المباشر (الكارت الكلاسيكي الفاخر)
           Column(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               TweenAnimationBuilder<double>(
                 key: ValueKey('counter_$_selectedTimePeriod'),
-                tween: Tween(begin: 0.0, end: totalPipeline),
+                tween: Tween(begin: 0.0, end: metrics.totalPipeline),
                 duration: const Duration(milliseconds: 800),
                 curve: Curves.easeOutCubic,
                 builder: (_, val, __) => Text(
@@ -1045,13 +1064,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           const Divider(color: VSPColors.divider, height: 1),
           const SizedBox(height: 16),
 
-          // 💵 2. الصف الثاني: دفع مباشر + محفظة رقمية
+          // الصف الثاني: دفع مباشر + محفظة رقمية
           Row(
             children: [
               Expanded(
                 child: _buildGridStatCard(
                   title: isArabic ? 'دفع مباشر' : 'Direct Cash',
-                  value: '${pitchCashRevenue.toInt()} $currencySymbol',
+                  value: '${metrics.pitchCashRevenue.toInt()} $currencySymbol',
                   valueColor: const Color(0xFFC8FF00),
                   tooltipText: isArabic
                       ? 'المبالغ النقدية التي تم تحصيلها يدوياً وكاش مباشرة من اللاعبين في الملعب مقابل الحجوزات.'
@@ -1063,7 +1082,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               Expanded(
                 child: _buildGridStatCard(
                   title: isArabic ? 'رقمي' : 'Digital',
-                  value: '${digitalVspBalance.toInt()} $currencySymbol',
+                  value: '${metrics.digitalVspBalance.toInt()} $currencySymbol',
                   valueColor: const Color(0xFF38BDF8),
                   borderColor: const Color(0xFF38BDF8).withValues(alpha: 0.35),
                   tooltipText: isArabic
@@ -1076,13 +1095,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 10),
 
-          // 📊 3. الصف الثالث: القيمة الإجمالية + معلق
+          // الصف الثالث: القيمة الإجمالية + معلق
           Row(
             children: [
               Expanded(
                 child: _buildGridStatCard(
                   title: isArabic ? 'إجمالي النشاط' : 'Total Pipeline',
-                  value: '${totalPipeline.toInt()} $currencySymbol',
+                  value: '${metrics.totalPipeline.toInt()} $currencySymbol',
                   valueColor: Colors.white,
                   tooltipText: isArabic
                       ? 'إجمالي القيمة المالية الكاملة لجميع الحجوزات (المدفوعة والمستحقة كاش) في الفترة المحددة.'
@@ -1094,7 +1113,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               Expanded(
                 child: _buildGridStatCard(
                   title: isArabic ? 'معلق عند الحضور' : 'Pending at Pitch',
-                  value: '${pendingReceivables.toInt()} $currencySymbol',
+                  value: '${metrics.pendingReceivables.toInt()} $currencySymbol',
                   valueColor: const Color(0xFFFFB800),
                   tooltipText: isArabic
                       ? 'المبالغ المتبقية من الحجوزات القادمة التي لم يتم تحصيلها بالكامل بعد، وتستحق الدفع كاش من اللاعبين عند حضورهم للملعب.'
@@ -1106,13 +1125,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 10),
 
-          // ⏱️ 4. الصف الرابع: عدد الحجوزات + ساعات التشغيل
+          // الصف الرابع: عدد الحجوزات + ساعات التشغيل
           Row(
             children: [
               Expanded(
                 child: _buildGridStatCard(
                   title: isArabic ? 'عدد الحجوزات' : 'Bookings',
-                  value: '$activeBookingsCount',
+                  value: '${metrics.activeBookingsCount}',
                   valueColor: Colors.white,
                   tooltipText: isArabic
                       ? 'إجمالي عدد المباريات والحجوزات المؤكدة والنشطة التي تم تسجيلها للملعب خلال هذه الفترة.'
@@ -1136,22 +1155,22 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           ),
           const SizedBox(height: 16),
 
-          // 🏦 4. زر تحويل/سحب الأرباح التفاعلي المباشر (خلفية رمادية أخف وأستروك رمادي متناسق)
+          // زر سحب الأرباح
           SizedBox(
             width: double.infinity,
             height: 50,
             child: ElevatedButton.icon(
-              onPressed: () => _showSettlementModal(context, digitalVspBalance, currencySymbol, isArabic),
+              onPressed: () => _showSettlementModal(context, metrics.digitalVspBalance, currencySymbol, isArabic),
               icon: Icon(
-                digitalVspBalance > 0 ? Iconsax.wallet_add_copy : Iconsax.empty_wallet_change_copy,
+                metrics.digitalVspBalance > 0 ? Iconsax.wallet_add_copy : Iconsax.empty_wallet_change_copy,
                 color: Colors.white,
                 size: 20,
               ),
               label: Text(
-                digitalVspBalance > 0
+                metrics.digitalVspBalance > 0
                     ? (isArabic
-                        ? 'طلب سحب الأرباح (${digitalVspBalance.toInt()} $currencySymbol)'
-                        : 'Withdraw Earnings (${digitalVspBalance.toInt()} $currencySymbol)')
+                        ? 'طلب سحب الأرباح (${metrics.digitalVspBalance.toInt()} $currencySymbol)'
+                        : 'Withdraw Earnings (${metrics.digitalVspBalance.toInt()} $currencySymbol)')
                     : (isArabic
                         ? 'سحب الأرباح (الرصيد المتاح: 0 $currencySymbol)'
                         : 'Withdraw Profits (Available: 0 $currencySymbol)'),
@@ -1176,7 +1195,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 🗂️ كارت إحصائي متقن بسلسل هيراركي ألوان واضح وواجهة عالية الجودة
   Widget _buildGridStatCard({
     required String title,
     required String value,
@@ -1245,7 +1263,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-  /// 💡 كروت اللمحات الذكية جنب بعض (Side-by-Side Row Layout)
   Widget _buildInsightBadges(bool isProOwner, bool isArabic) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
@@ -1255,7 +1272,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
         ),
         const SizedBox(height: 12),
-        
         Row(
           children: [
             Expanded(
@@ -1372,8 +1388,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
       ),
     );
   }
-
-
 
   void _showTermHelpModal(BuildContext context, String term, String description, bool isArabic) {
     showModalBottomSheet(
@@ -1501,7 +1515,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                     ),
                   ),
                   const SizedBox(height: 16),
-
                   Row(
                     mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
@@ -1523,8 +1536,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   const Divider(color: VSPColors.divider),
                   const SizedBox(height: 12),
-
-                  // Amount card
                   Container(
                     width: double.infinity,
                     padding: const EdgeInsets.all(16),
@@ -1547,14 +1558,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ],
                     ),
                   ),
-
                   const SizedBox(height: 16),
                   Text(
                     isArabic ? 'اختر طريقة استلام الأموال:' : 'Select Payout Channel:',
                     style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
                   ),
                   const SizedBox(height: 8),
-
                   Row(
                     children: [
                       Expanded(
@@ -1612,7 +1621,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       ),
                     ],
                   ),
-
                   const SizedBox(height: 16),
                   Text(
                     selectedMethod == 'InstaPay'
@@ -1632,7 +1640,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                       border: OutlineInputBorder(borderRadius: BorderRadius.circular(VSPRadius.md), borderSide: BorderSide.none),
                     ),
                   ),
-
                   const SizedBox(height: 20),
                   SizedBox(
                     width: double.infinity,
@@ -1656,7 +1663,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                           return;
                         }
 
-                        // 🛡️ USER CONTROL & FREEDOM: Confirmation Dialog before submitting settlement request
                         showDialog(
                           context: context,
                           builder: (dialogCtx) => AlertDialog(
@@ -1753,10 +1759,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
     final bookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
 
-    int s1Count = 0; // 06:00 ص - 12:00 ظ (06:00 - 12:00)
-    int s2Count = 0; // 12:00 ظ - 06:00 م (12:00 - 18:00) -> 2:00 PM lands HERE
-    int s3Count = 0; // 06:00 م - 12:00 ص (18:00 - 24:00)
-    int s4Count = 0; // 12:00 ص - 06:00 ص (00:00 - 06:00)
+    int s1Count = 0;
+    int s2Count = 0;
+    int s3Count = 0;
+    int s4Count = 0;
 
     final Map<int, int> dayCounts = {};
 
@@ -1783,7 +1789,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final String slot3Label = isArabic ? '06:00 م - 12:00 ص' : '06:00 PM - 12:00 AM';
     final String slot4Label = isArabic ? '12:00 ص - 06:00 ص' : '12:00 AM - 06:00 AM';
 
-    // Pure DB calculation for Peak Slot
     String peakHourStr;
     if (totalSlotBookings > 0) {
       if (s2Count >= s1Count && s2Count >= s3Count && s2Count >= s4Count) {
@@ -1812,7 +1817,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final List<String> dayNamesEn = ['', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'];
     final String peakDayStr = totalSlotBookings > 0 ? (isArabic ? dayNamesAr[peakDay] : dayNamesEn[peakDay]) : (isArabic ? 'غير محدد' : 'N/A');
 
-    // 100% Pure Database Percentages
     final double s1Pct = totalSlotBookings > 0 ? (s1Count / totalSlotBookings) : 0.0;
     final double s2Pct = totalSlotBookings > 0 ? (s2Count / totalSlotBookings) : 0.0;
     final double s3Pct = totalSlotBookings > 0 ? (s3Count / totalSlotBookings) : 0.0;
@@ -1850,7 +1854,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -1872,7 +1875,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
               const Divider(color: VSPColors.divider),
               const SizedBox(height: 12),
-
               Row(
                 children: [
                   Expanded(
@@ -1926,14 +1928,12 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                 ],
               ),
-
               const SizedBox(height: 20),
               Text(
                 isArabic ? 'كثافة الطلب خلال ساعات تشغيل الملعب:' : 'Demand Intensity during Stadium Hours:',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
               ),
               const SizedBox(height: 12),
-
               _buildDemandProgressRow(l1, s1Pct, s1Pct > 0 && s1Pct == maxPct ? Colors.amber : VSPColors.accent),
               const SizedBox(height: 8),
               _buildDemandProgressRow(l2, s2Pct, s2Pct > 0 && s2Pct == maxPct ? Colors.amber : VSPColors.accent),
@@ -1941,7 +1941,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               _buildDemandProgressRow(l3, s3Pct, s3Pct > 0 && s3Pct == maxPct ? Colors.amber : VSPColors.accent),
               const SizedBox(height: 8),
               _buildDemandProgressRow(l4, s4Pct, s4Pct > 0 && s4Pct == maxPct ? Colors.amber : Colors.blueAccent),
-
               const SizedBox(height: 20),
             ],
           ),
@@ -1994,7 +1993,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final int directPctInt = (directPct * 100).round();
     final int challengePctInt = (challengePct * 100).round();
 
-    // 💡 Dynamic Insight Analysis (Mathematically verified breakdown)
     final String dynamicInsightText;
     final IconData dynamicInsightIcon;
     if (manualRev > 0 && directRev > 0 && challengeRev > 0) {
@@ -2064,7 +2062,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 ),
               ),
               const SizedBox(height: 16),
-
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
@@ -2086,7 +2083,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
               ),
               const Divider(color: VSPColors.divider),
               const SizedBox(height: 12),
-
               _buildSourceProgressRow(
                 label: isArabic ? 'حجوزات يدوية / كاش' : 'Manual / Cash Walk-ins',
                 pct: manualPct,
@@ -2113,7 +2109,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                 color: Colors.amber,
                 isArabic: isArabic,
               ),
-
               const SizedBox(height: 16),
               Container(
                 padding: const EdgeInsets.all(12),
@@ -2210,34 +2205,9 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 
-
-
-  Widget _buildBookedTodayList(bool isArabic) {
-    final bookingProvider = Provider.of<BookingProvider>(context);
+  Widget _buildBookedTodayList(List<Booking> bookings, bool isArabic) {
     final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
-    final allBookings = bookingProvider.userBookings.where((b) => b.status != BookingStatus.cancelled).toList();
-
     final now = DateTime.now();
-    final List<Booking> bookings = allBookings.where((b) {
-      final bStartLocal = b.startTime.toLocal();
-      final bDate = b.operationalDate ?? bStartLocal;
-
-      if (_selectedTimePeriod == 'today') {
-        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
-      } else if (_selectedTimePeriod == 'week') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
-      } else if (_selectedTimePeriod == 'month') {
-        return bDate.year == now.year && bDate.month == now.month;
-      }
-      return true; // 'all'
-    }).toList();
-
-    if (_selectedStadiumFilter != 'all') {
-      bookings.removeWhere((b) => b.stadiumId != _selectedStadiumFilter);
-    }
-
     final String currencySymbol = isArabic ? 'ج.م' : 'EGP';
 
     if (bookings.isEmpty) {
@@ -2303,7 +2273,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
         }
 
         final slot = {
-          'time': DateFormat('hh:mm a').format(b.startTime),
+          'time': AppDateFormatter.formatTime(b.startTime, isArabic ? 'ar' : 'en'),
           'hour': b.startTime.hour,
           'minute': b.startTime.minute,
           'isBooked': true,
@@ -2349,7 +2319,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                           ),
                           const SizedBox(height: 2),
                           Text(
-                            '$pitchName • ${DateFormat('hh:mm a').format(b.startTime)}',
+                            '$pitchName • ${AppDateFormatter.formatTime(b.startTime, isArabic ? 'ar' : 'en')}',
                             style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11),
                           ),
                         ],
@@ -2386,6 +2356,3 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     );
   }
 }
-
-
-

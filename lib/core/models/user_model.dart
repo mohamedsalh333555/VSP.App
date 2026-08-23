@@ -1,7 +1,7 @@
 class UserModel {
   final String uid;
   final String email;
-  final String role; // 'player' or 'owner'
+  final String role; // 'player', 'owner', 'admin', 'co_founder'
   final String? name;
   final String? phone;
   final String? profileImageUrl;
@@ -9,14 +9,14 @@ class UserModel {
   final Map<String, dynamic>? additionalData;
   final DateTime? createdAt;
   
-  // Owner Registration Flags
+  // Registration & Verification Flags
   final bool isEmailVerified;
   final bool hasStadium;
   final bool isIdentityVerified;
   final bool isRegistrationComplete;
   final String? governorate;
   final List<String> favoriteStadiums;
-  final String? verificationStatus; // 'pending', 'approved', 'rejected' or null
+  final String? verificationStatus; // 'pending', 'approved', 'rejected'
   final DateTime? dateOfBirth;
 
   // P2P Receivables Settings
@@ -24,16 +24,14 @@ class UserModel {
   final String? p2pVodafone;
   final String? p2pBank;
 
-  // 🔴 Kill Switch & Debt Flags
-  final bool isBlocked; // ✅ Administrative user block
-  final int noShowCount; // ✅ No-show count for spam protection
+  // Administrative Moderation & Anti-Spam
+  final bool isBlocked;
+  final int noShowCount;
 
-  // 💰 VSP SUBSCRIPTION PLAN (for owners)
-  // Values: 'free_trial' | 'basic' | 'pro'
+  // VSP Subscription Plan (for owners)
   final String subscriptionPlan;
-  final DateTime? trialEndsAt;           // free_trial ends at
-  final DateTime? subscriptionExpiresAt; // paid plan expiry
-
+  final DateTime? trialEndsAt;
+  final DateTime? subscriptionExpiresAt;
   final String favoriteSport;
 
   UserModel({
@@ -65,60 +63,45 @@ class UserModel {
     this.favoriteSport = 'Football',
   });
 
-  /// الصريحة لحالة الدور
   bool get isOwner => role == 'owner';
   bool get isPlayer => role == 'player';
-
-  /// هل المستخدم مالك ملعب (سواء من حقل role أو امتلاك ملعب)؟
   bool get isOwnerRole => role == 'owner' || hasStadium;
-
-  /// هل المستخدم لاعب فقط؟
   bool get isPlayerRole => !isOwnerRole;
 
-  /// تاريخ نهاية الفترة التجريبية الفعلي (مع افتراض 60 يوماً من الإنشاء إذا كانت null)
   DateTime? get effectiveTrialEndsAt =>
       trialEndsAt ?? createdAt?.add(const Duration(days: 60));
 
-  /// هل المالك في فترة تجريبية نشطة؟ (يشترط عدم وجود أي اشتراك مدفوع مسبقاً)
   bool get isInActiveTrial =>
       subscriptionPlan == 'free_trial' &&
       subscriptionExpiresAt == null &&
       effectiveTrialEndsAt != null &&
       DateTime.now().isBefore(effectiveTrialEndsAt!);
 
-  /// هل الاشتراك ساري (تجريبي أو مدفوع)؟
   bool get hasActiveSubscription =>
       isInActiveTrial ||
       (subscriptionExpiresAt != null &&
        DateTime.now().isBefore(subscriptionExpiresAt!));
 
-  /// هل الباقة Pro وسارية؟
   bool get isProPlan =>
       subscriptionPlan == 'pro' &&
       subscriptionExpiresAt != null &&
       DateTime.now().isBefore(subscriptionExpiresAt!);
 
-  /// هل يسمح للمالك بإنشاء وإدارة البطولات الاحترافية؟ (متاحة لجميع الملاك بدون استثناء)
   bool get canCreateTournaments => true;
 
-  /// هل الباقة Basic أو أعلى (Pro يشمل Basic)؟
   bool get isBasicOrHigher =>
       (subscriptionPlan == 'basic' || subscriptionPlan == 'pro') &&
       subscriptionExpiresAt != null &&
       DateTime.now().isBefore(subscriptionExpiresAt!);
 
-  /// هل الاشتراك منتهي؟
   bool get isPlanExpired => !hasActiveSubscription;
 
-  /// الحد الأقصى لعدد الملاعب المسموح به حسب الباقة
   int get maxStadiums {
-    if (isProPlan) return 3; // Pro: حتى 3 ملاعب
-    if (isBasicOrHigher) return 1; // Basic: ملعب واحد
-    if (isInActiveTrial) return 1; // Trial: ملعب واحد
-    return 0; // منتهي — لا يقدر يضيف ملاعب جديدة
+    if (isProPlan) return 3;
+    if (isBasicOrHigher || isInActiveTrial) return 1;
+    return 0;
   }
 
-  /// نص الباقة الحالية للعرض
   String get subscriptionPlanLabel {
     if (isProPlan) return 'Pro';
     if (isBasicOrHigher) return 'Basic';
@@ -129,9 +112,8 @@ class UserModel {
     return 'منتهي';
   }
 
-  // Create UserModel from Firestore document
-  factory UserModel.fromFirestore(Map<String, dynamic> data) {
-    final rawAdditional = data['additionalData'] ?? data['additional_data'];
+  factory UserModel.fromMap(Map<String, dynamic> data) {
+    final rawAdditional = data['additional_data'] ?? data['additionalData'];
     final Map<String, dynamic> addData = rawAdditional is Map<String, dynamic>
         ? Map<String, dynamic>.from(rawAdditional)
         : <String, dynamic>{};
@@ -172,7 +154,6 @@ class UserModel {
       p2pInstapay: data['p2p_instapay'] ?? data['p2pInstapay'],
       p2pVodafone: data['p2p_vodafone'] ?? data['p2pVodafone'],
       p2pBank: data['p2p_bank'] ?? data['p2pBank'],
-      // 💰 Subscription fields
       subscriptionPlan: data['subscription_plan'] ?? data['subscriptionPlan'] ?? 'free_trial',
       trialEndsAt: (data['trial_ends_at'] ?? data['trialEndsAt']) != null
           ? DateTime.tryParse((data['trial_ends_at'] ?? data['trialEndsAt']).toString())
@@ -184,10 +165,12 @@ class UserModel {
     );
   }
 
-  // Convert UserModel to Firestore document
-  Map<String, dynamic> toFirestore() {
+  // Backward compatibility alias
+  factory UserModel.fromFirestore(Map<String, dynamic> data) => UserModel.fromMap(data);
+
+  Map<String, dynamic> toMap() {
     return {
-      'uid': uid,
+      'id': uid,
       'email': email,
       'role': role,
       'name': name,
@@ -215,7 +198,9 @@ class UserModel {
     };
   }
 
-  // Copy with method
+  // Backward compatibility alias
+  Map<String, dynamic> toFirestore() => toMap();
+
   UserModel copyWith({
     String? uid,
     String? email,

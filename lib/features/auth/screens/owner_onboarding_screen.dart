@@ -139,11 +139,10 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     if (success) {
       HapticFeedback.lightImpact();
       await authProvider.updateProfile({'isRegistrationComplete': true, 'isEmailVerified': true});
+      if (!mounted) return;
     } else {
       HapticFeedback.vibrate();
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(content: Text(authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً')),
-      );
+      VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
     }
     if (mounted) setState(() => _isLoading = false);
   }

@@ -2,6 +2,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../models/user_model.dart';
 import '../services/logger_service.dart';
 import '../constants/egypt_governorates.dart';
+import '../utils/phone_utils.dart';
 
 class UserRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
@@ -73,31 +74,35 @@ class UserRepository {
     final snakeData = _convertToSnakeCase(data);
 
     final securedData = Map<String, dynamic>.from(snakeData);
-    securedData.remove('role');
-    securedData.remove('id');
-    securedData.remove('uid');
-    securedData.remove('email');
-    securedData.remove('created_at');
-    securedData.remove('createdAt');
+    // 🛡️ Client-side sanitation complementing server-side security triggers
+    const restrictedKeys = [
+      'role',
+      'id',
+      'uid',
+      'email',
+      'created_at',
+      'points',
+      'wallet_balance',
+      'is_blocked',
+      'no_show_count',
+      'is_identity_verified',
+      'verification_status',
+      'has_stadium',
+      'is_registration_complete',
+      'subscription_plan',
+      'trial_ends_at',
+      'subscription_expires_at',
+      'total_platform_fees',
+      'cash_booking_banned',
+    ];
+    
+    for (final key in restrictedKeys) {
+      securedData.remove(key);
+    }
+    
     if (!data.containsKey('is_email_verified') && !data.containsKey('isEmailVerified')) {
       securedData.remove('is_email_verified');
-      securedData.remove('isEmailVerified');
     }
-    securedData.remove('points');
-    securedData.remove('wallet_balance');
-    securedData.remove('walletBalance');
-    securedData.remove('is_blocked');
-    securedData.remove('isBlocked');
-    securedData.remove('no_show_count');
-    securedData.remove('noShowCount');
-    securedData.remove('is_identity_verified');
-    securedData.remove('isIdentityVerified');
-    securedData.remove('verification_status');
-    securedData.remove('verificationStatus');
-    securedData.remove('has_stadium');
-    securedData.remove('hasStadium');
-    securedData.remove('is_registration_complete');
-    securedData.remove('isRegistrationComplete');
     
     if (securedData.containsKey('governorate')) {
       final String? gov = securedData['governorate']?.toString();
@@ -111,13 +116,19 @@ class UserRepository {
       }
     }
 
+    if (securedData.containsKey('phone')) {
+      securedData['phone'] = PhoneUtils.normalize(securedData['phone']?.toString());
+    }
+
     securedData['updated_at'] = DateTime.now().toUtc().toIso8601String();
+
+    if (securedData.isEmpty) return true;
 
     try {
       await _supabase.from('users').update(securedData).eq('id', userId);
       return true;
     } catch (e) {
-      VSPLogger.e('Error updating user profile $userId: Profile record must be pre-created by database trigger.', e);
+      VSPLogger.e('Error updating user profile $userId', e);
       return false;
     }
   }

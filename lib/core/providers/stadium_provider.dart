@@ -289,62 +289,99 @@ class StadiumProvider with ChangeNotifier {
     return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
   }
 
-  // Apply complex filters
+  // Apply complex filters with server-side pagination support
   void applyFilters(Map<String, dynamic> filters) {
     _currentFilters = filters;
     _isFilterActive = true;
+    _stadiums = [];
+    _filteredStadiums = [];
+    _lastDocument = null;
+    _hasMore = true;
     
     final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
     final String? location = filters['location'] as String?;
     final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
-    final double minPrice = (filters['minPrice'] ?? 0.0).toDouble();
-    final double maxPrice = (filters['maxPrice'] ?? 999999.0).toDouble();
+    final double? minPrice = (filters['minPrice'] as num?)?.toDouble();
+    final double? maxPrice = (filters['maxPrice'] as num?)?.toDouble();
     final bool noDepositOnly = filters['noDepositOnly'] == true;
     final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
 
-    _filteredStadiums = _stadiums.where((stadium) {
-      // 1. Sports Filter
-      if (sports.isNotEmpty) {
-        final matchesSport = sports.any((s) => stadium.type.toLowerCase() == s.toLowerCase());
-        if (!matchesSport) return false;
+    // Fetch filtered data directly from Supabase
+    fetchStadiumsWithParams(
+      isRefresh: true,
+      governorate: location ?? _selectedGovernorate,
+      sportType: sports.isNotEmpty ? sports.first : null,
+      pitchSize: sizes.isNotEmpty ? sizes.first : null,
+      minPrice: minPrice,
+      maxPrice: maxPrice,
+      noDepositOnly: noDepositOnly,
+      amenities: amenities,
+    );
+  }
+
+  Future<void> fetchStadiumsWithParams({
+    bool isRefresh = false,
+    String? governorate,
+    String? sportType,
+    String? pitchSize,
+    double? minPrice,
+    double? maxPrice,
+    bool? noDepositOnly,
+    List<String>? amenities,
+  }) async {
+    if (_isLoading || (_isLoadingMore && !isRefresh)) return;
+
+    if (isRefresh) {
+      _lastDocument = null;
+      _hasMore = true;
+      _setLoading(true);
+    } else {
+      _isLoadingMore = true;
+      notifyListeners();
+    }
+
+    try {
+      final result = await _databaseService.getStadiumsPaginated(
+        limit: 10,
+        startAfter: _lastDocument,
+        governorate: governorate,
+        sportType: sportType,
+        pitchSize: pitchSize,
+        minPrice: minPrice,
+        maxPrice: maxPrice,
+        noDepositOnly: noDepositOnly,
+      );
+
+      final List<Stadium> rawItems = result['items'];
+      final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
+          ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
+          : rawItems;
+      _lastDocument = result['lastDoc'];
+
+      if (isRefresh) {
+        _stadiums = newStadiums;
+        _filteredStadiums = newStadiums;
+      } else {
+        _stadiums.addAll(newStadiums);
+        _filteredStadiums.addAll(newStadiums);
       }
 
-      // 2. Location Filter
-      if (location != null && location.isNotEmpty) {
-        final govMatch = stadium.governorate?.toLowerCase().contains(location.toLowerCase()) ?? false;
-        final areaMatch = stadium.area.toLowerCase().contains(location.toLowerCase());
-        if (!govMatch && !areaMatch) return false;
+      if (rawItems.length < 10) {
+        _hasMore = false;
       }
 
-      // 3. Pitch Size Filter
-      if (sizes.isNotEmpty) {
-        final matchesSize = sizes.any((sz) => stadium.size.toLowerCase() == sz.toLowerCase());
-        if (!matchesSize) return false;
+      _errorMessage = null;
+      notifyListeners();
+    } catch (e) {
+      _setError('Failed to fetch stadiums: ${e.toString()}');
+    } finally {
+      if (isRefresh) {
+        _setLoading(false);
+      } else {
+        _isLoadingMore = false;
+        notifyListeners();
       }
-
-      // 4. Price Filter
-      if (stadium.pricePerHour < minPrice || stadium.pricePerHour > maxPrice) {
-        return false;
-      }
-
-      // 5. No Deposit Filter
-      if (noDepositOnly && stadium.needsDeposit) {
-        return false;
-      }
-
-      // 6. Essential Amenities Filter
-      if (amenities.isNotEmpty) {
-        for (final amenity in amenities) {
-          if (!_checkAmenity(stadium, amenity)) {
-            return false;
-          }
-        }
-      }
-
-      return true;
-    }).toList();
-
-    notifyListeners();
+    }
   }
 
   // Sort stadiums by distance

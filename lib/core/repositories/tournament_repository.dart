@@ -1379,7 +1379,9 @@ class TournamentRepository {
       final response = await _supabase
           .from('tournament_matches')
           .select('goal_details, home_team_name, away_team_name')
-          .eq('championship_id', championshipId);
+          .eq('championship_id', championshipId)
+          .neq('goal_details', '[]')
+          .eq('is_completed', true);
 
       final Map<String, Map<String, dynamic>> scorerStats = {};
 

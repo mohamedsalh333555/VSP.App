@@ -178,10 +178,11 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   Future<void> _launchWhatsAppSupport(Booking b, bool isArabic) async {
     final player = (b.playerTeamName != null && b.playerTeamName!.isNotEmpty) ? b.playerTeamName! : 'لاعب';
     final id = b.id;
-    final dateStr = DateFormat('yyyy/MM/dd hh:mm a').format(b.startTime.toLocal());
+    final dateStr = AppDateFormatter.formatFullDate(b.startTime, isArabic ? 'ar' : 'en');
+    final timeStr = AppDateFormatter.formatTime(b.startTime, isArabic ? 'ar' : 'en');
     final msg = isArabic
-        ? "مرحباً دعم VSP، أريد الإبلاغ عن صاحب الحجز (عدم حضور / مشكلة بالحجز).\nرقم الحجز: $id\nاسم صاحب الحجز: $player\nموعد الحجز: $dateStr"
-        : "Hi VSP Support, I would like to report the booking holder (no-show / dispute).\nBooking ID: $id\nPlayer Name: $player\nSlot: $dateStr";
+        ? "مرحباً دعم VSP، أريد الإبلاغ عن صاحب الحجز (عدم حضور / مشكلة بالحجز).\nرقم الحجز: $id\nاسم صاحب الحجز: $player\nموعد الحجز: $dateStr • $timeStr"
+        : "Hi VSP Support, I would like to report the booking holder (no-show / dispute).\nBooking ID: $id\nPlayer Name: $player\nSlot: $dateStr • $timeStr";
     final url = 'https://wa.me/201100229462?text=${Uri.encodeComponent(msg)}';
     try {
       await launchUrl(Uri.parse(url), mode: LaunchMode.externalApplication);
@@ -197,9 +198,9 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         : (b.hostName != null && b.hostName!.isNotEmpty ? b.hostName! : (isArabic ? 'عميل VSP' : 'VSP Customer'));
     
     final stadiumName = b.stadiumName.isNotEmpty ? b.stadiumName : (isArabic ? 'ملعب VSP' : 'VSP Pitch');
-    final dateStr = DateFormat('yyyy/MM/dd').format(b.startTime.toLocal());
-    final startTimeStr = DateFormat('hh:mm a').format(b.startTime.toLocal());
-    final endTimeStr = DateFormat('hh:mm a').format(b.endTime.toLocal());
+    final dateStr = AppDateFormatter.formatFullDate(b.startTime, isArabic ? 'ar' : 'en');
+    final startTimeStr = AppDateFormatter.formatTime(b.startTime, isArabic ? 'ar' : 'en');
+    final endTimeStr = AppDateFormatter.formatTime(b.endTime, isArabic ? 'ar' : 'en');
     
     final totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
     final depositPaid = b.depositPaid > 0 ? b.depositPaid : 0.0;

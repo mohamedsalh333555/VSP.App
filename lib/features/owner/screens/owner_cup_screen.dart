@@ -1,7 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
-import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
@@ -15,6 +14,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/services/sharing_service.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'create_tournament_wizard.dart';
+import '../../../core/utils/app_date_formatter.dart';
 
 class OwnerCupScreen extends StatefulWidget {
   final Function(bool isEmpty)? onTournamentListChanged;
@@ -494,14 +494,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
     );
   }
 
-  /// 🏆 كارت البطولة المصلح بالكامل
+  /// 🏆 كارت البطولة الموحد
   Widget _buildTournamentCard(Championship tournament, bool isArabic) {
-    final String startDateStr = isArabic
-        ? '${tournament.startDate.day} ${_getArabicMonth(tournament.startDate.month)}'
-        : DateFormat('MMM d').format(tournament.startDate);
-    final String endDateStr = isArabic
-        ? '${tournament.endDate.day} ${_getArabicMonth(tournament.endDate.month)}'
-        : DateFormat('MMM d').format(tournament.endDate);
+    final String startDateStr = AppDateFormatter.formatDayMonth(
+      tournament.startDate, 
+      isArabic ? 'ar' : 'en',
+    );
+    final String endDateStr = AppDateFormatter.formatDayMonth(
+      tournament.endDate, 
+      isArabic ? 'ar' : 'en',
+    );
     final dateRange = '$startDateStr - $endDateStr';
 
     final String translatedSport = isArabic
@@ -642,14 +644,6 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
         ),
       ),
     );
-  }
-
-  String _getArabicMonth(int month) {
-    const months = [
-      'يناير', 'فبراير', 'مارس', 'أبريل', 'مايو', 'يونيو',
-      'يوليو', 'أغسطس', 'سبتمبر', 'أكتوبر', 'نوفمبر', 'ديسمبر'
-    ];
-    return months[month - 1];
   }
 
   Widget _buildInfoColumn(String label, String value) {

@@ -4,7 +4,7 @@ import '../services/logger_service.dart';
 class ReportRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  ReportRepository({dynamic firestore});
+  ReportRepository();
 
   Future<bool> reportEntity({
     required String reporterId,

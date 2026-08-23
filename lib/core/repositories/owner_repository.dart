@@ -5,7 +5,7 @@ import '../services/logger_service.dart';
 class OwnerRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
-  OwnerRepository({dynamic firestore});
+  OwnerRepository();
 
   Stream<List<Booking>> getOwnerBookings(String ownerId) {
     return _supabase
