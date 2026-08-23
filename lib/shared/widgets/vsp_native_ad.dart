@@ -52,7 +52,7 @@ class VSPNativeAd extends StatelessWidget {
           ),
           const Spacer(),
           Text(
-            isArabic ? "بطولات VSP الكبرى 🏆" : "VSP Grand Championships 🏆",
+            isArabic ? "بطولات VSP الكبرى" : "VSP Grand Championships",
             style: const TextStyle(
               color: Colors.white,
               fontSize: 16,

@@ -354,7 +354,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                           Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 36),
                                           SizedBox(height: 8),
                                           Text(
-                                            '🏆 البطل',
+                                            'البطل',
                                             style: TextStyle(fontSize: 14, fontWeight: FontWeight.bold, color: VSPColors.accent),
                                           ),
                                           SizedBox(height: 4),
@@ -446,7 +446,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 24),
                 const SizedBox(width: 10),
                 Text(
-                  isAr ? 'غرفة سحب القرعة المباشر 🎲' : 'Live Draw Room 🎲',
+                  isAr ? 'غرفة سحب القرعة المباشر' : 'Live Draw Room',
                   style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
                 ),
               ],
@@ -458,8 +458,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 children: [
                   Text(
                     isAr
-                        ? 'سحب موجه ومؤمن عشوائياً بدون أي تدخل بشري لضمان النزاهة التامة 🏆'
-                        : 'Fair automated live draw for all participating teams 🏆',
+                        ? 'سحب موجه ومؤمن عشوائياً بدون أي تدخل بشري لضمان النزاهة التامة'
+                        : 'Fair automated live draw for all participating teams',
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                   const SizedBox(height: 12),
@@ -489,7 +489,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                               children: [
                                 Expanded(
                                   child: Text(
-                                    isRevealed ? m['home']! : '❓ (مستخفي)',
+                                    isRevealed ? m['home']! : (isAr ? 'قيد السحب...' : 'Pending draw...'),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: isRevealed ? Colors.white : VSPColors.textSecondary,
@@ -504,7 +504,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                 ),
                                 Expanded(
                                   child: Text(
-                                    isRevealed ? m['away']! : '❓ (مستخفي)',
+                                    isRevealed ? m['away']! : (isAr ? 'قيد السحب...' : 'Pending draw...'),
                                     textAlign: TextAlign.center,
                                     style: TextStyle(
                                       color: isRevealed ? Colors.white : VSPColors.textSecondary,
@@ -526,7 +526,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
             actions: [
               if (!isRevealing && revealedCount < matchups.length)
                 PrimaryButton(
-                  text: isAr ? 'بدء السحب الكاشف 🎲' : 'Start Live Reveal 🎲',
+                  text: isAr ? 'بدء السحب الكاشف' : 'Start Live Reveal',
                   height: 44,
                   onPressed: () async {
                     setModalState(() => isRevealing = true);
@@ -542,7 +542,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                 )
               else if (revealedCount >= matchups.length)
                 PrimaryButton(
-                  text: isAr ? 'اعتماد القرعة وبدء البطولة 🚀' : 'Confirm Draw & Start 🚀',
+                  text: isAr ? 'اعتماد القرعة وبدء البطولة' : 'Confirm Draw & Start',
                   height: 44,
                   onPressed: () {
                     Navigator.pop(dialogCtx);
@@ -565,8 +565,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
       VSPFeedback.showError(
         context,
         isArabic
-          ? '🛑 لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.'
-          : '🛑 Tournament cannot be started before its official date ($formattedDate).',
+          ? 'لا يمكن بدء البطولة أو إطلاق القرعة قبل الموعد المعلن للفرق ($formattedDate) لالتزام اللاعبين واستعدادهم.'
+          : 'Tournament cannot be started before its official date ($formattedDate).',
       );
       return;
     }
@@ -1060,16 +1060,16 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                         child: SizedBox(
                           height: 52,
                           child: PrimaryButton(
-                            text: isArabic ? 'تأكيد إضافة الفريق 🏆' : 'Confirm Add Team 🏆',
+                            text: isArabic ? 'تأكيد إضافة الفريق' : 'Confirm Add Team',
                             color: canSubmit ? VSPColors.accent : VSPColors.surfaceAlt,
                             textColor: canSubmit ? Colors.black : VSPColors.textSecondary,
                             onPressed: () async {
                               if (!isNameValid) {
-                                VSPFeedback.showError(sheetContext, isArabic ? 'يرجى كتابة اسم الفريق أولاً ✏️' : 'Please enter team name first ✏️');
+                                VSPFeedback.showError(sheetContext, isArabic ? 'يرجى كتابة اسم الفريق أولاً' : 'Please enter team name first');
                                 return;
                               }
                               if (!isValidRoster) {
-                                VSPFeedback.showError(sheetContext, isArabic ? 'يرجى إضافة 5 لاعبين على الأقل لكشف الفريق 👥' : 'Please add at least 5 players 👥');
+                                VSPFeedback.showError(sheetContext, isArabic ? 'يرجى إضافة 5 لاعبين على الأقل لكشف الفريق' : 'Please add at least 5 players');
                                 return;
                               }
 
@@ -1119,7 +1119,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                   if (parentContext.mounted) {
                                     VSPFeedback.showSuccess(
                                       parentContext,
-                                      isArabic ? 'تم إضافة الفريق للبطولة بنجاح! 🏆' : 'Team added to tournament successfully!',
+                                      isArabic ? 'تم إضافة الفريق للبطولة بنجاح.' : 'Team added to tournament successfully.',
                                     );
                                   }
                                 }
@@ -1489,8 +1489,8 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
                                 const SizedBox(width: 10),
                                 Text(
                                   Localizations.localeOf(context).languageCode == 'ar'
-                                      ? '🏆 بطل البطولة: ${currentChamp.championTeamName ?? ""}'
-                                      : '🏆 Champion: ${currentChamp.championTeamName ?? ""}',
+                                      ? 'بطل البطولة: ${currentChamp.championTeamName ?? ""}'
+                                      : 'Champion: ${currentChamp.championTeamName ?? ""}',
                                   style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 15),
                                 ),
                               ],

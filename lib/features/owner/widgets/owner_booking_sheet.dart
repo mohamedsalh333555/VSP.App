@@ -208,38 +208,38 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
 
     final String receiptText = isArabic
         ? '''
-📄 *وصل حجز إلكتروني رسمي - VSP Sports*
+*إيصال حجز إلكتروني رسمي - VSP Sports*
 ═════════════════════════
-🏷️ *كود الحجز:* $refCode
-👤 *اسم العميل:* $customerName
-🏟️ *الملعب:* $stadiumName
-📅 *التاريخ:* $dateStr
-⏰ *التوقيت:* من $startTimeStr إلى $endTimeStr
-💰 *إجمالي المبلغ:* ${totalPrice.toInt()} ج.م
-💳 *العربون المدفوع أونلاين:* ${depositPaid.toInt()} ج.م
-💵 *المتبقي كاش بالملعب:* ${remainingCash.toInt()} ج.م
+*كود الحجز:* $refCode
+*اسم العميل:* $customerName
+*الملعب:* $stadiumName
+*التاريخ:* $dateStr
+*التوقيت:* من $startTimeStr إلى $endTimeStr
+*إجمالي المبلغ:* ${totalPrice.toInt()} ج.م
+*العربون المسدد:* ${depositPaid.toInt()} ج.م
+*المتبقي للتحصيل بالملعب:* ${remainingCash.toInt()} ج.م
 ═════════════════════════
-📍 *موقع الملعب على الخريطة:*
+*موقع الملعب على الخريطة:*
 https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 
-نتمنى لكم مباراة ممتعة! ⚽🔥
+نتمنى لكم مباراة ممتعة.
 '''
         : '''
-📄 *Official Digital Booking Receipt - VSP Sports*
+*Official Digital Booking Receipt - VSP Sports*
 ═════════════════════════
-🏷️ *Booking Ref:* $refCode
-👤 *Customer Name:* $customerName
-🏟️ *Stadium:* $stadiumName
-📅 *Date:* $dateStr
-⏰ *Time:* $startTimeStr - $endTimeStr
-💰 *Total Price:* ${totalPrice.toInt()} EGP
-💳 *Deposit Paid Online:* ${depositPaid.toInt()} EGP
-💵 *Remaining Cash Due:* ${remainingCash.toInt()} EGP
+*Booking Ref:* $refCode
+*Customer Name:* $customerName
+*Stadium:* $stadiumName
+*Date:* $dateStr
+*Time:* $startTimeStr - $endTimeStr
+*Total Price:* ${totalPrice.toInt()} EGP
+*Deposit Paid:* ${depositPaid.toInt()} EGP
+*Remaining Cash Due:* ${remainingCash.toInt()} EGP
 ═════════════════════════
-📍 *Location:*
+*Location:*
 https://maps.google.com/?q=${Uri.encodeComponent(stadiumName)}
 
-Enjoy your match! ⚽🔥
+Enjoy your match.
 ''';
 
     final String whatsappUrl = 'https://wa.me/?text=${Uri.encodeComponent(receiptText)}';
@@ -422,7 +422,7 @@ Enjoy your match! ⚽🔥
       if (mounted) {
         VSPFeedback.showSuccess(
           context,
-          isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز 💵' : 'Cash payment confirmed at pitch 💵',
+          isArabic ? 'تم تأكيد استلام المبلغ بالملعب واكتمال الحجز بنجاح.' : 'Cash payment confirmed at pitch successfully.',
         );
       }
       if (parentCtx.mounted) {
@@ -458,7 +458,7 @@ Enjoy your match! ⚽🔥
       if (mounted) {
         VSPFeedback.showSuccess(
           context,
-          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح ⏱️' : 'Match extended by +30 mins ⏱️',
+          isArabic ? 'تم تمديد المباراة 30 دقيقة إضافية بنجاح.' : 'Match extended by 30 mins successfully.',
         );
       }
       if (parentCtx.mounted) {
@@ -576,12 +576,35 @@ Enjoy your match! ⚽🔥
           needsDeposit: false,
         );
 
-        final createdBooking = await bookingProvider.createBooking(draft, uid);
-        if (createdBooking == null) {
-          final errMsg = bookingProvider.errorMessage ?? (isArabic ? 'عذراً، فشل حفظ الحجز في قاعدة البيانات' : 'Failed to save booking');
-          throw Exception(errMsg);
+        bool rpcSuccess = false;
+        try {
+          final res = await Supabase.instance.client.rpc('owner_create_manual_booking_atomic', params: {
+            'p_owner_id': uid,
+            'p_stadium_id': stadium.id,
+            'p_start_time': startTime.toUtc().toIso8601String(),
+            'p_end_time': endTime.toUtc().toIso8601String(),
+            'p_customer_name': customerName,
+            'p_customer_phone': customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
+            'p_notes': notes.isNotEmpty ? notes : null,
+            'p_total_price': totalPrice,
+            'p_collected_amount': collectedAmount,
+            'p_current_players': _playerCount,
+          });
+          if (res != null && res['success'] == true) {
+            rpcSuccess = true;
+          }
+        } catch (_) {
+          rpcSuccess = false;
         }
-        await bookingProvider.loadOwnerBookings(uid);
+
+        if (!rpcSuccess) {
+          final createdBooking = await bookingProvider.createBooking(draft, uid);
+          if (createdBooking == null) {
+            final errMsg = bookingProvider.errorMessage ?? (isArabic ? 'عذراً، فشل حفظ الحجز في قاعدة البيانات' : 'Failed to save booking');
+            throw Exception(errMsg);
+          }
+        }
+        await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
       } else {
         final booking = widget.slot['booking'] as Booking?;
         if (booking != null) {

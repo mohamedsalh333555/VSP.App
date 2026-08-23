@@ -543,7 +543,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             startTime: startTime,
             endTime: endTime,
             bookingType: BookingType.personal,
-            playerTeamName: isAr ? 'حجز تليفوني سريع 📞' : 'Quick Phone Booking 📞',
+            playerTeamName: isAr ? 'حجز تليفوني سريع' : 'Quick Phone Booking',
             isPrivate: true,
             rentBall: false,
             totalPrice: selectedStadium.pricePerHour,
@@ -557,7 +557,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           if (created != null && mounted) {
             VSPFeedback.showSuccess(
               context,
-              isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح! ⚡' : 'Quick phone booking confirmed! ⚡',
+              isAr ? 'تم تثبيت الحجز التليفوني السريع بنجاح.' : 'Quick phone booking confirmed successfully.',
             );
             await bookingProvider.loadOwnerBookings(uid, forceRefresh: true);
           }
@@ -594,7 +594,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 if ((slot['nightLabel'] as String?)?.isNotEmpty ?? false) ...([
                   const SizedBox(height: 2),
                   Text(
-                    '🌙 ${slot['nightLabel']}',
+                    slot['nightLabel'] as String,
                     style: const TextStyle(
                       color: Colors.amber,
                       fontWeight: FontWeight.bold,
@@ -636,7 +636,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       final String badgeText = isBreak
           ? l10n.closedBadge
           : (isNowSlot
-              ? (isAr ? '⚡ الآن' : '⚡ NOW')
+              ? (isAr ? 'الآن' : 'NOW')
               : (isPast ? (isAr ? 'منقضي' : 'Past') : l10n.openBadge));
 
       return Container(

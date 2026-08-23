@@ -64,7 +64,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
       if (!context.mounted) return;
       if (success) {
         final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-        VSPFeedback.showSuccess(context, isArabic ? 'تم انضمامك للمباراة وتأكيد مكانك بنجاح! ⚽' : 'Joined match successfully! ⚽');
+        VSPFeedback.showSuccess(context, isArabic ? 'تم انضمامك للمباراة وتأكيد مكانك بنجاح.' : 'Joined match successfully.');
       } else {
         VSPFeedback.showError(context, AppLocalizations.of(context)!.joinFailed);
       }
@@ -339,7 +339,7 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
                   return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
                 }
                 if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
-                return _buildRawButton(label: isArabic ? 'انضمام ⚽' : 'Join ⚽', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
+                return _buildRawButton(label: isArabic ? 'انضمام' : 'Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
               }),
             ],
           ),

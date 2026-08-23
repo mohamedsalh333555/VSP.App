@@ -73,7 +73,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
         
         // إذا لم يكن لديه محافظة مسجلة، نقوم بمحاولة جلبها فوراً بالـ GPS أولاً في الخلفية
         if (gov == null || gov.isEmpty) {
-          VSPFeedback.showSuccess(context, 'جاري تحديد موقعك الجغرافي تلقائياً... 📍');
+          VSPFeedback.showSuccess(context, 'جاري تحديد موقعك الجغرافي تلقائياً...');
           final success = await auth.updateUserLocation();
           
           if (success) {
@@ -230,7 +230,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
               const Icon(Iconsax.cup_copy, color: VSPColors.warning, size: 36),
               const SizedBox(height: 8),
               Text(
-                isArabic ? 'انتهت مباراتك! ⚽' : 'Match Completed! ⚽',
+                isArabic ? 'انتهت مباراتك' : 'Match Completed',
                 style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
                 textAlign: TextAlign.center,
               ),
@@ -271,14 +271,14 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
                           review: review,
                         );
                         if (context.mounted) {
-                          VSPFeedback.showSuccess(context, isArabic ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم ⚽' : 'Result submitted & waiting opponent confirmation ⚽');
+                          VSPFeedback.showSuccess(context, isArabic ? 'تم تسجيل النتيجة بنجاح وفي انتظار تأكيد الخصم.' : 'Result submitted & waiting opponent confirmation.');
                         }
                       },
                     ),
                   );
                 },
                 child: Text(
-                  isArabic ? '⚽ تسجيل نتيجة المباراة الآن' : '⚽ Enter Match Result Now',
+                  isArabic ? 'تسجيل نتيجة المباراة الآن' : 'Enter Match Result Now',
                   style: const TextStyle(fontWeight: FontWeight.bold),
                 ),
               ),

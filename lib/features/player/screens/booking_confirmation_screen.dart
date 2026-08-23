@@ -765,7 +765,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                     const Icon(Iconsax.card_pos_copy, color: VSPColors.accent, size: 18),
                                     const SizedBox(width: 8),
                                     Text(
-                                      isArabic ? "الدفع الإلكتروني المقترح 💳" : "Smart Online Payment 💳",
+                                      isArabic ? "الدفع الإلكتروني المقترح" : "Smart Online Payment",
                                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                                     ),
                                   ],
@@ -773,8 +773,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                 const SizedBox(height: 6),
                                 Text(
                                   isArabic
-                                      ? "الحجز النقدي مقيد مؤقتاً - ادفع أونلاين بالفيزا أو المحفظة لتأكيد مكانك فوراً واستعادة تقييمك 💳"
-                                      : "Cash booking is temporarily restricted - Pay online via card or mobile wallet to confirm your spot immediately and restore your rating 💳",
+                                      ? "الحجز النقدي مقيد مؤقتاً - يرجى الدفع أونلاين بالفيزا أو المحفظة لتأكيد مكانك فوراً واستعادة تقييمك."
+                                      : "Cash booking is temporarily restricted - Pay online via card or mobile wallet to confirm your spot immediately and restore your rating.",
                                   style: const TextStyle(color: Colors.white, fontSize: 12, height: 1.4),
                                 ),
                               ],
@@ -1123,8 +1123,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                             VSPFeedback.showError(
                               context, 
                               isAr 
-                                ? '⚠️ عذراً، تم حجز وتأكيد هذه الساعة للتو بواسطة لاعب آخر! تم تحديث الجدول تلقائياً.' 
-                                : '⚠️ Sorry, this slot was just booked by another player! Schedule updated automatically.'
+                                ? 'عذراً، تم حجز وتأكيد هذه الساعة للتو بواسطة لاعب آخر. تم تحديث الجدول تلقائياً.' 
+                                : 'Sorry, this slot was just booked by another player! Schedule updated automatically.'
                             );
                           }
                           return;
@@ -1222,7 +1222,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                         ListTile(
                                           leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                                           title: Text(
-                                            isArabic ? 'دفع كامل المبلغ أونلاين 💳' : 'Pay Full Amount Online 💳',
+                                            isArabic ? 'دفع كامل المبلغ أونلاين' : 'Pay Full Amount Online',
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
@@ -1251,7 +1251,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                         ListTile(
                                           leading: const Icon(Iconsax.lock_copy, color: Colors.amber),
                                           title: Text(
-                                            isArabic ? 'دفع العربون فقط أونلاين 🔒' : 'Pay Deposit Only Online 🔒',
+                                            isArabic ? 'دفع العربون فقط أونلاين' : 'Pay Deposit Only Online',
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
@@ -1284,7 +1284,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                         ListTile(
                                           leading: const Icon(Iconsax.card_copy, color: VSPColors.accent),
                                           title: Text(
-                                            isArabic ? 'دفع إلكتروني كامل 💳' : 'Full Online Payment 💳',
+                                            isArabic ? 'دفع إلكتروني كامل' : 'Full Online Payment',
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(
@@ -1309,7 +1309,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                                               ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
                                               : const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
                                           title: Text(
-                                            isArabic ? 'دفع نقدي بالكامل في الملعب 💵' : 'Pay Full Cash at Pitch 💵',
+                                            isArabic ? 'دفع نقدي بالكامل في الملعب' : 'Pay Full Cash at Pitch',
                                             style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
                                           ),
                                           subtitle: Text(

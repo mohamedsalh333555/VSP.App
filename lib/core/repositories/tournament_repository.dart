@@ -565,12 +565,15 @@ class TournamentRepository {
   Future<void> generateFixtures(String championshipId) async {
     try {
       try {
-        await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
+        await _supabase.rpc('prepare_tournament_bracket_atomic', params: {'p_championship_id': championshipId});
       } catch (e) {
-        debugPrint('prepare_tournament_bracket RPC notice: $e');
         try {
-          await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
-        } catch (_) {}
+          await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
+        } catch (_) {
+          try {
+            await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
+          } catch (_) {}
+        }
       }
 
       final champDoc = await _supabase
@@ -843,51 +846,71 @@ class TournamentRepository {
       final int matchIndex = response['match_index'] ?? response['matchIndex'] ?? 0;
       final String championshipId = response['championship_id'] ?? response['championshipId'] ?? '';
 
-      final updatePayload = <String, dynamic>{
-        'home_score': homeScore,
-        'away_score': awayScore,
-        'winner_id': winnerId,
-        'status': 'completed',
-        'is_completed': true,
-        'goal_details': goalDetails.map((g) => g.toMap()).toList(),
-      };
-      if (homePenalties != null) updatePayload['home_penalties'] = homePenalties;
-      if (awayPenalties != null) updatePayload['away_penalties'] = awayPenalties;
-
+      bool rpcHandled = false;
       try {
-        await _supabase
-            .from('tournament_matches')
-            .update(updatePayload)
-            .eq('id', matchId);
-      } catch (err) {
-        debugPrint('⚠️ goal_details update fallback (column may be missing in DB): $err');
-        final fallbackPayload = <String, dynamic>{
+        final rpcRes = await _supabase.rpc('record_match_result_and_advance_atomic', params: {
+          'p_match_id': matchId,
+          'p_home_score': homeScore,
+          'p_away_score': awayScore,
+          'p_home_penalties': homePenalties,
+          'p_away_penalties': awayPenalties,
+          'p_winner_id': winnerId,
+          'p_winner_name': winnerName,
+          'p_goal_details': goalDetails.map((g) => g.toMap()).toList(),
+        });
+        if (rpcRes != null && rpcRes['success'] == true) {
+          rpcHandled = true;
+        }
+      } catch (rpcErr) {
+        debugPrint('record_match_result_and_advance_atomic fallback: $rpcErr');
+      }
+
+      if (!rpcHandled) {
+        final updatePayload = <String, dynamic>{
           'home_score': homeScore,
           'away_score': awayScore,
           'winner_id': winnerId,
           'status': 'completed',
           'is_completed': true,
+          'goal_details': goalDetails.map((g) => g.toMap()).toList(),
         };
-        if (homePenalties != null) fallbackPayload['home_penalties'] = homePenalties;
-        if (awayPenalties != null) fallbackPayload['away_penalties'] = awayPenalties;
+        if (homePenalties != null) updatePayload['home_penalties'] = homePenalties;
+        if (awayPenalties != null) updatePayload['away_penalties'] = awayPenalties;
 
-        await _supabase
-            .from('tournament_matches')
-            .update(fallbackPayload)
-            .eq('id', matchId);
-      }
-
-      if (nextMatchId != null) {
-        String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
-
-        if (winnerId != null) {
+        try {
           await _supabase
               .from('tournament_matches')
-              .update({
-                '${slotField}_team_id': winnerId,
-                '${slotField}_team_name': winnerName,
-              })
-              .eq('id', nextMatchId);
+              .update(updatePayload)
+              .eq('id', matchId);
+        } catch (err) {
+          final fallbackPayload = <String, dynamic>{
+            'home_score': homeScore,
+            'away_score': awayScore,
+            'winner_id': winnerId,
+            'status': 'completed',
+            'is_completed': true,
+          };
+          if (homePenalties != null) fallbackPayload['home_penalties'] = homePenalties;
+          if (awayPenalties != null) fallbackPayload['away_penalties'] = awayPenalties;
+
+          await _supabase
+              .from('tournament_matches')
+              .update(fallbackPayload)
+              .eq('id', matchId);
+        }
+
+        if (nextMatchId != null) {
+          String slotField = (matchIndex % 2 == 0) ? 'home' : 'away';
+
+          if (winnerId != null) {
+            await _supabase
+                .from('tournament_matches')
+                .update({
+                  '${slotField}_team_id': winnerId,
+                  '${slotField}_team_name': winnerName,
+                })
+                .eq('id', nextMatchId);
+          }
         }
       } else {
         // ── Final Match: Crown the Champion ──

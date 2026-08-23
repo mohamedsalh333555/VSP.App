@@ -121,8 +121,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                 children: [
                                   Text(
                                     Localizations.localeOf(context).languageCode == 'ar'
-                                        ? '🏆 بطل البطولة النهائي!'
-                                        : '🏆 Final Tournament Champion!',
+                                        ? 'بطل البطولة النهائي'
+                                        : 'Final Tournament Champion',
                                     style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
                                   ),
                                   const SizedBox(height: 2),
@@ -470,8 +470,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                     children: [
                                       Text(
                                         isArabic 
-                                            ? '⚽ ركلات الترجيح / Penalties Shootout 🏆' 
-                                            : '⚽ Penalty Shootout (Knockout Draw) 🏆',
+                                            ? 'ركلات الترجيح / Penalties Shootout' 
+                                            : 'Penalty Shootout (Knockout Draw)',
                                         style: const TextStyle(color: VSPColors.warning, fontWeight: FontWeight.bold, fontSize: 13),
                                       ),
                                       const SizedBox(height: 4),
@@ -625,8 +625,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
                                       VSPFeedback.showSuccess(
                                         context,
                                         isArabic
-                                            ? '🏆 تم تسجيل نتيجة المباراة وهدافيها وتصعيد $finalWinnerName بنجاح!'
-                                            : '🏆 Match score, goal scorers saved & $finalWinnerName advanced!',
+                                            ? 'تم تسجيل نتيجة المباراة وهدافيها وتصعيد $finalWinnerName بنجاح.'
+                                            : 'Match score, goal scorers saved & $finalWinnerName advanced successfully.',
                                       );
                                     }
                                   } catch (e) {

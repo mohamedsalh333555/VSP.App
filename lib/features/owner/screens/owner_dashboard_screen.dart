@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
@@ -828,8 +829,10 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
     final totalPrice = nextBooking.totalPrice > 0 ? nextBooking.totalPrice : nextBooking.depositPaid;
     final remainingCash = (totalPrice - nextBooking.depositPaid).clamp(0.0, 999999.0);
     final startTimeStr = AppDateFormatter.formatTime(nextBooking.startTime, isArabic ? 'ar' : 'en');
-    final playerName = nextBooking.userName?.isNotEmpty == true ? nextBooking.userName! : (isArabic ? 'كابتن الحجز' : 'Booking Captain');
-    final playerPhone = nextBooking.userPhone ?? '';
+    final playerName = nextBooking.hostName?.isNotEmpty == true 
+        ? nextBooking.hostName! 
+        : (nextBooking.playerTeamName?.isNotEmpty == true ? nextBooking.playerTeamName! : (isArabic ? 'كابتن الحجز' : 'Booking Captain'));
+    final playerPhone = nextBooking.playerPhone ?? '';
 
     return Container(
       width: double.infinity,
@@ -893,7 +896,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   ),
                   const SizedBox(height: 2),
                   Text(
-                    nextBooking.stadiumName ?? '',
+                    nextBooking.stadiumName,
                     style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
                   ),
                 ],
@@ -942,8 +945,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
                   child: ElevatedButton.icon(
                     onPressed: () {
                       final reminderMsg = isArabic
-                          ? 'أهلاً كابتن $playerName، تذكير بموعد مباراتك اليوم الساعة $startTimeStr في ${nextBooking.stadiumName ?? "الملعب"}. ننتظر تشريفكم في الموعد المحدد.'
-                          : 'Hi Captain $playerName, reminder for your match today at $startTimeStr at ${nextBooking.stadiumName ?? "the pitch"}.';
+                          ? 'أهلاً كابتن $playerName، تذكير بموعد مباراتك اليوم الساعة $startTimeStr في ${nextBooking.stadiumName}. ننتظر تشريفكم في الموعد المحدد.'
+                          : 'Hi Captain $playerName, reminder for your match today at $startTimeStr at ${nextBooking.stadiumName}.';
                       VSPLauncherUtils.openWhatsApp(context, phone: playerPhone, message: reminderMsg);
                     },
                     icon: const Icon(Iconsax.message_text_copy, size: 14, color: Colors.black),

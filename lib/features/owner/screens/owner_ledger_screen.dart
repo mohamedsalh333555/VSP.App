@@ -72,7 +72,7 @@ class OwnerLedgerScreen extends StatelessWidget {
           backgroundColor: VSPColors.surface,
           shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
           title: Text(
-            isAr ? 'تنبيه: وسيلة التحصيل غير مسجلة ⚠️' : 'Payout Method Missing ⚠️',
+            isAr ? 'تنبيه: وسيلة التحصيل غير مسجلة' : 'Payout Method Missing',
             style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 16),
           ),
           content: Text(
@@ -99,7 +99,7 @@ class OwnerLedgerScreen extends StatelessWidget {
                 backgroundColor: VSPColors.accent,
                 foregroundColor: Colors.black,
               ),
-              child: Text(isAr ? 'إضافة وسيلة تحصيل 💳' : 'Add Payout Method 💳'),
+              child: Text(isAr ? 'إضافة وسيلة تحصيل' : 'Add Payout Method'),
             ),
           ],
         ),
@@ -115,7 +115,7 @@ class OwnerLedgerScreen extends StatelessWidget {
         backgroundColor: VSPColors.surface,
         shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
         title: Text(
-          isAr ? 'طلب تسوية رصيد VSP 💸' : 'Request Payout Settlement 💸',
+          isAr ? 'طلب تسوية رصيد VSP' : 'Request Payout Settlement',
           style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
         ),
         content: Column(
@@ -161,8 +161,8 @@ class OwnerLedgerScreen extends StatelessWidget {
             const SizedBox(height: 12),
             Text(
               isAr
-                  ? '💡 تتم مراجعة التحويل وإرساله عبر الإدارة خلال 24 ساعة من تاريخ الطلب.'
-                  : '💡 Settlements are reviewed and disbursed by admin within 24 hours.',
+                  ? 'تتم مراجعة التحويل وإرساله عبر الإدارة خلال 24 ساعة من تاريخ الطلب.'
+                  : 'Settlements are reviewed and disbursed by admin within 24 hours.',
               style: const TextStyle(color: VSPColors.textSecondary, fontSize: 11, height: 1.4),
             ),
           ],
@@ -212,8 +212,8 @@ class OwnerLedgerScreen extends StatelessWidget {
                                   VSPFeedback.showSuccess(
                                     context,
                                     isAr
-                                        ? 'تم إرسال طلب التسوية للإدارة بنجاح! 🚀\nسيتم إشعارك فور إتمام التحويل.'
-                                        : 'Payout request submitted successfully! 🚀',
+                                        ? 'تم إرسال طلب التسوية للإدارة بنجاح.\nسيتم إشعارك فور إتمام التحويل.'
+                                        : 'Payout request submitted successfully.',
                                   );
                                 } else {
                                   VSPFeedback.showError(
@@ -350,7 +350,7 @@ class OwnerLedgerScreen extends StatelessWidget {
                         width: double.infinity,
                         height: 38,
                         child: PrimaryButton(
-                          text: isAr ? 'طلب تسوية وسحب الرصيد 💸' : 'Request Payout Settlement 💸',
+                          text: isAr ? 'طلب تسوية وسحب الرصيد' : 'Request Payout Settlement',
                           height: 38,
                           color: const Color(0xFF2563EB),
                           textColor: Colors.white,

@@ -243,7 +243,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // UPDATE
         final success = await TournamentRepository().updateChampionship(widget.tournament!.id, champData);
         if (success && mounted) {
-          VSPFeedback.showSuccess(context, 'Tournament updated successfully! 🏆');
+          VSPFeedback.showSuccess(context, 'Tournament updated successfully.');
           Navigator.pop(context);
         } else if (!success && mounted) {
           VSPFeedback.showError(context, 'فشل تعديل البطولة. يرجى المحاولة مرة أخرى.');
@@ -252,7 +252,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // CREATE
         final id = await TournamentRepository().createChampionship(champData);
         if (id != null && mounted) {
-          VSPFeedback.showSuccess(context, 'Tournament created successfully! 🏆');
+          VSPFeedback.showSuccess(context, 'Tournament created successfully.');
           Navigator.pop(context);
           
           try {
