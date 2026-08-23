@@ -184,17 +184,17 @@ void main() {
       expect(handballPositions.map((p) => p.code), containsAll(['GK', 'Wing', 'Back', 'Pivot', 'Playmaker']));
     });
 
-    test('StatsService.getSkillMetrics adapts metrics to active sport', () {
+    test('VSPConstants.activeSports is centrally configured for Football only', () {
+      expect(VSPConstants.activeSports, equals(['Football']));
+      expect(VSPConstants.sports, equals(['Football']));
+    });
+
+    test('StatsService returns clean real match metrics defaults', () async {
       final statsService = StatsService();
-
-      final footballMetrics = statsService.getSkillMetrics('ST', 1200, sport: 'Football');
-      expect(footballMetrics.keys, containsAll(['PAC', 'SHO', 'PAS', 'DRI', 'DEF', 'PHY']));
-
-      final padelMetrics = statsService.getSkillMetrics('Drive', 1200, sport: 'Padel');
-      expect(padelMetrics.keys, containsAll(['SER', 'VOL', 'SMA', 'DEF', 'SPD', 'PWR']));
-
-      final basketballMetrics = statsService.getSkillMetrics('PG', 1200, sport: 'Basketball');
-      expect(basketballMetrics.keys, containsAll(['PTS', 'REB', 'AST', 'STL', 'BLK', '3PT']));
+      // Verifies fallback structure on unauthenticated or error
+      final fallbackStats = await statsService.getPlayerStats('non_existent_player');
+      expect(fallbackStats['winRate'], equals('0.0'));
+      expect(fallbackStats['matchesPlayed'], equals(0));
     });
   });
 

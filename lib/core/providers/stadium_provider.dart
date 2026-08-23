@@ -2,6 +2,7 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import '../../data/models.dart';
 import '../repositories/stadium_repository.dart';
+import '../ui/tokens/vsp_tokens.dart';
 import '../utils/geo_helper.dart';
 import 'package:geolocator/geolocator.dart';
 
@@ -244,10 +245,14 @@ class StadiumProvider with ChangeNotifier {
     return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
   }
 
-  /// Returns unique registered sports dynamically from stadiums database
+  /// Returns unique registered sports dynamically from stadiums database, filtered by active configuration
   List<String> get availableSportTypes {
-    final sports = _stadiums.map((s) => s.type).where((t) => t.trim().isNotEmpty).toSet().toList();
-    if (sports.isEmpty) return ['Football', 'Padel'];
+    final sports = _stadiums
+        .map((s) => s.type)
+        .where((t) => t.trim().isNotEmpty && VSPConstants.activeSports.contains(t.trim()))
+        .toSet()
+        .toList();
+    if (sports.isEmpty) return List<String>.from(VSPConstants.activeSports);
     return sports;
   }
 

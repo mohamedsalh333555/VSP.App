@@ -95,7 +95,10 @@ class VSPShadow {
 }
 
 class VSPConstants {
-  static const List<String> sports = ['Football', 'Basketball', 'Volleyball', 'Padel', 'Handball'];
+  /// 🎯 Centralized Active Sports Control
+  /// Currently: Football only. Future sports (e.g. 'Padel') can be enabled here.
+  static const List<String> activeSports = ['Football'];
+  static const List<String> sports = activeSports;
 }
 
 class SportPosition {
