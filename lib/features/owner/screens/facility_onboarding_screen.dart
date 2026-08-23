@@ -68,7 +68,7 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
   @override
   Widget build(BuildContext context) {
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final uid = authProvider.currentUser?.uid ?? '';
+    final uid = authProvider.userModel?.uid ?? authProvider.currentUser?.uid ?? authProvider.firebaseUser?.id ?? '';
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
 
     return Scaffold(
@@ -77,16 +77,11 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
         child: StreamBuilder<List<Stadium>>(
             stream: StadiumRepository().getOwnerStadiums(uid),
             builder: (context, snapshot) {
-              if (snapshot.connectionState == ConnectionState.waiting) {
+              if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
                 return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
               }
               if (snapshot.hasError) {
-                return Center(
-                  child: Text(
-                    isAr ? 'حدث خطأ في تحميل الملاعب' : 'Error loading stadiums',
-                    style: const TextStyle(color: VSPColors.error),
-                  ),
-                );
+                VSPLogger.w('FacilityOnboardingScreen stream notice (gracefully handled): ${snapshot.error}');
               }
               final stadiums = snapshot.data ?? [];
               final hasStadiums = stadiums.isNotEmpty;

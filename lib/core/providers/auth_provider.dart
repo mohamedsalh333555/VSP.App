@@ -171,8 +171,6 @@ class AuthProvider with ChangeNotifier {
             'profile_image_url': avatar,
             'is_email_verified': true,
             'is_registration_complete': false,
-            'fair_play_score': 100,
-            'points': 0,
             'subscription_plan': effectiveRole == 'owner' ? 'free_trial' : null,
             'created_at': DateTime.now().toUtc().toIso8601String(),
             'updated_at': DateTime.now().toUtc().toIso8601String(),
@@ -920,7 +918,16 @@ class AuthProvider with ChangeNotifier {
     notifyListeners();
     
     final currentUid = _firebaseUser?.id;
-    final existingPhoneUser = await _userRepository.getUserByPhone(PhoneUtils.normalize(phone) ?? phone);
+    final normalizedPhone = PhoneUtils.normalize(phone) ?? phone;
+    UserModel? existingPhoneUser;
+    try {
+      existingPhoneUser = await _userRepository
+          .getUserByPhone(normalizedPhone)
+          .timeout(const Duration(seconds: 6));
+    } catch (e) {
+      VSPLogger.w('getUserByPhone timeout or error in completeSocialRegistration: $e');
+    }
+
     if (existingPhoneUser != null && existingPhoneUser.uid != currentUid) {
       _errorMessage = 'هذا الرقم مسجل مسبقاً، يرجى استخدام رقم آخر.';
       _isLoading = false;
@@ -930,7 +937,7 @@ class AuthProvider with ChangeNotifier {
 
     try {
       final Map<String, dynamic> updateData = {
-        'phone': PhoneUtils.normalize(phone),
+        'phone': normalizedPhone,
         'governorate': governorate ?? _governorate,
         'isRegistrationComplete': true,
         'date_of_birth': dateOfBirth?.toUtc().toIso8601String(),
@@ -945,24 +952,52 @@ class AuthProvider with ChangeNotifier {
         updateData['position'] = position;
       }
 
+      final effectiveRole = _userType ?? _userModel?.role ?? 'player';
+
       if (_userModel != null) {
         _userModel = _userModel!.copyWith(
           name: (name != null && name.isNotEmpty) ? name : _userModel!.name,
-          phone: phone,
+          phone: normalizedPhone,
           governorate: governorate ?? _governorate,
           position: position ?? _userModel!.position,
           isRegistrationComplete: true,
+          isEmailVerified: true,
           dateOfBirth: dateOfBirth ?? _userModel!.dateOfBirth,
           p2pInstapay: p2pInstapay ?? _userModel!.p2pInstapay,
           p2pVodafone: p2pVodafone ?? _userModel!.p2pVodafone,
           p2pBank: p2pBank ?? _userModel!.p2pBank,
         );
+      } else {
+        _userModel = UserModel(
+          uid: currentUid ?? _firebaseUser?.id ?? '',
+          email: _firebaseUser?.email ?? _email ?? '',
+          role: effectiveRole,
+          name: (name != null && name.isNotEmpty)
+              ? name
+              : (_firebaseUser?.userMetadata?['full_name'] ??
+                  _firebaseUser?.userMetadata?['name'] ??
+                  (effectiveRole == 'owner' ? 'مالك جديد' : 'لاعب جديد')),
+          phone: normalizedPhone,
+          governorate: governorate ?? _governorate,
+          position: position,
+          dateOfBirth: dateOfBirth,
+          p2pInstapay: p2pInstapay,
+          p2pVodafone: p2pVodafone,
+          p2pBank: p2pBank,
+          isRegistrationComplete: true,
+          isEmailVerified: true,
+          hasStadium: false,
+          isIdentityVerified: false,
+          verificationStatus: 'pending',
+          subscriptionPlan: effectiveRole == 'owner' ? 'free_trial' : 'free_trial',
+          trialEndsAt: DateTime.now().add(const Duration(days: 60)),
+        );
       }
 
       try {
-        await Supabase.instance.client.rpc('complete_user_registration', params: {
+        final dynamic rpcRes = await Supabase.instance.client.rpc('complete_user_registration', params: {
           'p_user_id': currentUid,
-          'p_phone': PhoneUtils.normalize(phone),
+          'p_phone': normalizedPhone,
           'p_name': (name != null && name.isNotEmpty) ? name : (_userModel?.name ?? ''),
           'p_position': position,
           'p_governorate': governorate ?? _governorate,
@@ -970,10 +1005,19 @@ class AuthProvider with ChangeNotifier {
           'p_p2p_instapay': p2pInstapay,
           'p_p2p_vodafone': p2pVodafone,
           'p_p2p_bank': p2pBank,
-        });
+        }).timeout(const Duration(seconds: 10));
+
+        if (rpcRes is Map && rpcRes['success'] == false) {
+          VSPLogger.w('RPC complete_user_registration returned failure: ${rpcRes['error']}');
+          if (currentUid != null) {
+            await _userRepository.completeRegistrationFlags(currentUid, updateData);
+          }
+        }
       } catch (rpcErr) {
         VSPLogger.w('RPC complete_user_registration fallback: $rpcErr');
-        await _userRepository.completeRegistrationFlags(currentUid!, updateData);
+        if (currentUid != null) {
+          await _userRepository.completeRegistrationFlags(currentUid, updateData);
+        }
       }
 
       _isGhostUser = false;

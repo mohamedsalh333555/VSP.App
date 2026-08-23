@@ -74,15 +74,43 @@ class StadiumRepository {
   }
 
   // Get stadiums for a specific owner
-  Stream<List<Stadium>> getOwnerStadiums(String ownerId) {
-     return _supabase
+  Stream<List<Stadium>> getOwnerStadiums(String ownerId) async* {
+    final cleanOwnerId = ownerId.trim();
+    if (cleanOwnerId.isEmpty) {
+      yield <Stadium>[];
+      return;
+    }
+
+    // 1. Immediate REST API fetch for instant UI load
+    try {
+      final response = await _supabase
+          .from('stadiums')
+          .select()
+          .eq('owner_id', cleanOwnerId)
+          .eq('is_deleted_by_owner', false)
+          .order('created_at', ascending: false);
+
+      final initialList = (response as List)
+          .map((data) => Stadium.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .toList();
+      yield initialList;
+    } catch (e) {
+      VSPLogger.w('Initial REST fetch for owner stadiums notice: $e');
+    }
+
+    // 2. Realtime Stream updates with error handling
+    yield* _supabase
         .from('stadiums')
         .stream(primaryKey: ['id'])
-        .eq('owner_id', ownerId)
+        .eq('owner_id', cleanOwnerId)
         .map((list) => list
             .where((data) => data['is_deleted_by_owner'] != true)
             .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
-            .toList());
+            .toList())
+        .handleError((error) {
+          VSPLogger.w('Realtime stream error for owner stadiums (handled): $error');
+          return <Stadium>[];
+        });
   }
 
   // Add new stadium (Owner)

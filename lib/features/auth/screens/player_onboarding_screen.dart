@@ -112,32 +112,29 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
     }
 
     setState(() => _isLoading = true);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final fullName = '$firstName $lastName';
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final fullName = '$firstName $lastName';
 
-    final success = await authProvider.completeSocialRegistration(
-      phone: phone,
-      name: fullName,
-      position: _selectedPosition,
-      governorate: _selectedGovernorate,
-      dateOfBirth: _dateOfBirth,
-    );
+      final success = await authProvider.completeSocialRegistration(
+        phone: phone,
+        name: fullName,
+        position: _selectedPosition,
+        governorate: _selectedGovernorate,
+        dateOfBirth: _dateOfBirth,
+      );
 
-    if (!mounted) return;
-
-    if (success) {
-      HapticFeedback.lightImpact();
-      await authProvider.updateProfile({
-        'isRegistrationComplete': true,
-        'isEmailVerified': true,
-      });
       if (!mounted) return;
-    } else {
-      HapticFeedback.vibrate();
-      VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
-    }
 
-    if (mounted) setState(() => _isLoading = false);
+      if (success) {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.vibrate();
+        VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
+    }
   }
 
   @override

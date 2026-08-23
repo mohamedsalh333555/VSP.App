@@ -121,30 +121,31 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
     }
 
     setState(() => _isLoading = true);
-    final authProvider = Provider.of<AuthProvider>(context, listen: false);
-    final fullName = '$firstName $lastName';
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final fullName = '$firstName $lastName';
 
-    final success = await authProvider.completeSocialRegistration(
-      phone: phone,
-      name: fullName,
-      governorate: _selectedGovernorate,
-      dateOfBirth: _dateOfBirth,
-      p2pInstapay: _instapayController.text.trim().isNotEmpty ? _instapayController.text.trim() : null,
-      p2pVodafone: _vodafoneController.text.trim().isNotEmpty ? _vodafoneController.text.trim() : null,
-      p2pBank: _bankController.text.trim().isNotEmpty ? _bankController.text.trim() : null,
-    );
+      final success = await authProvider.completeSocialRegistration(
+        phone: phone,
+        name: fullName,
+        governorate: _selectedGovernorate,
+        dateOfBirth: _dateOfBirth,
+        p2pInstapay: _instapayController.text.trim().isNotEmpty ? _instapayController.text.trim() : null,
+        p2pVodafone: _vodafoneController.text.trim().isNotEmpty ? _vodafoneController.text.trim() : null,
+        p2pBank: _bankController.text.trim().isNotEmpty ? _bankController.text.trim() : null,
+      );
 
-    if (!mounted) return;
-
-    if (success) {
-      HapticFeedback.lightImpact();
-      await authProvider.updateProfile({'isRegistrationComplete': true, 'isEmailVerified': true});
       if (!mounted) return;
-    } else {
-      HapticFeedback.vibrate();
-      VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
+
+      if (success) {
+        HapticFeedback.lightImpact();
+      } else {
+        HapticFeedback.vibrate();
+        VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
+      }
+    } finally {
+      if (mounted) setState(() => _isLoading = false);
     }
-    if (mounted) setState(() => _isLoading = false);
   }
 
   @override

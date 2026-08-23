@@ -200,6 +200,21 @@ class Stadium {
       }
     }
 
+    final rawPPH = data['pricePerHour'] ?? data['price_per_hour'] ?? 0;
+    final double parsedPricePerHour = (rawPPH is num) ? rawPPH.toDouble() : (double.tryParse(rawPPH.toString()) ?? 0.0);
+
+    final rawBasePrice = data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? 0;
+    final double parsedBasePrice = (rawBasePrice is num) ? rawBasePrice.toDouble() : (double.tryParse(rawBasePrice.toString()) ?? parsedPricePerHour);
+
+    final rawRating = data['rating'] ?? 0.0;
+    final double parsedRating = (rawRating is num) ? rawRating.toDouble() : (double.tryParse(rawRating.toString()) ?? 0.0);
+
+    final rawBallPrice = data['ballPrice'] ?? (data['features'] is Map ? data['features']['ballPrice'] ?? 0 : 0);
+    final double parsedBallPrice = (rawBallPrice is num) ? rawBallPrice.toDouble() : (double.tryParse(rawBallPrice.toString()) ?? 0.0);
+
+    final rawDeposit = data['deposit_amount'] ?? data['depositAmount'] ?? 0.0;
+    final double parsedDeposit = (rawDeposit is num) ? rawDeposit.toDouble() : (double.tryParse(rawDeposit.toString()) ?? 0.0);
+
     return Stadium(
       id: id,
       name: data['name'] ?? '',
@@ -213,12 +228,12 @@ class Stadium {
       cafeteria: data['cafeteria'] ?? 0,
       playersPerTeam: ppt,
       totalFieldCapacity: tfc,
-      pricePerHour: (data['pricePerHour'] ?? data['price_per_hour'] ?? 0).toDouble(),
-      basePrice: (data['basePrice'] ?? data['pricePerHour'] ?? data['price_per_hour'] ?? 0).toDouble(),
+      pricePerHour: parsedPricePerHour,
+      basePrice: parsedBasePrice,
       area: data['area'] ?? data['city'] ?? data['governorate'] ?? '',
       isFavorite: data['isFavorite'] ?? false,
       address: data['address'] ?? '',
-      rating: (data['rating'] ?? 0.0).toDouble(),
+      rating: parsedRating,
       reviewsCount: data['reviewsCount'] ?? data['reviews_count'] ?? 0,
       description: cleanDesc,
       features: data['features'] ?? {},
@@ -227,7 +242,7 @@ class Stadium {
       hasJerash: data['hasJerash'] ?? (data['features'] is Map ? data['features']['hasJerash'] ?? false : false),
       hasSeats: data['hasSeats'] ?? (data['features'] is Map ? data['features']['hasSeats'] ?? false : false),
       hasBall: data['hasBall'] ?? (data['features'] is Map ? data['features']['hasBall'] ?? false : false),
-      ballPrice: (data['ballPrice'] ?? (data['features'] is Map ? data['features']['ballPrice'] ?? 0 : 0)).toDouble(),
+      ballPrice: parsedBallPrice,
       notes: (data['notes'] as String?) ?? '', // ✅ Read notes
       contractUrl: data['contractUrl'] ?? data['contract_url'],
       ownerIdUrl: data['ownerIdUrl'] ?? data['owner_id_url'],
@@ -239,13 +254,13 @@ class Stadium {
       isSplitShift: data['features']?['isSplitShift'] ?? false,
       breakStartTime: data['features']?['breakTime']?['start'],
       breakEndTime: data['features']?['breakTime']?['end'],
-      lat: (data['lat'] as num?)?.toDouble(),
-      lng: (data['lng'] as num?)?.toDouble(),
-      depositAmount: (data['deposit_amount'] ?? data['depositAmount'] ?? 0.0).toDouble(),
+      lat: (data['lat'] is num) ? (data['lat'] as num).toDouble() : double.tryParse(data['lat']?.toString() ?? ''),
+      lng: (data['lng'] is num) ? (data['lng'] as num).toDouble() : double.tryParse(data['lng']?.toString() ?? ''),
+      depositAmount: parsedDeposit,
       needsDeposit: data['needs_deposit'] ?? data['needsDeposit'] ?? false,
-      maintenanceUntil: data['maintenance_until'] != null ? DateTime.parse(data['maintenance_until'].toString()) : null,
+      maintenanceUntil: data['maintenance_until'] != null ? DateTime.tryParse(data['maintenance_until'].toString()) : null,
       maintenanceReason: data['maintenance_reason'],
-      lastEmergencyClosureAt: data['last_emergency_closure_at'] != null ? DateTime.parse(data['last_emergency_closure_at'].toString()) : null,
+      lastEmergencyClosureAt: data['last_emergency_closure_at'] != null ? DateTime.tryParse(data['last_emergency_closure_at'].toString()) : null,
     );
   }
 
