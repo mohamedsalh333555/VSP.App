@@ -126,7 +126,8 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
     if (success) {
       HapticFeedback.lightImpact();
-      // Clear pending verification email from SharedPreferences
+      // Clear pending verification email from SecureStorage and SharedPreferences
+      await SecureStorageService.deleteSecure('pending_verification_email');
       final prefs = await SharedPreferences.getInstance();
       await prefs.remove('pending_verification_email');
       // GoRouter will redirect automatically via authStateChanges

@@ -155,39 +155,11 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
       final entryFee = widget.championship.entryFee;
 
       if (entryFee > 0) {
-        final uuidRegex = RegExp(r'^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$');
-        String validStadiumId = '';
-        String validOwnerId = uuidRegex.hasMatch(widget.championship.ownerId) ? widget.championship.ownerId : '';
-
-        if (validStadiumId.isEmpty) {
-          try {
-            final res = await Supabase.instance.client
-                .from('stadiums')
-                .select('id, owner_id')
-                .limit(1)
-                .maybeSingle();
-
-            if (res != null) {
-              final fetchedId = res['id'].toString();
-              if (uuidRegex.hasMatch(fetchedId)) {
-                validStadiumId = fetchedId;
-              }
-              if (validOwnerId.isEmpty && uuidRegex.hasMatch((res['owner_id'] ?? '').toString())) {
-                validOwnerId = (res['owner_id'] ?? '').toString();
-              }
-            }
-          } catch (e) {
-            debugPrint('Error fetching stadium fallback: $e');
-          }
-        }
-
-        final entryFee = widget.championship.entryFee;
-
         final draft = BookingDraft(
-          stadiumId: validStadiumId,
+          stadiumId: '00000000-0000-0000-0000-000000000000',
           stadiumName: 'بطولة: ${widget.championship.name}',
           stadiumImageUrl: widget.championship.logoUrl,
-          ownerId: validOwnerId,
+          ownerId: widget.championship.ownerId,
           startTime: widget.championship.startDate,
           endTime: widget.championship.endDate,
           bookingType: BookingType.team,

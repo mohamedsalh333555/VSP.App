@@ -135,11 +135,11 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   // ===========================================================================
   Widget _buildMetricsHeader(BuildContext context, bool isArabic) {
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: _supabase.from('users').stream(primaryKey: ['id']),
+      stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
       builder: (context, userSnap) {
-        final users = userSnap.data ?? [];
-        final totalOwners = users.where((u) => u['role'] == 'owner').length;
-        final pendingVerifications = users.where((u) => u['role'] == 'owner' && u['verification_status'] == 'pending').length;
+        final owners = userSnap.data ?? [];
+        final totalOwners = owners.length;
+        final pendingVerifications = owners.where((u) => u['verification_status'] == 'pending').length;
 
         return Container(
           padding: const EdgeInsets.all(VSPSpacing.md),
@@ -947,11 +947,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
   }
 
   Future<void> _dismissReport(String reportId) async {
+    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
     try {
       await _supabase.from('reports').delete().eq('id', reportId);
-      if (mounted) VSPFeedback.showSuccess(context, 'تم إغلاق البلاغ.');
+      if (mounted) {
+        VSPFeedback.showSuccess(context, isArabic ? 'تم إغلاق البلاغ بنجاح.' : 'Report dismissed successfully.');
+      }
     } catch (e) {
-      if (mounted) VSPFeedback.showError(context, 'فشل إغلاق البلاغ: $e');
+      if (mounted) {
+        VSPFeedback.showError(context, isArabic ? 'فشل إغلاق البلاغ: $e' : 'Failed to dismiss report: $e');
+      }
     }
   }
 

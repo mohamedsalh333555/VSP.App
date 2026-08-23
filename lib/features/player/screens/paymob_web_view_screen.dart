@@ -3,6 +3,7 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
+import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
@@ -25,7 +26,7 @@ class PaymobWebViewScreen extends StatefulWidget {
 }
 
 class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
-  late final WebViewController _controller;
+  WebViewController? _controller;
   bool _isLoading = true;
   int _loadingProgress = 0;
   bool _isPopped = false;
@@ -39,8 +40,26 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
   void initState() {
     super.initState();
     _sessionStartTime = DateTime.now();
-    _initWebView();
-    _startInitial90sTimer();
+    if (kIsWeb) {
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        _launchInWebBrowser(widget.initialUrl);
+      });
+      _startInitial90sTimer();
+    } else {
+      _initWebView();
+      _startInitial90sTimer();
+    }
+  }
+
+  Future<void> _launchInWebBrowser(String url) async {
+    try {
+      final uri = Uri.tryParse(url);
+      if (uri != null) {
+        await launchUrl(uri, mode: LaunchMode.externalApplication);
+      }
+    } catch (e) {
+      debugPrint('Error launching web URL: $e');
+    }
   }
 
   void _cancelAllTimers() {
@@ -363,23 +382,74 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
           ],
         ),
       ),
-      body: Stack(
-        children: [
-          WebViewWidget(controller: _controller),
-          if (_isLoading)
-            Positioned(
-              top: 0,
-              left: 0,
-              right: 0,
-              child: LinearProgressIndicator(
-                value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
-                backgroundColor: VSPColors.surfaceAlt,
-                color: VSPColors.accent,
-                minHeight: 3,
+      body: kIsWeb || _controller == null
+          ? Center(
+              child: Padding(
+                padding: const EdgeInsets.all(VSPSpacing.xl),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    const Icon(Iconsax.card_pos_copy, size: 64, color: VSPColors.accent),
+                    const SizedBox(height: VSPSpacing.lg),
+                    Text(
+                      isArabic ? 'جاري فتح بوابة الدفع الآمنة...' : 'Opening secure payment gateway...',
+                      style: const TextStyle(color: Colors.white, fontSize: 18, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: VSPSpacing.md),
+                    Text(
+                      isArabic
+                          ? 'يرجى إتمام عملية الدفع في النافذة الجديدة، ثم العودة للتطبيق.'
+                          : 'Please complete the payment in the new browser tab, then return here.',
+                      style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                      textAlign: TextAlign.center,
+                    ),
+                    const SizedBox(height: VSPSpacing.xl),
+                    ElevatedButton.icon(
+                      onPressed: () => _launchInWebBrowser(widget.initialUrl),
+                      icon: const Icon(Iconsax.export_3_copy, size: 18),
+                      label: Text(isArabic ? 'إعادة فتح نافذة الدفع' : 'Re-open Payment Window'),
+                      style: ElevatedButton.styleFrom(
+                        backgroundColor: VSPColors.accent,
+                        foregroundColor: Colors.black,
+                        padding: const EdgeInsets.symmetric(horizontal: 24, vertical: 12),
+                        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    TextButton.icon(
+                      onPressed: () async {
+                        final isConfirmed = await _checkBookingStatusDb();
+                        if (isConfirmed) {
+                          _popSuccess();
+                        } else {
+                          _showStillWaitingDialog();
+                        }
+                      },
+                      icon: const Icon(Icons.refresh, size: 16, color: VSPColors.accent),
+                      label: Text(isArabic ? 'التحقق من الدفع يدويًا' : 'Verify Payment Status', style: const TextStyle(color: VSPColors.accent)),
+                    ),
+                  ],
+                ),
               ),
+            )
+          : Stack(
+              children: [
+                WebViewWidget(controller: _controller!),
+                if (_isLoading)
+                  Positioned(
+                    top: 0,
+                    left: 0,
+                    right: 0,
+                    child: LinearProgressIndicator(
+                      value: _loadingProgress > 0 ? _loadingProgress / 100 : null,
+                      backgroundColor: VSPColors.surfaceAlt,
+                      color: VSPColors.accent,
+                      minHeight: 3,
+                    ),
+                  ),
+              ],
             ),
-        ],
-      ),
     );
   }
 }

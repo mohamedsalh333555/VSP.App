@@ -65,7 +65,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         if (!_paymentCompleted && _booking != null) {
           final authProvider = Provider.of<AuthProvider>(context, listen: false);
           final userId = authProvider.currentUser?.uid;
-          if (userId != null) {
+          if (userId != null && !widget.isTournamentPayment) {
             await _cleanupStalePendingBookings(userId);
           }
           if (mounted) {
@@ -98,6 +98,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
   Future<void> _createPendingBooking() async {
     if (!mounted) return;
     setState(() => _isLoading = true);
+
+    if (widget.isTournamentPayment) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
     
     final authProvider = Provider.of<AuthProvider>(context, listen: false);
     final userId = authProvider.currentUser?.uid;
@@ -146,11 +153,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   /// 🧹 حذف الحجوزات الشبح المعلقة (pending) للمستخدم على نفس الملعب
   Future<void> _cleanupStalePendingBookings(String userId) async {
+    if (widget.isTournamentPayment) return;
     try {
       await Supabase.instance.client
           .from('bookings')
           .delete()
-          .eq('user_id', userId)
+          .eq('created_by_user_id', userId)
           .eq('stadium_id', widget.bookingDraft.stadiumId)
           .eq('status', 'pending');
       debugPrint('🧹 Stale pending bookings cleaned up for user: $userId');
@@ -230,7 +238,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
 
   /// 🚀 فتح بوابة Paymob أو استدعاء المحاكاة الآمنة بالسيرفر (RPC) في الاختبار
   Future<void> _startPaymobCheckout() async {
-    if (_booking == null) return;
+    if (_booking == null && !widget.isTournamentPayment) return;
     setState(() => _isAwaitingWebhook = true);
 
     _webhookTimeoutTimer?.cancel();
@@ -267,9 +275,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         ? AppConfig.paymobWalletIntegrationId 
         : AppConfig.paymobCardIntegrationId;
 
+    final paymentRefId = widget.isTournamentPayment
+        ? 'TOURN_${widget.bookingDraft.playerTeamId ?? 'TEAM'}_${DateTime.now().millisecondsSinceEpoch}'
+        : (_booking?.id ?? 'BK_${DateTime.now().millisecondsSinceEpoch}');
+
     final unifiedUrl = await PaymobService.getUnifiedCheckoutUrl(
       amountInEgp: totalAmount,
-      bookingId: _booking!.id,
+      bookingId: paymentRefId,
       userEmail: userEmail,
       userName: userName,
       userPhone: userPhone,
@@ -301,6 +313,12 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
         );
 
         if (mounted && (isPaidSuccess == true)) {
+          if (widget.isTournamentPayment) {
+            _paymentCompleted = true;
+            _countdownTimer?.cancel();
+            Navigator.pop(context, true);
+            return;
+          }
           debugPrint('⚡ [Server Verification]: WebView returned success. Awaiting Realtime Webhook confirmation from server...');
           setState(() => _isAwaitingWebhook = true);
           if (_booking != null) {
@@ -349,29 +367,31 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       final authProvider = Provider.of<AuthProvider>(context, listen: false);
       final userId = authProvider.currentUser?.uid;
 
-      // 🔓 إلغاء وتفريغ الوقت فوراً للجميع من قاعدة البيانات
-      if (_booking != null && !_booking!.id.startsWith('mock_')) {
-        await Supabase.instance.client
-            .from('bookings')
-            .delete()
-            .eq('id', _booking!.id);
-      }
-
-      if (userId != null) {
-        await Supabase.instance.client
-            .from('bookings')
-            .delete()
-            .eq('user_id', userId)
-            .eq('stadium_id', widget.bookingDraft.stadiumId)
-            .eq('status', 'pending');
-
-        if (mounted) {
-          final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-          bookingProvider.loadUserBookings(userId);
+      if (!widget.isTournamentPayment) {
+        // 🔓 إلغاء وتفريغ الوقت فوراً للجميع من قاعدة البيانات
+        if (_booking != null && !_booking!.id.startsWith('mock_')) {
+          await Supabase.instance.client
+              .from('bookings')
+              .delete()
+              .eq('id', _booking!.id);
         }
-      }
 
-      debugPrint('🔓 Slot successfully released for everyone on Go Back.');
+        if (userId != null) {
+          await Supabase.instance.client
+              .from('bookings')
+              .delete()
+              .eq('created_by_user_id', userId)
+              .eq('stadium_id', widget.bookingDraft.stadiumId)
+              .eq('status', 'pending');
+
+          if (mounted) {
+            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+            bookingProvider.loadUserBookings(userId);
+          }
+        }
+
+        debugPrint('🔓 Slot successfully released for everyone on Go Back.');
+      }
     } catch (e) {
       debugPrint('⚠️ Error releasing booking slot on Go Back: $e');
     }
@@ -700,7 +720,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
                       child: PrimaryButton(
                         text: isArabic ? 'الانتقال للدفع الآمن' : 'Proceed to Secure Checkout',
                         isLoading: _isLoading || _isAwaitingWebhook,
-                        onPressed: (_booking == null) ? null : _startPaymobCheckout,
+                        onPressed: (_booking == null && !widget.isTournamentPayment) ? null : _startPaymobCheckout,
                       ),
                     ),
                     const SizedBox(height: 20),
