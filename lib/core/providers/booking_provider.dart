@@ -1,5 +1,7 @@
 import 'dart:async';
+import 'dart:convert';
 import 'package:flutter/foundation.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import '../../data/models.dart';
 import '../repositories/booking_repository.dart';
 import '../repositories/match_repository.dart';
@@ -43,11 +45,47 @@ class BookingProvider with ChangeNotifier {
 
   BookingProvider() {
     _repository = SupabaseBookingRepository();
+    _restoreDraftFromPrefs();
+  }
+
+  Future<void> _saveDraftToPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      if (_currentDraft != null) {
+        final jsonStr = json.encode(_currentDraft!.toMap());
+        await prefs.setString('vsp_draft_booking', jsonStr);
+      } else {
+        await prefs.remove('vsp_draft_booking');
+      }
+    } catch (e) {
+      VSPLogger.w('Failed to persist booking draft: $e');
+    }
+  }
+
+  Future<void> _restoreDraftFromPrefs() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final jsonStr = prefs.getString('vsp_draft_booking');
+      if (jsonStr != null && jsonStr.isNotEmpty) {
+        final map = json.decode(jsonStr) as Map<String, dynamic>;
+        final restored = BookingDraft.fromMap(map);
+        // Only restore if start time is still in future or within 15 min grace period
+        if (restored.startTime.isAfter(DateTime.now().subtract(const Duration(minutes: 15)))) {
+          _currentDraft = restored;
+          notifyListeners();
+        } else {
+          await prefs.remove('vsp_draft_booking');
+        }
+      }
+    } catch (e) {
+      VSPLogger.w('Failed to restore booking draft: $e');
+    }
   }
 
   /// Set the current booking draft (used between screens)
   void setDraft(BookingDraft draft) {
     _currentDraft = draft;
+    _saveDraftToPrefs();
     notifyListeners();
   }
 
@@ -85,6 +123,7 @@ class BookingProvider with ChangeNotifier {
         currentPlayers: currentPlayers,
         totalFieldCapacity: maxPlayers,
       );
+      _saveDraftToPrefs();
       notifyListeners();
     }
   }
@@ -92,6 +131,7 @@ class BookingProvider with ChangeNotifier {
   /// Clear the current draft
   void clearDraft() {
     _currentDraft = null;
+    _saveDraftToPrefs();
     notifyListeners();
   }
 

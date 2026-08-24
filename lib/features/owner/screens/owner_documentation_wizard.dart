@@ -56,13 +56,15 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
     final user = auth.userModel;
     if (user == null) return;
 
-    final addData = user.additionalData;
-    final docs = (addData['verificationDocuments'] as Map<String, dynamic>?) ?? addData;
+    final addData = user.additionalData ?? {};
+    final docs = (addData['verificationDocuments'] is Map)
+        ? (addData['verificationDocuments'] as Map<dynamic, dynamic>)
+        : addData;
 
-    final String? cr = (docs['commercialRegister'] ?? user.contractUrl)?.toString();
-    final String? tc = docs['taxCard']?.toString();
-    final String? idF = (docs['idFront'] ?? user.ownerIdUrl)?.toString();
-    final String? idB = docs['idBack']?.toString();
+    final String? cr = (docs['commercialRegister'] ?? addData['commercialRegister'] ?? addData['contractUrl'])?.toString();
+    final String? tc = (docs['taxCard'] ?? addData['taxCard'])?.toString();
+    final String? idF = (docs['idFront'] ?? addData['idFront'] ?? addData['ownerIdUrl'])?.toString();
+    final String? idB = (docs['idBack'] ?? addData['idBack'])?.toString();
 
     setState(() {
       if (cr != null && cr.isNotEmpty) _uploadedDocUrls['commercialRegister'] = cr;

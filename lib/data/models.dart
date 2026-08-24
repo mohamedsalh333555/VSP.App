@@ -586,7 +586,7 @@ class BookingDraft {
   }
 
   factory BookingDraft.fromMap(Map<String, dynamic> map) {
-    BookingType parsedType = BookingType.regular;
+    BookingType parsedType = BookingType.personal;
     final rawType = map['bookingType']?.toString();
     if (rawType != null) {
       for (final val in BookingType.values) {

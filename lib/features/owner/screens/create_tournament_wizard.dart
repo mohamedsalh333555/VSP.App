@@ -1,4 +1,5 @@
 import 'dart:async';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'owner_tournament_dashboard_screen.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -61,6 +62,122 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
 
   List<String> _availableSports = ['Football'];
 
+  String _getDraftPrefix() {
+    try {
+      final auth = Provider.of<AuthProvider>(context, listen: false);
+      final uid = auth.userModel?.uid ?? auth.currentUser?.uid ?? auth.firebaseUser?.id ?? '';
+      return uid.isNotEmpty ? 'vsp_draft_tournament_${uid}_' : 'temp_tournament_';
+    } catch (_) {
+      return 'temp_tournament_';
+    }
+  }
+
+  Future<void> _saveTournamentDraft() async {
+    if (widget.tournament != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = _getDraftPrefix();
+      await prefs.setString('${prefix}name', _nameController.text);
+      await prefs.setString('${prefix}sport', _selectedSport);
+      await prefs.setString('${prefix}fee', _feeController.text);
+      await prefs.setString('${prefix}prize', _prizeController.text);
+      await prefs.setString('${prefix}type', _selectedType);
+      await prefs.setString('${prefix}teams', _selectedTeams);
+      await prefs.setInt('${prefix}groups', _numberOfGroups);
+      await prefs.setInt('${prefix}qualifying', _qualifyingPerGroup);
+      await prefs.setBool('${prefix}two_legs', _isTwoLegs);
+      await prefs.setString('${prefix}start_date', _startDate.toIso8601String());
+      await prefs.setString('${prefix}end_date', _endDate.toIso8601String());
+      await prefs.setString('${prefix}duration', _durationController.text);
+      await prefs.setInt('${prefix}current_step', _currentStep);
+    } catch (_) {}
+  }
+
+  Future<void> _loadTournamentDraft() async {
+    if (widget.tournament != null) return;
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = _getDraftPrefix();
+
+      final savedName = prefs.getString('${prefix}name');
+      if (savedName != null && savedName.isNotEmpty) {
+        _nameController.text = savedName;
+      }
+      final savedSport = prefs.getString('${prefix}sport');
+      if (savedSport != null && savedSport.isNotEmpty) {
+        _selectedSport = savedSport;
+      }
+      final savedFee = prefs.getString('${prefix}fee');
+      if (savedFee != null && savedFee.isNotEmpty) {
+        _feeController.text = savedFee;
+      }
+      final savedPrize = prefs.getString('${prefix}prize');
+      if (savedPrize != null && savedPrize.isNotEmpty) {
+        _prizeController.text = savedPrize;
+      }
+      final savedType = prefs.getString('${prefix}type');
+      if (savedType != null && savedType.isNotEmpty) {
+        _selectedType = savedType;
+      }
+      final savedTeams = prefs.getString('${prefix}teams');
+      if (savedTeams != null && savedTeams.isNotEmpty) {
+        _selectedTeams = savedTeams;
+      }
+      _numberOfGroups = prefs.getInt('${prefix}groups') ?? _numberOfGroups;
+      _qualifyingPerGroup = prefs.getInt('${prefix}qualifying') ?? _qualifyingPerGroup;
+      _isTwoLegs = prefs.getBool('${prefix}two_legs') ?? _isTwoLegs;
+
+      final savedStart = prefs.getString('${prefix}start_date');
+      if (savedStart != null) {
+        final parsed = DateTime.tryParse(savedStart);
+        if (parsed != null && parsed.isAfter(DateTime.now().subtract(const Duration(days: 1)))) {
+          _startDate = parsed;
+        }
+      }
+      final savedEnd = prefs.getString('${prefix}end_date');
+      if (savedEnd != null) {
+        final parsed = DateTime.tryParse(savedEnd);
+        if (parsed != null && parsed.isAfter(_startDate)) {
+          _endDate = parsed;
+        }
+      }
+
+      final savedDuration = prefs.getString('${prefix}duration');
+      if (savedDuration != null && savedDuration.isNotEmpty) {
+        _durationController.text = savedDuration;
+      }
+
+      final savedStep = prefs.getInt('${prefix}current_step') ?? 0;
+      if (savedStep > 0 && savedStep <= 2) {
+        _currentStep = savedStep;
+      }
+      if (mounted) setState(() {});
+    } catch (_) {}
+  }
+
+  void _setupAutoSaveListeners() {
+    _nameController.addListener(_saveTournamentDraft);
+    _feeController.addListener(_saveTournamentDraft);
+    _durationController.addListener(_saveTournamentDraft);
+    _prizeController.addListener(_saveTournamentDraft);
+  }
+
+  Future<void> _clearTournamentDraft() async {
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final prefix = _getDraftPrefix();
+      final keys = [
+        'name', 'sport', 'fee', 'prize', 'type', 'teams',
+        'groups', 'qualifying', 'two_legs', 'start_date',
+        'end_date', 'duration', 'current_step',
+      ];
+      for (final k in keys) {
+        await prefs.remove('$prefix$k');
+        await prefs.remove('temp_tournament_$k');
+      }
+    } catch (_) {}
+  }
+
   @override
   void initState() {
     super.initState();
@@ -79,9 +196,13 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
       _endDate = t.endDate;
       _durationController.text = t.matchDuration.toString();
       _prizeController.text = t.grandPrize.toInt().toString();
-    } else if (widget.preselectedType != null) {
-      // Pre-fill type from FAB bottom sheet selection
-      _selectedType = widget.preselectedType!;
+    } else {
+      if (widget.preselectedType != null) {
+        _selectedType = widget.preselectedType!;
+      }
+      _loadTournamentDraft().then((_) {
+        _setupAutoSaveListeners();
+      });
     }
   }
 
@@ -150,6 +271,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
           _endDate = picked;
         }
       });
+      _saveTournamentDraft();
     }
   }
 
@@ -160,6 +282,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
     }
     if (_currentStep < 2) {
       setState(() => _currentStep++);
+      _saveTournamentDraft();
     } else {
       _handleSave();
     }
@@ -168,6 +291,7 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
   void _prevStep() {
     if (_currentStep > 0) {
       setState(() => _currentStep--);
+      _saveTournamentDraft();
     } else {
       Navigator.pop(context);
     }
@@ -252,6 +376,8 @@ class _CreateTournamentWizardState extends State<CreateTournamentWizard> {
         // CREATE
         final id = await TournamentRepository().createChampionship(champData);
         if (id != null && mounted) {
+          await _clearTournamentDraft();
+          if (!mounted) return;
           VSPFeedback.showSuccess(context, 'Tournament created successfully.');
           Navigator.pop(context);
           

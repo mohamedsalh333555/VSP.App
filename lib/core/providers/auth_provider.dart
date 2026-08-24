@@ -702,6 +702,21 @@ class AuthProvider with ChangeNotifier {
       }
     }
 
+    // Clear user-scoped and global draft caches
+    try {
+      final prefs = await SharedPreferences.getInstance();
+      final allKeys = prefs.getKeys();
+      final uid = _firebaseUser?.id ?? _userModel?.uid;
+      for (final k in allKeys) {
+        if (k.startsWith('temp_stadium_') ||
+            k.startsWith('temp_tournament_') ||
+            k == 'vsp_draft_booking' ||
+            (uid != null && uid.isNotEmpty && (k.startsWith('vsp_draft_stadium_${uid}_') || k.startsWith('vsp_draft_tournament_${uid}_')))) {
+          await prefs.remove(k);
+        }
+      }
+    } catch (_) {}
+
     _stopRealtimeUserListener();
     _notificationService.stopRealtimeNotificationsListener();
     await _authService.signOut();
