@@ -17,6 +17,7 @@ import '../../../core/repositories/team_repository.dart';
 import 'payment_gateway_screen.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import 'player_home_screen.dart';
 
 class BookingsScreen extends StatefulWidget {
  const BookingsScreen({super.key});
@@ -142,7 +143,7 @@ class _BookingsScreenState extends State<BookingsScreen> {
  const SizedBox(width: 8),
  Expanded(
  child: Text(
- isArabic ? 'لديك حجز معلق في انتظار السداد ⏱' : 'Pending Booking Awaiting Payment ⏱',
+ isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment',
  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
  ),
  ),
@@ -308,18 +309,22 @@ class _BookingsScreenState extends State<BookingsScreen> {
  );
  }
 
- Widget _buildEmptyState() {
- final l10n = AppLocalizations.of(context)!;
- return VSPEmptyState(
- icon: Iconsax.calendar_1_copy,
- title: l10n.noBookings,
- subtitle: l10n.noBookingsSubtitle,
- buttonText: l10n.exploreStadiums,
- onButtonPressed: () {
- Navigator.of(context).popUntil((route) => route.isFirst);
- },
- );
- }
+  Widget _buildEmptyState() {
+    final l10n = AppLocalizations.of(context)!;
+    return VSPEmptyState(
+      icon: Iconsax.calendar_1_copy,
+      title: l10n.noBookings,
+      subtitle: l10n.noBookingsSubtitle,
+      buttonText: l10n.exploreStadiums,
+      onButtonPressed: () {
+        if (playerHomeScreenKey.currentState != null) {
+          playerHomeScreenKey.currentState?.switchToTab(0);
+        } else {
+          Navigator.of(context).popUntil((route) => route.isFirst);
+        }
+      },
+    );
+  }
 }
 
 class _BookingCard extends StatelessWidget {

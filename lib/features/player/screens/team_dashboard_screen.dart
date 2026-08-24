@@ -13,6 +13,7 @@ import '../../../core/widgets/skeleton_loader.dart';
 import '../../../core/services/support_service.dart';
 import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/team_card_hero.dart';
+import 'player_home_screen.dart';
 
 class TeamDashboardScreen extends StatefulWidget {
   const TeamDashboardScreen({super.key});
@@ -112,11 +113,19 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
                       AppLocalizations.of(context)!.noMatchesAvailable,
                       style: Theme.of(context).textTheme.bodyMedium,
                     ),
-                    Text(
-                      AppLocalizations.of(context)!.hostOne,
-                      style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                        color: VSPColors.accent,
-                        fontWeight: FontWeight.bold,
+                    const SizedBox(height: 4),
+                    GestureDetector(
+                      onTap: () {
+                        playerHomeScreenKey.currentState?.switchToTab(0);
+                      },
+                      child: Text(
+                        AppLocalizations.of(context)!.hostOne,
+                        style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                          color: VSPColors.accent,
+                          fontWeight: FontWeight.bold,
+                          decoration: TextDecoration.underline,
+                          decorationColor: VSPColors.accent,
+                        ),
                       ),
                     ),
                   ],

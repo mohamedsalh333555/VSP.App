@@ -66,15 +66,15 @@ class TournamentRepository {
  streamQuery = streamQuery.eq('is_approved', true);
  }
 
- yield* streamQuery.map((list) {
- return _parseChampionshipsList(
- list,
- governorate: governorate,
- sportType: sportType,
- isOwner: isOwner,
- ownerId: ownerId,
- );
- });
+    yield* streamQuery.map<List<Championship>>((list) {
+      return _parseChampionshipsList(
+        list as List<Map<String, dynamic>>,
+        governorate: governorate,
+        sportType: sportType,
+        isOwner: isOwner,
+        ownerId: ownerId,
+      );
+    });
  } catch (e, s) {
  VSPLogger.e('Error listening to championships stream', e, s);
  }

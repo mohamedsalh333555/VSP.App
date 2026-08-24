@@ -1399,12 +1399,17 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> {
  children: [
  const Icon(Iconsax.lock_copy, color: Colors.amber, size: 14),
  const SizedBox(width: 6),
- Text(
- isArabic
- ? 'إحصائيات الحجوزات وساعات التشغيل متاحة في باقة 1000ج'
- : 'Bookings & Hours analytics available in 1000 EGP Pro Plan',
- style: const TextStyle(color: Colors.amber, fontSize: 11.5, fontWeight: FontWeight.bold),
- ),
+                  Expanded(
+                    child: Text(
+                      isArabic
+                          ? 'إحصائيات الحجوزات وساعات التشغيل متاحة في باقة 1000ج'
+                          : 'Bookings & Hours analytics in 1000 EGP Pro Plan',
+                      style: const TextStyle(color: Colors.amber, fontSize: 11.5, fontWeight: FontWeight.bold),
+                      textAlign: TextAlign.center,
+                      maxLines: 1,
+                      overflow: TextOverflow.ellipsis,
+                    ),
+                  ),
  ],
  ),
  ),
