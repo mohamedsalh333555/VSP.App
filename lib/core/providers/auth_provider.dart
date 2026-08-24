@@ -1035,7 +1035,15 @@ class AuthProvider with ChangeNotifier {
  }
  }
 
+ _userType = null;
  _isGhostUser = false;
+ _dataFetchError = false;
+
+ try {
+ final prefs = await SharedPreferences.getInstance();
+ await prefs.remove('pending_oauth_role');
+ await SecureStorageService.deleteSecure('pending_oauth_role');
+ } catch (_) {}
 
  _isLoading = false;
  notifyListeners();

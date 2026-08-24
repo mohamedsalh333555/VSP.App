@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/services.dart';
+import 'package:go_router/go_router.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:flutter/material.dart';
 import 'dart:ui';
@@ -128,9 +129,14 @@ class _PlayerOnboardingScreenState extends State<PlayerOnboardingScreen> {
 
  if (success) {
  HapticFeedback.lightImpact();
+ if (mounted) {
+ context.go('/');
+ }
  } else {
  HapticFeedback.vibrate();
+ if (mounted) {
  VSPFeedback.showError(context, authProvider.errorMessage ?? 'فشل إكمال التسجيل، يرجى المحاولة مجدداً');
+ }
  }
  } finally {
  if (mounted) setState(() => _isLoading = false);
