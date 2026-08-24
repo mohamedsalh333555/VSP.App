@@ -43,7 +43,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  Timer? _webhookTimeoutTimer;
  Timer? _fallbackPollingTimer;
  Timer? _countdownTimer;
- int _remainingSeconds = 300; // 5 minutes hold timer
+ int _remainingSeconds = 300; // 5 minutes atomic hold timer
  bool _paymentCompleted = false;
  String _selectedMethod = 'card'; // 'card', 'wallet'
 
@@ -366,45 +366,38 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  _countdownTimer?.cancel();
  _webhookTimeoutTimer?.cancel();
  _bookingSubscription?.cancel();
- 
- try {
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final userId = authProvider.currentUser?.uid;
+    try {
+      final authProvider = Provider.of<AuthProvider>(context, listen: false);
+      final userId = authProvider.currentUser?.uid;
 
- if (!widget.isTournamentPayment) {
- // تحويل الحجز إلى ملغى/منتهي بدلاً من الحذف المتهور (لحماية أموال اللاعب وتفريغ الوقت للباقين)
- if (_booking != null && !_booking!.id.startsWith('mock_')) {
- await Supabase.instance.client
- .from('bookings')
- .update({
- 'status': 'cancelled',
- 'payment_status': 'expired',
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- })
- .eq('id', _booking!.id)
- .eq('status', 'pending');
- }
+      if (!widget.isTournamentPayment) {
+        if (_booking != null && !_booking!.id.startsWith('mock_')) {
+          try {
+            await Supabase.instance.client.rpc('release_booking_lock', params: {
+              'p_booking_id': _booking!.id,
+            });
+          } catch (_) {
+            await Supabase.instance.client
+                .from('bookings')
+                .update({
+                  'status': 'cancelled',
+                  'payment_status': 'expired',
+                  'updated_at': DateTime.now().toUtc().toIso8601String(),
+                })
+                .eq('id', _booking!.id)
+                .eq('status', 'pending');
+          }
+        }
 
- if (userId != null) {
- await Supabase.instance.client
- .from('bookings')
- .update({
- 'status': 'cancelled',
- 'payment_status': 'expired',
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- })
- .eq('created_by_user_id', userId)
- .eq('stadium_id', widget.bookingDraft.stadiumId)
- .eq('status', 'pending');
-
- if (mounted) {
- final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
- bookingProvider.loadUserBookings(userId);
- }
- }
+        if (userId != null) {
+          if (mounted) {
+            final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+            bookingProvider.loadUserBookings(userId);
+          }
+        }
+      }
 
  debugPrint(' Slot successfully released with status=cancelled/expired (Row preserved for audit safety).');
- }
  } catch (e) {
  debugPrint(' Error releasing booking slot safely on Go Back: $e');
  }

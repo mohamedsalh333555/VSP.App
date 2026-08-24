@@ -582,10 +582,10 @@ class SupabaseBookingRepository implements BookingRepository {
  .where((b) {
  if (b.status == BookingStatus.cancelled) return false;
 
- // Fix: If booking is pending and older than 3 minutes without payment, ignore it (does not block slot)
+ // Fix: If booking is pending and older than 5 minutes without payment, ignore it (does not block slot)
  if (b.status == BookingStatus.pending) {
  final createdAtLocal = b.createdAt.toLocal();
- final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 3;
+ final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
  if (isExpired) return false;
  }
 
