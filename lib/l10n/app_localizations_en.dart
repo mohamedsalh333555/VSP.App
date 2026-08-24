@@ -341,7 +341,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get na => 'N/A';
 
   @override
-  String get informationStadium => 'Information Stadium';
+  String get informationStadium => 'Stadium Information & Specs';
 
   @override
   String get noDescription => 'No description provided.';
@@ -350,7 +350,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get features => 'Features';
 
   @override
-  String get featuresForMoney => 'Features For Money';
+  String get featuresForMoney => 'Additional Services & Add-ons';
 
   @override
   String ballAvailable(String price, String currency) {
@@ -369,21 +369,21 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get punctualityPolicy =>
-      'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.';
+      'Customers must arrive on time for their reservation. Any delay may result in forfeiting part of their playing time without compensation.';
 
   @override
   String get reservationDuration => 'Reservation Duration:';
 
   @override
   String get reservationDurationPolicy =>
-      'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).';
+      'Playing time cannot be extended after the booked slot expires. If additional time is required, a new reservation must be made (subject to availability).';
 
   @override
-  String get cancellationPolicyTitle => 'Cancellation And Refund Policy:';
+  String get cancellationPolicyTitle => 'Cancellation and Refund Policy:';
 
   @override
   String get cancellationPolicy =>
-      'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.';
+      'Full refund or deposit return is applicable if cancelled at least 2 hours before match kickoff.\n\nNo refund is provided if cancelled less than 2 hours prior to the scheduled match time.';
 
   @override
   String get liability => 'Liability:';
@@ -1126,7 +1126,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String tournamentJoinSuccess(String team) {
-    return 'Successfully joined the tournament! Good luck to team $team 🏆';
+    return 'Successfully joined the tournament! Good luck to team $team ';
   }
 
   @override
@@ -1193,13 +1193,13 @@ class AppLocalizationsEn extends AppLocalizations {
   String get noResults => 'No results found.';
 
   @override
-  String get stadiumsCategory => 'Stadiums 🏟️';
+  String get stadiumsCategory => 'Stadiums ';
 
   @override
-  String get teamsCategory => 'Teams ⚽';
+  String get teamsCategory => 'Teams ';
 
   @override
-  String get championshipsCategory => 'Championships 🏆';
+  String get championshipsCategory => 'Championships ';
 
   @override
   String prizeLabel(Object prize) {
@@ -1249,7 +1249,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String shareTeamText(Object name, Object rank) {
-    return 'Check out my team $name on VSP! We are ranked $rank. ⚽🏆';
+    return 'Check out my team $name on VSP! We are ranked $rank. ';
   }
 
   @override
@@ -1383,7 +1383,7 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String shareTeamMessage(Object teamName) {
-    return 'Check out my ultimate team \"$teamName\" on the VSP App! ⚽🏆\nDownload the app to challenge us!';
+    return 'Check out my ultimate team \"$teamName\" on the VSP App! \nDownload the app to challenge us!';
   }
 
   @override
@@ -1534,7 +1534,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get allStadiumsFilter => 'All Stadiums';
 
   @override
-  String get allTimeFilter => 'All Time 🌍';
+  String get allTimeFilter => 'All Time ';
 
   @override
   String get noBookingsForTodayLabel => 'No bookings for today';
@@ -2059,7 +2059,7 @@ class AppLocalizationsEn extends AppLocalizations {
       'Please upload the back side of your National ID.';
 
   @override
-  String get regCompleteTitle => 'Registration Complete! 🎉';
+  String get regCompleteTitle => 'Registration Complete! ';
 
   @override
   String get regCompleteBody =>
@@ -2154,7 +2154,7 @@ class AppLocalizationsEn extends AppLocalizations {
   String get addStadiumFirstError => 'Please add a stadium first';
 
   @override
-  String get blockedBannerTitle => 'Account Restricted ⚠️';
+  String get blockedBannerTitle => 'Account Restricted ';
 
   @override
   String get blockedBannerSubtitle =>
@@ -2162,11 +2162,11 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get geographicFallbackBanner =>
-      'No stadiums registered in your area yet 🟢.. here are the closest available stadiums in other areas.';
+      'No stadiums registered in your area yet .. here are the closest available stadiums in other areas.';
 
   @override
   String get teamMemberDeleteLockError =>
-      'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ⚠️';
+      'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ';
 
   @override
   String get memberRemovedSuccess =>

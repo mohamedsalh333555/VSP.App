@@ -33,241 +33,241 @@ final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
 @pragma('vm:entry-point')
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
-  await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
-  VSPLogger.i('Handling a background FCM message: ${message.messageId}');
+ await Firebase.initializeApp(options: DefaultFirebaseOptions.currentPlatform);
+ VSPLogger.i('Handling a background FCM message: ${message.messageId}');
 }
 
 void main() async {
-  WidgetsFlutterBinding.ensureInitialized();
-  usePathUrlStrategy();
-  
-  // SUPABASE & FIREBASE SECURE INITIALIZATION
-  try {
-    if (kReleaseMode) {
-      const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL');
-      if (!urlWasInjected) {
-        VSPLogger.w('⚠️ WARNING: Release build running without explicit build-time --dart-define parameters.');
-      }
-    }
+ WidgetsFlutterBinding.ensureInitialized();
+ usePathUrlStrategy();
+ 
+ // SUPABASE & FIREBASE SECURE INITIALIZATION
+ try {
+ if (kReleaseMode) {
+ const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL');
+ if (!urlWasInjected) {
+ VSPLogger.w(' WARNING: Release build running without explicit build-time --dart-define parameters.');
+ }
+ }
 
-    await Future.wait([
-      Supabase.initialize(
-        url: AppEnv.supabaseUrl,
-        publishableKey: AppEnv.supabaseAnonKey,
-      ).then((_) => VSPLogger.i("✅ Supabase initialized securely")),
-      Firebase.initializeApp(
-        options: DefaultFirebaseOptions.currentPlatform,
-      ).then((_) => VSPLogger.i("✅ Firebase initialized successfully")),
-    ]);
+ await Future.wait([
+ Supabase.initialize(
+ url: AppEnv.supabaseUrl,
+ publishableKey: AppEnv.supabaseAnonKey,
+ ).then((_) => VSPLogger.i(" Supabase initialized securely")),
+ Firebase.initializeApp(
+ options: DefaultFirebaseOptions.currentPlatform,
+ ).then((_) => VSPLogger.i(" Firebase initialized successfully")),
+ ]);
 
-    try {
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    } catch (e) {
-      VSPLogger.w("⚠️ Firebase Messaging background handler registration notice: $e");
-    }
-  } catch (e) {
-    VSPLogger.e("⚠️ Backend initialization notice: $e");
-  }
-  
-  // System UI Style
-  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
-  SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
-    statusBarColor: Colors.transparent,
-    statusBarIconBrightness: Brightness.light,
-    systemNavigationBarColor: Colors.transparent,
-    systemNavigationBarDividerColor: Colors.transparent,
-  ));
+ try {
+ FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+ } catch (e) {
+ VSPLogger.w(" Firebase Messaging background handler registration notice: $e");
+ }
+ } catch (e) {
+ VSPLogger.e(" Backend initialization notice: $e");
+ }
+ 
+ // System UI Style
+ SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
+ SystemChrome.setSystemUIOverlayStyle(const SystemUiOverlayStyle(
+ statusBarColor: Colors.transparent,
+ statusBarIconBrightness: Brightness.light,
+ systemNavigationBarColor: Colors.transparent,
+ systemNavigationBarDividerColor: Colors.transparent,
+ ));
 
-  // Global Crash Boundary & Logging Handlers
-  FlutterError.onError = (FlutterErrorDetails details) {
-    FlutterError.presentError(details);
-    VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
-    try {
-      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
-    } catch (_) {}
-  };
+ // Global Crash Boundary & Logging Handlers
+ FlutterError.onError = (FlutterErrorDetails details) {
+ FlutterError.presentError(details);
+ VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
+ try {
+ FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+ } catch (_) {}
+ };
 
-  PlatformDispatcher.instance.onError = (error, stack) {
-    VSPLogger.e('Uncaught Platform Error: $error', error, stack);
-    try {
-      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-    } catch (_) {}
-    return true;
-  };
+ PlatformDispatcher.instance.onError = (error, stack) {
+ VSPLogger.e('Uncaught Platform Error: $error', error, stack);
+ try {
+ FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+ } catch (_) {}
+ return true;
+ };
 
-  // Custom Error Boundary Widget
-  ErrorWidget.builder = (FlutterErrorDetails details) {
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      body: Center(
-        child: Padding(
-          padding: const EdgeInsets.all(VSPSpacing.xl),
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.center,
-            children: [
-              const Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
-              const SizedBox(height: VSPSpacing.xl),
-              const Text(
-                'Something went wrong! 🎮',
-                style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                textAlign: TextAlign.center,
-              ),
-              Text(
-                details.exceptionAsString(),
-                textAlign: TextAlign.center,
-                style: const TextStyle(color: VSPColors.error, fontSize: 13, fontFamily: 'monospace'),
-              ),
-              const SizedBox(height: VSPSpacing.md),
-              const Text(
-                'We encountered an unexpected error. Our team has been notified and we are working on it.',
-                textAlign: TextAlign.center,
-                style: TextStyle(color: VSPColors.textSecondary),
-              ),
-              const SizedBox(height: VSPSpacing.xl),
-              ElevatedButton(
-                onPressed: () {
-                  final ctx = navigatorKey.currentContext;
-                  if (ctx != null) {
-                    ctx.go('/');
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: VSPColors.accent,
-                  foregroundColor: Colors.black,
-                  padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
-                ),
-                child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  };
+ // Custom Error Boundary Widget
+ ErrorWidget.builder = (FlutterErrorDetails details) {
+ return Scaffold(
+ backgroundColor: VSPColors.background,
+ body: Center(
+ child: Padding(
+ padding: const EdgeInsets.all(VSPSpacing.xl),
+ child: Column(
+ mainAxisAlignment: MainAxisAlignment.center,
+ children: [
+ const Icon(Iconsax.warning_2_copy, size: 80, color: VSPColors.error),
+ const SizedBox(height: VSPSpacing.xl),
+ const Text(
+ 'Something went wrong! ',
+ style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
+ textAlign: TextAlign.center,
+ ),
+ Text(
+ details.exceptionAsString(),
+ textAlign: TextAlign.center,
+ style: const TextStyle(color: VSPColors.error, fontSize: 13, fontFamily: 'monospace'),
+ ),
+ const SizedBox(height: VSPSpacing.md),
+ const Text(
+ 'We encountered an unexpected error. Our team has been notified and we are working on it.',
+ textAlign: TextAlign.center,
+ style: TextStyle(color: VSPColors.textSecondary),
+ ),
+ const SizedBox(height: VSPSpacing.xl),
+ ElevatedButton(
+ onPressed: () {
+ final ctx = navigatorKey.currentContext;
+ if (ctx != null) {
+ ctx.go('/');
+ }
+ },
+ style: ElevatedButton.styleFrom(
+ backgroundColor: VSPColors.accent,
+ foregroundColor: Colors.black,
+ padding: const EdgeInsets.symmetric(horizontal: 32, vertical: 12),
+ ),
+ child: const Text('Try Again', style: TextStyle(fontWeight: FontWeight.bold)),
+ ),
+ ],
+ ),
+ ),
+ ),
+ );
+ };
 
-  runApp(const VSPApplication());
+ runApp(const VSPApplication());
 
-  // Background non-critical services (Notifications & Crashlytics)
-  unawaited(
-    NotificationService().initialize(navigatorKey).catchError((e) {
-      VSPLogger.w("⚠️ Warning: Notification service failed to initialize: $e");
-    }),
-  );
+ // Background non-critical services (Notifications & Crashlytics)
+ unawaited(
+ NotificationService().initialize(navigatorKey).catchError((e) {
+ VSPLogger.w(" Warning: Notification service failed to initialize: $e");
+ }),
+ );
 }
 
 class VSPApplication extends StatelessWidget {
-  const VSPApplication({super.key});
+ const VSPApplication({super.key});
 
-  @override
-  Widget build(BuildContext context) {
-    return MultiProvider(
-      providers: [
-        ChangeNotifierProvider(create: (_) => LanguageProvider()),
-        ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
-        ChangeNotifierProvider(create: (_) => StadiumProvider()),
-        ChangeNotifierProvider(create: (_) => BookingProvider()),
-      ],
-      child: const _MaterialAppWithRouter(),
-    );
-  }
+ @override
+ Widget build(BuildContext context) {
+ return MultiProvider(
+ providers: [
+ ChangeNotifierProvider(create: (_) => LanguageProvider()),
+ ChangeNotifierProvider(create: (_) => app_auth.AuthProvider()),
+ ChangeNotifierProvider(create: (_) => StadiumProvider()),
+ ChangeNotifierProvider(create: (_) => BookingProvider()),
+ ],
+ child: const _MaterialAppWithRouter(),
+ );
+ }
 }
 
 class _MaterialAppWithRouter extends StatefulWidget {
-  const _MaterialAppWithRouter();
+ const _MaterialAppWithRouter();
 
-  @override
-  State<_MaterialAppWithRouter> createState() => _MaterialAppWithRouterState();
+ @override
+ State<_MaterialAppWithRouter> createState() => _MaterialAppWithRouterState();
 }
 
 class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
-  late final GoRouter _router;
-  late final AppLinks _appLinks;
-  StreamSubscription<Uri>? _linkSubscription;
-  StreamSubscription<AuthState>? _authSub;
+ late final GoRouter _router;
+ late final AppLinks _appLinks;
+ StreamSubscription<Uri>? _linkSubscription;
+ StreamSubscription<AuthState>? _authSub;
 
-  @override
-  void initState() {
-    super.initState();
-    final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    _router = AppRouter.createRouter(authProvider, navigatorKey);
-    _initDeepLinks();
+ @override
+ void initState() {
+ super.initState();
+ final authProvider = Provider.of<app_auth.AuthProvider>(context, listen: false);
+ _router = AppRouter.createRouter(authProvider, navigatorKey);
+ _initDeepLinks();
 
-    // Listen to Supabase Auth State changes for Password Recovery
-    _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
-      if (data.event == AuthChangeEvent.passwordRecovery) {
-        debugPrint('🔑 Password recovery event triggered! Routing to /set-new-password');
-        _router.go('/set-new-password');
-      }
-    });
-  }
+ // Listen to Supabase Auth State changes for Password Recovery
+ _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+ if (data.event == AuthChangeEvent.passwordRecovery) {
+ debugPrint(' Password recovery event triggered! Routing to /set-new-password');
+ _router.go('/set-new-password');
+ }
+ });
+ }
 
-  void _initDeepLinks() {
-    _appLinks = AppLinks();
+ void _initDeepLinks() {
+ _appLinks = AppLinks();
 
-    // Check for initial link when app starts
-    _appLinks.getInitialLink().then((uri) {
-      if (uri != null) _handleDeepLink(uri);
-    });
+ // Check for initial link when app starts
+ _appLinks.getInitialLink().then((uri) {
+ if (uri != null) _handleDeepLink(uri);
+ });
 
-    // Listen to incoming links while app is running
-    _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
-      _handleDeepLink(uri);
-    });
-  }
+ // Listen to incoming links while app is running
+ _linkSubscription = _appLinks.uriLinkStream.listen((uri) {
+ _handleDeepLink(uri);
+ });
+ }
 
-  void _handleDeepLink(Uri uri) {
-    debugPrint('🔗 Handling deep link: $uri');
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+ void _handleDeepLink(Uri uri) {
+ debugPrint(' Handling deep link: $uri');
+ final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
-    // 1. Supabase OAuth callback bypass
-    if (DeepLinkHelper.isOAuthCallback(uri)) {
-      debugPrint('🔐 OAuth callback detected — forwarding to Supabase auth handler.');
-      return;
-    }
+ // 1. Supabase OAuth callback bypass
+ if (DeepLinkHelper.isOAuthCallback(uri)) {
+ debugPrint(' OAuth callback detected — forwarding to Supabase auth handler.');
+ return;
+ }
 
-    // 2. Auth Guard: حفظ الرابط لوقت لاحق إن لم يكن مسجلاً
-    if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
-      debugPrint('💾 Saving pending deep link for after login: $uri');
-      SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
-      return;
-    }
+ // 2. Auth Guard: حفظ الرابط لوقت لاحق إن لم يكن مسجلاً
+ if (!auth.isAuthenticated || auth.userModel?.isRegistrationComplete != true) {
+ debugPrint(' Saving pending deep link for after login: $uri');
+ SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_deep_link', uri.toString()));
+ return;
+ }
 
-    // 3. التحليل والتوجيه الآمن
-    final parsed = DeepLinkHelper.parse(uri);
-    if (parsed != null) {
-      _router.push(parsed.routePath);
-    } else {
-      debugPrint('⚠️ Invalid or unrecognized deep link: $uri');
-      _router.go('/');
-    }
-  }
+ // 3. التحليل والتوجيه الآمن
+ final parsed = DeepLinkHelper.parse(uri);
+ if (parsed != null) {
+ _router.push(parsed.routePath);
+ } else {
+ debugPrint(' Invalid or unrecognized deep link: $uri');
+ _router.go('/');
+ }
+ }
 
-  @override
-  void dispose() {
-    _linkSubscription?.cancel();
-    _authSub?.cancel();
-    super.dispose();
-  }
+ @override
+ void dispose() {
+ _linkSubscription?.cancel();
+ _authSub?.cancel();
+ super.dispose();
+ }
 
-  @override
-  Widget build(BuildContext context) {
-    final languageProvider = Provider.of<LanguageProvider>(context);
-    return MaterialApp.router(
-      routerConfig: _router,
-      title: 'VSP',
-      debugShowCheckedModeBanner: false,
-      theme: AppTheme.darkTheme,
-      localizationsDelegates: [
-        AppLocalizations.delegate,
-        GlobalMaterialLocalizations.delegate,
-        GlobalWidgetsLocalizations.delegate,
-        GlobalCupertinoLocalizations.delegate,
-      ],
-      supportedLocales: const [
-        Locale('en'),
-        Locale('ar'),
-      ],
-      locale: languageProvider.currentLocale,
-    );
-  }
+ @override
+ Widget build(BuildContext context) {
+ final languageProvider = Provider.of<LanguageProvider>(context);
+ return MaterialApp.router(
+ routerConfig: _router,
+ title: 'VSP',
+ debugShowCheckedModeBanner: false,
+ theme: AppTheme.darkTheme,
+ localizationsDelegates: [
+ AppLocalizations.delegate,
+ GlobalMaterialLocalizations.delegate,
+ GlobalWidgetsLocalizations.delegate,
+ GlobalCupertinoLocalizations.delegate,
+ ],
+ supportedLocales: const [
+ Locale('en'),
+ Locale('ar'),
+ ],
+ locale: languageProvider.currentLocale,
+ );
+ }
 }

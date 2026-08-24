@@ -16,532 +16,532 @@ import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 
 class ChallengeSelectTeamScreen extends StatefulWidget {
-  final Stadium stadium;
-  final String bookingType;
+ final Stadium stadium;
+ final String bookingType;
 
-  const ChallengeSelectTeamScreen({
-    super.key,
-    required this.stadium,
-    required this.bookingType,
-  });
+ const ChallengeSelectTeamScreen({
+ super.key,
+ required this.stadium,
+ required this.bookingType,
+ });
 
-  @override
-  State<ChallengeSelectTeamScreen> createState() => _ChallengeSelectTeamScreenState();
+ @override
+ State<ChallengeSelectTeamScreen> createState() => _ChallengeSelectTeamScreenState();
 }
 
 class _ChallengeSelectTeamScreenState extends State<ChallengeSelectTeamScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  Team? _selectedTeam;
-  Timer? _debounce;
-  bool _isSearching = false;
-  List<Team> _searchedTeams = [];
-  Map<String, int>? _h2hStats;
-  bool _isLoadingH2H = false;
-  final Map<String, bool> _championStatusMap = {};
+ final TextEditingController _searchController = TextEditingController();
+ String _searchQuery = '';
+ Team? _selectedTeam;
+ Timer? _debounce;
+ bool _isSearching = false;
+ List<Team> _searchedTeams = [];
+ Map<String, int>? _h2hStats;
+ bool _isLoadingH2H = false;
+ final Map<String, bool> _championStatusMap = {};
 
-  // Real History Teams fetched from bookings
-  List<Team> _historyTeams = [];
-  bool _isLoadingHistory = true;
+ // Real History Teams fetched from bookings
+ List<Team> _historyTeams = [];
+ bool _isLoadingHistory = true;
 
-  Future<void> _check1v1ChampionForTeam(String teamId) async {
-    if (_championStatusMap.containsKey(teamId)) return;
-    try {
-      final hasChamp = await TeamRepository().has1v1Champion(teamId);
-      if (mounted) {
-        setState(() {
-          _championStatusMap[teamId] = hasChamp;
-        });
-      }
-    } catch (e) {
-      debugPrint('Error checking 1v1 champion for team $teamId: $e');
-    }
-  }
+ Future<void> _check1v1ChampionForTeam(String teamId) async {
+ if (_championStatusMap.containsKey(teamId)) return;
+ try {
+ final hasChamp = await TeamRepository().has1v1Champion(teamId);
+ if (mounted) {
+ setState(() {
+ _championStatusMap[teamId] = hasChamp;
+ });
+ }
+ } catch (e) {
+ debugPrint('Error checking 1v1 champion for team $teamId: $e');
+ }
+ }
 
-  @override
-  void initState() {
-    super.initState();
-    _fetchHistory();
-  }
+ @override
+ void initState() {
+ super.initState();
+ _fetchHistory();
+ }
 
-  Future<void> _fetchHistory() async {
-    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-    final uid = auth.currentUser?.uid;
-    if (uid != null) {
-      final team = await TeamRepository().getUserTeam(uid);
-      if (team != null) {
-        final history = await TeamRepository().getPreviousOpponents(team.id);
-        if (mounted) {
-          setState(() {
-            _historyTeams = history;
-            _isLoadingHistory = false;
-          });
-        }
-      } else {
-        if (mounted) setState(() => _isLoadingHistory = false);
-      }
-    } else {
-      if (mounted) setState(() => _isLoadingHistory = false);
-    }
-  }
+ Future<void> _fetchHistory() async {
+ final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+ final uid = auth.currentUser?.uid;
+ if (uid != null) {
+ final team = await TeamRepository().getUserTeam(uid);
+ if (team != null) {
+ final history = await TeamRepository().getPreviousOpponents(team.id);
+ if (mounted) {
+ setState(() {
+ _historyTeams = history;
+ _isLoadingHistory = false;
+ });
+ }
+ } else {
+ if (mounted) setState(() => _isLoadingHistory = false);
+ }
+ } else {
+ if (mounted) setState(() => _isLoadingHistory = false);
+ }
+ }
 
-  void _onSearchChanged(String query) {
-    if (_debounce?.isActive ?? false) _debounce!.cancel();
-    
-    setState(() {
-      _searchQuery = query;
-    });
+ void _onSearchChanged(String query) {
+ if (_debounce?.isActive ?? false) _debounce!.cancel();
+ 
+ setState(() {
+ _searchQuery = query;
+ });
 
-    if (query.isEmpty) {
-      setState(() {
-        _searchedTeams = [];
-        _isSearching = false;
-      });
-      return;
-    }
+ if (query.isEmpty) {
+ setState(() {
+ _searchedTeams = [];
+ _isSearching = false;
+ });
+ return;
+ }
 
-    _debounce = Timer(const Duration(milliseconds: 500), () async {
-      setState(() => _isSearching = true);
-      
-      final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
-      final results = await TeamRepository().searchOpponentTeams(query);
-      
-      if (mounted) {
-        setState(() {
-          // Filter out the player's own team
-          _searchedTeams = results.where((team) => team.id != myTeamId).toList();
-          _isSearching = false;
-        });
-      }
-    });
-  }
+ _debounce = Timer(const Duration(milliseconds: 500), () async {
+ setState(() => _isSearching = true);
+ 
+ final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
+ final results = await TeamRepository().searchOpponentTeams(query);
+ 
+ if (mounted) {
+ setState(() {
+ // Filter out the player's own team
+ _searchedTeams = results.where((team) => team.id != myTeamId).toList();
+ _isSearching = false;
+ });
+ }
+ });
+ }
 
-  @override
-  void dispose() {
-    _searchController.dispose();
-    _debounce?.cancel();
-    super.dispose();
-  }
+ @override
+ void dispose() {
+ _searchController.dispose();
+ _debounce?.cancel();
+ super.dispose();
+ }
 
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      backgroundColor: VSPColors.background,
-      appBar: AppBar(
-        backgroundColor: VSPColors.background,
-        elevation: 0,
-        leading: const VSPBackButton(),
-        centerTitle: true,
-        title: Text(
-          AppLocalizations.of(context)!.selectOpponentTeam,
-          style: Theme.of(context).textTheme.displaySmall,
-        ),
-      ),
-      body: Column(
-        children: [
-          Expanded(
-            child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
-              padding: const EdgeInsets.all(16),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Text(
-                    AppLocalizations.of(context)!.chooseOpponent,
-                    style: Theme.of(context).textTheme.displaySmall,
-                  ),
-                  const SizedBox(height: 8),
-                  Text(
-                    AppLocalizations.of(context)!.chooseOpponentSubtitle,
-                    style: TextStyle(
-                      color: VSPColors.textSecondary.withValues(alpha: 0.7),
-                      fontSize: 14,
-                    ),
-                  ),
-                  const SizedBox(height: 24),
+ @override
+ Widget build(BuildContext context) {
+ return Scaffold(
+ backgroundColor: VSPColors.background,
+ appBar: AppBar(
+ backgroundColor: VSPColors.background,
+ elevation: 0,
+ leading: const VSPBackButton(),
+ centerTitle: true,
+ title: Text(
+ AppLocalizations.of(context)!.selectOpponentTeam,
+ style: Theme.of(context).textTheme.displaySmall,
+ ),
+ ),
+ body: Column(
+ children: [
+ Expanded(
+ child: SingleChildScrollView(keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag, 
+ padding: const EdgeInsets.all(16),
+ child: Column(
+ crossAxisAlignment: CrossAxisAlignment.start,
+ children: [
+ Text(
+ AppLocalizations.of(context)!.chooseOpponent,
+ style: Theme.of(context).textTheme.displaySmall,
+ ),
+ const SizedBox(height: 8),
+ Text(
+ AppLocalizations.of(context)!.chooseOpponentSubtitle,
+ style: TextStyle(
+ color: VSPColors.textSecondary.withValues(alpha: 0.7),
+ fontSize: 14,
+ ),
+ ),
+ const SizedBox(height: 24),
 
-                  // Search Field
-                  Container(
-                    decoration: BoxDecoration(
-                      color: VSPColors.surface,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                      border: Border.all(color: VSPColors.divider),
-                    ),
-                    child: TextField(
-                      controller: _searchController,
-                      style: Theme.of(context).textTheme.bodyLarge,
-                      onChanged: _onSearchChanged,
-                      decoration: InputDecoration(
-                        hintText: AppLocalizations.of(context)!.searchTeamPlaceholder,
-                        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
-                        prefixIcon: const Icon(Iconsax.search_normal_copy, color: VSPColors.accent),
-                        border: InputBorder.none,
-                        contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
-                      ),
-                    ),
-                  ),
+ // Search Field
+ Container(
+ decoration: BoxDecoration(
+ color: VSPColors.surface,
+ borderRadius: BorderRadius.circular(VSPRadius.md),
+ border: Border.all(color: VSPColors.divider),
+ ),
+ child: TextField(
+ controller: _searchController,
+ style: Theme.of(context).textTheme.bodyLarge,
+ onChanged: _onSearchChanged,
+ decoration: InputDecoration(
+ hintText: AppLocalizations.of(context)!.searchTeamPlaceholder,
+ hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(color: VSPColors.textSecondary),
+ prefixIcon: const Icon(Iconsax.search_normal_copy, color: VSPColors.accent),
+ border: InputBorder.none,
+ contentPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: 14),
+ ),
+ ),
+ ),
 
-                  const SizedBox(height: 32),
+ const SizedBox(height: 32),
 
-                  // Search Results or History
-                  if (_searchQuery.isNotEmpty) ...[
-                    Text(
-                      AppLocalizations.of(context)!.searchResults,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    if (_isSearching)
-                      const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
-                          child: CircularProgressIndicator(color: VSPColors.accent),
-                        ),
-                      )
-                    else if (_searchedTeams.isEmpty)
-                      Center(
-                        child: Padding(
-                          padding: const EdgeInsets.symmetric(vertical: 40),
-                          child: Column(
-                            children: [
-                              Icon(Iconsax.search_normal_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
-                              const SizedBox(height: 16),
-                              Text(
-                                AppLocalizations.of(context)!.noTeamsFound(_searchQuery),
-                                style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
-                              ),
-                            ],
-                          ),
-                        ),
-                      )
-                    else
-                      ..._searchedTeams.map((team) => _buildTeamCard(team)),
-                  ] else ...[
-                    Text(
-                      AppLocalizations.of(context)!.previousOpponents,
-                      style: Theme.of(context).textTheme.titleLarge,
-                    ),
-                    const SizedBox(height: 16),
-                    if (_isLoadingHistory)
-                       const Center(
-                        child: Padding(
-                          padding: EdgeInsets.symmetric(vertical: 40),
-                          child: CircularProgressIndicator(color: VSPColors.accent),
-                        ),
-                      )
-                    else if (_historyTeams.isEmpty)
-                      Container(
-                        width: double.infinity,
-                        padding: const EdgeInsets.symmetric(vertical: 40),
-                        decoration: BoxDecoration(
-                          color: VSPColors.surface,
-                          borderRadius: BorderRadius.circular(VSPRadius.lg),
-                        ),
-                        child: Column(
-                          children: [
-                            Icon(Iconsax.rotate_left_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
-                            const SizedBox(height: 16),
-                            Text(
-                              AppLocalizations.of(context)!.noPreviousOpponents,
-                              textAlign: TextAlign.center,
-                              style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
-                            ),
-                          ],
-                        ),
-                      )
-                    else
-                      ..._historyTeams.map((team) => _buildTeamCard(team)),
-                  ],
-                ],
-              ),
-            ),
-          ),
+ // Search Results or History
+ if (_searchQuery.isNotEmpty) ...[
+ Text(
+ AppLocalizations.of(context)!.searchResults,
+ style: Theme.of(context).textTheme.titleLarge,
+ ),
+ const SizedBox(height: 16),
+ if (_isSearching)
+ const Center(
+ child: Padding(
+ padding: EdgeInsets.symmetric(vertical: 40),
+ child: CircularProgressIndicator(color: VSPColors.accent),
+ ),
+ )
+ else if (_searchedTeams.isEmpty)
+ Center(
+ child: Padding(
+ padding: const EdgeInsets.symmetric(vertical: 40),
+ child: Column(
+ children: [
+ Icon(Iconsax.search_normal_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+ const SizedBox(height: 16),
+ Text(
+ AppLocalizations.of(context)!.noTeamsFound(_searchQuery),
+ style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5)),
+ ),
+ ],
+ ),
+ ),
+ )
+ else
+ ..._searchedTeams.map((team) => _buildTeamCard(team)),
+ ] else ...[
+ Text(
+ AppLocalizations.of(context)!.previousOpponents,
+ style: Theme.of(context).textTheme.titleLarge,
+ ),
+ const SizedBox(height: 16),
+ if (_isLoadingHistory)
+ const Center(
+ child: Padding(
+ padding: EdgeInsets.symmetric(vertical: 40),
+ child: CircularProgressIndicator(color: VSPColors.accent),
+ ),
+ )
+ else if (_historyTeams.isEmpty)
+ Container(
+ width: double.infinity,
+ padding: const EdgeInsets.symmetric(vertical: 40),
+ decoration: BoxDecoration(
+ color: VSPColors.surface,
+ borderRadius: BorderRadius.circular(VSPRadius.lg),
+ ),
+ child: Column(
+ children: [
+ Icon(Iconsax.rotate_left_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3), size: 48),
+ const SizedBox(height: 16),
+ Text(
+ AppLocalizations.of(context)!.noPreviousOpponents,
+ textAlign: TextAlign.center,
+ style: TextStyle(color: VSPColors.textSecondary.withValues(alpha: 0.5), fontSize: 13),
+ ),
+ ],
+ ),
+ )
+ else
+ ..._historyTeams.map((team) => _buildTeamCard(team)),
+ ],
+ ],
+ ),
+ ),
+ ),
 
-          // Continue Button
-          Container(
-            padding: const EdgeInsets.all(VSPSpacing.lg),
-            decoration: BoxDecoration(
-              color: VSPColors.surface,
-              borderRadius: const BorderRadius.only(
-                topLeft: Radius.circular(VSPRadius.xl),
-                topRight: Radius.circular(VSPRadius.xl),
-              ),
-              boxShadow: VSPShadow.subtle,
-            ),
-            child: SafeArea(
-              child: PrimaryButton(
-                text: AppLocalizations.of(context)!.continueButton,
-                onPressed: _selectedTeam == null
-                    ? null
-                    : () async {
-                        if (_selectedTeam != null && _selectedTeam!.fairPlayScore < 40) {
-                          if (context.mounted) {
-                            ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                backgroundColor: VSPColors.error,
-                              ),
-                            );
-                          }
-                          return;
-                        }
+ // Continue Button
+ Container(
+ padding: const EdgeInsets.all(VSPSpacing.lg),
+ decoration: BoxDecoration(
+ color: VSPColors.surface,
+ borderRadius: const BorderRadius.only(
+ topLeft: Radius.circular(VSPRadius.xl),
+ topRight: Radius.circular(VSPRadius.xl),
+ ),
+ boxShadow: VSPShadow.subtle,
+ ),
+ child: SafeArea(
+ child: PrimaryButton(
+ text: AppLocalizations.of(context)!.continueButton,
+ onPressed: _selectedTeam == null
+ ? null
+ : () async {
+ if (_selectedTeam != null && _selectedTeam!.fairPlayScore < 40) {
+ if (context.mounted) {
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
+ backgroundColor: VSPColors.error,
+ ),
+ );
+ }
+ return;
+ }
 
-                        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
-                        final uid = auth.currentUser?.uid;
-                        if (uid != null) {
-                          final team = await TeamRepository().getUserTeam(uid);
-                          if (team != null) {
-                            if (team.fairPlayScore < 40) {
-                              if (context.mounted) {
-                                ScaffoldMessenger.of(context).showSnackBar(
-                                  SnackBar(
-                                    content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
-                                    backgroundColor: VSPColors.error,
-                                  ),
-                                );
-                              }
-                              return;
-                            }
-                            if (context.mounted) {
-                              context.read<BookingProvider>().updateDraft(
-                                opponentTeamId: _selectedTeam!.id,
-                                opponentTeamName: _selectedTeam!.name,
-                                playerTeamId: team.id,
-                                playerTeamName: team.name,
-                              );
-                            }
-                          }
-                        } else if (context.mounted) {
-                           context.read<BookingProvider>().updateDraft(
-                            opponentTeamId: _selectedTeam!.id,
-                            opponentTeamName: _selectedTeam!.name,
-                          );
-                        }
+ final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+ final uid = auth.currentUser?.uid;
+ if (uid != null) {
+ final team = await TeamRepository().getUserTeam(uid);
+ if (team != null) {
+ if (team.fairPlayScore < 40) {
+ if (context.mounted) {
+ ScaffoldMessenger.of(context).showSnackBar(
+ SnackBar(
+ content: Text(AppLocalizations.of(context)!.fairPlayBannedError),
+ backgroundColor: VSPColors.error,
+ ),
+ );
+ }
+ return;
+ }
+ if (context.mounted) {
+ context.read<BookingProvider>().updateDraft(
+ opponentTeamId: _selectedTeam!.id,
+ opponentTeamName: _selectedTeam!.name,
+ playerTeamId: team.id,
+ playerTeamName: team.name,
+ );
+ }
+ }
+ } else if (context.mounted) {
+ context.read<BookingProvider>().updateDraft(
+ opponentTeamId: _selectedTeam!.id,
+ opponentTeamName: _selectedTeam!.name,
+ );
+ }
 
-                        if (!context.mounted) return;
-                        Navigator.push(
-                          context,
-                          MaterialPageRoute(
-                            builder: (context) => BookingConfirmationScreen(
-                              stadium: widget.stadium,
-                              bookingType: widget.bookingType,
-                              opponentTeam: _selectedTeam,
-                            ),
-                          ),
-                        );
-                      },
-              ),
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+ if (!context.mounted) return;
+ Navigator.push(
+ context,
+ MaterialPageRoute(
+ builder: (context) => BookingConfirmationScreen(
+ stadium: widget.stadium,
+ bookingType: widget.bookingType,
+ opponentTeam: _selectedTeam,
+ ),
+ ),
+ );
+ },
+ ),
+ ),
+ ),
+ ],
+ ),
+ );
+ }
 
-  Widget _buildTeamCard(Team team) {
-    final bool isSelected = _selectedTeam?.id == team.id;
-    _check1v1ChampionForTeam(team.id);
-    final bool hasChampion = _championStatusMap[team.id] ?? false;
+ Widget _buildTeamCard(Team team) {
+ final bool isSelected = _selectedTeam?.id == team.id;
+ _check1v1ChampionForTeam(team.id);
+ final bool hasChampion = _championStatusMap[team.id] ?? false;
 
-    return GestureDetector(
-      onTap: () async {
-        HapticFeedback.selectionClick();
-        if (isSelected) return;
-        
-        setState(() {
-          _selectedTeam = team;
-          _isLoadingH2H = true;
-          _h2hStats = null;
-        });
+ return GestureDetector(
+ onTap: () async {
+ HapticFeedback.selectionClick();
+ if (isSelected) return;
+ 
+ setState(() {
+ _selectedTeam = team;
+ _isLoadingH2H = true;
+ _h2hStats = null;
+ });
 
-        final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
-        if (myTeamId != null) {
-          final stats = await TeamRepository().getHeadToHeadStats(myTeamId, team.id);
-          if (mounted) {
-            setState(() {
-              _h2hStats = stats;
-              _isLoadingH2H = false;
-            });
-          }
-        } else {
-          if (mounted) setState(() => _isLoadingH2H = false);
-        }
-      },
-      child: AnimatedContainer(
-        duration: const Duration(milliseconds: 300),
-        margin: const EdgeInsets.only(bottom: 12),
-        padding: const EdgeInsets.all(VSPSpacing.md),
-        decoration: BoxDecoration(
-          color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
-          borderRadius: BorderRadius.circular(VSPRadius.lg),
-          border: Border.all(
-            color: isSelected ? VSPColors.accent : VSPColors.divider,
-            width: 1.5,
-          ),
-        ),
-        child: Column(
-          children: [
-            Row(
-              children: [
-                ShimmerImage(
-                  imageUrl: team.captainImageUrl,
-                  width: 50,
-                  height: 50,
-                  borderRadius: VSPRadius.full,
-                ),
-                const SizedBox(width: 16),
-                Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Flexible(
-                            child: Text(
-                              team.name,
-                              style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                                fontWeight: FontWeight.bold,
-                              ),
-                            ),
-                          ),
-                          if (hasChampion) ...[
-                            const SizedBox(width: 6),
-                            Container(
-                              padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
-                              decoration: BoxDecoration(
-                                color: VSPColors.warning.withValues(alpha: 0.15),
-                                borderRadius: BorderRadius.circular(12),
-                                border: Border.all(color: VSPColors.warning, width: 1),
-                              ),
-                              child: const Text(
-                                '👑 يضم بطل 1 ضد 1',
-                                style: TextStyle(
-                                  color: VSPColors.warning,
-                                  fontSize: 10,
-                                  fontWeight: FontWeight.bold,
-                                ),
-                              ),
-                            ),
-                          ],
-                        ],
-                      ),
-                      const SizedBox(height: 4),
-                      Text(
-                        AppLocalizations.of(context)!.matchesPlayedCount(team.matchesPlayed),
-                        style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
-                      ),
-                    ],
-                  ),
-                ),
-                if (isSelected)
-                  const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
-                else
-                  Icon(Iconsax.tick_circle_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
-              ],
-            ),
-            if (isSelected) ...[
-              const Divider(color: VSPColors.divider, height: 32),
-              if (_isLoadingH2H)
-                const Center(
-                  child: Padding(
-                    padding: EdgeInsets.all(8.0),
-                    child: SizedBox(
-                      width: 20,
-                      height: 20,
-                      child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
-                    ),
-                  ),
-                )
-              else if (_h2hStats != null && _h2hStats!['totalMatches']! > 0)
-                _buildH2HContent()
-              else if (_h2hStats != null)
-                Text(
-                  AppLocalizations.of(context)!.firstTimePlaying,
-                  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
-                ),
-            ],
-          ],
-        ),
-      ),
-    );
-  }
+ final String? myTeamId = context.read<BookingProvider>().currentDraft?.playerTeamId;
+ if (myTeamId != null) {
+ final stats = await TeamRepository().getHeadToHeadStats(myTeamId, team.id);
+ if (mounted) {
+ setState(() {
+ _h2hStats = stats;
+ _isLoadingH2H = false;
+ });
+ }
+ } else {
+ if (mounted) setState(() => _isLoadingH2H = false);
+ }
+ },
+ child: AnimatedContainer(
+ duration: const Duration(milliseconds: 300),
+ margin: const EdgeInsets.only(bottom: 12),
+ padding: const EdgeInsets.all(VSPSpacing.md),
+ decoration: BoxDecoration(
+ color: isSelected ? VSPColors.accent.withValues(alpha: 0.05) : VSPColors.surface,
+ borderRadius: BorderRadius.circular(VSPRadius.lg),
+ border: Border.all(
+ color: isSelected ? VSPColors.accent : VSPColors.divider,
+ width: 1.5,
+ ),
+ ),
+ child: Column(
+ children: [
+ Row(
+ children: [
+ ShimmerImage(
+ imageUrl: team.captainImageUrl,
+ width: 50,
+ height: 50,
+ borderRadius: VSPRadius.full,
+ ),
+ const SizedBox(width: 16),
+ Expanded(
+ child: Column(
+ crossAxisAlignment: CrossAxisAlignment.start,
+ children: [
+ Row(
+ children: [
+ Flexible(
+ child: Text(
+ team.name,
+ style: Theme.of(context).textTheme.titleMedium?.copyWith(
+ fontWeight: FontWeight.bold,
+ ),
+ ),
+ ),
+ if (hasChampion) ...[
+ const SizedBox(width: 6),
+ Container(
+ padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+ decoration: BoxDecoration(
+ color: VSPColors.warning.withValues(alpha: 0.15),
+ borderRadius: BorderRadius.circular(12),
+ border: Border.all(color: VSPColors.warning, width: 1),
+ ),
+ child: const Text(
+ ' يضم بطل 1 ضد 1',
+ style: TextStyle(
+ color: VSPColors.warning,
+ fontSize: 10,
+ fontWeight: FontWeight.bold,
+ ),
+ ),
+ ),
+ ],
+ ],
+ ),
+ const SizedBox(height: 4),
+ Text(
+ AppLocalizations.of(context)!.matchesPlayedCount(team.matchesPlayed),
+ style: Theme.of(context).textTheme.bodySmall?.copyWith(color: VSPColors.textSecondary),
+ ),
+ ],
+ ),
+ ),
+ if (isSelected)
+ const Icon(Iconsax.tick_circle_copy, color: VSPColors.accent)
+ else
+ Icon(Iconsax.tick_circle_copy, color: VSPColors.textSecondary.withValues(alpha: 0.3)),
+ ],
+ ),
+ if (isSelected) ...[
+ const Divider(color: VSPColors.divider, height: 32),
+ if (_isLoadingH2H)
+ const Center(
+ child: Padding(
+ padding: EdgeInsets.all(8.0),
+ child: SizedBox(
+ width: 20,
+ height: 20,
+ child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent),
+ ),
+ ),
+ )
+ else if (_h2hStats != null && _h2hStats!['totalMatches']! > 0)
+ _buildH2HContent()
+ else if (_h2hStats != null)
+ Text(
+ AppLocalizations.of(context)!.firstTimePlaying,
+ style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12, fontStyle: FontStyle.italic),
+ ),
+ ],
+ ],
+ ),
+ ),
+ );
+ }
 
-  Widget _buildH2HContent() {
-    final wins = _h2hStats!['teamAWins']!;
-    final opposingWins = _h2hStats!['teamBWins']!;
-    final draws = _h2hStats!['draws']!;
-    
-    String hypeMessage = AppLocalizations.of(context)!.seriesTied;
-    if (wins > opposingWins) {
-      hypeMessage = AppLocalizations.of(context)!.youDominate;
-    } else if (wins < opposingWins) {
-      hypeMessage = AppLocalizations.of(context)!.timeForRevenge;
-    }
+ Widget _buildH2HContent() {
+ final wins = _h2hStats!['teamAWins']!;
+ final opposingWins = _h2hStats!['teamBWins']!;
+ final draws = _h2hStats!['draws']!;
+ 
+ String hypeMessage = AppLocalizations.of(context)!.seriesTied;
+ if (wins > opposingWins) {
+ hypeMessage = AppLocalizations.of(context)!.youDominate;
+ } else if (wins < opposingWins) {
+ hypeMessage = AppLocalizations.of(context)!.timeForRevenge;
+ }
 
-    return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
-      children: [
-        Text(
-          AppLocalizations.of(context)!.headToHeadHistory,
-          style: const TextStyle(
-            color: VSPColors.textSecondary,
-            fontSize: 10,
-            fontWeight: FontWeight.bold,
-            letterSpacing: 1.2,
-          ),
-        ),
-        const SizedBox(height: 16),
-        Row(
-          children: [
-            _buildH2HStatItem(AppLocalizations.of(context)!.yourWins, wins, VSPColors.accent),
-            _buildH2HStatItem(AppLocalizations.of(context)!.draws, draws, VSPColors.textSecondary),
-            _buildH2HStatItem(AppLocalizations.of(context)!.theirWins, opposingWins, VSPColors.error),
-          ],
-        ),
-        const SizedBox(height: 16),
-        Container(
-          width: double.infinity,
-          padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
-          decoration: BoxDecoration(
-            color: VSPColors.accent.withValues(alpha: 0.1),
-            borderRadius: BorderRadius.circular(VSPRadius.sm),
-          ),
-          child: Text(
-            hypeMessage,
-            textAlign: TextAlign.center,
-            style: Theme.of(context).textTheme.labelLarge?.copyWith(
-              color: VSPColors.accent,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ),
-      ],
-    );
-  }
+ return Column(
+ crossAxisAlignment: CrossAxisAlignment.start,
+ children: [
+ Text(
+ AppLocalizations.of(context)!.headToHeadHistory,
+ style: const TextStyle(
+ color: VSPColors.textSecondary,
+ fontSize: 10,
+ fontWeight: FontWeight.bold,
+ letterSpacing: 1.2,
+ ),
+ ),
+ const SizedBox(height: 16),
+ Row(
+ children: [
+ _buildH2HStatItem(AppLocalizations.of(context)!.yourWins, wins, VSPColors.accent),
+ _buildH2HStatItem(AppLocalizations.of(context)!.draws, draws, VSPColors.textSecondary),
+ _buildH2HStatItem(AppLocalizations.of(context)!.theirWins, opposingWins, VSPColors.error),
+ ],
+ ),
+ const SizedBox(height: 16),
+ Container(
+ width: double.infinity,
+ padding: const EdgeInsets.symmetric(vertical: 8, horizontal: 12),
+ decoration: BoxDecoration(
+ color: VSPColors.accent.withValues(alpha: 0.1),
+ borderRadius: BorderRadius.circular(VSPRadius.sm),
+ ),
+ child: Text(
+ hypeMessage,
+ textAlign: TextAlign.center,
+ style: Theme.of(context).textTheme.labelLarge?.copyWith(
+ color: VSPColors.accent,
+ fontWeight: FontWeight.bold,
+ ),
+ ),
+ ),
+ ],
+ );
+ }
 
-  Widget _buildH2HStatItem(String label, int value, Color color) {
-    return Expanded(
-      child: Column(
-        children: [
-          Text(
-            value.toString(),
-            style: TextStyle(
-              color: color,
-              fontSize: 24,
-              fontWeight: FontWeight.w900,
-              
-            ),
-          ),
-          Text(
-            label,
-            style: TextStyle(
-              color: VSPColors.textSecondary.withValues(alpha: 0.6),
-              fontSize: 9,
-              fontWeight: FontWeight.bold,
-            ),
-          ),
-        ],
-      ),
-    );
-  }
+ Widget _buildH2HStatItem(String label, int value, Color color) {
+ return Expanded(
+ child: Column(
+ children: [
+ Text(
+ value.toString(),
+ style: TextStyle(
+ color: color,
+ fontSize: 24,
+ fontWeight: FontWeight.w900,
+ 
+ ),
+ ),
+ Text(
+ label,
+ style: TextStyle(
+ color: VSPColors.textSecondary.withValues(alpha: 0.6),
+ fontSize: 9,
+ fontWeight: FontWeight.bold,
+ ),
+ ),
+ ],
+ ),
+ );
+ }
 }
 
 

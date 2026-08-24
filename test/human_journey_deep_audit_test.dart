@@ -143,7 +143,7 @@ void main() {
       expect(redirect, equals('/suspended'));
     });
 
-    test('Blocked owner (isBlocked == true) is restricted to /owner dashboard', () {
+    test('Blocked owner (isBlocked == true) is strictly directed to /suspended', () {
       final mockAuth = FakeAuthProvider(
         isAuthenticated: true,
         isOwner: true,
@@ -162,7 +162,7 @@ void main() {
         FakeGoRouterState('/match/booking_123'),
         mockAuth,
       );
-      expect(redirect, equals('/owner'));
+      expect(redirect, equals('/suspended'));
     });
   });
 

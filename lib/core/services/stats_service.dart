@@ -68,11 +68,11 @@ class StatsService {
         'wins': wins,
         'challengeMatches': challengeMatchesCount,
       };
-    } catch (e, stack) {
-      VSPLogger.e('Error calculating stats for player $userId', e, stack);
+    } catch (e) {
+      VSPLogger.w('Notice calculating stats for player $userId: $e');
       return {
         'winRate': '0.0',
-        'favoriteStadium': 'Error',
+        'favoriteStadium': 'No matches yet',
         'matchesPlayed': 0,
         'wins': 0,
         'challengeMatches': 0,

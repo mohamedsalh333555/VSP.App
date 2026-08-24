@@ -152,7 +152,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get signOutCurrentAccount => 'تسجيل الخروج من الحساب الحالي';
 
   @override
-  String get credentialAccess => 'الوصول بالبيانات';
+  String get credentialAccess => 'تسجيل الدخول بالبريد وكلمة المرور';
 
   @override
   String get forgotPassword => 'نسيت كلمة المرور؟';
@@ -200,7 +200,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get dateOfBirthPlaceholder => 'YYYY-MM-DD';
 
   @override
-  String get addPersonalPhoneNumber => 'إضافة رقم (رقم الهاتف الشخصي)';
+  String get addPersonalPhoneNumber => 'رقم الهاتف الشخصي';
 
   @override
   String get enterName => 'أدخل اسمك';
@@ -576,7 +576,7 @@ class AppLocalizationsAr extends AppLocalizations {
   }
 
   @override
-  String get adminModeActivated => 'تم تفعيل وضع الأدمن ⚡';
+  String get adminModeActivated => 'تم تفعيل وضع الأدمن ';
 
   @override
   String get winRate => 'نسبة الفوز';
@@ -1113,7 +1113,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String tournamentJoinSuccess(String team) {
-    return 'تم الانضمام للبطولة بنجاح! بالتوفيق فريق $team 🏆';
+    return 'تم الانضمام للبطولة بنجاح! بالتوفيق فريق $team ';
   }
 
   @override
@@ -1180,13 +1180,13 @@ class AppLocalizationsAr extends AppLocalizations {
   String get noResults => 'لم يتم العثور على نتائج.';
 
   @override
-  String get stadiumsCategory => 'الملاعب 🏟️';
+  String get stadiumsCategory => 'الملاعب ';
 
   @override
-  String get teamsCategory => 'الفرق ⚽';
+  String get teamsCategory => 'الفرق ';
 
   @override
-  String get championshipsCategory => 'البطولات 🏆';
+  String get championshipsCategory => 'البطولات ';
 
   @override
   String prizeLabel(Object prize) {
@@ -1236,7 +1236,7 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String shareTeamText(Object name, Object rank) {
-    return 'شاهد فريقي $name على VSP! ترتيبنا هو $rank. ⚽🏆';
+    return 'شاهد فريقي $name على VSP! ترتيبنا هو $rank. ';
   }
 
   @override
@@ -1520,7 +1520,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get allStadiumsFilter => 'كل الملاعب';
 
   @override
-  String get allTimeFilter => 'كل الأوقات 🌍';
+  String get allTimeFilter => 'كل الأوقات ';
 
   @override
   String get noBookingsForTodayLabel => 'لا توجد حجوزات لليوم';
@@ -1570,15 +1570,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get resetLabel => 'إعادة تعيين';
 
   @override
-  String get forceStartTournament => 'بدء البطولة قسراً؟';
+  String get forceStartTournament => 'بدء البطولة بالعدد الحالي؟';
 
   @override
   String forceStartWarning(int count, int max) {
-    return 'البطولة غير مكتملة ($count / $max فرق). هل أنت متأكد من البدء القسري؟ تأكد من وجود 4 أو 8 أو 16 أو 32 فريقاً ليعمل الجدول بشكل صحيح.';
+    return 'البطولة غير مكتملة ($count / $max فرق). هل تريد بدء البطولة بالفرق المسجلة حالياً؟ تأكد من وجود 4 أو 8 أو 16 أو 32 فريقاً لإنشاء جدول المباريات.';
   }
 
   @override
-  String get forceStart => 'بدء قسري';
+  String get forceStart => 'بدء البطولة الآن';
 
   @override
   String get drawGeneratedSuccess => 'تم إنشاء القرعة وبدء البطولة بنجاح!';
@@ -2040,7 +2040,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get uploadIdBackRequired => 'يرجى رفع الجهة الخلفية للبطاقة الشخصية.';
 
   @override
-  String get regCompleteTitle => 'اكتمل التسجيل! 🎉';
+  String get regCompleteTitle => 'اكتمل التسجيل! ';
 
   @override
   String get regCompleteBody =>
@@ -2135,7 +2135,7 @@ class AppLocalizationsAr extends AppLocalizations {
   String get addStadiumFirstError => 'يرجى إضافة ملعب أولاً';
 
   @override
-  String get blockedBannerTitle => 'الحساب مقيد ⚠️';
+  String get blockedBannerTitle => 'الحساب مقيد ';
 
   @override
   String get blockedBannerSubtitle =>
@@ -2143,11 +2143,11 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get geographicFallbackBanner =>
-      'لا توجد ملاعب مسجلة في منطقتك بعد 🟢.. إليك أقرب الملاعب المتاحة في مناطق أخرى.';
+      'لا توجد ملاعب مسجلة في منطقتك بعد .. إليك أقرب الملاعب المتاحة في مناطق أخرى.';
 
   @override
   String get teamMemberDeleteLockError =>
-      'لا يمكن حذف لاعبي الفريق أثناء وجود مباراة نشطة أو بطولة جارية لتتجنب معاقبة الفريق بالانسحاب ⚠️';
+      'لا يمكن حذف لاعبي الفريق أثناء وجود مباراة نشطة أو بطولة جارية لتتجنب معاقبة الفريق بالانسحاب ';
 
   @override
   String get memberRemovedSuccess => 'تم حذف العضو من الفريق بنجاح.';

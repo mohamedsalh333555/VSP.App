@@ -743,7 +743,7 @@ abstract class AppLocalizations {
   /// No description provided for @informationStadium.
   ///
   /// In en, this message translates to:
-  /// **'Information Stadium'**
+  /// **'Stadium Information & Specs'**
   String get informationStadium;
 
   /// No description provided for @noDescription.
@@ -761,7 +761,7 @@ abstract class AppLocalizations {
   /// No description provided for @featuresForMoney.
   ///
   /// In en, this message translates to:
-  /// **'Features For Money'**
+  /// **'Additional Services & Add-ons'**
   String get featuresForMoney;
 
   /// No description provided for @ballAvailable.
@@ -791,7 +791,7 @@ abstract class AppLocalizations {
   /// No description provided for @punctualityPolicy.
   ///
   /// In en, this message translates to:
-  /// **'Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.'**
+  /// **'Customers must arrive on time for their reservation. Any delay may result in forfeiting part of their playing time without compensation.'**
   String get punctualityPolicy;
 
   /// No description provided for @reservationDuration.
@@ -803,19 +803,19 @@ abstract class AppLocalizations {
   /// No description provided for @reservationDurationPolicy.
   ///
   /// In en, this message translates to:
-  /// **'The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).'**
+  /// **'Playing time cannot be extended after the booked slot expires. If additional time is required, a new reservation must be made (subject to availability).'**
   String get reservationDurationPolicy;
 
   /// No description provided for @cancellationPolicyTitle.
   ///
   /// In en, this message translates to:
-  /// **'Cancellation And Refund Policy:'**
+  /// **'Cancellation and Refund Policy:'**
   String get cancellationPolicyTitle;
 
   /// No description provided for @cancellationPolicy.
   ///
   /// In en, this message translates to:
-  /// **'No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.'**
+  /// **'Full refund or deposit return is applicable if cancelled at least 2 hours before match kickoff.\n\nNo refund is provided if cancelled less than 2 hours prior to the scheduled match time.'**
   String get cancellationPolicy;
 
   /// No description provided for @liability.
@@ -2159,7 +2159,7 @@ abstract class AppLocalizations {
   /// No description provided for @tournamentJoinSuccess.
   ///
   /// In en, this message translates to:
-  /// **'Successfully joined the tournament! Good luck to team {team} 🏆'**
+  /// **'Successfully joined the tournament! Good luck to team {team} '**
   String tournamentJoinSuccess(String team);
 
   /// No description provided for @joinConfirmation.
@@ -2279,19 +2279,19 @@ abstract class AppLocalizations {
   /// No description provided for @stadiumsCategory.
   ///
   /// In en, this message translates to:
-  /// **'Stadiums 🏟️'**
+  /// **'Stadiums '**
   String get stadiumsCategory;
 
   /// No description provided for @teamsCategory.
   ///
   /// In en, this message translates to:
-  /// **'Teams ⚽'**
+  /// **'Teams '**
   String get teamsCategory;
 
   /// No description provided for @championshipsCategory.
   ///
   /// In en, this message translates to:
-  /// **'Championships 🏆'**
+  /// **'Championships '**
   String get championshipsCategory;
 
   /// No description provided for @prizeLabel.
@@ -2375,7 +2375,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareTeamText.
   ///
   /// In en, this message translates to:
-  /// **'Check out my team {name} on VSP! We are ranked {rank}. ⚽🏆'**
+  /// **'Check out my team {name} on VSP! We are ranked {rank}. '**
   String shareTeamText(Object name, Object rank);
 
   /// No description provided for @addStadium.
@@ -2633,7 +2633,7 @@ abstract class AppLocalizations {
   /// No description provided for @shareTeamMessage.
   ///
   /// In en, this message translates to:
-  /// **'Check out my ultimate team \"{teamName}\" on the VSP App! ⚽🏆\nDownload the app to challenge us!'**
+  /// **'Check out my ultimate team \"{teamName}\" on the VSP App! \nDownload the app to challenge us!'**
   String shareTeamMessage(Object teamName);
 
   /// No description provided for @shareFailedError.
@@ -2903,7 +2903,7 @@ abstract class AppLocalizations {
   /// No description provided for @allTimeFilter.
   ///
   /// In en, this message translates to:
-  /// **'All Time 🌍'**
+  /// **'All Time '**
   String get allTimeFilter;
 
   /// No description provided for @noBookingsForTodayLabel.
@@ -3893,7 +3893,7 @@ abstract class AppLocalizations {
   /// No description provided for @regCompleteTitle.
   ///
   /// In en, this message translates to:
-  /// **'Registration Complete! 🎉'**
+  /// **'Registration Complete! '**
   String get regCompleteTitle;
 
   /// No description provided for @regCompleteBody.
@@ -4067,7 +4067,7 @@ abstract class AppLocalizations {
   /// No description provided for @blockedBannerTitle.
   ///
   /// In en, this message translates to:
-  /// **'Account Restricted ⚠️'**
+  /// **'Account Restricted '**
   String get blockedBannerTitle;
 
   /// No description provided for @blockedBannerSubtitle.
@@ -4079,13 +4079,13 @@ abstract class AppLocalizations {
   /// No description provided for @geographicFallbackBanner.
   ///
   /// In en, this message translates to:
-  /// **'No stadiums registered in your area yet 🟢.. here are the closest available stadiums in other areas.'**
+  /// **'No stadiums registered in your area yet .. here are the closest available stadiums in other areas.'**
   String get geographicFallbackBanner;
 
   /// No description provided for @teamMemberDeleteLockError.
   ///
   /// In en, this message translates to:
-  /// **'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ⚠️'**
+  /// **'Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit '**
   String get teamMemberDeleteLockError;
 
   /// No description provided for @memberRemovedSuccess.

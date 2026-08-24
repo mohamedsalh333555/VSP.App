@@ -1,1071 +1,1071 @@
 {
-  "@@locale": "en",
-  "welcomeTitle": "Welcome to VSP",
-  "welcomeSubtitle": "Book your pitch easily and join teams",
-  "iAmPlayer": "I AM A PLAYER",
-  "iAmOwner": "I AM STADIUM OWNER",
-  "alreadyHaveAccount": "Already have an account?",
-  "login": "Login",
-  "arabic": "Arabic",
-  "english": "English",
-  "enterEmail": "Enter Your Email",
-  "emailHint": "example@email.com",
-  "continueButton": "Continue",
-  "verifyEmail": "Verify Your Email",
-  "verificationCodeSent": "Verification code sent to",
-  "enterCode": "Enter Code",
-  "resendCode": "Resend Code",
-  "verify": "Verify",
-  "setPassword": "Set Your Password",
-  "passwordHint": "Password",
-  "confirmPasswordHint": "Confirm Password",
-  "createAccount": "Create Account",
-  "accountCreated": "Account Created Successfully!",
-  "welcomeMessage": "Welcome to VSP Family",
-  "getStarted": "Get Started",
-  "facilityDetails": "Facility Details",
-  "stadiumName": "Stadium Name",
-  "location": "Location",
-  "socialMedia": "Social Media Links",
-  "uploadDocuments": "Upload Documents",
-  "commercialRegister": "Commercial Register",
-  "taxCard": "Tax Card",
-  "nationalId": "National ID Photo",
-  "submit": "Submit",
-  "hiSporty": "Hi Player",
-  "playerSubtitle": "Start By Creating An Account. This Makes It Easier To Book Your Next Match.",
-  "hiPitch": "Hi Owner",
-  "ownerSubtitle": "Start By Creating An Account. This Makes It Easier To Manage Your Stadium.",
-  "createNewAccount": "Create new account",
-  "continueWithEmail": "Continue With Email",
-  "or": "OR",
-  "termsText": "By using VSP , you agree to the\nTerms and ",
-  "privacyPolicy": "Privacy Policy.",
-  "emailAddress": "Email Address",
-  "password": "Password",
-  "unleashChampion": "BE THE CHAMPION",
-  "premierPlatform": "Book your pitch in seconds, compete with teams, and earn champions ranking",
-  "readyToJoin": "READY TO JOIN?",
-  "signOutCurrentAccount": "Sign out of current account",
-  "credentialAccess": "Credential Access",
-  "forgotPassword": "Forgot Password?",
-  "orContinueWith": "Or continue with",
-  "apple": "Apple",
-  "google": "Google",
-  "termsOfService": "Terms of Service",
-  "byUsingVsp": "By using VSP, you agree to the ",
-  "and": " and ",
-  "signInSubtitle": "Sign in to continue your sports journey",
-  "fullName": "Full Name",
-  "firstName": "First Name",
-  "lastName": "Last Name",
-  "firstNameHint": "Mohamed",
-  "lastNameHint": "Ahmed",
-  "dateOfBirth": "Date of Birth",
-  "dateOfBirthPlaceholder": "YYYY-MM-DD",
-  "addPersonalPhoneNumber": "Add Number (Personal Phone Number)",
-  "enterName": "Enter your name",
-  "phoneNumber": "Phone Number",
-  "governorate": "Governorate",
-  "preferredPosition": "Preferred Position",
-  "confirmPassword": "Confirm Password",
-  "personalInformation": "Personal Information",
-  "registerOwnerSubtitle": "Register as owner and manage your pitch",
-  "registerPlayerSubtitle": "Register as player and start your journey",
-  "fillAllFields": "Please fill all fields",
-  "pleaseEnterDob": "Please enter your date of birth",
-  "invalidPhone": "Please enter a valid phone number",
-  "passwordMismatch": "Passwords do not match",
-  "passwordTooShort": "Password must be at least 6 characters",
-  "verifyAccount": "VERIFY ACCOUNT",
-  "otpSentTo": "A 6-digit code was sent to ",
-  "enterOtpPlaceholder": "Enter the verification code sent to your device",
-  "resendIn": "RESEND IN {seconds} SECONDS",
-  "@resendIn": {
-    "placeholders": {
-      "seconds": {
-        "type": "int"
-      }
-    }
-  },
-  "homeNav": "Home",
-  "matchesNav": "Matches",
-  "championNav": "Champion",
-  "bookedNav": "Booked",
-  "profileNav": "Profile",
-  "seeAll": "See all",
-  "nearbyStadiums": "Nearby Stadiums",
-  "joinMatches": "Join Matches",
-  "joinChampionships": "Join Championships",
-  "searchStadiums": "Search stadiums, teams...",
-  "selectLocation": "Select Location",
-  "noStadiumsFoundIn": "No stadiums found in ",
-  "refresh": "Refresh",
-  "hi": "Hi",
-  "playerDefaultName": "Player",
-  "tournament": "TOURNAMENT",
-  "egCurrency": "eg",
-  "spotsLeft": "SPOTS LEFT",
-  "teamsJoined": "{joinedCount}/{maxCount} TEAMS JOINED",
-  "@teamsJoined": {
-    "placeholders": {
-      "joinedCount": {
-        "type": "int"
-      },
-      "maxCount": {
-        "type": "int"
-      }
-    }
-  },
-  "information": "Information",
-  "pitchConditions": "Pitch Conditions",
-  "ratings": "Ratings",
-  "pricePerHour": "Price per hour",
-  "bookNow": "Book Now",
-  "reviews": "{count} Reviews",
-  "@reviews": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "na": "N/A",
-  "informationStadium": "Information Stadium",
-  "noDescription": "No description provided.",
-  "features": "Features",
-  "featuresForMoney": "Features For Money",
-  "ballAvailable": "Ball Available: {price} {currency}",
-  "@ballAvailable": {
-    "placeholders": {
-      "price": {
-        "type": "String"
-      },
-      "currency": {
-        "type": "String"
-      }
-    }
-  },
-  "ownerNotes": "Owner Notes",
-  "noOwnerNotes": "No specific notes have been added by the stadium owner.",
-  "punctuality": "Punctuality:",
-  "punctualityPolicy": "Customers Must Arrive On Time For Their Reservation. Any Delay May Result In Forfeiting Part Of Their Playing Time Without Compensation.",
-  "reservationDuration": "Reservation Duration:",
-  "reservationDurationPolicy": "The Playing Time Cannot Be Extended After The Booked Time Has Expired. If Additional Time Is Required, A New Reservation Must Be Made (Subject To Availability).",
-  "cancellationPolicyTitle": "Cancellation And Refund Policy:",
-  "cancellationPolicy": "No Refund Will Be Given If The Reservation Is Cancelled Less Than 24 Hours Before The Scheduled Time.\n\nIf The Cancellation Is Made More Than 24 Hours Before The Scheduled Time, A Full Refund Will Be Issued.",
-  "liability": "Liability:",
-  "liabilityPolicy": "Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.",
-  "noReviews": "No reviews yet. Be the first to review!",
-  "recently": "Recently",
-  "player": "Player",
-  "bookedTitle": "Booked",
-  "upcoming": "Upcoming",
-  "history": "History",
-  "noBookings": "No Bookings Yet",
-  "noBookingsSubtitle": "Book a stadium or join a match to see your schedule here!",
-  "exploreStadiums": "Explore Stadiums",
-  "private": "PRIVATE",
-  "confirmed": "Confirmed",
-  "submitResult": "Submit Result",
-  "completed": "Completed",
-  "date": "Date",
-  "time": "Time",
-  "price": "Price",
-  "vsOpponent": "VS {opponent}",
-  "@vsOpponent": {
-    "placeholders": {
-      "opponent": {
-        "type": "String"
-      }
-    }
-  },
-  "cancel": "Cancel",
-  "chat": "Chat",
-  "waitingOpponent": "Waiting for opponent result...",
-  "addResult": "Add Result",
-  "resultSuccess": "Result Submitted Successfully!",
-  "resultFailed": "Failed to submit result",
-  "draw": "Draw",
-  "win": "Win",
-  "loss": "Loss",
-  "disputed": "Disputed",
-  "cancelBooking": "Cancel Booking?",
-  "cancelBookingConfirm": "Are you sure you want to cancel this booking? This action cannot be undone.",
-  "keepBooking": "Keep Booking",
-  "cancelling": "Cancelling booking...",
-  "cancelSuccess": "Booking cancelled successfully",
-  "cancelFailed": "Failed to cancel",
-  "shareStadiumText": "Check out {stadiumName} in {location} on VSP app!",
-  "@shareStadiumText": {
-    "placeholders": {
-      "stadiumName": {
-        "type": "String"
-      },
-      "location": {
-        "type": "String"
-      }
-    }
-  },
-  "perHour": "per hour",
-  "myMatch": "MY MATCH",
-  "joined": "Joined",
-  "full": "FULL",
-  "open": "OPEN",
-  "host": "Host",
-  "playersJoined": "{current}/{total} PLAYERS JOINED",
-  "@playersJoined": {
-    "placeholders": {
-      "current": {
-        "type": "int"
-      },
-      "total": {
-        "type": "int"
-      }
-    }
-  },
-  "manage": "MANAGE",
-  "leave": "LEAVE",
-  "vspTeam": "VSP Team",
-  "loginFirst": "Please login first",
-  "joinSuccess": "Joined Match Successfully!",
-  "joinFailed": "Failed to join match.",
-  "leaveSuccess": "Left Match Successfully.",
-  "leaveFailed": "Failed to leave match.",
-  "participantRemoved": "Participant removed.",
-  "maxCapacityReached": "Maximum stadium capacity reached.",
-  "updateFailed": "Failed to update spots.",
-  "manageMatch": "Manage Match",
-  "bringingPlayers": "Players you are bringing",
-  "manageSpots": "Manage your reserved spots",
-  "joinedFromApp": "Joined from App",
-  "noPlayersYet": "No players joined yet",
-  "profile": "Profile",
-  "positionLabel": "Position: {pos}",
-  "@positionLabel": {
-    "placeholders": {
-      "pos": {
-        "type": "String"
-      }
-    }
-  },
-  "adminModeActivated": "Admin Mode Activated",
-  "winRate": "WIN RATE",
-  "goals": "GOALS",
-  "matches": "MATCHES",
-  "favoriteStadiumLabel": "FAVORITE STADIUM: {stadium}",
-  "@favoriteStadiumLabel": {
-    "placeholders": {
-      "stadium": {
-        "type": "String"
-      }
-    }
-  },
-  "achievements": "Achievements",
-  "account": "Account",
-  "myTeam": "My Team",
-  "manageTeamInfo": "Manage Your Team Information",
-  "favoriteStadiums": "Favorite Stadiums",
-  "viewLikedFacilities": "View Your Liked Facilities",
-  "paymentMethods": "Payment Methods",
-  "managePaymentMethods": "Manage Your Payment Methods",
-  "preferences": "Preferences",
-  "notifications": "Notifications",
-  "manageNotificationSettings": "Manage Your Notification Settings",
-  "privacy": "Privacy",
-  "language": "Language",
-  "manageLanguagePreferences": "Manage Your Language Preferences",
-  "helpCenter": "Help Center",
-  "getHelpSupport": "Get Help & Support",
-  "feedback": "Feedback",
-  "reportIssueFeature": "Report an issue or suggest a feature",
-  "logout": "Logout",
-  "signOutAccount": "Sign out of your account",
-  "sendFeedback": "Send Feedback",
-  "describeIssue": "Describe the issue...",
-  "attachScreenshot": "Attach Screenshot",
-  "done": "Done",
-  "pleaseEnterFeedback": "Please enter some feedback",
-  "thankYouFeedback": "Thank you for your feedback!",
-  "legendary": "Legendary",
-  "diamond": "Diamond",
-  "platinum": "Platinum",
-  "gold": "Gold",
-  "silver": "Silver",
-  "bronze": "Bronze",
-  "champion": "Champion",
-  "ranking": "Ranking",
-  "championships": "Championships",
-  "teams": "Teams",
-  "oneVsOnePlayers": "1v1 Players",
-  "noOneVsOneRanked": "No 1v1 players ranked yet",
-  "skillPointsLabel": "SKILL: {skill} | G: {goals}",
-  "@skillPointsLabel": {
-    "placeholders": {
-      "skill": {
-        "type": "int"
-      },
-      "goals": {
-        "type": "int"
-      }
-    }
-  },
-  "pts": "PTS",
-  "noTeamsInLoc": "No teams in {location} yet",
-  "@noTeamsInLoc": {
-    "placeholders": {
-      "location": {
-        "type": "String"
-      }
-    }
-  },
-  "vspOfficialLeague": "VSP 1V1 OFFICIAL LEAGUE",
-  "watchHighlights": "Watch highlights & follow the ultimate street ranking!",
-  "teamStats": "MP: {mp} | W: {w} | D: {d} | L: {l}",
-  "@teamStats": {
-    "placeholders": {
-      "mp": {
-        "type": "int"
-      },
-      "w": {
-        "type": "int"
-      },
-      "d": {
-        "type": "int"
-      },
-      "l": {
-        "type": "int"
-      }
-    }
-  },
-  "pointsCount": "{count} pts",
-  "@pointsCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "noChampionshipsInLoc": "No championships in {location} yet",
-  "@noChampionshipsInLoc": {
-    "placeholders": {
-      "location": {
-        "type": "String"
-      }
-    }
-  },
-  "chooseBookingType": "Choose What Suits You",
-  "bookPitch": "Book a Pitch",
-  "bookPitchSubtitle": "Private booking for you and friends. No ranking.",
-  "findPlayers": "Find Players",
-  "findPlayersSubtitle": "Public match. Allow others to join to complete numbers.",
-  "teamIncompleteError": "You still need a complete team of 5+ to play challenge matches.",
-  "createTeamToCompete": "Create Team to Compete",
-  "createTeamSubtitle": "You need a team of 5+ players to play competitive matches. Start here!",
-  "teamIncomplete": "Team Incomplete",
-  "teamIncompleteSubtitle": "You need 5+ players to play ranked matches. Add more players!",
-  "challengeMatch": "Challenge Match",
-  "challengeMatchSubtitle": "Compete against other teams and rank up.",
-  "selectDate": "Select Date",
-  "selectTime": "Select Time",
-  "bookedStatus": "BOOKED",
-  "expiredStatus": "EXPIRED",
-  "privateLabel": "Private",
-  "currentPlayersWithYou": "Current Players with You",
-  "playersInGroupSubtitle": "How many players are already in your group?",
-  "rentBallLabel": "Rent Ball (+{price} {currency})",
-  "@rentBallLabel": {
-    "placeholders": {
-      "price": {
-        "type": "int"
-      },
-      "currency": {
-        "type": "String"
-      }
-    }
-  },
-  "payPerBallSubtitle": "Pay Per Ball At This Pitch",
-  "totalPriceLabel": "Price",
-  "priceEgp": "{price} EGP",
-  "@priceEgp": {
-    "placeholders": {
-      "price": {
-        "type": "int"
-      }
-    }
-  },
-  "confirmSelections": "Confirm Selections",
-  "apply": "Apply",
-  "bookingSuccess": "Your reservation has been completed successfully",
-  "bookingReference": "Booking Reference",
-  "refHash": "REF# {id}",
-  "@refHash": {
-    "placeholders": {
-      "id": {
-        "type": "String"
-      }
-    }
-  },
-  "myBookings": "My Bookings",
-  "home": "Home",
-  "bookingRefCopied": "Booking reference copied!",
-  "shareBookingMessage": "My booking on VSP: {stadium} - Ref# {id}",
-  "@shareBookingMessage": {
-    "placeholders": {
-      "stadium": {
-        "type": "String"
-      },
-      "id": {
-        "type": "String"
-      }
-    }
-  },
-  "selectOpponentTeam": "Select Opponent Team",
-  "chooseOpponent": "Choose Opponent",
-  "chooseOpponentSubtitle": "Search for a team to challenge or pick from teams you've played against.",
-  "searchTeamPlaceholder": "Search by Team Name or Captain's Phone",
-  "searchResults": "Search Results",
-  "noTeamsFound": "No teams found matching '{query}'",
-  "@noTeamsFound": {
-    "placeholders": {
-      "query": {
-        "type": "String"
-      }
-    }
-  },
-  "previousOpponents": "Teams You Played Against",
-  "noPreviousOpponents": "You don't have previous opponents yet.\nStart by searching for a team.",
-  "matchesPlayedCount": "Matches played: {count}",
-  "@matchesPlayedCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "firstTimePlaying": "First time playing against them. Set the tone!",
-  "headToHeadHistory": "HEAD-TO-HEAD HISTORY",
-  "yourWins": "YOUR WINS",
-  "draws": "DRAWS",
-  "theirWins": "THEIR WINS",
-  "seriesTied": "The series is tied! Break the deadlock!",
-  "youDominate": "You dominate them. Keep the streak alive!",
-  "timeForRevenge": "Time for revenge! They have the upper hand.",
-  "editProfile": "Edit Profile",
-  "enterPhone": "Enter your phone number",
-  "saveChanges": "Save Changes",
-  "nameEmptyError": "Name cannot be empty.",
-  "profileUpdatedSuccess": "Profile updated successfully!",
-  "profileUpdateFailed": "Failed to update profile.",
-  "errorOccurred": "An error occurred: {error}",
-  "@errorOccurred": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "points": "Points",
-  "members": "Members",
-  "trophies": "Trophies",
-  "teamName": "Team Name",
-  "enterTeamName": "Enter your team name",
-  "sportsType": "Sports Type",
-  "uploadPhoto": "Upload Photo",
-  "teamMembersHeader": "Team Members ({current}/{max})",
-  "@teamMembersHeader": {
-    "placeholders": {
-      "current": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "addMember": "Add Member",
-  "addMembersHint": "Add your team members",
-  "teamAchievements": "Team Achievements",
-  "winStreak": "{count} Win Streak",
-  "@winStreak": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "registerTeamPrompt": "Register your team to start unlocking achievements!",
-  "createTeam": "Create Team",
-  "deleteTeam": "Delete Team",
-  "deleteTeamConfirm": "Are you sure? This action cannot be undone and your team and achievements will be lost.",
-  "enterTeamNameError": "Please enter a team name",
-  "teamCreatedSuccess": "Team created successfully!",
-  "teamUpdatedSuccess": "Team updated successfully!",
-  "teamDeletedSuccess": "Team deleted successfully",
-  "confirmBooking": "Confirm Booking",
-  "bookingSummary": "Booking Summary",
-  "paymentMethod": "Payment Method",
-  "cashPayAtStadium": "Cash (Pay at Stadium)",
-  "cashPayment": "Cash Payment",
-  "cashPaymentDesc": "Booking Confirmed - Please pay cash at the stadium",
-  "sessionExpiredError": "Session expired. Please sign in again.",
-  "bookingCreateFailed": "Failed to create booking",
-  "bookingFailedError": "Booking failed: {error}",
-  "privateBooking": "Private Booking",
-  "ranked": "Ranked",
-  "friendly": "Friendly",
-  "subtotalAmount": "Subtotal Amount",
-  "loginToJoinError": "Please login to join matches",
-  "matchJoinSuccess": "Successfully joined the match!",
-  "reportMatch": "Report Match",
-  "reportSubtitle": "Help us maintain a safe community. Why are you reporting this match?",
-  "reportReasonSpam": "Spam",
-  "reportReasonInappropriate": "Inappropriate Content",
-  "reportReasonHarassment": "Harassment",
-  "reportReasonFake": "Fake Match",
-  "reportReasonOther": "Other",
-  "reportSubmitted": "Report submitted for review.",
-  "reportFailed": "Failed to submit report.",
-  "matchNotFound": "Match not found",
-  "goBack": "Go back",
-  "publicMatchAt": "Public Match at {stadium}",
-  "@publicMatchAt": {
-    "placeholders": {
-      "stadium": {
-        "type": "String"
-      }
-    }
-  },
-  "vsMatchFormat": "{team1} VS {team2}",
-  "@vsMatchFormat": {
-    "placeholders": {
-      "team1": {
-        "type": "String"
-      },
-      "team2": {
-        "type": "String"
-      }
-    }
-  },
-  "playersCount": "Players ({current}/{max})",
-  "@playersCount": {
-    "placeholders": {
-      "current": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "playerLabel": "Player {index}",
-  "@playerLabel": {
-    "placeholders": {
-      "index": {
-        "type": "int"
-      }
-    }
-  },
-  "matchFull": "Match Full",
-  "joinMatch": "Join",
-  "captainRequiredError": "To join the tournament, you must be a team captain.",
-  "minPlayersError": "Your team must have at least 5 players to participate.",
-  "alreadyJoinedError": "Your team has already joined this tournament.",
-  "tournamentJoinSuccess": "Successfully joined the tournament! Good luck to team {team} 🏆",
-  "@tournamentJoinSuccess": {
-    "placeholders": {
-      "team": {
-        "type": "String"
-      }
-    }
-  },
-  "joinConfirmation": "Join Confirmation",
-  "entryFee": "Entry Fee: {amount} {currency}",
-  "@entryFee": {
-    "placeholders": {
-      "amount": {
-        "type": "int"
-      },
-      "currency": {
-        "type": "String"
-      }
-    }
-  },
-  "tournamentPaymentDesc": "Payment will be made in Cash at the stadium when the tournament begins.",
-  "confirmAndPay": "Confirm & Pay",
-  "schedule": "Schedule",
-  "expand": "Expand",
-  "startDate": "Start Date",
-  "groupStage": "Group Stage",
-  "quarterFinals": "Quarter Finals",
-  "finalMatch": "Final Match",
-  "aboutTournament": "About The Tournament",
-  "matchRules": "Match Rules And Regulations",
-  "importantInstructions": "Important Instructions For Players",
-  "viewBrackets": "View Tournament Brackets",
-  "matchRulesContent": "Each Match Lasts {duration} Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.",
-  "@matchRulesContent": {
-    "placeholders": {
-      "duration": {
-        "type": "int"
-      }
-    }
-  },
-  "importantInstructionsContent": "Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers' Instructions.",
-  "searchHint": "Search stadiums, teams, or cups...",
-  "recentSearches": "Recent Searches",
-  "noResults": "No results found.",
-  "stadiumsCategory": "Stadiums 🏟️",
-  "teamsCategory": "Teams ⚽",
-  "championshipsCategory": "Championships 🏆",
-  "prizeLabel": "{prize} Prize",
-  "markAll": "Mark All",
-  "noNotificationsTitle": "No Notifications Yet",
-  "noNotificationsSubtitle": "We will notify you about your matches and challenges.",
-  "backToDashboard": "Back to Dashboard",
-  "accept": "Accept",
-  "decline": "Decline",
-  "minutesAgo": "{count}m ago",
-  "@minutesAgo": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "hoursAgo": "{count}h ago",
-  "@hoursAgo": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "matchesTitle": "Matches",
-  "noMatchesAvailable": "No public matches available right now.",
-  "hostOne": "Be the first to host one!",
-  "shareLink": "Share Link",
-  "shareTeamText": "Check out my team {name} on VSP! We are ranked {rank}. ⚽🏆",
-  "addStadium": "Add Stadium",
-  "autoFetch": "Auto Fetch",
-  "chooseManually": "Choose Manually",
-  "workingHours": "Working Hours",
-  "setDailyBreak": "Set Daily Break Time",
-  "length": "Length",
-  "width": "Width",
-  "bathrooms": "Bathrooms",
-  "cafeteria": "Cafeteria",
-  "garage": "Garage",
-  "changingRoom": "Changing Room",
-  "seatCount": "Seat Count",
-  "amenities": "Amenities",
-  "stadiumGallery": "Stadium Gallery",
-  "submitStadium": "Submit Stadium",
-  "stadiumPhotosHint": "High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.",
-  "basicInfoError": "Please fill basic info",
-  "selectFeaturesError": "Please select features",
-  "ballPriceMinError": "Ball rental price must be at least 5 EGP",
-  "uploadPhotoError": "Please upload at least one stadium image",
-  "stadiumSubmitSuccess": "Stadium Submitted for Review!",
-  "stadiumSaveFailed": "Failed to save stadium",
-  "start": "Start",
-  "end": "End",
-  "breakStart": "Break Start",
-  "breakEnd": "Break End",
-  "tapToFetch": "Tap to Fetch",
-  "ballAvailableLabel": "Ball Available",
-  "playersTeam": "Players per Team",
-  "selectSport": "Select Sport",
-  "errorLabel": "Error",
-  "ok": "OK",
-  "join": "Join",
-  "report": "Report",
-  "none": "None",
-  "wins": "Wins",
-  "close": "Close",
-  "shareTeamCard": "Share Team Card",
-  "freeAgent": "FREE AGENT",
-  "freeAgentDescription": "You are currently a Free Agent.\nJoin or create a team to unlock your Ultimate Team Card and start competing!",
-  "buildYourSquad": "Build Your Squad",
-  "editProfileSubtitle": "Change your name, phone, position, and picture",
-  "shareTeamMessage": "Check out my ultimate team \"{teamName}\" on the VSP App! ⚽🏆\nDownload the app to challenge us!",
-  "shareFailedError": "Failed to share team card.",
-  "ovrLabel": "OVR",
-  "gldLabel": "GLD",
-  "winRateLabel": "WIN%",
-  "winsLabel": "WINS",
-  "strkLabel": "STRK",
-  "delete": "Delete",
-  "whatsAppNotInstalled": "WhatsApp not installed",
-  "createTeamFirstError": "Please create a team first to use this option.",
-  "enterValidEmail": "Please enter a valid email",
-  "nameRequired": "Full name required (First and Last name)",
-  "phoneRequired": "Valid phone number required",
-  "faq1_q": "How does Elo ranking work?",
-  "faq1_a": "Your Elo increases when you win matches against opponents with similar or higher ranking. Losing to lower-ranked teams will decrease it more significantly.",
-  "faq2_q": "How do I join a match?",
-  "faq2_a": "Go to the Matches tab, find a public match that fits your schedule, and tap \"Join\". You can join as an individual or with your team.",
-  "faq3_q": "Can I cancel a booking?",
-  "faq3_a": "Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.",
-  "faq4_q": "How do I create a team?",
-  "faq4_a": "In the Profile tab, select \"My Team\". From there, you can choose a name, logo, and invite your friends using their VSP ID.",
-  "faq5_q": "What happens if a match is disputed?",
-  "faq5_a": "If teams disagree on the result, a VSP moderator will review the match history and evidence to determine the final outcome.",
-  "faq6_q": "How are stadium ratings calculated?",
-  "faq6_a": "Ratings are an average of verified reviews left by players after their matches. Only players who actually played at the stadium can leave a review.",
-  "faq7_q": "How do I edit my personal profile?",
-  "faq7_a": "In the Profile tab, select 'Edit Profile'. From there, you can update your name, picture, preferred position, and phone number.",
-  "faq8_q": "Why is my match not appearing in the public list?",
-  "faq8_a": "Private matches are hidden. Ensure you select 'Public Match' during booking if you want others to find and join you.",
-  "faq9_q": "How do I get a refund?",
-  "faq9_a": "Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.",
-  "faq10_q": "How do I contact support?",
-  "faq10_a": "Tap 'Chat with Support' on this screen to start a WhatsApp conversation with our team directly.",
-  "totalCollectedGross": "Total Collected (Gross)",
-  "netProfit": "NET PROFIT",
-  "pendingRev": "PENDING REV",
-  "platformCommission": "Platform Commission",
-  "debtCollectionNotice": "You owe {amount} EGP. Collection occurs every 2 months.",
-  "@debtCollectionNotice": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
-  },
-  "hoursBookedLabel": "Hours Booked",
-  "activeBookingsLabel": "Completed Bookings",
-  "bookedTodayLabel": "Booked Today",
-  "liveBookingsForToday": "Live bookings for today",
-  "includesPlatformFee": "Includes {amount} EGP platform fee",
-  "@includesPlatformFee": {
-    "placeholders": {
-      "amount": {
-        "type": "String"
-      }
-    }
-  },
-  "showMoreBtn": "Show more",
-  "allStadiumsFilter": "All Stadiums",
-  "allTimeFilter": "All Time 🌍",
-  "noBookingsForTodayLabel": "No bookings for today",
-  "collectedSticker": "COLLECTED",
-  "pendingSticker": "PENDING",
-  "platformCutApplied": "5% Platform Cut Applied",
-  "youHaveStadiums": "You have {count} stadium(s)",
-  "@youHaveStadiums": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "tournamentsTab": "Tournaments",
-  "bookedTab": "Booked",
-  "profileTab": "Profile",
-  "hiPrefix": "Hi",
-  "ownerGuestFallback": "Owner",
-  "individualPlayerLabel": "Individual Player",
-  "teamMatchLabel": "Team Match",
-  "playerTypeLabel": "Player",
-  "endDate": "End Date",
-  "resetLabel": "Reset",
-  "forceStartTournament": "Force Start Tournament?",
-  "forceStartWarning": "Tournament is not full ({count} / {max} teams). Are you sure you want to force start? Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.",
-  "@forceStartWarning": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "forceStart": "Force Start",
-  "drawGeneratedSuccess": "Draw Generated & Tournament Started!",
-  "selectTournamentWinner": "Select Tournament Winner",
-  "addTeamManually": "Add Team Manually",
-  "manualRegistrationSub": "Register a team that signed up via phone or in-person.",
-  "manualRegistration": "Manual Registration",
-  "statusLabel": "STATUS",
-  "categoryLabel": "CATEGORY",
-  "datesLabel": "DATES",
-  "teamsLabel": "TEAMS",
-  "joinedTeamsLabel": "Joined Teams",
-  "addTeam": "Add Team",
-  "paid": "Paid",
-  "pending": "Pending",
-  "generateDrawStart": "GENERATE DRAW & START",
-  "manualCrownChampion": "MANUAL CROWN CHAMPION",
-  "tournamentBrackets": "Tournament Brackets",
-  "noBracketsYet": "Brackets not generated yet.",
-  "roundOf": "Round of {count}",
-  "@roundOf": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "finalRound": "Final",
-  "semiFinalRound": "Semi Final",
-  "quarterFinalRound": "Quarter Final",
-  "matchScheduledFor": "Match scheduled for {time}",
-  "@matchScheduledFor": {
-    "placeholders": {
-      "time": {
-        "type": "String"
-      }
-    }
-  },
-  "waitingPreviousWinners": "Waiting for previous round winners...",
-  "updateScore": "Update Score",
-  "saveLabel": "Save",
-  "drawNotAllowed": "Draws not allowed in knockout!",
-  "notScheduled": "Not Scheduled",
-  "editLabel": "Edit",
-  "editTournamentTitle": "Edit Tournament",
-  "createTournamentTitle": "Create Tournament",
-  "backButton": "Back",
-  "updateChanges": "Update Changes",
-  "nextButton": "Next",
-  "basicsStep": "Basics",
-  "systemStep": "System",
-  "schedulingStep": "Scheduling",
-  "quickTemplates": "Quick Templates",
-  "choosePresetSubtitle": "Choose a preset template to quickly configure rules",
-  "currency": "Currency",
-  "tournamentNameLabel": "Tournament Name",
-  "sportTypeLabel": "Sport Type",
-  "entryFeeLabel": "Entry Fee",
-  "tournamentSystemLabel": "Tournament System",
-  "knockoutType": "Knockout",
-  "leagueType": "League",
-  "maxTeamsLabel": "Max Teams",
-  "startDateLabel": "Start Date",
-  "endDateLabel": "End Date",
-  "matchDurationLabel": "Match Duration (min)",
-  "grandPrizeLabel": "Grand Prize",
-  "myStadiumsTab": "My Stadiums",
-  "stadiumsEmptyTitle": "No stadiums found",
-  "stadiumsEmptySubtitle": "Tap add stadium to list your first facility",
-  "addStadiumLabel": "Add Stadium",
-  "identityPendingVerification": "Identity Verification",
-  "bookedManually": "Booked Manually",
-  "noWorkingHoursTitle": "No working hours set",
-  "noWorkingHoursSubtitle": "Please configure stadium opening hours first",
-  "breakTime": "Break Time",
-  "addManualBooking": "Add Manual Booking",
-  "closedBadge": "Closed",
-  "openBadge": "Open",
-  "collectedStatusAuto": "Collected",
-  "pendingStatusAuto": "Pending",
-  "enterCustomerNameError": "Please enter customer name",
-  "update": "Update",
-  "friendsRequiredNote": "Note: You need at least 6 members to create a team",
-  "createTeamTitle": "Create Team",
-  "teamNameLabel": "Team Name",
-  "uploadLogo": "Upload Logo",
-  "changeLogo": "Change Logo",
-  "teamMembers": "Team Members",
-  "addMemberBtn": "Add Member",
-  "noMembersAddedYet": "No members added yet.",
-  "cancelBtn": "Cancel",
-  "confirmBtn": "Confirm",
-  "sports": "Sports",
-  "priceRange": "Price Range",
-  "services": "Services",
-  "filters": "Filters",
-  "reset": "Reset",
-  "selectSports": "Select Sports",
-  "minRating": "Minimum Rating",
-  "anyRating": "Any Rating",
-  "stars": "Stars",
-  "stadiumServices": "Stadium Services",
-  "badgeUnlockedStatus": "Badge Unlocked!",
-  "badgeLockedStatus": "Badge Locked",
-  "gotItBtn": "Got It",
-  "bookingDetailsTitle": "Booking Details",
-  "manualBookingTitle": "Manual Booking",
-  "timeAndStadium": "Time & Stadium",
-  "customerName": "Customer Name",
-  "enterNameHint": "Enter name",
-  "phoneOptionalHint": "Phone (Optional)",
-  "internalNotes": "Internal Notes",
-  "internalNotesHint": "Internal Notes Hint",
-  "paymentStatus": "Payment Status",
-  "tournamentsTitle": "Tournaments",
-  "coming": "Coming",
-  "ongoing": "Ongoing",
-  "finished": "Finished",
-  "noTournamentsTitle": "No Tournaments",
-  "noTournamentsSubtitle": "Create a tournament to see it here",
-  "createYourFirst": "Create Your First",
-  "shareTournamentText": "Check out {name} starting from {startDate} to {endDate}! Grand Prize: {prize} EGP, Entry Fee: {fee} EGP.",
-  "@shareTournamentText": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      },
-      "startDate": {
-        "type": "String"
-      },
-      "endDate": {
-        "type": "String"
-      },
-      "prize": {
-        "type": "int"
-      },
-      "fee": {
-        "type": "int"
-      }
-    }
-  },
-  "teamsJoinedCount": "{current}/{max} Teams",
-  "@teamsJoinedCount": {
-    "placeholders": {
-      "current": {
-        "type": "int"
-      },
-      "max": {
-        "type": "int"
-      }
-    }
-  },
-  "actualLabel": "Actual",
-  "platformCommissionLabel": "Platform Commission",
-  "bookedHours": "Booked Hours",
-  "stadiumApprovedTitle": "Stadium Approved",
-  "stadiumApprovedSubtitle": "{name} has been approved!",
-  "@stadiumApprovedSubtitle": {
-    "placeholders": {
-      "name": {
-        "type": "String"
-      }
-    }
-  },
-  "dismissBtn": "Dismiss",
-  "createTournament": "Create Tournament",
-  "profileSettings": "Profile Settings",
-  "profileAccountLabel": "Account",
-  "profileAccountSubtitle": "Manage your account",
-  "profilePreferencesLabel": "Preferences",
-  "profileNotificationsLabel": "Notifications",
-  "profileNotificationsSubtitle": "Manage notifications",
-  "profilePrivacyLabel": "Privacy",
-  "profilePrivacySubtitle": "Manage privacy settings",
-  "profileLanguageLabel": "Language",
-  "profileLanguageSubtitle": "Change application language",
-  "profileSupportLabel": "Support",
-  "profileHelpCenterLabel": "Help Center",
-  "profileHelpCenterSubtitle": "Get support and help",
-  "profileLogoutLabel": "Logout",
-  "profileLogoutSubtitle": "Sign out of your account",
-  "inProgress": "In Progress",
-  "personalType": "Personal",
-  "teamType": "Team",
-  "challengeType": "Challenge",
-  "forgotPasswordSubtitle": "Enter your email address and we will send you a link to reset your password.",
-  "resetPasswordSuccess": "Password reset email sent! Check your inbox.",
-  "resetPasswordError": "Failed to send reset email. Please check the address and try again.",
-  "invalidEmail": "Please enter a valid email address.",
-  "selectImageSource": "Select Image Source",
-  "camera": "Camera",
-  "gallery": "Gallery",
-  "docUploadedSuccess": "Document uploaded successfully!",
-  "uploadFailed": "Upload failed: {error}",
-  "@uploadFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "uploadCommRegisterRequired": "Please upload your Commercial Register before continuing.",
-  "uploadIdFrontRequired": "Please upload the front side of your National ID.",
-  "uploadIdBackRequired": "Please upload the back side of your National ID.",
-  "regCompleteTitle": "Registration Complete! 🎉",
-  "regCompleteBody": "Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.",
-  "goToDashboard": "Go to Dashboard",
-  "saveInfoFailed": "Failed to save your information. Please check your connection and try again.",
-  "verificationPending": "Verification Pending",
-  "reviewingDocs": "We are reviewing your submitted documents.",
-  "submissionStatus": "Submission Status",
-  "nationalIdFront": "National ID Front",
-  "nationalIdBack": "National ID Back",
-  "reviewDurationText": "The review process typically takes up to 24 hours. We will notify you once your account has been verified and activated.",
-  "refreshStatus": "Refresh Status",
-  "verifiedSuccess": "Account verified successfully!",
-  "stillUnderReview": "Documents are still under review.",
-  "refreshStatusFailed": "Failed to refresh status: {error}",
-  "@refreshStatusFailed": {
-    "placeholders": {
-      "error": {
-        "type": "String"
-      }
-    }
-  },
-  "submitted": "Submitted",
-  "ownerInformationTitle": "Owner information",
-  "clickToUploadRegister": "Click to upload commercial register",
-  "uploadedSuccessfully": "Uploaded Successfully",
-  "saving": "Saving...",
-  "saveAndContinue": "Save & Continue",
-  "uploadNationalIdTitle": "Upload national ID",
-  "submitDocuments": "Submit Documents",
-  "facilityOnboardingSubtitle": "Add your stadium and verify your account to start receiving bookings.",
-  "addedStadiumsCount": "Your Stadiums ({count})",
-  "@addedStadiumsCount": {
-    "placeholders": {
-      "count": {
-        "type": "int"
-      }
-    }
-  },
-  "noStadiumsAddedYet": "No stadiums added yet",
-  "addStadiumButtonSubtitle": "Register your new stadium details",
-  "confirmContinueBtn": "Confirm & Continue",
-  "confirmContinueSubtitle": "Upload legal documents and ID",
-  "addStadiumFirstError": "Please add a stadium first",
-  "blockedBannerTitle": "Account Restricted ⚠️",
-  "blockedBannerSubtitle": "Your account has been restricted. Action capability is limited.",
-  "geographicFallbackBanner": "No stadiums registered in your area yet 🟢.. here are the closest available stadiums in other areas.",
-  "teamMemberDeleteLockError": "Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ⚠️",
-  "memberRemovedSuccess": "Team member has been removed successfully.",
-  "preliminaryRound": "Preliminary Round",
-  "byeBadge": "[ Auto Qualified - BYE ]",
-  "warning": "Warning",
-  "unpaidTeamsWarning": "Warning: The following teams have not paid the subscription fee: {teams}. Do you want to proceed anyway?",
-  "@unpaidTeamsWarning": {
-    "placeholders": {
-      "teams": {
-        "type": "String"
-      }
-    }
-  },
-  "proceedAnyway": "Proceed anyway",
-  "welcomePage1Title": "Live the Pro Vibe",
-  "welcomePage1Subtitle": "Your pitch is ready, and new challenges await. Book your match with a single tap and head towards glory.",
-  "welcomePage2Title": "Be the Area Champion",
-  "welcomePage2Subtitle": "Form your squad, compete in major tournaments, and climb the leaderboard to be the best in your region.",
-  "welcomePage3Title": "Ready to Start?!",
-  "welcomePage3Subtitle": "Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.",
-  "fairPlayBannedTitle": "Banned from Ranked Challenges",
-  "fairPlayBannedSubtitle": "Your team's Fair Play score is {score}/100. Minimum required is 40%.",
-  "@fairPlayBannedSubtitle": {
-    "placeholders": {
-      "score": {
-        "type": "int"
-      }
-    }
-  },
-  "fairPlayBannedError": "Your team's Fair Play score is below 40%. Cannot participate in ranked challenges.",
-  "createTeamFirstTitle": "Create Team First",
-  "createTeamFirstContent": "You must create your own team to be able to create a booking and request other players to join.",
-  "createTeamNow": "Create Team Now",
-  "findPlayersWarningTitle": "Important Warning",
-  "findPlayersWarningContent": "The platform does not guarantee payment for absent players (No-Show). Full financial responsibility lies with the booking owner.",
-  "completeTeamButton": "Complete Team",
-  "createTeamButton": "Create Team"
+ "@@locale": "en",
+ "welcomeTitle": "Welcome to VSP",
+ "welcomeSubtitle": "Book your pitch easily and join teams",
+ "iAmPlayer": "I AM A PLAYER",
+ "iAmOwner": "I AM STADIUM OWNER",
+ "alreadyHaveAccount": "Already have an account?",
+ "login": "Login",
+ "arabic": "Arabic",
+ "english": "English",
+ "enterEmail": "Enter Your Email",
+ "emailHint": "example@email.com",
+ "continueButton": "Continue",
+ "verifyEmail": "Verify Your Email",
+ "verificationCodeSent": "Verification code sent to",
+ "enterCode": "Enter Code",
+ "resendCode": "Resend Code",
+ "verify": "Verify",
+ "setPassword": "Set Your Password",
+ "passwordHint": "Password",
+ "confirmPasswordHint": "Confirm Password",
+ "createAccount": "Create Account",
+ "accountCreated": "Account Created Successfully!",
+ "welcomeMessage": "Welcome to VSP Family",
+ "getStarted": "Get Started",
+ "facilityDetails": "Facility Details",
+ "stadiumName": "Stadium Name",
+ "location": "Location",
+ "socialMedia": "Social Media Links",
+ "uploadDocuments": "Upload Documents",
+ "commercialRegister": "Commercial Register",
+ "taxCard": "Tax Card",
+ "nationalId": "National ID Photo",
+ "submit": "Submit",
+ "hiSporty": "Hi Player",
+ "playerSubtitle": "Start By Creating An Account. This Makes It Easier To Book Your Next Match.",
+ "hiPitch": "Hi Owner",
+ "ownerSubtitle": "Start By Creating An Account. This Makes It Easier To Manage Your Stadium.",
+ "createNewAccount": "Create new account",
+ "continueWithEmail": "Continue With Email",
+ "or": "OR",
+ "termsText": "By using VSP , you agree to the\nTerms and ",
+ "privacyPolicy": "Privacy Policy.",
+ "emailAddress": "Email Address",
+ "password": "Password",
+ "unleashChampion": "BE THE CHAMPION",
+ "premierPlatform": "Book your pitch in seconds, compete with teams, and earn champions ranking",
+ "readyToJoin": "READY TO JOIN?",
+ "signOutCurrentAccount": "Sign out of current account",
+ "credentialAccess": "Credential Access",
+ "forgotPassword": "Forgot Password?",
+ "orContinueWith": "Or continue with",
+ "apple": "Apple",
+ "google": "Google",
+ "termsOfService": "Terms of Service",
+ "byUsingVsp": "By using VSP, you agree to the ",
+ "and": " and ",
+ "signInSubtitle": "Sign in to continue your sports journey",
+ "fullName": "Full Name",
+ "firstName": "First Name",
+ "lastName": "Last Name",
+ "firstNameHint": "Mohamed",
+ "lastNameHint": "Ahmed",
+ "dateOfBirth": "Date of Birth",
+ "dateOfBirthPlaceholder": "YYYY-MM-DD",
+ "addPersonalPhoneNumber": "Add Number (Personal Phone Number)",
+ "enterName": "Enter your name",
+ "phoneNumber": "Phone Number",
+ "governorate": "Governorate",
+ "preferredPosition": "Preferred Position",
+ "confirmPassword": "Confirm Password",
+ "personalInformation": "Personal Information",
+ "registerOwnerSubtitle": "Register as owner and manage your pitch",
+ "registerPlayerSubtitle": "Register as player and start your journey",
+ "fillAllFields": "Please fill all fields",
+ "pleaseEnterDob": "Please enter your date of birth",
+ "invalidPhone": "Please enter a valid phone number",
+ "passwordMismatch": "Passwords do not match",
+ "passwordTooShort": "Password must be at least 6 characters",
+ "verifyAccount": "VERIFY ACCOUNT",
+ "otpSentTo": "A 6-digit code was sent to ",
+ "enterOtpPlaceholder": "Enter the verification code sent to your device",
+ "resendIn": "RESEND IN {seconds} SECONDS",
+ "@resendIn": {
+ "placeholders": {
+ "seconds": {
+ "type": "int"
+ }
+ }
+ },
+ "homeNav": "Home",
+ "matchesNav": "Matches",
+ "championNav": "Champion",
+ "bookedNav": "Booked",
+ "profileNav": "Profile",
+ "seeAll": "See all",
+ "nearbyStadiums": "Nearby Stadiums",
+ "joinMatches": "Join Matches",
+ "joinChampionships": "Join Championships",
+ "searchStadiums": "Search stadiums, teams...",
+ "selectLocation": "Select Location",
+ "noStadiumsFoundIn": "No stadiums found in ",
+ "refresh": "Refresh",
+ "hi": "Hi",
+ "playerDefaultName": "Player",
+ "tournament": "TOURNAMENT",
+ "egCurrency": "eg",
+ "spotsLeft": "SPOTS LEFT",
+ "teamsJoined": "{joinedCount}/{maxCount} TEAMS JOINED",
+ "@teamsJoined": {
+ "placeholders": {
+ "joinedCount": {
+ "type": "int"
+ },
+ "maxCount": {
+ "type": "int"
+ }
+ }
+ },
+ "information": "Information",
+ "pitchConditions": "Pitch Conditions",
+ "ratings": "Ratings",
+ "pricePerHour": "Price per hour",
+ "bookNow": "Book Now",
+ "reviews": "{count} Reviews",
+ "@reviews": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "na": "N/A",
+ "informationStadium": "Stadium Information & Specs",
+ "noDescription": "No description provided.",
+ "features": "Features",
+ "featuresForMoney": "Additional Services & Add-ons",
+ "ballAvailable": "Ball Available: {price} {currency}",
+ "@ballAvailable": {
+ "placeholders": {
+ "price": {
+ "type": "String"
+ },
+ "currency": {
+ "type": "String"
+ }
+ }
+ },
+ "ownerNotes": "Owner Notes",
+ "noOwnerNotes": "No specific notes have been added by the stadium owner.",
+ "punctuality": "Punctuality:",
+ "punctualityPolicy": "Customers must arrive on time for their reservation. Any delay may result in forfeiting part of their playing time without compensation.",
+ "reservationDuration": "Reservation Duration:",
+ "reservationDurationPolicy": "Playing time cannot be extended after the booked slot expires. If additional time is required, a new reservation must be made (subject to availability).",
+ "cancellationPolicyTitle": "Cancellation and Refund Policy:",
+ "cancellationPolicy": "Full refund or deposit return is applicable if cancelled at least 2 hours before match kickoff.\n\nNo refund is provided if cancelled less than 2 hours prior to the scheduled match time.",
+ "liability": "Liability:",
+ "liabilityPolicy": "Stadium management is not responsible for lost, stolen, or damaged personal belongings. Players use the facilities at their own risk.",
+ "noReviews": "No reviews yet. Be the first to review!",
+ "recently": "Recently",
+ "player": "Player",
+ "bookedTitle": "Booked",
+ "upcoming": "Upcoming",
+ "history": "History",
+ "noBookings": "No Bookings Yet",
+ "noBookingsSubtitle": "Book a stadium or join a match to see your schedule here!",
+ "exploreStadiums": "Explore Stadiums",
+ "private": "PRIVATE",
+ "confirmed": "Confirmed",
+ "submitResult": "Submit Result",
+ "completed": "Completed",
+ "date": "Date",
+ "time": "Time",
+ "price": "Price",
+ "vsOpponent": "VS {opponent}",
+ "@vsOpponent": {
+ "placeholders": {
+ "opponent": {
+ "type": "String"
+ }
+ }
+ },
+ "cancel": "Cancel",
+ "chat": "Chat",
+ "waitingOpponent": "Waiting for opponent result...",
+ "addResult": "Add Result",
+ "resultSuccess": "Result Submitted Successfully!",
+ "resultFailed": "Failed to submit result",
+ "draw": "Draw",
+ "win": "Win",
+ "loss": "Loss",
+ "disputed": "Disputed",
+ "cancelBooking": "Cancel Booking?",
+ "cancelBookingConfirm": "Are you sure you want to cancel this booking? This action cannot be undone.",
+ "keepBooking": "Keep Booking",
+ "cancelling": "Cancelling booking...",
+ "cancelSuccess": "Booking cancelled successfully",
+ "cancelFailed": "Failed to cancel",
+ "shareStadiumText": "Check out {stadiumName} in {location} on VSP app!",
+ "@shareStadiumText": {
+ "placeholders": {
+ "stadiumName": {
+ "type": "String"
+ },
+ "location": {
+ "type": "String"
+ }
+ }
+ },
+ "perHour": "per hour",
+ "myMatch": "MY MATCH",
+ "joined": "Joined",
+ "full": "FULL",
+ "open": "OPEN",
+ "host": "Host",
+ "playersJoined": "{current}/{total} PLAYERS JOINED",
+ "@playersJoined": {
+ "placeholders": {
+ "current": {
+ "type": "int"
+ },
+ "total": {
+ "type": "int"
+ }
+ }
+ },
+ "manage": "MANAGE",
+ "leave": "LEAVE",
+ "vspTeam": "VSP Team",
+ "loginFirst": "Please login first",
+ "joinSuccess": "Joined Match Successfully!",
+ "joinFailed": "Failed to join match.",
+ "leaveSuccess": "Left Match Successfully.",
+ "leaveFailed": "Failed to leave match.",
+ "participantRemoved": "Participant removed.",
+ "maxCapacityReached": "Maximum stadium capacity reached.",
+ "updateFailed": "Failed to update spots.",
+ "manageMatch": "Manage Match",
+ "bringingPlayers": "Players you are bringing",
+ "manageSpots": "Manage your reserved spots",
+ "joinedFromApp": "Joined from App",
+ "noPlayersYet": "No players joined yet",
+ "profile": "Profile",
+ "positionLabel": "Position: {pos}",
+ "@positionLabel": {
+ "placeholders": {
+ "pos": {
+ "type": "String"
+ }
+ }
+ },
+ "adminModeActivated": "Admin Mode Activated",
+ "winRate": "WIN RATE",
+ "goals": "GOALS",
+ "matches": "MATCHES",
+ "favoriteStadiumLabel": "FAVORITE STADIUM: {stadium}",
+ "@favoriteStadiumLabel": {
+ "placeholders": {
+ "stadium": {
+ "type": "String"
+ }
+ }
+ },
+ "achievements": "Achievements",
+ "account": "Account",
+ "myTeam": "My Team",
+ "manageTeamInfo": "Manage Your Team Information",
+ "favoriteStadiums": "Favorite Stadiums",
+ "viewLikedFacilities": "View Your Liked Facilities",
+ "paymentMethods": "Payment Methods",
+ "managePaymentMethods": "Manage Your Payment Methods",
+ "preferences": "Preferences",
+ "notifications": "Notifications",
+ "manageNotificationSettings": "Manage Your Notification Settings",
+ "privacy": "Privacy",
+ "language": "Language",
+ "manageLanguagePreferences": "Manage Your Language Preferences",
+ "helpCenter": "Help Center",
+ "getHelpSupport": "Get Help & Support",
+ "feedback": "Feedback",
+ "reportIssueFeature": "Report an issue or suggest a feature",
+ "logout": "Logout",
+ "signOutAccount": "Sign out of your account",
+ "sendFeedback": "Send Feedback",
+ "describeIssue": "Describe the issue...",
+ "attachScreenshot": "Attach Screenshot",
+ "done": "Done",
+ "pleaseEnterFeedback": "Please enter some feedback",
+ "thankYouFeedback": "Thank you for your feedback!",
+ "legendary": "Legendary",
+ "diamond": "Diamond",
+ "platinum": "Platinum",
+ "gold": "Gold",
+ "silver": "Silver",
+ "bronze": "Bronze",
+ "champion": "Champion",
+ "ranking": "Ranking",
+ "championships": "Championships",
+ "teams": "Teams",
+ "oneVsOnePlayers": "1v1 Players",
+ "noOneVsOneRanked": "No 1v1 players ranked yet",
+ "skillPointsLabel": "SKILL: {skill} | G: {goals}",
+ "@skillPointsLabel": {
+ "placeholders": {
+ "skill": {
+ "type": "int"
+ },
+ "goals": {
+ "type": "int"
+ }
+ }
+ },
+ "pts": "PTS",
+ "noTeamsInLoc": "No teams in {location} yet",
+ "@noTeamsInLoc": {
+ "placeholders": {
+ "location": {
+ "type": "String"
+ }
+ }
+ },
+ "vspOfficialLeague": "VSP 1V1 OFFICIAL LEAGUE",
+ "watchHighlights": "Watch highlights & follow the ultimate street ranking!",
+ "teamStats": "MP: {mp} | W: {w} | D: {d} | L: {l}",
+ "@teamStats": {
+ "placeholders": {
+ "mp": {
+ "type": "int"
+ },
+ "w": {
+ "type": "int"
+ },
+ "d": {
+ "type": "int"
+ },
+ "l": {
+ "type": "int"
+ }
+ }
+ },
+ "pointsCount": "{count} pts",
+ "@pointsCount": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "noChampionshipsInLoc": "No championships in {location} yet",
+ "@noChampionshipsInLoc": {
+ "placeholders": {
+ "location": {
+ "type": "String"
+ }
+ }
+ },
+ "chooseBookingType": "Choose What Suits You",
+ "bookPitch": "Book a Pitch",
+ "bookPitchSubtitle": "Private booking for you and friends. No ranking.",
+ "findPlayers": "Find Players",
+ "findPlayersSubtitle": "Public match. Allow others to join to complete numbers.",
+ "teamIncompleteError": "You still need a complete team of 5+ to play challenge matches.",
+ "createTeamToCompete": "Create Team to Compete",
+ "createTeamSubtitle": "You need a team of 5+ players to play competitive matches. Start here!",
+ "teamIncomplete": "Team Incomplete",
+ "teamIncompleteSubtitle": "You need 5+ players to play ranked matches. Add more players!",
+ "challengeMatch": "Challenge Match",
+ "challengeMatchSubtitle": "Compete against other teams and rank up.",
+ "selectDate": "Select Date",
+ "selectTime": "Select Time",
+ "bookedStatus": "BOOKED",
+ "expiredStatus": "EXPIRED",
+ "privateLabel": "Private",
+ "currentPlayersWithYou": "Current Players with You",
+ "playersInGroupSubtitle": "How many players are already in your group?",
+ "rentBallLabel": "Rent Ball (+{price} {currency})",
+ "@rentBallLabel": {
+ "placeholders": {
+ "price": {
+ "type": "int"
+ },
+ "currency": {
+ "type": "String"
+ }
+ }
+ },
+ "payPerBallSubtitle": "Pay Per Ball At This Pitch",
+ "totalPriceLabel": "Price",
+ "priceEgp": "{price} EGP",
+ "@priceEgp": {
+ "placeholders": {
+ "price": {
+ "type": "int"
+ }
+ }
+ },
+ "confirmSelections": "Confirm Selections",
+ "apply": "Apply",
+ "bookingSuccess": "Your reservation has been completed successfully",
+ "bookingReference": "Booking Reference",
+ "refHash": "REF# {id}",
+ "@refHash": {
+ "placeholders": {
+ "id": {
+ "type": "String"
+ }
+ }
+ },
+ "myBookings": "My Bookings",
+ "home": "Home",
+ "bookingRefCopied": "Booking reference copied!",
+ "shareBookingMessage": "My booking on VSP: {stadium} - Ref# {id}",
+ "@shareBookingMessage": {
+ "placeholders": {
+ "stadium": {
+ "type": "String"
+ },
+ "id": {
+ "type": "String"
+ }
+ }
+ },
+ "selectOpponentTeam": "Select Opponent Team",
+ "chooseOpponent": "Choose Opponent",
+ "chooseOpponentSubtitle": "Search for a team to challenge or pick from teams you've played against.",
+ "searchTeamPlaceholder": "Search by Team Name or Captain's Phone",
+ "searchResults": "Search Results",
+ "noTeamsFound": "No teams found matching '{query}'",
+ "@noTeamsFound": {
+ "placeholders": {
+ "query": {
+ "type": "String"
+ }
+ }
+ },
+ "previousOpponents": "Teams You Played Against",
+ "noPreviousOpponents": "You don't have previous opponents yet.\nStart by searching for a team.",
+ "matchesPlayedCount": "Matches played: {count}",
+ "@matchesPlayedCount": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "firstTimePlaying": "First time playing against them. Set the tone!",
+ "headToHeadHistory": "HEAD-TO-HEAD HISTORY",
+ "yourWins": "YOUR WINS",
+ "draws": "DRAWS",
+ "theirWins": "THEIR WINS",
+ "seriesTied": "The series is tied! Break the deadlock!",
+ "youDominate": "You dominate them. Keep the streak alive!",
+ "timeForRevenge": "Time for revenge! They have the upper hand.",
+ "editProfile": "Edit Profile",
+ "enterPhone": "Enter your phone number",
+ "saveChanges": "Save Changes",
+ "nameEmptyError": "Name cannot be empty.",
+ "profileUpdatedSuccess": "Profile updated successfully!",
+ "profileUpdateFailed": "Failed to update profile.",
+ "errorOccurred": "An error occurred: {error}",
+ "@errorOccurred": {
+ "placeholders": {
+ "error": {
+ "type": "String"
+ }
+ }
+ },
+ "points": "Points",
+ "members": "Members",
+ "trophies": "Trophies",
+ "teamName": "Team Name",
+ "enterTeamName": "Enter your team name",
+ "sportsType": "Sports Type",
+ "uploadPhoto": "Upload Photo",
+ "teamMembersHeader": "Team Members ({current}/{max})",
+ "@teamMembersHeader": {
+ "placeholders": {
+ "current": {
+ "type": "int"
+ },
+ "max": {
+ "type": "int"
+ }
+ }
+ },
+ "addMember": "Add Member",
+ "addMembersHint": "Add your team members",
+ "teamAchievements": "Team Achievements",
+ "winStreak": "{count} Win Streak",
+ "@winStreak": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "registerTeamPrompt": "Register your team to start unlocking achievements!",
+ "createTeam": "Create Team",
+ "deleteTeam": "Delete Team",
+ "deleteTeamConfirm": "Are you sure? This action cannot be undone and your team and achievements will be lost.",
+ "enterTeamNameError": "Please enter a team name",
+ "teamCreatedSuccess": "Team created successfully!",
+ "teamUpdatedSuccess": "Team updated successfully!",
+ "teamDeletedSuccess": "Team deleted successfully",
+ "confirmBooking": "Confirm Booking",
+ "bookingSummary": "Booking Summary",
+ "paymentMethod": "Payment Method",
+ "cashPayAtStadium": "Cash (Pay at Stadium)",
+ "cashPayment": "Cash Payment",
+ "cashPaymentDesc": "Booking Confirmed - Please pay cash at the stadium",
+ "sessionExpiredError": "Session expired. Please sign in again.",
+ "bookingCreateFailed": "Failed to create booking",
+ "bookingFailedError": "Booking failed: {error}",
+ "privateBooking": "Private Booking",
+ "ranked": "Ranked",
+ "friendly": "Friendly",
+ "subtotalAmount": "Subtotal Amount",
+ "loginToJoinError": "Please login to join matches",
+ "matchJoinSuccess": "Successfully joined the match!",
+ "reportMatch": "Report Match",
+ "reportSubtitle": "Help us maintain a safe community. Why are you reporting this match?",
+ "reportReasonSpam": "Spam",
+ "reportReasonInappropriate": "Inappropriate Content",
+ "reportReasonHarassment": "Harassment",
+ "reportReasonFake": "Fake Match",
+ "reportReasonOther": "Other",
+ "reportSubmitted": "Report submitted for review.",
+ "reportFailed": "Failed to submit report.",
+ "matchNotFound": "Match not found",
+ "goBack": "Go back",
+ "publicMatchAt": "Public Match at {stadium}",
+ "@publicMatchAt": {
+ "placeholders": {
+ "stadium": {
+ "type": "String"
+ }
+ }
+ },
+ "vsMatchFormat": "{team1} VS {team2}",
+ "@vsMatchFormat": {
+ "placeholders": {
+ "team1": {
+ "type": "String"
+ },
+ "team2": {
+ "type": "String"
+ }
+ }
+ },
+ "playersCount": "Players ({current}/{max})",
+ "@playersCount": {
+ "placeholders": {
+ "current": {
+ "type": "int"
+ },
+ "max": {
+ "type": "int"
+ }
+ }
+ },
+ "playerLabel": "Player {index}",
+ "@playerLabel": {
+ "placeholders": {
+ "index": {
+ "type": "int"
+ }
+ }
+ },
+ "matchFull": "Match Full",
+ "joinMatch": "Join",
+ "captainRequiredError": "To join the tournament, you must be a team captain.",
+ "minPlayersError": "Your team must have at least 5 players to participate.",
+ "alreadyJoinedError": "Your team has already joined this tournament.",
+ "tournamentJoinSuccess": "Successfully joined the tournament! Good luck to team {team} ",
+ "@tournamentJoinSuccess": {
+ "placeholders": {
+ "team": {
+ "type": "String"
+ }
+ }
+ },
+ "joinConfirmation": "Join Confirmation",
+ "entryFee": "Entry Fee: {amount} {currency}",
+ "@entryFee": {
+ "placeholders": {
+ "amount": {
+ "type": "int"
+ },
+ "currency": {
+ "type": "String"
+ }
+ }
+ },
+ "tournamentPaymentDesc": "Payment will be made in Cash at the stadium when the tournament begins.",
+ "confirmAndPay": "Confirm & Pay",
+ "schedule": "Schedule",
+ "expand": "Expand",
+ "startDate": "Start Date",
+ "groupStage": "Group Stage",
+ "quarterFinals": "Quarter Finals",
+ "finalMatch": "Final Match",
+ "aboutTournament": "About The Tournament",
+ "matchRules": "Match Rules And Regulations",
+ "importantInstructions": "Important Instructions For Players",
+ "viewBrackets": "View Tournament Brackets",
+ "matchRulesContent": "Each Match Lasts {duration} Minutes.\nTeams Must Arrive 15 Minutes Before The Start Of The Match.\nA Team That Is More Than 10 Minutes Late Will Be Considered Forfeited.\nThe Tournament Is A League System, And The Top Teams Advance To The Knockout Stage.",
+ "@matchRulesContent": {
+ "placeholders": {
+ "duration": {
+ "type": "int"
+ }
+ }
+ },
+ "importantInstructionsContent": "Each Player Must Wear Designated Sports Shoes (Kochi)—Barefoot Play Is Not Permitted.\nPlayers Must Bring Their Own Sports Clothing And Equipment.\nPlease Keep The Field Clean And Follow The Organizers' Instructions.",
+ "searchHint": "Search stadiums, teams, or cups...",
+ "recentSearches": "Recent Searches",
+ "noResults": "No results found.",
+ "stadiumsCategory": "Stadiums ",
+ "teamsCategory": "Teams ",
+ "championshipsCategory": "Championships ",
+ "prizeLabel": "{prize} Prize",
+ "markAll": "Mark All",
+ "noNotificationsTitle": "No Notifications Yet",
+ "noNotificationsSubtitle": "We will notify you about your matches and challenges.",
+ "backToDashboard": "Back to Dashboard",
+ "accept": "Accept",
+ "decline": "Decline",
+ "minutesAgo": "{count}m ago",
+ "@minutesAgo": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "hoursAgo": "{count}h ago",
+ "@hoursAgo": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "matchesTitle": "Matches",
+ "noMatchesAvailable": "No public matches available right now.",
+ "hostOne": "Be the first to host one!",
+ "shareLink": "Share Link",
+ "shareTeamText": "Check out my team {name} on VSP! We are ranked {rank}. ",
+ "addStadium": "Add Stadium",
+ "autoFetch": "Auto Fetch",
+ "chooseManually": "Choose Manually",
+ "workingHours": "Working Hours",
+ "setDailyBreak": "Set Daily Break Time",
+ "length": "Length",
+ "width": "Width",
+ "bathrooms": "Bathrooms",
+ "cafeteria": "Cafeteria",
+ "garage": "Garage",
+ "changingRoom": "Changing Room",
+ "seatCount": "Seat Count",
+ "amenities": "Amenities",
+ "stadiumGallery": "Stadium Gallery",
+ "submitStadium": "Submit Stadium",
+ "stadiumPhotosHint": "High-quality photos increase your booking rate. Add at least 3 photos of the pitch, facilities, and surroundings.",
+ "basicInfoError": "Please fill basic info",
+ "selectFeaturesError": "Please select features",
+ "ballPriceMinError": "Ball rental price must be at least 5 EGP",
+ "uploadPhotoError": "Please upload at least one stadium image",
+ "stadiumSubmitSuccess": "Stadium Submitted for Review!",
+ "stadiumSaveFailed": "Failed to save stadium",
+ "start": "Start",
+ "end": "End",
+ "breakStart": "Break Start",
+ "breakEnd": "Break End",
+ "tapToFetch": "Tap to Fetch",
+ "ballAvailableLabel": "Ball Available",
+ "playersTeam": "Players per Team",
+ "selectSport": "Select Sport",
+ "errorLabel": "Error",
+ "ok": "OK",
+ "join": "Join",
+ "report": "Report",
+ "none": "None",
+ "wins": "Wins",
+ "close": "Close",
+ "shareTeamCard": "Share Team Card",
+ "freeAgent": "FREE AGENT",
+ "freeAgentDescription": "You are currently a Free Agent.\nJoin or create a team to unlock your Ultimate Team Card and start competing!",
+ "buildYourSquad": "Build Your Squad",
+ "editProfileSubtitle": "Change your name, phone, position, and picture",
+ "shareTeamMessage": "Check out my ultimate team \"{teamName}\" on the VSP App! \nDownload the app to challenge us!",
+ "shareFailedError": "Failed to share team card.",
+ "ovrLabel": "OVR",
+ "gldLabel": "GLD",
+ "winRateLabel": "WIN%",
+ "winsLabel": "WINS",
+ "strkLabel": "STRK",
+ "delete": "Delete",
+ "whatsAppNotInstalled": "WhatsApp not installed",
+ "createTeamFirstError": "Please create a team first to use this option.",
+ "enterValidEmail": "Please enter a valid email",
+ "nameRequired": "Full name required (First and Last name)",
+ "phoneRequired": "Valid phone number required",
+ "faq1_q": "How does Elo ranking work?",
+ "faq1_a": "Your Elo increases when you win matches against opponents with similar or higher ranking. Losing to lower-ranked teams will decrease it more significantly.",
+ "faq2_q": "How do I join a match?",
+ "faq2_a": "Go to the Matches tab, find a public match that fits your schedule, and tap \"Join\". You can join as an individual or with your team.",
+ "faq3_q": "Can I cancel a booking?",
+ "faq3_a": "Yes, cancellations are allowed up to 2 hours before the match starts for a full refund to your wallet.",
+ "faq4_q": "How do I create a team?",
+ "faq4_a": "In the Profile tab, select \"My Team\". From there, you can choose a name, logo, and invite your friends using their VSP ID.",
+ "faq5_q": "What happens if a match is disputed?",
+ "faq5_a": "If teams disagree on the result, a VSP moderator will review the match history and evidence to determine the final outcome.",
+ "faq6_q": "How are stadium ratings calculated?",
+ "faq6_a": "Ratings are an average of verified reviews left by players after their matches. Only players who actually played at the stadium can leave a review.",
+ "faq7_q": "How do I edit my personal profile?",
+ "faq7_a": "In the Profile tab, select 'Edit Profile'. From there, you can update your name, picture, preferred position, and phone number.",
+ "faq8_q": "Why is my match not appearing in the public list?",
+ "faq8_a": "Private matches are hidden. Ensure you select 'Public Match' during booking if you want others to find and join you.",
+ "faq9_q": "How do I get a refund?",
+ "faq9_a": "Upon valid cancellation, the amount is credited to your in-app wallet for future bookings.",
+ "faq10_q": "How do I contact support?",
+ "faq10_a": "Tap 'Chat with Support' on this screen to start a WhatsApp conversation with our team directly.",
+ "totalCollectedGross": "Total Collected (Gross)",
+ "netProfit": "NET PROFIT",
+ "pendingRev": "PENDING REV",
+ "platformCommission": "Platform Commission",
+ "debtCollectionNotice": "You owe {amount} EGP. Collection occurs every 2 months.",
+ "@debtCollectionNotice": {
+ "placeholders": {
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "hoursBookedLabel": "Hours Booked",
+ "activeBookingsLabel": "Completed Bookings",
+ "bookedTodayLabel": "Booked Today",
+ "liveBookingsForToday": "Live bookings for today",
+ "includesPlatformFee": "Includes {amount} EGP platform fee",
+ "@includesPlatformFee": {
+ "placeholders": {
+ "amount": {
+ "type": "String"
+ }
+ }
+ },
+ "showMoreBtn": "Show more",
+ "allStadiumsFilter": "All Stadiums",
+ "allTimeFilter": "All Time ",
+ "noBookingsForTodayLabel": "No bookings for today",
+ "collectedSticker": "COLLECTED",
+ "pendingSticker": "PENDING",
+ "platformCutApplied": "5% Platform Cut Applied",
+ "youHaveStadiums": "You have {count} stadium(s)",
+ "@youHaveStadiums": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "tournamentsTab": "Tournaments",
+ "bookedTab": "Booked",
+ "profileTab": "Profile",
+ "hiPrefix": "Hi",
+ "ownerGuestFallback": "Owner",
+ "individualPlayerLabel": "Individual Player",
+ "teamMatchLabel": "Team Match",
+ "playerTypeLabel": "Player",
+ "endDate": "End Date",
+ "resetLabel": "Reset",
+ "forceStartTournament": "Force Start Tournament?",
+ "forceStartWarning": "Tournament is not full ({count} / {max} teams). Are you sure you want to force start? Make sure you have 4, 8, 16, or 32 teams for the brackets to work correctly.",
+ "@forceStartWarning": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ },
+ "max": {
+ "type": "int"
+ }
+ }
+ },
+ "forceStart": "Force Start",
+ "drawGeneratedSuccess": "Draw Generated & Tournament Started!",
+ "selectTournamentWinner": "Select Tournament Winner",
+ "addTeamManually": "Add Team Manually",
+ "manualRegistrationSub": "Register a team that signed up via phone or in-person.",
+ "manualRegistration": "Manual Registration",
+ "statusLabel": "STATUS",
+ "categoryLabel": "CATEGORY",
+ "datesLabel": "DATES",
+ "teamsLabel": "TEAMS",
+ "joinedTeamsLabel": "Joined Teams",
+ "addTeam": "Add Team",
+ "paid": "Paid",
+ "pending": "Pending",
+ "generateDrawStart": "GENERATE DRAW & START",
+ "manualCrownChampion": "MANUAL CROWN CHAMPION",
+ "tournamentBrackets": "Tournament Brackets",
+ "noBracketsYet": "Brackets not generated yet.",
+ "roundOf": "Round of {count}",
+ "@roundOf": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "finalRound": "Final",
+ "semiFinalRound": "Semi Final",
+ "quarterFinalRound": "Quarter Final",
+ "matchScheduledFor": "Match scheduled for {time}",
+ "@matchScheduledFor": {
+ "placeholders": {
+ "time": {
+ "type": "String"
+ }
+ }
+ },
+ "waitingPreviousWinners": "Waiting for previous round winners...",
+ "updateScore": "Update Score",
+ "saveLabel": "Save",
+ "drawNotAllowed": "Draws not allowed in knockout!",
+ "notScheduled": "Not Scheduled",
+ "editLabel": "Edit",
+ "editTournamentTitle": "Edit Tournament",
+ "createTournamentTitle": "Create Tournament",
+ "backButton": "Back",
+ "updateChanges": "Update Changes",
+ "nextButton": "Next",
+ "basicsStep": "Basics",
+ "systemStep": "System",
+ "schedulingStep": "Scheduling",
+ "quickTemplates": "Quick Templates",
+ "choosePresetSubtitle": "Choose a preset template to quickly configure rules",
+ "currency": "Currency",
+ "tournamentNameLabel": "Tournament Name",
+ "sportTypeLabel": "Sport Type",
+ "entryFeeLabel": "Entry Fee",
+ "tournamentSystemLabel": "Tournament System",
+ "knockoutType": "Knockout",
+ "leagueType": "League",
+ "maxTeamsLabel": "Max Teams",
+ "startDateLabel": "Start Date",
+ "endDateLabel": "End Date",
+ "matchDurationLabel": "Match Duration (min)",
+ "grandPrizeLabel": "Grand Prize",
+ "myStadiumsTab": "My Stadiums",
+ "stadiumsEmptyTitle": "No stadiums found",
+ "stadiumsEmptySubtitle": "Tap add stadium to list your first facility",
+ "addStadiumLabel": "Add Stadium",
+ "identityPendingVerification": "Identity Verification",
+ "bookedManually": "Booked Manually",
+ "noWorkingHoursTitle": "No working hours set",
+ "noWorkingHoursSubtitle": "Please configure stadium opening hours first",
+ "breakTime": "Break Time",
+ "addManualBooking": "Add Manual Booking",
+ "closedBadge": "Closed",
+ "openBadge": "Open",
+ "collectedStatusAuto": "Collected",
+ "pendingStatusAuto": "Pending",
+ "enterCustomerNameError": "Please enter customer name",
+ "update": "Update",
+ "friendsRequiredNote": "Note: You need at least 6 members to create a team",
+ "createTeamTitle": "Create Team",
+ "teamNameLabel": "Team Name",
+ "uploadLogo": "Upload Logo",
+ "changeLogo": "Change Logo",
+ "teamMembers": "Team Members",
+ "addMemberBtn": "Add Member",
+ "noMembersAddedYet": "No members added yet.",
+ "cancelBtn": "Cancel",
+ "confirmBtn": "Confirm",
+ "sports": "Sports",
+ "priceRange": "Price Range",
+ "services": "Services",
+ "filters": "Filters",
+ "reset": "Reset",
+ "selectSports": "Select Sports",
+ "minRating": "Minimum Rating",
+ "anyRating": "Any Rating",
+ "stars": "Stars",
+ "stadiumServices": "Stadium Services",
+ "badgeUnlockedStatus": "Badge Unlocked!",
+ "badgeLockedStatus": "Badge Locked",
+ "gotItBtn": "Got It",
+ "bookingDetailsTitle": "Booking Details",
+ "manualBookingTitle": "Manual Booking",
+ "timeAndStadium": "Time & Stadium",
+ "customerName": "Customer Name",
+ "enterNameHint": "Enter name",
+ "phoneOptionalHint": "Phone (Optional)",
+ "internalNotes": "Internal Notes",
+ "internalNotesHint": "Internal Notes Hint",
+ "paymentStatus": "Payment Status",
+ "tournamentsTitle": "Tournaments",
+ "coming": "Coming",
+ "ongoing": "Ongoing",
+ "finished": "Finished",
+ "noTournamentsTitle": "No Tournaments",
+ "noTournamentsSubtitle": "Create a tournament to see it here",
+ "createYourFirst": "Create Your First",
+ "shareTournamentText": "Check out {name} starting from {startDate} to {endDate}! Grand Prize: {prize} EGP, Entry Fee: {fee} EGP.",
+ "@shareTournamentText": {
+ "placeholders": {
+ "name": {
+ "type": "String"
+ },
+ "startDate": {
+ "type": "String"
+ },
+ "endDate": {
+ "type": "String"
+ },
+ "prize": {
+ "type": "int"
+ },
+ "fee": {
+ "type": "int"
+ }
+ }
+ },
+ "teamsJoinedCount": "{current}/{max} Teams",
+ "@teamsJoinedCount": {
+ "placeholders": {
+ "current": {
+ "type": "int"
+ },
+ "max": {
+ "type": "int"
+ }
+ }
+ },
+ "actualLabel": "Actual",
+ "platformCommissionLabel": "Platform Commission",
+ "bookedHours": "Booked Hours",
+ "stadiumApprovedTitle": "Stadium Approved",
+ "stadiumApprovedSubtitle": "{name} has been approved!",
+ "@stadiumApprovedSubtitle": {
+ "placeholders": {
+ "name": {
+ "type": "String"
+ }
+ }
+ },
+ "dismissBtn": "Dismiss",
+ "createTournament": "Create Tournament",
+ "profileSettings": "Profile Settings",
+ "profileAccountLabel": "Account",
+ "profileAccountSubtitle": "Manage your account",
+ "profilePreferencesLabel": "Preferences",
+ "profileNotificationsLabel": "Notifications",
+ "profileNotificationsSubtitle": "Manage notifications",
+ "profilePrivacyLabel": "Privacy",
+ "profilePrivacySubtitle": "Manage privacy settings",
+ "profileLanguageLabel": "Language",
+ "profileLanguageSubtitle": "Change application language",
+ "profileSupportLabel": "Support",
+ "profileHelpCenterLabel": "Help Center",
+ "profileHelpCenterSubtitle": "Get support and help",
+ "profileLogoutLabel": "Logout",
+ "profileLogoutSubtitle": "Sign out of your account",
+ "inProgress": "In Progress",
+ "personalType": "Personal",
+ "teamType": "Team",
+ "challengeType": "Challenge",
+ "forgotPasswordSubtitle": "Enter your email address and we will send you a link to reset your password.",
+ "resetPasswordSuccess": "Password reset email sent! Check your inbox.",
+ "resetPasswordError": "Failed to send reset email. Please check the address and try again.",
+ "invalidEmail": "Please enter a valid email address.",
+ "selectImageSource": "Select Image Source",
+ "camera": "Camera",
+ "gallery": "Gallery",
+ "docUploadedSuccess": "Document uploaded successfully!",
+ "uploadFailed": "Upload failed: {error}",
+ "@uploadFailed": {
+ "placeholders": {
+ "error": {
+ "type": "String"
+ }
+ }
+ },
+ "uploadCommRegisterRequired": "Please upload your Commercial Register before continuing.",
+ "uploadIdFrontRequired": "Please upload the front side of your National ID.",
+ "uploadIdBackRequired": "Please upload the back side of your National ID.",
+ "regCompleteTitle": "Registration Complete! ",
+ "regCompleteBody": "Your documents have been submitted for review. You can now access your dashboard and manage your stadiums.",
+ "goToDashboard": "Go to Dashboard",
+ "saveInfoFailed": "Failed to save your information. Please check your connection and try again.",
+ "verificationPending": "Verification Pending",
+ "reviewingDocs": "We are reviewing your submitted documents.",
+ "submissionStatus": "Submission Status",
+ "nationalIdFront": "National ID Front",
+ "nationalIdBack": "National ID Back",
+ "reviewDurationText": "The review process typically takes up to 24 hours. We will notify you once your account has been verified and activated.",
+ "refreshStatus": "Refresh Status",
+ "verifiedSuccess": "Account verified successfully!",
+ "stillUnderReview": "Documents are still under review.",
+ "refreshStatusFailed": "Failed to refresh status: {error}",
+ "@refreshStatusFailed": {
+ "placeholders": {
+ "error": {
+ "type": "String"
+ }
+ }
+ },
+ "submitted": "Submitted",
+ "ownerInformationTitle": "Owner information",
+ "clickToUploadRegister": "Click to upload commercial register",
+ "uploadedSuccessfully": "Uploaded Successfully",
+ "saving": "Saving...",
+ "saveAndContinue": "Save & Continue",
+ "uploadNationalIdTitle": "Upload national ID",
+ "submitDocuments": "Submit Documents",
+ "facilityOnboardingSubtitle": "Add your stadium and verify your account to start receiving bookings.",
+ "addedStadiumsCount": "Your Stadiums ({count})",
+ "@addedStadiumsCount": {
+ "placeholders": {
+ "count": {
+ "type": "int"
+ }
+ }
+ },
+ "noStadiumsAddedYet": "No stadiums added yet",
+ "addStadiumButtonSubtitle": "Register your new stadium details",
+ "confirmContinueBtn": "Confirm & Continue",
+ "confirmContinueSubtitle": "Upload legal documents and ID",
+ "addStadiumFirstError": "Please add a stadium first",
+ "blockedBannerTitle": "Account Restricted ",
+ "blockedBannerSubtitle": "Your account has been restricted. Action capability is limited.",
+ "geographicFallbackBanner": "No stadiums registered in your area yet .. here are the closest available stadiums in other areas.",
+ "teamMemberDeleteLockError": "Cannot remove team members while there is an active match or ongoing tournament to avoid penalizing the team with a forfeit ",
+ "memberRemovedSuccess": "Team member has been removed successfully.",
+ "preliminaryRound": "Preliminary Round",
+ "byeBadge": "[ Auto Qualified - BYE ]",
+ "warning": "Warning",
+ "unpaidTeamsWarning": "Warning: The following teams have not paid the subscription fee: {teams}. Do you want to proceed anyway?",
+ "@unpaidTeamsWarning": {
+ "placeholders": {
+ "teams": {
+ "type": "String"
+ }
+ }
+ },
+ "proceedAnyway": "Proceed anyway",
+ "welcomePage1Title": "Live the Pro Vibe",
+ "welcomePage1Subtitle": "Your pitch is ready, and new challenges await. Book your match with a single tap and head towards glory.",
+ "welcomePage2Title": "Be the Area Champion",
+ "welcomePage2Subtitle": "Form your squad, compete in major tournaments, and climb the leaderboard to be the best in your region.",
+ "welcomePage3Title": "Ready to Start?!",
+ "welcomePage3Subtitle": "Choose your role now. Join as a player to take on challenges, or as an owner to manage your stadium smartly.",
+ "fairPlayBannedTitle": "Banned from Ranked Challenges",
+ "fairPlayBannedSubtitle": "Your team's Fair Play score is {score}/100. Minimum required is 40%.",
+ "@fairPlayBannedSubtitle": {
+ "placeholders": {
+ "score": {
+ "type": "int"
+ }
+ }
+ },
+ "fairPlayBannedError": "Your team's Fair Play score is below 40%. Cannot participate in ranked challenges.",
+ "createTeamFirstTitle": "Create Team First",
+ "createTeamFirstContent": "You must create your own team to be able to create a booking and request other players to join.",
+ "createTeamNow": "Create Team Now",
+ "findPlayersWarningTitle": "Important Warning",
+ "findPlayersWarningContent": "The platform does not guarantee payment for absent players (No-Show). Full financial responsibility lies with the booking owner.",
+ "completeTeamButton": "Complete Team",
+ "createTeamButton": "Create Team"
 }

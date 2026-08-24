@@ -5,462 +5,516 @@ import '../repositories/stadium_repository.dart';
 import '../ui/tokens/vsp_tokens.dart';
 import '../utils/geo_helper.dart';
 import 'package:geolocator/geolocator.dart';
+import '../services/fast_cache_service.dart';
 
 class StadiumProvider with ChangeNotifier {
-  final StadiumRepository _databaseService = StadiumRepository();
-  StreamSubscription? _stadiumSubscription;
-  
-  List<Stadium> _stadiums = [];
-  List<Stadium> _filteredStadiums = [];
-  bool _isFilterActive = false;
-  bool _isLoading = false;
-  bool _isLoadingMore = false;
-  bool _hasMore = true;
-  int? _lastDocument;
-  String? _errorMessage;
-  String? _selectedGovernorate;
-  bool _isGeographicFallback = false;
+ final StadiumRepository _databaseService = StadiumRepository();
+ StreamSubscription? _stadiumSubscription;
+ 
+ List<Stadium> _stadiums = [];
+ List<Stadium> _filteredStadiums = [];
+ bool _isFilterActive = false;
+ String? _activeQuickFilter; // 'night_shift' | 'no_deposit' | null
+ bool _isLoading = false;
+ bool _isLoadingMore = false;
+ bool _hasMore = true;
+ int? _lastDocument;
 
-  Map<String, dynamic>? _currentFilters;
+ StadiumProvider() {
+ _initFastCache();
+ }
 
-  // Getters
-  List<Stadium> get stadiums => _isFilterActive ? _filteredStadiums : _stadiums;
-  List<Stadium> get allStadiums => _stadiums;
-  List<Stadium> get filteredStadiums => _filteredStadiums;
-  bool get isLoading => _isLoading;
-  bool get isLoadingMore => _isLoadingMore;
-  bool get hasMore => _hasMore;
-  String? get errorMessage => _errorMessage;
-  bool get isFilterActive => _isFilterActive;
-  Map<String, dynamic>? get currentFilters => _currentFilters;
-  String? get selectedGovernorate => _selectedGovernorate;
-  bool get isGeographicFallback => _isGeographicFallback;
+ Future<void> _initFastCache() async {
+ try {
+ final cached = await FastCacheService.getCachedStadiums();
+ if (cached.isNotEmpty && _stadiums.isEmpty) {
+ _stadiums = cached;
+ notifyListeners();
+ }
+ } catch (_) {}
+ }
+ String? _errorMessage;
+ String? _selectedGovernorate;
+ bool _isGeographicFallback = false;
 
-  // Private helpers to manage state consistently
-  void _setLoading(bool value) {
-    if (_isLoading != value) {
-      _isLoading = value;
-      notifyListeners();
-    }
-  }
+ Map<String, dynamic>? _currentFilters;
 
-  void _setError(String? message) {
-    _errorMessage = message;
-    notifyListeners();
-  }
+ // Getters
+ String? get activeQuickFilter => _activeQuickFilter;
 
-  // Fetch stadiums with pagination
-  Future<void> fetchStadiums({bool isRefresh = false}) async {
-    if (_isLoading || (_isLoadingMore && !isRefresh)) return;
+ List<Stadium> get stadiums {
+ List<Stadium> baseList = _isFilterActive ? _filteredStadiums : _stadiums;
+ if (_activeQuickFilter == 'night_shift') {
+ return baseList.where((s) => _isNightShiftStadium(s)).toList();
+ } else if (_activeQuickFilter == 'no_deposit') {
+ return baseList.where((s) => !s.needsDeposit || s.depositAmount <= 0).toList();
+ }
+ return baseList;
+ }
 
-    if (isRefresh) {
-      _lastDocument = null;
-      _hasMore = true;
-      if (_stadiums.isEmpty) {
-        _setLoading(true);
-      }
-    } else {
-      _isLoadingMore = true;
-      notifyListeners();
-    }
+ bool _isNightShiftStadium(Stadium stadium) {
+ final closing = stadium.closingTime.toLowerCase();
+ if (closing.contains('am') || closing.contains('صباحاً') || closing.contains('00:') || closing.contains('01:') || closing.contains('02:') || closing.contains('03:') || closing.contains('04:') || closing.contains('05:') || closing.contains('24')) {
+ return true;
+ }
+ final features = stadium.features;
+ if (features is Map && features['workingHours'] is Map) {
+ final end = features['workingHours']['end']?.toString().toLowerCase() ?? '';
+ if (end.contains('am') || end.contains('صباحاً') || end.contains('01:') || end.contains('02:') || end.contains('03:') || end.contains('04:')) {
+ return true;
+ }
+ }
+ return false;
+ }
 
-    try {
-      // 🛡️ Discovery and Search Geo-Matching: Database-Level Geodistance Query
-      // Check if user's geographic location is available. If active, immediately fetch
-      // the pre-sorted list from the database RPC instead of client-side loops.
-      Position? userPosition;
-      try {
-        if (await Geolocator.isLocationServiceEnabled()) {
-          LocationPermission permission = await Geolocator.checkPermission();
-          if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
-            userPosition = await Geolocator.getLastKnownPosition();
-            userPosition ??= await Geolocator.getCurrentPosition(
-              locationSettings: const LocationSettings(timeLimit: Duration(seconds: 2)),
-            );
-          }
-        }
-      } catch (e) {
-        debugPrint('Error getting GPS location: $e');
-      }
+ void toggleQuickFilter(String filterKey) {
+ if (_activeQuickFilter == filterKey) {
+ _activeQuickFilter = null;
+ } else {
+ _activeQuickFilter = filterKey;
+ }
+ notifyListeners();
+ }
 
-      // 🛡️ Governorate Filter Priority: If a specific governorate is selected by user,
-      // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
-      if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
-        final limit = isRefresh ? 10 : _stadiums.length + 10;
-        final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
-          userPosition.latitude,
-          userPosition.longitude,
-          limit: limit,
-        );
+ List<Stadium> get allStadiums => _stadiums;
+ List<Stadium> get filteredStadiums => _filteredStadiums;
+ bool get isLoading => _isLoading;
+ bool get isLoadingMore => _isLoadingMore;
+ bool get hasMore => _hasMore;
+ String? get errorMessage => _errorMessage;
+ bool get isFilterActive => _isFilterActive;
+ Map<String, dynamic>? get currentFilters => _currentFilters;
+ String? get selectedGovernorate => _selectedGovernorate;
+ bool get isGeographicFallback => _isGeographicFallback;
 
-        _stadiums = nearbyStadiums;
-        _lastDocument = _stadiums.length;
-        _hasMore = nearbyStadiums.length >= limit;
-        _isGeographicFallback = false;
-      } else {
-        final result = await _databaseService.getStadiumsPaginated(
-          limit: 10,
-          startAfter: _lastDocument,
-          governorate: _selectedGovernorate,
-        );
+ // Private helpers to manage state consistently
+ void _setLoading(bool value) {
+ if (_isLoading != value) {
+ _isLoading = value;
+ notifyListeners();
+ }
+ }
 
-        final List<Stadium> newStadiums = result['items'];
-        _lastDocument = result['lastDoc'];
+ void _setError(String? message) {
+ _errorMessage = message;
+ notifyListeners();
+ }
 
-        if (isRefresh) {
-          _stadiums = newStadiums;
-          _isGeographicFallback = false;
-        } else {
-          _stadiums.addAll(newStadiums);
-        }
+ // Fetch stadiums with pagination
+ Future<void> fetchStadiums({bool isRefresh = false}) async {
+ if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
-        if (newStadiums.length < 10) {
-          _hasMore = false;
-        }
-      }
+ if (isRefresh) {
+ _lastDocument = null;
+ _hasMore = true;
+ if (_stadiums.isEmpty) {
+ _setLoading(true);
+ }
+ } else {
+ _isLoadingMore = true;
+ notifyListeners();
+ }
 
-      _errorMessage = null;
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to fetch stadiums: ${e.toString()}');
-    } finally {
-      if (isRefresh) {
-        _setLoading(false);
-      } else {
-        _isLoadingMore = false;
-        notifyListeners();
-      }
-    }
-  }
+ try {
+ // Discovery and Search Geo-Matching: Database-Level Geodistance Query
+ // Check if user's geographic location is available. If active, immediately fetch
+ // the pre-sorted list from the database RPC instead of client-side loops.
+ Position? userPosition;
+ try {
+ if (await Geolocator.isLocationServiceEnabled()) {
+ LocationPermission permission = await Geolocator.checkPermission();
+ if (permission == LocationPermission.whileInUse || permission == LocationPermission.always) {
+ userPosition = await Geolocator.getLastKnownPosition();
+ userPosition ??= await Geolocator.getCurrentPosition(
+ locationSettings: const LocationSettings(timeLimit: Duration(seconds: 2)),
+ );
+ }
+ }
+ } catch (e) {
+ debugPrint('Error getting GPS location: $e');
+ }
 
-  // Listen specifically to owner's stadiums
-  void listenToOwnerStadiums(String ownerId) {
-    _stadiumSubscription?.cancel();
-    
-    _setError(null);
-    _setLoading(true);
+ // Governorate Filter Priority: If a specific governorate is selected by user,
+ // strictly honor it. Use GPS nearby pre-sort ONLY when no governorate is selected.
+ if ((_selectedGovernorate == null || _selectedGovernorate!.isEmpty) && userPosition != null) {
+ final limit = isRefresh ? 10 : _stadiums.length + 10;
+ final nearbyStadiums = await _databaseService.fetchNearbyStadiums(
+ userPosition.latitude,
+ userPosition.longitude,
+ limit: limit,
+ );
 
-    _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
-      (data) {
-        _stadiums = data;
-        _errorMessage = null;
-        _setLoading(false);
-      },
-      onError: (error) {
-        _setError('Failed to fetch your stadiums: ${error.toString()}');
-        _setLoading(false);
-      },
-    );
-  }
+ _stadiums = nearbyStadiums;
+ _lastDocument = _stadiums.length;
+ _hasMore = nearbyStadiums.length >= limit;
+ _isGeographicFallback = false;
+ } else {
+ final result = await _databaseService.getStadiumsPaginated(
+ limit: 10,
+ startAfter: _lastDocument,
+ governorate: _selectedGovernorate,
+ );
 
-  // Get stadium by ID
-  Future<Stadium?> getStadiumById(String stadiumId) async {
-    try {
-      return await _databaseService.getStadiumById(stadiumId);
-    } catch (e) {
-      debugPrint('Error fetching stadium by ID: $e');
-      return null;
-    }
-  }
+ final List<Stadium> newStadiums = result['items'];
+ _lastDocument = result['lastDoc'];
 
-  // Add stadium (Owner)
-  Future<String?> addStadium(Stadium stadium) async {
-    _setError(null);
-    _setLoading(true);
+ if (isRefresh) {
+ _stadiums = newStadiums;
+ _isGeographicFallback = false;
+ } else {
+ _stadiums.addAll(newStadiums);
+ }
 
-    try {
-      String? stadiumId = await _databaseService.addStadium(stadium.toFirestore());
-      _setLoading(false);
-      return stadiumId;
-    } catch (e) {
-      _setError('Failed to add stadium: ${e.toString()}');
-      _setLoading(false);
-      return null;
-    }
-  }
+ if (newStadiums.length < 10) {
+ _hasMore = false;
+ }
+ }
 
-  // Update stadium
-  Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
-    _setError(null);
-    _setLoading(true);
+ _errorMessage = null;
+ if (_stadiums.isNotEmpty && (_selectedGovernorate == null || _selectedGovernorate!.isEmpty)) {
+ FastCacheService.cacheStadiums(_stadiums);
+ }
+ notifyListeners();
+ } catch (e) {
+ _setError('Failed to fetch stadiums: ${e.toString()}');
+ } finally {
+ if (isRefresh) {
+ _setLoading(false);
+ } else {
+ _isLoadingMore = false;
+ notifyListeners();
+ }
+ }
+ }
 
-    try {
-      bool success = await _databaseService.updateStadium(stadiumId, data);
-      _setLoading(false);
-      return success;
-    } catch (e) {
-      _setError('Failed to update stadium: ${e.toString()}');
-      _setLoading(false);
-      return false;
-    }
-  }
+ // Listen specifically to owner's stadiums
+ void listenToOwnerStadiums(String ownerId) {
+ _stadiumSubscription?.cancel();
+ 
+ _setError(null);
+ _setLoading(true);
 
-  // Filter stadiums by location (Robust)
-  List<Stadium> filterByLocation(String location) {
-    final query = location.trim().toLowerCase();
-    if (query.isEmpty) return _stadiums;
-    
-    return _stadiums.where((stadium) => 
-      stadium.location.toLowerCase().contains(query)
-    ).toList();
-  }
+ _stadiumSubscription = _databaseService.getOwnerStadiums(ownerId).listen(
+ (data) {
+ _stadiums = data;
+ _errorMessage = null;
+ _setLoading(false);
+ },
+ onError: (error) {
+ _setError('Failed to fetch your stadiums: ${error.toString()}');
+ _setLoading(false);
+ },
+ );
+ }
 
-  // Filter stadiums by governorate
-  void applyGovernorateFilter(String? governorate) {
-    if (_selectedGovernorate == governorate) return;
-    
-    _selectedGovernorate = governorate;
-    _stadiums = [];
-    _filteredStadiums = [];
-    _lastDocument = null;
-    _hasMore = true;
-    _isFilterActive = false; 
-    _isGeographicFallback = false;
-    
-    fetchStadiums(isRefresh: true);
-  }
+ // Get stadium by ID
+ Future<Stadium?> getStadiumById(String stadiumId) async {
+ try {
+ return await _databaseService.getStadiumById(stadiumId);
+ } catch (e) {
+ debugPrint('Error fetching stadium by ID: $e');
+ return null;
+ }
+ }
 
-  // Filter stadiums by price range
-  List<Stadium> filterByPriceRange(double minPrice, double maxPrice) {
-    return _stadiums.where((stadium) => 
-      stadium.pricePerHour >= minPrice && stadium.pricePerHour <= maxPrice
-    ).toList();
-  }
+ // Add stadium (Owner)
+ Future<String?> addStadium(Stadium stadium) async {
+ _setError(null);
+ _setLoading(true);
 
-  // Search stadiums (Robust)
-  List<Stadium> searchStadiums(String query) {
-    final cleanQuery = query.trim().toLowerCase();
-    final sourceList = _isFilterActive ? _filteredStadiums : _stadiums;
-    if (cleanQuery.isEmpty) return sourceList;
+ try {
+ String? stadiumId = await _databaseService.addStadium(stadium.toFirestore());
+ _setLoading(false);
+ return stadiumId;
+ } catch (e) {
+ _setError('Failed to add stadium: ${e.toString()}');
+ _setLoading(false);
+ return null;
+ }
+ }
 
-    return sourceList.where((stadium) => 
-      stadium.name.toLowerCase().contains(cleanQuery) ||
-      stadium.location.toLowerCase().contains(cleanQuery)
-    ).toList();
-  }
+ // Update stadium
+ Future<bool> updateStadium(String stadiumId, Map<String, dynamic> data) async {
+ _setError(null);
+ _setLoading(true);
 
-  double get maxStadiumPrice {
-    if (_stadiums.isEmpty) return 2000.0;
-    final maxP = _stadiums.map((s) => s.pricePerHour).reduce((a, b) => a > b ? a : b);
-    return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
-  }
+ try {
+ bool success = await _databaseService.updateStadium(stadiumId, data);
+ _setLoading(false);
+ return success;
+ } catch (e) {
+ _setError('Failed to update stadium: ${e.toString()}');
+ _setLoading(false);
+ return false;
+ }
+ }
 
-  /// Returns unique registered sports dynamically from stadiums database, filtered by active configuration
-  List<String> get availableSportTypes {
-    final sports = _stadiums
-        .map((s) => s.type)
-        .where((t) => t.trim().isNotEmpty && VSPConstants.activeSports.contains(t.trim()))
-        .toSet()
-        .toList();
-    if (sports.isEmpty) return List<String>.from(VSPConstants.activeSports);
-    return sports;
-  }
+ // Filter stadiums by location (Robust)
+ List<Stadium> filterByLocation(String location) {
+ final query = location.trim().toLowerCase();
+ if (query.isEmpty) return _stadiums;
+ 
+ return _stadiums.where((stadium) => 
+ stadium.location.toLowerCase().contains(query)
+ ).toList();
+ }
 
-  // Private helper to check dynamic features mapping safely
-  bool _checkAmenity(Stadium stadium, String amenity) {
-    final dynamic feats = stadium.features;
-    final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
+ // Filter stadiums by governorate
+ void applyGovernorateFilter(String? governorate) {
+ if (_selectedGovernorate == governorate) return;
+ 
+ _selectedGovernorate = governorate;
+ _stadiums = [];
+ _filteredStadiums = [];
+ _lastDocument = null;
+ _hasMore = true;
+ _isFilterActive = false; 
+ _isGeographicFallback = false;
+ 
+ fetchStadiums(isRefresh: true);
+ }
 
-    // 1. Payment & Deposit
-    if (amenity == 'No Deposit Needed' || amenity == 'حجز بدون عربون (دفع نقدي)') {
-      return !stadium.needsDeposit;
-    }
+ // Filter stadiums by price range
+ List<Stadium> filterByPriceRange(double minPrice, double maxPrice) {
+ return _stadiums.where((stadium) => 
+ stadium.pricePerHour >= minPrice && stadium.pricePerHour <= maxPrice
+ ).toList();
+ }
 
-    // 2. Real Owner Amenities (Strictly matching owner inputs)
-    if (amenity == 'Showers & Baths' || amenity == 'دش وحمام') {
-      return featMap['bathOption'] == 'Yes' || featMap['hasShower'] == true || featMap['shower'] == true;
-    }
-    if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
-      return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
-    }
-    if (amenity == 'Night Floodlights' || amenity == 'كشافات إضاءة ليلاً') {
-      return stadium.hasJerash || featMap['hasLighting'] == true || featMap['lighting'] == true;
-    }
-    if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
-      return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
-    }
-    if (amenity == 'Ball Provided' || amenity == 'كرة متوفرة' || amenity == 'كرة') {
-      return stadium.hasBall || featMap['hasBall'] == true;
-    }
-    if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
-      return stadium.hasSeats || featMap['hasSeats'] == true;
-    }
-    if (amenity == 'Garage & Parking' || amenity == 'جراج سيارات') {
-      return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
-    }
+ // Search stadiums (Robust)
+ List<Stadium> searchStadiums(String query) {
+ final cleanQuery = query.trim().toLowerCase();
+ final sourceList = _isFilterActive ? _filteredStadiums : _stadiums;
+ if (cleanQuery.isEmpty) return sourceList;
 
-    // Fallback checks
-    final key = amenity.replaceAll(' ', '').toLowerCase();
-    return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
-  }
+ return sourceList.where((stadium) => 
+ stadium.name.toLowerCase().contains(cleanQuery) ||
+ stadium.location.toLowerCase().contains(cleanQuery)
+ ).toList();
+ }
 
-  // Apply complex filters with server-side pagination support
-  void applyFilters(Map<String, dynamic> filters) {
-    _currentFilters = filters;
-    _isFilterActive = true;
-    _stadiums = [];
-    _filteredStadiums = [];
-    _lastDocument = null;
-    _hasMore = true;
-    
-    final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
-    final String? location = filters['location'] as String?;
-    final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
-    final double? minPrice = (filters['minPrice'] as num?)?.toDouble();
-    final double? maxPrice = (filters['maxPrice'] as num?)?.toDouble();
-    final bool noDepositOnly = filters['noDepositOnly'] == true;
-    final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
+ double get maxStadiumPrice {
+ if (_stadiums.isEmpty) return 2000.0;
+ final maxP = _stadiums.map((s) => s.pricePerHour).reduce((a, b) => a > b ? a : b);
+ return maxP > 0 ? (maxP / 50).ceil() * 50.0 : 2000.0;
+ }
 
-    // Fetch filtered data directly from Supabase
-    fetchStadiumsWithParams(
-      isRefresh: true,
-      governorate: location ?? _selectedGovernorate,
-      sportType: sports.isNotEmpty ? sports.first : null,
-      pitchSize: sizes.isNotEmpty ? sizes.first : null,
-      minPrice: minPrice,
-      maxPrice: maxPrice,
-      noDepositOnly: noDepositOnly,
-      amenities: amenities,
-    );
-  }
+ /// Returns unique registered sports dynamically from stadiums database, filtered by active configuration
+ List<String> get availableSportTypes {
+ final sports = _stadiums
+ .map((s) => s.type)
+ .where((t) => t.trim().isNotEmpty && VSPConstants.activeSports.contains(t.trim()))
+ .toSet()
+ .toList();
+ if (sports.isEmpty) return List<String>.from(VSPConstants.activeSports);
+ return sports;
+ }
 
-  Future<void> fetchStadiumsWithParams({
-    bool isRefresh = false,
-    String? governorate,
-    String? sportType,
-    String? pitchSize,
-    double? minPrice,
-    double? maxPrice,
-    bool? noDepositOnly,
-    List<String>? amenities,
-  }) async {
-    if (_isLoading || (_isLoadingMore && !isRefresh)) return;
+ // Private helper to check dynamic features mapping safely
+ bool _checkAmenity(Stadium stadium, String amenity) {
+ final dynamic feats = stadium.features;
+ final Map<dynamic, dynamic> featMap = feats is Map ? feats : {};
 
-    if (isRefresh) {
-      _lastDocument = null;
-      _hasMore = true;
-      _setLoading(true);
-    } else {
-      _isLoadingMore = true;
-      notifyListeners();
-    }
+ // 1. Payment & Deposit
+ if (amenity == 'No Deposit Needed' || amenity == 'حجز بدون عربون (دفع نقدي)') {
+ return !stadium.needsDeposit;
+ }
 
-    try {
-      final result = await _databaseService.getStadiumsPaginated(
-        limit: 10,
-        startAfter: _lastDocument,
-        governorate: governorate,
-        sportType: sportType,
-        pitchSize: pitchSize,
-        minPrice: minPrice,
-        maxPrice: maxPrice,
-        noDepositOnly: noDepositOnly,
-      );
+ // 2. Real Owner Amenities (Strictly matching owner inputs)
+ if (amenity == 'Showers & Baths' || amenity == 'دش وحمام') {
+ return featMap['bathOption'] == 'Yes' || featMap['hasShower'] == true || featMap['shower'] == true;
+ }
+ if (amenity == 'Changing Rooms' || amenity == 'غرف تغيير ملابس') {
+ return featMap['changingRoom'] == true || featMap['changingRooms'] == true || featMap['hasChangingRooms'] == true;
+ }
+ if (amenity == 'Night Floodlights' || amenity == 'كشافات إضاءة ليلاً') {
+ return stadium.hasJerash || featMap['hasLighting'] == true || featMap['lighting'] == true;
+ }
+ if (amenity == 'Cafeteria & Drinks' || amenity == 'كافتيريا ومشروبات') {
+ return stadium.cafeteria > 0 || featMap['cafeteria'] == true || featMap['hasCafeteria'] == true;
+ }
+ if (amenity == 'Ball Provided' || amenity == 'كرة متوفرة' || amenity == 'كرة') {
+ return stadium.hasBall || featMap['hasBall'] == true;
+ }
+ if (amenity == 'Spectator Seats' || amenity == 'مدرجات جمهور' || amenity == 'مقاعد') {
+ return stadium.hasSeats || featMap['hasSeats'] == true;
+ }
+ if (amenity == 'Garage & Parking' || amenity == 'جراج سيارات') {
+ return featMap['garage'] == true || featMap['hasGarage'] == true || featMap['parking'] == true;
+ }
 
-      final List<Stadium> rawItems = result['items'];
-      final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
-          ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
-          : rawItems;
-      _lastDocument = result['lastDoc'];
+ // Fallback checks
+ final key = amenity.replaceAll(' ', '').toLowerCase();
+ return featMap[key] == true || featMap['has${amenity.replaceAll(' ', '')}'] == true;
+ }
 
-      if (isRefresh) {
-        _stadiums = newStadiums;
-        _filteredStadiums = newStadiums;
-      } else {
-        _stadiums.addAll(newStadiums);
-        _filteredStadiums.addAll(newStadiums);
-      }
+ // Apply complex filters with server-side pagination support
+ void applyFilters(Map<String, dynamic> filters) {
+ _currentFilters = filters;
+ _isFilterActive = true;
+ _stadiums = [];
+ _filteredStadiums = [];
+ _lastDocument = null;
+ _hasMore = true;
+ 
+ final List<String> sports = filters['sports'] is List ? List<String>.from(filters['sports']) : [];
+ final String? location = filters['location'] as String?;
+ final List<String> sizes = filters['sizes'] is List ? List<String>.from(filters['sizes']) : [];
+ final double? minPrice = (filters['minPrice'] as num?)?.toDouble();
+ final double? maxPrice = (filters['maxPrice'] as num?)?.toDouble();
+ final bool noDepositOnly = filters['noDepositOnly'] == true;
+ final List<String> amenities = filters['amenities'] is List ? List<String>.from(filters['amenities']) : [];
 
-      if (rawItems.length < 10) {
-        _hasMore = false;
-      }
+ // Fetch filtered data directly from Supabase
+ fetchStadiumsWithParams(
+ isRefresh: true,
+ governorate: location ?? _selectedGovernorate,
+ sportType: sports.isNotEmpty ? sports.first : null,
+ pitchSize: sizes.isNotEmpty ? sizes.first : null,
+ minPrice: minPrice,
+ maxPrice: maxPrice,
+ noDepositOnly: noDepositOnly,
+ amenities: amenities,
+ );
+ }
 
-      _errorMessage = null;
-      notifyListeners();
-    } catch (e) {
-      _setError('Failed to fetch stadiums: ${e.toString()}');
-    } finally {
-      if (isRefresh) {
-        _setLoading(false);
-      } else {
-        _isLoadingMore = false;
-        notifyListeners();
-      }
-    }
-  }
+ Future<void> fetchStadiumsWithParams({
+ bool isRefresh = false,
+ String? governorate,
+ String? sportType,
+ String? pitchSize,
+ double? minPrice,
+ double? maxPrice,
+ bool? noDepositOnly,
+ List<String>? amenities,
+ }) async {
+ if (_isLoading || (_isLoadingMore && !isRefresh)) return;
 
-  // Sort stadiums by distance
-  void sortByDistance(Position? userPosition) {
-    if (userPosition == null) return;
+ if (isRefresh) {
+ _lastDocument = null;
+ _hasMore = true;
+ _setLoading(true);
+ } else {
+ _isLoadingMore = true;
+ notifyListeners();
+ }
 
-    _stadiums.sort((a, b) {
-      if (a.lat == null || a.lng == null) return 1;
-      if (b.lat == null || b.lng == null) return -1;
+ try {
+ final result = await _databaseService.getStadiumsPaginated(
+ limit: 10,
+ startAfter: _lastDocument,
+ governorate: governorate,
+ sportType: sportType,
+ pitchSize: pitchSize,
+ minPrice: minPrice,
+ maxPrice: maxPrice,
+ noDepositOnly: noDepositOnly,
+ );
 
-      final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
-      final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
-      
-      return distA.compareTo(distB);
-    });
+ final List<Stadium> rawItems = result['items'];
+ final List<Stadium> newStadiums = (amenities != null && amenities.isNotEmpty)
+ ? rawItems.where((s) => amenities.every((a) => _checkAmenity(s, a))).toList()
+ : rawItems;
+ _lastDocument = result['lastDoc'];
 
-    if (_isFilterActive) {
-      _filteredStadiums.sort((a, b) {
-        if (a.lat == null || a.lng == null) return 1;
-        if (b.lat == null || b.lng == null) return -1;
+ if (isRefresh) {
+ _stadiums = newStadiums;
+ _filteredStadiums = newStadiums;
+ } else {
+ _stadiums.addAll(newStadiums);
+ _filteredStadiums.addAll(newStadiums);
+ }
 
-        final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
-        final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
-        
-        return distA.compareTo(distB);
-      });
-    }
+ if (rawItems.length < 10) {
+ _hasMore = false;
+ }
 
-    notifyListeners();
-  }
+ _errorMessage = null;
+ notifyListeners();
+ } catch (e) {
+ _setError('Failed to fetch stadiums: ${e.toString()}');
+ } finally {
+ if (isRefresh) {
+ _setLoading(false);
+ } else {
+ _isLoadingMore = false;
+ notifyListeners();
+ }
+ }
+ }
 
-  // Reset all filters
-  void clearFilters() {
-    _isFilterActive = false;
-    _currentFilters = null;
-    _filteredStadiums = [];
-    notifyListeners();
-  }
+ // Sort stadiums by distance
+ void sortByDistance(Position? userPosition) {
+ if (userPosition == null) return;
 
-  // Clear error
-  void clearError() {
-    _setError(null);
-  }
+ _stadiums.sort((a, b) {
+ if (a.lat == null || a.lng == null) return 1;
+ if (b.lat == null || b.lng == null) return -1;
 
-  // Phase 2: Stadium Deletion Safeguard
-  Future<bool> deleteStadium(String stadiumId) async {
-    _setError(null);
-    _setLoading(true);
+ final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
+ final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
+ 
+ return distA.compareTo(distB);
+ });
 
-    try {
-      bool success = await _databaseService.deleteStadium(stadiumId);
-      if (success) {
-        // Remove from local list if present
-        _stadiums.removeWhere((s) => s.id == stadiumId);
-        if (_isFilterActive) {
-          _filteredStadiums.removeWhere((s) => s.id == stadiumId);
-        }
-        _setLoading(false);
-        return true;
-      } else {
-        _setError('Failed to delete stadium safely. Check your connection.');
-        _setLoading(false);
-        return false;
-      }
-    } catch (e) {
-      _setError('Error during stadium deletion: ${e.toString()}');
-      _setLoading(false);
-      return false;
-    }
-  }
+ if (_isFilterActive) {
+ _filteredStadiums.sort((a, b) {
+ if (a.lat == null || a.lng == null) return 1;
+ if (b.lat == null || b.lng == null) return -1;
 
-  @override
-  void dispose() {
-    _stadiumSubscription?.cancel();
-    super.dispose();
-  }
+ final distA = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, a.lat!, a.lng!);
+ final distB = GeoHelper.calculateDistance(userPosition.latitude, userPosition.longitude, b.lat!, b.lng!);
+ 
+ return distA.compareTo(distB);
+ });
+ }
+
+ notifyListeners();
+ }
+
+ // Reset all filters
+ void clearFilters() {
+ _isFilterActive = false;
+ _currentFilters = null;
+ _filteredStadiums = [];
+ notifyListeners();
+ }
+
+ // Clear error
+ void clearError() {
+ _setError(null);
+ }
+
+ // Phase 2: Stadium Deletion Safeguard
+ Future<bool> deleteStadium(String stadiumId) async {
+ _setError(null);
+ _setLoading(true);
+
+ try {
+ bool success = await _databaseService.deleteStadium(stadiumId);
+ if (success) {
+ // Remove from local list if present
+ _stadiums.removeWhere((s) => s.id == stadiumId);
+ if (_isFilterActive) {
+ _filteredStadiums.removeWhere((s) => s.id == stadiumId);
+ }
+ _setLoading(false);
+ return true;
+ } else {
+ _setError('Failed to delete stadium safely. Check your connection.');
+ _setLoading(false);
+ return false;
+ }
+ } catch (e) {
+ _setError('Error during stadium deletion: ${e.toString()}');
+ _setLoading(false);
+ return false;
+ }
+ }
+
+ @override
+ void dispose() {
+ _stadiumSubscription?.cancel();
+ super.dispose();
+ }
 }
