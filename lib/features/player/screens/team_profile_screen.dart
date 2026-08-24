@@ -1,7 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import 'package:url_launcher/url_launcher.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/ui/components/vsp_card.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -13,6 +12,7 @@ import '../../../core/widgets/shimmer_image.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/user_repository.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/utils/vsp_launcher_utils.dart';
 
 class TeamProfileScreen extends StatefulWidget {
  final Team? team;
@@ -125,18 +125,12 @@ class _TeamProfileScreenState extends State<TeamProfileScreen> {
  final message = isArabic
  ? 'مرحباً كابتن ${team.captainName}، رأيت فريقك ${team.name} على تطبيق VSP وأود التواصل معك.'
  : 'Hello Captain ${team.captainName}, I saw your team ${team.name} on VSP and would like to contact you.';
- 
- final encodedMessage = Uri.encodeComponent(message);
- final url = 'https://wa.me/$phone?text=$encodedMessage';
 
- try {
- await launchUrl(
- Uri.parse(url),
- mode: LaunchMode.externalApplication,
+ await VSPLauncherUtils.openWhatsApp(
+ context,
+ phone: phone,
+ message: message,
  );
- } catch (e) {
- debugPrint('Could not launch WhatsApp chat: $e');
- }
  }
 
  @override

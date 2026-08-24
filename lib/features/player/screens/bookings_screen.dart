@@ -327,6 +327,124 @@ class _BookingsScreenState extends State<BookingsScreen> {
   }
 }
 
+class _RescheduleActionBanner extends StatefulWidget {
+  final Booking booking;
+
+  const _RescheduleActionBanner({required this.booking});
+
+  @override
+  State<_RescheduleActionBanner> createState() => _RescheduleActionBannerState();
+}
+
+class _RescheduleActionBannerState extends State<_RescheduleActionBanner> {
+  bool _isLoading = false;
+
+  Future<void> _respond(bool accept) async {
+    if (_isLoading) return;
+    setState(() => _isLoading = true);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    try {
+      final success = await Provider.of<BookingProvider>(context, listen: false).respondToReschedule(
+        bookingId: widget.booking.id,
+        accept: accept,
+      );
+      if (mounted) {
+        setState(() => _isLoading = false);
+        if (success) {
+          VSPFeedback.showSuccess(
+            context,
+            accept
+                ? (isArabic ? 'تمت الموافقة وتعديل توقيت الحجز بنجاح ' : 'Reschedule accepted successfully ')
+                : (isArabic ? 'تم رفض الموعد وإلغاء الحجز وإعادة المبلغ 100% ' : 'Reschedule rejected & 100% refunded '),
+          );
+        } else if (accept) {
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'عذراً، هذا الموعد المقترح تم حجزه للاعب آخر أثناء الانتظار. تم إلغاء الحجز وإعادة أموالك بالكامل.'
+                : 'Sorry, this slot was taken by another player in the meantime. Booking cancelled & fully refunded.',
+          );
+        }
+      }
+    } catch (e) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+        VSPFeedback.showError(context, isArabic ? 'حدث خطأ أثناء معالجة الطلب' : 'Failed to respond to reschedule');
+      }
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    return Container(
+      padding: const EdgeInsets.all(VSPSpacing.md),
+      decoration: BoxDecoration(
+        color: Colors.amber.withValues(alpha: 0.15),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(color: Colors.amber, width: 1),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Iconsax.clock_copy, color: Colors.amber, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isArabic ? ' اقتراح من المالك بنقل موعد المباراة:' : ' Pitch owner proposed a new match time:',
+                  style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            '${isArabic ? "الموعد المقترح: " : "Proposed time: "}${AppDateFormatter.formatDayMonth(widget.booking.proposedStartTime!, Localizations.localeOf(context).languageCode)} • ${AppDateFormatter.formatTime(widget.booking.proposedStartTime!, Localizations.localeOf(context).languageCode)}',
+            style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
+          ),
+          const SizedBox(height: 10),
+          if (_isLoading)
+            const Center(
+              child: SizedBox(
+                height: 28,
+                width: 28,
+                child: CircularProgressIndicator(strokeWidth: 2.5, color: Colors.amber),
+              ),
+            )
+          else
+            Row(
+              children: [
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
+                    onPressed: () => _respond(true),
+                    child: Text(
+                      isArabic ? ' موافقة على الموعد' : ' Accept New Time',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: ElevatedButton(
+                    style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
+                    onPressed: () => _respond(false),
+                    child: Text(
+                      isArabic ? ' رفض واسترداد كامل' : ' Reject & Refund',
+                      style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ),
+              ],
+            ),
+        ],
+      ),
+    );
+  }
+}
+
 class _BookingCard extends StatelessWidget {
  final Booking booking;
  final bool isHistory;
@@ -475,68 +593,7 @@ class _BookingCard extends StatelessWidget {
 
  if (booking.rescheduleStatus == 'pending' && booking.proposedStartTime != null) ...[
  const SizedBox(height: VSPSpacing.sm),
- Container(
- padding: const EdgeInsets.all(VSPSpacing.md),
- decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.15),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: Colors.amber, width: 1),
- ),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- children: [
- const Icon(Iconsax.clock_copy, color: Colors.amber, size: 20),
- const SizedBox(width: 8),
- Expanded(
- child: Text(
- Localizations.localeOf(context).languageCode == 'ar'
- ? ' اقتراح من المالك بنقل موعد المباراة:'
- : ' Pitch owner proposed a new match time:',
- style: const TextStyle(color: Colors.amber, fontWeight: FontWeight.bold, fontSize: 13),
- ),
- ),
- ],
- ),
- const SizedBox(height: 6),
- Text(
- '${Localizations.localeOf(context).languageCode == 'ar' ? 'الموعد المقترح: ' : 'Proposed time: '}${AppDateFormatter.formatDayMonth(booking.proposedStartTime!, Localizations.localeOf(context).languageCode)} • ${AppDateFormatter.formatTime(booking.proposedStartTime!, Localizations.localeOf(context).languageCode)}',
- style: const TextStyle(color: Colors.white, fontSize: 12, fontWeight: FontWeight.w600),
- ),
- const SizedBox(height: 10),
- Row(
- children: [
- Expanded(
- child: ElevatedButton(
- style: ElevatedButton.styleFrom(backgroundColor: VSPColors.accent, foregroundColor: Colors.black),
- onPressed: () async {
- final success = await Provider.of<BookingProvider>(context, listen: false).respondToReschedule(bookingId: booking.id, accept: true);
- if (success && context.mounted) {
- VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تمت الموافقة وتعديل توقيت الحجز بنجاح ' : 'Reschedule accepted successfully ');
- }
- },
- child: Text(Localizations.localeOf(context).languageCode == 'ar' ? ' موافقة على الموعد' : ' Accept New Time', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
- ),
- ),
- const SizedBox(width: 8),
- Expanded(
- child: ElevatedButton(
- style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error, foregroundColor: Colors.white),
- onPressed: () async {
- final success = await Provider.of<BookingProvider>(context, listen: false).respondToReschedule(bookingId: booking.id, accept: false);
- if (success && context.mounted) {
- VSPFeedback.showSuccess(context, Localizations.localeOf(context).languageCode == 'ar' ? 'تم رفض الموعد وإلغاء الحجز وإعادة المبلغ 100% ' : 'Reschedule rejected & 100% refunded ');
- }
- },
- child: Text(Localizations.localeOf(context).languageCode == 'ar' ? ' رفض واسترداد كامل' : ' Reject & Refund', style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 11)),
- ),
- ),
- ],
- ),
- ],
- ),
- ),
+ _RescheduleActionBanner(booking: booking),
  ],
 
  if (!isHistory) ...[

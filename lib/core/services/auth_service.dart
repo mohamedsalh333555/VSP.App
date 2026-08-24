@@ -271,17 +271,22 @@ class AuthService {
  }
  }
 
- // Delete Account
- Future<Map<String, dynamic>> deleteAccount(String uid) async {
- try {
- await _supabase.from('users').delete().eq('id', uid);
- await signOut();
- return {'success': true};
- } catch (e) {
- _logSecurityEvent('ACCOUNT_DELETION_FAILED', e);
- return {'success': false, 'message': 'فشل في حذف الحساب.'};
- }
- }
+  // Delete Account
+  Future<Map<String, dynamic>> deleteAccount(String uid) async {
+    try {
+      try {
+        await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
+      } catch (rpcErr) {
+        _logSecurityEvent('RPC_DELETE_FALLBACK', rpcErr);
+        await _supabase.from('users').delete().eq('id', uid);
+      }
+      await signOut();
+      return {'success': true};
+    } catch (e) {
+      _logSecurityEvent('ACCOUNT_DELETION_FAILED', e);
+      return {'success': false, 'message': 'فشل في حذف الحساب.'};
+    }
+  }
 
  // Verify OTP via Supabase Auth
  Future<bool> verifyOtp({required String email, required String token}) async {

@@ -343,28 +343,6 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
 
  return StatefulBuilder(
  builder: (context, setModalState) {
- Widget buildDateInput(String label, String dateText) {
- return Expanded(
- child: Container(
- padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 12),
- decoration: BoxDecoration(
- color: Colors.transparent,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.divider),
- ),
- child: Center(
- child: Text(
- dateText,
- style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: VSPColors.textSecondary,
- fontWeight: FontWeight.bold,
- ),
- ),
- ),
- ),
- );
- }
-
  return Dialog(
  backgroundColor: VSPColors.surface,
  insetPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md),
@@ -388,14 +366,26 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  ),
  ],
  ),
- const SizedBox(height: VSPSpacing.md),
- Row(
- children: [
- buildDateInput('Start', DateFormat('MMM d, yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)),
- const SizedBox(width: 8), const Text('-', style: TextStyle(color: VSPColors.textSecondary)), const SizedBox(width: 8),
- buildDateInput('End', DateFormat('MMM d, yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate.add(const Duration(days: 7)))),
- ],
- ),
+                  Container(
+                    width: double.infinity,
+                    padding: const EdgeInsets.symmetric(vertical: 12, horizontal: 16),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.1),
+                      borderRadius: BorderRadius.circular(VSPRadius.md),
+                      border: Border.all(color: VSPColors.accent.withValues(alpha: 0.3)),
+                    ),
+                    child: Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        const Icon(Iconsax.calendar_1_copy, color: VSPColors.accent, size: 18),
+                        const SizedBox(width: 8),
+                        Text(
+                          '${Localizations.localeOf(context).languageCode == 'ar' ? 'تاريخ الحجز: ' : 'Booking Date: '}${DateFormat('EEEE, d MMMM yyyy', Localizations.localeOf(context).toString()).format(tempSelectedDate)}',
+                          style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 13),
+                        ),
+                      ],
+                    ),
+                  ),
  const SizedBox(height: 36),
  SizedBox(
  height: 240, 

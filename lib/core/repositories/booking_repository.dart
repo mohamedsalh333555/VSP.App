@@ -350,10 +350,16 @@ class SupabaseBookingRepository implements BookingRepository {
 
  final bool isManual = booking.paymentTransactionId?.contains('MANUAL') ?? false;
 
- if (isManual) {
- // Stadium Owner deleting a manual walk-in slot: Hard delete from database
- await _supabase.from('bookings').delete().eq('id', bookingId);
- } else {
+        if (isManual) {
+          // Stadium Owner cancelling a manual walk-in slot: Safe soft-cancellation
+          await _supabase.from('bookings').update({
+            'status': BookingStatus.cancelled.name,
+            'payment_status': 'cancelled',
+            'cancellation_reason': 'Owner cancelled manual walk-in slot',
+            'cancelled_at': DateTime.now().toUtc().toIso8601String(),
+            'updated_at': DateTime.now().toUtc().toIso8601String(),
+          }).eq('id', bookingId);
+        } else {
  try {
  final rpcRes = await _supabase.rpc('cancel_booking_with_refund_atomic', params: {
  'p_booking_id': bookingId,
@@ -899,9 +905,35 @@ class SupabaseBookingRepository implements BookingRepository {
  if (booking == null) return false;
 
  if (accept && booking.proposedStartTime != null && booking.proposedEndTime != null) {
+ final propStart = booking.proposedStartTime!.toUtc().toIso8601String();
+ final propEnd = booking.proposedEndTime!.toUtc().toIso8601String();
+
+ // Overlap Guard: Ensure proposed slot is still 100% free before updating
+ final conflictCheck = await _supabase
+ .from('bookings')
+ .select('id')
+ .eq('stadium_id', booking.stadiumId)
+ .neq('id', bookingId)
+ .neq('status', 'cancelled')
+ .filter('start_time', 'lt', propEnd)
+ .filter('end_time', 'gt', propStart)
+ .limit(1);
+
+ if (conflictCheck.isNotEmpty) {
+ VSPLogger.w('Reschedule slot conflict detected for stadium: ${booking.stadiumId}');
  await _supabase.from('bookings').update({
- 'start_time': booking.proposedStartTime!.toUtc().toIso8601String(),
- 'end_time': booking.proposedEndTime!.toUtc().toIso8601String(),
+ 'status': 'cancelled',
+ 'reschedule_status': 'conflict_auto_cancelled',
+ 'cancellation_reason': 'Proposed time was booked by another player',
+ 'cancelled_at': DateTime.now().toUtc().toIso8601String(),
+ 'updated_at': DateTime.now().toUtc().toIso8601String(),
+ }).eq('id', bookingId);
+ return false;
+ }
+
+ await _supabase.from('bookings').update({
+ 'start_time': propStart,
+ 'end_time': propEnd,
  'reschedule_status': 'accepted',
  'proposed_start_time': null,
  'proposed_end_time': null,
