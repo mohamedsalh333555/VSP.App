@@ -243,12 +243,20 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  }
  },
  onPageStarted: (String url) {
- debugPrint(' [Paymob WebView PageStarted]: $url');
+ if (kDebugMode) {
+ final uri = Uri.tryParse(url);
+ final cleanUrl = uri != null ? '${uri.scheme}://${uri.host}${uri.path}' : '[URL]';
+ debugPrint(' [Paymob WebView PageStarted]: $cleanUrl');
+ }
  if (mounted) setState(() => _isLoading = true);
  _checkCallbackUrl(url);
  },
  onPageFinished: (String url) async {
- debugPrint(' [Paymob WebView PageFinished]: $url');
+ if (kDebugMode) {
+ final uri = Uri.tryParse(url);
+ final cleanUrl = uri != null ? '${uri.scheme}://${uri.host}${uri.path}' : '[URL]';
+ debugPrint(' [Paymob WebView PageFinished]: $cleanUrl');
+ }
  if (mounted) setState(() => _isLoading = false);
  _checkCallbackUrl(url);
 
@@ -288,11 +296,17 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  }
  },
  onWebResourceError: (WebResourceError error) {
- debugPrint(' [Paymob WebView RESOURCE ERROR]: code=${error.errorCode} desc=${error.description} url=${error.url} isMainFrame=${error.isForMainFrame}');
+ if (kDebugMode) {
+ debugPrint(' [Paymob WebView RESOURCE ERROR]: code=${error.errorCode} desc=${error.description}');
+ }
  },
  onNavigationRequest: (NavigationRequest request) {
  final url = request.url;
- debugPrint(' [Paymob WebView NavRequest]: $url');
+ if (kDebugMode) {
+ final uri = Uri.tryParse(url);
+ final cleanUrl = uri != null ? '${uri.scheme}://${uri.host}${uri.path}' : '[URL]';
+ debugPrint(' [Paymob WebView NavRequest]: $cleanUrl');
+ }
  _checkCallbackUrl(url);
  return NavigationDecision.navigate;
  },

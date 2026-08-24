@@ -248,7 +248,8 @@ class SupabaseBookingRepository implements BookingRepository {
  .from('bookings')
  .select()
  .or('user_id.eq.$userId,created_by_user_id.eq.$userId,joined_user_ids.cs.{"$userId"}')
- .order('start_time', ascending: false);
+ .order('start_time', ascending: false)
+ .limit(100);
  final bookings = (response as List)
  .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
  .where((b) => b.userId.trim().toLowerCase() == userId.trim().toLowerCase() || b.joinedUserIds.map((e) => e.trim().toLowerCase()).contains(userId.trim().toLowerCase()))
