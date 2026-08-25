@@ -1463,10 +1463,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  features: stadiumFeatures,
  );
 
- if (stadiumId == null) {
- _showError("Failed to create stadium. Please check your data or permissions.");
- return;
- }
+    if (stadiumId == null) {
+      if (!mounted) return;
+      final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+      _showError(isArabic ? 'فشل إنشاء الملعب. يرجى مراجعة البيانات المدخلة وصلاحيات الحساب.' : 'Failed to create stadium. Please check your data or permissions.');
+      return;
+    }
  // IMMEDIATELY set hasStadium flag so app navigation knows
  
  }

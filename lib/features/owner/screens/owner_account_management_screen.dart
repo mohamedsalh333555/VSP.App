@@ -526,66 +526,96 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
  }
 
  /// Fawry Upgrade Modal
- void _showUpgradePlanModal(BuildContext context, bool isArabic) {
- showDialog(
- context: context,
- builder: (dialogCtx) => Dialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
- child: Padding(
- padding: const EdgeInsets.all(24.0),
- child: Column(
- mainAxisSize: MainAxisSize.min,
- children: [
- Container(
- width: 60,
- height: 60,
- decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.15),
- shape: BoxShape.circle,
- border: Border.all(color: Colors.amber, width: 2),
- ),
- child: const Icon(Iconsax.crown_copy, color: Colors.amber, size: 30),
- ),
- const SizedBox(height: 16),
- Text(
- isArabic ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
- textAlign: TextAlign.center,
- ),
- const SizedBox(height: 10),
- Text(
- isArabic
- ? 'الباقة الأساسية (500 ج.م / شهرين مجاناً) تتيح تشغيل ملعب واحد فقط.\n\nترقية حسابك للباقة الاحترافية (1000 ج.م) لإضافة حتى 3 ملاعب كاملة وإدارتها من مكان واحد!'
- : 'Basic Plan allows 1 stadium only.\n\nUpgrade to Pro Plan (1000 EGP) to add up to 3 stadiums and manage your full multi-pitch complex!',
- style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
- textAlign: TextAlign.center,
- ),
- const SizedBox(height: 24),
- PrimaryButton(
- text: isArabic ? 'ترقية إلى باقة 1000 ج.م ' : 'Upgrade to Pro 1000 EGP ',
- onPressed: () {
- Navigator.pop(dialogCtx);
- Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
- );
- },
- ),
- const SizedBox(height: 10),
- TextButton(
- onPressed: () => Navigator.pop(dialogCtx),
- child: Text(
- isArabic ? 'إلغاء' : 'Cancel',
- style: const TextStyle(color: VSPColors.textSecondary),
- ),
- ),
- ],
- ),
- ),
- ),
- );
- }
+  void _showUpgradePlanModal(BuildContext context, bool isArabic) {
+    showDialog(
+      context: context,
+      builder: (dialogCtx) => Dialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.xl)),
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(
+                width: 64,
+                height: 64,
+                decoration: BoxDecoration(
+                  color: VSPColors.accent.withValues(alpha: 0.12),
+                  shape: BoxShape.circle,
+                  border: Border.all(color: VSPColors.accent, width: 1.5),
+                ),
+                child: const Icon(Iconsax.crown_copy, color: VSPColors.accent, size: 30),
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isArabic ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
+                style: const TextStyle(color: Colors.white, fontWeight: FontWeight.w900, fontSize: 18),
+                textAlign: TextAlign.center,
+              ),
+              const SizedBox(height: 12),
+              Container(
+                padding: const EdgeInsets.all(12),
+                decoration: BoxDecoration(
+                  color: Colors.white.withValues(alpha: 0.03),
+                  borderRadius: BorderRadius.circular(12),
+                  border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+                ),
+                child: Column(
+                  children: [
+                    Row(
+                      children: [
+                        const Icon(Iconsax.building_3_copy, color: Color(0xFFA1A1AA), size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic ? 'الباقة الأساسية: ملعب 1 فقط (أول شهرين مجاناً)' : 'Basic Plan: 1 Stadium only (1st 2 Months Free)',
+                            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12),
+                          ),
+                        ),
+                      ],
+                    ),
+                    const Divider(color: Color(0xFF262626), height: 16),
+                    Row(
+                      children: [
+                        const Icon(Iconsax.buildings_copy, color: VSPColors.accent, size: 16),
+                        const SizedBox(width: 8),
+                        Expanded(
+                          child: Text(
+                            isArabic ? 'الباقة الاحترافية: حتى 3 ملاعب كاملة (1000 ج.م/شهر)' : 'Pro Plan: Up to 3 Stadiums (1000 EGP/mo)',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 12.5),
+                          ),
+                        ),
+                      ],
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(height: 20),
+              PrimaryButton(
+                text: isArabic ? 'عرض الباقات والترقية' : 'View Plans & Upgrade',
+                onPressed: () {
+                  Navigator.pop(dialogCtx);
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const SubscriptionPlansScreen()),
+                  );
+                },
+              ),
+              const SizedBox(height: 10),
+              TextButton(
+                onPressed: () => Navigator.pop(dialogCtx),
+                child: Text(
+                  isArabic ? 'إلغاء' : 'Cancel',
+                  style: const TextStyle(color: VSPColors.textSecondary),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
  void _showDeleteAccountDialog(BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';

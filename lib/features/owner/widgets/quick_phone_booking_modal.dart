@@ -276,33 +276,38 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
  ),
  ),
  const SizedBox(height: 16),
-
  Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Row(
- children: [
- const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 22),
- const SizedBox(width: 8),
- Text(
- isAr ? 'حجز تليفوني سريع (5 ثوانٍ) ' : 'Quick Phone Booking ',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 16),
- ),
- ],
- ),
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.15),
- borderRadius: BorderRadius.circular(VSPRadius.full),
- ),
- child: Text(
- widget.slotTime,
- style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
- ),
- ),
- ],
- ),
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Expanded(
+                    child: Row(
+                      children: [
+                        const Icon(Iconsax.call_calling_copy, color: VSPColors.accent, size: 20),
+                        const SizedBox(width: 8),
+                        Flexible(
+                          child: Text(
+                            isAr ? 'حجز تليفوني سريع' : 'Quick Phone Booking',
+                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 15),
+                            overflow: TextOverflow.ellipsis,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                  const SizedBox(width: 8),
+                  Container(
+                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(VSPRadius.full),
+                    ),
+                    child: Text(
+                      widget.slotTime,
+                      style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 11),
+                    ),
+                  ),
+                ],
+              ),
  const SizedBox(height: 6),
  Text(
  isAr ? 'الملعب: ${widget.stadium.name} • التاريخ: $dateStr' : '${widget.stadium.name} • $dateStr',

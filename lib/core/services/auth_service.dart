@@ -1,6 +1,7 @@
 import 'dart:convert';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
+import 'package:google_sign_in/google_sign_in.dart';
 import 'logger_service.dart';
 import 'secure_storage_service.dart';
 
@@ -163,80 +164,121 @@ class AuthService {
  }
  }
 
- // Sign Out
- Future<void> signOut() async {
- VSPLogger.i(' Sign-Out Initiated');
- try {
- await _supabase.auth.signOut();
- await SecureStorageService.clearAll();
- } catch (e) {
- await SecureStorageService.clearAll();
- _logSecurityEvent('SUPABASE_SIGN_OUT_ERROR', e);
- VSPLogger.e(' Supabase signOut error', e);
- }
- VSPLogger.i(' Sign-Out Complete');
- }
+  // Sign Out
+  Future<void> signOut() async {
+    VSPLogger.i(' Sign-Out Initiated');
+    try {
+      if (!kIsWeb) {
+        try {
+          final GoogleSignIn googleSignIn = GoogleSignIn();
+          await googleSignIn.signOut();
+        } catch (_) {}
+      }
+      await _supabase.auth.signOut();
+      await SecureStorageService.clearAll();
+    } catch (e) {
+      await SecureStorageService.clearAll();
+      _logSecurityEvent('SUPABASE_SIGN_OUT_ERROR', e);
+      VSPLogger.e(' Supabase signOut error', e);
+    }
+    VSPLogger.i(' Sign-Out Complete');
+  }
 
- // Send Password Reset Email
- Future<bool> sendPasswordResetEmail(String email) async {
- try {
- await _supabase.auth.resetPasswordForEmail(
- email.trim(),
- redirectTo: kIsWeb ? null : 'io.supabase.fluttervsp://reset-callback/',
- );
- return true;
- } catch (e) {
- _logSecurityEvent('PASSWORD_RESET_FAILED', e);
- return false;
- }
- }
+  // Send Password Reset Email
+  Future<bool> sendPasswordResetEmail(String email) async {
+    try {
+      await _supabase.auth.resetPasswordForEmail(
+        email.trim(),
+        redirectTo: kIsWeb ? null : 'io.supabase.fluttervsp://reset-callback/',
+      );
+      return true;
+    } catch (e) {
+      _logSecurityEvent('PASSWORD_RESET_FAILED', e);
+      return false;
+    }
+  }
 
- // Send Verification Resend
- Future<bool> sendEmailVerification() async {
- try {
- final user = _supabase.auth.currentUser;
- if (user == null || user.email == null) return false;
- await _supabase.auth.resend(
- type: OtpType.signup,
- email: user.email!,
- );
- return true;
- } catch (e) {
- _logSecurityEvent('EMAIL_VERIFICATION_SENT_FAILED', e);
- return false;
- }
- }
+  // Send Verification Resend
+  Future<bool> sendEmailVerification() async {
+    try {
+      final user = _supabase.auth.currentUser;
+      if (user == null || user.email == null) return false;
+      await _supabase.auth.resend(
+        type: OtpType.signup,
+        email: user.email!,
+      );
+      return true;
+    } catch (e) {
+      _logSecurityEvent('EMAIL_VERIFICATION_SENT_FAILED', e);
+      return false;
+    }
+  }
 
- // Check Email Verified
- Future<bool> checkEmailVerified() async {
- try {
- final response = await _supabase.auth.getUser();
- return response.user?.emailConfirmedAt != null;
- } catch (e) {
- return false;
- }
- }
+  // Check Email Verified
+  Future<bool> checkEmailVerified() async {
+    try {
+      final response = await _supabase.auth.getUser();
+      return response.user?.emailConfirmedAt != null;
+    } catch (e) {
+      return false;
+    }
+  }
 
- // Sign In with Google
- Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
- try {
- final success = await _supabase.auth.signInWithOAuth(
- OAuthProvider.google,
- redirectTo: kIsWeb 
- ? '${Uri.base.origin}/' 
- : 'io.supabase.fluttervsp://login-callback/',
- queryParams: const {'prompt': 'select_account'},
- authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
- );
- if (success) {
- return {'success': true, 'user': _supabase.auth.currentUser};
- }
- return {'success': false, 'message': 'فشل الدخول عبر جوجل.'};
- } catch (e) {
- _logSecurityEvent('GOOGLE_AUTH_ERROR', e);
- return {'success': false, 'message': 'حدث خطأ في خدمة جوجل: $e'};
- }
- }
+  // Web Client ID from Google Cloud Console & Supabase Google Provider
+  static const String _googleWebClientId = '653374694721-dtrtkur7g05lh09kfq3arvdhbelil8io.apps.googleusercontent.com';
+
+  // Sign In with Google
+  Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
+    try {
+      if (kIsWeb) {
+        final success = await _supabase.auth.signInWithOAuth(
+          OAuthProvider.google,
+          redirectTo: '${Uri.base.origin}/',
+          queryParams: const {'prompt': 'select_account'},
+        );
+        if (success) {
+          return {'success': true, 'user': _supabase.auth.currentUser};
+        }
+        return {'success': false, 'message': 'فشل الدخول عبر جوجل.'};
+      } else {
+        // Native Google Sign-In for Android & iOS (Zero browser redirects / Deep Link bypass)
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          serverClientId: _googleWebClientId,
+          scopes: ['email', 'profile'],
+        );
+
+        // Sign out previous Google session to force account picker
+        await googleSignIn.signOut().catchError((_) => null);
+
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          return {'success': false, 'message': 'تم إلغاء تسجيل الدخول'};
+        }
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final String? idToken = googleAuth.idToken;
+        final String? accessToken = googleAuth.accessToken;
+
+        if (idToken == null) {
+          return {'success': false, 'message': 'تعذر استلام رمز المصادقة من جوجل'};
+        }
+
+        final AuthResponse response = await _supabase.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: accessToken,
+        );
+
+        if (response.user != null) {
+          return {'success': true, 'user': response.user};
+        }
+        return {'success': false, 'message': 'فشل تسجيل الدخول في سوبابيز.'};
+      }
+    } catch (e) {
+      _logSecurityEvent('GOOGLE_AUTH_ERROR', e);
+      return {'success': false, 'message': 'حدث خطأ في خدمة جوجل: $e'};
+    }
+  }
 
  // Sign In with Apple
  Future<Map<String, dynamic>> signInWithApple({String? role}) async {

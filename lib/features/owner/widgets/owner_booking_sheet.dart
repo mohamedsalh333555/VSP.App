@@ -803,9 +803,12 @@ Enjoy your match.
  Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
- Text(
+ Expanded(
+ child: Text(
  modalTitle,
  style: Theme.of(context).textTheme.displaySmall,
+ overflow: TextOverflow.ellipsis,
+ ),
  ),
  if (isOwnerManual && !isPastCompleted || isUpcomingPendingCash)
  IconButton(

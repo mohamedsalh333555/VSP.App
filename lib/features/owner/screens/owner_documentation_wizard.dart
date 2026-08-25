@@ -61,10 +61,10 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  ? (addData['verificationDocuments'] as Map<dynamic, dynamic>)
  : addData;
 
- final String? cr = (docs['commercialRegister'] ?? addData['commercialRegister'] ?? addData['contractUrl'])?.toString();
- final String? tc = (docs['taxCard'] ?? addData['taxCard'])?.toString();
- final String? idF = (docs['idFront'] ?? addData['idFront'] ?? addData['ownerIdUrl'])?.toString();
- final String? idB = (docs['idBack'] ?? addData['idBack'])?.toString();
+ final String? cr = (docs['commercialRegister'] ?? docs['commercialRegisterUrl'] ?? addData['commercialRegister'] ?? addData['commercialRegisterUrl'] ?? addData['contractUrl'])?.toString();
+ final String? tc = (docs['taxCard'] ?? docs['taxCardUrl'] ?? addData['taxCard'] ?? addData['taxCardUrl'])?.toString();
+ final String? idF = (docs['idFront'] ?? docs['nationalIdFrontUrl'] ?? docs['idFrontUrl'] ?? addData['idFront'] ?? addData['nationalIdFrontUrl'] ?? addData['ownerIdUrl'])?.toString();
+ final String? idB = (docs['idBack'] ?? docs['nationalIdBackUrl'] ?? docs['idBackUrl'] ?? addData['idBack'] ?? addData['nationalIdBackUrl'])?.toString();
 
  setState(() {
  if (cr != null && cr.isNotEmpty) _uploadedDocUrls['commercialRegister'] = cr;

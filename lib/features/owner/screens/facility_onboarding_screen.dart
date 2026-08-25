@@ -388,20 +388,21 @@ class _UpgradeBottomSheet extends StatelessWidget {
  Container(
  width: 64, height: 64,
  decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.15),
+ color: VSPColors.accent.withValues(alpha: 0.12),
  shape: BoxShape.circle,
+ border: Border.all(color: VSPColors.accent, width: 1.5),
  ),
- child: const Icon(Iconsax.crown_copy, color: Colors.amber, size: 32),
+ child: const Icon(Iconsax.crown_copy, color: VSPColors.accent, size: 32),
  ),
  const SizedBox(height: 16),
 
  // ─── Title ───
  Text(
- isAr ? 'تحتاج ترقية للباقة الاحترافية' : 'Pro Plan Required',
+ isAr ? 'ترقية الباقة لإضافة ملاعب أخرى' : 'Upgrade Plan to Add More Stadiums',
  textAlign: TextAlign.center,
  style: const TextStyle(
  color: Colors.white,
- fontSize: 20,
+ fontSize: 19,
  fontWeight: FontWeight.w900,
  ),
  ),
@@ -414,13 +415,13 @@ class _UpgradeBottomSheet extends StatelessWidget {
  // ─── Description ───
  Text(
  isAr
- ? 'فترتك التجريبية المجانية تتيح لك إضافة ملعب واحد فقط.\n\nلإضافة ملعب ثانٍ، تحتاج الاشتراك في الباقة الاحترافية (1000 ج.م / شهر).\n\nبعد الاشتراك ستُعاد تلقائياً لإكمال إضافة ملعبك الجديد دون فقدان أي بيانات.'
- : 'Your free trial allows 1 stadium only.\n\nTo add a second stadium, you need to upgrade to the Pro Plan (1000 EGP/month).\n\nAfter subscribing, you will be returned automatically to complete adding your new stadium — no data will be lost.',
+ ? 'فترتك الحالية تتيح تشغيل ملعب واحد فقط (1).\n\nللإضافة والتوسع حتى 3 ملاعب كاملة، يرجى الترقية للباقة الاحترافية (1000 ج.م / شهرياً).'
+ : 'Your current plan allows 1 stadium only.\n\nTo operate up to 3 full stadiums, please upgrade to the Pro Plan (1000 EGP/month).',
  textAlign: TextAlign.center,
  style: const TextStyle(
  color: VSPColors.textSecondary,
  fontSize: 13,
- height: 1.6,
+ height: 1.5,
  ),
  ),
  const SizedBox(height: 20),
@@ -430,25 +431,25 @@ class _UpgradeBottomSheet extends StatelessWidget {
  width: double.infinity,
  padding: const EdgeInsets.all(14),
  decoration: BoxDecoration(
- color: Colors.amber.withValues(alpha: 0.08),
+ color: VSPColors.accent.withValues(alpha: 0.05),
  borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: Colors.amber.withValues(alpha: 0.3)),
+ border: Border.all(color: VSPColors.accent.withValues(alpha: 0.25)),
  ),
  child: Column(
  children: [
  _FeatureRow(
- icon: Iconsax.building_copy,
- text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب مختلفة' : 'Operate up to 3 stadiums',
+ icon: Iconsax.buildings_copy,
+ text: isAr ? 'إضافة وتشغيل حتى 3 ملاعب كاملة' : 'Operate up to 3 full stadiums',
  ),
  const SizedBox(height: 8),
  _FeatureRow(
  icon: Iconsax.chart_1_copy,
- text: isAr ? 'تحليل توزيع الحجوزات بالساعة واليوم' : 'Hourly & daily booking analytics',
+ text: isAr ? 'أولوية الظهور في نتائج البحث للاعبين' : 'Priority search boost in governorate results',
  ),
  const SizedBox(height: 8),
  _FeatureRow(
  icon: Iconsax.headphones_copy,
- text: isAr ? 'دعم فني وأولوية في تفعيل الحساب' : 'Priority owner support',
+ text: isAr ? 'دعم فني وأولوية تشغيلية على مدار الساعة' : '24/7 Priority owner support',
  ),
  ],
  ),
