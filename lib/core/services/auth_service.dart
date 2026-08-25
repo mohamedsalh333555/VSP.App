@@ -225,7 +225,7 @@ class AuthService {
   }
 
   // Web Client ID from Google Cloud Console & Supabase Google Provider
-  static const String _googleWebClientId = '653374694721-dtrtkur7g05lh09kfq3arvdhbelil8io.apps.googleusercontent.com';
+  static const String _googleWebClientId = '860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com';
 
   // Sign In with Google
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {

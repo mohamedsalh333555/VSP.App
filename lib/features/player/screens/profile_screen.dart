@@ -9,7 +9,6 @@ import 'package:vsp_application/core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/core/ui/components/vsp_section_title.dart';
 import 'profile_subscreens/my_team_screen.dart';
-import 'profile_subscreens/payment_methods_screen.dart';
 import 'profile_subscreens/notifications_screen.dart';
 import 'terms_and_privacy_screen.dart';
 import 'faq_and_support_screen.dart';
@@ -19,7 +18,6 @@ import 'profile_subscreens/favorites_screen.dart';
 import 'package:provider/provider.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../core/config/app_config.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
 import '../../../shared/widgets/team_card_hero.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
@@ -327,17 +325,6 @@ class _ProfileScreenState extends State<ProfileScreen> {
  onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const FavoritesScreen())),
  ),
  ),
- if (AppConfig.enableOnlinePayment) ...[
- VSPFadeInItem(
- index: 3,
- child: VSPMenuItem(
- icon: Iconsax.wallet_1_copy,
- title: l10n.paymentMethods,
- subtitle: l10n.managePaymentMethods,
- onTap: () => Navigator.push(context, MaterialPageRoute(builder: (_) => const PaymentMethodsScreen())),
- ),
- ),
- ],
 
  const SizedBox(height: VSPSpacing.lg),
 

@@ -68,6 +68,7 @@
 			<key>CFBundleURLSchemes</key>
 			<array>
 				<string>io.supabase.fluttervsp</string>
+				<string>com.googleusercontent.apps.860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk</string>
 			</array>
 		</dict>
 	</array>

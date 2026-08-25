@@ -14,6 +14,9 @@ import '../../auth/screens/welcome_screen.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/repositories/stadium_repository.dart';
+import 'package:cached_network_image/cached_network_image.dart';
+import 'package:flutter/services.dart';
+import '../../../core/services/image_pick_service.dart';
 
 class OwnerAccountManagementScreen extends StatefulWidget {
  const OwnerAccountManagementScreen({super.key});
@@ -205,6 +208,8 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
  child: Column(
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
+ _buildAvatarHeader(authProvider, isArabic),
+ const SizedBox(height: 20),
  _buildInputLabel(isArabic ? 'اسم المالك' : 'Owner Name'),
  CustomTextField(controller: _nameController, hintText: isArabic ? 'أدخل اسمك' : 'Enter your name'),
  const SizedBox(height: 16),
@@ -612,6 +617,87 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               ),
             ],
           ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildAvatarHeader(AuthProvider auth, bool isArabic) {
+    final photoUrl = auth.userModel?.profileImageUrl;
+    final name = auth.userModel?.name ?? '';
+    return Center(
+      child: GestureDetector(
+        onTap: () async {
+          HapticFeedback.lightImpact();
+          final picked = await ImagePickService.pick(context, aspectRatio: CropAspectRatioPreset.square);
+          if (picked != null && mounted) {
+            try {
+              await auth.updateProfilePhoto(picked);
+              if (mounted) {
+                VSPFeedback.showSuccess(context, isArabic ? 'تم تحديث الصورة بنجاح' : 'Photo updated');
+              }
+            } catch (_) {
+              if (mounted) {
+                VSPFeedback.showError(context, isArabic ? 'فشل تحديث الصورة' : 'Failed to update');
+              }
+            }
+          }
+        },
+        child: Stack(
+          children: [
+            Container(
+              width: 86,
+              height: 86,
+              decoration: BoxDecoration(
+                shape: BoxShape.circle,
+                gradient: const SweepGradient(
+                  colors: [VSPColors.accent, Color(0xFF84CC16), Color(0xFF22C55E), VSPColors.accent],
+                ),
+                boxShadow: [
+                  BoxShadow(color: VSPColors.accent.withValues(alpha: 0.3), blurRadius: 12),
+                ],
+              ),
+              padding: const EdgeInsets.all(2.5),
+              child: Container(
+                decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF141417)),
+                clipBehavior: Clip.antiAlias,
+                child: (photoUrl != null && photoUrl.trim().isNotEmpty)
+                    ? CachedNetworkImage(
+                        imageUrl: photoUrl,
+                        fit: BoxFit.cover,
+                        errorWidget: (_, __, ___) => _buildInitials(name),
+                      )
+                    : _buildInitials(name),
+              ),
+            ),
+            Positioned(
+              bottom: 0,
+              right: 0,
+              child: Container(
+                padding: const EdgeInsets.all(5),
+                decoration: BoxDecoration(
+                  color: VSPColors.accent,
+                  shape: BoxShape.circle,
+                  border: Border.all(color: Colors.black, width: 2),
+                ),
+                child: const Icon(Iconsax.camera_copy, size: 13, color: Colors.black),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  Widget _buildInitials(String name) {
+    final initial = name.trim().isNotEmpty ? name.trim().substring(0, 1).toUpperCase() : 'M';
+    return Center(
+      child: Text(
+        initial,
+        style: const TextStyle(
+          color: VSPColors.accent,
+          fontSize: 28,
+          fontWeight: FontWeight.w900,
         ),
       ),
     );

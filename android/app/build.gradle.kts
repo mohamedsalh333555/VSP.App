@@ -50,6 +50,11 @@ android {
     }
 
     buildTypes {
+        debug {
+            if (keystorePropertiesFile.exists()) {
+                signingConfig = signingConfigs.getByName("release")
+            }
+        }
         release {
             // RELEASE SIGNING: Uses the credentials loaded from android/key.properties.
             // If the file is missing, it falls back to debug signing to prevent build failure during dev.

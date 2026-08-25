@@ -9,6 +9,7 @@ import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -92,10 +93,10 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        automaticallyImplyLeading: false,
+        leading: Navigator.canPop(context) ? const VSPBackButton() : null,
         centerTitle: true,
         title: Text(
-          l10n.bookedTitle,
+          Localizations.localeOf(context).languageCode == 'ar' ? 'جدول الحجوزات' : 'Pitch Schedule',
           style: Theme.of(context).textTheme.displayMedium,
         ),
       ),
@@ -480,7 +481,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   separatorBuilder: (c, i) => const SizedBox(height: VSPSpacing.md),
                   itemBuilder: (context, index) {
                     final slot = mergedSlots[index];
-                    return _buildTimeSlotRow(slot, selectedStadium);
+                    return _buildTimeSlotRow(slot, selectedStadium, slots);
                   },
                 );
               },
@@ -491,18 +492,73 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     );
   }
 
-  Widget _buildTimeSlotRow(Map<String, dynamic> slot, Stadium selectedStadium) {
+  Widget _buildTimeSlotRow(Map<String, dynamic> slot, Stadium selectedStadium, List<Map<String, dynamic>> allRawSlots) {
     final bool isMerged = slot['merged'] == true;
     return GestureDetector(
       behavior: HitTestBehavior.opaque,
       onTap: () async {
         if (slot['type'] == 'empty') {
+          final now = DateTime.now();
+          final DateTime? slotTime = slot['slotTime'] as DateTime?;
+          final bool isToday = _selectedDayIndex == 0;
+          final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
+
+          if (isPast) {
+            HapticFeedback.lightImpact();
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            VSPFeedback.showWarning(
+              context,
+              isAr ? 'هذا الموعد منقضي، يرجى اختيار موعد قادم.' : 'This slot has expired. Please choose an upcoming slot.',
+            );
+            return;
+          }
+
           final selectedDate = _baseDate.add(Duration(days: _selectedDayIndex));
           final startTime = (slot['slotTime'] as DateTime?) ?? DateTime(
             selectedDate.year, selectedDate.month, selectedDate.day,
             slot['hour'] as int, slot['minute'] as int,
           );
           final endTime = startTime.add(const Duration(minutes: 60));
+
+          // Calculate consecutive available minutes until next obstacle (break, booking, closing)
+          int maxAvailableMinutes = 60;
+          String nextObstacleType = 'none';
+          DateTime? nextObstacleTime;
+
+          final startIdx = allRawSlots.indexWhere((s) {
+            final st = s['slotTime'] as DateTime?;
+            return st != null &&
+                st.year == startTime.year &&
+                st.month == startTime.month &&
+                st.day == startTime.day &&
+                st.hour == startTime.hour &&
+                st.minute == startTime.minute;
+          });
+
+          if (startIdx != -1) {
+            int consecutiveEmpty = 0;
+            for (int i = startIdx; i < allRawSlots.length; i++) {
+              final raw = allRawSlots[i];
+              if (raw['type'] == 'empty') {
+                consecutiveEmpty++;
+              } else {
+                nextObstacleType = raw['type'] == 'break' ? 'break' : 'booking';
+                nextObstacleTime = raw['slotTime'] as DateTime?;
+                break;
+              }
+            }
+            if (nextObstacleType == 'none' && (startIdx + consecutiveEmpty >= allRawSlots.length)) {
+              nextObstacleType = 'closing';
+              if (allRawSlots.isNotEmpty) {
+                final lastSlot = allRawSlots.last;
+                final lastTime = lastSlot['slotTime'] as DateTime?;
+                if (lastTime != null) {
+                  nextObstacleTime = lastTime.add(const Duration(minutes: 30));
+                }
+              }
+            }
+            maxAvailableMinutes = consecutiveEmpty * 30;
+          }
 
           final booked = await QuickPhoneBookingModal.show(
             context,
@@ -512,6 +568,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
             startTime: startTime,
             endTime: endTime,
             defaultPrice: selectedStadium.pricePerHour,
+            maxAvailableMinutes: maxAvailableMinutes,
+            nextObstacleType: nextObstacleType,
+            nextObstacleTime: nextObstacleTime,
           );
 
           if (booked == true && mounted) {
@@ -528,6 +587,21 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       },
       onLongPress: () async {
         if (slot['type'] == 'empty') {
+          final now = DateTime.now();
+          final DateTime? slotTime = slot['slotTime'] as DateTime?;
+          final bool isToday = _selectedDayIndex == 0;
+          final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
+
+          if (isPast) {
+            HapticFeedback.lightImpact();
+            final isAr = Localizations.localeOf(context).languageCode == 'ar';
+            VSPFeedback.showWarning(
+              context,
+              isAr ? 'هذا الموعد منقضي، يرجى اختيار موعد قادم.' : 'This slot has expired. Please choose an upcoming slot.',
+            );
+            return;
+          }
+
           HapticFeedback.mediumImpact();
           final isAr = Localizations.localeOf(context).languageCode == 'ar';
           final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -626,10 +700,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
     final now = DateTime.now();
     final DateTime? slotTime = slot['slotTime'] as DateTime?;
     final bool isToday = _selectedDayIndex == 0;
-    final bool isPast = isToday && slotTime != null && slotTime.isBefore(now.subtract(const Duration(minutes: 30)));
+    // Slot is past if more than 15 minutes have passed since its start time
+    final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
+    // Slot is "NOW" if current time is within 15 minutes before or after its start time
     final bool isNowSlot = isToday && slotTime != null &&
-        slotTime.isAfter(now.subtract(const Duration(minutes: 30))) &&
-        slotTime.isBefore(now.add(const Duration(minutes: 30)));
+        now.isAfter(slotTime.subtract(const Duration(minutes: 15))) &&
+        now.isBefore(slotTime.add(const Duration(minutes: 15)));
 
     if (slot['type'] == 'empty' || slot['type'] == 'break') {
       final bool isBreak = slot['type'] == 'break';
@@ -703,31 +779,15 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       height: isMerged ? null : 70,
       padding: EdgeInsets.symmetric(horizontal: 16, vertical: isMerged ? 14 : 0),
       decoration: BoxDecoration(
-        color: isManual ? VSPColors.surface : VSPColors.background,
+        color: isManual ? VSPColors.surface : const Color(0xFF141417),
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isManual ? Colors.blueAccent.withValues(alpha: 0.5) : VSPColors.divider, 
+          color: isManual ? VSPColors.accent.withValues(alpha: 0.25) : Colors.white.withValues(alpha: 0.08), 
           width: 1,
         ),
       ),
       child: Row(
         children: [
-          Container(
-            width: 40,
-            height: 40,
-            decoration: BoxDecoration(
-              shape: BoxShape.circle,
-              color: isManual ? Colors.blueAccent.withValues(alpha: 0.1) : VSPColors.surfaceAlt,
-            ),
-            child: Icon(
-              isManual ? Iconsax.document_text_copy : Iconsax.cup_copy, 
-              size: 22, 
-              color: isManual ? Colors.blueAccent : VSPColors.accent,
-            ),
-          ),
-          
-          const SizedBox(width: 14),
-          
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
@@ -737,17 +797,18 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                   slot['name'] ?? '',
                   style: Theme.of(context).textTheme.titleSmall?.copyWith(
                     fontWeight: FontWeight.bold, 
-                    fontSize: 14,
+                    fontSize: 14.5,
+                    color: VSPColors.textPrimary,
                   ),
                   maxLines: 1,
                   overflow: TextOverflow.ellipsis,
                 ),
-                const SizedBox(height: 2),
+                const SizedBox(height: 4),
                 Row(
                   children: [
                     if (durationLabel != null) ...[
                       Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: VSPColors.accent.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
@@ -756,12 +817,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           durationLabel,
                           style: const TextStyle(
                             color: VSPColors.accent,
-                            fontSize: 9,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                     ],
                     if ((slot['subtitle'] as String?)?.isNotEmpty ?? false) ...[
                       Flexible(
@@ -771,11 +832,11 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                           overflow: TextOverflow.ellipsis,
                           style: Theme.of(context).textTheme.labelSmall?.copyWith(
                             color: VSPColors.textSecondary,
-                            fontSize: 10,
+                            fontSize: 10.5,
                           ),
                         ),
                       ),
-                      const SizedBox(width: 4),
+                      const SizedBox(width: 6),
                     ],
                     Builder(builder: (context) {
                       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -789,7 +850,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                       final String badgeLabel;
                       final Color badgeColor;
                       if (isPaidInFull) {
-                        badgeLabel = isArabic ? 'تم الدفع' : 'Paid';
+                        badgeLabel = isArabic ? 'مدفوع بالكامل' : 'Paid in Full';
                         badgeColor = VSPColors.success;
                       } else if (isCompleted) {
                         badgeLabel = isArabic ? 'محصل' : 'Collected';
@@ -798,23 +859,24 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                         badgeLabel = isArabic 
                             ? 'متبقي ${remaining.toStringAsFixed(0)} ج.م' 
                             : 'Rem. ${remaining.toStringAsFixed(0)} EGP';
-                        badgeColor = Colors.amber;
+                        badgeColor = const Color(0xFF38BDF8);
                       } else {
-                        badgeLabel = isArabic ? 'غير مدفوع' : 'Unpaid';
-                        badgeColor = VSPColors.warning;
+                        badgeLabel = isArabic ? 'كاش عند الحضور' : 'Pay on Arrival';
+                        badgeColor = Colors.white60;
                       }
 
                       return Container(
-                        padding: const EdgeInsets.symmetric(horizontal: 5, vertical: 2),
+                        padding: const EdgeInsets.symmetric(horizontal: 6, vertical: 2),
                         decoration: BoxDecoration(
                           color: badgeColor.withValues(alpha: 0.12),
                           borderRadius: BorderRadius.circular(4),
+                          border: Border.all(color: badgeColor.withValues(alpha: 0.25), width: 0.5),
                         ),
                         child: Text(
                           badgeLabel,
                           style: TextStyle(
                             color: badgeColor,
-                            fontSize: 9,
+                            fontSize: 9.5,
                             fontWeight: FontWeight.bold,
                           ),
                         ),

@@ -7,12 +7,17 @@
   "client": [
     {
       "client_info": {
-        "mobilesdk_app_id": "1:860837572098:android:5a9d7594b32d94b1e5c11b",
+        "mobilesdk_app_id": "1:860837572098:android:88148dcafc11a001e5c11b",
         "android_client_info": {
           "package_name": "app.vsp.sports"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
@@ -20,7 +25,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vspApplication"
+              }
+            }
+          ]
         }
       }
     },
@@ -31,7 +48,20 @@
           "package_name": "com.example.vsp_application"
         }
       },
-      "oauth_client": [],
+      "oauth_client": [
+        {
+          "client_id": "860837572098-pbr9mdrvpupo10age72enq5okj30knrq.apps.googleusercontent.com",
+          "client_type": 1,
+          "android_info": {
+            "package_name": "com.example.vsp_application",
+            "certificate_hash": "300c61a272625603451bf17513c349359b3f5967"
+          }
+        },
+        {
+          "client_id": "860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com",
+          "client_type": 3
+        }
+      ],
       "api_key": [
         {
           "current_key": "AIzaSyBxfM4csK8u13t80oHOT8I9aMKGx-pe4EM"
@@ -39,7 +69,19 @@
       ],
       "services": {
         "appinvite_service": {
-          "other_platform_oauth_client": []
+          "other_platform_oauth_client": [
+            {
+              "client_id": "860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com",
+              "client_type": 3
+            },
+            {
+              "client_id": "860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com",
+              "client_type": 2,
+              "ios_info": {
+                "bundle_id": "com.example.vspApplication"
+              }
+            }
+          ]
         }
       }
     }

@@ -908,8 +908,6 @@ class _HomeContent extends StatelessWidget {
  ),
  const SizedBox(height: 16),
  _buildSearchBar(context),
- const SizedBox(height: 12),
- _buildQuickPillFilters(context, Provider.of<StadiumProvider>(context)),
  ],
  ),
  ),
@@ -996,93 +994,6 @@ class _HomeContent extends StatelessWidget {
  ),
  ),
  ],
- );
- }
-
- Widget _buildQuickPillFilters(BuildContext context, StadiumProvider stadiumProvider) {
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final active = stadiumProvider.activeQuickFilter;
-
- return SizedBox(
- height: 38,
- child: ListView(
- scrollDirection: Axis.horizontal,
- physics: const BouncingScrollPhysics(),
- children: [
- // سهرة الليلة
- _buildPillChip(
- label: isAr ? ' سهرة الليلة (بعد 11 م)' : ' Night Shift (After 11 PM)',
- isSelected: active == 'night_shift',
- onTap: () {
- HapticFeedback.lightImpact();
- stadiumProvider.toggleQuickFilter('night_shift');
- },
- ),
- const SizedBox(width: 8),
-
- // ماتشات محتاجة لاعيبة دلوقتي
- _buildPillChip(
- label: isAr ? ' ماتشات محتاجة لاعيبة' : ' Matches Need Players',
- isSelected: false,
- onTap: () {
- HapticFeedback.lightImpact();
- onNavigate(1); // Switches to matches/radar tab
- },
- ),
- const SizedBox(width: 8),
-
- // ملاعب كاش بدون عربون
- _buildPillChip(
- label: isAr ? ' ملاعب كاش بدون عربون' : ' Zero Deposit Cash',
- isSelected: active == 'no_deposit',
- onTap: () {
- HapticFeedback.lightImpact();
- stadiumProvider.toggleQuickFilter('no_deposit');
- },
- ),
- ],
- ),
- );
- }
-
- Widget _buildPillChip({
- required String label,
- required bool isSelected,
- required VoidCallback onTap,
- }) {
- return GestureDetector(
- onTap: onTap,
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 200),
- padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 8),
- decoration: BoxDecoration(
- color: isSelected ? VSPColors.accent : VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.full),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.divider,
- width: isSelected ? 1.5 : 1.0,
- ),
- boxShadow: isSelected
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.3),
- blurRadius: 8,
- offset: const Offset(0, 2),
- ),
- ]
- : null,
- ),
- child: Center(
- child: Text(
- label,
- style: TextStyle(
- color: isSelected ? Colors.black : Colors.white,
- fontSize: 12,
- fontWeight: isSelected ? FontWeight.w900 : FontWeight.w600,
- ),
- ),
- ),
- ),
  );
  }
 

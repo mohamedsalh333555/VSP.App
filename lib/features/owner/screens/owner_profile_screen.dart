@@ -8,10 +8,8 @@ import '../../player/screens/profile_subscreens/notifications_screen.dart';
 import '../../player/screens/terms_and_privacy_screen.dart';
 import '../../player/screens/faq_and_support_screen.dart';
 import '../../player/screens/profile_subscreens/language_screen.dart';
-import '../../player/screens/profile_subscreens/payment_methods_screen.dart';
 import '../../../core/providers/auth_provider.dart';
 import 'owner_account_management_screen.dart';
-import '../../../core/config/app_config.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../core/ui/components/vsp_menu_item.dart';
 
@@ -62,22 +60,6 @@ class OwnerProfileScreen extends StatelessWidget {
                 },
               ),
             ),
-            if (AppConfig.enableOnlinePayment)
-              VSPFadeInItem(
-                index: 1,
-                child: VSPMenuItem(
-                  icon: Iconsax.wallet_1_copy,
-                  title: l10n.paymentMethods,
-                  subtitle: l10n.paymentMethods, // Can refine if needed
-                  onTap: () {
-                    Navigator.push(
-                      context,
-                      MaterialPageRoute(
-                          builder: (context) => const PaymentMethodsScreen()),
-                    );
-                  },
-                ),
-              ),
 
             const SizedBox(height: VSPSpacing.lg),
 
