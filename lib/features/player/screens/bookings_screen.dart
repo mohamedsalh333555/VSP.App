@@ -526,11 +526,13 @@ class _BookingCard extends StatelessWidget {
  ),
  ),
 
- if (booking.status == BookingStatus.cancelled) ...[
- _buildStatusBadge(Localizations.localeOf(context).languageCode == 'ar' ? 'ملغي' : 'Cancelled', Colors.red),
- ] else if (!isHistory) ...[
- _buildStatusBadge(l10n.confirmed, VSPColors.accent),
- ] else ...[
+                  if (booking.status == BookingStatus.cancelled) ...[
+                    _buildStatusBadge(Localizations.localeOf(context).languageCode == 'ar' ? 'ملغي' : 'Cancelled', Colors.red),
+                  ] else if (booking.status == BookingStatus.pending && !booking.isPaid) ...[
+                    _buildStatusBadge(Localizations.localeOf(context).languageCode == 'ar' ? 'بانتظار السداد ⏳' : 'Pending Payment ⏳', Colors.amber),
+                  ] else if (!isHistory) ...[
+                    _buildStatusBadge(l10n.confirmed, VSPColors.accent),
+                  ] else ...[
  if (booking.endTime.isAfter(DateTime.now()))
  _buildStatusBadge(l10n.inProgress, VSPColors.accent)
  else if (booking.bookingType == BookingType.challenge)

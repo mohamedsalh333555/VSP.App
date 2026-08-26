@@ -149,35 +149,6 @@ class StadiumCard extends StatelessWidget {
  ),
  ),
  const Spacer(),
- if (stadium.isFeatured) ...[
- Container(
- padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.2),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.accent, width: 1.2),
- boxShadow: [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.3),
- blurRadius: 8,
- spreadRadius: 1,
- ),
- ],
- ),
- child: Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.star_copy, color: VSPColors.accent, size: 12),
- const SizedBox(width: 4),
- Text(
- Localizations.localeOf(context).languageCode == 'ar' ? 'مميز ' : 'Featured ',
- style: const TextStyle(color: VSPColors.accent, fontSize: 10, fontWeight: FontWeight.bold),
- ),
- ],
- ),
- ),
- const SizedBox(width: 6),
- ],
  if (!stadium.isVerified) ...[
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
@@ -219,9 +190,6 @@ class StadiumCard extends StatelessWidget {
  ),
  )
  else ...[
- // DISTANCE BADGE
- _buildDistanceBadge(context),
- const SizedBox(width: VSPSpacing.sm),
  // FAVORITE BUTTON
  Consumer<AuthProvider>(
  builder: (context, auth, _) {
@@ -404,45 +372,6 @@ class StadiumCard extends StatelessWidget {
  ],
  ),
  ),
- ),
- );
- }
-
- Widget _buildDistanceBadge(BuildContext context) {
- final auth = Provider.of<AuthProvider>(context, listen: false);
- final userPos = auth.currentPosition;
- 
- if (userPos == null || stadium.lat == null || stadium.lng == null) {
- return const SizedBox.shrink();
- }
-
- final distance = GeoHelper.calculateDistance(
- userPos.latitude, 
- userPos.longitude, 
- stadium.lat!, 
- stadium.lng!,
- );
-
- return Container(
- padding: const EdgeInsets.symmetric(horizontal: VSPSpacing.sm, vertical: 6),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.8),
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- ),
- child: Row(
- mainAxisSize: MainAxisSize.min,
- children: [
- const Icon(Iconsax.gps_copy, color: Colors.black, size: 12),
- const SizedBox(width: 4),
- Text(
- GeoHelper.formatDistance(distance),
- style: const TextStyle(
- color: Colors.black,
- fontSize: 10,
- fontWeight: FontWeight.bold,
- ),
- ),
- ],
  ),
  );
  }

@@ -625,6 +625,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
   Widget _buildAvatarHeader(AuthProvider auth, bool isArabic) {
     final photoUrl = auth.userModel?.profileImageUrl;
     final name = auth.userModel?.name ?? '';
+    final bool isPro = auth.userModel?.isPro ?? false;
     return Center(
       child: GestureDetector(
         onTap: () async {
@@ -650,14 +651,20 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
               height: 86,
               decoration: BoxDecoration(
                 shape: BoxShape.circle,
-                gradient: const SweepGradient(
-                  colors: [VSPColors.accent, Color(0xFF84CC16), Color(0xFF22C55E), VSPColors.accent],
-                ),
-                boxShadow: [
-                  BoxShadow(color: VSPColors.accent.withValues(alpha: 0.3), blurRadius: 12),
-                ],
+                gradient: isPro
+                    ? const SweepGradient(
+                        colors: [VSPColors.accent, Color(0xFF84CC16), Color(0xFF22C55E), VSPColors.accent],
+                      )
+                    : null,
+                color: isPro ? null : const Color(0xFF1E1E24),
+                border: isPro ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+                boxShadow: isPro
+                    ? [
+                        BoxShadow(color: VSPColors.accent.withValues(alpha: 0.3), blurRadius: 12),
+                      ]
+                    : null,
               ),
-              padding: const EdgeInsets.all(2.5),
+              padding: EdgeInsets.all(isPro ? 2.5 : 0),
               child: Container(
                 decoration: const BoxDecoration(shape: BoxShape.circle, color: Color(0xFF141417)),
                 clipBehavior: Clip.antiAlias,

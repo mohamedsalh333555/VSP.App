@@ -22,6 +22,7 @@ import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_crashlytics/firebase_crashlytics.dart';
 import 'package:app_links/app_links.dart';
 import 'package:shared_preferences/shared_preferences.dart';
+import 'core/services/vsp_time_service.dart';
 import 'core/navigation/app_router.dart';
 import 'dart:async';
 
@@ -54,7 +55,10 @@ void main() async {
  Supabase.initialize(
  url: AppEnv.supabaseUrl,
  publishableKey: AppEnv.supabaseAnonKey,
- ).then((_) => VSPLogger.i(" Supabase initialized securely")),
+ ).then((_) {
+ VSPLogger.i(" Supabase initialized securely");
+ VSPTimeService.syncWithServer();
+ }),
  Firebase.initializeApp(
  options: DefaultFirebaseOptions.currentPlatform,
  ).then((_) => VSPLogger.i(" Firebase initialized successfully")),

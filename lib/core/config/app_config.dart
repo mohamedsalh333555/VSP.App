@@ -9,6 +9,7 @@ class AppConfig {
  static const String paymobWalletIntegrationId = String.fromEnvironment('PAYMOB_WALLET_INTEGRATION_ID', defaultValue: '5772511');
  
  static String get paymobPublicKey => AppEnv.paymobPublicKey;
+ static String get paymobSecretKey => AppEnv.paymobSecretKey;
 
  // Supabase URL & Key References
  static String get supabaseUrl => AppEnv.supabaseUrl;

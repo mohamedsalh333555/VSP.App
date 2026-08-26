@@ -82,6 +82,8 @@ class UserModel {
       (subscriptionExpiresAt != null &&
        DateTime.now().isBefore(subscriptionExpiresAt!));
 
+  bool get isPro => isProPlan || subscriptionPlan == 'pro';
+
   bool get isProPlan =>
       subscriptionPlan == 'pro' &&
       subscriptionExpiresAt != null &&

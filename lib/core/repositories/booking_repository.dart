@@ -139,9 +139,27 @@ class SupabaseBookingRepository implements BookingRepository {
  'p_opponent_team_name': draft.opponentTeamName,
  });
 
- if (rpcResult is Map && rpcResult['success'] == false) {
- throw Exception(rpcResult['message']?.toString() ?? "عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.");
- }
+    if (rpcResult is Map && rpcResult['success'] == false) {
+      String errorMessage = rpcResult['message']?.toString() ?? "عذراً، هذا التوقيت محجوز بالفعل لمباراة أخرى.";
+      final errorCode = rpcResult['code']?.toString();
+      
+      // Handle Supabase Windows-1252 encoding corruption (messages become '???')
+      if (errorMessage.contains('???')) {
+        if (errorCode == 'SLOT_LOCKED_OR_TAKEN') {
+          errorMessage = "عذراً، هذا الموعد محجوز أو قيد الدفع من قِبل لاعب آخر حالياً.";
+        } else if (errorMessage.contains('????? ???? ?? ????? ??????')) {
+          errorMessage = "حسابك مقيد عن الحجز النقدي بسبب تكرار عدم الحضور. يرجى السداد إلكترونياً.";
+        } else if (errorMessage.contains('???? ??? ???? ??? ??????')) {
+          errorMessage = "لديك حجز نقدي نشط بالفعل. يرجى إنهاء الحجز السابق أو الدفع إلكترونياً.";
+        } else if (errorMessage.contains('????? ???? ??????')) {
+          errorMessage = "حسابك مقيد حالياً. يرجى التواصل مع إدارة التطبيق.";
+        } else {
+          errorMessage = "عذراً، تعذر إتمام الحجز. يرجى التأكد من الموعد والمحاولة لاحقاً.";
+        }
+      }
+      
+      throw Exception(errorMessage);
+    }
 
  final bookingId = (rpcResult is Map) ? rpcResult['booking_id']?.toString() : null;
  if (bookingId == null) {
@@ -354,7 +372,6 @@ class SupabaseBookingRepository implements BookingRepository {
           // Stadium Owner cancelling a manual walk-in slot: Safe soft-cancellation
           await _supabase.from('bookings').update({
             'status': BookingStatus.cancelled.name,
-            'payment_status': 'cancelled',
             'cancellation_reason': 'Owner cancelled manual walk-in slot',
             'cancelled_at': DateTime.now().toUtc().toIso8601String(),
             'updated_at': DateTime.now().toUtc().toIso8601String(),

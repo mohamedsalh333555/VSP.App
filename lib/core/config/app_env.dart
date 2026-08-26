@@ -30,4 +30,11 @@ class AppEnv {
  }
  return 'egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx';
  }
+
+  // Paymob Secret Key
+  static String get paymobSecretKey {
+    const key = String.fromEnvironment('PAYMOB_SECRET_KEY');
+    if (key.isNotEmpty) return key;
+    return 'egy_sk_test_bd1135d9086f141c2a800d726aa7c118ff988321ab75aba708252df996658697';
+  }
 }

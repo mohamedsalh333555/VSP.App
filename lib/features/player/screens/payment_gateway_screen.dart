@@ -316,19 +316,64 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  ),
  );
 
- if (mounted && (isPaidSuccess == true)) {
- if (widget.isTournamentPayment) {
- _paymentCompleted = true;
- _countdownTimer?.cancel();
- Navigator.pop(context, true);
- return;
- }
- debugPrint(' [Server Verification]: WebView returned success. Awaiting Realtime Webhook confirmation from server...');
- setState(() => _isAwaitingWebhook = true);
- if (_booking != null) {
- _startFallbackPollingTimer(_booking!.id);
- }
- } else if (mounted && !_paymentCompleted) {
+  if (mounted && (isPaidSuccess == true)) {
+    if (widget.isTournamentPayment) {
+      _paymentCompleted = true;
+      _countdownTimer?.cancel();
+      Navigator.pop(context, true);
+      return;
+    }
+
+    setState(() {
+      _isAwaitingWebhook = true;
+      _isLoading = true;
+    });
+
+    if (_booking != null) {
+      final bookingId = _booking!.id;
+      try {
+        // 1. Actively verify transaction with Paymob API
+        await PaymobService.verifyTransactionStatus(bookingId: bookingId);
+
+        // 2. Atomic state transition in database to confirmed & paid
+        final nowIso = DateTime.now().toUtc().toIso8601String();
+        await Supabase.instance.client.from('bookings').update({
+          'status': 'confirmed',
+          'payment_status': 'paid',
+          'is_paid': true,
+          'payment_method': 'paymob',
+          'updated_at': nowIso,
+        }).eq('id', bookingId);
+
+        // 3. Fetch fresh confirmed booking & navigate to BookingSuccessScreen
+        if (!mounted) return;
+        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+        final updatedBooking = await bookingProvider.getBookingById(bookingId);
+
+        if (mounted && updatedBooking != null && !_paymentCompleted) {
+          _paymentCompleted = true;
+          _countdownTimer?.cancel();
+          _webhookTimeoutTimer?.cancel();
+          _fallbackPollingTimer?.cancel();
+          _bookingSubscription?.cancel();
+
+          HapticFeedback.heavyImpact();
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(
+              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
+            ),
+          );
+          return;
+        }
+      } catch (e) {
+        debugPrint(' Active verification update notice: $e');
+      }
+
+      // Fallback polling in case of momentary connection glitch
+      _startFallbackPollingTimer(bookingId);
+    }
+  } else if (mounted && !_paymentCompleted) {
  setState(() => _isAwaitingWebhook = false);
  VSPFeedback.showError(
  context,

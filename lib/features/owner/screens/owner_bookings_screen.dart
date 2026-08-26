@@ -13,6 +13,7 @@ import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/services/vsp_time_service.dart';
 import '../widgets/owner_booking_sheet.dart';
 import '../widgets/quick_phone_booking_modal.dart';
 export '../widgets/owner_booking_sheet.dart';
@@ -30,7 +31,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   Stadium? _selectedStadium;
   
   DateTime get _baseDate {
-    final now = DateTime.now();
+    final now = VSPTimeService.now;
     try {
       final stadiumProvider = Provider.of<StadiumProvider>(context, listen: false);
       final selectedStadium = _getEffectiveStadium(stadiumProvider.stadiums);
@@ -259,7 +260,7 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
                 }
 
                 DateTime getEffectiveOperationalBaseDate() {
-                  final now = DateTime.now();
+                  final now = VSPTimeService.now;
                   final int startH = _parseTimeToHour(selectedStadium.openingTime);
                   final int endH = _parseTimeToHour(selectedStadium.closingTime);
                   if (startH > endH && now.hour < endH) {
@@ -498,10 +499,9 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
       behavior: HitTestBehavior.opaque,
       onTap: () async {
         if (slot['type'] == 'empty') {
-          final now = DateTime.now();
+          final now = VSPTimeService.now;
           final DateTime? slotTime = slot['slotTime'] as DateTime?;
-          final bool isToday = _selectedDayIndex == 0;
-          final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
+          final bool isPast = slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
 
           if (isPast) {
             HapticFeedback.lightImpact();
@@ -697,13 +697,12 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
   Widget _buildSlotCard(Map<String, dynamic> slot) {
     final l10n = AppLocalizations.of(context)!;
     final isAr = Localizations.localeOf(context).languageCode == 'ar';
-    final now = DateTime.now();
+    final now = VSPTimeService.now;
     final DateTime? slotTime = slot['slotTime'] as DateTime?;
-    final bool isToday = _selectedDayIndex == 0;
     // Slot is past if more than 15 minutes have passed since its start time
-    final bool isPast = isToday && slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
+    final bool isPast = slotTime != null && now.isAfter(slotTime.add(const Duration(minutes: 15)));
     // Slot is "NOW" if current time is within 15 minutes before or after its start time
-    final bool isNowSlot = isToday && slotTime != null &&
+    final bool isNowSlot = !isPast && slotTime != null &&
         now.isAfter(slotTime.subtract(const Duration(minutes: 15))) &&
         now.isBefore(slotTime.add(const Duration(minutes: 15)));
 
@@ -713,13 +712,13 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           ? VSPColors.textSecondary
           : (isNowSlot
               ? VSPColors.accent
-              : (isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.accent));
+              : (isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.accent));
 
       final String badgeText = isBreak
           ? l10n.closedBadge
           : (isNowSlot
               ? (isAr ? 'الآن' : 'NOW')
-              : (isPast ? (isAr ? 'منقضي' : 'Past') : l10n.openBadge));
+              : (isPast ? (isAr ? 'منقضي' : 'Expired') : l10n.openBadge));
 
       return Container(
         height: 54,
@@ -728,22 +727,22 @@ class _OwnerBookingsScreenState extends State<OwnerBookingsScreen> {
           color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.08) : Colors.transparent,
           borderRadius: BorderRadius.circular(VSPRadius.md),
           border: Border.all(
-            color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.5) : (isPast ? VSPColors.divider.withValues(alpha: 0.3) : VSPColors.divider),
+            color: isNowSlot ? VSPColors.accent.withValues(alpha: 0.5) : (isPast ? VSPColors.divider.withValues(alpha: 0.2) : VSPColors.divider),
             width: isNowSlot ? 1.5 : 1,
           ),
         ),
         child: Row(
           children: [
             Icon(
-              isBreak ? Iconsax.close_circle_copy : (isPast ? Iconsax.rotate_left_copy : Iconsax.add_circle_copy),
-              color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : (isNowSlot ? VSPColors.accent : VSPColors.textSecondary),
+              isBreak ? Iconsax.close_circle_copy : (isPast ? Iconsax.clock_copy : Iconsax.add_circle_copy),
+              color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : (isNowSlot ? VSPColors.accent : VSPColors.textSecondary),
               size: 22,
             ),
             const SizedBox(width: 12),
             Text(
-              isBreak ? l10n.breakTime : (isAr ? 'متاح للحجز' : 'Available'),
+              isBreak ? l10n.breakTime : (isPast ? (isAr ? 'موعد منقضي' : 'Expired Slot') : (isAr ? 'متاح للحجز' : 'Available')),
               style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.5) : VSPColors.textSecondary,
+                color: isPast ? VSPColors.textSecondary.withValues(alpha: 0.35) : VSPColors.textSecondary,
                 fontWeight: isNowSlot ? FontWeight.bold : FontWeight.w600,
               ),
             ),

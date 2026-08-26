@@ -838,10 +838,35 @@ class _HomeContent extends StatelessWidget {
  HapticFeedback.lightImpact();
  onNavigate(4); // Switches the bottom navigation index directly to the Profile Tab (index 4)
  },
+ child: Container(
+ width: 52,
+ height: 52,
+ decoration: BoxDecoration(
+ shape: BoxShape.circle,
+ gradient: (auth.userModel?.isPro == true)
+ ? const SweepGradient(
+ colors: [VSPColors.accent, Color(0xFF84CC16), Color(0xFF22C55E), VSPColors.accent],
+ )
+ : null,
+ color: (auth.userModel?.isPro == true) ? null : VSPColors.surface,
+ border: (auth.userModel?.isPro == true) ? null : Border.all(color: Colors.white.withValues(alpha: 0.15), width: 1.5),
+ boxShadow: (auth.userModel?.isPro == true)
+ ? [
+ BoxShadow(
+ color: VSPColors.accent.withValues(alpha: 0.35),
+ blurRadius: 10,
+ spreadRadius: 1,
+ ),
+ ]
+ : null,
+ ),
+ padding: EdgeInsets.all((auth.userModel?.isPro == true) ? 2.5 : 0),
  child: CircleAvatar(
- radius: 25, backgroundColor: VSPColors.surface, 
+ radius: 24,
+ backgroundColor: VSPColors.surface, 
  backgroundImage: auth.userModel?.profileImageUrl != null ? NetworkImage(auth.userModel!.profileImageUrl!) : null, 
- child: auth.userModel?.profileImageUrl == null ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary) : null
+ child: auth.userModel?.profileImageUrl == null ? const Icon(Iconsax.user_copy, color: VSPColors.textSecondary, size: 20) : null,
+ ),
  ),
  ),
  const SizedBox(width: 12),
