@@ -216,19 +216,8 @@ class AppRouter {
  if (path != '/verify-email') return '/verify-email';
  return null;
  }
-
- // 6. Registration detail check (missing phone)
- final rawPhone = userModel.phone?.trim() ?? '';
- final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
- final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
- if (!hasPhone) {
- final role = authProvider.userType ?? userModel.role;
- final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
- if (path != targetPath) return targetPath;
- return null;
- }
-
- // 6.5 Admin role check & security boundary
+ 
+ // 5.5 Admin role check & security boundary
  final bool isAdmin = userModel.role == 'admin' || userModel.role == 'co_founder';
  if (path == '/admin' && !isAdmin) {
  return '/';
@@ -242,6 +231,17 @@ class AppRouter {
  // FIX: Both Owner and Player blocked accounts go to /suspended
  // Previously owners were allowed to stay in /owner (security gap)
  if (path != '/suspended') return '/suspended';
+ return null;
+ }
+
+ // 6. Registration detail check (missing phone)
+ final rawPhone = userModel.phone?.trim() ?? '';
+ final digitsOnly = rawPhone.replaceAll(RegExp(r'\D'), '');
+ final bool hasPhone = rawPhone.isNotEmpty && digitsOnly.length >= 9 && digitsOnly.length <= 12;
+ if (!hasPhone) {
+ final role = authProvider.userType ?? userModel.role;
+ final targetPath = role == 'owner' ? '/onboarding-owner' : '/onboarding-player';
+ if (path != targetPath) return targetPath;
  return null;
  }
 
