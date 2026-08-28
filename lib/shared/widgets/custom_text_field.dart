@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
 
-/// حقل إدخال نص مخصص بتصميم داكن
+/// حقل إدخال نص مخصص بتصميم داكن مع دعم التحقق المباشر (Inline Live Validation)
 class CustomTextField extends StatelessWidget {
   final String? hintText;
   final String? errorText;
@@ -20,6 +20,8 @@ class CustomTextField extends StatelessWidget {
   final ValueChanged<String>? onFieldSubmitted;
   final bool? enabled;
   final bool autofocus;
+  final bool? isValid;
+  final bool showLiveValidation;
 
   const CustomTextField({
     super.key,
@@ -39,88 +41,131 @@ class CustomTextField extends StatelessWidget {
     this.onFieldSubmitted,
     this.enabled,
     this.autofocus = false,
+    this.isValid,
+    this.showLiveValidation = true,
   });
+
+  bool _computeValidity(String text) {
+    if (isValid != null) return isValid!;
+    if (!showLiveValidation) return false;
+    final trimmed = text.trim();
+    if (trimmed.isEmpty) return false;
+
+    if (keyboardType == TextInputType.emailAddress) {
+      final emailRegex = RegExp(r'^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$');
+      return emailRegex.hasMatch(trimmed);
+    } else if (keyboardType == TextInputType.phone) {
+      final clean = trimmed.replaceAll(RegExp(r'[\s-]'), '');
+      final phoneRegex = RegExp(r'^(01[0125][0-9]{8}|(\+?201)[0125][0-9]{8})$');
+      return phoneRegex.hasMatch(clean);
+    }
+    return false;
+  }
 
   @override
   Widget build(BuildContext context) {
-    final fieldWidget = TextFormField(
-      controller: controller,
-      keyboardType: keyboardType,
-      textDirection: (keyboardType == TextInputType.emailAddress ||
-              keyboardType == TextInputType.url ||
-              keyboardType == TextInputType.phone ||
-              keyboardType == TextInputType.number ||
-              keyboardType.toString().contains('number'))
-          ? TextDirection.ltr
-          : null,
-      obscureText: obscureText,
-      maxLines: maxLines,
-      validator: validator,
-      maxLength: maxLength,
-      inputFormatters: inputFormatters,
-      textInputAction: textInputAction,
-      onChanged: onChanged,
-      onFieldSubmitted: onFieldSubmitted,
-      enabled: enabled,
-      autofocus: autofocus,
-      style: Theme.of(context).textTheme.bodyLarge,
-      decoration: InputDecoration(
-        isDense: true,
-        hintText: hintText,
-        errorText: errorText,
-        hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
-              color: VSPColors.textSecondary.withValues(alpha: 0.5),
+    return ListenableBuilder(
+      listenable: controller,
+      builder: (context, _) {
+        final hasValidInput = _computeValidity(controller.text);
+
+        Widget? effectiveSuffix = suffixIcon;
+        if (effectiveSuffix == null && hasValidInput && errorText == null) {
+          effectiveSuffix = const Padding(
+            padding: EdgeInsets.symmetric(horizontal: 12),
+            child: Icon(
+              Icons.check_circle_rounded,
+              color: Color(0xFF10B981),
+              size: 20,
             ),
-        filled: true,
-        fillColor: VSPColors.surfaceAlt,
-        counterText: "",
-        prefixIcon: prefixIcon != null
-            ? Icon(
-                prefixIcon,
-                color: VSPColors.textSecondary,
-                size: 20,
-              )
-            : null,
-        suffixIcon: suffixIcon,
-        border: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.input),
-          borderSide: BorderSide.none,
-        ),
-        enabledBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.input),
-          borderSide: const BorderSide(
-            color: VSPColors.divider,
-            width: 1,
-          ),
-        ),
-        focusedBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.input),
-          borderSide: const BorderSide(
-            color: VSPColors.accent,
-            width: 1.5,
-          ),
-        ),
-        errorBorder: OutlineInputBorder(
-          borderRadius: BorderRadius.circular(VSPRadius.input),
-          borderSide: const BorderSide(
-            color: VSPColors.error,
-            width: 1,
-          ),
-        ),
-        contentPadding: const EdgeInsets.symmetric(
-          horizontal: 16,
-          vertical: 16,
-        ),
-      ),
-    );
+          );
+        }
 
-    if (maxLines != null && maxLines! > 1) {
-      return fieldWidget;
-    }
+        final fieldWidget = TextFormField(
+          controller: controller,
+          keyboardType: keyboardType,
+          textDirection: (keyboardType == TextInputType.emailAddress ||
+                  keyboardType == TextInputType.url ||
+                  keyboardType == TextInputType.phone ||
+                  keyboardType == TextInputType.number ||
+                  keyboardType.toString().contains('number'))
+              ? TextDirection.ltr
+              : null,
+          obscureText: obscureText,
+          maxLines: maxLines,
+          validator: validator,
+          maxLength: maxLength,
+          inputFormatters: inputFormatters,
+          textInputAction: textInputAction,
+          onChanged: onChanged,
+          onFieldSubmitted: onFieldSubmitted,
+          enabled: enabled,
+          autofocus: autofocus,
+          style: Theme.of(context).textTheme.bodyLarge,
+          decoration: InputDecoration(
+            isDense: true,
+            hintText: hintText,
+            errorText: errorText,
+            hintStyle: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                  color: VSPColors.textSecondary.withValues(alpha: 0.5),
+                ),
+            filled: true,
+            fillColor: VSPColors.surfaceAlt,
+            counterText: "",
+            prefixIcon: prefixIcon != null
+                ? Icon(
+                    prefixIcon,
+                    color: VSPColors.textSecondary,
+                    size: 20,
+                  )
+                : null,
+            suffixIcon: effectiveSuffix != null
+                ? AnimatedSwitcher(
+                    duration: const Duration(milliseconds: 200),
+                    child: effectiveSuffix,
+                  )
+                : null,
+            border: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderSide: BorderSide.none,
+            ),
+            enabledBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderSide: const BorderSide(
+                color: VSPColors.divider,
+                width: 1,
+              ),
+            ),
+            focusedBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderSide: const BorderSide(
+                color: VSPColors.accent,
+                width: 1.5,
+              ),
+            ),
+            errorBorder: OutlineInputBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.input),
+              borderSide: const BorderSide(
+                color: VSPColors.error,
+                width: 1,
+              ),
+            ),
+            contentPadding: const EdgeInsets.symmetric(
+              horizontal: 16,
+              vertical: 16,
+            ),
+          ),
+        );
 
-    return ConstrainedBox(
-      constraints: const BoxConstraints(minHeight: VSPSize.inputHeight),
-      child: fieldWidget,
+        if (maxLines != null && maxLines! > 1) {
+          return fieldWidget;
+        }
+
+        return ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: VSPSize.inputHeight),
+          child: fieldWidget,
+        );
+      },
     );
   }
 }

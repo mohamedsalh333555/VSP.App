@@ -711,6 +711,7 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  label: isArabic ? 'رسوم خدمات المنصة' : 'Platform Service Fee',
  value: '${serviceFee.toStringAsFixed(1)} ${isArabic ? 'ج.م' : 'EGP'}',
  isBold: false,
+ onInfoTap: () => _showFeeTransparencyModal(context, isArabic),
  ),
  const SizedBox(height: 6),
  _buildFeeRow(
@@ -785,33 +786,120 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  );
  }
 
- Widget _buildFeeRow({
- required String label,
- required String value,
- bool isBold = false,
- }) {
- return Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(
- label,
- style: TextStyle(
- color: isBold ? Colors.white : VSPColors.textSecondary,
- fontSize: isBold ? 13 : 11,
- fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
- ),
- ),
- Text(
- value,
- style: TextStyle(
- color: isBold ? VSPColors.accent : Colors.white,
- fontSize: isBold ? 14 : 11,
- fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
- ),
- ),
- ],
- );
- }
+  void _showFeeTransparencyModal(BuildContext context, bool isArabic) {
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VSPColors.surface,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+      ),
+      builder: (ctx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(20.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Center(
+                child: Container(
+                  width: 40,
+                  height: 4,
+                  decoration: BoxDecoration(
+                    color: VSPColors.divider,
+                    borderRadius: BorderRadius.circular(2),
+                  ),
+                ),
+              ),
+              const SizedBox(height: 16),
+              Row(
+                children: [
+                  Container(
+                    padding: const EdgeInsets.all(8),
+                    decoration: BoxDecoration(
+                      color: VSPColors.accent.withValues(alpha: 0.15),
+                      borderRadius: BorderRadius.circular(10),
+                    ),
+                    child: const Icon(Iconsax.info_circle_copy, color: VSPColors.accent, size: 20),
+                  ),
+                  const SizedBox(width: 12),
+                  Text(
+                    isArabic ? 'شفافية رسوم خدمات المنصة' : 'Platform Service Fee Transparency',
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                ],
+              ),
+              const SizedBox(height: 16),
+              Text(
+                isArabic
+                    ? 'رسوم خدمات المنصة تغطي تكاليف المعاملات البنكية المشفرة، والتثبيت الذري الفوري للمواعيد (منع التكرار)، وخدمة العملاء والدعم الفني المباشر على مدار الساعة.'
+                    : 'The platform service fee covers end-to-end encrypted payment processing, instant atomic slot locking (zero double-bookings), and 24/7 priority customer support.',
+                style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13.5, height: 1.6),
+              ),
+              const SizedBox(height: 20),
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    foregroundColor: Colors.black,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+                    padding: const EdgeInsets.symmetric(vertical: 14),
+                  ),
+                  onPressed: () => Navigator.pop(ctx),
+                  child: Text(isArabic ? 'فهمت ذلك' : 'Got it', style: const TextStyle(fontWeight: FontWeight.bold)),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildFeeRow({
+    required String label,
+    required String value,
+    bool isBold = false,
+    VoidCallback? onInfoTap,
+  }) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Row(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            Text(
+              label,
+              style: TextStyle(
+                color: isBold ? Colors.white : VSPColors.textSecondary,
+                fontSize: isBold ? 13 : 11,
+                fontWeight: isBold ? FontWeight.bold : FontWeight.normal,
+              ),
+            ),
+            if (onInfoTap != null) ...[
+              const SizedBox(width: 6),
+              GestureDetector(
+                onTap: onInfoTap,
+                child: const Icon(
+                  Iconsax.info_circle_copy,
+                  size: 14,
+                  color: VSPColors.accent,
+                ),
+              ),
+            ],
+          ],
+        ),
+        Text(
+          value,
+          style: TextStyle(
+            color: isBold ? VSPColors.accent : Colors.white,
+            fontSize: isBold ? 14 : 11,
+            fontWeight: isBold ? FontWeight.w900 : FontWeight.bold,
+          ),
+        ),
+      ],
+    );
+  }
 
  Widget _buildPaymentMethodCard({
  required String id,
