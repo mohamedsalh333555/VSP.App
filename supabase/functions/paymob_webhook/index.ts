@@ -143,6 +143,29 @@ serve(async (req: Request) => {
       console.warn("⚠️ Non-blocking warning: failed to write to webhook_logs", logErr);
     }
 
+    // 3.5 Handle Tournament Orders
+    if (specialReference.startsWith("TOURN_")) {
+      console.log(`🏆 Processing tournament webhook for order: ${specialReference}`);
+      if (isSuccess) {
+        const { data: tournResult, error: tournErr } = await supabase.rpc(
+          "confirm_tournament_order_atomic",
+          {
+            p_order_reference: specialReference,
+            p_paymob_transaction_id: transactionId,
+          }
+        );
+        if (tournErr) {
+          console.error("❌ Failed to confirm tournament order via RPC:", tournErr);
+        } else {
+          console.log("🎉 Tournament order confirmed successfully:", tournResult);
+        }
+      }
+      return new Response(JSON.stringify({ status: "processed", type: "tournament", success: isSuccess }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
     if (!bookingId) {
       return new Response(JSON.stringify({ message: "No booking ID in reference" }), {
         status: 200,

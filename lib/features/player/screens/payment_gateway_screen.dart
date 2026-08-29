@@ -283,125 +283,82 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  ? 'TOURN_${widget.bookingDraft.playerTeamId ?? 'TEAM'}_${DateTime.now().millisecondsSinceEpoch}'
  : (_booking?.id ?? 'BK_${DateTime.now().millisecondsSinceEpoch}');
 
- final unifiedUrl = await PaymobService.getUnifiedCheckoutUrl(
- amountInEgp: totalAmount,
- bookingId: paymentRefId,
- userEmail: userEmail,
- userName: userName,
- userPhone: userPhone,
- integrationId: selectedIntegrationId,
- );
+    final paymobUrl = await PaymobService.getCheckoutUrlFromServer(
+      amountInEgp: totalAmount,
+      bookingId: paymentRefId,
+      userEmail: userEmail,
+      userName: userName,
+      userPhone: userPhone,
+      integrationId: selectedIntegrationId,
+      isTournamentPayment: widget.isTournamentPayment,
+    );
 
- String? paymobUrl = unifiedUrl;
- final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
+    final isArabic = mounted ? Localizations.localeOf(context).languageCode == 'ar' : true;
 
- if (paymobUrl != null && paymobUrl.isNotEmpty) {
- if (isArabic && !paymobUrl.contains('lang=')) {
- paymobUrl += paymobUrl.contains('?') ? '&lang=ar' : '?lang=ar';
- }
-
- try {
- if (!mounted) return;
- setState(() {
- _remainingSeconds += 300; // 5 minutes additional grace period for 3DS OTP entry
- });
- final isPaidSuccess = await Navigator.push<bool>(
- context,
- MaterialPageRoute(
- builder: (_) => PaymobWebViewScreen(
- initialUrl: paymobUrl!,
- title: isArabic ? 'سداد الحجز بالفيزا ' : 'Pay via Card ',
- bookingId: _booking?.id,
- ),
- ),
- );
-
-  if (mounted && (isPaidSuccess == true)) {
-    if (widget.isTournamentPayment) {
-      _paymentCompleted = true;
-      _countdownTimer?.cancel();
-      Navigator.pop(context, true);
-      return;
-    }
-
-    setState(() {
-      _isAwaitingWebhook = true;
-      _isLoading = true;
-    });
-
-    if (_booking != null) {
-      final bookingId = _booking!.id;
+    if (paymobUrl != null && paymobUrl.isNotEmpty) {
       try {
-        // 1. Actively verify transaction with Paymob API
-        await PaymobService.verifyTransactionStatus(bookingId: bookingId);
-
-        // 2. Atomic state transition in database to confirmed & paid
-        final nowIso = DateTime.now().toUtc().toIso8601String();
-        await Supabase.instance.client.from('bookings').update({
-          'status': 'confirmed',
-          'payment_status': 'paid',
-          'is_paid': true,
-          'payment_method': 'paymob',
-          'updated_at': nowIso,
-        }).eq('id', bookingId);
-
-        // 3. Fetch fresh confirmed booking & navigate to BookingSuccessScreen
         if (!mounted) return;
-        final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
-        final updatedBooking = await bookingProvider.getBookingById(bookingId);
-
-        if (mounted && updatedBooking != null && !_paymentCompleted) {
-          _paymentCompleted = true;
-          _countdownTimer?.cancel();
-          _webhookTimeoutTimer?.cancel();
-          _fallbackPollingTimer?.cancel();
-          _bookingSubscription?.cancel();
-
-          HapticFeedback.heavyImpact();
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(
-              builder: (context) => BookingSuccessScreen(booking: updatedBooking),
+        setState(() {
+          _remainingSeconds += 300; // 5 minutes additional grace period for 3DS OTP entry
+        });
+        final isPaidSuccess = await Navigator.push<bool>(
+          context,
+          MaterialPageRoute(
+            builder: (_) => PaymobWebViewScreen(
+              initialUrl: paymobUrl,
+              title: isArabic ? 'سداد الحجز بالفيزا ' : 'Pay via Card ',
+              bookingId: _booking?.id,
             ),
+          ),
+        );
+
+        if (mounted && (isPaidSuccess == true)) {
+          if (widget.isTournamentPayment) {
+            _paymentCompleted = true;
+            _countdownTimer?.cancel();
+            Navigator.pop(context, true);
+            return;
+          }
+
+          setState(() {
+            _isAwaitingWebhook = true;
+            _isLoading = true;
+          });
+
+          if (_booking != null) {
+            final bookingId = _booking!.id;
+            // SEC-FIX (Zero-Trust): Do NOT mutate database from client!
+            // The client is strictly a passive listener waiting for the HMAC-signed server webhook.
+            // Start read-only fallback polling in case realtime websocket reconnects slowly.
+            _startFallbackPollingTimer(bookingId);
+          }
+        } else if (mounted && !_paymentCompleted) {
+          setState(() => _isAwaitingWebhook = false);
+          VSPFeedback.showError(
+            context,
+            isArabic 
+                ? 'لم تكتمل عملية الدفع بالبطاقة. يمكنك إعادة المحاولة أو اختيار وسيلة دفع أخرى.' 
+                : 'Payment was not completed. You can try again or select another payment method.',
           );
-          return;
         }
       } catch (e) {
-        debugPrint(' Active verification update notice: $e');
+        debugPrint('Paymob Launch notice: $e');
+        if (mounted) {
+          setState(() => _isAwaitingWebhook = false);
+        }
       }
-
-      // Fallback polling in case of momentary connection glitch
-      _startFallbackPollingTimer(bookingId);
+    } else {
+      if (mounted) {
+        setState(() => _isAwaitingWebhook = false);
+        VSPFeedback.showError(
+          context,
+          isArabic 
+              ? 'عذراً، متعذر الاتصال ببوابة Paymob حالياً. يرجى التأكد من مفتاح API في السيرفر.' 
+              : 'Failed to obtain Paymob checkout token.',
+        );
+      }
     }
-  } else if (mounted && !_paymentCompleted) {
- setState(() => _isAwaitingWebhook = false);
- VSPFeedback.showError(
- context,
- isArabic 
- ? 'لم تكتمل عملية الدفع بالبطاقة. يمكنك إعادة المحاولة أو اختيار وسيلة دفع أخرى.' 
- : 'Payment was not completed. You can try again or select another payment method.',
- );
- }
- } catch (e) {
- debugPrint('Paymob Launch notice: $e');
- if (mounted) {
- setState(() => _isAwaitingWebhook = false);
- }
- }
- } else {
- if (mounted) {
- setState(() => _isAwaitingWebhook = false);
- VSPFeedback.showError(
- context,
- isArabic 
- ? 'عذراً، متعذر الاتصال ببوابة Paymob حالياً. يرجى التأكد من مفتاح API في السيرفر.' 
- : 'Failed to obtain Paymob checkout token.',
- );
- }
- }
- }
-
-
+  }
 
 
 
