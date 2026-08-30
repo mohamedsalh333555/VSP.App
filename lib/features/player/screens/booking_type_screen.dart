@@ -12,6 +12,7 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../data/models.dart';
 import 'booking_confirmation_screen.dart';
 import 'challenge_select_team_screen.dart';
+import 'add_matchup_teams_screen.dart';
 import '../widgets/create_team_sheet.dart';
 
 class BookingTypeScreen extends StatefulWidget {
@@ -100,6 +101,12 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
                     subtitle: isArabic ? 'مباراة تحدي بين فريقك وفريق آخر واحتساب نقاط تصنيف الـ ELO' : 'Competitive match between two teams to earn ELO rank points',
                     iconData: Iconsax.cup_copy,
                   ),
+                  _buildOptionCard(
+                    id: 'Matchup Match',
+                    title: isArabic ? 'مواجهات (ثنائية / الفايز مستمر)' : 'Matchups (Duo / Winner Stays)',
+                    subtitle: isArabic ? 'تتبع نتائج وترتيب المباريات المتكررة بين 2 إلى 5+ فرق مسجلة' : 'Track live results & standings between 2 to 5+ registered teams',
+                    iconData: Iconsax.status_up_copy,
+                  ),
                 ],
               ),
             ),
@@ -136,7 +143,7 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     });
 
     try {
-      if (_selectedType == 'Challenge Match') {
+      if (_selectedType == 'Challenge Match' || _selectedType == 'Matchup Match') {
         final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
         final uid = auth.currentUser?.uid;
         if (uid != null) {
@@ -172,6 +179,26 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
             return;
           }
         }
+      }
+
+      if (_selectedType == 'Matchup Match') {
+        if (!mounted) return;
+        final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+        final uid = auth.currentUser?.uid;
+        final userTeam = uid != null ? await TeamRepository().getUserTeam(uid) : null;
+        if (userTeam == null) {
+          if (mounted) setState(() => _isNavigating = false);
+          return;
+        }
+
+        if (!mounted) return;
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => AddMatchupTeamsScreen(stadium: widget.stadium, hostTeam: userTeam),
+          ),
+        );
+        return;
       }
 
       BookingType type = BookingType.personal;

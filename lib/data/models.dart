@@ -406,10 +406,11 @@ enum MatchResultChoice { weWon, draw, weLost }
 
 /// Booking Type Enum
 enum BookingType {
- personal, // Solo/Standard booking (حجز عادي)
- openJoin, // Open gathering match (حجز انضمام وتجميع)
- challenge, // Team challenge match (حجز تحدي فرق)
- team, // Legacy alias for challenge
+  personal, // Solo/Standard booking (حجز عادي)
+  openJoin, // Open gathering match (حجز انضمام وتجميع)
+  challenge, // Team challenge match (حجز تحدي فرق)
+  team, // Legacy alias for challenge
+  matchup, // Matchups mode: Duo or Winner Stays (مواجهات)
 }
 
 /// Booking Draft - Used for passing data between screens before final save
@@ -863,6 +864,7 @@ class Booking {
  if (val == 'openjoin' || val == 'openjoinmatch') return BookingType.openJoin;
  if (val == 'challenge' || val == 'challengematch') return BookingType.challenge;
  if (val == 'team') return BookingType.team;
+ if (val == 'matchup' || val == 'matchups') return BookingType.matchup;
  return BookingType.personal;
  }(),
  playerTeamId: data['playerTeamId'] ?? data['player_team_id'],
@@ -2099,7 +2101,129 @@ class Promotion {
  Map<String, dynamic> toFirestore() => toMap();
 }
 
-// === VSP OFFICIAL 1v1 LEAGUE MODELS ===
-// (Duplicated class removed, using the one defined above)
+// === VSP MATCHUPS DOMAIN MODELS (ميزة مواجهات) ===
 
+/// Model representing a team registered in a Matchup booking
+class MatchupTeam {
+  final String id;
+  final String bookingId;
+  final String teamId;
+  final String teamName;
+  final String logoUrl;
+  final String captainId;
+  final String addedByUserId;
+  final DateTime joinedAt;
 
+  MatchupTeam({
+    required this.id,
+    required this.bookingId,
+    required this.teamId,
+    required this.teamName,
+    this.logoUrl = '',
+    this.captainId = '',
+    required this.addedByUserId,
+    required this.joinedAt,
+  });
+
+  factory MatchupTeam.fromMap(Map<String, dynamic> map) {
+    final teamData = map['teams'] is Map ? map['teams'] as Map<String, dynamic> : null;
+    return MatchupTeam(
+      id: map['id']?.toString() ?? '',
+      bookingId: map['booking_id']?.toString() ?? '',
+      teamId: map['team_id']?.toString() ?? '',
+      teamName: teamData?['name']?.toString() ?? map['team_name']?.toString() ?? 'Team',
+      logoUrl: teamData?['logo_url']?.toString() ?? map['logo_url']?.toString() ?? '',
+      captainId: teamData?['captain_id']?.toString() ?? map['captain_id']?.toString() ?? '',
+      addedByUserId: map['added_by_user_id']?.toString() ?? '',
+      joinedAt: map['joined_at'] != null ? DateTime.parse(map['joined_at'].toString()).toLocal() : DateTime.now(),
+    );
+  }
+}
+
+/// Model representing a recorded match result in a Matchup session
+class MatchupResult {
+  final String id;
+  final String bookingId;
+  final String teamAId;
+  final String teamBId;
+  final String outcome; // 'team_a_win', 'team_b_win', 'draw'
+  final String recordedBy;
+  final DateTime createdAt;
+
+  MatchupResult({
+    required this.id,
+    required this.bookingId,
+    required this.teamAId,
+    required this.teamBId,
+    required this.outcome,
+    required this.recordedBy,
+    required this.createdAt,
+  });
+
+  factory MatchupResult.fromMap(Map<String, dynamic> map) {
+    return MatchupResult(
+      id: map['id']?.toString() ?? '',
+      bookingId: map['booking_id']?.toString() ?? '',
+      teamAId: map['team_a_id']?.toString() ?? '',
+      teamBId: map['team_b_id']?.toString() ?? '',
+      outcome: map['outcome']?.toString() ?? 'draw',
+      recordedBy: map['recorded_by']?.toString() ?? '',
+      createdAt: map['created_at'] != null ? DateTime.parse(map['created_at'].toString()).toLocal() : DateTime.now(),
+    );
+  }
+}
+
+/// Model representing historic Head-to-Head record between two teams
+class TeamHeadToHead {
+  final String teamAId;
+  final String teamBId;
+  final int teamAWins;
+  final int teamBWins;
+  final int draws;
+  final DateTime updatedAt;
+
+  TeamHeadToHead({
+    required this.teamAId,
+    required this.teamBId,
+    required this.teamAWins,
+    required this.teamBWins,
+    required this.draws,
+    required this.updatedAt,
+  });
+
+  int get totalMatches => teamAWins + teamBWins + draws;
+
+  factory TeamHeadToHead.fromMap(Map<String, dynamic> map) {
+    return TeamHeadToHead(
+      teamAId: map['team_a_id']?.toString() ?? '',
+      teamBId: map['team_b_id']?.toString() ?? '',
+      teamAWins: (map['team_a_wins'] as num?)?.toInt() ?? 0,
+      teamBWins: (map['team_b_wins'] as num?)?.toInt() ?? 0,
+      draws: (map['draws'] as num?)?.toInt() ?? 0,
+      updatedAt: map['updated_at'] != null ? DateTime.parse(map['updated_at'].toString()).toLocal() : DateTime.now(),
+    );
+  }
+}
+
+/// Dynamic Standings Item calculated on-the-fly for Matchups
+class MatchupStandingsItem {
+  final String teamId;
+  final String teamName;
+  final String logoUrl;
+  final int matchesPlayed;
+  final int wins;
+  final int draws;
+  final int losses;
+  final int points;
+
+  MatchupStandingsItem({
+    required this.teamId,
+    required this.teamName,
+    this.logoUrl = '',
+    required this.matchesPlayed,
+    required this.wins,
+    required this.draws,
+    required this.losses,
+    required this.points,
+  });
+}

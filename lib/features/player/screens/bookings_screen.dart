@@ -9,6 +9,7 @@ import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/primary_button.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
+import 'matchup_live_dashboard_screen.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../core/providers/auth_provider.dart' as app_auth;
 import '../../../data/models.dart';
@@ -598,6 +599,23 @@ class _BookingCard extends StatelessWidget {
  _RescheduleActionBanner(booking: booking),
  ],
 
+  if (booking.bookingType == BookingType.matchup) ...[
+    const SizedBox(height: VSPSpacing.md),
+    VSPAnimatedButton(
+      text: Localizations.localeOf(context).languageCode == 'ar' ? 'لوحة المواجهة والنتائج الحية 🏆' : 'Live Matchup Dashboard 🏆',
+      color: VSPColors.accent,
+      textColor: Colors.black,
+      onPressed: () {
+        Navigator.push(
+          context,
+          MaterialPageRoute(
+            builder: (_) => MatchupLiveDashboardScreen(bookingId: booking.id),
+          ),
+        );
+      },
+    ),
+  ],
+
  if (!isHistory) ...[
  const SizedBox(height: VSPSpacing.md),
  Row(
@@ -664,6 +682,8 @@ class _BookingCard extends StatelessWidget {
  return isArabic ? 'فريق' : 'TEAM';
  case BookingType.challenge:
  return isArabic ? 'تحدي' : 'CHALLENGE';
+ case BookingType.matchup:
+ return isArabic ? 'مواجهات' : 'MATCHUP';
  }
  }
 

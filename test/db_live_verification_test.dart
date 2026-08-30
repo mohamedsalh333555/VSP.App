@@ -14,9 +14,9 @@ void main() {
  print('=================================================================\n');
 
  final supabase = SupabaseClient(
- 'https://mktqkddbcddrxjxabdua.supabase.co',
- 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE',
- );
+    const String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co'),
+    const String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key'),
+  );
 
  int passed = 0;
  int failed = 0;

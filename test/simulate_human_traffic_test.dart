@@ -11,8 +11,8 @@ void main() {
  test('Simulate 70 Concurrent Human Users (10 Owners & 60 Players Load Test)', () async {
  print(' بدء محاكاة 70 مستخدماً بشرياً على سيرفر VSP...');
 
- const supabaseUrl = 'https://mktqkddbcddrxjxabdua.supabase.co';
- const supabaseAnonKey = 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE';
+  const supabaseUrl = String.fromEnvironment('SUPABASE_URL', defaultValue: 'https://placeholder.supabase.co');
+  const supabaseAnonKey = String.fromEnvironment('SUPABASE_ANON_KEY', defaultValue: 'placeholder_key');
 
  try {
  await Supabase.initialize(

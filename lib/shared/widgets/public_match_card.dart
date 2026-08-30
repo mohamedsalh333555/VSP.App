@@ -120,18 +120,20 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  }
 
  String _getLocalizedBookingType(BuildContext context, BookingType type) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- switch (type) {
- case BookingType.personal:
- return isArabic ? 'حجز عادي' : 'SOLO';
- case BookingType.openJoin:
- return isArabic ? 'تجميعي' : 'OPEN JOIN';
- case BookingType.team:
- return isArabic ? 'فريق' : 'TEAM';
- case BookingType.challenge:
- return isArabic ? 'تحدي' : 'CHALLENGE';
- }
- }
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    switch (type) {
+      case BookingType.personal:
+        return isArabic ? 'حجز عادي' : 'SOLO';
+      case BookingType.openJoin:
+        return isArabic ? 'تجميعي' : 'OPEN JOIN';
+      case BookingType.team:
+        return isArabic ? 'فريق' : 'TEAM';
+      case BookingType.challenge:
+        return isArabic ? 'تحدي' : 'CHALLENGE';
+      case BookingType.matchup:
+        return isArabic ? 'مواجهات' : 'MATCHUP';
+    }
+  }
 
  Widget _buildTypeBadge(String text) {
  return Text(

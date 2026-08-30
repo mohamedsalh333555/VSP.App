@@ -59,3 +59,4 @@ node_modules
 .venv/
 scratch_check.dart
 scratch/
+bin/

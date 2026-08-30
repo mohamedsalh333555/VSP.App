@@ -106,6 +106,8 @@ class SupabaseBookingRepository implements BookingRepository {
  return 'challenge';
  case BookingType.team:
  return 'team';
+ case BookingType.matchup:
+ return 'matchup';
  case BookingType.personal:
  return 'personal';
  }

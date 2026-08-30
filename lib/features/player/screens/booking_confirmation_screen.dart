@@ -75,6 +75,11 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  return bType == 'challenge' || bType == 'challengematch';
  }
 
+ bool get _isMatchup {
+ final bType = widget.bookingType.toLowerCase().replaceAll(' ', '').replaceAll('_', '');
+ return bType == 'matchup' || bType == 'matchups' || bType == 'matchupmatch';
+ }
+
  bool _isSlotsInitialized = false;
 
  @override
@@ -1136,6 +1141,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  bType = BookingType.openJoin;
  } else if (_isChallenge) {
  bType = BookingType.challenge;
+ } else if (_isMatchup) {
+ bType = BookingType.matchup;
  } else {
  bType = BookingType.personal;
  }

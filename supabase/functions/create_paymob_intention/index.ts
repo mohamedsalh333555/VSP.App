@@ -26,7 +26,7 @@ serve(async (req: Request) => {
 
     // 2. Read Server Secrets & Initialize Supabase Admin Client
     const paymobSecretKey = Deno.env.get("PAYMOB_SECRET_KEY");
-    const paymobPublicKey = Deno.env.get("PAYMOB_PUBLIC_KEY") || "egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx";
+    const paymobPublicKey = Deno.env.get("PAYMOB_PUBLIC_KEY") ?? "";
     const supabaseUrl = Deno.env.get("SUPABASE_URL") ?? "";
     const supabaseServiceKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY") ?? "";
 
