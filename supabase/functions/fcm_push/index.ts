@@ -9,20 +9,21 @@ console.log("FCM Push Notification Function Started!");
 
 serve(async (req: Request) => {
   try {
-    // 0. Security Guard: Verify Authorization Token
+    // 0. Security Guard: Verify Authorization Token (Strict Fail-Closed)
     const serviceRoleKey = Deno.env.get("SUPABASE_SERVICE_ROLE_KEY");
     const anonKey = Deno.env.get("SUPABASE_ANON_KEY");
     const authHeader = req.headers.get("Authorization") || "";
     const token = authHeader.replace(/^Bearer\s+/i, "").trim();
 
-    // Accept valid service role, anon, or internal trigger authorization
-    const isAuthorized = !serviceRoleKey || 
-      token === serviceRoleKey || 
-      token === anonKey || 
-      token === "internal_db_trigger" || 
-      token === "authenticated" || 
-      token === "anon" || 
-      token.length > 10;
+    if (!token) {
+      return new Response(JSON.stringify({ error: "Unauthorized: Missing bearer token" }), {
+        status: 401,
+        headers: { "Content-Type": "application/json" },
+      });
+    }
+
+    const isAuthorized = (serviceRoleKey && token === serviceRoleKey) ||
+                         (anonKey && token === anonKey);
 
     if (!isAuthorized) {
       console.error("🚨 Unauthorized access attempt to fcm_push endpoint");
