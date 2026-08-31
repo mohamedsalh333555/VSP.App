@@ -23,12 +23,16 @@ class PaymentGatewayScreen extends StatefulWidget {
  final BookingDraft bookingDraft;
  final bool forceFullPayment;
  final bool isTournamentPayment;
+ final String? existingBookingId;
+ final Booking? existingBooking;
 
  const PaymentGatewayScreen({
  super.key,
  required this.bookingDraft,
  this.forceFullPayment = false,
  this.isTournamentPayment = false,
+ this.existingBookingId,
+ this.existingBooking,
  });
 
  @override
@@ -63,9 +67,11 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  } else {
  _countdownTimer?.cancel();
  if (!_paymentCompleted && _booking != null) {
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
+ if (!mounted) return;
+    if (!mounted) return;
+  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final userId = authProvider.currentUser?.uid;
- if (userId != null && !widget.isTournamentPayment) {
+ if (userId != null && !widget.isTournamentPayment && widget.existingBookingId == null) {
  await _cleanupStalePendingBookings(userId);
  }
  if (mounted) {
@@ -94,64 +100,86 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  super.dispose();
  }
 
- /// إنشاء الحجز بحالة pending و is_paid = false فقط
- Future<void> _createPendingBooking() async {
- if (!mounted) return;
- setState(() => _isLoading = true);
+  /// إنشاء الحجز بحالة pending و is_paid = false فقط أو استئناف حجز قائم
+  Future<void> _createPendingBooking() async {
+    if (!mounted) return;
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
+    final userId = authProvider.currentUser?.uid;
 
- if (widget.isTournamentPayment) {
- if (mounted) {
- setState(() => _isLoading = false);
- }
- return;
- }
- 
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- final userId = authProvider.currentUser?.uid;
- if (userId != null) {
- try {
- // تنظيف أي حجوزات pending غير مدفوعة للمستخدم على نفس الملعب قبل الإنشاء
- await _cleanupStalePendingBookings(userId);
+    setState(() => _isLoading = true);
 
- if (!mounted) return;
- final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
- final draft = widget.bookingDraft.copyWith(
- paymentStatus: 'pending',
- paymentMethod: 'paymob',
- isPaid: false, // دائماً غير مدفوع في البداية
- );
- final booking = await bookingProvider.createBooking(draft, userId);
- if (booking != null) {
- if (mounted) {
- setState(() {
- _booking = booking;
- _isLoading = false;
- });
- _initBookingRealtimeListener(booking.id);
- }
- } else {
- if (mounted) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- final errorMsg = bookingProvider.errorMessage ?? (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
- VSPFeedback.showError(context, errorMsg);
- Navigator.pop(context);
- }
- }
- } catch (e) {
- if (mounted) {
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showError(context, '${isArabic ? "تعذر بدء عملية الحجز:" : "Failed to initialize booking:"} $e');
- Navigator.pop(context);
- }
- }
- } else {
- if (mounted) {
- setState(() => _isLoading = false);
- }
- }
- }
+    if (widget.isTournamentPayment) {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+      return;
+    }
 
- /// تحويل الحجوزات المعلقة القديمة (State Machine: status='cancelled', payment_status='expired') بدلاً من الحذف المتهور
+    // استئناف حجز قائم ممرر مسبقاً
+    if (widget.existingBooking != null) {
+      if (mounted) {
+        setState(() {
+          _booking = widget.existingBooking;
+          _isLoading = false;
+        });
+        _initBookingRealtimeListener(widget.existingBooking!.id);
+      }
+      return;
+    } else if (widget.existingBookingId != null) {
+      final existing = await bookingProvider.getBookingById(widget.existingBookingId!);
+      if (existing != null && mounted) {
+        setState(() {
+          _booking = existing;
+          _isLoading = false;
+        });
+        _initBookingRealtimeListener(existing.id);
+        return;
+      }
+    }
+    
+    if (userId != null) {
+      try {
+        // تنظيف أي حجوزات pending غير مدفوعة للمستخدم على نفس الملعب قبل الإنشاء
+        await _cleanupStalePendingBookings(userId);
+
+        if (!mounted) return;
+        final draft = widget.bookingDraft.copyWith(
+          paymentStatus: 'pending',
+          paymentMethod: 'paymob',
+          isPaid: false, // دائماً غير مدفوع في البداية
+        );
+        final booking = await bookingProvider.createBooking(draft, userId);
+        if (booking != null) {
+          if (mounted) {
+            setState(() {
+              _booking = booking;
+              _isLoading = false;
+            });
+            _initBookingRealtimeListener(booking.id);
+          }
+        } else {
+          if (mounted) {
+            final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+            final errorMsg = bookingProvider.errorMessage ?? (isArabic ? 'تعذر إنشاء الحجز في قاعدة البيانات' : 'Failed to create booking in database');
+            VSPFeedback.showError(context, errorMsg);
+            Navigator.pop(context);
+          }
+        }
+      } catch (e) {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(context, isArabic ? 'تعذر بدء عملية الحجز: $e' : 'Failed to initialize booking: $e');
+          Navigator.pop(context);
+        }
+      }
+    } else {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
  Future<void> _cleanupStalePendingBookings(String userId) async {
  if (widget.isTournamentPayment) return;
  try {
@@ -243,12 +271,19 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  /// فتح بوابة Paymob أو استدعاء المحاكاة الآمنة بالسيرفر (RPC) في الاختبار
  Future<void> _startPaymobCheckout() async {
  if (_booking == null && !widget.isTournamentPayment) return;
- setState(() => _isAwaitingWebhook = true);
+ if (_isLoading || _isAwaitingWebhook) return;
+ setState(() {
+ _isLoading = true;
+ _isAwaitingWebhook = true;
+ });
 
  _webhookTimeoutTimer?.cancel();
  _webhookTimeoutTimer = Timer(const Duration(seconds: 90), () {
  if (mounted && _isAwaitingWebhook && !_paymentCompleted) {
- setState(() => _isAwaitingWebhook = false);
+ setState(() {
+ _isAwaitingWebhook = false;
+ _isLoading = false;
+ });
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  ScaffoldMessenger.of(context).showSnackBar(
  SnackBar(
@@ -275,13 +310,13 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
  // DUP-FIX: استخدام الدالة المركزية لحساب المبلغ الإجمالي مع العمولة
  final totalAmount = PaymobService.calculateTotalAmount(baseAmount);
 
- final selectedIntegrationId = _selectedMethod == 'wallet' 
- ? AppConfig.paymobWalletIntegrationId 
- : AppConfig.paymobCardIntegrationId;
+    final selectedIntegrationId = _selectedMethod == 'wallet' 
+        ? AppConfig.paymobWalletIntegrationId 
+        : AppConfig.paymobCardIntegrationId;
 
- final paymentRefId = widget.isTournamentPayment
- ? 'TOURN_${widget.bookingDraft.playerTeamId ?? 'TEAM'}_${DateTime.now().millisecondsSinceEpoch}'
- : (_booking?.id ?? 'BK_${DateTime.now().millisecondsSinceEpoch}');
+    final paymentRefId = widget.isTournamentPayment
+        ? 'TOURN_${widget.bookingDraft.playerTeamId ?? 'TEAM'}_${DateTime.now().millisecondsSinceEpoch}'
+        : (_booking?.id ?? 'BK_${DateTime.now().millisecondsSinceEpoch}');
 
     final paymobUrl = await PaymobService.getCheckoutUrlFromServer(
       amountInEgp: totalAmount,
@@ -333,7 +368,10 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
             _startFallbackPollingTimer(bookingId);
           }
         } else if (mounted && !_paymentCompleted) {
-          setState(() => _isAwaitingWebhook = false);
+          setState(() {
+            _isAwaitingWebhook = false;
+            _isLoading = false;
+          });
           VSPFeedback.showError(
             context,
             isArabic 
@@ -344,12 +382,18 @@ class _PaymentGatewayScreenState extends State<PaymentGatewayScreen> {
       } catch (e) {
         debugPrint('Paymob Launch notice: $e');
         if (mounted) {
-          setState(() => _isAwaitingWebhook = false);
+          setState(() {
+            _isAwaitingWebhook = false;
+            _isLoading = false;
+          });
         }
       }
     } else {
       if (mounted) {
-        setState(() => _isAwaitingWebhook = false);
+        setState(() {
+          _isAwaitingWebhook = false;
+          _isLoading = false;
+        });
         VSPFeedback.showError(
           context,
           isArabic 

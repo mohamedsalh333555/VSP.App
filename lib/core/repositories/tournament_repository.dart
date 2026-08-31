@@ -1953,10 +1953,203 @@ class TournamentRepository {
  await _supabase.from('tournament_matches').insert(knockoutMatches);
  }
 
- debugPrint(' Successfully advanced group winners to Knockout stage with cross-group pairings (BYE-safe)!');
- } catch (e) {
- debugPrint('Error advancing groups to knockout: $e');
- rethrow;
- }
- }
+    debugPrint(' Successfully advanced group winners to Knockout stage with cross-group pairings (BYE-safe)!');
+    } catch (e) {
+      debugPrint('Error advancing groups to knockout: $e');
+      rethrow;
+    }
+  }
+
+  /// بث مباشر لحظي لتفاصيل بطولة معينة (Realtime Stream)
+  Stream<Championship?> getSingleChampionshipStream(String championshipId) {
+    return _supabase
+        .from('championships')
+        .stream(primaryKey: ['id'])
+        .eq('id', championshipId)
+        .map((list) {
+          if (list.isEmpty) return null;
+          try {
+            return Championship.fromFirestore(list.first, championshipId);
+          } catch (e) {
+            debugPrint('Error parsing realtime championship stream: $e');
+            return null;
+          }
+        });
+  }
+
+  /// حذف البطولة بكامل بياناتها ومبارياتها وتشكيلاتها بأمان
+  Future<bool> deleteChampionship(String championshipId) async {
+    try {
+      // 1. حذف تشكيلات البطولة
+      try {
+        final rosters = await _supabase
+            .from('championship_rosters')
+            .select('id')
+            .eq('championship_id', championshipId);
+        final rosterIds = (rosters as List).map((r) => r['id'].toString()).toList();
+        if (rosterIds.isNotEmpty) {
+          try {
+            await _supabase
+                .from('championship_roster_players')
+                .delete()
+                .inFilter('roster_id', rosterIds);
+          } catch (_) {}
+          try {
+            await _supabase
+                .from('championship_roster_guests')
+                .delete()
+                .inFilter('roster_id', rosterIds);
+          } catch (_) {}
+        }
+        await _supabase
+            .from('championship_rosters')
+            .delete()
+            .eq('championship_id', championshipId);
+      } catch (rosterErr) {
+        debugPrint('Championship rosters cleanup notice: $rosterErr');
+      }
+
+      // 2. حذف مباريات البطولة
+      try {
+        await _supabase
+            .from('tournament_matches')
+            .delete()
+            .eq('championship_id', championshipId);
+      } catch (matchErr) {
+        debugPrint('Tournament matches cleanup notice: $matchErr');
+      }
+
+      // 3. حذف سجل البطولة الأساسي
+      await _supabase
+          .from('championships')
+          .delete()
+          .eq('id', championshipId);
+
+      debugPrint('Championship $championshipId deleted successfully.');
+      return true;
+    } catch (e) {
+      debugPrint('Error deleting championship: $e');
+      return false;
+    }
+  }
+
+  /// فحص تكرار تسجيل اللاعبين أو الضيوف في فرق أخرى داخل نفس البطولة
+  Future<List<String>> checkDuplicatePlayersInChampionship({
+    required String championshipId,
+    required String currentTeamId,
+    required List<String> playerIds,
+    required List<String> guestNames,
+  }) async {
+    final List<String> duplicateNames = [];
+    try {
+      final rosters = await _supabase
+          .from('championship_rosters')
+          .select('id, team_id, guest_names, player_ids')
+          .eq('championship_id', championshipId)
+          .neq('team_id', currentTeamId);
+
+      final otherRosters = List<Map<String, dynamic>>.from(rosters as List);
+      final Set<String> registeredPlayerIds = {};
+      final Set<String> registeredGuestNames = {};
+
+      for (var r in otherRosters) {
+        final rosterId = r['id'].toString();
+        final pIds = r['player_ids'] as List? ?? [];
+        for (var p in pIds) {
+          if (p != null && p.toString().isNotEmpty) registeredPlayerIds.add(p.toString());
+        }
+
+        try {
+          final rp = await _supabase
+              .from('championship_roster_players')
+              .select('player_id')
+              .eq('roster_id', rosterId);
+          for (var item in (rp as List)) {
+            final pId = item['player_id']?.toString();
+            if (pId != null && pId.isNotEmpty) registeredPlayerIds.add(pId);
+          }
+        } catch (_) {}
+
+        final gNames = r['guest_names'] as List? ?? [];
+        for (var g in gNames) {
+          if (g != null && g.toString().trim().isNotEmpty) {
+            registeredGuestNames.add(g.toString().trim().toLowerCase());
+          }
+        }
+      }
+
+      for (final pId in playerIds) {
+        if (registeredPlayerIds.contains(pId)) {
+          try {
+            final userDoc = await _supabase
+                .from('users')
+                .select('name')
+                .eq('id', pId)
+                .maybeSingle();
+            final name = userDoc?['name']?.toString() ?? 'لاعب مسجل';
+            duplicateNames.add(name);
+          } catch (_) {
+            duplicateNames.add('لاعب مسجل مسبقاً');
+          }
+        }
+      }
+
+      for (final g in guestNames) {
+        if (registeredGuestNames.contains(g.trim().toLowerCase())) {
+          duplicateNames.add(g.trim());
+        }
+      }
+    } catch (e) {
+      debugPrint('Error checking duplicate players in championship: $e');
+    }
+    return duplicateNames;
+  }
+
+  /// فحص تعارض مواعيد المباريات لنفس الفرق
+  Future<String?> checkMatchScheduleConflict({
+    required String championshipId,
+    required String matchId,
+    required String? homeTeamId,
+    required String? awayTeamId,
+    required DateTime scheduledTime,
+    int matchDurationMinutes = 45,
+  }) async {
+    try {
+      final matchesRes = await _supabase
+          .from('tournament_matches')
+          .select('id, scheduled_time, home_team_id, away_team_id, home_team_name, away_team_name')
+          .eq('championship_id', championshipId)
+          .neq('id', matchId)
+          .not('scheduled_time', 'is', null);
+
+      final newMatchStart = scheduledTime;
+      final newMatchEnd = scheduledTime.add(Duration(minutes: matchDurationMinutes));
+
+      for (var m in (matchesRes as List)) {
+        final rawTime = m['scheduled_time']?.toString();
+        if (rawTime == null) continue;
+        final existingStart = DateTime.parse(rawTime).toLocal();
+        final existingEnd = existingStart.add(Duration(minutes: matchDurationMinutes));
+
+        final bool overlaps = newMatchStart.isBefore(existingEnd) && newMatchEnd.isAfter(existingStart);
+        if (overlaps) {
+          final mHomeId = m['home_team_id']?.toString();
+          final mAwayId = m['away_team_id']?.toString();
+
+          if (homeTeamId != null && (homeTeamId == mHomeId || homeTeamId == mAwayId)) {
+            final tName = m['home_team_name'] ?? 'الفريق';
+            return 'تعارض: فريق ($tName) لديه مباراة أخرى مجدولة في نفس التوقيت (${AppDateFormatter.formatTime(existingStart, 'ar')})!';
+          }
+          if (awayTeamId != null && (awayTeamId == mHomeId || awayTeamId == mAwayId)) {
+            final tName = m['away_team_name'] ?? 'الفريق';
+            return 'تعارض: فريق ($tName) لديه مباراة أخرى مجدولة في نفس التوقيت (${AppDateFormatter.formatTime(existingStart, 'ar')})!';
+          }
+        }
+      }
+      return null;
+    } catch (e) {
+      debugPrint('Error checking match schedule conflict: $e');
+      return null;
+    }
+  }
 }

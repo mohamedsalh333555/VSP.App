@@ -28,7 +28,8 @@ class StadiumCard extends StatelessWidget {
 
  @override
  Widget build(BuildContext context) {
- return GestureDetector(
+ return RepaintBoundary(
+ child: GestureDetector(
  onTap: () {
  HapticFeedback.lightImpact();
  onTap?.call();
@@ -354,27 +355,28 @@ class StadiumCard extends StatelessWidget {
  fontSize: 18,
  ),
  ),
- Text(
- AppLocalizations.of(context)!.perHour,
- style: Theme.of(context).textTheme.labelSmall?.copyWith(
- color: VSPColors.textSecondary,
- fontSize: 9,
- ),
- ),
- ],
- ),
- ],
- ),
- ],
- ],
- ),
- ),
- ],
- ),
- ),
- ),
- );
- }
+                          Text(
+                            AppLocalizations.of(context)!.perHour,
+                            style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                              color: VSPColors.textSecondary,
+                              fontSize: 9,
+                            ),
+                          ),
+                        ],
+                      ),
+                    ],
+                  ),
+                ],
+              ],
+            ),
+          ),
+        ],
+      ),
+    ),
+  ),
+  ),
+  );
+}
 
  String _localizeSizeAndType(String size, String type, BuildContext context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';

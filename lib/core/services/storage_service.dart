@@ -62,24 +62,26 @@ class StorageService {
  // FIX: Preserve PNG transparency — use CompressFormat.png for .png files.
  // Using CompressFormat.jpeg on a PNG with transparency fills the alpha channel
  // with a solid black background. We must never convert .png to .jpeg.
- final bool isPng = extension == '.png';
- final CompressFormat compressFormat = isPng ? CompressFormat.png : CompressFormat.jpeg;
- final String outputExt = isPng ? 'png' : 'jpg';
- final int quality = isPng ? 100 : 70; // PNG is lossless; quality=100 retains all data.
+        final bool isPng = extension == '.png';
+        final CompressFormat compressFormat = isPng ? CompressFormat.png : CompressFormat.jpeg;
+        final String outputExt = isPng ? 'png' : 'jpg';
+        final int quality = isPng ? 100 : 80;
 
- final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.$outputExt");
+        final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.$outputExt");
 
- // Only rename .heic → .jpg (not .png → .jpg)
- if (uploadPath.toLowerCase().endsWith('.heic')) {
- uploadPath = uploadPath.replaceAll(RegExp(r'\.heic$', caseSensitive: false), '.jpg');
- }
+        // Only rename .heic → .jpg (not .png → .jpg)
+        if (uploadPath.toLowerCase().endsWith('.heic')) {
+          uploadPath = uploadPath.replaceAll(RegExp(r'\.heic$', caseSensitive: false), '.jpg');
+        }
 
- final compressedXFile = await FlutterImageCompress.compressAndGetFile(
- finalFile.absolute.path,
- targetPath,
- format: compressFormat,
- quality: quality,
- );
+        final compressedXFile = await FlutterImageCompress.compressAndGetFile(
+          finalFile.absolute.path,
+          targetPath,
+          format: compressFormat,
+          quality: quality,
+          minWidth: 1200,
+          minHeight: 1200,
+        );
  
  if (compressedXFile != null) {
  finalFile = File(compressedXFile.path);
@@ -160,20 +162,50 @@ class StorageService {
  );
  }
 
- Future<String?> getOwnerDocumentSignedUrl(String path, {int expiresIn = 3600}) async {
- try {
- String cleanPath = path;
- const storagePathMarker = '/storage/v1/object/public/owner_documents/';
- const signedMarker = '/storage/v1/object/sign/owner_documents/';
- if (cleanPath.contains(storagePathMarker)) {
- cleanPath = cleanPath.split(storagePathMarker).last;
- } else if (cleanPath.contains(signedMarker)) {
- cleanPath = cleanPath.split(signedMarker).last.split('?').first;
- }
- return await _storage.from('owner_documents').createSignedUrl(cleanPath, expiresIn);
- } catch (e) {
- debugPrint('Error generating owner document signed URL: $e');
- return null;
- }
- }
+  Future<String?> getOwnerDocumentSignedUrl(String path, {int expiresIn = 3600}) async {
+    try {
+      String cleanPath = path;
+      const storagePathMarker = '/storage/v1/object/public/owner_documents/';
+      const signedMarker = '/storage/v1/object/sign/owner_documents/';
+      if (cleanPath.contains(storagePathMarker)) {
+        cleanPath = cleanPath.split(storagePathMarker).last;
+      } else if (cleanPath.contains(signedMarker)) {
+        cleanPath = cleanPath.split(signedMarker).last.split('?').first;
+      }
+      return await _storage.from('owner_documents').createSignedUrl(cleanPath, expiresIn);
+    } catch (e) {
+      debugPrint('Error generating owner document signed URL: $e');
+      return null;
+    }
+  }
+
+  /// ضغط الصورة المستقل: جودة 80% وأبعاد قصوى 1200 بكسل مع حماية شفافية PNG
+  Future<XFile?> compressImage(XFile file, {int quality = 80, int minWidth = 1200, int minHeight = 1200}) async {
+    if (kIsWeb) return file;
+    try {
+      final extension = p.extension(file.path).toLowerCase();
+      if (!['.jpg', '.jpeg', '.png', '.heic', '.webp'].contains(extension)) {
+        return file;
+      }
+      final tempDir = await getTemporaryDirectory();
+      final bool isPng = extension == '.png';
+      final CompressFormat compressFormat = isPng ? CompressFormat.png : CompressFormat.jpeg;
+      final String outputExt = isPng ? 'png' : 'jpg';
+      final int effectiveQuality = isPng ? 100 : quality;
+      final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.$outputExt");
+
+      final compressedXFile = await FlutterImageCompress.compressAndGetFile(
+        file.path,
+        targetPath,
+        format: compressFormat,
+        quality: effectiveQuality,
+        minWidth: minWidth,
+        minHeight: minHeight,
+      );
+      return compressedXFile ?? file;
+    } catch (e) {
+      debugPrint('Image compression error: $e');
+      return file;
+    }
+  }
 }

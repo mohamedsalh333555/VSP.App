@@ -127,14 +127,26 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
  );
  }
 
- @override
- Widget build(BuildContext context) {
- final l10n = AppLocalizations.of(context)!;
- final stadium = widget.stadium;
- final hasDeposit = stadium.depositAmount > 0.0;
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+  @override
+  Widget build(BuildContext context) {
+    final l10n = AppLocalizations.of(context)!;
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- return Scaffold(
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: Supabase.instance.client
+          .from('stadiums')
+          .stream(primaryKey: ['id'])
+          .eq('id', widget.stadium.id),
+      builder: (context, snapshot) {
+        Stadium stadium = widget.stadium;
+        if (snapshot.hasData && snapshot.data!.isNotEmpty) {
+          try {
+            stadium = Stadium.fromFirestore(snapshot.data!.first, widget.stadium.id);
+          } catch (_) {}
+        }
+        final hasDeposit = stadium.depositAmount > 0.0;
+
+        return Scaffold(
  backgroundColor: VSPColors.background,
  body: Column(
  children: [
@@ -355,8 +367,10 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
  ),
  ),
  ),
- );
- }
+        );
+      },
+    );
+  }
 
  Widget _buildTabItem(int index, String label) {
  final isSelected = _tabController.index == index;

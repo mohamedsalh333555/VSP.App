@@ -243,20 +243,20 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
  @override
  Widget build(BuildContext context) {
- final authProvider = Provider.of<app_auth.AuthProvider>(context);
- final currentUser = authProvider.currentUser;
- final booking = widget.booking;
- 
- final bool hasJoined = currentUser != null && booking.joinedUserIds.contains(currentUser.uid);
- final bool isPending = currentUser != null && booking.pendingUserIds.contains(currentUser.uid);
- final bool isHost = currentUser != null && booking.createdByUserId == currentUser.uid;
- 
- final totalFieldCapacity = booking.totalFieldCapacity;
- final remainingPlayers = (booking.totalFieldCapacity - booking.currentPlayers).clamp(0, booking.totalFieldCapacity);
- final entryFee = (booking.totalPrice / totalFieldCapacity).toStringAsFixed(0);
- final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final currentUser = context.select((app_auth.AuthProvider a) => a.currentUser);
+    final booking = widget.booking;
+    
+    final bool hasJoined = currentUser != null && booking.joinedUserIds.contains(currentUser.uid);
+    final bool isPending = currentUser != null && booking.pendingUserIds.contains(currentUser.uid);
+    final bool isHost = currentUser != null && booking.createdByUserId == currentUser.uid;
+    
+    final totalFieldCapacity = booking.totalFieldCapacity;
+    final remainingPlayers = (booking.totalFieldCapacity - booking.currentPlayers).clamp(0, booking.totalFieldCapacity);
+    final entryFee = (booking.totalPrice / totalFieldCapacity).toStringAsFixed(0);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
- return Container(
+    return RepaintBoundary(
+      child: Container(
  padding: const EdgeInsets.all(16),
  decoration: BoxDecoration(
  color: VSPColors.surface, 
@@ -340,15 +340,16 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
  if (isPending) {
  return _buildRawButton(label: isArabic ? 'إلغاء الطلب' : 'Cancel Request', color: VSPColors.error, onTap: () => _rejectRequest(context, currentUser.uid), isOutlined: true);
  }
- if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
- return _buildRawButton(label: isArabic ? 'انضمام' : 'Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
- }),
- ],
- ),
- ],
- ),
- );
- }
+                  if (booking.currentPlayers >= totalFieldCapacity) return _buildRawButton(label: AppLocalizations.of(context)!.full, color: VSPColors.textSecondary, onTap: null);
+                  return _buildRawButton(label: isArabic ? 'انضمام' : 'Join', color: VSPColors.accent, onTap: () => _handleJoin(context, currentUser?.uid));
+                }),
+              ],
+            ),
+          ],
+        ),
+      ),
+    );
+  }
 }
 
 class _ManageParticipantsModal extends StatefulWidget {
@@ -619,19 +620,18 @@ class _ManageParticipantsModalState extends State<_ManageParticipantsModal> {
  if (!isHost)
  IconButton(
  icon: const Icon(Iconsax.user_remove_copy, color: VSPColors.error, size: 16), 
- onPressed: _isProcessing ? null : () => _removeUser(u.uid),
- ),
- ],
- ),
- );
- }),
- ],
- ),
- ),
- ),
- ],
- ),
- );
- }
+                                onPressed: _isProcessing ? null : () => _removeUser(u.uid),
+                              ),
+                          ],
+                        ),
+                      );
+                    }),
+                ],
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
 }
-

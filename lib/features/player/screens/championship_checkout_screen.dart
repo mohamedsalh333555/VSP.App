@@ -135,76 +135,99 @@ class _ChampionshipCheckoutScreenState extends State<ChampionshipCheckoutScreen>
  }
  }
 
- Future<void> _handleConfirmAndPay() async {
- final minPlayers = widget.championship.minPlayersPerTeam;
- final maxPlayers = widget.championship.maxPlayersPerTeam;
- final totalCount = _selectedPlayerIds.length + _offlineGuestNames.length;
+  Future<void> _handleConfirmAndPay() async {
+    if (_isSubmitting) return;
 
- if (totalCount < minPlayers) {
- VSPFeedback.showError(context, 'يرجى اختيار $minPlayers لاعبين على الأقل للتشكيلة.');
- return;
- }
- if (totalCount > maxPlayers) {
- VSPFeedback.showError(context, 'التشكيلة تجاوزت الحد الأقصى ($maxPlayers لاعبين).');
- return;
- }
+    final minPlayers = widget.championship.minPlayersPerTeam;
+    final maxPlayers = widget.championship.maxPlayersPerTeam;
+    final totalCount = _selectedPlayerIds.length + _offlineGuestNames.length;
 
- setState(() => _isSubmitting = true);
+    if (totalCount < minPlayers) {
+      VSPFeedback.showError(context, 'يرجى اختيار $minPlayers لاعبين على الأقل للتشكيلة.');
+      return;
+    }
+    if (totalCount > maxPlayers) {
+      VSPFeedback.showError(context, 'التشكيلة تجاوزت الحد الأقصى ($maxPlayers لاعبين).');
+      return;
+    }
 
- try {
- final entryFee = widget.championship.entryFee;
+    setState(() => _isSubmitting = true);
 
- if (entryFee > 0) {
- final draft = BookingDraft(
- stadiumId: '00000000-0000-0000-0000-000000000000',
- stadiumName: 'بطولة: ${widget.championship.name}',
- stadiumImageUrl: widget.championship.logoUrl,
- ownerId: widget.championship.ownerId,
- startTime: widget.championship.startDate,
- endTime: widget.championship.endDate,
- bookingType: BookingType.team,
- playerTeamId: widget.team.id,
- playerTeamName: widget.team.name,
- totalPrice: entryFee,
- isPaid: false,
- isPrivate: false,
- rentBall: false,
- currentPlayers: totalCount,
- totalFieldCapacity: maxPlayers,
- depositPaid: entryFee,
- isDepositPaid: false,
- needsDeposit: true,
- );
+    try {
+      // فحص تكرار اللاعبين في فرق أخرى بالبطولة
+      final duplicatePlayers = await TournamentRepository().checkDuplicatePlayersInChampionship(
+        championshipId: widget.championship.id,
+        currentTeamId: widget.team.id,
+        playerIds: _selectedPlayerIds,
+        guestNames: _offlineGuestNames,
+      );
 
- if (mounted) {
- setState(() => _isSubmitting = false);
- final paymentResult = await Navigator.push<bool>(
- context,
- MaterialPageRoute(
- builder: (context) => PaymentGatewayScreen(
- bookingDraft: draft,
- forceFullPayment: true,
- isTournamentPayment: true,
- ),
- ),
- );
+      if (duplicatePlayers.isNotEmpty) {
+        if (mounted) {
+          final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+          final dupNamesStr = duplicatePlayers.join('، ');
+          VSPFeedback.showError(
+            context,
+            isArabic
+                ? 'عذراً! اللاعبون التالي أسماؤهم مسجلون بالفعل في فرق أخرى داخل هذه البطولة: ($dupNamesStr). يرجى تعديل التشكيلة أولاً.'
+                : 'The following players are already registered in other teams for this tournament: ($dupNamesStr). Please adjust your roster.',
+          );
+        }
+        return;
+      }
 
- if (paymentResult == true && mounted) {
- await _executeJoinChampionship();
- }
- return;
- }
- }
+      final entryFee = widget.championship.entryFee;
 
- await _executeJoinChampionship();
- } catch (e) {
- if (mounted) {
- VSPFeedback.showError(context, 'حدث خطأ أثناء الاشتراك: $e');
- }
- } finally {
- if (mounted) setState(() => _isSubmitting = false);
- }
- }
+      if (entryFee > 0) {
+        final draft = BookingDraft(
+          stadiumId: '00000000-0000-0000-0000-000000000000',
+          stadiumName: 'بطولة: ${widget.championship.name}',
+          stadiumImageUrl: widget.championship.logoUrl,
+          ownerId: widget.championship.ownerId,
+          startTime: widget.championship.startDate,
+          endTime: widget.championship.endDate,
+          bookingType: BookingType.team,
+          playerTeamId: widget.team.id,
+          playerTeamName: widget.team.name,
+          totalPrice: entryFee,
+          isPaid: false,
+          isPrivate: false,
+          rentBall: false,
+          currentPlayers: totalCount,
+          totalFieldCapacity: maxPlayers,
+          depositPaid: entryFee,
+          isDepositPaid: false,
+          needsDeposit: true,
+        );
+
+        if (mounted) {
+          final paymentResult = await Navigator.push<bool>(
+            context,
+            MaterialPageRoute(
+              builder: (context) => PaymentGatewayScreen(
+                bookingDraft: draft,
+                forceFullPayment: true,
+                isTournamentPayment: true,
+              ),
+            ),
+          );
+
+          if (paymentResult == true && mounted) {
+            await _executeJoinChampionship();
+          }
+          return;
+        }
+      }
+
+      await _executeJoinChampionship();
+    } catch (e) {
+      if (mounted) {
+        VSPFeedback.showError(context, 'حدث خطأ أثناء الاشتراك: $e');
+      }
+    } finally {
+      if (mounted) setState(() => _isSubmitting = false);
+    }
+  }
 
  Future<void> _executeJoinChampionship() async {
  final entryFee = widget.championship.entryFee;

@@ -993,13 +993,12 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  Navigator.pop(sheetContext);
  setState(() => _isLocationLoading = true);
  await _resolveLocationAndAddress(selectedCoords.latitude, selectedCoords.longitude);
+ if (!mounted) return;
  setState(() => _isLocationLoading = false);
- if (mounted) {
  VSPFeedback.showSuccess(
  context,
  isArabic ? 'تم تحديد موقع الملعب بنجاح! ' : 'Stadium location selected successfully! ',
  );
- }
  },
  style: ElevatedButton.styleFrom(
  backgroundColor: VSPColors.accent,
@@ -1074,140 +1073,177 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  }
  }
 
- Future<void> _selectTimeForBreak(BuildContext context, int index, bool isStart) async {
- final TimeOfDay? picked = await showTimePicker(
- context: context,
- initialTime: TimeOfDay.now(),
- builder: (pickerCtx, child) => MediaQuery(
- data: MediaQuery.of(pickerCtx).copyWith(alwaysUse24HourFormat: false),
- child: Theme(
- data: Theme.of(pickerCtx).copyWith(
- colorScheme: const ColorScheme.dark(
- primary: VSPColors.accent,
- onPrimary: Colors.black,
- surface: VSPColors.surface,
- onSurface: VSPColors.textPrimary,
- ),
- timePickerTheme: TimePickerThemeData(
- backgroundColor: VSPColors.surface,
- dialBackgroundColor: VSPColors.surfaceAlt,
- dayPeriodColor: WidgetStateColor.resolveWith((states) =>
- states.contains(WidgetState.selected)
- ? VSPColors.accent
- : VSPColors.surfaceAlt),
- dayPeriodTextColor: WidgetStateColor.resolveWith((states) =>
- states.contains(WidgetState.selected)
- ? Colors.black
- : VSPColors.textSecondary),
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- ),
- ),
- ),
- child: child!,
- ),
- ),
- );
- if (picked != null && mounted) {
- final hour = picked.hour;
- final minute = picked.minute;
+  Future<void> _selectTimeForBreak(BuildContext context, int index, bool isStart) async {
+    final initial = isStart ? _breakTimes[index]['start'] : _breakTimes[index]['end'];
+    final picked = await showTimePicker(
+      context: context,
+      initialTime: initial ?? const TimeOfDay(hour: 17, minute: 0),
+    );
+    if (picked != null && mounted) {
+      final hour = picked.hour;
+      final minute = picked.minute;
+      final roundedMinute = (minute < 30) ? 0 : 0;
+      final roundedTime = TimeOfDay(hour: hour, minute: roundedMinute);
+      setState(() {
+        if (isStart) {
+          _breakTimes[index]['start'] = roundedTime;
+        } else {
+          _breakTimes[index]['end'] = roundedTime;
+        }
+      });
+      _saveWorkingHoursToPrefs();
+    }
+  }
 
- final roundedMinute = (minute / 15).round() * 15;
- if (roundedMinute == 60) {
- final roundedTime = TimeOfDay(hour: (hour + 1) % 24, minute: 0);
- setState(() {
- if (isStart) {
- _breakTimes[index]['start'] = roundedTime;
- } else {
- _breakTimes[index]['end'] = roundedTime;
- }
- });
- _saveWorkingHoursToPrefs();
- return;
- }
+  Future<void> _pickImage() async {
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    showModalBottomSheet(
+      context: context,
+      backgroundColor: VSPColors.surfaceAlt,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(VSPRadius.xl)),
+      ),
+      builder: (sheetCtx) => SafeArea(
+        child: Padding(
+          padding: const EdgeInsets.all(VSPSpacing.md),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Container(width: 40, height: 4, decoration: BoxDecoration(color: VSPColors.divider, borderRadius: BorderRadius.circular(2))),
+              const SizedBox(height: 16),
+              Text(
+                isArabic ? 'إضافة صور للملعب' : 'Add Stadium Photos',
+                style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
+              ),
+              const SizedBox(height: 16),
+              ListTile(
+                leading: const Icon(Iconsax.gallery_copy, color: VSPColors.accent),
+                title: Text(isArabic ? 'اختيار عدة صور من المعرض' : 'Pick multiple photos'),
+                subtitle: Text(isArabic ? 'رفع متسلسل تلقائي مع شريط تقدم' : 'Automatic sequential upload with progress'),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _pickMultipleImages();
+                },
+              ),
+              ListTile(
+                leading: const Icon(Iconsax.crop_copy, color: VSPColors.accent),
+                title: Text(isArabic ? 'صورة واحدة مع ضبط الأبعاد (16:9)' : 'Single photo with 16:9 crop'),
+                subtitle: Text(isArabic ? 'أفضل كصورة غلاف رئيسية' : 'Best as main cover photo'),
+                onTap: () {
+                  Navigator.pop(sheetCtx);
+                  _pickSingleCroppedImage();
+                },
+              ),
+            ],
+          ),
+        ),
+      ),
+    );
+  }
 
- final roundedTime = TimeOfDay(hour: hour, minute: roundedMinute);
+  Future<void> _pickSingleCroppedImage() async {
+    try {
+      final picked = await ImagePickService.pick(
+        context,
+        aspectRatio: CropAspectRatioPreset.ratio16x9,
+      );
+      if (picked == null) return;
+      await _uploadSinglePickedFile(picked);
+    } catch (e) {
+      debugPrint('Error picking single image: $e');
+    }
+  }
 
- setState(() {
- if (isStart) {
- _breakTimes[index]['start'] = roundedTime;
- } else {
- _breakTimes[index]['end'] = roundedTime;
- }
- });
- _saveWorkingHoursToPrefs();
- }
- }
+  Future<void> _pickMultipleImages() async {
+    try {
+      final List<XFile> pickedList = await _imagePicker.pickMultiImage();
+      if (pickedList.isEmpty) return;
 
- Future<void> _pickImage() async {
- try {
- // Open cropper (16:9 for stadium photos) then upload the result
- final picked = await ImagePickService.pick(
- context,
- aspectRatio: CropAspectRatioPreset.ratio16x9,
- );
- if (picked == null) return;
- _uploadSinglePickedFile(picked);
- } catch (e) {
- debugPrint('Error picking images: $e');
- }
- }
+      final total = pickedList.length;
+      for (int i = 0; i < total; i++) {
+        if (!mounted) break;
+        await _uploadSinglePickedFile(
+          pickedList[i],
+          currentIndex: i + 1,
+          totalCount: total,
+        );
+      }
+    } catch (e) {
+      debugPrint('Error picking multiple images: $e');
+    }
+  }
 
- Future<void> _uploadSinglePickedFile(XFile pickedFile) async {
- Timer? progressTimer;
- final imageFile = File(pickedFile.path);
- final imageEntry = {'file': imageFile, 'url': null, 'isUploading': true, 'progress': 0};
- setState(() => _images.add(imageEntry));
- 
- try {
- progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
- if (!mounted || imageEntry['isUploading'] != true) {
- timer.cancel();
- return;
- }
- setState(() {
- int current = imageEntry['progress'] as int? ?? 0;
- if (current < 95) {
- imageEntry['progress'] = current + 5;
- }
- });
- });
+  Future<void> _uploadSinglePickedFile(XFile pickedFile, {int? currentIndex, int? totalCount}) async {
+    Timer? progressTimer;
+    final imageFile = File(pickedFile.path);
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+    final progressLabel = (currentIndex != null && totalCount != null && totalCount > 1)
+        ? (isArabic ? "جارٍ رفع الصورة $currentIndex من $totalCount" : "Uploading photo $currentIndex of $totalCount")
+        : null;
 
- final url = await _storageService.uploadFile(
- file: XFile(imageFile.path),
- bucket: 'stadium-images',
- path: 'stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
- );
+    final imageEntry = {
+      'file': imageFile,
+      'url': null,
+      'isUploading': true,
+      'progress': 0,
+      'statusLabel': progressLabel,
+    };
+    setState(() => _images.add(imageEntry));
+    
+    try {
+      progressTimer = Timer.periodic(const Duration(milliseconds: 100), (timer) {
+        if (!mounted || imageEntry['isUploading'] != true) {
+          timer.cancel();
+          return;
+        }
+        setState(() {
+          int current = imageEntry['progress'] as int? ?? 0;
+          if (current < 95) {
+            imageEntry['progress'] = current + 5;
+          }
+        });
+      });
 
- progressTimer.cancel();
- if (!mounted) return;
- if (url == null) {
- setState(() {
- _images.remove(imageEntry);
- });
- if (mounted) {
- VSPFeedback.showError(context, 'Failed to upload photo. Please check storage bucket.');
- }
- return;
- }
- setState(() {
- imageEntry['url'] = url;
- imageEntry['progress'] = 100;
- imageEntry['isUploading'] = false;
- });
- _saveImagesToPrefs();
- } catch (e) {
- progressTimer?.cancel();
- if (mounted) {
- setState(() {
- imageEntry['isUploading'] = false;
- _images.remove(imageEntry);
- });
- }
- }
- }
+      final url = await _storageService.uploadFile(
+        file: XFile(imageFile.path),
+        bucket: 'stadium-images',
+        path: 'stadiums/images/std_${DateTime.now().microsecondsSinceEpoch}.jpg',
+      );
 
+      progressTimer.cancel();
+      if (!mounted) return;
+      if (url == null) {
+        setState(() {
+          _images.remove(imageEntry);
+        });
+        if (mounted) {
+          VSPFeedback.showError(context, isArabic ? 'فشل رفع الصورة، يرجى المحاولة ثانية.' : 'Failed to upload photo.');
+        }
+        return;
+      }
+      setState(() {
+        imageEntry['url'] = url;
+        imageEntry['progress'] = 100;
+        imageEntry['isUploading'] = false;
+      });
+      _saveImagesToPrefs();
 
+      // مسح الأثر: حذف الملف المؤقت من الكاش بعد نجاح الرفع
+      try {
+        if (await imageFile.exists()) {
+          await imageFile.delete();
+        }
+      } catch (_) {}
+    } catch (e) {
+      progressTimer?.cancel();
+      if (mounted) {
+        setState(() {
+          imageEntry['isUploading'] = false;
+          _images.remove(imageEntry);
+        });
+      }
+    }
+  }
 
  void _nextPage() {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
@@ -2151,6 +2187,7 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  fileUrl: img['url'],
  isUploading: img['isUploading'] ?? false,
  progress: img['progress'] ?? 0,
+                  statusLabel: img['statusLabel'],
  onTap: _pickImage, 
  onDelete: () async {
  if (img['url'] != null) {
@@ -2337,15 +2374,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  );
  }
 
- Widget _buildUploadCard({
- required String title,
- required String? fileUrl,
- required bool isUploading,
- required int progress,
- required VoidCallback onTap,
- required VoidCallback onDelete,
- Widget? thumbnail,
- }) {
+  Widget _buildUploadCard({
+    required String title,
+    required String? fileUrl,
+    required bool isUploading,
+    required int progress,
+    String? statusLabel,
+    required VoidCallback onTap,
+    required VoidCallback onDelete,
+    Widget? thumbnail,
+  }) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  return InkWell(
  onTap: fileUrl == null ? onTap : null,

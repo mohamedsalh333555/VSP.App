@@ -6,6 +6,7 @@ import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import 'package:image_picker/image_picker.dart';
 import '../../../../core/services/image_pick_service.dart';
+import '../../../../core/services/storage_service.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../../shared/widgets/primary_button.dart';
@@ -55,7 +56,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  aspectRatio: CropAspectRatioPreset.square,
  );
  if (image != null && mounted) {
- setState(() => _newProfileImage = image);
+ final compressed = await StorageService().compressImage(image);
+ setState(() => _newProfileImage = compressed ?? image);
  }
  }
 
@@ -74,9 +76,10 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
  final auth = Provider.of<AuthProvider>(context, listen: false);
 
  try {
- // 1. Upload new image if selected
+ // 1. Upload compressed new image if selected
  if (_newProfileImage != null) {
- await auth.updateProfilePhoto(_newProfileImage!);
+ final compressed = await StorageService().compressImage(_newProfileImage!);
+ await auth.updateProfilePhoto(compressed ?? _newProfileImage!);
  // AuthProvider already handles the Firestore update for the photo
  }
 

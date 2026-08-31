@@ -67,6 +67,7 @@ class _SignupScreenState extends State<SignupScreen> {
  minYear: 1940,
  maxYear: DateTime.now().year - 10,
  );
+ if (!mounted) return;
  if (picked != null) setState(() => _dateOfBirth = picked);
  }
 
@@ -82,6 +83,7 @@ class _SignupScreenState extends State<SignupScreen> {
  }
 
  Future<void> _handleSignup() async {
+    if (_isLoading) return;
  final firstName = _firstNameController.text.trim();
  final lastName = _lastNameController.text.trim();
  final fullName = '$firstName $lastName';

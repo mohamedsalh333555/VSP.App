@@ -1,3 +1,4 @@
+import 'dart:io';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:flutter/material.dart';
@@ -202,6 +203,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  source: source,
  );
  
+ if (!mounted) return;
  if (pickedFile == null) return;
 
  setState(() {
@@ -222,6 +224,14 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  file: pickedFile,
  uid: uid,
  );
+ 
+ // Clean up temporary cached file immediately after upload
+ try {
+ final tempF = File(pickedFile.path);
+ if (await tempF.exists()) {
+ await tempF.delete();
+ }
+ } catch (_) {}
  
  if (!mounted) return;
  setState(() {
@@ -397,7 +407,45 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
 
  @override
  Widget build(BuildContext context) {
- return Scaffold(
+ final isUploadingAny = _uploadingStatus.values.any((s) => s == true) || _isSaving;
+ return PopScope(
+ canPop: !isUploadingAny,
+ onPopInvokedWithResult: (didPop, result) async {
+ if (didPop) return;
+ final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+ final confirm = await showDialog<bool>(
+ context: context,
+ builder: (ctx) => AlertDialog(
+ backgroundColor: VSPColors.surface,
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+ title: Text(
+ isArabic ? 'إلغاء رفع المستندات؟' : 'Cancel Document Upload?',
+ style: const TextStyle(color: VSPColors.error, fontWeight: FontWeight.bold),
+ ),
+ content: Text(
+ isArabic
+ ? 'جاري رفع المستندات الآن، هل أنت متأكد من رغبتك في إيقاف الرفع والخروج؟'
+ : 'Documents are currently uploading. Are you sure you want to stop and exit?',
+ style: const TextStyle(color: VSPColors.textSecondary),
+ ),
+ actions: [
+ TextButton(
+ onPressed: () => Navigator.pop(ctx, false),
+ child: Text(isArabic ? 'متابعة الرفع' : 'Continue Upload', style: const TextStyle(color: VSPColors.accent)),
+ ),
+ ElevatedButton(
+ onPressed: () => Navigator.pop(ctx, true),
+ style: ElevatedButton.styleFrom(backgroundColor: VSPColors.error),
+ child: Text(isArabic ? 'إلغاء وخروج' : 'Cancel & Exit'),
+ ),
+ ],
+ ),
+ );
+ if (confirm == true && context.mounted) {
+ Navigator.pop(context);
+ }
+ },
+ child: Scaffold(
  backgroundColor: VSPColors.background,
  appBar: AppBar(
  backgroundColor: VSPColors.background,
@@ -436,6 +484,7 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  ),
  ),
  ],
+ ),
  ),
  ),
  );

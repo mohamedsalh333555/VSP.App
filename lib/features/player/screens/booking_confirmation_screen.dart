@@ -423,7 +423,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  children: [
  Expanded(child: PrimaryButton(text: l10n.cancel, onPressed: () => Navigator.pop(context), color: VSPColors.surfaceAlt, textColor: VSPColors.textPrimary)),
  const SizedBox(width: VSPSpacing.md),
- Expanded(child: PrimaryButton(text: l10n.apply, onPressed: () { setState(() { _selectedDate = tempSelectedDate; }); Navigator.pop(context); })),
+ Expanded(child: PrimaryButton(text: l10n.apply, onPressed: () { setState(() { _selectedDate = tempSelectedDate; _selectedTimeSlots.clear(); }); Navigator.pop(context); })),
  ],
  ),
  ],
@@ -492,7 +492,12 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  final date = _operationalBaseDate.add(Duration(days: index));
  final isSelected = date.day == _selectedDate.day && date.month == _selectedDate.month;
  return GestureDetector(
- onTap: () { setState(() { _selectedDate = date; }); },
+ onTap: () {
+ setState(() {
+ _selectedDate = date;
+ _selectedTimeSlots.clear();
+ });
+ },
  child: Container(
  width: 60, margin: const EdgeInsets.only(right: VSPSpacing.sm),
  decoration: BoxDecoration(color: isSelected ? VSPColors.accent : Colors.transparent, borderRadius: BorderRadius.circular(VSPRadius.md), border: Border.all(color: isSelected ? VSPColors.accent : VSPColors.divider)),
@@ -1104,6 +1109,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  // Pre-Selection Double-Check: Verify slot is still 100% free right before opening payment
  try {
  final currentBookings = await bookingProvider.getBookingsForStadium(widget.stadium.id, _selectedDate).first;
+ if (!mounted) return;
  final sortedCheck = List<String>.from(_selectedTimeSlots)
  ..sort((a, b) => _getSlotDateTime(a).compareTo(_getSlotDateTime(b)));
  final isConflict = _isSlotBooked(sortedCheck.first, currentBookings);
@@ -1185,7 +1191,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  backgroundColor: VSPColors.surface,
  shape: const RoundedRectangleBorder(borderRadius: BorderRadius.vertical(top: Radius.circular(20))),
  builder: (ctx) {
- bool isCashSubmitting = false;
+ bool isNavigating = false;
  return StatefulBuilder(
  builder: (sheetContext, setSheetState) {
  return SafeArea(
@@ -1228,7 +1234,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  : 'Pay full ${_totalPrice.toInt()} EGP online (Remaining at pitch: 0 EGP)',
  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
  ),
- onTap: () {
+ onTap: isNavigating ? null : () {
+ setSheetState(() => isNavigating = true);
  HapticFeedback.lightImpact();
  Navigator.pop(ctx);
  final fullDraft = draft.copyWith(
@@ -1257,7 +1264,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  : 'Pay ${depositAmount.toInt()} EGP deposit now + pay remaining (${(_totalPrice - depositAmount).toInt()} EGP) in cash',
  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
  ),
- onTap: () {
+ onTap: isNavigating ? null : () {
+ setSheetState(() => isNavigating = true);
  HapticFeedback.lightImpact();
  Navigator.pop(ctx);
  final depositDraft = draft.copyWith(
@@ -1288,7 +1296,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  isArabic ? 'سداد بالفيزا / فودافون كاش / إنستاباي' : 'Pay via Visa / Vodafone Cash / InstaPay',
  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
  ),
- onTap: isCashSubmitting ? null : () {
+ onTap: isNavigating ? null : () {
+ setSheetState(() => isNavigating = true);
  HapticFeedback.lightImpact();
  Navigator.pop(ctx);
  nav.push(MaterialPageRoute(
@@ -1302,7 +1311,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  const Divider(color: VSPColors.divider),
  // خيار 2: دفع نقدي
  ListTile(
- leading: isCashSubmitting
+ leading: isNavigating
  ? const SizedBox(width: 20, height: 20, child: CircularProgressIndicator(strokeWidth: 2, color: VSPColors.accent))
  : const Icon(Iconsax.money_3_copy, color: VSPColors.warning),
  title: Text(
@@ -1313,9 +1322,9 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  isArabic ? 'سداد المبلغ كاملاً للمسؤول عند الحضور' : 'Pay total amount in cash upon arrival',
  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
  ),
- onTap: isCashSubmitting ? null : () async {
+ onTap: isNavigating ? null : () async {
  HapticFeedback.mediumImpact();
- setSheetState(() => isCashSubmitting = true);
+ setSheetState(() => isNavigating = true);
  try {
  final cashDraft = draft.copyWith(
  paymentMethod: 'cash',
@@ -1330,13 +1339,13 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  nav.pushReplacement(MaterialPageRoute(builder: (_) => BookingSuccessScreen(booking: booking)));
  } else if (bookingProvider.errorMessage != null && sheetContext.mounted) {
  HapticFeedback.vibrate();
- setSheetState(() => isCashSubmitting = false);
+ setSheetState(() => isNavigating = false);
  VSPFeedback.showError(sheetContext, bookingProvider.errorMessage!);
  }
  } catch (e) {
  HapticFeedback.vibrate();
  if (sheetContext.mounted) {
- setSheetState(() => isCashSubmitting = false);
+ setSheetState(() => isNavigating = false);
  VSPFeedback.showError(sheetContext, e.toString().replaceAll('Exception: ', ''));
  }
  }

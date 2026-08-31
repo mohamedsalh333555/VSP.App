@@ -232,7 +232,11 @@ class _BookingsScreenState extends State<BookingsScreen> {
  Navigator.push(
  context,
  MaterialPageRoute(
- builder: (ctx) => PaymentGatewayScreen(bookingDraft: draft),
+ builder: (ctx) => PaymentGatewayScreen(
+ bookingDraft: draft,
+ existingBookingId: pendingBooking.id,
+ existingBooking: pendingBooking,
+ ),
  ),
  );
  },

@@ -94,6 +94,7 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
 
  Future<void> _loadEmailFromPrefs() async {
  final savedEmail = await SecureStorageService.readSecure('pending_verification_email');
+ if (!mounted) return;
  if (savedEmail != null && savedEmail.isNotEmpty) {
  setState(() {
  _resolvedEmail = savedEmail;
@@ -370,7 +371,20 @@ class _VerifyEmailScreenState extends State<VerifyEmailScreen>
  fontWeight: FontWeight.bold,
  fontSize: 13,
  ),
- child: Text(
+ child: _isResending
+ ? Row(
+ mainAxisSize: MainAxisSize.min,
+ children: [
+ const SizedBox(
+ width: 12,
+ height: 12,
+ child: CircularProgressIndicator(strokeWidth: 1.5, color: VSPColors.accent),
+ ),
+ const SizedBox(width: 6),
+ Text(isAr ? 'جاري الإرسال...' : 'Sending...'),
+ ],
+ )
+ : Text(
  canResend
  ? (isAr ? 'إعادة إرسال الرمز' : 'Resend Code')
  : (isAr ? 'إعادة إرسال خلال $_countdown ثانية' : 'Resend in ${_countdown}s'),
