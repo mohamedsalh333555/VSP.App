@@ -408,40 +408,69 @@ class TeamRepository {
  }
  }
 
- Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
- try {
- final nowIso = DateTime.now().toUtc().toIso8601String();
- final activeBookings = await _supabase
- .from('bookings')
- .select('id')
- .eq('status', 'confirmed')
- .or('player_team_id.eq.$teamId,opponent_team_id.eq.$teamId')
- .gt('end_time', nowIso)
- .limit(1);
+  Future<void> removeMemberFromTeam(String teamId, String userId, String imageUrl) async {
+    try {
+      final nowIso = DateTime.now().toUtc().toIso8601String();
+      final activeBookings = await _supabase
+          .from('bookings')
+          .select('id')
+          .eq('status', 'confirmed')
+          .or('player_team_id.eq.$teamId,opponent_team_id.eq.$teamId')
+          .gt('end_time', nowIso)
+          .limit(1);
 
- final bool hasActiveMatch = (activeBookings as List).isNotEmpty;
+      final bool hasActiveMatch = (activeBookings as List).isNotEmpty;
 
- final activeTournaments = await _supabase
- .from('championships')
- .select('id')
- .inFilter('status', ['open', 'ongoing'])
- .contains('joined_teams', [teamId]);
- final bool hasActiveTournament = (activeTournaments as List).isNotEmpty;
- 
- if (hasActiveMatch || hasActiveTournament) {
- throw Exception("active_match_or_tournament_error");
- }
+      final activeTournaments = await _supabase
+          .from('championships')
+          .select('id')
+          .inFilter('status', ['open', 'ongoing'])
+          .contains('joined_teams', [teamId]);
+      final bool hasActiveTournament = (activeTournaments as List).isNotEmpty;
+      
+      if (hasActiveMatch || hasActiveTournament) {
+        throw Exception("active_match_or_tournament_error");
+      }
 
- await _supabase
- .from('team_members')
- .delete()
- .eq('team_id', teamId)
- .eq('user_id', userId);
- } catch (e) {
- debugPrint('Error removing member from team: $e');
- rethrow;
- }
- }
+      // 🛡️ Automatic Captain Transfer: If the departing user is the captain, transfer to next member
+      final teamData = await _supabase
+          .from('teams')
+          .select('captain_id')
+          .eq('id', teamId)
+          .maybeSingle();
+
+      final String currentCaptainId = teamData?['captain_id']?.toString() ?? '';
+      if (currentCaptainId == userId) {
+        final allMembers = await getTeamMemberUids(teamId);
+        final remainingMembers = allMembers.where((uid) => uid != userId).toList();
+
+        if (remainingMembers.isNotEmpty) {
+          final nextCaptainId = remainingMembers.first;
+          final nextCaptainUser = await _supabase
+              .from('users')
+              .select('name, phone, profile_image_url')
+              .eq('id', nextCaptainId)
+              .maybeSingle();
+
+          await _supabase.from('teams').update({
+            'captain_id': nextCaptainId,
+            'captain_name': nextCaptainUser?['name'] ?? 'Captain',
+            'captain_phone': PhoneUtils.normalize(nextCaptainUser?['phone']?.toString() ?? ''),
+            'captain_image_url': nextCaptainUser?['profile_image_url'] ?? '',
+          }).eq('id', teamId);
+        }
+      }
+
+      await _supabase
+          .from('team_members')
+          .delete()
+          .eq('team_id', teamId)
+          .eq('user_id', userId);
+    } catch (e) {
+      debugPrint('Error removing member from team: $e');
+      rethrow;
+    }
+  }
 
  Future<bool> updateTeam(String teamId, Map<String, dynamic> data) async {
  try {

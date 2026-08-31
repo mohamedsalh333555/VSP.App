@@ -427,10 +427,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  ],
  ),
  const SizedBox(height: VSPSpacing.md),
- if (!isCaptain) SizedBox(
+ if (!isCaptain || _teamMembers.isNotEmpty) SizedBox(
  width: double.infinity,
  child: PrimaryButton(
- text: "مغادرة الفريق",
+ text: isCaptain ? "مغادرة الفريق (تسليم الكابتنة)" : "مغادرة الفريق",
  color: VSPColors.error.withValues(alpha: 0.15),
  textColor: VSPColors.error,
  onPressed: () => _showLeaveConfirmation(team, uid),
@@ -981,45 +981,59 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
 
 
  void _showLeaveConfirmation(Team team, String userId) {
- showDialog(
- context: context,
- builder: (context) => AlertDialog(
- backgroundColor: VSPColors.surface,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
- title: const Text('مغادرة الفريق', style: TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold)),
- content: const Text('هل أنت متأكد من رغبتك في مغادرة هذا الفريق؟'),
- actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
- actions: [
- Row(children: [
- Expanded(child: PrimaryButton(text: 'إلغاء', height: 48, color: VSPColors.surfaceAlt, textColor: VSPColors.textPrimary, onPressed: () => Navigator.pop(context))),
- const SizedBox(width: VSPSpacing.md),
- Expanded(child: PrimaryButton(text: 'تأكيد المغادرة', height: 48, color: VSPColors.error, textColor: Colors.white, onPressed: () async {
- Navigator.pop(context);
- setState(() => _isSaving = true);
- try {
- await TeamRepository().removeMemberFromTeam(team.id, userId, '');
- if (!context.mounted) return;
- ScaffoldMessenger.of(context).showSnackBar(const SnackBar(content: Text('تمت مغادرة الفريق بنجاح.'), backgroundColor: VSPColors.success));
- if (!context.mounted) return;
- Navigator.pop(context);
- } catch (e) {
- if (!context.mounted) return;
- final errorMsg = e.toString().replaceAll('Exception:', '').trim();
- final displayMsg = errorMsg == 'active_match_or_tournament_error'
- ? AppLocalizations.of(context)!.teamMemberDeleteLockError
- : errorMsg;
- ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error));
- } finally {
- if (mounted) setState(() => _isSaving = false);
- }
- })),
- ]),
- ],
- ),
- );
- }
+    final bool isLeavingCaptain = _isCaptain(team);
+    final String contentText = isLeavingCaptain
+        ? 'أنت كابتن الفريق. عند مغادرتك، سيتم نقل شارة الكابتنة وقيادة الفريق تلقائياً إلى العضو التالي. هل أنت متأكد؟'
+        : 'هل أنت متأكد من رغبتك في مغادرة هذا الفريق؟';
 
- void _showDeleteConfirmation(Team team) {
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        backgroundColor: VSPColors.surface,
+        shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.lg)),
+        title: Text(
+          isLeavingCaptain ? 'مغادرة وتسليم الكابتنة' : 'مغادرة الفريق',
+          style: const TextStyle(color: VSPColors.textPrimary, fontWeight: FontWeight.bold),
+        ),
+        content: Text(
+          contentText,
+          style: const TextStyle(color: VSPColors.textSecondary, height: 1.4),
+        ),
+        actionsPadding: const EdgeInsets.symmetric(horizontal: VSPSpacing.md, vertical: VSPSpacing.md),
+        actions: [
+          Row(children: [
+            Expanded(child: PrimaryButton(text: 'إلغاء', height: 48, color: VSPColors.surfaceAlt, textColor: VSPColors.textPrimary, onPressed: () => Navigator.pop(context))),
+            const SizedBox(width: VSPSpacing.md),
+            Expanded(child: PrimaryButton(text: 'تأكيد المغادرة', height: 48, color: VSPColors.error, textColor: Colors.white, onPressed: () async {
+              Navigator.pop(context);
+              setState(() => _isSaving = true);
+              try {
+                await TeamRepository().removeMemberFromTeam(team.id, userId, '');
+                if (!context.mounted) return;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(
+                  content: Text(isLeavingCaptain ? 'تمت مغادرة الفريق ونقل شارة الكابتنة بنجاح.' : 'تمت مغادرة الفريق بنجاح.'),
+                  backgroundColor: VSPColors.success,
+                ));
+                if (!context.mounted) return;
+                Navigator.pop(context);
+              } catch (e) {
+                if (!context.mounted) return;
+                final errorMsg = e.toString().replaceAll('Exception:', '').trim();
+                final displayMsg = errorMsg == 'active_match_or_tournament_error'
+                    ? AppLocalizations.of(context)!.teamMemberDeleteLockError
+                    : errorMsg;
+                ScaffoldMessenger.of(context).showSnackBar(SnackBar(content: Text(displayMsg), backgroundColor: VSPColors.error));
+              } finally {
+                if (mounted) setState(() => _isSaving = false);
+              }
+            })),
+          ]),
+        ],
+      ),
+    );
+  }
+
+  void _showDeleteConfirmation(Team team) {
  final l10n = AppLocalizations.of(context)!;
  showDialog(
  context: context,
