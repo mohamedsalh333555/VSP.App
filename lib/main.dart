@@ -2,7 +2,7 @@ import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show kReleaseMode, PlatformDispatcher;
+import 'package:flutter/foundation.dart' show PlatformDispatcher;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -42,36 +42,32 @@ void main() async {
  WidgetsFlutterBinding.ensureInitialized();
  usePathUrlStrategy();
  
- // SUPABASE & FIREBASE SECURE INITIALIZATION
- try {
- if (kReleaseMode) {
- const bool urlWasInjected = bool.fromEnvironment('SUPABASE_URL');
- if (!urlWasInjected) {
- VSPLogger.w(' WARNING: Release build running without explicit build-time --dart-define parameters.');
- }
- }
+  // SUPABASE INITIALIZATION
+  try {
+    await Supabase.initialize(
+      url: AppEnv.supabaseUrl,
+      publishableKey: AppEnv.supabaseAnonKey,
+    ).timeout(const Duration(seconds: 8));
+    VSPLogger.i("Supabase initialized securely");
+    unawaited(VSPTimeService.syncWithServer());
+  } catch (e) {
+    VSPLogger.e("Supabase initialization error: $e");
+  }
 
- await Future.wait([
- Supabase.initialize(
- url: AppEnv.supabaseUrl,
- publishableKey: AppEnv.supabaseAnonKey,
- ).then((_) {
- VSPLogger.i(" Supabase initialized securely");
- VSPTimeService.syncWithServer();
- }),
- Firebase.initializeApp(
- options: DefaultFirebaseOptions.currentPlatform,
- ).then((_) => VSPLogger.i(" Firebase initialized successfully")),
- ]);
-
- try {
- FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
- } catch (e) {
- VSPLogger.w(" Firebase Messaging background handler registration notice: $e");
- }
- } catch (e) {
- VSPLogger.e(" Backend initialization notice: $e");
- }
+  // FIREBASE INITIALIZATION
+  try {
+    await Firebase.initializeApp(
+      options: DefaultFirebaseOptions.currentPlatform,
+    ).timeout(const Duration(seconds: 8));
+    VSPLogger.i("Firebase initialized successfully");
+    try {
+      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+    } catch (e) {
+      VSPLogger.w("Firebase Messaging background handler notice: $e");
+    }
+  } catch (e) {
+    VSPLogger.w("Firebase initialization notice: $e");
+  }
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);
@@ -196,13 +192,17 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  _router = AppRouter.createRouter(authProvider, navigatorKey);
  _initDeepLinks();
 
- // Listen to Supabase Auth State changes for Password Recovery
- _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
- if (data.event == AuthChangeEvent.passwordRecovery) {
- debugPrint(' Password recovery event triggered! Routing to /set-new-password');
- _router.go('/set-new-password');
- }
- });
+    // Listen to Supabase Auth State changes for Password Recovery
+    try {
+      _authSub = Supabase.instance.client.auth.onAuthStateChange.listen((data) {
+        if (data.event == AuthChangeEvent.passwordRecovery) {
+          debugPrint(' Password recovery event triggered! Routing to /set-new-password');
+          _router.go('/set-new-password');
+        }
+      });
+    } catch (e) {
+      debugPrint(' Supabase auth listener warning: $e');
+    }
  }
 
  void _initDeepLinks() {
