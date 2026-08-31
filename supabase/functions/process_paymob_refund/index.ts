@@ -133,10 +133,9 @@ serve(async (req: Request) => {
     }
 
     const isPaid = booking.is_paid || booking.is_deposit_paid || booking.payment_status === "paid" || booking.payment_status === "confirmed";
-    const refundAmount = Number(booking.deposit_paid || booking.total_price || booking.deposit_amount || 0);
 
     // If unpaid, perform immediate soft cancellation
-    if (!isPaid || refundAmount <= 0) {
+    if (!isPaid) {
       await supabase
         .from("bookings")
         .update({
@@ -157,22 +156,67 @@ serve(async (req: Request) => {
       );
     }
 
-    // 6. Find Paymob Transaction ID
-    let paymobTxnId = booking.paymob_txn_id || booking.paymob_transaction_id || booking.payment_transaction_id;
+    // =========================================================================
+    // 🔒 6. STRICT FINANCIAL LEDGER VERIFICATION (IMMUTABLE SOURCE OF TRUTH)
+    // =========================================================================
+    // Do NOT rely on mutable columns in bookings table (e.g. total_price or deposit_amount).
+    // Find the verified completed payment transaction from the immutable transactions ledger.
+    const { data: paymentTx, error: txErr } = await supabase
+      .from("transactions")
+      .select("id, amount, paymob_transaction_id, status, type")
+      .eq("booking_id", bookingId)
+      .eq("status", "completed")
+      .order("created_at", { ascending: false })
+      .limit(1)
+      .maybeSingle();
 
-    if (!paymobTxnId) {
-      // Look up in transactions table
-      const { data: txRecord } = await supabase
-        .from("transactions")
-        .select("paymob_transaction_id, id")
-        .eq("booking_id", bookingId)
-        .not("paymob_transaction_id", "is", null)
-        .maybeSingle();
+    if (txErr || !paymentTx || !paymentTx.amount || Number(paymentTx.amount) <= 0) {
+      console.error(`🚨 Security Failure: No verified completed payment transaction found in transactions table for booking ${bookingId}`);
 
-      if (txRecord?.paymob_transaction_id) {
-        paymobTxnId = txRecord.paymob_transaction_id;
+      // Fail-Closed: Mark as refund_failed and alert Admins for manual review
+      await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          payment_status: "refund_failed",
+          cancellation_reason: "تعذر التحقق من المبلغ المدفوع الفعلي من سجل المعاملات المالية",
+          cancelled_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq("id", bookingId);
+
+      // Notify Admins
+      const { data: admins } = await supabase
+        .from("users")
+        .select("id")
+        .eq("role", "admin");
+
+      if (admins && admins.length > 0) {
+        const adminNotifications = admins.map((admin) => ({
+          user_id: admin.id,
+          title: "تنبيه أمني: تعذر التحقق من المبلغ المدفوع للاسترداد 🚨",
+          body: `فشل التحقق المالي للحجز #${bookingId.substring(0, 8)}. لا يوجد قيد دفع مطابق ومكتمل في جدول المعاملات. يرجى المراجعة اليدوية.`,
+          type: "admin_alert",
+          created_at: now.toISOString(),
+        }));
+        await supabase.from("notifications").insert(adminNotifications);
       }
+
+      return new Response(
+        JSON.stringify({
+          success: false,
+          refund_failed: true,
+          message: "تعذر التحقق من المبلغ المدفوع الفعلي لسجل المعاملة. تم إخطار الإدارة لمراجعة العملية يدوياً.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
     }
+
+    // Exact, verified refund amount from immutable financial ledger
+    const verifiedRefundAmount = Number(paymentTx.amount);
+
+    // Find Paymob Transaction ID from transaction record or booking fallback
+    let paymobTxnId = paymentTx.paymob_transaction_id || booking.paymob_txn_id || booking.paymob_transaction_id || booking.payment_transaction_id;
 
     // Strip non-numeric prefixes (e.g. "PAYMOB_12345" -> "12345")
     if (typeof paymobTxnId === "string") {
@@ -182,18 +226,39 @@ serve(async (req: Request) => {
       }
     }
 
-    console.log(`🔄 Initiating Paymob Refund for Booking ${bookingId}: TxnID=${paymobTxnId}, Amount=${refundAmount} EGP`);
+    if (!paymobTxnId) {
+      console.error(`🚨 Missing Paymob Transaction ID for verified payment ${paymentTx.id}`);
+      await supabase
+        .from("bookings")
+        .update({
+          status: "cancelled",
+          payment_status: "refund_failed",
+          cancellation_reason: "رقم معاملة Paymob غير متوفر في سجل المعاملات المالية",
+          cancelled_at: now.toISOString(),
+          updated_at: now.toISOString(),
+        })
+        .eq("id", bookingId);
 
-    // 7. Call Paymob Refund API
+      return new Response(
+        JSON.stringify({
+          success: false,
+          refund_failed: true,
+          message: "تعذر العثور على رقم معاملة الدفع لدى بوابة Paymob. تم تحويل الطلب للدعم الفني.",
+        }),
+        { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
+      );
+    }
+
+    console.log(`🔄 Initiating Paymob Refund for Booking ${bookingId}: TxnID=${paymobTxnId}, Verified Ledger Amount=${verifiedRefundAmount} EGP`);
+
+    // =========================================================================
+    // 7. CALL PAYMOB REFUND API WITH VERIFIED LEDGER AMOUNT
+    // =========================================================================
     let refundSuccess = false;
     let refundTxnId: string | null = null;
     let paymobErrorMessage = "";
 
     try {
-      if (!paymobTxnId) {
-        throw new Error("No valid Paymob transaction ID found for this booking.");
-      }
-
       // Step A: Authenticate with Paymob to get Auth Token
       const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
         method: "POST",
@@ -213,8 +278,8 @@ serve(async (req: Request) => {
         throw new Error("Paymob returned empty auth token.");
       }
 
-      // Step B: Call Refund API
-      const amountCents = Math.round(refundAmount * 100);
+      // Step B: Call Refund API with exact verified cents from ledger
+      const amountCents = Math.round(verifiedRefundAmount * 100);
       const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -239,7 +304,9 @@ serve(async (req: Request) => {
       paymobErrorMessage = paymobErr.message || String(paymobErr);
     }
 
-    // 8. Handle Refund Results
+    // =========================================================================
+    // 8. HANDLE REFUND RESULTS & WRITE AUDIT TRAIL
+    // =========================================================================
     if (refundSuccess) {
       // SUCCESS: Update booking & transaction ledger
       await supabase
@@ -247,7 +314,7 @@ serve(async (req: Request) => {
         .update({
           status: "cancelled",
           payment_status: "refunded",
-          refund_amount: refundAmount,
+          refund_amount: verifiedRefundAmount,
           refund_txn_id: refundTxnId,
           cancellation_reason: reason,
           cancelled_at: now.toISOString(),
@@ -255,11 +322,11 @@ serve(async (req: Request) => {
         })
         .eq("id", bookingId);
 
-      // Ledger entry
+      // Immutable Ledger entry for completed refund
       await supabase.from("transactions").insert({
         user_id: booking.created_by_user_id || booking.player_id,
         booking_id: bookingId,
-        amount: refundAmount,
+        amount: verifiedRefundAmount,
         type: "refund",
         status: "completed",
         payment_method: booking.payment_method || "paymob",
@@ -274,7 +341,7 @@ serve(async (req: Request) => {
         await supabase.from("notifications").insert({
           user_id: playerUserId,
           title: "تم استرداد المبلغ بنجاح! 💸",
-          body: `تم إرجاع مبلغ (${refundAmount} ج.م) الخاص بحجز ${booking.stadium_name} إلى بطاقتك / محفظتك الإلكترونية بنجاح.`,
+          body: `تم إرجاع مبلغ (${verifiedRefundAmount} ج.م) الخاص بحجز ${booking.stadium_name} إلى بطاقتك / محفظتك الإلكترونية بنجاح.`,
           type: "refund_success",
           created_at: now.toISOString(),
         });
@@ -294,7 +361,7 @@ serve(async (req: Request) => {
       return new Response(
         JSON.stringify({
           success: true,
-          refund_amount: refundAmount,
+          refund_amount: verifiedRefundAmount,
           refund_txn_id: refundTxnId,
           message: "تم استرداد المبلغ بنجاح عبر Paymob وسيظهر في حسابك خلال 3 - 5 أيام عمل.",
         }),
@@ -307,6 +374,7 @@ serve(async (req: Request) => {
         .update({
           status: "cancelled",
           payment_status: "refund_failed",
+          refund_amount: verifiedRefundAmount,
           cancellation_reason: `Paymob Gateway Error: ${paymobErrorMessage}`,
           cancelled_at: now.toISOString(),
           updated_at: now.toISOString(),
@@ -317,7 +385,7 @@ serve(async (req: Request) => {
       await supabase.from("transactions").insert({
         user_id: booking.created_by_user_id || booking.player_id,
         booking_id: bookingId,
-        amount: refundAmount,
+        amount: verifiedRefundAmount,
         type: "refund",
         status: "failed",
         payment_method: booking.payment_method || "paymob",
@@ -335,7 +403,7 @@ serve(async (req: Request) => {
         const adminNotifications = admins.map((admin) => ({
           user_id: admin.id,
           title: "تنبيه: فشل استرداد آلي عبر Paymob 🚨",
-          body: `تعذر الاسترداد الآلي للحجز #${bookingId.substring(0, 8)} بمبلغ ${refundAmount} ج.م. يرجى مراجعة لوحة Paymob لتنفيذ الاسترداد يدوياً.`,
+          body: `تعذر الاسترداد الآلي للحجز #${bookingId.substring(0, 8)} بمبلغ ${verifiedRefundAmount} ج.م. يرجى مراجعة لوحة Paymob لتنفيذ الاسترداد يدوياً.`,
           type: "admin_alert",
           created_at: now.toISOString(),
         }));
@@ -346,7 +414,7 @@ serve(async (req: Request) => {
         JSON.stringify({
           success: false,
           refund_failed: true,
-          refund_amount: refundAmount,
+          refund_amount: verifiedRefundAmount,
           message: "تم إلغاء الحجز، ولكن تعذر إتمام الاسترداد التلقائي عبر بوابة الدفع. تم إخطار فريق الدعم الفني لمراجعة العملية وتحويل المبلغ لك يدوياً.",
         }),
         { status: 200, headers: { ...corsHeaders, "Content-Type": "application/json" } }
