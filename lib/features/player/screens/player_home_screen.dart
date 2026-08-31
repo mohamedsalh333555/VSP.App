@@ -26,6 +26,7 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../shared/widgets/stadium_card.dart';
 import 'stadium_details_screen.dart';
+import 'all_stadiums_screen.dart';
 import 'team_dashboard_screen.dart';
 import 'bookings_screen.dart';
 import 'champion_screen.dart';
@@ -1117,7 +1118,18 @@ class _HomeContent extends StatelessWidget {
  ),
  const SizedBox(height: 8),
  ],
- _SectionHeader(title: AppLocalizations.of(context)!.nearbyStadiums),
+      _SectionHeader(
+        title: AppLocalizations.of(context)!.nearbyStadiums,
+        onSeeAll: () {
+          HapticFeedback.lightImpact();
+          Navigator.push(
+            context,
+            MaterialPageRoute(
+              builder: (_) => const AllStadiumsScreen(),
+            ),
+          );
+        },
+      ),
  const SizedBox(height: 8),
  SizedBox(
  height: 240,
