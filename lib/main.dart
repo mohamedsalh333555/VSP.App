@@ -78,15 +78,22 @@ void main() async {
  systemNavigationBarDividerColor: Colors.transparent,
  ));
 
-  // Global Crash Sentinel & Observability
-  CrashSentinelService.initialize(
-    onCrashReported: (error, stack) {
-      VSPLogger.e('CrashSentinel Intercepted: $error', error, stack);
-      try {
-        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
-      } catch (_) {}
-    },
-  );
+  // Global Crash Boundary & Logging Handlers
+  FlutterError.onError = (FlutterErrorDetails details) {
+    FlutterError.presentError(details);
+    VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
+    try {
+      FirebaseCrashlytics.instance.recordFlutterFatalError(details);
+    } catch (_) {}
+  };
+
+  PlatformDispatcher.instance.onError = (error, stack) {
+    VSPLogger.e('Uncaught Platform Error: $error', error, stack);
+    try {
+      FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+    } catch (_) {}
+    return true;
+  };
 
  // Custom Error Boundary Widget
  ErrorWidget.builder = (FlutterErrorDetails details) {
