@@ -29,7 +29,6 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
 import 'core/services/secure_storage_service.dart';
-import 'core/services/crash_sentinel_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
