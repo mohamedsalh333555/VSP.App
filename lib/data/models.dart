@@ -1,4 +1,5 @@
 import '../core/utils/elo_calculator.dart';
+export '../models/banner_model.dart';
 
 /// Stadium data model
 class Stadium {

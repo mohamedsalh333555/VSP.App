@@ -7,7 +7,6 @@ import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../data/models.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
-import '../../../core/repositories/stadium_repository.dart';
 import '../../../core/repositories/app_settings_repository.dart';
 import '../../../core/repositories/match_repository.dart';
 import '../../../core/repositories/notification_repository.dart';
@@ -15,7 +14,7 @@ import '../../../core/services/sharing_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../shared/widgets/vsp_bottom_nav_bar.dart';
-import '../../../core/widgets/promo_slider.dart';
+import '../../../widgets/banner_slider_widget.dart';
 import '../../../core/widgets/skeleton_loader.dart';
 import '../../../shared/widgets/public_match_card.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -37,7 +36,6 @@ import '../widgets/match_result_modal.dart';
 import '../../../core/providers/booking_provider.dart';
 import 'global_search_screen.dart';
 import 'notifications_center_screen.dart';
-import '../../../shared/widgets/live_match_radar_widget.dart';
 
 // المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
 final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
@@ -804,11 +802,8 @@ class _HomeContent extends StatelessWidget {
  padding: EdgeInsets.only(bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
  child: Column(
  children: [
- const SizedBox(height: 8),
- // رادار المباراة القادمة الحي مع العد التنازلي واللوكيشن وتذكير واتساب
- LiveMatchRadarWidget(onNavigate: onNavigate),
- const SizedBox(height: 4),
- _buildPromos(),
+ const SizedBox(height: 10),
+ const BannerSliderWidget(placement: 'home_slider'),
  const SizedBox(height: 14),
  _buildStadiumsList(context, stadiumProvider),
  const SizedBox(height: 16),
@@ -1022,8 +1017,6 @@ class _HomeContent extends StatelessWidget {
  ],
  );
  }
-
- Widget _buildPromos() => StreamBuilder<List<Promotion>>(stream: StadiumRepository().getPromotionsStream(), builder: (context, snapshot) => snapshot.hasData ? PromoSlider(promotions: snapshot.data!) : const SizedBox.shrink());
 
  Widget _buildStadiumsList(BuildContext context, StadiumProvider provider) {
  if (provider.stadiums.isEmpty && !provider.isLoading) {
