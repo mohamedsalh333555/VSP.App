@@ -155,51 +155,54 @@ class AuthProvider with ChangeNotifier {
  }
  }
 
- if (userData == null) {
- // SELF-HEALING FALLBACK: If DB trigger did not fire or row is absent, create it directly
- final effectiveRole = pendingRole ?? _userType ?? 'player';
- final userMeta = user.userMetadata ?? {};
- final name = (userMeta['full_name'] ?? userMeta['name'] ?? user.email?.split('@').first ?? 'مستخدم جديد').toString();
- final avatar = (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
+      if (userData == null) {
+        // SELF-HEALING FALLBACK: If DB trigger did not fire or row is absent, create it directly
+        final effectiveRole = pendingRole ?? _userType ?? 'player';
+        final userMeta = user.userMetadata ?? {};
+        final name = (userMeta['full_name'] ?? userMeta['name'] ?? user.email?.split('@').first ?? 'مستخدم جديد').toString();
+        final avatar = (userMeta['avatar_url'] ?? userMeta['picture'])?.toString();
 
- try {
- await Supabase.instance.client.from('users').upsert({
- 'id': user.id,
- 'email': user.email,
- 'name': name,
- 'role': effectiveRole,
- 'profile_image_url': avatar,
- 'is_email_verified': true,
- 'is_registration_complete': false,
- 'subscription_plan': effectiveRole == 'owner' ? 'free_trial' : null,
- 'created_at': DateTime.now().toUtc().toIso8601String(),
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- });
- userData = await _userRepository.getUserData(user.id);
- } catch (e) {
- VSPLogger.w(" Direct user row creation fallback failed: $e");
- }
- }
+        final fallbackMap = {
+          'id': user.id,
+          'email': user.email ?? '',
+          'name': name,
+          'role': effectiveRole,
+          'profile_image_url': avatar,
+          'is_email_verified': true,
+          'is_registration_complete': false,
+          'subscription_plan': effectiveRole == 'owner' ? 'free_trial' : 'free',
+          'created_at': DateTime.now().toUtc().toIso8601String(),
+          'updated_at': DateTime.now().toUtc().toIso8601String(),
+        };
 
- final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
+        try {
+          await Supabase.instance.client.from('users').upsert(fallbackMap);
+          userData = await _userRepository.getUserData(user.id);
+        } catch (e) {
+          VSPLogger.w(" Direct user row creation fallback failed: $e");
+        }
 
- // UNREGISTERED ACCOUNT GUARD:
- // Only trigger signOut() if isLoginOnly == true AND userData == null (user has no DB record at all).
- if (isLoginOnly && userData == null) {
- VSPLogger.w(" Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
- await prefs.remove('pending_oauth_is_login_only');
- await signOut();
- _errorMessage = 'هذا الحساب غير مسجل مسبقاً. يرجى إنشاء حساب جديد أولاً.';
- _isFetchingUser = false;
- _isLoading = false;
- _isInitializing = false;
- notifyListeners();
- return;
- }
+        // Guaranteed non-null fallback to prevent unauthenticated loop
+        userData ??= fallbackMap;
+      }
 
- if (isLoginOnly) {
- await prefs.remove('pending_oauth_is_login_only');
- }
+      final isLoginOnly = prefs.getBool('pending_oauth_is_login_only') ?? false;
+
+      // UNREGISTERED ACCOUNT GUARD:
+      // Only trigger signOut() if isLoginOnly == true AND user has completed registration flag as false in existing check
+      if (isLoginOnly && (userData['phone'] == null || userData['phone'].toString().trim().isEmpty)) {
+        VSPLogger.w(" Unregistered social account attempted sign-in from LoginScreen for UID: ${user.id}");
+        await prefs.remove('pending_oauth_is_login_only');
+        await signOut();
+        _errorMessage = 'هذا الحساب غير مسجل مسبقاً. يرجى إنشاء حساب جديد أولاً.';
+        _isFetchingUser = false;
+        _isLoading = false;
+        _isInitializing = false;
+        notifyListeners();
+        return;
+      }
+
+      await prefs.remove('pending_oauth_is_login_only');
 
  if (userData != null) {
  // ─── OAuth Role Override Fix ────────────────────────────────────────────
