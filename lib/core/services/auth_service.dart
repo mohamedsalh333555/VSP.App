@@ -224,17 +224,18 @@ class AuthService {
     }
   }
 
-  // Web Client ID from Google Cloud Console & Supabase Google Provider
-  static const String _googleWebClientId = '653374694721-cps5rfs3r51hlprlkrt3pm4qp247pf66.apps.googleusercontent.com';
-
   // Sign In with Google
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
     try {
+      final String redirectUrl = kIsWeb
+          ? '${Uri.base.origin}/'
+          : (role != null 
+              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
+              : 'io.supabase.fluttervsp://login-callback/');
+
       final success = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
-        redirectTo: kIsWeb
-            ? '${Uri.base.origin}/'
-            : 'io.supabase.fluttervsp://login-callback/',
+        redirectTo: redirectUrl,
         authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
         queryParams: const {'prompt': 'select_account'},
       );
@@ -249,16 +250,20 @@ class AuthService {
     }
   }
 
- // Sign In with Apple
- Future<Map<String, dynamic>> signInWithApple({String? role}) async {
- try {
- final success = await _supabase.auth.signInWithOAuth(
- OAuthProvider.apple,
- redirectTo: kIsWeb 
- ? '${Uri.base.origin}/' 
- : 'io.supabase.fluttervsp://login-callback/',
- authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
- );
+  // Sign In with Apple
+  Future<Map<String, dynamic>> signInWithApple({String? role}) async {
+    try {
+      final String redirectUrl = kIsWeb 
+          ? '${Uri.base.origin}/' 
+          : (role != null 
+              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
+              : 'io.supabase.fluttervsp://login-callback/');
+
+      final success = await _supabase.auth.signInWithOAuth(
+        OAuthProvider.apple,
+        redirectTo: redirectUrl,
+        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+      );
  if (success) {
  return {'success': true, 'user': _supabase.auth.currentUser};
  }

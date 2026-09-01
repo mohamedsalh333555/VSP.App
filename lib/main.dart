@@ -29,6 +29,7 @@ import 'dart:async';
 import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
+import 'core/services/secure_storage_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -226,6 +227,12 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  // 1. Supabase OAuth callback bypass
  if (DeepLinkHelper.isOAuthCallback(uri)) {
  debugPrint(' OAuth callback detected — forwarding to Supabase auth handler.');
+ final role = uri.queryParameters['role'];
+ if (role != null && (role == 'owner' || role == 'player')) {
+ auth.setUserType(role);
+ SharedPreferences.getInstance().then((prefs) => prefs.setString('pending_oauth_role', role));
+ SecureStorageService.writeSecure('pending_oauth_role', role);
+ }
  return;
  }
 

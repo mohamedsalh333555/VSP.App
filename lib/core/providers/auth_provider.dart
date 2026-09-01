@@ -469,6 +469,7 @@ class AuthProvider with ChangeNotifier {
  try {
  final prefs = await SharedPreferences.getInstance();
  await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
+ await prefs.setString('pending_oauth_role', _userType ?? 'player');
  await SecureStorageService.writeSecure('pending_oauth_role', _userType ?? 'player');
 
  final result = await _authService.signInWithGoogle(role: _userType);
