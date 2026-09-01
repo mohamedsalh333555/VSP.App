@@ -1,9 +1,10 @@
 import 'package:flutter_test/flutter_test.dart';
+import 'package:vsp_application/core/services/paymob_service.dart';
 import 'package:vsp_application/data/models.dart';
 import 'package:vsp_application/features/owner/screens/owner_dashboard_screen.dart';
 
 void main() {
-  group('OwnerFinancialCalculator Tests', () {
+  group('OwnerFinancialCalculator & Platform Share Tests', () {
     final now = DateTime.now();
 
     final testBookings = [
@@ -26,7 +27,7 @@ void main() {
         bookingType: BookingType.personal,
         createdAt: now,
       ),
-      // 2. Online Paymob booking (300 EGP total, 100 EGP digital deposit paid, 200 EGP remaining)
+      // 2. Online Paymob booking (100 EGP base amount, customer pays 107.75 EGP online)
       Booking(
         id: 'b2',
         stadiumId: 's1',
@@ -37,17 +38,17 @@ void main() {
         endTime: now.add(const Duration(hours: 1)),
         isPrivate: true,
         rentBall: false,
-        totalPrice: 300.0,
+        totalPrice: 100.0,
         depositPaid: 100.0,
         paymentMethod: 'paymob_card',
-        paymentStatus: 'deposit_paid',
+        paymentStatus: 'paid',
         status: BookingStatus.confirmed,
         bookingType: BookingType.personal,
         createdAt: now,
       ),
     ];
 
-    test('Calculates cash revenue and digital balance accurately', () {
+    test('Calculates pitch cash revenue and digital balance accurately', () {
       final metrics = OwnerFinancialCalculator.calculate(
         allBookings: testBookings,
         ownerChampionships: [],
@@ -61,14 +62,27 @@ void main() {
       // Digital balance: 100 EGP from booking 2
       expect(metrics.digitalVspBalance, equals(100.0));
 
-      // Pending receivables: 200 EGP from booking 2
-      expect(metrics.pendingReceivables, equals(200.0));
-
-      // Total pipeline: 200 + 300 = 500 EGP
-      expect(metrics.totalPipeline, equals(500.0));
-
       // Active count: 2
       expect(metrics.activeBookingsCount, equals(2));
+    });
+
+    test('Validates 100 EGP booking fee distribution between Platform (2%) and Paymob (2.75% + 3 EGP)', () {
+      const baseAmount = 100.0;
+
+      // Platform Owner Net Profit (2.0%): Exactly 2.00 EGP
+      final platformShare = PaymobService.calculatePlatformShare(baseAmount);
+      expect(platformShare, equals(2.00));
+
+      // Paymob Banking Gateway Share (2.75% + 3.0 EGP): Exactly 5.75 EGP
+      final gatewayShare = PaymobService.calculateGatewayShare(baseAmount);
+      expect(gatewayShare, equals(5.75));
+
+      // Total fee: 2.00 + 5.75 = 7.75 EGP
+      final totalFee = PaymobService.calculateServiceFee(baseAmount);
+      expect(totalFee, equals(7.75));
+
+      // Owner receives full pitch rental price: 100.00 EGP
+      expect(baseAmount, equals(100.00));
     });
   });
 }

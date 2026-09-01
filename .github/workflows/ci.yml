@@ -37,6 +37,24 @@ jobs:
       - name: Generate Localizations
         run: flutter gen-l10n
 
+      - name: Setup Mock Firebase Options for CI
+        run: |
+          if [ ! -f lib/firebase_options.dart ]; then
+          cat << 'EOF' > lib/firebase_options.dart
+          import 'package:firebase_core/firebase_core.dart' show FirebaseOptions;
+          import 'package:flutter/foundation.dart' show defaultTargetPlatform, kIsWeb, TargetPlatform;
+
+          class DefaultFirebaseOptions {
+            static FirebaseOptions get currentPlatform => const FirebaseOptions(
+              apiKey: 'ci-mock-key',
+              appId: '1:123456789:android:ci-mock-app-id',
+              messagingSenderId: '123456789',
+              projectId: 'vsp-ci-project',
+            );
+          }
+          EOF
+          fi
+
       - name: Run Static Code Analysis (Zero Tolerance Gate)
         run: flutter analyze
 
