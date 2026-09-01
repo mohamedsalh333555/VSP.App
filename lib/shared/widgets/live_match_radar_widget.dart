@@ -78,7 +78,7 @@ class _LiveMatchRadarWidgetState extends State<LiveMatchRadarWidget>
   }
 
   String _formatRemainingTime(Duration duration, bool isArabic) {
-    if (duration.isNegative) return isArabic ? 'جارية الآن 🔴' : 'Live Now 🔴';
+    if (duration.isNegative) return isArabic ? 'جارية الآن' : 'Live Now';
     final hours = duration.inHours.toString().padLeft(2, '0');
     final minutes = (duration.inMinutes % 60).toString().padLeft(2, '0');
     final seconds = (duration.inSeconds % 60).toString().padLeft(2, '0');
@@ -95,8 +95,8 @@ class _LiveMatchRadarWidgetState extends State<LiveMatchRadarWidget>
     final stadiumName = booking.stadiumName.isNotEmpty ? booking.stadiumName : (isArabic ? 'الملعب' : 'Stadium');
     final timeStr = _formatMatchTimeRange(booking.startTime, booking.endTime, locale);
     final message = isArabic
-        ? '⚽ تذكير بمباراتنا القادمة:\n🏟️ الملعب: $stadiumName\n⏰ الموعد: $timeStr\n📍 يرجى التواجد في الموعد المحدد.\nتم الحجز عبر تطبيق VSP'
-        : '⚽ Match Reminder:\n🏟️ Pitch: $stadiumName\n⏰ Time: $timeStr\n📍 Please be on time.\nBooked via VSP App';
+        ? 'تذكير بمباراتنا القادمة:\n• الملعب: $stadiumName\n• الموعد: $timeStr\n• يرجى التواجد في الموعد المحدد.\nتم الحجز عبر تطبيق VSP'
+        : 'Match Reminder:\n• Pitch: $stadiumName\n• Time: $timeStr\n• Please be on time.\nBooked via VSP App';
 
     final uri = Uri.parse('https://wa.me/?text=${Uri.encodeComponent(message)}');
     try {
@@ -227,7 +227,7 @@ class _LiveMatchRadarWidgetState extends State<LiveMatchRadarWidget>
                     children: [
                       Text(
                         isLiveNow
-                            ? (isArabic ? 'مباراة جارية الآن 🔴' : 'Match Live Now 🔴')
+                            ? (isArabic ? 'مباراة جارية الآن' : 'Match Live Now')
                             : (isArabic ? 'المباراة القادمة' : 'Upcoming Match'),
                         style: const TextStyle(
                           color: VSPColors.accent,
@@ -326,8 +326,8 @@ class _LiveMatchRadarWidgetState extends State<LiveMatchRadarWidget>
                     ),
                     child: Text(
                       nextMatch.bookingType == BookingType.challenge
-                          ? (isArabic ? 'تحدي فرق 🔥' : 'Challenge 🔥')
-                          : (isArabic ? 'حجز خماسي ⚽' : '5v5 Match ⚽'),
+                          ? (isArabic ? 'تحدي فرق' : 'Challenge')
+                          : (isArabic ? 'حجز خماسي' : '5v5 Match'),
                       style: const TextStyle(
                         color: VSPColors.accent,
                         fontSize: 11,

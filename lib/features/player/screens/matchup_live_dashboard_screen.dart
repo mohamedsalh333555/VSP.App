@@ -88,7 +88,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
       );
 
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح! 🏆');
+      VSPFeedback.showSuccess(context, 'تم تسجيل نتيجة المباراة وتحديث الترتيب بنجاح!');
       await _loadMatchupData();
     } catch (e) {
       debugPrint('Error submitting match result: $e');
@@ -135,7 +135,7 @@ class _MatchupLiveDashboardScreenState extends State<MatchupLiveDashboardScreen>
     try {
       await _matchupRepo.closeMatchup(widget.bookingId);
       if (!mounted) return;
-      VSPFeedback.showSuccess(context, 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح! 🎖️');
+      VSPFeedback.showSuccess(context, 'تم إغلاق المواجهة واعتماد النتائج النهائية بنجاح!');
       Navigator.pop(context);
     } catch (e) {
       debugPrint('Error closing matchup: $e');

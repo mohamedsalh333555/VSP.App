@@ -360,7 +360,7 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
       _popSuccess();
     } else if (isExplicitFailure) {
       if (lowerUrl.contains('authentication_not_supported')) {
-        debugPrint('⚠️ Paymob returned AUTHENTICATION_NOT_SUPPORTED for card pan.');
+        debugPrint('[Paymob] returned AUTHENTICATION_NOT_SUPPORTED for card pan.');
       }
       _popFailure();
     }

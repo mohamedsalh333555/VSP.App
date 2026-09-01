@@ -177,16 +177,17 @@ class _SignupScreenState extends State<SignupScreen> {
  await SecureStorageService.writeSecure('pending_verification_email', email);
  // GoRouter handles declarative navigation to /verify-email, /onboarding, or /
  // via authProvider's refreshListenable / redirectLogic once notifyListeners() fires.
- } else {
- if (mounted) {
- String errorMsg = authProvider.errorMessage ?? 'فشل إنشاء الحساب';
- if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
- errorMsg = 'تعذر إرسال إيميل التأكيد. يرجى التمرير لأسفل في نافذة Email في Supabase وإيقاف خيار (Confirm email).';
- }
- debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
- VSPFeedback.showError(context, errorMsg);
- }
- }
+ } else if (mounted) {
+        final isAr = Localizations.localeOf(context).languageCode == 'ar';
+        String errorMsg = authProvider.errorMessage ?? (isAr ? 'فشل إنشاء الحساب' : 'Account creation failed');
+        if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
+          errorMsg = isAr
+              ? 'تعذر إرسال إيميل التأكيد. يرجى مراجعة إعدادات البريد.'
+              : 'Could not send confirmation email. Please check email settings.';
+        }
+        debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
+        VSPFeedback.showError(context, errorMsg);
+      }
  
  if (mounted) setState(() => _isLoading = false);
  }

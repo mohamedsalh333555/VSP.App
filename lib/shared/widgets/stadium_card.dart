@@ -282,7 +282,7 @@ class StadiumCard extends StatelessWidget {
  if (hasGarage) ...[
  const Icon(Iconsax.car_copy, color: VSPColors.accent, size: 14),
  const SizedBox(width: 4),
- Text(isArabic ? 'جراج 🅿 ' : 'Garage 🅿 ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
+ Text(isArabic ? 'جراج ' : 'Garage ', style: const TextStyle(color: Colors.white70, fontSize: 11)),
  ],
  if (!hasBaths && !hasCafe && !hasGarage)
  Text(isArabic ? 'لا توجد خدمات مضافة ' : 'No amenities listed ', style: const TextStyle(color: Colors.white38, fontSize: 11)),

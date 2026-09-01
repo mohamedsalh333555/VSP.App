@@ -12,7 +12,6 @@ import '../../../core/services/sharing_service.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../shared/widgets/vsp_countdown_timer.dart';
 import '../../../data/models.dart';
-import '../../../core/services/location_service.dart';
 import '../../../core/constants/egypt_governorates.dart';
 import '../../owner/screens/tournament_brackets_screen.dart';
 import 'championship_checkout_screen.dart';
@@ -237,7 +236,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
         return;
       }
 
-      // GPS GEOFENCING GUARD: Verify physical GPS location when joining a tournament in a different governorate
+      // INTER-GOVERNORATE ATTENDANCE CONFIRMATION: Verify commitment if championship is hosted in another governorate
       if (!mounted) return;
       final isArabic = Localizations.localeOf(context).languageCode == 'ar';
       final champGovRaw = activeChamp.governorate.trim();
@@ -246,28 +245,49 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
       final champGovStd = EgyptGovernorates.resolveGoogleName(champGovRaw) ?? champGovRaw;
       final playerGovStd = EgyptGovernorates.resolveGoogleName(playerGovRaw) ?? playerGovRaw;
 
-      if (champGovStd.isNotEmpty && champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
-        final (position, gpsGov) = await LocationService().getThrottledLocation(force: true);
+      if (champGovStd.isNotEmpty && playerGovStd.isNotEmpty && champGovStd.toLowerCase() != playerGovStd.toLowerCase()) {
+        final confirmed = await showDialog<bool>(
+          context: context,
+          builder: (ctx) => AlertDialog(
+            backgroundColor: VSPColors.surface,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(VSPRadius.xl),
+              side: const BorderSide(color: VSPColors.divider),
+            ),
+            title: Row(
+              children: [
+                const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 22),
+                const SizedBox(width: 8),
+                Expanded(
+                  child: Text(
+                    isArabic ? 'تأكيد موقع البطولة' : 'Confirm Tournament Location',
+                    style: Theme.of(ctx).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold, color: Colors.white),
+                  ),
+                ),
+              ],
+            ),
+            content: Text(
+              isArabic
+                  ? 'هذه البطولة تُقام في ملاعب محافظة [$champGovRaw]. هل أنت وفريقك مستعدون للالتزام بالحضور وخوض المباريات في الموعد والمكان المحدد؟'
+                  : 'This tournament is hosted in [$champGovRaw]. Are you and your team committed to attending and playing on-site as scheduled?',
+              style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13, height: 1.5),
+            ),
+            actionsPadding: const EdgeInsets.all(16),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(ctx, false),
+                child: Text(isArabic ? 'إلغاء' : 'Cancel', style: const TextStyle(color: VSPColors.textSecondary)),
+              ),
+              PrimaryButton(
+                text: isArabic ? 'نعم، ملتزمون بالحضور' : 'Yes, We Will Attend',
+                height: 44,
+                onPressed: () => Navigator.pop(ctx, true),
+              ),
+            ],
+          ),
+        );
 
-        if (gpsGov == 'mock_location_detected') {
-          if (mounted) {
-            _showErrorDialog(isArabic 
-                ? 'تنبيه أمني: تم اكتشاف استخدام موقع وهمي (Mock Location). لا يمكن الانضمام للبطولة.' 
-                : 'Security Alert: Mock location detected. Cannot join tournament.');
-          }
-          return;
-        }
-
-        final resolvedGpsGov = (gpsGov != null && gpsGov.isNotEmpty)
-            ? (EgyptGovernorates.resolveGoogleName(gpsGov) ?? gpsGov)
-            : null;
-
-        if (resolvedGpsGov == null || resolvedGpsGov.toLowerCase() != champGovStd.toLowerCase()) {
-          if (mounted) {
-            _showErrorDialog(isArabic 
-                ? 'عذراً! هذه البطولة مقامة في محافظة [$champGovRaw]. يتطلب النظام التحقق التلقائي من تواجدك الفعلي في نفس المحافظة عبر إذن الموقع (GPS) للانضمام.' 
-                : 'Sorry! This tournament is hosted in [$champGovRaw]. System requires active GPS verification confirming your presence in that governorate to join.');
-          }
+        if (confirmed != true) {
           return;
         }
       }
@@ -1276,6 +1296,13 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
  championship.rules.isNotEmpty
  ? championship.rules
  : (isArabic ? 'بطولة رسمية تنافسية لفرق كرة القدم بمدينة ${championship.governorate.isNotEmpty ? championship.governorate : "مصر"}.' : 'Official competitive football tournament.'),
+ ),
+ const SizedBox(height: 16),
+ _buildInfoSection(
+ isArabic ? 'آلية تسليم الجوائز المالية' : 'Prize Handover & Distribution',
+ isArabic
+ ? '• تُسلم الجوائز والمكافآت المالية للفرق الفائزة بالمركز الأول والوصيف فور انتهاء المباراة النهائية مباشرة.\n• التسليم يتم نقداً بالملعب أو عبر تحويل فوري معتمد (InstaPay / المحفظة الإلكترونية) بمعرفة إدارة الملعب والمنظم.'
+ : '• Monetary prizes are awarded to the Champion and Runner-up immediately post-final match.\n• Prizes are handed on-pitch in cash or via instant verified InstaPay / E-Wallet transfer by stadium organizers.',
  ),
  const SizedBox(height: 16),
  _buildInfoSection(

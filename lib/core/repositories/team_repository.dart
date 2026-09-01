@@ -432,7 +432,7 @@ class TeamRepository {
         throw Exception("active_match_or_tournament_error");
       }
 
-      // 🛡️ Automatic Captain Transfer: If the departing user is the captain, transfer to next member
+      // Automatic Captain Transfer: If the departing user is the captain, transfer to next member
       final teamData = await _supabase
           .from('teams')
           .select('captain_id')

@@ -362,7 +362,7 @@ class _AddMatchupTeamsScreenState extends State<AddMatchupTeamsScreen> {
                             border: Border.all(color: VSPColors.success),
                           ),
                           child: Text(
-                            isArabic ? 'جاهز للتأكيد ✓' : 'Ready ✓',
+                            isArabic ? 'جاهز للتأكيد' : 'Ready to Confirm',
                             style: const TextStyle(color: VSPColors.success, fontSize: 12, fontWeight: FontWeight.bold),
                           ),
                         ),

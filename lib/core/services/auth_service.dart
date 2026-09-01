@@ -1,5 +1,7 @@
 import 'dart:convert';
+import 'package:crypto/crypto.dart';
 import 'package:flutter/foundation.dart';
+import 'package:sign_in_with_apple/sign_in_with_apple.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'logger_service.dart';
@@ -250,29 +252,69 @@ class AuthService {
     }
   }
 
-  // Sign In with Apple
+  // Sign In with Apple (Native iOS with Face ID / Touch ID + Web fallback)
   Future<Map<String, dynamic>> signInWithApple({String? role}) async {
     try {
-      final String redirectUrl = kIsWeb 
-          ? '${Uri.base.origin}/' 
-          : (role != null 
-              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
-              : 'io.supabase.fluttervsp://login-callback/');
+      if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) {
+        // 1. Generate Nonce for Supabase cryptographic verification
+        final rawNonce = _supabase.auth.generateRawNonce();
+        final hashedNonce = sha256.convert(utf8.encode(rawNonce)).toString();
 
-      final success = await _supabase.auth.signInWithOAuth(
-        OAuthProvider.apple,
-        redirectTo: redirectUrl,
-        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
-      );
- if (success) {
- return {'success': true, 'user': _supabase.auth.currentUser};
- }
- return {'success': false, 'message': 'فشل تسجيل الدخول عبر آبل.'};
- } catch (e) {
- _logSecurityEvent('APPLE_AUTH_ERROR', e);
- return {'success': false, 'message': 'حدث خطأ في خدمة آبل: $e'};
- }
- }
+        // 2. Request native Apple ID Credential
+        final credential = await SignInWithApple.getAppleIDCredential(
+          scopes: [
+            AppleIDAuthorizationScopes.email,
+            AppleIDAuthorizationScopes.fullName,
+          ],
+          nonce: hashedNonce,
+        );
+
+        final idToken = credential.identityToken;
+        if (idToken == null) {
+          return {'success': false, 'message': 'فشل الحصول على رمز الهوية من Apple.'};
+        }
+
+        // 3. Sign in to Supabase using ID Token directly
+        final authResponse = await _supabase.auth.signInWithIdToken(
+          provider: OAuthProvider.apple,
+          idToken: idToken,
+          nonce: rawNonce,
+        );
+
+        final user = authResponse.user;
+        if (user != null) {
+          return {'success': true, 'user': user};
+        }
+        return {'success': false, 'message': 'فشل تسجيل الدخول عبر Apple.'};
+      } else {
+        // Fallback for Web/other platforms: Web-based OAuth redirect
+        final String redirectUrl = kIsWeb
+            ? '${Uri.base.origin}/'
+            : (role != null
+                ? 'io.supabase.fluttervsp://login-callback/?role=$role'
+                : 'io.supabase.fluttervsp://login-callback/');
+
+        final success = await _supabase.auth.signInWithOAuth(
+          OAuthProvider.apple,
+          redirectTo: redirectUrl,
+          authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+        );
+        if (success) {
+          return {'success': true, 'user': _supabase.auth.currentUser};
+        }
+        return {'success': false, 'message': 'فشل تسجيل الدخول عبر Apple.'};
+      }
+    } on SignInWithAppleAuthorizationException catch (e) {
+      if (e.code == AuthorizationErrorCode.canceled) {
+        return {'success': false, 'message': 'تم إلغاء تسجيل الدخول.'};
+      }
+      _logSecurityEvent('APPLE_AUTH_ERROR', e);
+      return {'success': false, 'message': 'حدث خطأ أثناء تسجيل الدخول عبر Apple: ${e.message}'};
+    } catch (e) {
+      _logSecurityEvent('APPLE_AUTH_ERROR', e);
+      return {'success': false, 'message': 'حدث خطأ في خدمة Apple: $e'};
+    }
+  }
 
  // Update Password
  Future<bool> updatePassword(String newPassword) async {

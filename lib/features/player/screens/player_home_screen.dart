@@ -71,17 +71,18 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
  String? gov = auth.userModel?.governorate;
  
  // إذا لم يكن لديه محافظة مسجلة، نقوم بمحاولة جلبها فوراً بالـ GPS أولاً في الخلفية
- if (gov == null || gov.isEmpty) {
- VSPFeedback.showSuccess(context, 'جاري تحديد موقعك الجغرافي تلقائياً...');
+  if (gov == null || gov.isEmpty) {
+  final isAr = Localizations.localeOf(context).languageCode == 'ar';
+ VSPFeedback.showSuccess(context, isAr ? 'جاري تحديد موقعك الجغرافي تلقائياً...' : 'Determining your location automatically...');
  final success = await auth.updateUserLocation();
  
  if (success) {
- final resolvedGov = auth.userModel?.governorate ?? 'القاهرة';
+ final resolvedGov = auth.userModel?.governorate ?? (isAr ? 'القاهرة' : 'Cairo');
  stadiumProvider.applyGovernorateFilter(resolvedGov);
  } else {
  // إذا فشل الـ GPS أو رفض المستخدم الإذن، نفتح له نافذة الاختيار اليدوي كخيار بديل
  if (mounted) {
- VSPFeedback.showError(context, 'تعذر تحديد الموقع الجغرافي. يرجى الاختيار يدوياً.');
+ VSPFeedback.showError(context, isAr ? 'تعذر تحديد الموقع الجغرافي. يرجى الاختيار يدوياً.' : 'Could not determine location. Please select manually.');
  _showLocationPickerHelper(context, auth);
  }
  }
@@ -537,7 +538,38 @@ class ChampionshipCard extends StatelessWidget {
  Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
+ Row(
+ mainAxisSize: MainAxisSize.min,
+ children: [
  _buildTypeBadge(AppLocalizations.of(context)!.tournament),
+ if (championship.governorate.isNotEmpty) ...[
+ const SizedBox(width: 6),
+ Container(
+ padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 3),
+ decoration: BoxDecoration(
+ color: VSPColors.surfaceAlt,
+ borderRadius: BorderRadius.circular(VSPRadius.full),
+ border: Border.all(color: VSPColors.divider, width: 0.5),
+ ),
+ child: Row(
+ mainAxisSize: MainAxisSize.min,
+ children: [
+ const Icon(Iconsax.location_copy, color: VSPColors.accent, size: 10),
+ const SizedBox(width: 3),
+ Text(
+ championship.governorate,
+ style: const TextStyle(
+ color: VSPColors.textSecondary,
+ fontSize: 10,
+ fontWeight: FontWeight.w600,
+ ),
+ ),
+ ],
+ ),
+ ),
+ ],
+ ],
+ ),
  Builder(builder: (context) {
  final isFull = championship.isFull || championship.joinedTeams.length >= championship.maxTeams;
  final isCompleted = championship.status == 'completed';

@@ -204,8 +204,8 @@ class AuthProvider with ChangeNotifier {
 
       await prefs.remove('pending_oauth_is_login_only');
 
- if (userData != null) {
- // ─── OAuth Role Override Fix ────────────────────────────────────────────
+      if (userData.isNotEmpty) {
+        // ─── OAuth Role Override Fix ────────────────────────────────────────────
  // Problem: Google OAuth doesn't pass custom 'role' param → trigger defaults to 'player'
  // Fix: Read the role the user intentionally selected before OAuth redirect
  final effectiveRole = pendingRole ?? _userType;
@@ -516,6 +516,7 @@ class AuthProvider with ChangeNotifier {
  try {
  final prefs = await SharedPreferences.getInstance();
  await prefs.setBool('pending_oauth_is_login_only', isLoginOnly);
+ await prefs.setString('pending_oauth_role', _userType ?? 'player');
  await SecureStorageService.writeSecure('pending_oauth_role', _userType ?? 'player');
 
  final result = await _authService.signInWithApple(role: _userType);

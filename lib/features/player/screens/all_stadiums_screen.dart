@@ -480,8 +480,8 @@ class _AllStadiumsScreenState extends State<AllStadiumsScreen> {
                     runSpacing: 8,
                     children: [
                       _buildSortChip(StadiumSortOption.featured, isArabic ? 'المميزة' : 'Featured', setModalState),
-                      _buildSortChip(StadiumSortOption.topRated, isArabic ? 'الأعلى تقييماً ⭐' : 'Top Rated ⭐', setModalState),
-                      _buildSortChip(StadiumSortOption.priceLowToHigh, isArabic ? 'الأقل سعراً 💵' : 'Lowest Price 💵', setModalState),
+                      _buildSortChip(StadiumSortOption.topRated, isArabic ? 'الأعلى تقييماً' : 'Top Rated', setModalState),
+                      _buildSortChip(StadiumSortOption.priceLowToHigh, isArabic ? 'الأقل سعراً' : 'Lowest Price', setModalState),
                       _buildSortChip(StadiumSortOption.priceHighToLow, isArabic ? 'الأعلى سعراً' : 'Highest Price', setModalState),
                     ],
                   ),

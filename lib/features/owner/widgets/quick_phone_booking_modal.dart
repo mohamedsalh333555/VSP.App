@@ -229,7 +229,7 @@ class _QuickPhoneBookingModalState extends State<QuickPhoneBookingModal> {
       } else {
         VSPFeedback.showSuccess(
           context, 
-          isAr ? 'تم تأكيد حجز $customerName بنجاح ⚽' : 'Booking confirmed for $customerName ⚽',
+          isAr ? 'تم تأكيد حجز $customerName بنجاح' : 'Booking confirmed for $customerName',
         );
       }
     } catch (e) {

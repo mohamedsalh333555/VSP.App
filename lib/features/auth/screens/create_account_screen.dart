@@ -33,11 +33,12 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
- late TapGestureRecognizer _termsRecognizer;
- late TapGestureRecognizer _privacyRecognizer;
+  late TapGestureRecognizer _termsRecognizer;
+  late TapGestureRecognizer _privacyRecognizer;
+  bool _acceptedTerms = true;
 
- @override
- void initState() {
+  @override
+  void initState() {
  super.initState();
  _termsRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
  _privacyRecognizer = TapGestureRecognizer()..onTap = _onTermsOrPrivacyTap;
@@ -62,6 +63,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  Widget build(BuildContext context) {
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final bool isUserOwner = widget.isOwner;
+ final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  // تحديد النصوص بناءً على نوع المستخدم
  final String greeting = !isUserOwner
@@ -166,13 +168,93 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
  const SizedBox(height: 32),
 
- // Action Buttons
+ // Explicit Terms & Privacy Agreement Checkbox
  VSPFadeInItem(
  index: 3,
+ child: Padding(
+ padding: const EdgeInsets.only(bottom: 20),
+ child: InkWell(
+ onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
+ borderRadius: BorderRadius.circular(VSPRadius.md),
+ child: Padding(
+ padding: const EdgeInsets.symmetric(vertical: 4),
+ child: Row(
+ crossAxisAlignment: CrossAxisAlignment.center,
+ children: [
+ SizedBox(
+ width: 24,
+ height: 24,
+ child: Checkbox(
+ value: _acceptedTerms,
+ activeColor: VSPColors.accent,
+ checkColor: Colors.black,
+ shape: RoundedRectangleBorder(
+ borderRadius: BorderRadius.circular(4),
+ ),
+ side: BorderSide(
+ color: _acceptedTerms ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.6),
+ width: 1.5,
+ ),
+ onChanged: (val) {
+ setState(() => _acceptedTerms = val ?? false);
+ },
+ ),
+ ),
+ const SizedBox(width: 12),
+ Expanded(
+ child: RichText(
+ text: TextSpan(
+ style: Theme.of(context).textTheme.bodySmall?.copyWith(
+ color: VSPColors.textSecondary,
+ height: 1.4,
+ fontSize: 13,
+ ),
+ children: [
+ TextSpan(text: isArabic ? 'أوافق على ' : 'I agree to the '),
+ TextSpan(
+ text: isArabic ? 'شروط الخدمة' : 'Terms of Service',
+ recognizer: _termsRecognizer,
+ style: const TextStyle(
+ color: VSPColors.accent,
+ fontWeight: FontWeight.bold,
+ decoration: TextDecoration.underline,
+ ),
+ ),
+ TextSpan(text: isArabic ? ' و ' : ' and '),
+ TextSpan(
+ text: isArabic ? 'سياسة الخصوصية' : 'Privacy Policy',
+ recognizer: _privacyRecognizer,
+ style: const TextStyle(
+ color: VSPColors.accent,
+ fontWeight: FontWeight.bold,
+ decoration: TextDecoration.underline,
+ ),
+ ),
+ ],
+ ),
+ ),
+ ),
+ ],
+ ),
+ ),
+ ),
+ ),
+ ),
+
+ // Action Buttons
+ VSPFadeInItem(
+ index: 4,
  child: PrimaryButton(
  text: AppLocalizations.of(context)!.continueWithEmail,
  height: 60,
  onPressed: () {
+ if (!_acceptedTerms) {
+ VSPFeedback.showWarning(
+ context,
+ isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
+ );
+ return;
+ }
  authProvider.setUserType(isUserOwner ? 'owner' : 'player');
  context.push(isUserOwner ? '/signup-owner' : '/signup-player');
  },
@@ -182,7 +264,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  const SizedBox(height: 32),
 
  VSPFadeInItem(
- index: 4,
+ index: 5,
  child: Row(
  children: [
  const Expanded(child: Divider(color: VSPColors.borderMedium)),
@@ -204,7 +286,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
  // Social Sign-In Buttons (Google & Apple)
  VSPFadeInItem(
- index: 5,
+ index: 6,
  child: Row(
  children: [
  // زر Apple يظهر فقط إذا كان الجهاز آيفون أو ماك
@@ -233,6 +315,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  ],
  ),
  onPressed: () async {
+ if (!_acceptedTerms) {
+ VSPFeedback.showWarning(
+ context,
+ isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
+ );
+ return;
+ }
  final role = isUserOwner ? 'owner' : 'player';
  authProvider.setUserType(role);
  await SecureStorageService.writeSecure('pending_oauth_role', role);
@@ -273,6 +362,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  ],
  ),
  onPressed: () async {
+ if (!_acceptedTerms) {
+ VSPFeedback.showWarning(
+ context,
+ isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
+ );
+ return;
+ }
  final role = isUserOwner ? 'owner' : 'player';
  authProvider.setUserType(role);
  await SecureStorageService.writeSecure('pending_oauth_role', role);
@@ -294,7 +390,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 
  // Footer Links
  VSPFadeInItem(
- index: 6,
+ index: 7,
  child: Center(
  child: Opacity(
  opacity: 0.6,
@@ -450,79 +546,109 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  icon: Iconsax.building_copy,
  title: isAr ? '١. شروط وإلتزامات تشغيل الملاعب' : '1. Stadium Operations & Listing Terms',
  content: isAr
- ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين. تضمن المنصة تنظيم الحجوزات وعدم التعارض.'
- : 'Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots. VSP manages technical dispatching to prevent conflicts.',
- ),
- const SizedBox(height: 12),
-
- _buildModalSectionCard(
- dialogContext,
- icon: Iconsax.lock_copy,
- title: isAr ? '٢. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '2. Player Privacy & Data Protection',
- content: isAr
- ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على خصوصية الحاحزين وعدم استغلال بيانات الاتصال الخاصة باللاعبين خارج نطاق تنظيم المباريات.'
- : 'Under Egyptian Law PDPL 2020, owners agree to keep player phone numbers strictly confidential and use them only for booking communication.',
+ ? 'يلتزم صاحب الملعب بدقة بيانات الملعب والمعلومات المعروضة، وتجهيز الإضاءة والمرافق في المواعيد المحجوزة للاعبين دون أي تأخير أو تغيير في السعر المتفق عليه. تضمن المنصة تنظيم الحجوزات بدقة ومنع التضارب.'
+ : 'Stadium owners must guarantee pitch readiness, lighting, and amenities for confirmed slots without rate changes or delays. VSP ensures technical dispatching to prevent slot conflicts.',
  ),
  const SizedBox(height: 12),
 
  _buildModalSectionCard(
  dialogContext,
  icon: Iconsax.wallet_1_copy,
- title: isAr ? '٣. سياسة التحصيل والعربون المباشر' : '3. Payouts & Deposit Settlement Policy',
+ title: isAr ? '٢. سياسة العربون والتحصيل المباشر' : '2. Direct Deposit & Payout Policy',
  content: isAr
- ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة عبر (انستا باي أو فودافون كاش أو البنك)، والالتزام بتوفير الملعب للحاحز دون تغيير الأسعار أو الإلغاء المفاجئ.'
- : 'Owners must verify and honor direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer, maintaining fixed rates.',
+ ? 'يلتزم المالك بتأكيد مبالغ العربون والحجوزات المستلمة مباشرة عبر (انستا باي أو فودافون كاش أو التحويل البنكي) وتحديث حالة الحجز في التطبيق فور استلام المبلغ، والالتزام بتوفير الملعب للحاجز.'
+ : 'Owners must promptly verify and confirm direct deposits received via InstaPay, Vodafone Cash, or Bank Transfer in-app, honoring the reservation for the player.',
+ ),
+ const SizedBox(height: 12),
+
+ _buildModalSectionCard(
+ dialogContext,
+ icon: Iconsax.shield_cross_copy,
+ title: isAr ? '٣. سياسة منع الإلغاء المفاجئ' : '3. Cancellation & Commitment Policy',
+ content: isAr
+ ? 'يُحظر على صاحب الملعب إلغاء أي حجز مؤكد إلا في حالات القوة القاهرة المثبتة، مع الالتزام بإخطار الحاجز وإعادة كامل العربون أو المبالغ المدفوعة إليه فوراً دون أي اقتطاع.'
+ : 'Owners are prohibited from cancelling confirmed bookings except in proven force majeure cases, with mandatory immediate full refund to the customer.',
  ),
  const SizedBox(height: 12),
 
  _buildModalSectionCard(
  dialogContext,
  icon: Iconsax.cup_copy,
- title: isAr ? '٤. نزاهة البطولات والشفافية' : '4. Tournament Integrity & Transparency',
+ title: isAr ? '٤. نزاهة البطولات والجوائز' : '4. Tournament Integrity & Prizes',
  content: isAr
- ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
- : 'Owners hosting tournaments commit to fair refereeing, prompt score confirmation, and timely prize distribution to winning teams.',
+ ? 'يلتزم المالك بإدارة البطولات والتحديات المعروضة على ملعبه بنزاهة تامة، والالتزام بالجدول المعلن، وتأكيد النتائج وتسليم الجوائز المعلنة للفرق الفائزة دون تأخير.'
+ : 'Owners hosting tournaments commit to fair refereeing, strictly adhering to scheduled brackets, and promptly distributing announced prizes to winning teams.',
+ ),
+ const SizedBox(height: 12),
+
+ _buildModalSectionCard(
+ dialogContext,
+ icon: Iconsax.lock_copy,
+ title: isAr ? '٥. سياسة حماية بيانات اللاعبين (PDPL 2020)' : '5. Player Privacy & Data Protection',
+ content: isAr
+ ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، يلتزم المالك بالحفاظ على سرية وخصوصية الحاجزين وعدم استخدام أو استغلال بيانات الاتصال الخاصة باللاعبين في أي أغراض تسويقية أو خارج نطاق تنظيم المباريات.'
+ : 'Under Egyptian Law PDPL 2020, owners agree to keep player contact information strictly confidential and use it solely for match coordination.',
  ),
  ] else ...[
- _buildModalSectionCard(
- dialogContext,
- icon: Iconsax.document_text_copy,
- title: isAr ? '١. شروط استخدام منصة VSP' : '1. Terms of VSP Platform Use',
- content: isAr
- ? 'تُعتبر منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والتحديات التنافسية بين الفرق. يلتزم الحاحزون والكباتن بالحضور في الموعد المحدد والاحترام المتبادل في الملاعب. أي إلغاء للحجز يخضع لسياسة الملعب المحددة.'
- : 'VSP platform acts as a digital intermediary to organize football pitch bookings and team challenges. Players and captains must adhere to scheduled times and mutual respect. Cancellations follow stadium policy.',
- ),
- const SizedBox(height: 12),
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.document_text_copy,
+                      title: isAr ? '١. طبيعة المنصة واستخدام خدمة VSP' : '1. VSP Platform Services & Usage',
+                      content: isAr
+                          ? 'تُعد منصة VSP وسيطاً تقنياً لتنظيم وتسهيل حجز ملاعب كرة القدم والمباريات التنافسية. إدارة الملعب هي المسؤولة عن سلامة المنشأة والمرافق. يلتزم اللاعبون بالحضور في الموعد المحدد والتحلي بالأخلاق الرياضية داخل الملعب.'
+                          : 'VSP acts as a digital intermediary facilitating pitch bookings and competitive matches. Facility management is responsible for pitch readiness. Players must arrive on time and uphold sportsmanship.',
+                    ),
+                    const SizedBox(height: 12),
 
- _buildModalSectionCard(
- dialogContext,
- icon: Iconsax.lock_copy,
- title: isAr ? '٢. سياسة حماية البيانات والخصوصية' : '2. Privacy & Data Protection Policy',
- content: isAr
- ? 'وفقاً لقانون حماية البيانات الشخصية المصري (PDPL 2020)، تُجمع البيانات الأساسية (الاسم، رقم الهاتف، والمحافظة) لغرض تنظيم الحجوزات والتواصل بين كباتن الفرق فقط. تلتزم VSP بعدم مشاركة أو بيع أي من بيانات المستخدمين لأطراف خارجية.'
- : 'In accordance with the Egyptian Personal Data Protection Law (PDPL 2020), basic data (name, phone, governorate) is processed strictly for match organization. VSP does not sell or share user data with external third parties.',
- ),
- const SizedBox(height: 12),
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.wallet_1_copy,
+                      title: isAr ? '٢. سياسة الإلغاء والاسترداد المالي' : '2. Cancellation & Refund Policy',
+                      content: isAr
+                          ? '• يُسمح بإلغاء الحجز حتى قبل موعد بدء المباراة بساعتين (2 Hours) للحصول على استرداد مالي كامل.\n• تتم معالجة ومراجعة طلبات الاسترداد المالي من قِبل فريق VSP خلال 3-5 أيام عمل عبر وسيلة الدفع الأصلية أو التحويل المباشر.\n• الإلغاء بعد انتهاء المهلة المحددة (أقل من ساعتين) أو عدم الحضور (No-Show) لا يمنح الحق في استرداد العربون أو المبالغ المدفوعة.'
+                          : '• Free cancellation is available up to 2 hours before kickoff for a full refund.\n• Refund requests are processed by the VSP team within 3-5 business days via the original payment method or direct transfer.\n• Late cancellations (within 2 hours) or no-shows forfeit deposit/fee refunds.',
+                    ),
+                    const SizedBox(height: 12),
 
- _buildModalSectionCard(
- dialogContext,
- icon: Iconsax.wallet_1_copy,
- title: isAr ? '٣. سياسة الرسوم والدفع الإلكتروني' : '3. Payments & Refunds Policy',
- content: isAr
- ? 'تتم معالجة جميع المدفوعات الرقمية بشكل آمن عبر بوابة Paymob المرخصة. تُحسب وتظهر رسوم خدمة المنصة ورسوم معالجة الدفع بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا. عند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين)، يُسترد المبلغ المستحق تلقائياً إلى وسيلة الدفع الأصلية التي استخدمتها.'
- : 'All digital payments are processed securely through licensed Paymob gateway. Applicable platform service fees and gateway processing charges are clearly displayed before checkout. Payment credentials are never stored on our servers. Eligible cancellations made before the cutoff window (2 hrs) are automatically refunded to your original payment method.',
- ),
- const SizedBox(height: 12),
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.coin_copy,
+                      title: isAr ? '٣. سياسة الرسوم والشفافية المالية' : '3. Fees & Pricing Transparency',
+                      content: isAr
+                          ? '• طبيعة الرسوم: عند الحجز الإلكتروني، قد يُضاف مبلغ خدمة وتشغيل تقني ورسوم معالجة مصرفية لتغطية تكاليف السيرفرات السحابية وتأمين المواعيد وبوابات الدفع البنكية المرخصة (Paymob).\n• الشفافية ومنع الرسوم الخفية: يظهر إجمالي المبلغ المطلوب سداده وتفاصيله بوضوح في شاشة تأكيد الحجز قبل إتمام أي عملية دفع، ولا توجد أي رسوم غير معلنة.\n• الحجز النقدي: عند اختيار السداد النقدي بالملعب، يدفع اللاعب قيمة إيجار الملعب المحددة من الإدارة دون أي رسوم معالجة دفع رقمي إضافية من المنصة.'
+                          : '• Nature of Fees: For online bookings, platform service and banking processing fees cover cloud servers, real-time lock security, and licensed payment gateways (Paymob).\n• Full Transparency: Total payable amounts are clearly itemized before checkout with zero hidden fees.\n• Cash Bookings: Direct on-pitch cash payments cover standard pitch rental only without digital processing charges.',
+                    ),
+                    const SizedBox(height: 12),
 
- _buildModalSectionCard(
- dialogContext,
- icon: Iconsax.cup_copy,
- title: isAr ? '٤. قواعد الفرق ونظام الترتيب' : '4. Team Rules & Elo Rating System',
- content: isAr
- ? 'يُسمح لكل فريق بتسجيل ما يصل إلى 12 لاعباً، ولكل لاعب الانضمام إلى 3 فرق كحد أقصى. تُعتمد نتائج التحديات تلقائياً بعد 24 ساعة ما لم يُقدَّم اعتراض رسمي.'
- : 'Teams can register up to 12 players, and players may join up to 3 teams max. Match results and Elo rating updates become final 24 hours post-match unless an official dispute is raised.',
- ),
- ],
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.location_cross_copy,
+                      title: isAr ? '٤. سياسة تتبع الحضور والغياب (No-Show)' : '4. Attendance & No-Show Policy',
+                      content: isAr
+                          ? '• تسجيل حالتي (2) غياب يؤدي إلى تقييد ميزة الحجز النقدي المباشر.\n• تسجيل 3 حالات غياب متكررة يؤدي إلى تعليق الحساب لحماية أوقات الملاعب واللاعبين الآخرين.\n• يمكن للاعب تقديم طعن جغرافي (GPS) لإثبات الحضور خلال 60 دقيقة من نهاية المباراة، بشرط التواجد ضمن نطاق 150 متراً من الملعب بدقة GPS تقل عن 50 متراً.'
+                          : '• 2 recorded no-shows restrict cash booking privileges.\n• 3 recorded no-shows lead to account suspension.\n• Players can dispute a no-show via GPS within 60 minutes post-match if present within 150m of the stadium with GPS accuracy under 50m.',
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.cup_copy,
+                      title: isAr ? '٥. نزاهة التحديات وترتيب الـ Elo' : '5. Challenge Matches & Elo Ranking',
+                      content: isAr
+                          ? 'يلتزم كباتن الفرق بإدخال النتائج الحقيقية بعد المباراة. في حال وجود نزاع أو تضارب في النتائج، تُجمد نقاط الترتيب تلقائياً لحين المراجعة الإدارية. أي تلاعب متعمد بالنتائج يعرض الحساب للحظر النهائي.'
+                          : 'Captains must submit truthful match results. Disputed outcomes freeze ranking points for administrative review. Intentional result manipulation results in permanent ban.',
+                    ),
+                    const SizedBox(height: 12),
+
+                    _buildModalSectionCard(
+                      dialogContext,
+                      icon: Iconsax.lock_copy,
+                      title: isAr ? '٦. قواعد الفرق وحماية البيانات والخصوصية' : '6. Team Rules, Privacy & Data Rights',
+                      content: isAr
+                          ? '• الحد الأقصى لقائمة الفريق هو 12 لاعباً، ويحق للاعب الانضمام إلى 3 فرق كحد أقصى.\n• لا نبيع أو نؤجر بياناتك الشخصية لأي طرف ثالث نهائياً.\n• يحق لك تعديل بياناتك أو حذف حسابك وكافة سجلاتك نهائياً من داخل التطبيق (الملف الشخصي -> حذف الحساب) في أي وقت.\n• للدعم والاستفسارات: WhatsApp على 01100229462.'
+                          : '• Max 12 players per team roster, and players can join up to 3 teams.\n• We never sell personal data to third parties.\n• You may edit or permanently delete your account and all data directly in-app at any time.\n• For support: WhatsApp +201100229462.',
+                    ),
+                  ],
  ],
  ),
  ),

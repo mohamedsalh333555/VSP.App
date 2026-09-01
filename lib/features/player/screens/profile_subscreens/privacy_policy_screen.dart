@@ -82,14 +82,14 @@ class PrivacyPolicyScreen extends StatelessWidget {
                   : 'We collect data you provide directly when creating your account, including: name, phone number, date of birth, governorate, profile image, and preferred position (Striker / GK / etc.).',
             ),
 
-            // Section 2: Payments via Paymob (Updated to 2 Hours)
+            // Section 2: Payments via Paymob & Refunds
             _buildSection(
               context,
               icon: Iconsax.wallet_1_copy,
               title: isAr ? '٢. الدفع والمبالغ المستردة' : '2. Payments & Refunds',
               content: isAr
-                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. تُحسب وتظهر رسوم خدمة المنصة ورسوم بوابة الدفع بوضوح في تفاصيل الفاتورة قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، يتم استرداد المبالغ المستحقة تلقائياً ومباشرةً إلى وسيلة الدفع الأصلية التي تم الدفع منها (الحساب البنكي / المحفظة الإلكترونية / انستا باي).'
-                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Applicable platform service fees and gateway processing charges are clearly displayed before payment confirmation. Card or account credentials are never stored on our servers.\n\nUpon eligible cancellation (up to 2 hours before kickoff), refunds are automatically credited directly to your original payment method (Bank Account / E-Wallet / InstaPay).',
+                  ? 'تتم معالجة جميع المدفوعات الرقمية داخل التطبيق بشكل آمن عبر بوابة Paymob المرخصة في مصر. تُحسب وتظهر أي رسوم خدمة ورسوم معالجة بوضوح في تفاصيل الحساب قبل إتمام الدفع. لا يتم تخزين بيانات البطاقة المصرفية على خوادمنا في أي وقت.\n\nعند إلغاء الحجز المؤهل قبل انتهاء وقت السماح (ساعتين قبل موعد المباراة)، تتم مراجعة ومعالجة الاسترداد المالي خلال 3-5 أيام عمل عبر نفس وسيلة الدفع الأصلية أو التحويل المباشر.'
+                  : 'All in-app digital payments are processed securely through Paymob, a licensed payment gateway in Egypt. Applicable platform service fees and gateway processing charges are clearly displayed before payment confirmation. Card credentials are never stored on our servers.\n\nUpon eligible cancellation (up to 2 hours before kickoff), refund requests are processed within 3-5 business days via the original payment method or direct transfer.',
             ),
 
             // Section 3: No-Show Penalties & GPS (Updated with strict constraints)

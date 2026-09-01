@@ -606,7 +606,7 @@ class _BookingCard extends StatelessWidget {
   if (booking.bookingType == BookingType.matchup) ...[
     const SizedBox(height: VSPSpacing.md),
     VSPAnimatedButton(
-      text: Localizations.localeOf(context).languageCode == 'ar' ? 'لوحة المواجهة والنتائج الحية 🏆' : 'Live Matchup Dashboard 🏆',
+      text: Localizations.localeOf(context).languageCode == 'ar' ? 'لوحة المواجهة والنتائج الحية' : 'Live Matchup Dashboard',
       color: VSPColors.accent,
       textColor: Colors.black,
       onPressed: () {

@@ -41,15 +41,15 @@ class PaymobService {
 
         if (data != null && data['checkout_url'] != null) {
           final checkoutUrl = data['checkout_url'] as String;
-          debugPrint('✅ Secure Server-Generated Paymob Checkout URL: $checkoutUrl');
+          debugPrint('[PaymobService] Secure Server-Generated Checkout URL: $checkoutUrl');
           return checkoutUrl;
         }
       }
 
-      debugPrint('❌ Failed to obtain Paymob checkout URL from Edge Function. Status: ${response.status}');
+      debugPrint('[PaymobService] Failed to obtain checkout URL from Edge Function. Status: ${response.status}');
       return null;
     } catch (e) {
-      debugPrint('🚨 PaymobService.getCheckoutUrlFromServer Exception: $e');
+      debugPrint('[PaymobService] getCheckoutUrlFromServer Exception: $e');
       // Strict Fail-Closed: any network error or exception returns null
       return null;
     }
