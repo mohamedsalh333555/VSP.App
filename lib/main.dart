@@ -2,7 +2,6 @@ import 'dart:ui';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:flutter/foundation.dart' show PlatformDispatcher;
 import 'package:provider/provider.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'firebase_options.dart';
@@ -30,6 +29,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
 import 'core/services/secure_storage_service.dart';
+import 'core/services/crash_sentinel_service.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -79,22 +79,15 @@ void main() async {
  systemNavigationBarDividerColor: Colors.transparent,
  ));
 
- // Global Crash Boundary & Logging Handlers
- FlutterError.onError = (FlutterErrorDetails details) {
- FlutterError.presentError(details);
- VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
- try {
- FirebaseCrashlytics.instance.recordFlutterFatalError(details);
- } catch (_) {}
- };
-
- PlatformDispatcher.instance.onError = (error, stack) {
- VSPLogger.e('Uncaught Platform Error: $error', error, stack);
- try {
- FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
- } catch (_) {}
- return true;
- };
+  // Global Crash Sentinel & Observability
+  CrashSentinelService.initialize(
+    onCrashReported: (error, stack) {
+      VSPLogger.e('CrashSentinel Intercepted: $error', error, stack);
+      try {
+        FirebaseCrashlytics.instance.recordError(error, stack, fatal: true);
+      } catch (_) {}
+    },
+  );
 
  // Custom Error Boundary Widget
  ErrorWidget.builder = (FlutterErrorDetails details) {

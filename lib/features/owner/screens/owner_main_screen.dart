@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import 'package:confetti/confetti.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../shared/widgets/vsp_ambient_background.dart';
 import '../widgets/owner_bottom_nav_bar.dart';
 import 'owner_dashboard_screen.dart';
 import 'owner_profile_screen.dart';
@@ -105,7 +106,10 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
  return Scaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
- body: Stack(
+ body: VSPAmbientBackground(
+ showTopGlow: true,
+ showBottomGlow: true,
+ child: Stack(
  alignment: Alignment.center,
  children: [
  IndexedStack(
@@ -134,8 +138,7 @@ class _OwnerMainScreenState extends State<OwnerMainScreen> {
  ),
  ],
  ),
-
-
+ ),
  bottomNavigationBar: OwnerBottomNavBar(
  currentIndex: _currentIndex,
  onTap: _onItemTapped,

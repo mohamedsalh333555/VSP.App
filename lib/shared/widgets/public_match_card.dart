@@ -257,12 +257,19 @@ class _PublicMatchCardState extends State<PublicMatchCard> {
 
     return RepaintBoundary(
       child: Container(
- padding: const EdgeInsets.all(16),
- decoration: BoxDecoration(
- color: VSPColors.surface, 
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: widget.highlighted ? VSPColors.accent : VSPColors.divider, width: 1),
- ),
+      padding: const EdgeInsets.all(16),
+      decoration: BoxDecoration(
+        color: VSPColors.surface, 
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: widget.highlighted ? VSPColors.accent : Colors.white.withValues(alpha: 0.08), width: 1),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.black.withValues(alpha: 0.25),
+            blurRadius: 14,
+            offset: const Offset(0, 4),
+          ),
+        ],
+      ),
  child: Column(
  mainAxisSize: MainAxisSize.min,
  crossAxisAlignment: CrossAxisAlignment.start,

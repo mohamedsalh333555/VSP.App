@@ -15,7 +15,9 @@ class PhoneUtils {
     if (result.isEmpty) return null;
 
     // 3. Handle Egyptian national vs international formats
-    if (result.startsWith('20') && result.length == 12) {
+    if (result.startsWith('0020') && result.length == 14) {
+      result = '0${result.substring(4)}';
+    } else if (result.startsWith('20') && result.length == 12) {
       result = '0${result.substring(2)}';
     } else if (result.length == 10 && result.startsWith(RegExp(r'1[0125]'))) {
       result = '0$result';

@@ -36,6 +36,7 @@ import '../widgets/match_result_modal.dart';
 import '../../../core/providers/booking_provider.dart';
 import 'global_search_screen.dart';
 import 'notifications_center_screen.dart';
+import '../../../shared/widgets/vsp_ambient_background.dart';
 
 // المفتاح العالمي للتحكم في تبويبات الرئيسية والملاحة (يتم استيراد championScreenKey من champion_screen.dart)
 final GlobalKey<PlayerHomeScreenState> playerHomeScreenKey = GlobalKey<PlayerHomeScreenState>();
@@ -437,7 +438,10 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
  return Scaffold(
  extendBody: true,
  backgroundColor: VSPColors.background,
- body: IndexedStack(
+ body: VSPAmbientBackground(
+ showTopGlow: true,
+ showBottomGlow: true,
+ child: IndexedStack(
  index: _selectedIndex,
  children: [
  _HomeContent(
@@ -456,6 +460,7 @@ class PlayerHomeScreenState extends State<PlayerHomeScreen> {
  const BookingsScreen(),
  const ProfileScreen(),
  ],
+ ),
  ),
  bottomNavigationBar: VspBottomNavBar(
  selectedIndex: _selectedIndex,
@@ -527,9 +532,16 @@ class ChampionshipCard extends StatelessWidget {
  color: VSPColors.surface,
  borderRadius: BorderRadius.circular(VSPRadius.xl),
  border: Border.all(
- color: VSPColors.divider,
- width: 1,
+ color: Colors.white.withValues(alpha: 0.08),
+ width: 0.8,
  ),
+ boxShadow: [
+ BoxShadow(
+ color: Colors.black.withValues(alpha: 0.25),
+ blurRadius: 14,
+ offset: const Offset(0, 4),
+ ),
+ ],
  ),
  child: Column(
  mainAxisSize: MainAxisSize.min,

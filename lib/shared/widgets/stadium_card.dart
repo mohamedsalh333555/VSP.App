@@ -38,12 +38,12 @@ class StadiumCard extends StatelessWidget {
  height: isOwnerView ? 260 : 210,
  decoration: BoxDecoration(
  borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: VSPColors.divider, width: 1),
+ border: Border.all(color: Colors.white.withValues(alpha: 0.08), width: 0.8),
  boxShadow: [
  BoxShadow(
- color: Colors.black.withValues(alpha: 0.3),
- blurRadius: 15,
- offset: const Offset(0, 8),
+ color: Colors.black.withValues(alpha: 0.35),
+ blurRadius: 16,
+ offset: const Offset(0, 6),
  ),
  ],
  ),

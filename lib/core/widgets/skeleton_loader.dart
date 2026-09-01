@@ -17,13 +17,14 @@ class VSPSkeleton extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Shimmer.fromColors(
-      baseColor: Colors.white.withValues(alpha: 0.05),
-      highlightColor: Colors.white.withValues(alpha: 0.1),
+      baseColor: const Color(0xFF1E1E22),
+      highlightColor: const Color(0xFF2C2C32),
+      period: const Duration(milliseconds: 1400),
       child: Container(
         width: width,
         height: height,
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: const Color(0xFF1E1E22),
           borderRadius: BorderRadius.circular(borderRadius),
         ),
       ),
@@ -42,7 +43,8 @@ class CardSkeleton extends StatelessWidget {
       padding: const EdgeInsets.all(16),
       decoration: BoxDecoration(
         color: VSPColors.surface,
-        borderRadius: BorderRadius.circular(VSPRadius.md),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: Colors.white.withValues(alpha: 0.05), width: 0.8),
       ),
       child: const Column(
         crossAxisAlignment: CrossAxisAlignment.start,
