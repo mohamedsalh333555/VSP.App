@@ -216,6 +216,37 @@ class AppTheme {
  borderSide: const BorderSide(color: VSPColors.accent, width: 1.5),
  ),
  ),
+
+ pageTransitionsTheme: const PageTransitionsTheme(
+ builders: {
+ TargetPlatform.android: SmoothFadeTransitionsBuilder(),
+ TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+ TargetPlatform.windows: SmoothFadeTransitionsBuilder(),
+ },
+ ),
  );
  }
+}
+
+/// Custom high-performance transition builder that replaces heavy Android Zoom/Slide
+/// with an ultra-responsive 60fps fade transition.
+class SmoothFadeTransitionsBuilder extends PageTransitionsBuilder {
+  const SmoothFadeTransitionsBuilder();
+
+  @override
+  Widget buildTransitions<T>(
+    PageRoute<T> route,
+    BuildContext context,
+    Animation<double> animation,
+    Animation<double> secondaryAnimation,
+    Widget child,
+  ) {
+    return FadeTransition(
+      opacity: CurvedAnimation(
+        parent: animation,
+        curve: Curves.easeOutCubic,
+      ),
+      child: child,
+    );
+  }
 }

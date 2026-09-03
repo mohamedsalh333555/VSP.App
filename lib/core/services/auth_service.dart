@@ -306,8 +306,9 @@ class AuthService {
             authScreenLaunchMode: LaunchMode.externalApplication,
             queryParams: const {'prompt': 'select_account'},
           );
-          if (success)
+          if (success) {
             return {'success': true, 'user': _supabase.auth.currentUser};
+          }
         } catch (_) {}
       }
 

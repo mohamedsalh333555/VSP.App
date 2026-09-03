@@ -41,15 +41,18 @@ class VSPAmbientBackground extends StatelessWidget {
                     right: isRtl ? null : -100,
                     left: isRtl ? -100 : null,
                     child: Container(
-                      width: 280,
-                      height: 280,
+                      width: 320,
+                      height: 320,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: effectiveGlowColor,
-                      ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 50, sigmaY: 50),
-                        child: Container(color: Colors.transparent),
+                        gradient: RadialGradient(
+                          colors: [
+                            effectiveGlowColor.withValues(alpha: 0.20),
+                            effectiveGlowColor.withValues(alpha: 0.08),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
                       ),
                     ),
                   ),
@@ -59,15 +62,18 @@ class VSPAmbientBackground extends StatelessWidget {
                     left: isRtl ? null : -80,
                     right: isRtl ? -80 : null,
                     child: Container(
-                      width: 220,
-                      height: 220,
+                      width: 260,
+                      height: 260,
                       decoration: BoxDecoration(
                         shape: BoxShape.circle,
-                        color: effectiveGlowColor.withValues(alpha: 0.08),
-                      ),
-                      child: BackdropFilter(
-                        filter: ImageFilter.blur(sigmaX: 45, sigmaY: 45),
-                        child: Container(color: Colors.transparent),
+                        gradient: RadialGradient(
+                          colors: [
+                            effectiveGlowColor.withValues(alpha: 0.15),
+                            effectiveGlowColor.withValues(alpha: 0.05),
+                            Colors.transparent,
+                          ],
+                          stops: const [0.0, 0.45, 1.0],
+                        ),
                       ),
                     ),
                   ),

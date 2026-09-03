@@ -66,20 +66,23 @@ class _VSPBackButtonState extends State<VSPBackButton>
  Navigator.maybePop(context);
  }
  },
- child: ClipRRect(
- borderRadius: BorderRadius.circular(VSPRadius.full),
- child: BackdropFilter(
- filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
  child: Container(
  width: widget.size,
  height: widget.size,
  decoration: BoxDecoration(
- color: VSPColors.glassSurface,
+ color: VSPColors.surfaceAlt,
  shape: BoxShape.circle,
  border: Border.all(
  color: VSPColors.glassBorder,
  width: 1,
  ),
+ boxShadow: [
+ BoxShadow(
+ color: Colors.black.withValues(alpha: 0.25),
+ blurRadius: 8,
+ offset: const Offset(0, 2),
+ ),
+ ],
  ),
  child: Center(
  child: Icon(
@@ -88,8 +91,6 @@ class _VSPBackButtonState extends State<VSPBackButton>
  : Iconsax.arrow_left_2_copy,
  color: widget.iconColor ?? Colors.white,
  size: 15,
- ),
- ),
  ),
  ),
  ),
