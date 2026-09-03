@@ -37,11 +37,14 @@ class TournamentRepository {
  if (sportType != null && sportType.isNotEmpty) {
  query = query.eq('sport_type', sportType);
  }
- if (governorate != null && governorate.isNotEmpty) {
- final stdGov = EgyptGovernorates.resolveGoogleName(governorate);
- if (stdGov != null) {
- query = query.eq('governorate', stdGov);
- }
+ if (governorate != null &&
+     governorate.isNotEmpty &&
+     governorate != 'All' &&
+     governorate != 'الكل') {
+   final stdGov = EgyptGovernorates.resolveGoogleName(governorate);
+   if (stdGov != null) {
+     query = query.eq('governorate', stdGov);
+   }
  }
  
  final List<dynamic> response = await query;

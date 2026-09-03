@@ -1264,7 +1264,7 @@ class _HomeContent extends StatelessWidget {
  children: [
  _SectionHeader(
  title: AppLocalizations.of(context)!.joinChampionships, 
- onSeeAll: () => onNavigate(2, arguments: {'initialTab': 1}),
+ onSeeAll: () => onNavigate(2, arguments: {'initialTab': 0}),
  ),
  const SizedBox(height: 8),
  SizedBox(

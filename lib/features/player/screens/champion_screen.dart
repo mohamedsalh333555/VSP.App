@@ -28,7 +28,6 @@ class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
   late TabController _tabController;
   int _selectedTabIndex = 0;
-  String? _selectedRankingType;
 
   // Filter states
   String _selectedLocation = 'Cairo'; 
@@ -38,7 +37,7 @@ class ChampionScreenState extends State<ChampionScreen>
   @override
   void initState() {
     super.initState();
-    _tabController = TabController(length: 2, vsync: this);
+    _tabController = TabController(length: 3, vsync: this);
     _tabController.addListener(() {
       setState(() {
         _selectedTabIndex = _tabController.index;
@@ -108,15 +107,23 @@ class ChampionScreenState extends State<ChampionScreen>
               ),
               child: Stack(
                 children: [
-                  // Animated background pill
+                  // Animated background pill for 3 tabs
                   AnimatedAlign(
                     duration: const Duration(milliseconds: 220),
                     curve: Curves.easeInOut,
                     alignment: Directionality.of(context) == TextDirection.rtl 
-                        ? (_selectedTabIndex == 0 ? Alignment.centerRight : Alignment.centerLeft) 
-                        : (_selectedTabIndex == 0 ? Alignment.centerLeft : Alignment.centerRight),
+                        ? (_selectedTabIndex == 0
+                            ? Alignment.centerRight
+                            : (_selectedTabIndex == 1
+                                ? Alignment.center
+                                : Alignment.centerLeft)) 
+                        : (_selectedTabIndex == 0
+                            ? Alignment.centerLeft
+                            : (_selectedTabIndex == 1
+                                ? Alignment.center
+                                : Alignment.centerRight)),
                     child: FractionallySizedBox(
-                      widthFactor: 0.5,
+                      widthFactor: 1.0 / 3.0,
                       child: Container(
                         height: 42,
                         decoration: BoxDecoration(
@@ -128,37 +135,71 @@ class ChampionScreenState extends State<ChampionScreen>
                   ),
                   Row(
                     children: [
+                      // Tab 0: Championships with live count badge
                       Expanded(
                         child: GestureDetector(
                           onTap: () => _tabController.animateTo(0),
                           behavior: HitTestBehavior.opaque,
                           child: Center(
-                            child: Text(
-                              AppLocalizations.of(context)!.ranking,
-                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 0
-                                        ? Colors.black // Pure black on accent green background
-                                        : Colors.white, // Pure white for better contrast on dark
-                                    fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
-                                    fontSize: 14,
-                                  ),
+                            child: StreamBuilder<List<Championship>>(
+                              stream: TournamentRepository().getChampionshipsStream(
+                                governorate: _selectedLocation,
+                                sportType: _selectedSport,
+                              ),
+                              builder: (context, snapshot) {
+                                final count = snapshot.data?.length ?? 0;
+                                final countBadge = count > 0 ? ' ($count)' : '';
+                                final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+                                final label = (isArabic ? 'البطولات' : 'Tournaments') + countBadge;
+
+                                return Text(
+                                  label,
+                                  maxLines: 1,
+                                  overflow: TextOverflow.ellipsis,
+                                  style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                        color: _selectedTabIndex == 0 ? Colors.black : Colors.white,
+                                        fontWeight: _selectedTabIndex == 0 ? FontWeight.w900 : FontWeight.bold,
+                                        fontSize: 13,
+                                      ),
+                                );
+                              },
                             ),
                           ),
                         ),
                       ),
+                      // Tab 1: Teams
                       Expanded(
                         child: GestureDetector(
                           onTap: () => _tabController.animateTo(1),
                           behavior: HitTestBehavior.opaque,
                           child: Center(
                             child: Text(
-                              AppLocalizations.of(context)!.championships,
+                              AppLocalizations.of(context)!.teams,
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
                               style: Theme.of(context).textTheme.bodyLarge?.copyWith(
-                                    color: _selectedTabIndex == 1
-                                        ? Colors.black // Pure black on accent green background
-                                        : Colors.white, // Pure white for better contrast on dark
+                                    color: _selectedTabIndex == 1 ? Colors.black : Colors.white,
                                     fontWeight: _selectedTabIndex == 1 ? FontWeight.w900 : FontWeight.bold,
-                                    fontSize: 14,
+                                    fontSize: 13,
+                                  ),
+                            ),
+                          ),
+                        ),
+                      ),
+                      // Tab 2: 1VS1
+                      Expanded(
+                        child: GestureDetector(
+                          onTap: () => _tabController.animateTo(2),
+                          behavior: HitTestBehavior.opaque,
+                          child: Center(
+                            child: Text(
+                              '1VS1',
+                              maxLines: 1,
+                              overflow: TextOverflow.ellipsis,
+                              style: Theme.of(context).textTheme.bodyLarge?.copyWith(
+                                    color: _selectedTabIndex == 2 ? Colors.black : Colors.white,
+                                    fontWeight: _selectedTabIndex == 2 ? FontWeight.w900 : FontWeight.bold,
+                                    fontSize: 13,
                                   ),
                             ),
                           ),
@@ -172,20 +213,20 @@ class ChampionScreenState extends State<ChampionScreen>
 
             const SizedBox(height: VSPSpacing.md),
 
-            // Filters Row - Symmetrical Dropdowns
+            // Filters Row - 2 Symmetrical Wide Dropdowns
             Container(
               padding: const EdgeInsets.symmetric(horizontal: 16),
               child: Row(
                 children: [
-                  // Dropdown 1: Governorates
+                  // Dropdown 1: Governorates (with 'All' / 'كل المحافظات' at start)
                   Expanded(
                     child: _buildFunctionalDropdown(
                       value: _selectedLocation,
-                      items: EgyptGovernorates.allGovernorates,
+                      items: ['All', ...EgyptGovernorates.allGovernorates],
                       onChanged: (val) => setState(() => _selectedLocation = val!),
                     ),
                   ),
-                  const SizedBox(width: 8), 
+                  const SizedBox(width: 10), 
                   // Dropdown 2: Team Sports
                   Expanded(
                     child: _buildFunctionalDropdown(
@@ -194,28 +235,21 @@ class ChampionScreenState extends State<ChampionScreen>
                       onChanged: (val) => setState(() => _selectedSport = val!),
                     ),
                   ),
-                  const SizedBox(width: 8),
-                  // Dropdown 3: Ranking Type
-                  Expanded(
-                    child: _buildFunctionalDropdown(
-                      value: _selectedRankingType ?? AppLocalizations.of(context)!.teams,
-                      items: [AppLocalizations.of(context)!.teams, AppLocalizations.of(context)!.oneVsOnePlayers],
-                      onChanged: (val) => setState(() => _selectedRankingType = val!),
-                    ),
-                  ),
                 ],
               ),
             ),
 
             const SizedBox(height: VSPSpacing.lg),
 
-            // Tab Views
+            // Tab Views with smooth swipe gestures
             Expanded(
               child: TabBarView(
                 controller: _tabController,
+                physics: const BouncingScrollPhysics(),
                 children: [
-                  _buildRankingTab(),
                   _buildChampionshipsTab(),
+                  _buildTeamsRankingStream(),
+                  _build1v1PlayersRanking(),
                 ],
               ),
             ),
@@ -227,6 +261,9 @@ class ChampionScreenState extends State<ChampionScreen>
 
   String _translateItem(String item) {
     final isArabic = AppLocalizations.of(context)!.localeName == 'ar';
+    if (item == 'All') {
+      return isArabic ? 'كل المحافظات' : 'All Governorates';
+    }
     if (!isArabic) return item;
     if (EgyptGovernorates.sportsTranslations.containsKey(item)) {
       return EgyptGovernorates.getLocalizedSport(item, true);
@@ -243,7 +280,7 @@ class ChampionScreenState extends State<ChampionScreen>
     final effectiveValue = items.contains(value) ? value : items.first;
 
     return Container(
-      padding: const EdgeInsets.symmetric(horizontal: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14),
       height: 44,
       decoration: BoxDecoration(
         color: VSPColors.surface,
@@ -257,8 +294,8 @@ class ChampionScreenState extends State<ChampionScreen>
           dropdownColor: VSPColors.surface,
           isExpanded: true,
           style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                fontWeight: FontWeight.w500,
-                fontSize: 10, // Small text for 3-column layout
+                fontWeight: FontWeight.w600,
+                fontSize: 13,
               ),
           onChanged: onChanged,
           selectedItemBuilder: (BuildContext context) {
@@ -270,8 +307,8 @@ class ChampionScreenState extends State<ChampionScreen>
                   child: Text(
                     _translateItem(item),
                     style: Theme.of(context).textTheme.bodyMedium?.copyWith(
-                          fontWeight: FontWeight.w500,
-                          fontSize: 10,
+                          fontWeight: FontWeight.w600,
+                          fontSize: 13,
                         ),
                   ),
                 ),
@@ -293,18 +330,6 @@ class ChampionScreenState extends State<ChampionScreen>
     );
   }
 
-  Widget _buildRankingTab() {
-    return Column(
-      children: [
-        // Conditional Rendering based on Dropdown selection
-        Expanded(
-          child: (_selectedRankingType == AppLocalizations.of(context)!.oneVsOnePlayers) 
-              ? _build1v1PlayersRanking() 
-              : _buildTeamsRankingStream(),
-        ),
-      ],
-    );
-  }
 
   Widget _build1v1PlayersRanking() {
     return StreamBuilder<List<VSP1v1Player>>(
