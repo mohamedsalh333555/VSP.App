@@ -106,14 +106,15 @@ class _AddMatchupTeamsScreenState extends State<AddMatchupTeamsScreen> {
         return;
       }
 
-      // 3. Verify minimum 5 members for official matchup
+      // 3. Verify minimum members according to stadium capacity/pitch size
+      final requiredMembers = widget.stadium.playersPerTeam > 0 ? widget.stadium.playersPerTeam : 5;
       final membersCount = (response['team_members'] as List?)?.isNotEmpty == true
           ? (response['team_members'][0]['count'] as int? ?? 0)
           : team.memberUids.length;
 
-      if (membersCount < 5) {
+      if (membersCount < requiredMembers) {
         if (!mounted) return;
-        VSPFeedback.showError(context, 'فريق ${team.name} غير مكتمل ($membersCount/5 أعضاء مسجلين)');
+        VSPFeedback.showError(context, 'فريق ${team.name} غير مكتمل ($membersCount/$requiredMembers أعضاء مسجلين)');
         return;
       }
 
