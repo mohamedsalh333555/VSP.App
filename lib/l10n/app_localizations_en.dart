@@ -168,6 +168,15 @@ class AppLocalizationsEn extends AppLocalizations {
   String get google => 'Google';
 
   @override
+  String get continueWithGoogle => 'Continue with Google';
+
+  @override
+  String get dontHaveAccount => 'Don\'t have an account?';
+
+  @override
+  String get signUp => 'Sign up';
+
+  @override
   String get termsOfService => 'Terms of Service';
 
   @override
@@ -2244,4 +2253,72 @@ class AppLocalizationsEn extends AppLocalizations {
 
   @override
   String get createTeamButton => 'Create Team';
+
+  @override
+  String get completeYourPlayerProfile => 'Complete Your Profile as Player';
+
+  @override
+  String get completeYourOwnerProfile =>
+      'Complete Your Profile as Stadium Owner';
+
+  @override
+  String get playAndContactInfo => 'Playing & Contact Info';
+
+  @override
+  String get ownerContactAndPayoutInfo => 'Contact & Financial Settlement Info';
+
+  @override
+  String get completeRegistration => 'Complete Registration';
+
+  @override
+  String get locationAutoDetectFailed =>
+      'Could not determine your location automatically. Please select your governorate manually.';
+
+  @override
+  String get enterFirstName => 'Enter first name';
+
+  @override
+  String get enterLastName => 'Enter last name';
+
+  @override
+  String get payoutInfoTitle => 'Payout & Settlement Details';
+
+  @override
+  String get payoutInfoSubtitle =>
+      'Please provide at least one method to receive pitch booking revenues from VSP.';
+
+  @override
+  String get instapayAddress => 'InstaPay IPN Address';
+
+  @override
+  String get walletNumber => 'E-Wallet Number (Vodafone/Etisalat/Orange)';
+
+  @override
+  String get bankAccountIban => 'Bank Account / IBAN & Beneficiary Name';
+
+  @override
+  String get cancelRegistrationTitle => 'Cancel registration & sign out?';
+
+  @override
+  String get cancelRegistrationContent => 'Entered data will not be saved.';
+
+  @override
+  String get cancelAndSignOut => 'Cancel & Sign Out';
+
+  @override
+  String get continueRegistration => 'Continue Registration';
+
+  @override
+  String get selectPreferredPosition => 'Please select your preferred position';
+
+  @override
+  String get atLeastOnePayoutMethod =>
+      'Please provide at least one payout method';
+
+  @override
+  String get iAgreeTo => 'I agree to the ';
+
+  @override
+  String get pleaseAgreeToTerms =>
+      'Please agree to the Terms of Service & Privacy Policy to continue.';
 }

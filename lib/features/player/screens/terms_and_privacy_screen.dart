@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/providers/auth_provider.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 
 class TermsAndPrivacyScreen extends StatelessWidget {
   const TermsAndPrivacyScreen({super.key});
@@ -18,13 +18,7 @@ class TermsAndPrivacyScreen extends StatelessWidget {
       appBar: AppBar(
         backgroundColor: VSPColors.background,
         elevation: 0,
-        leading: IconButton(
-          icon: Icon(
-            isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-            color: Colors.white,
-          ),
-          onPressed: () => Navigator.pop(context),
-        ),
+        leading: const VSPBackButton(),
         centerTitle: true,
         title: Text(
           isOwner

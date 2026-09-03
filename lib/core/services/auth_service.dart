@@ -6,6 +6,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:google_sign_in/google_sign_in.dart';
 import 'logger_service.dart';
 import 'secure_storage_service.dart';
+import '../config/app_env.dart';
 
 class AuthService {
  final SupabaseClient _supabase = Supabase.instance.client;
@@ -227,9 +228,43 @@ class AuthService {
     }
   }
 
-  // Sign In with Google
+  // Sign In with Google (Native Google Play Sheet on Mobile + Web OAuth Fallback)
   Future<Map<String, dynamic>> signInWithGoogle({String? role}) async {
     try {
+      // 1. Mobile (Android / iOS): Native Google Play Services Sheet (Fast & No Browser)
+      if (!kIsWeb) {
+        final GoogleSignIn googleSignIn = GoogleSignIn(
+          serverClientId: AppEnv.googleWebClientId,
+          clientId: defaultTargetPlatform == TargetPlatform.iOS ? AppEnv.googleIosClientId : null,
+          scopes: ['email', 'profile'],
+        );
+
+        final GoogleSignInAccount? googleUser = await googleSignIn.signIn();
+        if (googleUser == null) {
+          // User closed the Google bottom sheet
+          return {'success': false, 'message': 'تم إلغاء تسجيل الدخول'};
+        }
+
+        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final String? idToken = googleAuth.idToken;
+        final String? accessToken = googleAuth.accessToken;
+
+        if (idToken == null) {
+          throw Exception('لم يتم استلام idToken من حساب جوجل');
+        }
+
+        final AuthResponse response = await _supabase.auth.signInWithIdToken(
+          provider: OAuthProvider.google,
+          idToken: idToken,
+          accessToken: accessToken,
+        );
+
+        if (response.user != null) {
+          return {'success': true, 'user': response.user};
+        }
+      }
+
+      // 2. Fallback for Web or devices without Google Play Services
       final String redirectUrl = kIsWeb
           ? '${Uri.base.origin}/'
           : (role != null 
@@ -249,6 +284,23 @@ class AuthService {
       return {'success': false, 'message': 'فشل تسجيل الدخول عبر جوجل.'};
     } catch (e) {
       _logSecurityEvent('GOOGLE_AUTH_ERROR', e);
+
+      // Fallback: If Native Google sheet fails unexpectedly on mobile, attempt Web OAuth as safe fallback
+      if (!kIsWeb) {
+        try {
+          final String redirectUrl = role != null 
+              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
+              : 'io.supabase.fluttervsp://login-callback/';
+          final success = await _supabase.auth.signInWithOAuth(
+            OAuthProvider.google,
+            redirectTo: redirectUrl,
+            authScreenLaunchMode: LaunchMode.externalApplication,
+            queryParams: const {'prompt': 'select_account'},
+          );
+          if (success) return {'success': true, 'user': _supabase.auth.currentUser};
+        } catch (_) {}
+      }
+
       return {'success': false, 'message': 'حدث خطأ في خدمة جوجل: $e'};
     }
   }

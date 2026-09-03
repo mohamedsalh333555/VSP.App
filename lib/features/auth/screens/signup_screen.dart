@@ -1,8 +1,10 @@
+import '../../../shared/widgets/vsp_terms_checkbox.dart';
+import '../../../shared/widgets/vsp_auth_header.dart';
+import '../../../shared/widgets/vsp_position_selector.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:go_router/go_router.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
@@ -27,6 +29,8 @@ class SignupScreen extends StatefulWidget {
 }
 
 class _SignupScreenState extends State<SignupScreen> {
+  bool _agreedToTerms = false;
+
  final _firstNameController = TextEditingController();
  final _lastNameController = TextEditingController();
  final _phoneController = TextEditingController();
@@ -83,6 +87,10 @@ class _SignupScreenState extends State<SignupScreen> {
  }
 
  Future<void> _handleSignup() async {
+    if (!_agreedToTerms) {
+      VSPFeedback.showError(context, AppLocalizations.of(context)!.pleaseAgreeToTerms);
+      return;
+    }
     if (_isLoading) return;
  final firstName = _firstNameController.text.trim();
  final lastName = _lastNameController.text.trim();
@@ -244,27 +252,7 @@ class _SignupScreenState extends State<SignupScreen> {
  const SizedBox(height: 12),
  
  // Header Nav
- Row(
- children: [
- _buildNavCircle(
- context, 
- icon: Localizations.localeOf(context).languageCode == 'ar' ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
- onTap: () {
- if (context.canPop()) {
- context.pop();
- } else {
- context.go('/welcome');
- }
- },
- ),
- const Spacer(),
- Image.asset(
- 'assets/images/logo.png',
- height: 24,
- fit: BoxFit.contain,
- ),
- ],
- ),
+              const VSPAuthHeader(showLogo: true),
 
  const SizedBox(height: 32),
 
@@ -418,11 +406,16 @@ class _SignupScreenState extends State<SignupScreen> {
  const SizedBox(height: 8),
  _buildGovernorateDropdown(languageProvider),
 
- // Position Selector (Players Only)
- if (!widget.isOwner) ...[
- const SizedBox(height: 16),
- _buildPositionSelector(languageProvider),
- ],
+  // Position Selector (Players Only)
+  if (!widget.isOwner) ...[
+    const SizedBox(height: 16),
+    _buildLabel(AppLocalizations.of(context)!.preferredPosition),
+    const SizedBox(height: 4),
+    VSPPositionSelector(
+      selectedPosition: _selectedPosition,
+      onPositionSelected: (code) => setState(() => _selectedPosition = code),
+    ),
+  ],
  
  const SizedBox(height: 16),
  _buildLabel(AppLocalizations.of(context)!.emailAddress),
@@ -471,117 +464,42 @@ class _SignupScreenState extends State<SignupScreen> {
  ),
  ),
  
- const SizedBox(height: 32),
+ const SizedBox(height: 20),
+
+ 
+ VSPTermsCheckbox(
+
+ 
+   value: _agreedToTerms,
+
+ 
+   onChanged: (val) => setState(() => _agreedToTerms = val),
+
+ 
+ ),
+
+ 
+ const SizedBox(height: 20),
+
+ 
  PrimaryButton(
- text: AppLocalizations.of(context)!.createAccount,
+
+ 
+   text: AppLocalizations.of(context)!.createAccount,
  isLoading: _isLoading,
  onPressed: _isLoading ? null : _handleSignup,
  ),
  const SizedBox(height: 40),
- ],
- ),
- ),
- ),
- ],
- ),
- ),
- ),
- );
- }
-
- Widget _buildNavCircle(BuildContext context, {required IconData icon, required VoidCallback onTap}) {
- return GestureDetector(
- onTap: onTap,
- child: Container(
- padding: const EdgeInsets.all(10),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.borderLight),
- ),
- child: Icon(icon, color: VSPColors.textPrimary, size: 20),
- ),
- );
- }
-
- Widget _buildPositionSelector(LanguageProvider languageProvider) {
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- final sportPositions = SportPositionsRegistry.getPositionsForSport('Football');
- final positions = sportPositions.map((pos) => {
- 'code': pos.code,
- 'label': isAr ? pos.nameAr : pos.nameEn,
- }).toList();
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- _buildLabel(AppLocalizations.of(context)!.preferredPosition),
- const SizedBox(height: 4),
- Row(
- children: positions.map((pos) {
- final code = pos['code'] as String;
- final label = pos['label'] as String;
- final isSelected = _selectedPosition == code;
-
- return Expanded(
- child: Padding(
- padding: const EdgeInsets.symmetric(horizontal: 3.0),
- child: AnimatedContainer(
- duration: const Duration(milliseconds: 200),
- curve: Curves.easeOutCubic,
- child: Material(
- color: Colors.transparent,
- child: InkWell(
- onTap: () {
- HapticFeedback.selectionClick();
- setState(() => _selectedPosition = code);
- },
- borderRadius: BorderRadius.circular(VSPRadius.md),
- child: Container(
- padding: const EdgeInsets.symmetric(vertical: 14, horizontal: 4),
- decoration: BoxDecoration(
- color: isSelected
- ? VSPColors.accent.withValues(alpha: 0.15)
- : VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(
- color: isSelected ? VSPColors.accent : VSPColors.borderLight,
- width: isSelected ? 1.8 : 1.0,
- ),
- boxShadow: isSelected
- ? [
- BoxShadow(
- color: VSPColors.accent.withValues(alpha: 0.25),
- blurRadius: 10,
- offset: const Offset(0, 3),
- ),
- ]
- : [],
- ),
- child: Center(
- child: FittedBox(
- fit: BoxFit.scaleDown,
- child: Text(
- label,
- textAlign: TextAlign.center,
- style: TextStyle(
- color: isSelected ? VSPColors.accent : VSPColors.textPrimary,
- fontWeight: isSelected ? FontWeight.bold : FontWeight.w600,
- fontSize: 13,
- ),
- ),
- ),
- ),
- ),
- ),
- ),
- ),
- ),
- );
- }).toList(),
- ),
- ],
- );
- }
+              ],
+            ),
+          ),
+        ),
+      ],
+    ),
+  ),
+),
+);
+}
 
  Widget _buildPasswordStrengthBar() {
  final password = _passwordController.text;

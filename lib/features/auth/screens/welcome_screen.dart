@@ -10,6 +10,7 @@ import '../../../core/providers/language_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 
 /// Welcome Screen - State-of-the-Art Glassmorphic Onboarding Experience.
 class WelcomeScreen extends StatefulWidget {
@@ -400,49 +401,28 @@ class _WelcomeScreenState extends State<WelcomeScreen> {
  ],
  ),
 
- // 2. Fixed Top Safe Bar (Language Switcher & Glass Back Arrow)
+ // 2. Fixed Top Safe Bar
  Positioned(
  top: 0,
  left: 0,
  right: 0,
  child: SafeArea(
  child: Padding(
- padding: const EdgeInsets.symmetric(horizontal: 20.0, vertical: 10.0),
+ padding: const EdgeInsets.only(left: 24.0, right: 24.0, top: 12.0, bottom: 4.0),
  child: Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
  // Glass Back Arrow (Only visible when page > 0)
  _currentPage > 0
- ? ScaleAnimatedButton(
- onPressed: () {
+ ? VSPBackButton(
+ onTap: () {
  _pageController.previousPage(
  duration: const Duration(milliseconds: 300),
  curve: Curves.easeInOut,
  );
  },
- child: ClipRRect(
- borderRadius: BorderRadius.circular(VSPRadius.full),
- child: BackdropFilter(
- filter: ImageFilter.blur(sigmaX: 16, sigmaY: 16),
- child: Container(
- padding: const EdgeInsets.all(10),
- decoration: BoxDecoration(
- color: VSPColors.glassSurface,
- shape: BoxShape.circle,
- border: Border.all(color: VSPColors.glassBorder),
- ),
- child: Icon(
- Localizations.localeOf(context).languageCode == 'ar'
- ? Iconsax.arrow_right_3_copy
- : Iconsax.arrow_left_2_copy,
- color: Colors.white,
- size: 15,
- ),
- ),
- ),
- ),
  )
- : const SizedBox(width: 40),
+ : const SizedBox(width: 38, height: 38),
 
  // Language switch button
  _buildLanguageSwitcher(),

@@ -5,6 +5,7 @@ import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/custom_text_field.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 
 /// Screen shown when the user clicks a password-reset deep link.
 /// Supabase has already established the recovery session before this screen
@@ -109,6 +110,7 @@ class _SetNewPasswordScreenState extends State<SetNewPasswordScreen> {
  appBar: AppBar(
  backgroundColor: Colors.transparent,
  elevation: 0,
+ leading: const VSPBackButton(),
  title: Text(
  isAr ? 'تعيين كلمة مرور جديدة' : 'Set New Password',
  style: const TextStyle(

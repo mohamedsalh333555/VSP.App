@@ -1,3 +1,4 @@
+import '../../../shared/widgets/vsp_auth_header.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, TargetPlatform;
@@ -6,7 +7,6 @@ import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/social_auth_button.dart';
@@ -221,25 +221,7 @@ class _LoginScreenState extends State<LoginScreen> {
  const SizedBox(height: 12),
  
  // Header Nav
- Row(
- children: [
- VSPBackButton(
- onTap: () {
- if (context.canPop()) {
- context.pop();
- } else {
- context.go('/welcome');
- }
- },
- ),
- const Spacer(),
- Image.asset(
- 'assets/images/logo.png',
- height: 24,
- fit: BoxFit.contain,
- ),
- ],
- ),
+              const VSPAuthHeader(showLogo: true),
 
  const SizedBox(height: 32),
 
@@ -425,7 +407,7 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  const SizedBox(width: 10),
  Text(
- AppLocalizations.of(context)!.google,
+ AppLocalizations.of(context)!.continueWithGoogle,
  style: Theme.of(context).textTheme.labelLarge?.copyWith(
  fontWeight: FontWeight.bold,
  color: VSPColors.textPrimary,
@@ -455,6 +437,36 @@ class _LoginScreenState extends State<LoginScreen> {
  ),
  ],
  ),
+					const SizedBox(height: 32),
+
+					// Don't have an account? Sign up
+					Row(
+						mainAxisAlignment: MainAxisAlignment.center,
+						children: [
+							Text(
+								AppLocalizations.of(context)!.dontHaveAccount,
+								style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+										color: VSPColors.textSecondary,
+										fontSize: 14,
+									),
+							),
+							const SizedBox(width: 6),
+							GestureDetector(
+								onTap: () {
+									context.go('/welcome');
+								},
+								child: Text(
+									AppLocalizations.of(context)!.signUp,
+									style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+											color: VSPColors.accent,
+											fontWeight: FontWeight.bold,
+											fontSize: 14,
+										),
+								),
+							),
+						],
+					),
+
  const SizedBox(height: 40),
  ],
  ),

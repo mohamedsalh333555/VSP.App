@@ -18,7 +18,7 @@ class AppEnv {
     if (kReleaseMode) {
       VSPLogger.w(' Production build running with standard project SUPABASE_ANON_KEY.');
     }
-    return 'sb_publishable_I6UoUL32GmnFZcXQ5ioasA_WLgizloE';
+    return 'sb_publishable_ht3eLKZoEiQ49hh413Yfgw_E-S4k3-k';
   }
 
   // Paymob Public Key فقط في التطبيق
@@ -30,4 +30,8 @@ class AppEnv {
     }
     return 'egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx';
   }
+
+  // Google OAuth Client IDs
+  static const String googleWebClientId = '860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com';
+  static const String googleIosClientId = '860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com';
 }

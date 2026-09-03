@@ -9,14 +9,14 @@ class VSPBackButton extends StatefulWidget {
  final VoidCallback? onTap;
  final Color? iconColor;
  final double size;
- final EdgeInsetsGeometry? margin;
+ final EdgeInsetsGeometry margin;
 
  const VSPBackButton({
  super.key,
  this.onTap,
  this.iconColor,
  this.size = 38.0,
- this.margin,
+ this.margin = EdgeInsets.zero,
  });
 
  @override
@@ -51,7 +51,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  return Container(
- margin: widget.margin ?? const EdgeInsets.all(8),
+ margin: widget.margin,
  child: ScaleTransition(
  scale: _scale,
  child: GestureDetector(

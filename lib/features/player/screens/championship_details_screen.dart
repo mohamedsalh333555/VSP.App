@@ -5,6 +5,7 @@ import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_icon_badge.dart';
+import '../../../shared/widgets/vsp_back_button.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../core/repositories/team_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
@@ -362,13 +363,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
               isArabic ? 'تفاصيل البطولة' : 'Championship Details',
               style: Theme.of(context).textTheme.titleMedium?.copyWith(fontWeight: FontWeight.bold),
             ),
-            leading: IconButton(
-              icon: Icon(
-                isArabic ? Iconsax.arrow_right_1_copy : Iconsax.arrow_left_2_copy,
-                color: VSPColors.textPrimary,
-              ),
-              onPressed: () => Navigator.pop(context),
-            ),
+            leading: const VSPBackButton(),
             actions: [
               IconButton(
                 icon: const Icon(Iconsax.share_copy, color: VSPColors.accent, size: 20),

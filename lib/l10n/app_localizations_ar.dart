@@ -167,6 +167,15 @@ class AppLocalizationsAr extends AppLocalizations {
   String get google => 'جوجل';
 
   @override
+  String get continueWithGoogle => 'المتابعة عبر Google';
+
+  @override
+  String get dontHaveAccount => 'ليس لديك حساب؟';
+
+  @override
+  String get signUp => 'إنشاء حساب';
+
+  @override
   String get termsOfService => 'شروط الخدمة';
 
   @override
@@ -2224,4 +2233,71 @@ class AppLocalizationsAr extends AppLocalizations {
 
   @override
   String get createTeamButton => 'إنشاء فريق';
+
+  @override
+  String get completeYourPlayerProfile => 'أكمل ملفك كلاعب';
+
+  @override
+  String get completeYourOwnerProfile => 'أكمل ملفك كصاحب ملعب';
+
+  @override
+  String get playAndContactInfo => 'معلومات اللعب والتواصل';
+
+  @override
+  String get ownerContactAndPayoutInfo => 'بيانات التواصل والتسويات المالية';
+
+  @override
+  String get completeRegistration => 'إتمام التسجيل';
+
+  @override
+  String get locationAutoDetectFailed =>
+      'لم نتمكن من تحديد موقعك تلقائياً. يرجى اختيار محافظتك يدوياً لعرض الملاعب في منطقتك.';
+
+  @override
+  String get enterFirstName => 'أدخل الاسم الأول';
+
+  @override
+  String get enterLastName => 'أدخل الاسم الثاني';
+
+  @override
+  String get payoutInfoTitle => 'بيانات استلام المستحقات والتسويات';
+
+  @override
+  String get payoutInfoSubtitle =>
+      'يرجى إدخال وسيلة واحدة على الأقل لاستلام أرباح ومستحقات حجز ملاعبك من إدارة منصة VSP.';
+
+  @override
+  String get instapayAddress => 'عنوان انستا باي InstaPay IPN';
+
+  @override
+  String get walletNumber => 'رقم المحفظة الإلكترونية (فودافون/اتصالات/أورنج)';
+
+  @override
+  String get bankAccountIban => 'الحساب البنكي / IBAN واسم المستفيد';
+
+  @override
+  String get cancelRegistrationTitle => 'هل تريد إلغاء التسجيل وتسجيل الخروج؟';
+
+  @override
+  String get cancelRegistrationContent => 'لن يتم حفظ البيانات المدخلة.';
+
+  @override
+  String get cancelAndSignOut => 'إلغاء وتسجيل خروج';
+
+  @override
+  String get continueRegistration => 'متابعة التسجيل';
+
+  @override
+  String get selectPreferredPosition => 'يرجى اختيار مركزك المفضل';
+
+  @override
+  String get atLeastOnePayoutMethod =>
+      'يرجى إدخال وسيلة واحدة على الأقل لاستلام المستحقات';
+
+  @override
+  String get iAgreeTo => 'أوافق على ';
+
+  @override
+  String get pleaseAgreeToTerms =>
+      'يرجى الموافقة على الشروط والأحكام وسياسة الخصوصية للمتابعة.';
 }

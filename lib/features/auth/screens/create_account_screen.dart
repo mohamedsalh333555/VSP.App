@@ -14,7 +14,7 @@ import 'package:flutter/foundation.dart' show kIsWeb, defaultTargetPlatform, Tar
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../../core/providers/auth_provider.dart';
 
-import '../../../shared/widgets/vsp_back_button.dart';
+import '../../../shared/widgets/vsp_auth_header.dart';
 import '../../../shared/widgets/vsp_icon_badge.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
@@ -33,9 +33,9 @@ class CreateAccountScreen extends StatefulWidget {
 }
 
 class _CreateAccountScreenState extends State<CreateAccountScreen> {
+
   late TapGestureRecognizer _termsRecognizer;
   late TapGestureRecognizer _privacyRecognizer;
-  bool _acceptedTerms = true;
 
   @override
   void initState() {
@@ -63,7 +63,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  Widget build(BuildContext context) {
  final authProvider = Provider.of<AuthProvider>(context, listen: false);
  final bool isUserOwner = widget.isOwner;
- final bool isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  // تحديد النصوص بناءً على نوع المستخدم
  final String greeting = !isUserOwner
@@ -116,11 +115,7 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  const SizedBox(height: 12),
  
  // Header Nav
- const Row(
- children: [
- VSPBackButton(),
- ],
- ),
+              const VSPAuthHeader(showLogo: true),
 
  const SizedBox(height: 24),
 
@@ -166,269 +161,204 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
  ),
  ),
 
- const SizedBox(height: 32),
+					const SizedBox(height: 32),
 
- // Explicit Terms & Privacy Agreement Checkbox
- VSPFadeInItem(
- index: 3,
- child: Padding(
- padding: const EdgeInsets.only(bottom: 20),
- child: InkWell(
- onTap: () => setState(() => _acceptedTerms = !_acceptedTerms),
- borderRadius: BorderRadius.circular(VSPRadius.md),
- child: Padding(
- padding: const EdgeInsets.symmetric(vertical: 4),
- child: Row(
- crossAxisAlignment: CrossAxisAlignment.center,
- children: [
- SizedBox(
- width: 24,
- height: 24,
- child: Checkbox(
- value: _acceptedTerms,
- activeColor: VSPColors.accent,
- checkColor: Colors.black,
- shape: RoundedRectangleBorder(
- borderRadius: BorderRadius.circular(4),
- ),
- side: BorderSide(
- color: _acceptedTerms ? VSPColors.accent : VSPColors.textSecondary.withValues(alpha: 0.6),
- width: 1.5,
- ),
- onChanged: (val) {
- setState(() => _acceptedTerms = val ?? false);
- },
- ),
- ),
- const SizedBox(width: 12),
- Expanded(
- child: RichText(
- text: TextSpan(
- style: Theme.of(context).textTheme.bodySmall?.copyWith(
- color: VSPColors.textSecondary,
- height: 1.4,
- fontSize: 13,
- ),
- children: [
- TextSpan(text: isArabic ? 'أوافق على ' : 'I agree to the '),
- TextSpan(
- text: isArabic ? 'شروط الخدمة' : 'Terms of Service',
- recognizer: _termsRecognizer,
- style: const TextStyle(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- decoration: TextDecoration.underline,
- ),
- ),
- TextSpan(text: isArabic ? ' و ' : ' and '),
- TextSpan(
- text: isArabic ? 'سياسة الخصوصية' : 'Privacy Policy',
- recognizer: _privacyRecognizer,
- style: const TextStyle(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- decoration: TextDecoration.underline,
- ),
- ),
- ],
- ),
- ),
- ),
- ],
- ),
- ),
- ),
- ),
- ),
+					// Action Buttons
+					VSPFadeInItem(
+						index: 3,
+						child: PrimaryButton(
+							text: AppLocalizations.of(context)!.continueWithEmail,
+							height: 60,
+							onPressed: () {
+								context.push(isUserOwner ? '/signup-owner' : '/signup-player');
+							},
+						),
+					),
 
- // Action Buttons
- VSPFadeInItem(
- index: 4,
- child: PrimaryButton(
- text: AppLocalizations.of(context)!.continueWithEmail,
- height: 60,
- onPressed: () {
- if (!_acceptedTerms) {
- VSPFeedback.showWarning(
- context,
- isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
- );
- return;
- }
- authProvider.setUserType(isUserOwner ? 'owner' : 'player');
- context.push(isUserOwner ? '/signup-owner' : '/signup-player');
- },
- ),
- ),
+					const SizedBox(height: 28),
 
- const SizedBox(height: 32),
+					VSPFadeInItem(
+						index: 4,
+						child: Row(
+							children: [
+								const Expanded(child: Divider(color: VSPColors.borderMedium)),
+								Padding(
+									padding: const EdgeInsets.symmetric(horizontal: 16),
+									child: Text(
+										AppLocalizations.of(context)!.or,
+										style: TextStyle(
+											color: VSPColors.textSecondary.withValues(alpha: 0.5),
+										),
+									),
+								),
+								const Expanded(child: Divider(color: VSPColors.borderMedium)),
+							],
+						),
+					),
 
- VSPFadeInItem(
- index: 5,
- child: Row(
- children: [
- const Expanded(child: Divider(color: VSPColors.borderMedium)),
- Padding(
- padding: const EdgeInsets.symmetric(horizontal: 16),
- child: Text(
- AppLocalizations.of(context)!.or,
- style: TextStyle(
- color: VSPColors.textSecondary.withValues(alpha: 0.5),
- ),
- ),
- ),
- const Expanded(child: Divider(color: VSPColors.borderMedium)),
- ],
- ),
- ),
+					const SizedBox(height: 28),
 
- const SizedBox(height: 32),
+					// Social Sign-In Buttons (Google & Apple)
+					VSPFadeInItem(
+						index: 5,
+						child: Row(
+							children: [
+								if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
+									Expanded(
+										child: SocialAuthButton(
+											height: 56,
+											iconWidget: Row(
+												mainAxisSize: MainAxisSize.min,
+												mainAxisAlignment: MainAxisAlignment.center,
+												children: [
+													Image.asset(
+														'assets/images/apple_logo.png',
+														width: 20,
+														height: 20,
+														color: VSPColors.textPrimary,
+													),
+													const SizedBox(width: 10),
+													Text(
+														'Apple',
+														style: Theme.of(context).textTheme.labelLarge?.copyWith(
+																fontWeight: FontWeight.bold,
+																color: VSPColors.textPrimary,
+															),
+													),
+												],
+											),
+											onPressed: () async {
+												final role = isUserOwner ? 'owner' : 'player';
+												authProvider.setUserType(role);
+												await SecureStorageService.writeSecure('pending_oauth_role', role);
+												final prefs = await SharedPreferences.getInstance();
+												await prefs.setString('pending_oauth_role', role);
+												await prefs.setBool('pending_oauth_is_login_only', false);
+												final success = await authProvider.signInWithApple(isLoginOnly: false);
+												if (context.mounted && !success) {
+													VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
+												}
+											},
+										),
+									),
+									const SizedBox(width: 12),
+								],
+								Expanded(
+									child: SocialAuthButton(
+										height: 56,
+										iconWidget: Row(
+											mainAxisSize: MainAxisSize.min,
+											mainAxisAlignment: MainAxisAlignment.center,
+											children: [
+												Image.asset(
+													'assets/images/google_logo.png',
+													width: 22,
+													height: 22,
+												),
+												const SizedBox(width: 10),
+												Text(
+													AppLocalizations.of(context)!.continueWithGoogle,
+													style: Theme.of(context).textTheme.labelLarge?.copyWith(
+															fontWeight: FontWeight.bold,
+															color: VSPColors.textPrimary,
+														),
+												),
+											],
+										),
+										onPressed: () async {
+											final role = isUserOwner ? 'owner' : 'player';
+											authProvider.setUserType(role);
+											await SecureStorageService.writeSecure('pending_oauth_role', role);
+											final prefs = await SharedPreferences.getInstance();
+											await prefs.setString('pending_oauth_role', role);
+											await prefs.setBool('pending_oauth_is_login_only', false);
+											final success = await authProvider.signInWithGoogle(isLoginOnly: false);
+											if (context.mounted && !success) {
+												VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
+											}
+										},
+									),
+								),
+							],
+						),
+					),
 
- // Social Sign-In Buttons (Google & Apple)
- VSPFadeInItem(
- index: 6,
- child: Row(
- children: [
- // زر Apple يظهر فقط إذا كان الجهاز آيفون أو ماك
- if (!kIsWeb && defaultTargetPlatform == TargetPlatform.iOS) ...[
- Expanded(
- child: SocialAuthButton(
- height: 56,
- iconWidget: Row(
- mainAxisSize: MainAxisSize.min,
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Image.asset(
- 'assets/images/apple_logo.png',
- width: 20,
- height: 20,
- color: VSPColors.textPrimary,
- ),
- const SizedBox(width: 10),
- Text(
- 'Apple',
- style: Theme.of(context).textTheme.labelLarge?.copyWith(
- fontWeight: FontWeight.bold,
- color: VSPColors.textPrimary,
- ),
- ),
- ],
- ),
- onPressed: () async {
- if (!_acceptedTerms) {
- VSPFeedback.showWarning(
- context,
- isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
- );
- return;
- }
- final role = isUserOwner ? 'owner' : 'player';
- authProvider.setUserType(role);
- await SecureStorageService.writeSecure('pending_oauth_role', role);
- final prefs = await SharedPreferences.getInstance();
- await prefs.setString('pending_oauth_role', role);
- await prefs.setBool('pending_oauth_is_login_only', false);
- final success = await authProvider.signInWithApple(isLoginOnly: false);
- if (context.mounted && !success) {
- VSPFeedback.showError(context, authProvider.errorMessage ?? 'Apple Sign-In failed');
- }
- },
- ),
- ),
- const SizedBox(width: 12),
- ],
- 
- // زر Google يظهر للجميع
- Expanded(
- child: SocialAuthButton(
- height: 56,
- iconWidget: Row(
- mainAxisSize: MainAxisSize.min,
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- Image.asset(
- 'assets/images/google_logo.png',
- width: 22,
- height: 22,
- ),
- const SizedBox(width: 10),
- Text(
- AppLocalizations.of(context)!.google,
- style: Theme.of(context).textTheme.labelLarge?.copyWith(
- fontWeight: FontWeight.bold,
- color: VSPColors.textPrimary,
- ),
- ),
- ],
- ),
- onPressed: () async {
- if (!_acceptedTerms) {
- VSPFeedback.showWarning(
- context,
- isArabic ? 'يرجى الموافقة على الشروط وسياسة الخصوصية للمتابعة' : 'Please agree to Terms and Privacy Policy to proceed',
- );
- return;
- }
- final role = isUserOwner ? 'owner' : 'player';
- authProvider.setUserType(role);
- await SecureStorageService.writeSecure('pending_oauth_role', role);
- final prefs = await SharedPreferences.getInstance();
- await prefs.setString('pending_oauth_role', role);
- await prefs.setBool('pending_oauth_is_login_only', false);
- final success = await authProvider.signInWithGoogle(isLoginOnly: false);
- if (context.mounted && !success) {
- VSPFeedback.showError(context, authProvider.errorMessage ?? 'Google Sign-In failed');
- }
- },
- ),
- ),
- ],
- ),
- ),
+					const SizedBox(height: 32),
 
- const SizedBox(height: 48),
+					// Already have an account? Sign in
+					VSPFadeInItem(
+						index: 6,
+						child: Row(
+							mainAxisAlignment: MainAxisAlignment.center,
+							children: [
+								Text(
+									AppLocalizations.of(context)!.alreadyHaveAccount,
+									style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+											color: VSPColors.textSecondary,
+											fontSize: 14,
+										),
+								),
+								const SizedBox(width: 6),
+								GestureDetector(
+									onTap: () {
+										context.push('/login');
+									},
+									child: Text(
+										AppLocalizations.of(context)!.login,
+										style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+												color: VSPColors.accent,
+												fontWeight: FontWeight.bold,
+												fontSize: 14,
+											),
+									),
+								),
+							],
+						),
+					),
 
- // Footer Links
- VSPFadeInItem(
- index: 7,
- child: Center(
- child: Opacity(
- opacity: 0.6,
- child: RichText(
- textAlign: TextAlign.center,
- text: TextSpan(
- style: Theme.of(context).textTheme.bodySmall?.copyWith(
- color: VSPColors.textSecondary,
- height: 1.5,
- ),
- children: [
- TextSpan(text: AppLocalizations.of(context)!.byUsingVsp),
- TextSpan(
- text: AppLocalizations.of(context)!.termsOfService,
- recognizer: _termsRecognizer,
- style: const TextStyle(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- decoration: TextDecoration.underline,
- ),
- ),
- TextSpan(text: AppLocalizations.of(context)!.and),
- TextSpan(
- text: AppLocalizations.of(context)!.privacyPolicy,
- recognizer: _privacyRecognizer,
- style: const TextStyle(
- color: VSPColors.accent,
- fontWeight: FontWeight.bold,
- decoration: TextDecoration.underline,
- ),
- ),
- ],
- ),
- ),
- ),
- ),
- ),
- const SizedBox(height: 40),
+					const SizedBox(height: 32),
+
+					// Footer Links
+					VSPFadeInItem(
+						index: 7,
+						child: Center(
+							child: Opacity(
+								opacity: 0.75,
+								child: RichText(
+									textAlign: TextAlign.center,
+									text: TextSpan(
+										style: Theme.of(context).textTheme.bodySmall?.copyWith(
+												color: VSPColors.textSecondary,
+												height: 1.5,
+											),
+										children: [
+											TextSpan(text: AppLocalizations.of(context)!.byUsingVsp),
+											TextSpan(
+												text: AppLocalizations.of(context)!.termsOfService,
+												recognizer: _termsRecognizer,
+												style: const TextStyle(
+													color: VSPColors.accent,
+													fontWeight: FontWeight.bold,
+													decoration: TextDecoration.underline,
+												),
+											),
+											TextSpan(text: AppLocalizations.of(context)!.and),
+											TextSpan(
+												text: AppLocalizations.of(context)!.privacyPolicy,
+												recognizer: _privacyRecognizer,
+												style: const TextStyle(
+													color: VSPColors.accent,
+													fontWeight: FontWeight.bold,
+													decoration: TextDecoration.underline,
+												),
+											),
+										],
+									),
+								),
+							),
+						),
+					),
+					const SizedBox(height: 40),
  ],
  ),
  ),

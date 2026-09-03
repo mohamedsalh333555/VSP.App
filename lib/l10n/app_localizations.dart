@@ -410,6 +410,24 @@ abstract class AppLocalizations {
   /// **'Google'**
   String get google;
 
+  /// No description provided for @continueWithGoogle.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue with Google'**
+  String get continueWithGoogle;
+
+  /// No description provided for @dontHaveAccount.
+  ///
+  /// In en, this message translates to:
+  /// **'Don\'t have an account?'**
+  String get dontHaveAccount;
+
+  /// No description provided for @signUp.
+  ///
+  /// In en, this message translates to:
+  /// **'Sign up'**
+  String get signUp;
+
   /// No description provided for @termsOfService.
   ///
   /// In en, this message translates to:
@@ -4219,6 +4237,132 @@ abstract class AppLocalizations {
   /// In en, this message translates to:
   /// **'Create Team'**
   String get createTeamButton;
+
+  /// No description provided for @completeYourPlayerProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Your Profile as Player'**
+  String get completeYourPlayerProfile;
+
+  /// No description provided for @completeYourOwnerProfile.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Your Profile as Stadium Owner'**
+  String get completeYourOwnerProfile;
+
+  /// No description provided for @playAndContactInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Playing & Contact Info'**
+  String get playAndContactInfo;
+
+  /// No description provided for @ownerContactAndPayoutInfo.
+  ///
+  /// In en, this message translates to:
+  /// **'Contact & Financial Settlement Info'**
+  String get ownerContactAndPayoutInfo;
+
+  /// No description provided for @completeRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Complete Registration'**
+  String get completeRegistration;
+
+  /// No description provided for @locationAutoDetectFailed.
+  ///
+  /// In en, this message translates to:
+  /// **'Could not determine your location automatically. Please select your governorate manually.'**
+  String get locationAutoDetectFailed;
+
+  /// No description provided for @enterFirstName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter first name'**
+  String get enterFirstName;
+
+  /// No description provided for @enterLastName.
+  ///
+  /// In en, this message translates to:
+  /// **'Enter last name'**
+  String get enterLastName;
+
+  /// No description provided for @payoutInfoTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Payout & Settlement Details'**
+  String get payoutInfoTitle;
+
+  /// No description provided for @payoutInfoSubtitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide at least one method to receive pitch booking revenues from VSP.'**
+  String get payoutInfoSubtitle;
+
+  /// No description provided for @instapayAddress.
+  ///
+  /// In en, this message translates to:
+  /// **'InstaPay IPN Address'**
+  String get instapayAddress;
+
+  /// No description provided for @walletNumber.
+  ///
+  /// In en, this message translates to:
+  /// **'E-Wallet Number (Vodafone/Etisalat/Orange)'**
+  String get walletNumber;
+
+  /// No description provided for @bankAccountIban.
+  ///
+  /// In en, this message translates to:
+  /// **'Bank Account / IBAN & Beneficiary Name'**
+  String get bankAccountIban;
+
+  /// No description provided for @cancelRegistrationTitle.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel registration & sign out?'**
+  String get cancelRegistrationTitle;
+
+  /// No description provided for @cancelRegistrationContent.
+  ///
+  /// In en, this message translates to:
+  /// **'Entered data will not be saved.'**
+  String get cancelRegistrationContent;
+
+  /// No description provided for @cancelAndSignOut.
+  ///
+  /// In en, this message translates to:
+  /// **'Cancel & Sign Out'**
+  String get cancelAndSignOut;
+
+  /// No description provided for @continueRegistration.
+  ///
+  /// In en, this message translates to:
+  /// **'Continue Registration'**
+  String get continueRegistration;
+
+  /// No description provided for @selectPreferredPosition.
+  ///
+  /// In en, this message translates to:
+  /// **'Please select your preferred position'**
+  String get selectPreferredPosition;
+
+  /// No description provided for @atLeastOnePayoutMethod.
+  ///
+  /// In en, this message translates to:
+  /// **'Please provide at least one payout method'**
+  String get atLeastOnePayoutMethod;
+
+  /// No description provided for @iAgreeTo.
+  ///
+  /// In en, this message translates to:
+  /// **'I agree to the '**
+  String get iAgreeTo;
+
+  /// No description provided for @pleaseAgreeToTerms.
+  ///
+  /// In en, this message translates to:
+  /// **'Please agree to the Terms of Service & Privacy Policy to continue.'**
+  String get pleaseAgreeToTerms;
 }
 
 class _AppLocalizationsDelegate
