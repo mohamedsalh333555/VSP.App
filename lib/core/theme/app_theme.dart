@@ -220,7 +220,7 @@ class AppTheme {
  pageTransitionsTheme: const PageTransitionsTheme(
  builders: {
  TargetPlatform.android: SmoothFadeTransitionsBuilder(),
- TargetPlatform.iOS: CupertinoPageTransitionsBuilder(),
+ TargetPlatform.iOS: SmoothFadeTransitionsBuilder(),
  TargetPlatform.windows: SmoothFadeTransitionsBuilder(),
  },
  ),
