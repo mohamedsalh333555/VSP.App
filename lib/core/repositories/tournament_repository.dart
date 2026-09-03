@@ -1476,7 +1476,6 @@ class TournamentRepository {
 
  final Map<String, Map<String, dynamic>> scorerStats = {};
 
- int totalOwnGoals = 0;
 
  for (final matchData in (response as List)) {
  final rawGoals = matchData['goal_details'] as List?;
@@ -1490,12 +1489,7 @@ class TournamentRepository {
  final bool isOwnGoal = item['is_own_goal'] == true || item['isOwnGoal'] == true;
  final playerName = item['player_name']?.toString().trim() ?? item['playerName']?.toString().trim() ?? '';
  
- // Aggregate Own Goals under a dedicated category without naming any player
- if (isOwnGoal || 
- playerName.contains('عكسي') || 
- playerName == 'لاعب مجهول' || 
- playerName.contains('مجهول')) {
- totalOwnGoals++;
+ if (isOwnGoal) {
  continue;
  }
 
@@ -1522,15 +1516,6 @@ class TournamentRepository {
 
  final list = scorerStats.values.toList();
  list.sort((a, b) => (b['goals'] as int).compareTo(a['goals'] as int));
-
- if (totalOwnGoals > 0) {
- list.add({
- 'name': 'أهداف عكسية',
- 'team': 'إجمالي الأهداف العكسية في البطولة',
- 'goals': totalOwnGoals,
- 'isOwnGoalCategory': true,
- });
- }
 
  return list;
  } catch (e) {

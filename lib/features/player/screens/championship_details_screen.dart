@@ -1174,28 +1174,24 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
  padding: const EdgeInsets.all(VSPSpacing.md),
  itemCount: scorers.length,
  itemBuilder: (context, index) {
- final item = scorers[index];
- final bool isOwnGoalCategory = item['isOwnGoalCategory'] == true || item['name'] == 'أهداف عكسية';
- final rank = index + 1;
- final String name = item['name'] ?? '';
- final String team = item['team'] ?? '';
- final int goals = item['goals'] as int? ?? 0;
+                final item = scorers[index];
+                final rank = index + 1;
+                final String name = item['name'] ?? '';
+                final String team = item['team'] ?? '';
+                final int goals = item['goals'] as int? ?? 0;
 
- Color rankColor = VSPColors.surfaceAlt;
- String rankEmoji = '#$rank';
- if (!isOwnGoalCategory) {
- if (rank == 1) {
- rankColor = VSPColors.accent;
- rankEmoji = '';
- } else if (rank == 2) {
- rankColor = VSPColors.accent.withValues(alpha: 0.7);
- rankEmoji = '';
- } else if (rank == 3) {
- rankColor = VSPColors.accent.withValues(alpha: 0.5);
- rankEmoji = '';
- }
- }
-
+                Color rankColor = VSPColors.surfaceAlt;
+                String rankEmoji = '#';
+                if (rank == 1) {
+                  rankColor = VSPColors.accent;
+                  rankEmoji = '🥇';
+                } else if (rank == 2) {
+                  rankColor = VSPColors.accent.withValues(alpha: 0.7);
+                  rankEmoji = '🥈';
+                } else if (rank == 3) {
+                  rankColor = VSPColors.accent.withValues(alpha: 0.5);
+                  rankEmoji = '🥉';
+                }
  return Container(
  margin: const EdgeInsets.only(bottom: 8),
  padding: const EdgeInsets.all(12),
@@ -1210,13 +1206,11 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
  width: 36,
  height: 36,
  decoration: BoxDecoration(
- color: isOwnGoalCategory ? VSPColors.error.withValues(alpha: 0.15) : rankColor.withValues(alpha: 0.15),
+ color: rankColor.withValues(alpha: 0.15),
  shape: BoxShape.circle,
  ),
  child: Center(
- child: isOwnGoalCategory
- ? const Icon(Iconsax.repeat_copy, color: VSPColors.error, size: 18)
- : Text(
+ child: Text(
  rankEmoji,
  style: TextStyle(
  color: rank <= 3 ? rankColor : VSPColors.textSecondary,
@@ -1232,9 +1226,9 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
  Text(
- isOwnGoalCategory ? (isArabic ? 'أهداف عكسية' : 'Own Goals') : name,
- style: TextStyle(
- color: isOwnGoalCategory ? Colors.white70 : Colors.white,
+ name,
+ style: const TextStyle(
+ color: Colors.white,
  fontWeight: FontWeight.bold,
  fontSize: 14,
  ),
@@ -1252,17 +1246,17 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
  Container(
  padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
  decoration: BoxDecoration(
- color: isOwnGoalCategory ? VSPColors.error.withValues(alpha: 0.15) : VSPColors.accent.withValues(alpha: 0.15),
+ color: VSPColors.accent.withValues(alpha: 0.15),
  borderRadius: BorderRadius.circular(VSPRadius.sm),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
- Icon(isOwnGoalCategory ? Iconsax.repeat_copy : Iconsax.cup_copy, color: isOwnGoalCategory ? VSPColors.error : VSPColors.accent, size: 12),
+ const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 12),
  const SizedBox(width: 4),
  Text(
  '$goals ${isArabic ? "أهداف" : "goals"}',
- style: TextStyle(color: isOwnGoalCategory ? VSPColors.error : VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
+ style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 12),
  ),
  ],
  ),

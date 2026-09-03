@@ -361,7 +361,6 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  teamId: match.homeTeamId ?? 'home',
  teamName: match.homeTeamName ?? 'Team A',
  roster: homeRoster,
- opposingRoster: awayRoster,
  onGoalAdded: (goal) {
  setModalState(() {
  goalDetails.add(goal);
@@ -394,7 +393,6 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  teamId: match.awayTeamId ?? 'away',
  teamName: match.awayTeamName ?? 'Team B',
  roster: awayRoster,
- opposingRoster: homeRoster,
  onGoalAdded: (goal) {
  setModalState(() {
  goalDetails.add(goal);
@@ -734,17 +732,17 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  return Container(
  padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
  decoration: BoxDecoration(
- color: g.isOwnGoal ? VSPColors.error.withValues(alpha: 0.2) : VSPColors.surfaceAlt,
+ color: VSPColors.surfaceAlt,
  borderRadius: BorderRadius.circular(VSPRadius.sm),
- border: Border.all(color: g.isOwnGoal ? VSPColors.error : VSPColors.accent.withValues(alpha: 0.4)),
+ border: Border.all(color: VSPColors.accent.withValues(alpha: 0.4)),
  ),
  child: Row(
  mainAxisSize: MainAxisSize.min,
  children: [
  Text(
- g.isOwnGoal ? ' ${g.playerName} (عكسي)' : ' ${g.playerName}',
- style: TextStyle(
- color: g.isOwnGoal ? VSPColors.error : Colors.white,
+ '⚽ ${g.playerName}',
+ style: const TextStyle(
+ color: Colors.white,
  fontSize: 10,
  fontWeight: FontWeight.w600,
  ),
@@ -770,21 +768,17 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  required String teamId,
  required String teamName,
  required List<String> roster,
- required List<String> opposingRoster,
  required Function(GoalItem goal) onGoalAdded,
  }) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  final TextEditingController customNameController = TextEditingController();
  String? selectedFromRoster;
- bool isOwnGoal = false;
 
  showDialog(
  context: context,
  builder: (dlgCtx) {
  return StatefulBuilder(
  builder: (context, setDlgState) {
- final activeRoster = isOwnGoal ? opposingRoster : roster;
-
  return AlertDialog(
  backgroundColor: VSPColors.surface,
  surfaceTintColor: Colors.transparent,
@@ -806,51 +800,8 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  mainAxisSize: MainAxisSize.min,
  crossAxisAlignment: CrossAxisAlignment.start,
  children: [
- // Own Goal Checkbox
- GestureDetector(
- onTap: () {
- setDlgState(() {
- isOwnGoal = !isOwnGoal;
- selectedFromRoster = null;
- });
- },
- child: Container(
- padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 8),
- decoration: BoxDecoration(
- color: isOwnGoal ? VSPColors.error.withValues(alpha: 0.15) : VSPColors.surfaceAlt,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: isOwnGoal ? VSPColors.error : VSPColors.divider),
- ),
- child: Row(
- children: [
- Checkbox(
- value: isOwnGoal,
- activeColor: VSPColors.error,
- onChanged: (val) {
- setDlgState(() {
- isOwnGoal = val ?? false;
- selectedFromRoster = null;
- });
- },
- ),
- Expanded(
- child: Text(
- isArabic ? ' هدف عكسي (سجله لاعب المنافس بالخطأ)' : ' Own Goal (By Opponent)',
- style: TextStyle(
- color: isOwnGoal ? VSPColors.error : Colors.white70,
- fontWeight: FontWeight.bold,
- fontSize: 11.5,
- ),
- ),
- ),
- ],
- ),
- ),
- ),
- const SizedBox(height: 16),
-
  // Player Selection from Roster
- if (activeRoster.isNotEmpty) ...[
+ if (roster.isNotEmpty) ...[
  Text(
  isArabic ? 'اختر اسم الهداف من كشف اللاعبين:' : 'Select scorer from roster:',
  style: const TextStyle(color: VSPColors.textSecondary, fontSize: 12),
@@ -871,7 +822,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  dropdownColor: VSPColors.surface,
  underline: const SizedBox(),
  style: const TextStyle(color: Colors.white, fontSize: 12),
- items: activeRoster.map((name) {
+ items: roster.map((name) {
  return DropdownMenuItem<String>(
  value: name,
  child: Text(name),
@@ -937,7 +888,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  id: DateTime.now().millisecondsSinceEpoch.toString(),
  teamId: teamId,
  playerName: finalName,
- isOwnGoal: isOwnGoal,
+ isOwnGoal: false,
  ));
  Navigator.pop(dlgCtx);
  },

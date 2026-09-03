@@ -11,7 +11,6 @@ import '../../../core/widgets/shimmer_image.dart';
 import '../../../data/models.dart';
 import '../../../shared/widgets/primary_button.dart';
 import '../../../shared/widgets/vsp_back_button.dart';
-import '../widgets/sixth_team_fee_dialog.dart';
 import 'booking_confirmation_screen.dart';
 
 class AddMatchupTeamsScreen extends StatefulWidget {
@@ -118,22 +117,10 @@ class _AddMatchupTeamsScreenState extends State<AddMatchupTeamsScreen> {
         return;
       }
 
-      // 4. Check 6th team tier rule
-      if (_addedTeams.length >= 5) {
+      // 4. Maximum teams limit check (up to 8 teams completely free!)
+      if (_addedTeams.length >= 8) {
         if (!mounted) return;
-        await showDialog(
-          context: context,
-          builder: (_) => SixthTeamFeeDialog(
-            onProceedToPay: () {
-              setState(() {
-                _addedTeams.add(team);
-                _codeController.clear();
-              });
-              VSPFeedback.showSuccess(context, 'تمت إضافة فريق ${team.name} بنجاح!');
-            },
-            onCancel: () {},
-          ),
-        );
+        VSPFeedback.showWarning(context, 'الحد الأقصى لفرق المواجهة هو 8 فرق');
         return;
       }
 
