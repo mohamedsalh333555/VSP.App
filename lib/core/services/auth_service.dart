@@ -9,164 +9,171 @@ import 'secure_storage_service.dart';
 import '../config/app_env.dart';
 
 class AuthService {
- final SupabaseClient _supabase = Supabase.instance.client;
+  final SupabaseClient _supabase = Supabase.instance.client;
 
- // Get current user
- User? get currentUser => _supabase.auth.currentUser;
+  // Get current user
+  User? get currentUser => _supabase.auth.currentUser;
 
- /// دالة آمنة تضمن عدم الانهيار وتطالب بجلسة صالحة
- Future<User> requireCurrentUser() async {
- final user = _supabase.auth.currentUser;
- if (user == null) {
- throw const AuthException('انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.');
- }
- return user;
- }
+  /// دالة آمنة تضمن عدم الانهيار وتطالب بجلسة صالحة
+  Future<User> requireCurrentUser() async {
+    final user = _supabase.auth.currentUser;
+    if (user == null) {
+      throw const AuthException(
+        'انتهت صلاحية الجلسة، يرجى تسجيل الدخول مجدداً.',
+      );
+    }
+    return user;
+  }
 
- // Stream of auth state changes mapped to User?
- Stream<User?> get authStateChanges => 
-      _supabase.auth.onAuthStateChange.map((data) {
-        debugPrint('🔥 AUTH STATE CHANGED: event=${data.event}, user=${data.session?.user.email}');
-        if (data.session != null) {
-          SecureStorageService.saveAuthToken(data.session!.accessToken);
+  // Stream of auth state changes mapped to User?
+  Stream<User?> get authStateChanges => _supabase.auth.onAuthStateChange.map((
+    data,
+  ) {
+    debugPrint(
+      '🔥 AUTH STATE CHANGED: event=${data.event}, user=${data.session?.user.email}',
+    );
+    if (data.session != null) {
+      SecureStorageService.saveAuthToken(data.session!.accessToken);
+    }
+    return data.session?.user;
+  });
+
+  // Internal logger for security auditing
+  void _logSecurityEvent(String event, dynamic error) {
+    debugPrint('[SECURITY_LOG] $event: $error');
+  }
+
+  /// دالة منفصلة للتحقق والدخول التلقائي في حالة وجود حساب سابق لنفس البريد والدور
+  Future<Map<String, dynamic>?> signInIfExistingSameRoleAccount({
+    required String email,
+    required String password,
+    required String role,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
+    try {
+      final emailCheck = await _supabase
+          .from('users')
+          .select('id, role')
+          .eq('email', cleanEmail)
+          .maybeSingle();
+
+      if (emailCheck != null) {
+        final existingRole = emailCheck['role']?.toString();
+
+        if (existingRole != null && existingRole != role) {
+          final arabicExistingRole = existingRole == 'player'
+              ? 'لاعب'
+              : 'مالك ملعب';
+          return {
+            'success': false,
+            'message':
+                'هذا البريد مسجل مسبقاً كـ $arabicExistingRole. '
+                'يرجى تسجيل الدخول بحسابك أو استخدام بريد آخر.',
+          };
         }
-        return data.session?.user;
-      });
 
- // Internal logger for security auditing
- void _logSecurityEvent(String event, dynamic error) {
- debugPrint('[SECURITY_LOG] $event: $error');
- }
+        try {
+          final signInResponse = await _supabase.auth.signInWithPassword(
+            email: cleanEmail,
+            password: password,
+          );
+          if (signInResponse.user != null) {
+            VSPLogger.i(
+              'Existing $role re-signed in automatically: $cleanEmail',
+            );
+            return {'success': true, 'user': signInResponse.user};
+          }
+        } catch (_) {
+          return {
+            'success': false,
+            'message':
+                'البريد الإلكتروني مسجل بالفعل. تأكد من كلمة المرور الصحيحة أو سجّل دخولك.',
+          };
+        }
+        return {'success': false, 'message': 'البريد الإلكتروني مسجل بالفعل.'};
+      }
+    } catch (e) {
+      _logSecurityEvent('EMAIL_CHECK_FAILED', e);
+    }
+    return null; // Account does not exist, proceed with sign up
+  }
 
- /// دالة منفصلة للتحقق والدخول التلقائي في حالة وجود حساب سابق لنفس البريد والدور
- Future<Map<String, dynamic>?> signInIfExistingSameRoleAccount({
- required String email,
- required String password,
- required String role,
- }) async {
- final cleanEmail = email.trim().toLowerCase();
- try {
- final emailCheck = await _supabase
- .from('users')
- .select('id, role')
- .eq('email', cleanEmail)
- .maybeSingle();
+  // Sign Up - Pure new user creation
+  Future<Map<String, dynamic>> signUpWithEmail({
+    required String email,
+    required String password,
+    required String role,
+    required Map<String, dynamic> userData,
+  }) async {
+    final cleanEmail = email.trim().toLowerCase();
 
- if (emailCheck != null) {
- final existingRole = emailCheck['role']?.toString();
+    // Check for existing account first via helper
+    final existingCheck = await signInIfExistingSameRoleAccount(
+      email: cleanEmail,
+      password: password,
+      role: role,
+    );
+    if (existingCheck != null) {
+      return existingCheck;
+    }
 
- if (existingRole != null && existingRole != role) {
- final arabicExistingRole = existingRole == 'player' ? 'لاعب' : 'مالك ملعب';
- return {
- 'success': false,
- 'message':
- 'هذا البريد مسجل مسبقاً كـ $arabicExistingRole. '
- 'يرجى تسجيل الدخول بحسابك أو استخدام بريد آخر.',
- };
- }
+    final allowedRoles = ['player', 'owner'];
+    if (!allowedRoles.contains(role)) {
+      return {'success': false, 'message': 'رتبة غير صالحة.'};
+    }
 
- try {
- final signInResponse = await _supabase.auth.signInWithPassword(
- email: cleanEmail,
- password: password,
- );
- if (signInResponse.user != null) {
- VSPLogger.i('Existing $role re-signed in automatically: $cleanEmail');
- return {'success': true, 'user': signInResponse.user};
- }
- } catch (_) {
- return {
- 'success': false,
- 'message': 'البريد الإلكتروني مسجل بالفعل. تأكد من كلمة المرور الصحيحة أو سجّل دخولك.',
- };
- }
- return {'success': false, 'message': 'البريد الإلكتروني مسجل بالفعل.'};
- }
- } catch (e) {
- _logSecurityEvent('EMAIL_CHECK_FAILED', e);
- }
- return null; // Account does not exist, proceed with sign up
- }
+    try {
+      final response = await _supabase.auth.signUp(
+        email: cleanEmail,
+        password: password,
+        data: {
+          'role': role,
+          'name': userData['name']?.toString().trim() ?? '',
+          'position': userData['position'] ?? 'GK',
+          'phone': userData['phone']?.toString().trim() ?? '',
+          'governorate': userData['governorate'],
+        },
+      );
 
- // Sign Up - Pure new user creation
- Future<Map<String, dynamic>> signUpWithEmail({
- required String email,
- required String password,
- required String role,
- required Map<String, dynamic> userData,
- }) async {
- final cleanEmail = email.trim().toLowerCase();
+      final user = response.user;
+      if (user == null) {
+        return {'success': false, 'message': 'فشل إنشاء الحساب.'};
+      }
 
- // Check for existing account first via helper
- final existingCheck = await signInIfExistingSameRoleAccount(
- email: cleanEmail,
- password: password,
- role: role,
- );
- if (existingCheck != null) {
- return existingCheck;
- }
+      return {'success': true, 'user': user};
+    } on AuthException catch (e) {
+      VSPLogger.e("Supabase Sign Up AuthException: ${e.message}", e);
+      return {'success': false, 'message': e.message};
+    } catch (e) {
+      VSPLogger.e("Supabase Sign Up Exception", e);
+      _logSecurityEvent('AUTH_UNKNOWN_ERROR', e);
+      return {'success': false, 'message': 'خطأ غير معروف في المصادقة.'};
+    }
+  }
 
- final allowedRoles = ['player', 'owner'];
- if (!allowedRoles.contains(role)) {
- return {'success': false, 'message': 'رتبة غير صالحة.'};
- }
+  // Sign In
+  Future<Map<String, dynamic>> signInWithEmail({
+    required String email,
+    required String password,
+  }) async {
+    try {
+      final response = await _supabase.auth.signInWithPassword(
+        email: email.trim().toLowerCase(),
+        password: password,
+      );
 
- try {
- final response = await _supabase.auth.signUp(
- email: cleanEmail,
- password: password,
- data: {
- 'role': role,
- 'name': userData['name']?.toString().trim() ?? '',
- 'position': userData['position'] ?? 'GK',
- 'phone': userData['phone']?.toString().trim() ?? '',
- 'governorate': userData['governorate'],
- },
- );
- 
- final user = response.user;
- if (user == null) {
- return {'success': false, 'message': 'فشل إنشاء الحساب.'};
- }
-
- return {'success': true, 'user': user};
- } on AuthException catch (e) {
- VSPLogger.e("Supabase Sign Up AuthException: ${e.message}", e);
- return {'success': false, 'message': e.message};
- } catch (e) {
- VSPLogger.e("Supabase Sign Up Exception", e);
- _logSecurityEvent('AUTH_UNKNOWN_ERROR', e);
- return {'success': false, 'message': 'خطأ غير معروف في المصادقة.'};
- }
- }
-
- // Sign In
- Future<Map<String, dynamic>> signInWithEmail({
- required String email,
- required String password,
- }) async {
- try {
- final response = await _supabase.auth.signInWithPassword(
- email: email.trim().toLowerCase(),
- password: password,
- );
- 
- return {
- 'success': true, 
- 'user': response.user
- };
- } on AuthException catch (e) {
- _logSecurityEvent('LOGIN_ATTEMPT_FAILED', e.message);
- return {
- 'success': false, 
- 'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.'
- };
- } catch (e) {
- _logSecurityEvent('SIGN_IN_CRITICAL_FAILURE', e);
- return {'success': false, 'message': 'فشل تسجيل الدخول.'};
- }
- }
+      return {'success': true, 'user': response.user};
+    } on AuthException catch (e) {
+      _logSecurityEvent('LOGIN_ATTEMPT_FAILED', e.message);
+      return {
+        'success': false,
+        'message': 'البريد الإلكتروني أو كلمة المرور غير صحيحة.',
+      };
+    } catch (e) {
+      _logSecurityEvent('SIGN_IN_CRITICAL_FAILURE', e);
+      return {'success': false, 'message': 'فشل تسجيل الدخول.'};
+    }
+  }
 
   // Sign Out
   Future<void> signOut() async {
@@ -207,10 +214,7 @@ class AuthService {
     try {
       final user = _supabase.auth.currentUser;
       if (user == null || user.email == null) return false;
-      await _supabase.auth.resend(
-        type: OtpType.signup,
-        email: user.email!,
-      );
+      await _supabase.auth.resend(type: OtpType.signup, email: user.email!);
       return true;
     } catch (e) {
       _logSecurityEvent('EMAIL_VERIFICATION_SENT_FAILED', e);
@@ -235,7 +239,9 @@ class AuthService {
       if (!kIsWeb) {
         final GoogleSignIn googleSignIn = GoogleSignIn(
           serverClientId: AppEnv.googleWebClientId,
-          clientId: defaultTargetPlatform == TargetPlatform.iOS ? AppEnv.googleIosClientId : null,
+          clientId: defaultTargetPlatform == TargetPlatform.iOS
+              ? AppEnv.googleIosClientId
+              : null,
           scopes: ['email', 'profile'],
         );
 
@@ -245,7 +251,8 @@ class AuthService {
           return {'success': false, 'message': 'تم إلغاء تسجيل الدخول'};
         }
 
-        final GoogleSignInAuthentication googleAuth = await googleUser.authentication;
+        final GoogleSignInAuthentication googleAuth =
+            await googleUser.authentication;
         final String? idToken = googleAuth.idToken;
         final String? accessToken = googleAuth.accessToken;
 
@@ -267,14 +274,16 @@ class AuthService {
       // 2. Fallback for Web or devices without Google Play Services
       final String redirectUrl = kIsWeb
           ? '${Uri.base.origin}/'
-          : (role != null 
-              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
-              : 'io.supabase.fluttervsp://login-callback/');
+          : (role != null
+                ? 'io.supabase.fluttervsp://login-callback/?role=$role'
+                : 'io.supabase.fluttervsp://login-callback/');
 
       final success = await _supabase.auth.signInWithOAuth(
         OAuthProvider.google,
         redirectTo: redirectUrl,
-        authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+        authScreenLaunchMode: kIsWeb
+            ? LaunchMode.platformDefault
+            : LaunchMode.externalApplication,
         queryParams: const {'prompt': 'select_account'},
       );
 
@@ -288,8 +297,8 @@ class AuthService {
       // Fallback: If Native Google sheet fails unexpectedly on mobile, attempt Web OAuth as safe fallback
       if (!kIsWeb) {
         try {
-          final String redirectUrl = role != null 
-              ? 'io.supabase.fluttervsp://login-callback/?role=$role' 
+          final String redirectUrl = role != null
+              ? 'io.supabase.fluttervsp://login-callback/?role=$role'
               : 'io.supabase.fluttervsp://login-callback/';
           final success = await _supabase.auth.signInWithOAuth(
             OAuthProvider.google,
@@ -297,7 +306,8 @@ class AuthService {
             authScreenLaunchMode: LaunchMode.externalApplication,
             queryParams: const {'prompt': 'select_account'},
           );
-          if (success) return {'success': true, 'user': _supabase.auth.currentUser};
+          if (success)
+            return {'success': true, 'user': _supabase.auth.currentUser};
         } catch (_) {}
       }
 
@@ -324,7 +334,10 @@ class AuthService {
 
         final idToken = credential.identityToken;
         if (idToken == null) {
-          return {'success': false, 'message': 'فشل الحصول على رمز الهوية من Apple.'};
+          return {
+            'success': false,
+            'message': 'فشل الحصول على رمز الهوية من Apple.',
+          };
         }
 
         // 3. Sign in to Supabase using ID Token directly
@@ -344,13 +357,15 @@ class AuthService {
         final String redirectUrl = kIsWeb
             ? '${Uri.base.origin}/'
             : (role != null
-                ? 'io.supabase.fluttervsp://login-callback/?role=$role'
-                : 'io.supabase.fluttervsp://login-callback/');
+                  ? 'io.supabase.fluttervsp://login-callback/?role=$role'
+                  : 'io.supabase.fluttervsp://login-callback/');
 
         final success = await _supabase.auth.signInWithOAuth(
           OAuthProvider.apple,
           redirectTo: redirectUrl,
-          authScreenLaunchMode: kIsWeb ? LaunchMode.platformDefault : LaunchMode.externalApplication,
+          authScreenLaunchMode: kIsWeb
+              ? LaunchMode.platformDefault
+              : LaunchMode.externalApplication,
         );
         if (success) {
           return {'success': true, 'user': _supabase.auth.currentUser};
@@ -362,31 +377,35 @@ class AuthService {
         return {'success': false, 'message': 'تم إلغاء تسجيل الدخول.'};
       }
       _logSecurityEvent('APPLE_AUTH_ERROR', e);
-      return {'success': false, 'message': 'حدث خطأ أثناء تسجيل الدخول عبر Apple: ${e.message}'};
+      return {
+        'success': false,
+        'message': 'حدث خطأ أثناء تسجيل الدخول عبر Apple: ${e.message}',
+      };
     } catch (e) {
       _logSecurityEvent('APPLE_AUTH_ERROR', e);
       return {'success': false, 'message': 'حدث خطأ في خدمة Apple: $e'};
     }
   }
 
- // Update Password
- Future<bool> updatePassword(String newPassword) async {
- try {
- await _supabase.auth.updateUser(
- UserAttributes(password: newPassword),
- );
- return true;
- } catch (e) {
- _logSecurityEvent('PASSWORD_UPDATE_FAILED', e);
- return false;
- }
- }
+  // Update Password
+  Future<bool> updatePassword(String newPassword) async {
+    try {
+      await _supabase.auth.updateUser(UserAttributes(password: newPassword));
+      return true;
+    } catch (e) {
+      _logSecurityEvent('PASSWORD_UPDATE_FAILED', e);
+      return false;
+    }
+  }
 
   // Delete Account
   Future<Map<String, dynamic>> deleteAccount(String uid) async {
     try {
       try {
-        await _supabase.rpc('delete_user_permanently', params: {'p_user_id': uid});
+        await _supabase.rpc(
+          'delete_user_permanently',
+          params: {'p_user_id': uid},
+        );
       } catch (rpcErr) {
         _logSecurityEvent('RPC_DELETE_FALLBACK', rpcErr);
         await _supabase.from('users').delete().eq('id', uid);
@@ -399,53 +418,49 @@ class AuthService {
     }
   }
 
- // Verify OTP via Supabase Auth
- Future<bool> verifyOtp({required String email, required String token}) async {
- try {
- final response = await _supabase.auth.verifyOTP(
- type: OtpType.signup,
- email: email,
- token: token,
- );
- return response.session != null;
- } catch (e) {
- _logSecurityEvent('OTP_VERIFICATION_FAILED', e);
- return false;
- }
- }
+  // Verify OTP via Supabase Auth
+  Future<bool> verifyOtp({required String email, required String token}) async {
+    try {
+      final response = await _supabase.auth.verifyOTP(
+        type: OtpType.signup,
+        email: email,
+        token: token,
+      );
+      return response.session != null;
+    } catch (e) {
+      _logSecurityEvent('OTP_VERIFICATION_FAILED', e);
+      return false;
+    }
+  }
 }
 
 class SignInWithOAuthOptions {
- final String? redirectTo;
- final Map<String, String>? queryParams;
- final Map<String, dynamic>? data;
+  final String? redirectTo;
+  final Map<String, String>? queryParams;
+  final Map<String, dynamic>? data;
 
- const SignInWithOAuthOptions({
- this.redirectTo,
- this.queryParams,
- this.data,
- });
+  const SignInWithOAuthOptions({this.redirectTo, this.queryParams, this.data});
 }
 
 extension GoTrueClientOAuthSecure on GoTrueClient {
- Future<bool> signInWithOAuthSecure(
- OAuthProvider provider, {
- required SignInWithOAuthOptions options,
- }) async {
- final Map<String, String> query = {};
- if (options.queryParams != null) {
- query.addAll(options.queryParams!);
- }
- if (options.data != null) {
- query['data'] = jsonEncode(options.data);
- options.data!.forEach((key, value) {
- query[key] = value.toString();
- });
- }
- return signInWithOAuth(
- provider,
- redirectTo: options.redirectTo,
- queryParams: query,
- );
- }
+  Future<bool> signInWithOAuthSecure(
+    OAuthProvider provider, {
+    required SignInWithOAuthOptions options,
+  }) async {
+    final Map<String, String> query = {};
+    if (options.queryParams != null) {
+      query.addAll(options.queryParams!);
+    }
+    if (options.data != null) {
+      query['data'] = jsonEncode(options.data);
+      options.data!.forEach((key, value) {
+        query[key] = value.toString();
+      });
+    }
+    return signInWithOAuth(
+      provider,
+      redirectTo: options.redirectTo,
+      queryParams: query,
+    );
+  }
 }
