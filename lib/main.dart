@@ -220,7 +220,10 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  }
 
  void _handleDeepLink(Uri uri) {
- debugPrint(' Handling deep link: $uri');
+    debugPrint('⚡ Handling deep link: $uri');
+    debugPrint('⚡ DeepLink Scheme: ${uri.scheme}, Host: ${uri.host}, Path: ${uri.path}');
+    debugPrint('⚡ DeepLink QueryParams: ${uri.queryParameters}');
+    debugPrint('⚡ DeepLink Fragment: ${uri.fragment}');
  final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
 
  // 1. Supabase OAuth callback bypass

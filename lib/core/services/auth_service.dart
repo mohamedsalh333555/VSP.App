@@ -24,12 +24,13 @@ class AuthService {
 
  // Stream of auth state changes mapped to User?
  Stream<User?> get authStateChanges => 
- _supabase.auth.onAuthStateChange.map((data) {
- if (data.session != null) {
- SecureStorageService.saveAuthToken(data.session!.accessToken);
- }
- return data.session?.user;
- });
+      _supabase.auth.onAuthStateChange.map((data) {
+        debugPrint('🔥 AUTH STATE CHANGED: event=${data.event}, user=${data.session?.user.email}');
+        if (data.session != null) {
+          SecureStorageService.saveAuthToken(data.session!.accessToken);
+        }
+        return data.session?.user;
+      });
 
  // Internal logger for security auditing
  void _logSecurityEvent(String event, dynamic error) {
