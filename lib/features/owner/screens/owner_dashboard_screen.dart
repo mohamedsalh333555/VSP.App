@@ -21,6 +21,8 @@ import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/image_pick_service.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import 'package:google_fonts/google_fonts.dart';
+import 'package:go_router/go_router.dart';
+import '../../../core/models/user_model.dart';
 
 /// كائن البيانات المالية المجمعة للوحة تحكم المالك
 class OwnerFinancialMetrics {
@@ -185,9 +187,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     final isProOwner = userModel?.isProPlan == true;
 
     bool isExpired = false;
-    bool isUnderReview = false;
     if (userModel != null) {
-      isUnderReview = userModel.verificationStatus == 'pending' || userModel.verificationStatus == 'under_review';
       if (userModel.trialEndsAt == null && userModel.subscriptionExpiresAt == null) {
         isExpired = false;
       } else {
@@ -232,9 +232,13 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 _buildSleekHeader(auth, isProOwner, isArabic),
                 const SizedBox(height: 14),
 
-                // 2. تنبيه الحساب الخفيف (إذا كان الاشتراك منتهياً أو قيد المراجعة)
-                if (userModel != null && (isExpired || isUnderReview))
-                  _buildSlimAlert(userModel, isArabic, isExpired, isUnderReview),
+                // 2. كارت التوثيق التفاعلي الذكي لحالة المنشأة
+                if (userModel != null)
+                  _buildVerificationBanner(userModel, isArabic),
+
+                // 2.1 تنبيه انتهاء الاشتراك إن وجد
+                if (userModel != null && isExpired)
+                  _buildSubscriptionExpiredAlert(isArabic),
 
                 // 3. المحتوى المتفرع حسب الباقة (Basic vs Pro)
                 if (isProOwner) ...[
@@ -592,53 +596,313 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     );
   }
 
-  /// 3. تنبيه الحساب الخفيف
-  Widget _buildSlimAlert(dynamic userModel, bool isArabic, bool isExpired, bool isUnderReview) {
+  /// 2. كارت التوثيق التفاعلي الفاخر بحالاته الثلاث (غير موثق / قيد المراجعة / معتمد رسمي)
+  Widget _buildVerificationBanner(UserModel userModel, bool isArabic) {
+    final bool isApproved = userModel.isIdentityVerified == true || userModel.verificationStatus == 'approved';
+    final bool isPending = !isApproved && (userModel.verificationStatus == 'pending' || userModel.verificationStatus == 'under_review');
+    final bool isRejected = !isApproved && userModel.verificationStatus == 'rejected';
+
+    // 1. منشأة معتمدة وموثقة رسمياً
+    if (isApproved) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF10B981).withValues(alpha: 0.14),
+              const Color(0xFF047857).withValues(alpha: 0.08),
+            ],
+            begin: AlignmentDirectional.centerStart,
+            end: AlignmentDirectional.centerEnd,
+          ),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: const Color(0xFF10B981).withValues(alpha: 0.35),
+            width: 0.9,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(6),
+              decoration: BoxDecoration(
+                color: const Color(0xFF10B981).withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Iconsax.verify_copy,
+                color: Color(0xFF34D399),
+                size: 18,
+              ),
+            ),
+            const SizedBox(width: 10),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic ? 'منشأة رياضية موثقة ومعتمدة رسمياً' : 'Officially Verified Sports Facility',
+                    style: const TextStyle(
+                      color: Color(0xFFD1FAE5),
+                      fontSize: 13,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 2),
+                  Text(
+                    isArabic ? 'ملاعبك نشطة ومتاحة لجميع اللاعبين على المنصة' : 'Your pitches are live & available for players to book',
+                    style: TextStyle(
+                      color: const Color(0xFFA7F3D0).withValues(alpha: 0.85),
+                      fontSize: 11,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 6),
+            const Text(
+              '🏆',
+              style: TextStyle(fontSize: 18),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 2. المستندات قيد المراجعة من الإدارة
+    if (isPending) {
+      return Container(
+        margin: const EdgeInsets.only(bottom: 14),
+        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+        decoration: BoxDecoration(
+          gradient: LinearGradient(
+            colors: [
+              const Color(0xFF0284C7).withValues(alpha: 0.16),
+              const Color(0xFF0369A1).withValues(alpha: 0.08),
+            ],
+            begin: AlignmentDirectional.centerStart,
+            end: AlignmentDirectional.centerEnd,
+          ),
+          borderRadius: BorderRadius.circular(VSPRadius.md),
+          border: Border.all(
+            color: const Color(0xFF38BDF8).withValues(alpha: 0.35),
+            width: 0.9,
+          ),
+        ),
+        child: Row(
+          children: [
+            Container(
+              padding: const EdgeInsets.all(7),
+              decoration: BoxDecoration(
+                color: const Color(0xFF0284C7).withValues(alpha: 0.2),
+                shape: BoxShape.circle,
+              ),
+              child: const Icon(
+                Iconsax.timer_1_copy,
+                color: Color(0xFF38BDF8),
+                size: 20,
+              ),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                mainAxisSize: MainAxisSize.min,
+                children: [
+                  Text(
+                    isArabic ? 'المستندات قيد المراجعة ⏳' : 'Documents Under Review ⏳',
+                    style: const TextStyle(
+                      color: Color(0xFFE0F2FE),
+                      fontSize: 13.5,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                  const SizedBox(height: 3),
+                  Text(
+                    isArabic
+                        ? 'أوراقك قيد التدقيق حالياً من الإدارة. يمكنك ضبط ملاعبك وإعدادات الأسعار الآن.'
+                        : 'Your docs are being audited by administration. You can configure your pitches & prices.',
+                    style: TextStyle(
+                      color: const Color(0xFFBAE6FD).withValues(alpha: 0.85),
+                      fontSize: 11,
+                      height: 1.35,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(width: 8),
+            GestureDetector(
+              onTap: () {
+                HapticFeedback.lightImpact();
+                context.push('/documentation');
+              },
+              child: Container(
+                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF0284C7).withValues(alpha: 0.28),
+                  borderRadius: BorderRadius.circular(VSPRadius.sm),
+                  border: Border.all(color: const Color(0xFF38BDF8).withValues(alpha: 0.4)),
+                ),
+                child: Text(
+                  isArabic ? 'عرض' : 'View',
+                  style: const TextStyle(
+                    color: Color(0xFFE0F2FE),
+                    fontSize: 11.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      );
+    }
+
+    // 3. مطلوب التوثيق (غير موثق أو تم رفض بعض الوثائق)
+    final Color primaryColor = isRejected ? VSPColors.error : const Color(0xFFF59E0B);
+    final String title = isRejected
+        ? (isArabic ? 'تم رفض بعض المستندات' : 'Documents Need Attention')
+        : (isArabic ? 'منشأتك غير موثقة بعد 📄' : 'Facility Verification Required 📄');
+    final String subtitle = isRejected
+        ? (isArabic ? 'يرجى مراجعة وتحديث الوثائق المطلوبة لاعتماد منشأتك.' : 'Please update your uploaded documents for approval.')
+        : (isArabic ? 'يرجى رفع السجل التجاري والبطاقة الضريبية لتفعيل ظهور ملاعبك للاعبين.' : 'Upload commercial registry & tax card to make your pitches visible to players.');
+
     return Container(
       margin: const EdgeInsets.only(bottom: 14),
-      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
       decoration: BoxDecoration(
-        color: isExpired
-            ? VSPColors.error.withValues(alpha: 0.12)
-            : VSPColors.warning.withValues(alpha: 0.08),
+        gradient: LinearGradient(
+          colors: [
+            primaryColor.withValues(alpha: 0.16),
+            primaryColor.withValues(alpha: 0.06),
+          ],
+          begin: AlignmentDirectional.centerStart,
+          end: AlignmentDirectional.centerEnd,
+        ),
         borderRadius: BorderRadius.circular(VSPRadius.md),
         border: Border.all(
-          color: isExpired
-              ? VSPColors.error.withValues(alpha: 0.3)
-              : VSPColors.warning.withValues(alpha: 0.25),
+          color: primaryColor.withValues(alpha: 0.38),
+          width: 1,
         ),
       ),
       child: Row(
         children: [
-          Icon(
-            isExpired ? Iconsax.warning_2_copy : Iconsax.info_circle_copy,
-            color: isExpired ? VSPColors.error : VSPColors.warning,
+          Container(
+            padding: const EdgeInsets.all(7),
+            decoration: BoxDecoration(
+              color: primaryColor.withValues(alpha: 0.2),
+              shape: BoxShape.circle,
+            ),
+            child: Icon(
+              isRejected ? Iconsax.warning_2_copy : Iconsax.security_safe_copy,
+              color: primaryColor,
+              size: 20,
+            ),
+          ),
+          const SizedBox(width: 12),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  title,
+                  style: TextStyle(
+                    color: isRejected ? const Color(0xFFFCA5A5) : const Color(0xFFFEF3C7),
+                    fontSize: 13.5,
+                    fontWeight: FontWeight.bold,
+                  ),
+                ),
+                const SizedBox(height: 3),
+                Text(
+                  subtitle,
+                  style: TextStyle(
+                    color: isRejected ? Colors.white70 : const Color(0xFFFDE68A).withValues(alpha: 0.85),
+                    fontSize: 11,
+                    height: 1.35,
+                  ),
+                ),
+              ],
+            ),
+          ),
+          const SizedBox(width: 8),
+          GestureDetector(
+            onTap: () {
+              HapticFeedback.selectionClick();
+              context.push('/documentation');
+            },
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 7),
+              decoration: BoxDecoration(
+                color: primaryColor,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+                boxShadow: [
+                  BoxShadow(
+                    color: primaryColor.withValues(alpha: 0.35),
+                    blurRadius: 8,
+                  ),
+                ],
+              ),
+              child: Text(
+                isArabic ? 'توثيق الآن' : 'Verify Now',
+                style: const TextStyle(
+                  color: Colors.black,
+                  fontSize: 11.5,
+                  fontWeight: FontWeight.w900,
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  /// 2.1 تنبيه انتهاء الاشتراك
+  Widget _buildSubscriptionExpiredAlert(bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: 14),
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+      decoration: BoxDecoration(
+        color: VSPColors.error.withValues(alpha: 0.12),
+        borderRadius: BorderRadius.circular(VSPRadius.md),
+        border: Border.all(
+          color: VSPColors.error.withValues(alpha: 0.3),
+        ),
+      ),
+      child: Row(
+        children: [
+          const Icon(
+            Iconsax.warning_2_copy,
+            color: VSPColors.error,
             size: 18,
           ),
           const SizedBox(width: 10),
           Expanded(
             child: Text(
-              isExpired
-                  ? (isArabic ? 'انتهت صلاحية الاشتراك. يرجى التجديد لتفعيل الحجوزات.' : 'Subscription expired. Renew now.')
-                  : (isArabic ? 'حسابك قيد المراجعة والتوثيق من إدارة التطبيق.' : 'Account is under review.'),
+              isArabic
+                  ? 'انتهت صلاحية الاشتراك. يرجى التجديد لتفعيل الحجوزات.'
+                  : 'Subscription expired. Renew now to activate bookings.',
               style: const TextStyle(color: VSPColors.textPrimary, fontSize: 12, fontWeight: FontWeight.w500),
             ),
           ),
-          if (isExpired)
-            GestureDetector(
-              onTap: () => _showProUpgradeSheet(context),
-              child: Container(
-                padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
-                decoration: BoxDecoration(
-                  color: Colors.white,
-                  borderRadius: BorderRadius.circular(VSPRadius.sm),
-                ),
-                child: Text(
-                  isArabic ? 'تجديد' : 'Renew',
-                  style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
-                ),
+          GestureDetector(
+            onTap: () => _showProUpgradeSheet(context),
+            child: Container(
+              padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 4),
+              decoration: BoxDecoration(
+                color: Colors.white,
+                borderRadius: BorderRadius.circular(VSPRadius.sm),
+              ),
+              child: Text(
+                isArabic ? 'تجديد' : 'Renew',
+                style: const TextStyle(color: Colors.black, fontSize: 11, fontWeight: FontWeight.bold),
               ),
             ),
+          ),
         ],
       ),
     );

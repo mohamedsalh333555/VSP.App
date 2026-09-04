@@ -128,6 +128,36 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  ),
  ),
  ),
+              const SizedBox(height: 12),
+              TextButton(
+                onPressed: () async {
+                  final uid = authProvider.currentUser?.uid;
+                  final updatedAdditional = Map<String, dynamic>.from(
+                    authProvider.userModel?.additionalData ?? {},
+                  )..['isOnboardingConfirmed'] = true;
+                  if (uid != null) {
+                    try {
+                      await Supabase.instance.client.from('users').update({
+                        'has_stadium': true,
+                        'additional_data': updatedAdditional,
+                        'updated_at': DateTime.now().toUtc().toIso8601String(),
+                      }).eq('id', uid);
+                    } catch (_) {}
+                  }
+                  await authProvider.updateProfile({'additionalData': updatedAdditional});
+                  if (context.mounted) {
+                    context.go('/owner');
+                  }
+                },
+                child: Text(
+                  isAr ? 'استكشاف لوحة التحكم أولاً' : 'Explore Dashboard First',
+                  style: const TextStyle(
+                    color: VSPColors.textSecondary,
+                    fontSize: 14,
+                    fontWeight: FontWeight.w600,
+                  ),
+                ),
+              ),
  const SizedBox(height: 16),
  ],
  ),

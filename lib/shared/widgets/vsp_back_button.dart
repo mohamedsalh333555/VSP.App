@@ -90,7 +90,7 @@ class _VSPBackButtonState extends State<VSPBackButton>
  ? Iconsax.arrow_right_3_copy
  : Iconsax.arrow_left_2_copy,
  color: widget.iconColor ?? Colors.white,
- size: 15,
+ size: 18,
  ),
  ),
  ),

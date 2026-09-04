@@ -262,13 +262,7 @@ class AppRouter {
  return null;
  }
 
- if (!userModel.isIdentityVerified) {
- final status = userModel.verificationStatus?.toLowerCase();
- if (status != 'pending') {
- if (path != '/documentation') return '/documentation';
- return null;
- }
- }
+ // Direct access to Owner Dashboard allowed
  
  if (path == '/welcome' || path == '/splash' || path == '/login' || path.startsWith('/create-account') || path.startsWith('/signup') || path == '/onboarding-player' || path == '/onboarding-owner' || path == '/verify-email' || path == '/owner' || path == '/player' || path == '/offline') {
  return '/';

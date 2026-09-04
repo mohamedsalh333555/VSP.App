@@ -219,6 +219,11 @@ class AuthProvider with ChangeNotifier {
  // 1⃣ Patch DB via repository setUserRole RPC
  await _userRepository.setUserRole(user.id, effectiveRole);
 
+ // 1.5 Sync role directly to Supabase Auth metadata for single source of truth
+ try {
+ await Supabase.instance.client.auth.updateUser(UserAttributes(data: {'role': effectiveRole}));
+ } catch (_) {}
+
  // 2⃣ Patch local map before _userModel is built
  userData['role'] = effectiveRole;
  _userType = effectiveRole;
@@ -693,6 +698,31 @@ class AuthProvider with ChangeNotifier {
  return false;
  }
  }
+
+  /// Abort an incomplete registration and purge the uncompleted account.
+  ///
+  /// Called when a user taps "Cancel / Back" during onboarding before completing
+  /// registration. Safely calls the server-side RPC [delete_user_permanently]
+  /// to remove the uncompleted user from [public.users] and [auth.users].
+  Future<void> abortRegistration() async {
+    final uid = _firebaseUser?.id;
+    if (uid != null) {
+      if (_userModel?.isRegistrationComplete != true) {
+        try {
+          await Supabase.instance.client.rpc('delete_user_permanently', params: {'p_user_id': uid});
+          VSPLogger.i('abortRegistration: Incomplete account successfully purged from Supabase for UID: $uid');
+        } catch (e) {
+          VSPLogger.w('abortRegistration RPC error: $e');
+          try {
+            await _authService.deleteAccount(uid);
+          } catch (_) {}
+        }
+      } else {
+        VSPLogger.w('abortRegistration called on a completed account - falling back to normal signOut.');
+      }
+    }
+    await signOut();
+  }
 
  /// Sign out
  Future<void> signOut() async {

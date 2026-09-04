@@ -64,8 +64,8 @@ class UserModel {
   });
 
   bool get isOwner => role == 'owner';
-  bool get isPlayer => role == 'player';
-  bool get isOwnerRole => role == 'owner' || hasStadium;
+  bool get isPlayer => !isOwner;
+  bool get isOwnerRole => role == 'owner';
   bool get isPlayerRole => !isOwnerRole;
 
   DateTime? get effectiveTrialEndsAt =>
@@ -127,10 +127,19 @@ class UserModel {
       addData['rejection_reason'] = data['rejection_reason'];
     }
 
+    final rawRole = (data['role'] ?? addData['role'] ?? 'player').toString();
+    final bool hasOwnerIndicator = data['has_stadium'] == true ||
+        data['hasStadium'] == true ||
+        addData['role'] == 'owner' ||
+        addData['is_owner'] == true;
+    final effectiveRole = (rawRole != 'admin' && rawRole != 'co_founder' && hasOwnerIndicator)
+        ? 'owner'
+        : rawRole;
+
     return UserModel(
       uid: data['id'] ?? data['uid'] ?? '',
       email: data['email'] ?? '',
-      role: data['role'] ?? 'player',
+      role: effectiveRole,
       name: data['name'],
       phone: data['phone'],
       profileImageUrl: data['profile_image_url'] ?? data['profileImageUrl'],

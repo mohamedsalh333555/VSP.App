@@ -174,7 +174,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
       onPopInvokedWithResult: (didPop, result) async {
         if (didPop || !context.mounted) return;
         final shouldSignOut = await _showExitDialog(context);
-        if (shouldSignOut == true) await auth.signOut();
+        if (shouldSignOut == true) await auth.abortRegistration();
       },
       child: Scaffold(
         backgroundColor: VSPColors.background,
@@ -194,7 +194,7 @@ class _OwnerOnboardingScreenState extends State<OwnerOnboardingScreen> {
                   showLogo: true,
                   onBack: () async {
                     final shouldSignOut = await _showExitDialog(context);
-                    if (shouldSignOut == true) await auth.signOut();
+                    if (shouldSignOut == true) await auth.abortRegistration();
                   },
                 ),
                 const SizedBox(height: 24),

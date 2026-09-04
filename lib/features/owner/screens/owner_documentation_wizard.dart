@@ -401,7 +401,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  _currentStep--;
  });
  } else {
- Navigator.pop(context);
+ if (Navigator.of(context).canPop()) {
+ Navigator.of(context).pop();
+ } else {
+ context.go('/owner');
+ }
  }
  }
 
@@ -442,7 +446,11 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  ),
  );
  if (confirm == true && context.mounted) {
- Navigator.pop(context);
+ if (Navigator.of(context).canPop()) {
+ Navigator.of(context).pop();
+ } else {
+ context.go('/owner');
+ }
  }
  },
  child: Scaffold(
@@ -450,7 +458,13 @@ class _OwnerDocumentationWizardState extends State<OwnerDocumentationWizard> {
  appBar: AppBar(
  backgroundColor: VSPColors.background,
  elevation: 0,
- leading: VSPBackButton(onTap: _previousPage),
+ leadingWidth: 60,
+ leading: Center(
+ child: Padding(
+ padding: const EdgeInsetsDirectional.only(start: 12),
+ child: VSPBackButton(onTap: _previousPage),
+ ),
+ ),
  title: Text(
  AppLocalizations.of(context)!.ownerInformationTitle,
  style: Theme.of(context).textTheme.displaySmall,
