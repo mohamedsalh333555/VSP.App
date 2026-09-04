@@ -32,6 +32,6 @@ class AppEnv {
   }
 
   // Google OAuth Client IDs
-  static const String googleWebClientId = '860837572098-9am05covilk2ipu7sb49ov9pbqbj7fvv.apps.googleusercontent.com';
+  static const String googleWebClientId = '860837572098-uad28p5kb2n567utmk382ogqorpn6vid.apps.googleusercontent.com';
   static const String googleIosClientId = '860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com';
 }
