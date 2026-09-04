@@ -1,0 +1,30 @@
+-- Migration: 202609050005_phase4_fix_function_search_paths.sql
+-- Description: Set search_path = public, pg_temp on all security definer functions to prevent search_path hijacking.
+
+ALTER FUNCTION public."auto_approve_tournament_matches_24h"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."auto_downgrade_expired_subscriptions"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."auto_expire_stale_records"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."auto_reconcile_all_past_bookings"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."auto_reconcile_past_bookings"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."auto_reconcile_single_entry_results"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."create_owner_on_behalf"(p_email text, p_password text, p_name text, p_phone text, p_governorate text) SET search_path = public, pg_temp;
+ALTER FUNCTION public."dismiss_no_show_penalty"(p_player_id uuid, p_booking_id uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public."get_admin_quick_metrics"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."global_search"(search_term text) SET search_path = public, pg_temp;
+ALTER FUNCTION public."handle_stadium_breaks_collision"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."handle_stadium_review_changes"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."increment_banner_clicks"(p_banner_id uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public."increment_banner_views"(p_banner_id uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public."log_booking_payment_transaction"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."pay_rehabilitation_fine"(p_user_id uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public."prepare_tournament_bracket"(p_championship_id uuid) SET search_path = public, pg_temp;
+ALTER FUNCTION public."prevent_late_cancellation"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."prevent_unauthorized_role_change"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."protect_booking_payment_fields"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."protect_completed_match_scores"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."reset_fair_play_score_annually"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."sync_booking_players_table"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."sync_notification_message_body"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."sync_owner_has_stadium_on_delete"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."sync_owner_pro_features"() SET search_path = public, pg_temp;
+ALTER FUNCTION public."verify_match_played"(p_booking_id uuid, p_attended boolean, p_absent_team_id text) SET search_path = public, pg_temp;
