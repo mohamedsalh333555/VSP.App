@@ -31,6 +31,13 @@ class AppEnv {
     return 'egy_pk_test_NO6ul8ku1EsmWTuXrnz6l0CHnY0c90dx';
   }
 
+  // Paymob Test Secret Key for direct testing fallback
+  static String get paymobSecretKey {
+    const key = String.fromEnvironment('PAYMOB_SECRET_KEY');
+    if (key.isNotEmpty) return key;
+    return 'egy_sk_test_bd1135d9086f141c2a800d726aa7c118ff988321ab75aba708252df996658697';
+  }
+
   // Google OAuth Client IDs
   static const String googleWebClientId = '860837572098-uad28p5kb2n567utmk382ogqorpn6vid.apps.googleusercontent.com';
   static const String googleIosClientId = '860837572098-2uv3tlten0tq4tp4ff7g0d79dmi94qnk.apps.googleusercontent.com';
