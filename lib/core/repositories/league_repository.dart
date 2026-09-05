@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
@@ -8,46 +9,92 @@ class LeagueRepository {
   LeagueRepository();
 
   Stream<List<VSP1v1Player>> get1v1Standings() {
-    return _supabase
-        .from('vsp_1vs1_players')
-        .stream(primaryKey: ['id'])
-        .map((list) {
-          if (list.isEmpty) return [];
-          
-          final sortedList = List<Map<String, dynamic>>.from(list);
-          sortedList.sort((a, b) {
-            final pointsA = (a['total_points'] ?? 0) as int;
-            final pointsB = (b['total_points'] ?? 0) as int;
-            if (pointsA != pointsB) return pointsB.compareTo(pointsA);
+    late StreamController<List<VSP1v1Player>> controller;
+    RealtimeChannel? tournamentChannel;
+    RealtimeChannel? playersChannel;
 
-            final skillA = (a['skill_points'] ?? 0) as int;
-            final skillB = (b['skill_points'] ?? 0) as int;
-            if (skillA != skillB) return skillB.compareTo(skillA);
+    Future<void> fetchAndEmit() async {
+      try {
+        final tournament = await _supabase
+            .from('vsp_1v1_tournaments')
+            .select()
+            .eq('status', 'published')
+            .maybeSingle();
 
-            final goalsA = (a['goals'] ?? 0) as int;
-            final goalsB = (b['goals'] ?? 0) as int;
-            return goalsB.compareTo(goalsA);
-          });
+        if (tournament == null) {
+          if (!controller.isClosed) controller.add([]);
+          return;
+        }
 
-          List<VSP1v1Player> players = [];
-          for (int i = 0; i < sortedList.length; i++) {
-            var data = sortedList[i];
-            
-            final mappedData = {
-              'name': data['name'] ?? 'Unknown',
-              'avatarUrl': data['avatar_url'] ?? '',
-              'totalPoints': data['total_points'] ?? 0,
-              'skillPoints': data['skill_points'] ?? 0,
-              'goals': data['goals'] ?? 0,
-              'tackles': data['tackles'] ?? 0,
-              'titles': data['titles'] ?? 0,
-              'rank': i + 1, 
-              'trend': data['trend'] ?? 'stable',
-            };
-            players.add(VSP1v1Player.fromFirestore(mappedData, data['id'].toString()));
-          }
-          return players;
-        });
+        final response = await _supabase
+            .from('vsp_1v1_tournament_players')
+            .select('*')
+            .eq('tournament_id', tournament['id'])
+            .order('total_points', ascending: false);
+
+        final rawList = response as List<dynamic>;
+        final List<VSP1v1Player> players = [];
+        for (int i = 0; i < rawList.length; i++) {
+          final data = rawList[i];
+          players.add(VSP1v1Player(
+            id: data['id'].toString(),
+            name: data['player_name'] ?? 'لاعب',
+            avatarUrl: data['avatar_url'] ?? '',
+            totalPoints: (data['total_points'] ?? 0) as int,
+            skillPoints: (data['skills'] ?? 0) as int,
+            goals: (data['goals'] ?? 0) as int,
+            tackles: (data['tackles'] ?? 0) as int,
+            titles: i == 0 ? 1 : 0,
+            rank: i + 1,
+            trend: i == 0 ? 'up' : 'stable',
+          ));
+        }
+
+        if (!controller.isClosed) controller.add(players);
+      } catch (e) {
+        debugPrint('Error fetching 1v1 standings: $e');
+        if (!controller.isClosed) controller.add([]);
+      }
+    }
+
+    // ignore: close_sinks
+    controller = StreamController<List<VSP1v1Player>>.broadcast(
+      onListen: () {
+        fetchAndEmit();
+
+        final tag = DateTime.now().millisecondsSinceEpoch;
+        tournamentChannel = _supabase
+            .channel('realtime_1v1_tournaments_$tag')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'vsp_1v1_tournaments',
+              callback: (payload) {
+                fetchAndEmit();
+              },
+            )
+            .subscribe();
+
+        playersChannel = _supabase
+            .channel('realtime_1v1_players_$tag')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'vsp_1v1_tournament_players',
+              callback: (payload) {
+                fetchAndEmit();
+              },
+            )
+            .subscribe();
+      },
+      onCancel: () {
+        tournamentChannel?.unsubscribe();
+        playersChannel?.unsubscribe();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
   }
 
   Future<int> get1v1RegistrationsCount() async {

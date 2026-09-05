@@ -341,9 +341,35 @@ class ChampionScreenState extends State<ChampionScreen>
         final players = snapshot.data ?? [];
         if (players.isEmpty) {
           return Center(
-            child: Text(
-              AppLocalizations.of(context)!.noOneVsOneRanked,
-              style: const TextStyle(color: VSPColors.textSecondary),
+            child: Padding(
+              padding: const EdgeInsets.all(32.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Container(
+                    width: 76,
+                    height: 76,
+                    decoration: BoxDecoration(
+                      color: VSPColors.surface,
+                      borderRadius: BorderRadius.circular(24),
+                      border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+                    ),
+                    child: const Icon(Iconsax.cup_copy, size: 38, color: VSPColors.textSecondary),
+                  ),
+                  const SizedBox(height: 16),
+                  Text(
+                    AppLocalizations.of(context)!.noOneVsOneRanked,
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: Colors.white, fontSize: 16, fontWeight: FontWeight.bold),
+                  ),
+                  const SizedBox(height: 8),
+                  const Text(
+                    'لا توجد بطولة نشطة حالياً، سيتم عرض الترتيب فور نشر النتائج من المنظم',
+                    textAlign: TextAlign.center,
+                    style: TextStyle(color: VSPColors.textSecondary, fontSize: 12),
+                  ),
+                ],
+              ),
             ),
           );
         }
