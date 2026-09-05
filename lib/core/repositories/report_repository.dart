@@ -34,6 +34,10 @@ class ReportRepository {
     return _supabase
         .from('reports')
         .stream(primaryKey: ['id'])
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
         .map((list) {
           final sorted = List<Map<String, dynamic>>.from(list);
           sorted.sort((a, b) {
@@ -42,6 +46,9 @@ class ReportRepository {
             return dateB.compareTo(dateA);
           });
           return sorted;
+        })
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in getReportsStream: $e');
         });
   }
 }

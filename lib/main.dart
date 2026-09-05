@@ -29,6 +29,7 @@ import 'package:flutter_web_plugins/url_strategy.dart';
 import 'core/config/app_env.dart';
 import 'core/utils/deep_link_helper.dart';
 import 'core/services/secure_storage_service.dart';
+import 'shared/widgets/vsp_network_banner.dart';
 
 final GlobalKey<NavigatorState> navigatorKey = GlobalKey<NavigatorState>();
 
@@ -270,6 +271,7 @@ class _MaterialAppWithRouterState extends State<_MaterialAppWithRouter> {
  title: 'VSP',
  debugShowCheckedModeBanner: false,
  theme: AppTheme.darkTheme,
+ builder: (context, child) => VSPNetworkBanner(child: child ?? const SizedBox()),
  localizationsDelegates: [
  AppLocalizations.delegate,
  GlobalMaterialLocalizations.delegate,

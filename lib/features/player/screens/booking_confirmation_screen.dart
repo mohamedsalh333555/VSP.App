@@ -549,7 +549,30 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  ),
  );
  }
- final existingBookings = snapshot.data ?? [];
+                if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
+                  return Padding(
+                    padding: const EdgeInsets.symmetric(vertical: 24),
+                    child: Center(
+                      child: Column(
+                        children: [
+                          const Icon(Iconsax.refresh_2_copy, color: VSPColors.warning, size: 28),
+                          const SizedBox(height: 8),
+                          const Text(
+                            'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
+                            style: TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                          ),
+                          const SizedBox(height: 10),
+                          TextButton.icon(
+                            onPressed: () => setState(() {}),
+                            icon: const Icon(Icons.refresh, color: VSPColors.accent, size: 16),
+                            label: const Text('إعادة المحاولة', style: TextStyle(color: VSPColors.accent, fontSize: 13)),
+                          ),
+                        ],
+                      ),
+                    ),
+                  );
+                }
+                final existingBookings = snapshot.data ?? [];
  final now = DateTime.now();
  final bool isToday = _selectedDate.year == now.year && _selectedDate.month == now.month && _selectedDate.day == now.day;
 
@@ -1106,10 +1129,21 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
  final nav = Navigator.of(context);
  final bookingProvider = Provider.of<BookingProvider>(context, listen: false);
 
- // Pre-Selection Double-Check: Verify slot is still 100% free right before opening payment
- try {
- final currentBookings = await bookingProvider.getBookingsForStadium(widget.stadium.id, _selectedDate).first;
- if (!mounted) return;
+        // Pre-Selection Double-Check: Verify slot is still 100% free right before opening payment
+        try {
+          List<Booking> currentBookings = [];
+          try {
+            currentBookings = await bookingProvider
+                .getBookingsForStadium(widget.stadium.id, _selectedDate)
+                .first
+                .timeout(const Duration(seconds: 4));
+          } catch (_) {
+            final repo = BookingRepository();
+            if (repo is SupabaseBookingRepository) {
+              currentBookings = await repo.fetchStadiumBookingsDirectly(widget.stadium.id, _selectedDate);
+            }
+          }
+          if (!mounted) return;
  final sortedCheck = List<String>.from(_selectedTimeSlots)
  ..sort((a, b) => _getSlotDateTime(a).compareTo(_getSlotDateTime(b)));
  final isConflict = _isSlotBooked(sortedCheck.first, currentBookings);

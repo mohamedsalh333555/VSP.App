@@ -224,28 +224,67 @@ class TeamRepository {
  }
  }
 
- Stream<List<Team>> getTeams({String? governorate}) {
- return _supabase
- .from('teams')
- .stream(primaryKey: ['id'])
- .map((list) {
- return list.map((data) {
- if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
- final dbGov = (data['governorate'] ?? '').toString().trim();
- final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
- final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+  Future<List<Team>> fetchTeamsDirectly({String? governorate}) async {
+    try {
+      final response = await _supabase.from('teams').select().limit(50);
+      return (response as List).map((data) {
+        if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+          final dbGov = (data['governorate'] ?? '').toString().trim();
+          final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
+          final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
 
- final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
- dbGov.toLowerCase() == governorate.toLowerCase();
+          final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
+              dbGov.toLowerCase() == governorate.toLowerCase();
 
- if (!matches) {
- return null;
- }
- }
- return Team.fromFirestore(data, data['id'].toString());
- }).whereType<Team>().toList();
- });
- }
+          if (!matches) {
+            return null;
+          }
+        }
+        return Team.fromFirestore(data as Map<String, dynamic>, data['id'].toString());
+      }).whereType<Team>().toList();
+    } catch (e) {
+      debugPrint('Error fetching teams directly: $e');
+      return [];
+    }
+  }
+
+  Stream<List<Team>> getTeams({String? governorate}) async* {
+    // 1. Immediate REST fetch
+    final direct = await fetchTeamsDirectly(governorate: governorate);
+    if (direct.isNotEmpty) yield direct;
+
+    // 2. Realtime Stream with safety timeout & error recovery
+    yield* _supabase
+        .from('teams')
+        .stream(primaryKey: ['id'])
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchTeamsDirectly(governorate: governorate);
+            sink.add(refreshed);
+          },
+        )
+        .map((list) {
+          return list.map((data) {
+            if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+              final dbGov = (data['governorate'] ?? '').toString().trim();
+              final stdDbGov = EgyptGovernorates.resolveGoogleName(dbGov) ?? dbGov;
+              final stdFilterGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+
+              final matches = stdDbGov.toLowerCase() == stdFilterGov.toLowerCase() ||
+                  dbGov.toLowerCase() == governorate.toLowerCase();
+
+              if (!matches) {
+                return null;
+              }
+            }
+            return Team.fromFirestore(data, data['id'].toString());
+          }).whereType<Team>().toList();
+        })
+        .handleError((error) {
+          debugPrint('Handled realtime error in getTeams: $error');
+        });
+  }
 
  Future<List<Team>> searchOpponentTeams(String query) async {
  try {

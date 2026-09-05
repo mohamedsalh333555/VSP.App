@@ -48,12 +48,42 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  key: ValueKey(_refreshKey),
  stream: TournamentRepository().getTournamentMatches(widget.championship.id),
  builder: (context, snapshot) {
- if (!snapshot.hasData) {
- return const Scaffold(
- backgroundColor: VSPColors.background,
- body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
- );
- }
+        if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
+          return Scaffold(
+            backgroundColor: VSPColors.background,
+            appBar: AppBar(backgroundColor: Colors.transparent, elevation: 0, leading: const VSPBackButton()),
+            body: Center(
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Iconsax.refresh_2_copy, color: VSPColors.warning, size: 36),
+                  const SizedBox(height: 12),
+                  const Text(
+                    'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
+                    style: TextStyle(color: VSPColors.textSecondary, fontSize: 14),
+                  ),
+                  const SizedBox(height: 16),
+                  ElevatedButton.icon(
+                    onPressed: () => setState(() => _refreshKey++),
+                    icon: const Icon(Icons.refresh, size: 18),
+                    label: const Text('إعادة المحاولة'),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: VSPColors.accent,
+                      foregroundColor: Colors.black,
+                    ),
+                  ),
+                ],
+              ),
+            ),
+          );
+        }
+
+        if (!snapshot.hasData) {
+          return const Scaffold(
+            backgroundColor: VSPColors.background,
+            body: Center(child: CircularProgressIndicator(color: VSPColors.accent)),
+          );
+        }
 
  final matches = snapshot.data!;
  if (matches.isEmpty) {

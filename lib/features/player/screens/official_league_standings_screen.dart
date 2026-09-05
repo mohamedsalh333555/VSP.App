@@ -36,13 +36,18 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
  }
 
  void _subscribeToRegistrations() {
- _registrationsSubscription = LeagueRepository().stream1v1RegistrationsCount().listen((count) {
+ _registrationsSubscription = LeagueRepository().stream1v1RegistrationsCount().listen(
+ (count) {
  if (mounted) {
  setState(() {
  _registrationCount = count;
  });
  }
- });
+ },
+ onError: (err) {
+ debugPrint('1v1 registrations stream error (handled): $err');
+ },
+ );
  }
 
  @override

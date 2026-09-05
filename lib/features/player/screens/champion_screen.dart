@@ -14,6 +14,7 @@ import 'player_home_screen.dart'; // For ChampionshipCard
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 
 final GlobalKey<ChampionScreenState> championScreenKey = GlobalKey<ChampionScreenState>();
 
@@ -338,6 +339,12 @@ class ChampionScreenState extends State<ChampionScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
+        if (snapshot.hasError) {
+          return VSPErrorState(
+            customMessage: snapshot.error?.toString(),
+            onRetry: () => setState(() {}),
+          );
+        }
         final players = snapshot.data ?? [];
         if (players.isEmpty) {
           return Center(
@@ -585,6 +592,12 @@ class ChampionScreenState extends State<ChampionScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+        if (snapshot.hasError) {
+          return VSPErrorState(
+            customMessage: snapshot.error?.toString(),
+            onRetry: () => setState(() {}),
+          );
         }
 
         final List<Team> allTeams = snapshot.data ?? [];
@@ -957,6 +970,12 @@ class ChampionScreenState extends State<ChampionScreen>
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
+        if (snapshot.hasError) {
+          return VSPErrorState(
+            customMessage: snapshot.error?.toString(),
+            onRetry: () => setState(() {}),
+          );
         }
 
         final championships = snapshot.data ?? [];

@@ -211,6 +211,10 @@ class ChatRepository {
     return _supabase
         .from('conversations')
         .stream(primaryKey: ['id'])
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
         .map((list) => list.where((c) {
               final parts = (c['participant_ids'] as List?)?.map((e) => e.toString()).toList() ?? [];
               final deleted = (c['deleted_for_users'] as List?)?.map((e) => e.toString()).toList() ?? [];
@@ -220,7 +224,10 @@ class ChatRepository {
                 final t1 = DateTime.parse(a['last_message_time'] ?? a['created_at']);
                 final t2 = DateTime.parse(b['last_message_time'] ?? b['created_at']);
                 return t2.compareTo(t1);
-              }));
+              }))
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in streamUserConversations: $e');
+        });
   }
 
   Stream<int> streamTotalUnreadCount(String userId) {

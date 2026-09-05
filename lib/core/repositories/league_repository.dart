@@ -73,7 +73,12 @@ class LeagueRepository {
                 fetchAndEmit();
               },
             )
-            .subscribe();
+            .subscribe((status, [error]) {
+              if (status == RealtimeSubscribeStatus.timedOut) {
+                debugPrint('1v1 tournaments channel timed out: $error');
+                fetchAndEmit();
+              }
+            });
 
         playersChannel = _supabase
             .channel('realtime_1v1_players_$tag')
@@ -85,7 +90,12 @@ class LeagueRepository {
                 fetchAndEmit();
               },
             )
-            .subscribe();
+            .subscribe((status, [error]) {
+              if (status == RealtimeSubscribeStatus.timedOut) {
+                debugPrint('1v1 players channel timed out: $error');
+                fetchAndEmit();
+              }
+            });
       },
       onCancel: () {
         tournamentChannel?.unsubscribe();
@@ -143,15 +153,29 @@ class LeagueRepository {
     }
   }
 
-  Stream<int> stream1v1RegistrationsCount() {
-    return _supabase
+  Stream<int> stream1v1RegistrationsCount() async* {
+    // 1. Immediate REST count
+    yield await get1v1RegistrationsCount();
+
+    // 2. Realtime with safety timeout & error recovery
+    yield* _supabase
         .from('vsp_1v1_registrations')
         .stream(primaryKey: ['id'])
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final freshCount = await get1v1RegistrationsCount();
+            sink.add(freshCount);
+          },
+        )
         .map((list) {
           return list.where((item) {
             final status = item['status'];
             return status == 'pending' || status == 'approved';
           }).length;
+        })
+        .handleError((error) {
+          debugPrint('Handled realtime error in stream1v1RegistrationsCount: $error');
         });
   }
 }

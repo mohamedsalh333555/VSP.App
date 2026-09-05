@@ -26,9 +26,16 @@ class NotificationRepository {
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('created_at', ascending: false)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
         .map((list) => list
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
-            .toList());
+            .toList())
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in getUserNotifications: $e');
+        });
   }
 
   Future<void> sendNotification(String userId, AppNotification notification) async {

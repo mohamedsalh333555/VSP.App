@@ -243,20 +243,35 @@ class SupabaseBookingRepository implements BookingRepository {
  }
  }
 
- @override
- Stream<List<Booking>> getUserBookings(String userId) {
- return _supabase
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('created_by_user_id', userId)
- .map((list) {
- final bookings = list
- .map((data) => Booking.fromFirestore(data, data['id'].toString()))
- .toList();
- bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
- return bookings;
- });
- }
+  @override
+  Stream<List<Booking>> getUserBookings(String userId) async* {
+    // 1. Immediate REST fetch
+    final direct = await getUserBookingsDirectly(userId);
+    if (direct.isNotEmpty) yield direct;
+
+    // 2. Realtime stream with safety timeout & error recovery
+    yield* _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getUserBookingsDirectly(userId);
+            sink.add(refreshed);
+          },
+        )
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .toList();
+          bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return bookings;
+        })
+        .handleError((error) {
+          VSPLogger.w('Handled realtime error in getUserBookings: $error');
+        });
+  }
 
  @override
  Future<List<Booking>> getUserBookingsDirectly(String userId) async {
@@ -305,27 +320,43 @@ class SupabaseBookingRepository implements BookingRepository {
  }
  }
 
- @override
- Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) {
- final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
- return _supabase
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('owner_id', ownerId)
- .map((list) {
- final bookings = list
- .map((data) => Booking.fromFirestore(data, data['id'].toString()))
- .where((b) {
- if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
- return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
- }
- return true;
- })
- .toList();
- bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
- return bookings;
- });
- }
+  @override
+  Stream<List<Booking>> getOwnerBookings(String ownerId, {List<String>? stadiumIds}) async* {
+    final lowerStadiumIds = stadiumIds?.map((id) => id.toLowerCase()).toList();
+
+    // 1. Immediate REST fetch
+    final direct = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+    if (direct.isNotEmpty) yield direct;
+
+    // 2. Realtime stream with safety timeout & error recovery
+    yield* _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('owner_id', ownerId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+            sink.add(refreshed);
+          },
+        )
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) {
+                if (lowerStadiumIds != null && lowerStadiumIds.isNotEmpty) {
+                  return lowerStadiumIds.contains(b.stadiumId.toLowerCase());
+                }
+                return true;
+              })
+              .toList();
+          bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
+          return bookings;
+        })
+        .handleError((error) {
+          VSPLogger.w('Handled realtime error in getOwnerBookings: $error');
+        });
+  }
 
  @override
  Future<Booking?> getBookingById(String bookingId) async {
@@ -471,38 +502,52 @@ class SupabaseBookingRepository implements BookingRepository {
  }
  }
 
- @override
- Stream<List<Booking>> getUpcomingBookings(String userId) {
- final now = DateTime.now();
- return _supabase
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('created_by_user_id', userId)
- .map((list) {
- final bookings = list
- .map((data) => Booking.fromFirestore(data, data['id'].toString()))
- .where((b) => b.status == BookingStatus.confirmed && b.startTime.isAfter(now))
- .toList();
- bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
- return bookings;
- });
- }
+  @override
+  Stream<List<Booking>> getUpcomingBookings(String userId) {
+    final now = DateTime.now();
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) => b.status == BookingStatus.confirmed && b.startTime.isAfter(now))
+              .toList();
+          bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
+          return bookings;
+        })
+        .handleError((error) {
+          VSPLogger.w('Handled realtime error in getUpcomingBookings: $error');
+        });
+  }
 
- @override
- Stream<List<Booking>> getBookingHistory(String userId) {
- return _supabase
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('created_by_user_id', userId)
- .map((list) {
- final bookings = list
- .map((data) => Booking.fromFirestore(data, data['id'].toString()))
- .where((b) => b.status == BookingStatus.completed)
- .toList();
- bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
- return bookings;
- });
- }
+  @override
+  Stream<List<Booking>> getBookingHistory(String userId) {
+    return _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('created_by_user_id', userId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .map((list) {
+          final bookings = list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) => b.status == BookingStatus.completed)
+              .toList();
+          bookings.sort((a, b) => a.startTime.compareTo(b.startTime));
+          return bookings;
+        })
+        .handleError((error) {
+          VSPLogger.w('Handled realtime error in getBookingHistory: $error');
+        });
+  }
 
  @override
  Future<bool> submitMatchResult({
@@ -611,40 +656,86 @@ class SupabaseBookingRepository implements BookingRepository {
  }
  }
  return false;
- } catch (e) {
- debugPrint(' Error submitting match result: $e');
- return false;
- }
- }
+    } catch (e) {
+      debugPrint(' Error submitting match result: $e');
+      return false;
+    }
+  }
 
- @override
- Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) {
- final startOfDay = DateTime(date.year, date.month, date.day);
- final endOfDay = startOfDay.add(const Duration(days: 2));
 
- return _supabase
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('stadium_id', stadiumId)
- .map((list) {
- return list
- .map((data) => Booking.fromFirestore(data, data['id'].toString()))
- .where((b) {
- if (b.status == BookingStatus.cancelled) return false;
+  Future<List<Booking>> fetchStadiumBookingsDirectly(String stadiumId, DateTime date) async {
+    try {
+      final startOfDay = DateTime(date.year, date.month, date.day);
+      final endOfDay = startOfDay.add(const Duration(days: 2));
 
- // Fix: If booking is pending and older than 5 minutes without payment, ignore it (does not block slot)
- if (b.status == BookingStatus.pending) {
- final createdAtLocal = b.createdAt.toLocal();
- final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
- if (isExpired) return false;
- }
+      final response = await _supabase
+          .from('bookings')
+          .select()
+          .eq('stadium_id', stadiumId)
+          .gte('start_time', startOfDay.toIso8601String())
+          .lt('start_time', endOfDay.toIso8601String());
 
- return b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
- b.startTime.isBefore(endOfDay);
- })
- .toList();
- });
- }
+      return (response as List)
+          .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .where((b) {
+            if (b.status == BookingStatus.cancelled) return false;
+            if (b.status == BookingStatus.pending) {
+              final createdAtLocal = b.createdAt.toLocal();
+              final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
+              if (isExpired) return false;
+            }
+            return true;
+          })
+          .toList();
+    } catch (e) {
+      VSPLogger.w('fetchStadiumBookingsDirectly notice: $e');
+      return [];
+    }
+  }
+
+  @override
+  Stream<List<Booking>> getBookingsForStadium(String stadiumId, DateTime date) async* {
+    // 1. Immediate REST API fetch
+    final direct = await fetchStadiumBookingsDirectly(stadiumId, date);
+    if (direct.isNotEmpty) yield direct;
+
+    final startOfDay = DateTime(date.year, date.month, date.day);
+    final endOfDay = startOfDay.add(const Duration(days: 2));
+
+    // 2. Realtime Stream with safety timeout & error recovery
+    yield* _supabase
+        .from('bookings')
+        .stream(primaryKey: ['id'])
+        .eq('stadium_id', stadiumId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
+            sink.add(refreshed);
+          },
+        )
+        .map((list) {
+          return list
+              .map((data) => Booking.fromFirestore(data, data['id'].toString()))
+              .where((b) {
+                if (b.status == BookingStatus.cancelled) return false;
+
+                // Fix: If booking is pending and older than 5 minutes without payment, ignore it (does not block slot)
+                if (b.status == BookingStatus.pending) {
+                  final createdAtLocal = b.createdAt.toLocal();
+                  final isExpired = DateTime.now().difference(createdAtLocal).inMinutes >= 5;
+                  if (isExpired) return false;
+                }
+
+                return b.startTime.isAfter(startOfDay.subtract(const Duration(seconds: 1))) &&
+                    b.startTime.isBefore(endOfDay);
+              })
+              .toList();
+        })
+        .handleError((error) {
+          VSPLogger.w('Handled realtime error in getBookingsForStadium: $error');
+        });
+  }
 
  @override
  Future<bool> updatePaymentStatus(String bookingId, bool isPaid) async {

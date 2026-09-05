@@ -158,12 +158,19 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
       if (uid != null) {
         Provider.of<BookingProvider>(context, listen: false).loadOwnerBookings(uid);
         Provider.of<StadiumProvider>(context, listen: false).listenToOwnerStadiums(uid);
-        _champSubscription = TournamentRepository().getChampionshipsStream(isOwner: true, ownerId: uid).listen((champs) {
-          if (!mounted) return;
-          setState(() {
-            _ownerChampionships = champs;
-          });
-        });
+        _champSubscription = TournamentRepository()
+            .getChampionshipsStream(isOwner: true, ownerId: uid)
+            .listen(
+          (champs) {
+            if (!mounted) return;
+            setState(() {
+              _ownerChampionships = champs;
+            });
+          },
+          onError: (e) {
+            VSPLogger.w('Owner championships subscription notice (handled): $e');
+          },
+        );
       }
     });
   }

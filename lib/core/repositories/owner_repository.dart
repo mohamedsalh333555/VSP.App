@@ -12,12 +12,19 @@ class OwnerRepository {
  .from('bookings')
  .stream(primaryKey: ['id'])
  .eq('owner_id', ownerId)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
  .map((list) {
  final bookings = list
  .map((data) => Booking.fromFirestore(data, data['id'].toString()))
  .toList();
  bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
  return bookings;
+ })
+ .handleError((e) {
+ VSPLogger.w('Handled realtime error in owner getOwnerBookings: $e');
  });
  }
 
@@ -26,9 +33,16 @@ class OwnerRepository {
  .from('stadiums')
  .stream(primaryKey: ['id'])
  .eq('owner_id', ownerId)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
  .map((list) => list
  .map((data) => Stadium.fromFirestore(data, data['id'].toString()))
- .toList());
+ .toList())
+ .handleError((e) {
+ VSPLogger.w('Handled realtime error in getOwnerStadiums: $e');
+ });
  }
 
  Future<double> calculateOwnerRevenue(String ownerId) async {
@@ -75,6 +89,10 @@ class OwnerRepository {
  return _supabase
  .from('transactions')
  .stream(primaryKey: ['id'])
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
  .map((list) {
  final sorted = List<Map<String, dynamic>>.from(list);
  sorted.sort((a, b) {
@@ -83,6 +101,9 @@ class OwnerRepository {
  return dateB.compareTo(dateA);
  });
  return sorted;
+ })
+ .handleError((e) {
+ VSPLogger.w('Handled realtime error in getTransactionsStream: $e');
  });
  }
 

@@ -46,6 +46,8 @@ dependencies:
   share_plus: ^12.0.1
   webview_flutter: ^4.13.1
   crypto: ^3.0.6
+  connectivity_plus: ^6.1.1
+
   
   # Supabase
   supabase_flutter: ^2.15.4

@@ -7,6 +7,7 @@ import '../../../shared/widgets/vsp_animated_button.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../shared/widgets/vsp_fade_in_item.dart';
 import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_error_state.dart';
 import 'package:flutter/material.dart';
 import 'package:provider/provider.dart';
 import 'matchup_live_dashboard_screen.dart';
@@ -68,18 +69,26 @@ class _BookingsScreenState extends State<BookingsScreen> {
  body: SafeArea(
  top: true,
  bottom: false,
- child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, List<Booking> pending, bool loading})>(
+ child: Selector<BookingProvider, ({List<Booking> upcoming, List<Booking> history, List<Booking> pending, bool loading, String? error})>(
  selector: (_, provider) => (
  upcoming: provider.upcomingBookings,
  history: provider.historyBookings,
  pending: provider.pendingBookings,
  loading: provider.isLoading,
+ error: provider.errorMessage,
  ),
  builder: (context, data, child) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
  if (data.loading) {
  return const Center(
  child: CircularProgressIndicator(color: VSPColors.accent),
+ );
+ }
+ 
+ if (data.error != null && data.upcoming.isEmpty && data.history.isEmpty && data.pending.isEmpty) {
+ return VSPErrorState(
+ customMessage: data.error,
+ onRetry: _loadData,
  );
  }
  

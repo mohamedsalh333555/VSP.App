@@ -60,27 +60,37 @@ class TournamentRepository {
  VSPLogger.e('Error fetching initial championships via REST', e, s);
  }
 
- // 2. Listen to Real-time Stream for updates with filter
- try {
- dynamic streamQuery = _supabase.from('championships').stream(primaryKey: ['id']);
- if (isOwner && ownerId != null) {
- streamQuery = streamQuery.eq('owner_id', ownerId);
- } else if (!isOwner) {
- streamQuery = streamQuery.eq('is_approved', true);
- }
+ // 2. Listen to Real-time Stream for updates with filter and timeout safety
+    try {
+      dynamic streamQuery = _supabase.from('championships').stream(primaryKey: ['id']);
+      if (isOwner && ownerId != null) {
+        streamQuery = streamQuery.eq('owner_id', ownerId);
+      } else if (!isOwner) {
+        streamQuery = streamQuery.eq('is_approved', true);
+      }
 
-    yield* streamQuery.map<List<Championship>>((list) {
-      return _parseChampionshipsList(
-        list as List<Map<String, dynamic>>,
-        governorate: governorate,
-        sportType: sportType,
-        isOwner: isOwner,
-        ownerId: ownerId,
-      );
-    });
- } catch (e, s) {
- VSPLogger.e('Error listening to championships stream', e, s);
- }
+      yield* streamQuery
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) {
+              VSPLogger.w('Championships realtime stream timed out. Relying on REST query.');
+            },
+          )
+          .map<List<Championship>>((list) {
+            return _parseChampionshipsList(
+              list as List<Map<String, dynamic>>,
+              governorate: governorate,
+              sportType: sportType,
+              isOwner: isOwner,
+              ownerId: ownerId,
+            );
+          })
+          .handleError((error) {
+            VSPLogger.w('Handled realtime stream error in getChampionshipsStream: $error');
+          });
+    } catch (e, s) {
+      VSPLogger.e('Error listening to championships stream', e, s);
+    }
  }
 
  Future<Championship?> getChampionshipById(String id) async {
@@ -1020,22 +1030,57 @@ class TournamentRepository {
  }
  }
 
- Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) {
- return _supabase
- .from('tournament_matches')
- .stream(primaryKey: ['id'])
- .map((list) {
- final matches = list
- .map((data) => TournamentMatch.fromFirestore(data, data['id'].toString()))
- .where((m) => m.championshipId == championshipId)
- .toList();
- matches.sort((a, b) {
- if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
- return a.matchIndex.compareTo(b.matchIndex);
- });
- return matches;
- });
- }
+  Future<List<TournamentMatch>> getTournamentMatchesDirectly(String championshipId) async {
+    try {
+      final response = await _supabase
+          .from('tournament_matches')
+          .select()
+          .eq('championship_id', championshipId);
+      final matches = (response as List)
+          .map((data) => TournamentMatch.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
+          .toList();
+      matches.sort((a, b) {
+        if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
+        return a.matchIndex.compareTo(b.matchIndex);
+      });
+      return matches;
+    } catch (e) {
+      debugPrint('Error fetching tournament matches directly: $e');
+      return [];
+    }
+  }
+
+  Stream<List<TournamentMatch>> getTournamentMatches(String championshipId) async* {
+    // 1. Direct REST fetch for immediate UI display without waiting on Realtime
+    final direct = await getTournamentMatchesDirectly(championshipId);
+    if (direct.isNotEmpty) yield direct;
+
+    // 2. Realtime stream with safety timeout and error recovery
+    yield* _supabase
+        .from('tournament_matches')
+        .stream(primaryKey: ['id'])
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getTournamentMatchesDirectly(championshipId);
+            sink.add(refreshed);
+          },
+        )
+        .map((list) {
+          final matches = list
+              .map((data) => TournamentMatch.fromFirestore(data, data['id'].toString()))
+              .where((m) => m.championshipId == championshipId)
+              .toList();
+          matches.sort((a, b) {
+            if (a.roundIndex != b.roundIndex) return b.roundIndex.compareTo(a.roundIndex);
+            return a.matchIndex.compareTo(b.matchIndex);
+          });
+          return matches;
+        })
+        .handleError((error) {
+          debugPrint('Handled realtime error in getTournamentMatches: $error');
+        });
+  }
 
  /// انسحاب الفريق الذري من البطولة (Atomic Tournament Withdrawal)
  Future<bool> leaveChampionship(String championshipId, String teamId) async {
@@ -1948,12 +1993,26 @@ class TournamentRepository {
     }
   }
 
-  /// بث مباشر لحظي لتفاصيل بطولة معينة (Realtime Stream)
-  Stream<Championship?> getSingleChampionshipStream(String championshipId) {
-    return _supabase
+  /// بث مباشر لحظي لتفاصيل بطولة معينة (Realtime Stream with REST Fallback)
+  Stream<Championship?> getSingleChampionshipStream(String championshipId) async* {
+    // 1. Immediate REST fetch
+    try {
+      final direct = await getChampionshipById(championshipId);
+      if (direct != null) yield direct;
+    } catch (_) {}
+
+    // 2. Realtime Stream with safety timeout & error recovery
+    yield* _supabase
         .from('championships')
         .stream(primaryKey: ['id'])
         .eq('id', championshipId)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getChampionshipById(championshipId);
+            sink.add(refreshed);
+          },
+        )
         .map((list) {
           if (list.isEmpty) return null;
           try {
@@ -1962,6 +2021,9 @@ class TournamentRepository {
             debugPrint('Error parsing realtime championship stream: $e');
             return null;
           }
+        })
+        .handleError((error) {
+          debugPrint('Handled realtime error in getSingleChampionshipStream: $error');
         });
   }
 

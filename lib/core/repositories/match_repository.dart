@@ -18,7 +18,13 @@ class MatchRepository {
  return _supabase
  .from('bookings')
  .stream(primaryKey: ['id'])
- .map((list) => list);
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
+ .handleError((e) {
+ VSPLogger.w('Handled realtime error in getMatches: $e');
+ });
  }
 
  // Legacy Match Join (Compatibility wrapper)
@@ -74,6 +80,10 @@ class MatchRepository {
  .stream(primaryKey: ['id'])
  .eq('is_private', false)
  .order('start_time', ascending: true)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => VSPLogger.w('Public matches realtime stream timed out'),
+ )
  .map<List<Booking>>((list) {
  final currentNow = DateTime.now();
  final currentCutoff = currentNow.subtract(const Duration(hours: 2));
@@ -94,6 +104,9 @@ class MatchRepository {
  return isNotExpired && isConfirmed && isFuture && (hasSpace || isParticipant);
  })
  .toList();
+ })
+ .handleError((error) {
+ VSPLogger.w('Handled realtime error in getPublicMatches: $error');
  });
  }
 

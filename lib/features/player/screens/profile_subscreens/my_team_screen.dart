@@ -63,8 +63,14 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  .from('team_members')
  .stream(primaryKey: ['id'])
  .eq('user_id', uid)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
  .listen((data) {
  _initialLoad();
+ }, onError: (err) {
+ VSPLogger.w('Membership realtime stream notice: $err');
  });
  }
  });
@@ -106,6 +112,10 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  .from('teams')
  .stream(primaryKey: ['id'])
  .eq('id', team.id)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
  .listen((data) async {
  if (data.isNotEmpty && mounted) {
  final updatedTeam = await TeamRepository().getTeam(team.id);
@@ -117,6 +127,8 @@ class _MyTeamScreenState extends State<MyTeamScreen> {
  });
  }
  }
+ }, onError: (err) {
+ VSPLogger.w('Team realtime stream notice: $err');
  });
  
  await _loadMemberDetails(team);
