@@ -335,59 +335,221 @@ class ChampionScreenState extends State<ChampionScreen>
     return StreamBuilder<List<VSP1v1Player>>(
       stream: LeagueRepository().get1v1Standings(),
       builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        if (snapshot.connectionState == ConnectionState.waiting) {
+          return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
+        }
         final players = snapshot.data ?? [];
-        if (players.isEmpty) return Center(child: Text(AppLocalizations.of(context)!.noOneVsOneRanked, style: const TextStyle(color: VSPColors.textSecondary)));
+        if (players.isEmpty) {
+          return Center(
+            child: Text(
+              AppLocalizations.of(context)!.noOneVsOneRanked,
+              style: const TextStyle(color: VSPColors.textSecondary),
+            ),
+          );
+        }
 
-        return ListView.builder(
-          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 8),
+        final top3 = players.take(3).toList();
+        final rest = players.skip(3).toList();
+
+        if (players.length < 3) {
+          return ListView.builder(
+            padding: EdgeInsets.fromLTRB(16, VSPSpacing.md, 16, MediaQuery.of(context).padding.bottom + 24),
+            physics: const BouncingScrollPhysics(),
+            itemCount: players.length,
+            itemBuilder: (ctx, i) => VSPFadeInItem(
+              index: i,
+              child: Padding(
+                padding: const EdgeInsets.only(bottom: 12),
+                child: _build1v1RankListItem(players[i], i + 1),
+              ),
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          keyboardDismissBehavior: ScrollViewKeyboardDismissBehavior.onDrag,
+          padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: 12),
           physics: const BouncingScrollPhysics(),
-          itemCount: players.length,
-          itemBuilder: (context, index) {
-            final player = players[index];
-            final isFirst = player.rank == 1;
-            
-            return Container(
-              margin: const EdgeInsets.only(bottom: 8),
-              padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border(left: BorderSide(color: isFirst ? VSPColors.accent : Colors.transparent, width: 4)),
-              ),
-              child: Row(
-                children: [
-                  SizedBox(
-                    width: 30,
-                    child: Text('${player.rank}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: isFirst ? VSPColors.accent : VSPColors.textSecondary, fontWeight: FontWeight.w900)),
-                  ),
-                  Icon(player.trend == 'up' ? Iconsax.arrow_up_1_copy : (player.trend == 'down' ? Iconsax.arrow_down_1_copy : Iconsax.minus_cirlce_copy), color: player.trend == 'up' ? VSPColors.accent : (player.trend == 'down' ? Colors.red : VSPColors.textSecondary), size: 20),
-                  const SizedBox(width: 12),
-                  CircleAvatar(
-                    radius: 18, 
-                    backgroundColor: VSPColors.surfaceAlt, 
-                    backgroundImage: player.avatarUrl.isNotEmpty ? NetworkImage(player.avatarUrl) : null,
-                    child: player.avatarUrl.isEmpty ? const Icon(Iconsax.user_copy, size: 20, color: VSPColors.accent) : null,
-                  ),
-                  const SizedBox(width: 12),
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(player.name.toUpperCase(), style: Theme.of(context).textTheme.titleSmall?.copyWith(fontWeight: FontWeight.bold, letterSpacing: 0.5)),
-                        Text(AppLocalizations.of(context)!.skillPointsLabel(player.skillPoints, player.goals), style: Theme.of(context).textTheme.labelSmall?.copyWith(color: VSPColors.textSecondary, fontSize: 10)),
-                      ],
+          child: Column(
+            children: [
+              // Premium 1v1 Podium
+              SizedBox(
+                height: 290,
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.end,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    // Rank 2 - Left (Silver)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 1,
+                        child: _buildTopRankItem(
+                          rank: 2,
+                          name: top3[1].name,
+                          logo: top3[1].avatarUrl,
+                          points: top3[1].totalPoints,
+                          badgeIcon: Iconsax.medal_star_copy,
+                          borderColor: const Color(0xFFC0C0C0),
+                          bgColor: VSPColors.surface,
+                        ),
+                      ),
                     ),
-                  ),
-                  Text('${player.totalPoints}', style: Theme.of(context).textTheme.titleLarge?.copyWith(color: VSPColors.textPrimary, fontWeight: FontWeight.w900)),
-                  const SizedBox(width: 4),
-                  Text(AppLocalizations.of(context)!.pts, style: const TextStyle(color: VSPColors.textSecondary, fontSize: 10, fontWeight: FontWeight.bold)),
-                ],
+                    const SizedBox(width: 10),
+                    // Rank 1 - Center (Gold Champion)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 0,
+                        child: _buildTopRankItem(
+                          rank: 1,
+                          name: top3[0].name,
+                          logo: top3[0].avatarUrl,
+                          points: top3[0].totalPoints,
+                          badgeIcon: Iconsax.crown_copy,
+                          borderColor: VSPColors.accent,
+                          bgColor: const Color(0xFF1E2614),
+                          isCenter: true,
+                        ),
+                      ),
+                    ),
+                    const SizedBox(width: 10),
+                    // Rank 3 - Right (Bronze)
+                    Expanded(
+                      child: VSPFadeInItem(
+                        index: 2,
+                        child: _buildTopRankItem(
+                          rank: 3,
+                          name: top3[2].name,
+                          logo: top3[2].avatarUrl,
+                          points: top3[2].totalPoints,
+                          badgeIcon: Iconsax.award_copy,
+                          borderColor: const Color(0xFFCD7F32),
+                          bgColor: VSPColors.surface,
+                        ),
+                      ),
+                    ),
+                  ],
+                ),
               ),
-            );
-          },
+
+              const SizedBox(height: 28),
+
+              // Expanded Ranking List (#4, #5...)
+              ...List.generate(rest.length, (index) {
+                final player = rest[index];
+                final rank = index + 4;
+                return VSPFadeInItem(
+                  index: index + 3,
+                  child: Padding(
+                    padding: const EdgeInsets.only(bottom: 10),
+                    child: _build1v1RankListItem(player, rank),
+                  ),
+                );
+              }),
+
+              const SizedBox(height: 20),
+            ],
+          ),
         );
       },
+    );
+  }
+
+  Widget _build1v1RankListItem(VSP1v1Player player, int rank) {
+    final initialLetter = player.name.trim().isNotEmpty
+        ? player.name.trim().split(' ').last.substring(0, 1).toUpperCase()
+        : 'P';
+    final isArabic = Localizations.localeOf(context).languageCode == 'ar';
+
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 12),
+      decoration: BoxDecoration(
+        color: VSPColors.surface,
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: VSPColors.divider.withValues(alpha: 0.3)),
+      ),
+      child: Row(
+        children: [
+          // Rank Number
+          SizedBox(
+            width: 28,
+            child: Text(
+              '#$rank',
+              style: Theme.of(context).textTheme.titleMedium?.copyWith(
+                    color: rank <= 3 ? VSPColors.accent : VSPColors.textSecondary,
+                    fontWeight: FontWeight.w900,
+                    fontSize: 13,
+                  ),
+            ),
+          ),
+
+          // Player Avatar / Initial
+          Container(
+            width: 38,
+            height: 38,
+            decoration: BoxDecoration(
+              shape: BoxShape.circle,
+              color: VSPColors.surfaceAlt,
+              border: Border.all(color: VSPColors.divider, width: 1),
+            ),
+            child: ClipOval(
+              child: player.avatarUrl.isNotEmpty
+                  ? CachedNetworkImage(
+                      imageUrl: player.avatarUrl,
+                      fit: BoxFit.cover,
+                      errorWidget: (_, __, ___) => _buildInitialBadge(initialLetter, VSPColors.accent),
+                    )
+                  : _buildInitialBadge(initialLetter, VSPColors.accent),
+            ),
+          ),
+          const SizedBox(width: 12),
+
+          // Player Name & Breakdown
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  player.name,
+                  style: Theme.of(context).textTheme.bodyMedium?.copyWith(
+                        fontWeight: FontWeight.bold,
+                        color: Colors.white,
+                      ),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  isArabic
+                      ? '🛡️ ${player.tackles}  •  ⚽ ${player.goals}  •  ⚡ ${player.skillPoints}'
+                      : '🛡️ ${player.tackles}  •  ⚽ ${player.goals}  •  ⚡ ${player.skillPoints}',
+                  style: Theme.of(context).textTheme.labelSmall?.copyWith(
+                        color: VSPColors.textSecondary,
+                        fontSize: 11,
+                      ),
+                ),
+              ],
+            ),
+          ),
+
+          // Total Points Badge
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
+            decoration: BoxDecoration(
+              color: VSPColors.surfaceAlt,
+              borderRadius: BorderRadius.circular(VSPRadius.md),
+              border: Border.all(color: VSPColors.divider.withValues(alpha: 0.4)),
+            ),
+            child: Text(
+              '${player.totalPoints} ${isArabic ? 'نقطة' : 'PTS'}',
+              style: const TextStyle(
+                color: VSPColors.accent,
+                fontWeight: FontWeight.w900,
+                fontSize: 12,
+              ),
+            ),
+          ),
+        ],
+      ),
     );
   }
 
