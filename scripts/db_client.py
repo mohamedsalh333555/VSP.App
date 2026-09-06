@@ -26,7 +26,7 @@ def run_sql(query):
     except urllib.error.HTTPError as e:
         err_content = e.read().decode("utf-8")
         print(f"HTTPError {e.code}: {err_content}", file=sys.stderr)
-        raise
+        raise Exception(f"HTTPError {e.code}: {err_content}")
 
 if __name__ == "__main__":
     if len(sys.argv) > 1:
