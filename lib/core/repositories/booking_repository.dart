@@ -307,7 +307,7 @@ class SupabaseBookingRepository implements BookingRepository {
  query = query.eq('owner_id', ownerId);
  }
 
- final response = await query.order('start_time', ascending: false);
+    final response = await query.order('start_time', ascending: false).limit(100);
  final bookings = (response as List)
  .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
  .toList();
@@ -333,6 +333,7 @@ class SupabaseBookingRepository implements BookingRepository {
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('owner_id', ownerId)
+        .limit(100)
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))

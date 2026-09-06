@@ -2155,25 +2155,15 @@ class TournamentRepository {
       final otherRosters = List<Map<String, dynamic>>.from(rosters as List);
       final Set<String> registeredPlayerIds = {};
       final Set<String> registeredGuestNames = {};
+      final List<String> otherRosterIds = [];
 
       for (var r in otherRosters) {
         final rosterId = r['id'].toString();
+        otherRosterIds.add(rosterId);
         final pIds = r['player_ids'] as List? ?? [];
         for (var p in pIds) {
           if (p != null && p.toString().isNotEmpty) registeredPlayerIds.add(p.toString());
         }
-
-        try {
-          final rp = await _supabase
-              .from('championship_roster_players')
-              .select('player_id')
-              .eq('roster_id', rosterId);
-          for (var item in (rp as List)) {
-            final pId = item['player_id']?.toString();
-            if (pId != null && pId.isNotEmpty) registeredPlayerIds.add(pId);
-          }
-        } catch (_) {}
-
         final gNames = r['guest_names'] as List? ?? [];
         for (var g in gNames) {
           if (g != null && g.toString().trim().isNotEmpty) {
@@ -2182,19 +2172,34 @@ class TournamentRepository {
         }
       }
 
-      for (final pId in playerIds) {
-        if (registeredPlayerIds.contains(pId)) {
-          try {
-            final userDoc = await _supabase
-                .from('users')
-                .select('name')
-                .eq('id', pId)
-                .maybeSingle();
-            final name = userDoc?['name']?.toString() ?? 'لاعب مسجل';
-            duplicateNames.add(name);
-          } catch (_) {
-            duplicateNames.add('لاعب مسجل مسبقاً');
+      // Batch fetch all players across other rosters in 1 query instead of N+1
+      if (otherRosterIds.isNotEmpty) {
+        try {
+          final rp = await _supabase
+              .from('championship_roster_players')
+              .select('player_id')
+              .inFilter('roster_id', otherRosterIds);
+          for (var item in (rp as List)) {
+            final pId = item['player_id']?.toString();
+            if (pId != null && pId.isNotEmpty) registeredPlayerIds.add(pId);
           }
+        } catch (_) {}
+      }
+
+      // Batch fetch duplicate user names in 1 query instead of loop queries
+      final matchingDupIds = playerIds.where((p) => registeredPlayerIds.contains(p)).toList();
+      if (matchingDupIds.isNotEmpty) {
+        try {
+          final userDocs = await _supabase
+              .from('users')
+              .select('name')
+              .inFilter('id', matchingDupIds);
+          for (var u in (userDocs as List)) {
+            final name = u['name']?.toString() ?? 'لاعب مسجل';
+            duplicateNames.add(name);
+          }
+        } catch (_) {
+          duplicateNames.add('لاعب مسجل مسبقاً');
         }
       }
 

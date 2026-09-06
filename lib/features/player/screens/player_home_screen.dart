@@ -830,7 +830,6 @@ class _HomeContent extends StatelessWidget {
  @override
  Widget build(BuildContext context) {
  final auth = Provider.of<AuthProvider>(context);
- final stadiumProvider = Provider.of<StadiumProvider>(context);
 
  return Column(
  children: [
@@ -852,11 +851,13 @@ class _HomeContent extends StatelessWidget {
  const SizedBox(height: 10),
  const BannerSliderWidget(placement: 'home_slider'),
  const SizedBox(height: 14),
- _buildStadiumsList(context, stadiumProvider),
+ Consumer<StadiumProvider>(
+ builder: (context, stadiumProvider, _) => _buildStadiumsList(context, stadiumProvider),
+ ),
  const SizedBox(height: 16),
- _buildMatchesList(context),
+ _HomeMatchesSection(onNavigate: onNavigate),
  const SizedBox(height: 16),
- _buildChampionshipsList(context, auth),
+ _HomeChampionshipsSection(onNavigate: onNavigate),
  ],
  ),
  ),
@@ -930,48 +931,7 @@ class _HomeContent extends StatelessWidget {
  ],
  ),
  ),
- StreamBuilder<int>(
- stream: NotificationRepository().getUnreadNotificationCount(
- context.read<AuthProvider>().currentUser?.uid ?? '',
- ),
- builder: (context, snapshot) {
- final hasUnread = (snapshot.data ?? 0) > 0;
- return Stack(
- alignment: Alignment.center,
- children: [
- IconButton(
- icon: const Icon(Iconsax.notification_copy, color: Colors.white),
- onPressed: () => Navigator.push(
- context,
- MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
- ),
- ),
- if (hasUnread)
- Positioned(
- top: 8,
- right: 8,
- child: TweenAnimationBuilder<double>(
- tween: Tween(begin: 0.0, end: 1.0),
- duration: const Duration(milliseconds: 400),
- curve: Curves.elasticOut,
- builder: (ctx, val, _) => Transform.scale(
- scale: val,
- child: Container(
- width: 9,
- height: 9,
- decoration: BoxDecoration(
- color: VSPColors.error,
- shape: BoxShape.circle,
- boxShadow: [BoxShadow(color: VSPColors.error.withValues(alpha: 0.6), blurRadius: 4, spreadRadius: 1)],
- ),
- ),
- ),
- ),
- ),
- ],
- );
- },
- ),
+ _HomeNotificationBadge(userId: auth.currentUser?.uid ?? ''),
  ],
  ),
  const SizedBox(height: 16),
@@ -1201,101 +1161,6 @@ class _HomeContent extends StatelessWidget {
  );
  }
 
- Widget _buildMatchesList(BuildContext context) {
- return StreamBuilder<List<Booking>>(
- stream: MatchRepository().getPublicMatches(), 
- builder: (context, snapshot) {
- if (snapshot.hasError) {
- debugPrint(' Matches Stream Error: ${snapshot.error}');
- return const SizedBox.shrink(); // Hide silently or show error
- }
-
- final matches = snapshot.data ?? [];
- 
- // Hide entire section if no matches to match premium UX
- if (matches.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
- return const SizedBox.shrink();
- }
-
- return Column(
- children: [
- _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => onNavigate(1)),
- const SizedBox(height: 8),
- SizedBox(
- height: 240,
- child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
- ? ListView.builder(
- scrollDirection: Axis.horizontal, 
- padding: const EdgeInsets.symmetric(horizontal: 16), 
- itemCount: 3, 
- itemBuilder: (_, __) => const CardSkeleton(),
- )
- : ListView.builder(
- scrollDirection: Axis.horizontal, 
- padding: const EdgeInsets.symmetric(horizontal: 16), 
- itemCount: matches.length, 
- itemBuilder: (context, i) => Align(
- alignment: Alignment.topCenter, 
- child: Container(
- width: 320, 
- margin: const EdgeInsets.only(right: 6), 
- child: PublicMatchCard(booking: matches[i]),
- ),
- ),
- ),
- ),
- ],
- );
- }
- );
- }
-
- Widget _buildChampionshipsList(BuildContext context, AuthProvider auth) {
- return StreamBuilder<List<Championship>>(
- stream: TournamentRepository().getChampionshipsStream(), 
- builder: (context, snapshot) {
- final championships = snapshot.data ?? [];
-
- if (championships.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
- return const SizedBox.shrink();
- }
-
- return Column(
- children: [
- _SectionHeader(
- title: AppLocalizations.of(context)!.joinChampionships, 
- onSeeAll: () => onNavigate(2, arguments: {'initialTab': 0}),
- ),
- const SizedBox(height: 8),
- SizedBox(
- height: 250,
- child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
- ? ListView.builder(
- scrollDirection: Axis.horizontal, 
- padding: const EdgeInsets.symmetric(horizontal: 16), 
- itemCount: 3, 
- itemBuilder: (_, __) => const CardSkeleton(),
- )
- : ListView.builder(
- scrollDirection: Axis.horizontal, 
- padding: const EdgeInsets.symmetric(horizontal: 16), 
- itemCount: championships.length, 
- itemBuilder: (context, i) => Align(
- alignment: Alignment.topCenter, 
- child: Container(
- width: 320, 
- margin: const EdgeInsets.only(right: 6), 
- child: ChampionshipCard(championship: championships[i]),
- ),
- ),
- ),
- ),
- ],
- );
- }
- );
- }
-
 }
 
 void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
@@ -1358,3 +1223,196 @@ void _showLocationPickerHelper(BuildContext context, AuthProvider auth) {
 
 
 
+
+
+class _HomeNotificationBadge extends StatefulWidget {
+  final String userId;
+  const _HomeNotificationBadge({required this.userId});
+
+  @override
+  State<_HomeNotificationBadge> createState() => _HomeNotificationBadgeState();
+}
+
+class _HomeNotificationBadgeState extends State<_HomeNotificationBadge> {
+  late final Stream<int> _unreadStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadStream = NotificationRepository().getUnreadNotificationCount(widget.userId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: _unreadStream,
+      builder: (context, snapshot) {
+        final hasUnread = (snapshot.data ?? 0) > 0;
+        return Stack(
+          alignment: Alignment.center,
+          children: [
+            IconButton(
+              icon: const Icon(Iconsax.notification_copy, color: Colors.white),
+              onPressed: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+              ),
+            ),
+            if (hasUnread)
+              Positioned(
+                top: 8,
+                right: 8,
+                child: TweenAnimationBuilder<double>(
+                  tween: Tween(begin: 0.0, end: 1.0),
+                  duration: const Duration(milliseconds: 400),
+                  curve: Curves.elasticOut,
+                  builder: (ctx, val, _) => Transform.scale(
+                    scale: val,
+                    child: Container(
+                      width: 9,
+                      height: 9,
+                      decoration: BoxDecoration(
+                        color: VSPColors.error,
+                        shape: BoxShape.circle,
+                        boxShadow: [BoxShadow(color: VSPColors.error.withValues(alpha: 0.6), blurRadius: 4, spreadRadius: 1)],
+                      ),
+                    ),
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HomeMatchesSection extends StatefulWidget {
+  final Function(int, {Map<String, dynamic>? arguments}) onNavigate;
+  const _HomeMatchesSection({required this.onNavigate});
+
+  @override
+  State<_HomeMatchesSection> createState() => _HomeMatchesSectionState();
+}
+
+class _HomeMatchesSectionState extends State<_HomeMatchesSection> {
+  late final Stream<List<Booking>> _matchesStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _matchesStream = MatchRepository().getPublicMatches();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Booking>>(
+      stream: _matchesStream,
+      builder: (context, snapshot) {
+        if (snapshot.hasError) {
+          debugPrint(' Matches Stream Error: ');
+          return const SizedBox.shrink();
+        }
+
+        final matches = snapshot.data ?? [];
+        if (matches.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          children: [
+            _SectionHeader(title: AppLocalizations.of(context)!.joinMatches, onSeeAll: () => widget.onNavigate(1)),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 240,
+              child: matches.isEmpty && snapshot.connectionState == ConnectionState.waiting
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 3,
+                      itemBuilder: (_, __) => const CardSkeleton(),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: matches.length,
+                      itemBuilder: (context, i) => Align(
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          width: 320,
+                          margin: const EdgeInsets.only(right: 6),
+                          child: PublicMatchCard(booking: matches[i]),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _HomeChampionshipsSection extends StatefulWidget {
+  final Function(int, {Map<String, dynamic>? arguments}) onNavigate;
+  const _HomeChampionshipsSection({required this.onNavigate});
+
+  @override
+  State<_HomeChampionshipsSection> createState() => _HomeChampionshipsSectionState();
+}
+
+class _HomeChampionshipsSectionState extends State<_HomeChampionshipsSection> {
+  late final Stream<List<Championship>> _championshipsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _championshipsStream = TournamentRepository().getChampionshipsStream();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<List<Championship>>(
+      stream: _championshipsStream,
+      builder: (context, snapshot) {
+        final championships = snapshot.data ?? [];
+        if (championships.isEmpty && snapshot.connectionState != ConnectionState.waiting) {
+          return const SizedBox.shrink();
+        }
+
+        return Column(
+          children: [
+            _SectionHeader(
+              title: AppLocalizations.of(context)!.joinChampionships,
+              onSeeAll: () => widget.onNavigate(2, arguments: {'initialTab': 0}),
+            ),
+            const SizedBox(height: 8),
+            SizedBox(
+              height: 250,
+              child: championships.isEmpty && snapshot.connectionState == ConnectionState.waiting
+                  ? ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: 3,
+                      itemBuilder: (_, __) => const CardSkeleton(),
+                    )
+                  : ListView.builder(
+                      scrollDirection: Axis.horizontal,
+                      padding: const EdgeInsets.symmetric(horizontal: 16),
+                      itemCount: championships.length,
+                      itemBuilder: (context, i) => Align(
+                        alignment: Alignment.topCenter,
+                        child: Container(
+                          width: 320,
+                          margin: const EdgeInsets.only(right: 6),
+                          child: ChampionshipCard(championship: championships[i]),
+                        ),
+                      ),
+                    ),
+            ),
+          ],
+        );
+      },
+    );
+  }
+}

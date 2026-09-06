@@ -43,32 +43,36 @@ void main() async {
  WidgetsFlutterBinding.ensureInitialized();
  usePathUrlStrategy();
  
-  // SUPABASE INITIALIZATION
-  try {
-    await Supabase.initialize(
-      url: AppEnv.supabaseUrl,
-      publishableKey: AppEnv.supabaseAnonKey,
-    ).timeout(const Duration(seconds: 8));
-    VSPLogger.i("Supabase initialized securely");
-    unawaited(VSPTimeService.syncWithServer());
-  } catch (e) {
-    VSPLogger.e("Supabase initialization error: $e");
-  }
-
-  // FIREBASE INITIALIZATION
-  try {
-    await Firebase.initializeApp(
-      options: DefaultFirebaseOptions.currentPlatform,
-    ).timeout(const Duration(seconds: 8));
-    VSPLogger.i("Firebase initialized successfully");
-    try {
-      FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
-    } catch (e) {
-      VSPLogger.w("Firebase Messaging background handler notice: $e");
-    }
-  } catch (e) {
-    VSPLogger.w("Firebase initialization notice: $e");
-  }
+  // CONCURRENT INITIALIZATION (Supabase & Firebase)
+  await Future.wait([
+    (() async {
+      try {
+        await Supabase.initialize(
+          url: AppEnv.supabaseUrl,
+          publishableKey: AppEnv.supabaseAnonKey,
+        ).timeout(const Duration(seconds: 8));
+        VSPLogger.i("Supabase initialized securely");
+        unawaited(VSPTimeService.syncWithServer());
+      } catch (e) {
+        VSPLogger.e("Supabase initialization error: $e");
+      }
+    })(),
+    (() async {
+      try {
+        await Firebase.initializeApp(
+          options: DefaultFirebaseOptions.currentPlatform,
+        ).timeout(const Duration(seconds: 8));
+        VSPLogger.i("Firebase initialized successfully");
+        try {
+          FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+        } catch (e) {
+          VSPLogger.w("Firebase Messaging background handler notice: $e");
+        }
+      } catch (e) {
+        VSPLogger.w("Firebase initialization notice: $e");
+      }
+    })(),
+  ]);
  
  // System UI Style
  SystemChrome.setEnabledSystemUIMode(SystemUiMode.edgeToEdge);

@@ -20,12 +20,13 @@ class NotificationRepository {
     };
   }
 
-  Stream<List<AppNotification>> getUserNotifications(String userId) {
+  Stream<List<AppNotification>> getUserNotifications(String userId, {int limit = 50}) {
     return _supabase
         .from('notifications')
         .stream(primaryKey: ['id'])
         .eq('user_id', userId)
         .order('created_at', ascending: false)
+        .limit(limit)
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) => sink.add([]),

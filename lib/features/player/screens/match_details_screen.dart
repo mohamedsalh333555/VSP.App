@@ -31,10 +31,22 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  Stadium? _stadium;
  bool _isJoining = false;
  bool _isActionProcessing = false;
+ late final Stream<List<Map<String, dynamic>>> _bookingStream;
 
  @override
  void initState() {
  super.initState();
+ _bookingStream = Supabase.instance.client
+     .from('bookings')
+     .stream(primaryKey: ['id'])
+     .eq('id', widget.bookingId)
+     .timeout(
+       const Duration(seconds: 10),
+       onTimeout: (sink) => sink.add([]),
+     )
+     .handleError((e) {
+       VSPLogger.w('Handled realtime error in match details: ');
+     });
  _fetchMatchDetails();
  }
 
@@ -234,17 +246,7 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
 
  return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: Supabase.instance.client
-          .from('bookings')
-          .stream(primaryKey: ['id'])
-          .eq('id', widget.bookingId)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: (sink) => sink.add([]),
-          )
-          .handleError((e) {
-            VSPLogger.w('Handled realtime error in match details: $e');
-          }),
+ stream: _bookingStream,
  builder: (context, snapshot) {
  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
  _booking = Booking.fromFirestore(snapshot.data!.first, widget.bookingId);

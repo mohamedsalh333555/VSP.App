@@ -2,6 +2,7 @@ import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
 import '../../core/ui/tokens/vsp_tokens.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import '../../data/models.dart';
 
 class TeamCardHero extends StatelessWidget {
@@ -79,7 +80,14 @@ class TeamCardHero extends StatelessWidget {
                   ),
                   child: ClipOval(
                     child: team.logoUrl.isNotEmpty 
-                        ? Image.network(team.logoUrl, fit: BoxFit.cover)
+                        ? CachedNetworkImage(
+                            imageUrl: team.logoUrl,
+                            fit: BoxFit.cover,
+                            memCacheWidth: 300,
+                            memCacheHeight: 300,
+                            placeholder: (_, __) => Container(color: VSPColors.surface),
+                            errorWidget: (_, __, ___) => const Icon(Iconsax.security_safe_copy, size: 80, color: VSPColors.white),
+                          )
                         : const Icon(Iconsax.security_safe_copy, size: 80, color: VSPColors.white),
                   ),
                 ),

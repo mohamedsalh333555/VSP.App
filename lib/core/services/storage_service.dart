@@ -65,7 +65,13 @@ class StorageService {
         final bool isPng = extension == '.png';
         final CompressFormat compressFormat = isPng ? CompressFormat.png : CompressFormat.jpeg;
         final String outputExt = isPng ? 'png' : 'jpg';
-        final int quality = isPng ? 100 : 80;
+        final int quality = isPng ? 85 : 75;
+        final bool isSmallAsset = bucket.contains('avatar') ||
+            bucket.contains('profile') ||
+            uploadPath.contains('avatar') ||
+            uploadPath.contains('profile') ||
+            uploadPath.contains('logo');
+        final int maxDim = isSmallAsset ? 512 : 1080;
 
         final targetPath = p.join(tempDir.path, "compressed_${DateTime.now().millisecondsSinceEpoch}.$outputExt");
 
@@ -79,8 +85,8 @@ class StorageService {
           targetPath,
           format: compressFormat,
           quality: quality,
-          minWidth: 1200,
-          minHeight: 1200,
+          minWidth: maxDim,
+          minHeight: maxDim,
         );
  
  if (compressedXFile != null) {

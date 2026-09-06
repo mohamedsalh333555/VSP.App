@@ -274,9 +274,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
  style: Theme.of(context).textTheme.titleLarge,
  ),
  const SizedBox(height: VSPSpacing.md),
- ...data.upcoming.asMap().entries.map((entry) {
- final index = entry.key;
- final booking = entry.value;
+ ListView.builder(
+ shrinkWrap: true,
+ physics: const NeverScrollableScrollPhysics(),
+ padding: EdgeInsets.zero,
+ itemCount: data.upcoming.length,
+ itemBuilder: (context, index) {
+ final booking = data.upcoming[index];
  return VSPFadeInItem(
  index: index,
  child: Padding(
@@ -288,7 +292,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
  ),
  ),
  );
- }),
+ },
+ ),
  const SizedBox(height: VSPSpacing.lg),
  ],
 
@@ -298,9 +303,13 @@ class _BookingsScreenState extends State<BookingsScreen> {
  style: Theme.of(context).textTheme.titleLarge,
  ),
  const SizedBox(height: VSPSpacing.md),
- ...data.history.asMap().entries.map((entry) {
- final index = entry.key;
- final booking = entry.value;
+ ListView.builder(
+ shrinkWrap: true,
+ physics: const NeverScrollableScrollPhysics(),
+ padding: EdgeInsets.zero,
+ itemCount: data.history.length,
+ itemBuilder: (context, index) {
+ final booking = data.history[index];
  return VSPFadeInItem(
  index: index + data.upcoming.length,
  child: Padding(
@@ -312,7 +321,8 @@ class _BookingsScreenState extends State<BookingsScreen> {
  ),
  ),
  );
- }),
+ },
+ ),
  ],
  ],
  ),

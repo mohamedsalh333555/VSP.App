@@ -107,12 +107,13 @@ class OwnerRepository {
  });
  }
 
- Future<List<Map<String, dynamic>>> getTransactionsList() async {
+ Future<List<Map<String, dynamic>>> getTransactionsList({int limit = 50}) async {
  try {
  final list = await _supabase
  .from('transactions')
  .select()
- .order('created_at', ascending: false);
+ .order('created_at', ascending: false)
+ .limit(limit);
  return List<Map<String, dynamic>>.from(list);
  } catch (e, stack) {
  VSPLogger.e('Error fetching transactions list', e, stack);

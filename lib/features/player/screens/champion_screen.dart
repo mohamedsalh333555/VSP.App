@@ -30,6 +30,60 @@ class ChampionScreen extends StatefulWidget {
 
 class ChampionScreenState extends State<ChampionScreen>
     with SingleTickerProviderStateMixin {
+  // Stream memoization to prevent recreation on rebuild
+  Stream<List<Championship>>? _championshipsStream;
+  String? _lastChampionshipsKey;
+  Stream<List<Championship>> _getChampionshipsStream() {
+    final key = '${_selectedLocation}_$_selectedSport';
+    if (_championshipsStream != null && _lastChampionshipsKey == key) {
+      return _championshipsStream!;
+    }
+    _lastChampionshipsKey = key;
+    _championshipsStream = TournamentRepository().getChampionshipsStream(
+      governorate: _selectedLocation,
+      sportType: _selectedSport,
+    );
+    return _championshipsStream!;
+  }
+
+  Stream<List<Team>>? _teamsStream;
+  Stream<List<Team>> _getTeamsStream() {
+    _teamsStream ??= TeamRepository().getTeams();
+    return _teamsStream!;
+  }
+
+  Stream<Map<String, dynamic>?>? _active1v1Stream;
+  String? _last1v1Location;
+  Stream<Map<String, dynamic>?> _getActive1v1Stream(String effectiveLocation) {
+    if (_active1v1Stream != null && _last1v1Location == effectiveLocation) {
+      return _active1v1Stream!;
+    }
+    _last1v1Location = effectiveLocation;
+    _active1v1Stream = LeagueRepository().getActive1v1TournamentStream(governorate: effectiveLocation);
+    return _active1v1Stream!;
+  }
+
+  Stream<List<Map<String, dynamic>>>? _tournamentPlayersStream;
+  String? _lastTourneyPlayersId;
+  Stream<List<Map<String, dynamic>>> _getTournamentPlayersStream(String tournamentId) {
+    if (_tournamentPlayersStream != null && _lastTourneyPlayersId == tournamentId) {
+      return _tournamentPlayersStream!;
+    }
+    _lastTourneyPlayersId = tournamentId;
+    _tournamentPlayersStream = LeagueRepository().getTournamentPlayersStream(tournamentId, isCompleted: false);
+    return _tournamentPlayersStream!;
+  }
+
+  Stream<List<VSP1v1Player>>? _standingsStream;
+  String? _lastStandingsId;
+  Stream<List<VSP1v1Player>> _getStandingsStream(String? tourneyId) {
+    if (_standingsStream != null && _lastStandingsId == tourneyId) {
+      return _standingsStream!;
+    }
+    _lastStandingsId = tourneyId;
+    _standingsStream = LeagueRepository().get1v1Standings(tournamentId: tourneyId);
+    return _standingsStream!;
+  }
   late TabController _tabController;
   int _selectedTabIndex = 0;
 
@@ -139,23 +193,16 @@ class ChampionScreenState extends State<ChampionScreen>
                   ),
                   Row(
                     children: [
-                      // Tab 0: Championships with live count badge
+                      // Tab 0: Championships
                       Expanded(
                         child: GestureDetector(
                           onTap: () => _tabController.animateTo(0),
                           behavior: HitTestBehavior.opaque,
                           child: Center(
-                            child: StreamBuilder<List<Championship>>(
-                              stream: TournamentRepository().getChampionshipsStream(
-                                governorate: _selectedLocation,
-                                sportType: _selectedSport,
-                              ),
-                              builder: (context, snapshot) {
-                                final count = snapshot.data?.length ?? 0;
-                                final countBadge = count > 0 ? ' ($count)' : '';
+                            child: Builder(
+                              builder: (context) {
                                 final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-                                final label = (isArabic ? 'البطولات' : 'Tournaments') + countBadge;
-
+                                final label = isArabic ? 'البطولات' : 'Tournaments';
                                 return Text(
                                   label,
                                   maxLines: 1,
@@ -402,7 +449,7 @@ class ChampionScreenState extends State<ChampionScreen>
         effectiveLocation.toLowerCase() != userGov.toLowerCase();
 
     return StreamBuilder<Map<String, dynamic>?>(
-      stream: LeagueRepository().getActive1v1TournamentStream(governorate: effectiveLocation),
+      stream: _getActive1v1Stream(effectiveLocation),
       builder: (context, tourneySnap) {
         if (tourneySnap.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -533,7 +580,7 @@ class ChampionScreenState extends State<ChampionScreen>
     final prizePool = (tournament['prize_pool'] as num?)?.toDouble() ?? 0.0;
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: LeagueRepository().getTournamentPlayersStream(tournamentId, isCompleted: false),
+      stream: _getTournamentPlayersStream(tournamentId),
       builder: (context, playersSnap) {
         final players = playersSnap.data ?? [];
         final registeredCount = players.length;
@@ -1022,7 +1069,7 @@ class ChampionScreenState extends State<ChampionScreen>
   Widget _build1v1StandingsPhase(Map<String, dynamic> tournament) {
     final tourneyId = tournament['id']?.toString();
     return StreamBuilder<List<VSP1v1Player>>(
-      stream: LeagueRepository().get1v1Standings(tournamentId: tourneyId),
+      stream: _getStandingsStream(tourneyId),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -1406,7 +1453,7 @@ class ChampionScreenState extends State<ChampionScreen>
 
   Widget _buildTeamsRankingStream() {
     return StreamBuilder<List<Team>>(
-      stream: TeamRepository().getTeams(),
+      stream: _getTeamsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -1815,10 +1862,7 @@ class ChampionScreenState extends State<ChampionScreen>
     final isDifferentGov = userGov.isNotEmpty && _selectedLocation.toLowerCase() != userGov.toLowerCase();
 
     return StreamBuilder<List<Championship>>(
-      stream: TournamentRepository().getChampionshipsStream(
-        governorate: _selectedLocation,
-        sportType: _selectedSport,
-      ),
+      stream: _getChampionshipsStream(),
       builder: (context, snapshot) {
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

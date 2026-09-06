@@ -29,12 +29,24 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
  late PageController _pageController;
  int _currentImageIndex = 0;
  late final List<String> _displayImages;
+  late final Stream<List<Map<String, dynamic>>> _stadiumStream;
 
  @override
  void initState() {
  super.initState();
  _tabController = TabController(length: 3, vsync: this);
  _pageController = PageController();
+    _stadiumStream = Supabase.instance.client
+        .from('stadiums')
+        .stream(primaryKey: ['id'])
+        .eq('id', widget.stadium.id)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .handleError((e) {
+          VSPLogger.w('Handled realtime error in stadium details: ');
+        });
  
  // Parse ALL genuine stadium images (primary imageUrl + images array + features['allImages'])
  final List<String> rawImages = [];
@@ -133,17 +145,7 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: Supabase.instance.client
-          .from('stadiums')
-          .stream(primaryKey: ['id'])
-          .eq('id', widget.stadium.id)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: (sink) => sink.add([]),
-          )
-          .handleError((e) {
-            VSPLogger.w('Handled realtime error in stadium details: $e');
-          }),
+      stream: _stadiumStream,
       builder: (context, snapshot) {
         Stadium stadium = widget.stadium;
         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
@@ -809,9 +811,36 @@ class _PitchConditionsTab extends StatelessWidget {
  }
 }
 
-class _RatingsTab extends StatelessWidget {
+class _RatingsTab extends StatefulWidget {
  final Stadium stadium;
  const _RatingsTab({required this.stadium});
+
+ @override
+ State<_RatingsTab> createState() => _RatingsTabState();
+}
+
+class _RatingsTabState extends State<_RatingsTab> {
+  late final Stream<List<Map<String, dynamic>>> _reviewsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _reviewsStream = Supabase.instance.client
+        .from('reviews')
+        .stream(primaryKey: ['id'])
+        .eq('stadium_id', widget.stadium.id)
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) => sink.add([]),
+        )
+        .map((list) {
+          final sorted = List<Map<String, dynamic>>.from(list);
+          sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
+          return sorted;
+        }).handleError((e) {
+          VSPLogger.w('Handled realtime error in stadium reviews: ');
+        });
+  }
 
  Future<void> _showAddReviewSheet(BuildContext context) async {
  final auth = Provider.of<AuthProvider>(context, listen: false);
@@ -918,7 +947,7 @@ class _RatingsTab extends StatelessWidget {
  final userAvatar = userModel?.profileImageUrl ?? '';
 
  await Supabase.instance.client.rpc('submit_stadium_review_atomic', params: {
- 'p_stadium_id': stadium.id,
+ 'p_stadium_id': widget.stadium.id,
  'p_user_id': userId,
  'p_user_name': userName,
  'p_user_image_url': userAvatar,
@@ -971,22 +1000,8 @@ class _RatingsTab extends StatelessWidget {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  return StreamBuilder<List<Map<String, dynamic>>>(
-      stream: Supabase.instance.client
-          .from('reviews')
-          .stream(primaryKey: ['id'])
-          .eq('stadium_id', stadium.id)
-          .timeout(
-            const Duration(seconds: 10),
-            onTimeout: (sink) => sink.add([]),
-          )
-          .map((list) {
-        final sorted = List<Map<String, dynamic>>.from(list);
-        sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
-        return sorted;
-      }).handleError((e) {
-        VSPLogger.w('Handled realtime error in stadium reviews: $e');
-      }),
- builder: (context, snapshot) {
+      stream: _reviewsStream,
+      builder: (context, snapshot) {
  final docs = snapshot.data ?? [];
  final count = docs.length;
  

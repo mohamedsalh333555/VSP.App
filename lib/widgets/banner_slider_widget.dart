@@ -296,6 +296,8 @@ class _BannerSliderWidgetState extends State<BannerSliderWidget> {
               // Banner Image
               CachedNetworkImage(
                 imageUrl: banner.imageUrl,
+                memCacheWidth: 800,
+                memCacheHeight: 450,
                 fit: BoxFit.cover,
                 placeholder: (context, url) => Shimmer.fromColors(
                   baseColor: VSPColors.surface,

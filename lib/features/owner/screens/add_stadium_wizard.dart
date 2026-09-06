@@ -1,6 +1,7 @@
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:flutter/material.dart';
 import 'dart:io';
 import 'dart:async';
@@ -2198,7 +2199,16 @@ class _AddStadiumWizardState extends State<AddStadiumWizard> {
  thumbnail: img['url'] != null 
  ? ClipRRect(
  borderRadius: BorderRadius.circular(8),
- child: Image.network(img['url']!, width: 40, height: 40, fit: BoxFit.cover),
+ child: CachedNetworkImage(
+ imageUrl: img['url']!,
+ width: 40,
+ height: 40,
+ fit: BoxFit.cover,
+ memCacheWidth: 100,
+ memCacheHeight: 100,
+ placeholder: (_, __) => Container(width: 40, height: 40, color: VSPColors.surface),
+ errorWidget: (_, __, ___) => const Icon(Iconsax.image_copy, size: 20),
+ ),
  )
  : (img['file'] != null 
  ? ClipRRect(

@@ -20,6 +20,7 @@ class AppTheme {
 
  static ThemeData get darkTheme {
  final baseTextTheme = GoogleFonts.poppinsTextTheme(ThemeData.dark().textTheme);
+ GoogleFonts.config.allowRuntimeFetching = false;
  final poppinsFamily = GoogleFonts.poppins().fontFamily;
  final tajawalFamily = GoogleFonts.tajawal().fontFamily;
  

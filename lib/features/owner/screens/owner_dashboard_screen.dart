@@ -149,6 +149,23 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   int _selectedProTabIndex = 0; // 0 = Overview (نظرة عامة), 1 = Insights (التحليلات)
   StreamSubscription? _champSubscription;
   List<Championship> _ownerChampionships = [];
+  OwnerFinancialMetrics? _cachedMetrics;
+  String? _lastMetricsKey;
+
+  OwnerFinancialMetrics _getOrCalculateMetrics(List<Booking> allBookings) {
+    final key = '${allBookings.length}_${_ownerChampionships.length}_${_selectedTimePeriod}_$_selectedStadiumFilter';
+    if (_cachedMetrics != null && _lastMetricsKey == key) {
+      return _cachedMetrics!;
+    }
+    _lastMetricsKey = key;
+    _cachedMetrics = OwnerFinancialCalculator.calculate(
+      allBookings: allBookings,
+      ownerChampionships: _ownerChampionships,
+      timePeriod: _selectedTimePeriod,
+      stadiumFilter: _selectedStadiumFilter,
+    );
+    return _cachedMetrics!;
+  }
 
   @override
   void initState() {
@@ -208,12 +225,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
     final allBookings = bookingProvider.userBookings;
     final stadiums = stadiumProvider.stadiums;
 
-    final metrics = OwnerFinancialCalculator.calculate(
-      allBookings: allBookings,
-      ownerChampionships: _ownerChampionships,
-      timePeriod: _selectedTimePeriod,
-      stadiumFilter: _selectedStadiumFilter,
-    );
+    final metrics = _getOrCalculateMetrics(allBookings);
 
     return Scaffold(
       backgroundColor: VSPColors.background,
@@ -476,47 +488,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         const SizedBox(width: 10),
 
         // Notifications Button (Kept in place)
-        StreamBuilder<int>(
-          stream: NotificationRepository().getUnreadNotificationCount(auth.currentUser?.uid ?? ''),
-          builder: (context, snapshot) {
-            final unread = snapshot.data ?? 0;
-            return Stack(
-              clipBehavior: Clip.none,
-              children: [
-                Container(
-                  decoration: BoxDecoration(
-                    color: VSPColors.surface,
-                    borderRadius: BorderRadius.circular(VSPRadius.md),
-                    border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-                  ),
-                  child: IconButton(
-                    icon: const Icon(Iconsax.notification_copy, color: VSPColors.textPrimary, size: 20),
-                    onPressed: () {
-                      HapticFeedback.lightImpact();
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
-                      );
-                    },
-                  ),
-                ),
-                if (unread > 0)
-                  Positioned(
-                    top: 6,
-                    right: 6,
-                    child: Container(
-                      width: 8,
-                      height: 8,
-                      decoration: const BoxDecoration(
-                        color: VSPColors.accent,
-                        shape: BoxShape.circle,
-                      ),
-                    ),
-                  ),
-              ],
-            );
-          },
-        ),
+                _OwnerNotificationButton(userId: auth.currentUser?.uid ?? ''),
       ],
     );
   }
@@ -2832,5 +2804,69 @@ class _RadialTickGaugePainter extends CustomPainter {
     return oldDelegate.progress != progress ||
         oldDelegate.activeColor != activeColor ||
         oldDelegate.inactiveColor != inactiveColor;
+  }
+}
+
+
+class _OwnerNotificationButton extends StatefulWidget {
+  final String userId;
+  const _OwnerNotificationButton({required this.userId});
+
+  @override
+  State<_OwnerNotificationButton> createState() => _OwnerNotificationButtonState();
+}
+
+class _OwnerNotificationButtonState extends State<_OwnerNotificationButton> {
+  late final Stream<int> _unreadStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _unreadStream = NotificationRepository().getUnreadNotificationCount(widget.userId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return StreamBuilder<int>(
+      stream: _unreadStream,
+      builder: (context, snapshot) {
+        final unread = snapshot.data ?? 0;
+        return Stack(
+          clipBehavior: Clip.none,
+          children: [
+            Container(
+              decoration: BoxDecoration(
+                color: VSPColors.surface,
+                borderRadius: BorderRadius.circular(VSPRadius.md),
+                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
+              ),
+              child: IconButton(
+                icon: const Icon(Iconsax.notification_copy, color: VSPColors.textPrimary, size: 20),
+                onPressed: () {
+                  HapticFeedback.lightImpact();
+                  Navigator.push(
+                    context,
+                    MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
+                  );
+                },
+              ),
+            ),
+            if (unread > 0)
+              Positioned(
+                top: 6,
+                right: 6,
+                child: Container(
+                  width: 8,
+                  height: 8,
+                  decoration: const BoxDecoration(
+                    color: VSPColors.accent,
+                    shape: BoxShape.circle,
+                  ),
+                ),
+              ),
+          ],
+        );
+      },
+    );
   }
 }
