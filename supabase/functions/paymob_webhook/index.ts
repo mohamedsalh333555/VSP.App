@@ -234,8 +234,9 @@ serve(async (req: Request) => {
 
     // 3.5 Handle Team Tournament Orders
     if (specialReference.startsWith("TOURN_")) {
-      console.log(`🏆 Processing tournament webhook for order: ${specialReference}`);
+      console.log(`Processing tournament webhook for order: ${specialReference}`);
       if (isSuccess) {
+        // Step 1: Atomic confirmation & capacity check (with row lock)
         const { data: tournResult, error: tournErr } = await supabase.rpc(
           "confirm_tournament_order_atomic",
           {
@@ -243,10 +244,74 @@ serve(async (req: Request) => {
             p_paymob_transaction_id: transactionId,
           }
         );
+
         if (tournErr) {
-          console.error("❌ Failed to confirm tournament order via RPC:", tournErr);
+          console.error("Failed to confirm tournament order via RPC:", tournErr);
+        } else if (tournResult?.needs_refund === true || tournResult?.requires_refund === true) {
+          // OVER-CAPACITY DETECTED: Real Paymob Refund API call FIRST
+          console.warn(`Capacity exceeded for tournament order ${specialReference}. Initiating REAL Paymob Refund API call...`);
+          
+          let refundSuccess = false;
+          let refundId = null;
+          let refundErrorMsg = null;
+
+          try {
+            const paymobApiKey = Deno.env.get("PAYMOB_API_KEY") || Deno.env.get("PAYMOB_SECRET_KEY") || "";
+            if (!paymobApiKey) {
+              throw new Error("Missing PAYMOB_API_KEY / PAYMOB_SECRET_KEY on server environment");
+            }
+
+            // Step A: Authenticate with Paymob to obtain auth token
+            const authRes = await fetch("https://accept.paymob.com/api/auth/tokens", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({ api_key: paymobApiKey }),
+            });
+
+            if (!authRes.ok) {
+              const authErrText = await authRes.text();
+              throw new Error(`Paymob auth token request failed: ${authErrText}`);
+            }
+
+            const authData = await authRes.json();
+            const authToken = authData.token;
+
+            // Step B: Call Paymob Void/Refund API with exact transaction and amount in cents
+            const amountCents = Math.round(Number(tournResult.amount) * 100);
+            const refundRes = await fetch("https://accept.paymob.com/api/acceptance/void_refund/refund", {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                auth_token: authToken,
+                transaction_id: Number(transactionId),
+                amount_cents: amountCents,
+              }),
+            });
+
+            const refundData = await refundRes.json();
+            console.log("Paymob Refund API Response:", JSON.stringify(refundData));
+
+            if (refundRes.ok && (refundData.success === true || refundData.is_refund === true || refundData.id)) {
+              refundSuccess = true;
+              refundId = String(refundData.id || refundData.transaction_id || "REFUND_SUCCESS");
+            } else {
+              refundErrorMsg = refundData.message || refundData.detail || JSON.stringify(refundData);
+            }
+          } catch (refundEx: any) {
+            console.error("Exception during Paymob Refund API call:", refundEx);
+            refundErrorMsg = refundEx.message || String(refundEx);
+          }
+
+          // Step C: Atomically record real refund status or flag for manual review
+          await supabase.rpc("record_tournament_refund_status_atomic", {
+            p_order_reference: specialReference,
+            p_refund_success: refundSuccess,
+            p_paymob_refund_id: refundId,
+            p_error_message: refundErrorMsg,
+          });
+
         } else {
-          console.log("🎉 Tournament order confirmed successfully:", tournResult);
+          console.log("Tournament order confirmed successfully:", tournResult);
         }
       }
       return new Response(JSON.stringify({ status: "processed", type: "tournament", success: isSuccess }), {

@@ -2209,4 +2209,25 @@ class TournamentRepository {
       return null;
     }
   }
+
+  /// Atomically marks a championship prize as delivered in the financial ledger
+  Future<Map<String, dynamic>> markChampionshipPrizeDelivered(
+    String championshipId, {
+    String? notes,
+  }) async {
+    try {
+      final res = await _supabase.rpc(
+        'mark_championship_prize_delivered_atomic',
+        params: {
+          'p_championship_id': championshipId,
+          'p_notes': notes,
+        },
+      );
+      return Map<String, dynamic>.from(res as Map);
+    } catch (e, s) {
+      VSPLogger.e('Error marking championship prize delivered', e, s);
+      rethrow;
+    }
+  }
 }
+

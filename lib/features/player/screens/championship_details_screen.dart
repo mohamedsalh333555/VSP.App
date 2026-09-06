@@ -485,6 +485,45 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                       const SizedBox(height: 12),
                       VSPCountdownTimer(targetDate: championship.startDate),
                     ],
+                    if (championship.status == 'completed') ...[
+                      const SizedBox(height: 12),
+                      Container(
+                        padding: const EdgeInsets.symmetric(horizontal: 14, vertical: 10),
+                        decoration: BoxDecoration(
+                          color: championship.prizeDelivered
+                              ? const Color(0xFF10B981).withValues(alpha: 0.1)
+                              : const Color(0xFFF59E0B).withValues(alpha: 0.1),
+                          borderRadius: BorderRadius.circular(VSPRadius.md),
+                          border: Border.all(
+                            color: championship.prizeDelivered
+                                ? const Color(0xFF10B981).withValues(alpha: 0.3)
+                                : const Color(0xFFF59E0B).withValues(alpha: 0.3),
+                          ),
+                        ),
+                        child: Row(
+                          children: [
+                            Icon(
+                              championship.prizeDelivered ? Iconsax.verify_copy : Iconsax.clock_copy,
+                              color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                              size: 18,
+                            ),
+                            const SizedBox(width: 8),
+                            Expanded(
+                              child: Text(
+                                championship.prizeDelivered
+                                    ? (isArabic ? 'تم تسليم الجائزة المالية للبطل وتوثيقها رسمياً' : 'Prize officially delivered to champion')
+                                    : (isArabic ? 'بانتظار تسليم الجائزة المالية للبطل' : 'Pending prize delivery to champion'),
+                                style: TextStyle(
+                                  color: championship.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                    ],
                     const SizedBox(height: 16),
                     // Stats Grid
                     Row(
@@ -492,8 +531,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                         _buildStatCard(
                           icon: Iconsax.cup_copy,
                           iconColor: VSPColors.accent,
-                          label: isArabic ? 'الجائزة الكبرى' : 'Grand Prize',
-                          value: championship.grandPrize > 0 ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}' : (isArabic ? 'كأس وميداليات' : 'Cup & Medals'),
+                          label: isArabic ? 'الجائزة' : 'Prize',
+                          value: championship.prizePool > 0
+                              ? '${championship.prizePool.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                              : (championship.grandPrize > 0
+                                  ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'
+                                  : (isArabic ? 'كأس وميداليات' : 'Cup & Medals')),
                         ),
                         const SizedBox(width: 8),
                         _buildStatCard(
