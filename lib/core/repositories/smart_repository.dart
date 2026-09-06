@@ -26,6 +26,7 @@ class SmartRepository {
  final response = await _supabase
  .from('championships')
  .select()
+ .eq('is_approved', true)
  .range(offset, offset + pageSize - 1)
  .order('created_at', ascending: false);
 

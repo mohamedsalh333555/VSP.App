@@ -104,144 +104,191 @@ class TournamentRepository {
  }
  }
 
- List<Championship> _parseChampionshipsList(
- List<dynamic> list, {
- String? governorate,
- String? sportType,
- bool isOwner = false,
- String? ownerId,
- }) {
- return list.map((data) {
- if (data is! Map<String, dynamic>) return null;
- // Show all championships from DB as-is
- if (isOwner && ownerId != null) {
- final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
- if (champOwnerId != ownerId) return null;
- }
- if (governorate != null &&
- governorate.isNotEmpty &&
- governorate != 'All' &&
- governorate != 'الكل' &&
- governorate != 'الجميع') {
- final String champGov = data['governorate']?.toString() ?? '';
- if (champGov.isNotEmpty) {
- final stdGov1 = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate.trim().toLowerCase();
- final stdGov2 = EgyptGovernorates.resolveGoogleName(champGov) ?? champGov.trim().toLowerCase();
- if (stdGov1 != stdGov2) {
- return null;
- }
- }
- }
- if (sportType != null &&
- sportType.isNotEmpty &&
- sportType != 'All' &&
- sportType != 'الكل' &&
- sportType != 'الجميع') {
- final String champSport = (data['sport_type'] ?? data['sportType'] ?? 'Football').toString();
- if (champSport.isNotEmpty && champSport.toLowerCase() != sportType.toLowerCase()) {
- return null;
- }
- }
- try {
- return Championship.fromFirestore(data, data['id'].toString());
- } catch (e) {
- debugPrint('Error parsing championship: $e');
- return null;
- }
- }).whereType<Championship>().toList();
- }
+  List<Championship> _parseChampionshipsList(
+    List<dynamic> list, {
+    String? governorate,
+    String? sportType,
+    bool isOwner = false,
+    String? ownerId,
+  }) {
+    return list.map((data) {
+      if (data is! Map<String, dynamic>) return null;
+      if (!isOwner) {
+        final dynamic approvedVal = data['is_approved'] ?? data['isApproved'];
+        if (approvedVal != true) return null;
+      }
+      // Show all championships from DB as-is
+      if (isOwner && ownerId != null) {
+        final String champOwnerId = (data['owner_id'] ?? data['ownerId'] ?? '').toString();
+        if (champOwnerId != ownerId) return null;
+      }
+      if (governorate != null &&
+          governorate.isNotEmpty &&
+          governorate != 'All' &&
+          governorate != 'الكل' &&
+          governorate != 'الجميع') {
+        final String champGov = data['governorate']?.toString() ?? '';
+        if (champGov.isNotEmpty) {
+          final stdGov1 = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate.trim().toLowerCase();
+          final stdGov2 = EgyptGovernorates.resolveGoogleName(champGov) ?? champGov.trim().toLowerCase();
+          if (stdGov1 != stdGov2) {
+            return null;
+          }
+        }
+      }
+      if (sportType != null &&
+          sportType.isNotEmpty &&
+          sportType != 'All' &&
+          sportType != 'الكل' &&
+          sportType != 'الجميع') {
+        final String champSport = (data['sport_type'] ?? data['sportType'] ?? 'Football').toString();
+        if (champSport.isNotEmpty && champSport.toLowerCase() != sportType.toLowerCase()) {
+          return null;
+        }
+      }
+      try {
+        return Championship.fromFirestore(data, data['id'].toString());
+      } catch (e) {
+        debugPrint('Error parsing championship: $e');
+        return null;
+      }
+    }).whereType<Championship>().toList();
+  }
 
- Future<String?> createChampionship(Map<String, dynamic> data) async {
- try {
- final sanitizedData = Map<String, dynamic>.from(data);
- sanitizedData.remove('joinedTeams');
- sanitizedData.remove('joined_teams');
- sanitizedData.remove('status');
- sanitizedData.remove('creatorId');
- sanitizedData.remove('creator_id');
+  Future<String?> createChampionship(Map<String, dynamic> data) async {
+    try {
+      final sanitizedData = Map<String, dynamic>.from(data);
+      sanitizedData.remove('joinedTeams');
+      sanitizedData.remove('joined_teams');
+      sanitizedData.remove('status');
+      sanitizedData.remove('creatorId');
+      sanitizedData.remove('creator_id');
 
- String rawType = (sanitizedData['type'] ?? 'Cup').toString();
- String dbType = rawType;
- if (rawType == 'GroupsAndKnockout' || rawType == 'groups_and_knockout') {
- dbType = 'Groups';
- }
+      String rawType = (sanitizedData['type'] ?? 'Cup').toString();
+      String dbType = rawType;
+      if (rawType == 'GroupsAndKnockout' || rawType == 'groups_and_knockout') {
+        dbType = 'Groups';
+      }
 
- final pgData = {
- 'name': sanitizedData['name'],
- 'type': dbType,
- 'sport_type': sanitizedData['sportType'] ?? sanitizedData['sport_type'] ?? 'Football',
- 'logo_url': sanitizedData['logoUrl'] ?? sanitizedData['logo_url'] ?? '',
- 'start_date': sanitizedData['startDate'] ?? sanitizedData['start_date'],
- 'end_date': sanitizedData['endDate'] ?? sanitizedData['end_date'],
- 'entry_fee': sanitizedData['entryFee'] ?? sanitizedData['entry_fee'] ?? 0.0,
- 'grand_prize': sanitizedData['grandPrize'] ?? sanitizedData['grand_prize'] ?? 0.0,
- 'max_teams': sanitizedData['maxTeams'] ?? sanitizedData['max_teams'] ?? 16,
- 'owner_id': (sanitizedData['ownerId'] != null && sanitizedData['ownerId'].toString().isNotEmpty)
- ? sanitizedData['ownerId']
- : (sanitizedData['owner_id'] != null && sanitizedData['owner_id'].toString().isNotEmpty
- ? sanitizedData['owner_id']
- : (_supabase.auth.currentUser?.id ?? '')),
- 'governorate': sanitizedData['governorate'] ?? 'Cairo',
- 'rules': sanitizedData['rules'] ?? '',
- 'status': 'open',
- 'is_approved': true, // Directly open and approved for owner
- 'joined_teams': [],
- 'paid_teams': [],
- 'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
- 
- // Flat settings columns
- 'max_players_per_team': sanitizedData['maxPlayersPerTeam'] ?? sanitizedData['max_players_per_team'] ?? 11,
- 'min_players_per_team': sanitizedData['minPlayersPerTeam'] ?? sanitizedData['min_players_per_team'] ?? 5,
- 'winning_points': sanitizedData['winningPoints'] ?? sanitizedData['winning_points'] ?? 3,
- 'draw_points': sanitizedData['drawPoints'] ?? sanitizedData['draw_points'] ?? 1,
- 'loss_points': sanitizedData['lossPoints'] ?? sanitizedData['loss_points'] ?? 0,
- 'match_duration': sanitizedData['matchDuration'] ?? sanitizedData['match_duration'] ?? 30,
- 'is_back_and_forth': sanitizedData['isBackAndForth'] ?? sanitizedData['is_back_and_forth'] ?? false,
- 'trophy_medals': sanitizedData['trophyMedals'] ?? sanitizedData['trophy_medals'] ?? true,
- 'red_card_suspension': sanitizedData['redCardSuspension'] ?? sanitizedData['red_card_suspension'] ?? true,
- 'fair_play_scoring': sanitizedData['fairPlayScoring'] ?? sanitizedData['fair_play_scoring'] ?? false,
- };
+      final currentUserId = _supabase.auth.currentUser?.id;
+      bool isApproved = false;
+      if (currentUserId != null) {
+        try {
+          final userDoc = await _supabase
+              .from('users')
+              .select('role')
+              .eq('id', currentUserId)
+              .maybeSingle();
+          final userRole = userDoc?['role']?.toString().toLowerCase();
+          if (userRole == 'admin' ||
+              userRole == 'co_founder' ||
+              userRole == 'super_admin' ||
+              userRole == 'cofounder') {
+            isApproved = true;
+          }
+        } catch (_) {
+          isApproved = false;
+        }
+      }
 
- try {
- final response = await _supabase
- .from('championships')
- .insert(pgData)
- .select('id')
- .single();
- return response['id']?.toString();
- } on PostgrestException catch (pe) {
- if (pe.message.contains('championships_type_check')) {
- pgData['type'] = 'Cup';
- final response = await _supabase
- .from('championships')
- .insert(pgData)
- .select('id')
- .single();
- return response['id']?.toString();
- }
- rethrow;
- }
- } catch (e, stack) {
- VSPLogger.e('Error creating championship', e, stack);
- rethrow;
- }
- }
+      final pgData = {
+        'name': sanitizedData['name'],
+        'type': dbType,
+        'sport_type': sanitizedData['sportType'] ?? sanitizedData['sport_type'] ?? 'Football',
+        'logo_url': sanitizedData['logoUrl'] ?? sanitizedData['logo_url'] ?? '',
+        'start_date': sanitizedData['startDate'] ?? sanitizedData['start_date'],
+        'end_date': sanitizedData['endDate'] ?? sanitizedData['end_date'],
+        'entry_fee': sanitizedData['entryFee'] ?? sanitizedData['entry_fee'] ?? 0.0,
+        'grand_prize': sanitizedData['grandPrize'] ?? sanitizedData['grand_prize'] ?? 0.0,
+        'max_teams': sanitizedData['maxTeams'] ?? sanitizedData['max_teams'] ?? 16,
+        'owner_id': (sanitizedData['ownerId'] != null && sanitizedData['ownerId'].toString().isNotEmpty)
+            ? sanitizedData['ownerId']
+            : (sanitizedData['owner_id'] != null && sanitizedData['owner_id'].toString().isNotEmpty
+                ? sanitizedData['owner_id']
+                : (_supabase.auth.currentUser?.id ?? '')),
+        'governorate': sanitizedData['governorate'] ?? 'Cairo',
+        'rules': sanitizedData['rules'] ?? '',
+        'status': 'open',
+        'is_approved': isApproved, // Only pre-approved if creator is admin/co_founder
+        'joined_teams': [],
+        'paid_teams': [],
+        'payment_methods': sanitizedData['paymentMethods'] ?? ['cash'],
+        
+        // Flat settings columns
+        'max_players_per_team': sanitizedData['maxPlayersPerTeam'] ?? sanitizedData['max_players_per_team'] ?? 11,
+        'min_players_per_team': sanitizedData['minPlayersPerTeam'] ?? sanitizedData['min_players_per_team'] ?? 5,
+        'winning_points': sanitizedData['winningPoints'] ?? sanitizedData['winning_points'] ?? 3,
+        'draw_points': sanitizedData['drawPoints'] ?? sanitizedData['draw_points'] ?? 1,
+        'loss_points': sanitizedData['lossPoints'] ?? sanitizedData['loss_points'] ?? 0,
+        'match_duration': sanitizedData['matchDuration'] ?? sanitizedData['match_duration'] ?? 30,
+        'is_back_and_forth': sanitizedData['isBackAndForth'] ?? sanitizedData['is_back_and_forth'] ?? false,
+        'trophy_medals': sanitizedData['trophyMedals'] ?? sanitizedData['trophy_medals'] ?? true,
+        'red_card_suspension': sanitizedData['redCardSuspension'] ?? sanitizedData['red_card_suspension'] ?? true,
+        'fair_play_scoring': sanitizedData['fairPlayScoring'] ?? sanitizedData['fair_play_scoring'] ?? false,
+      };
 
- /// تفعيل ونشر البطولة للمالك (مجانية 100% بدون أي رسوم إنشاء)
- Future<bool> activateChampionship(String championshipId) async {
- try {
- await _supabase.from('championships').update({
- 'status': 'open',
- 'is_approved': true,
- 'creation_fee_paid': true,
- }).eq('id', championshipId);
- VSPLogger.i(' Championship $championshipId activated successfully (100% Free).');
- return true;
- } catch (e, stack) {
- VSPLogger.e(' Error activating championship', e, stack);
- return false;
- }
- }
+      try {
+        final response = await _supabase
+            .from('championships')
+            .insert(pgData)
+            .select('id')
+            .single();
+        return response['id']?.toString();
+      } on PostgrestException catch (pe) {
+        if (pe.message.contains('championships_type_check')) {
+          pgData['type'] = 'Cup';
+          final response = await _supabase
+              .from('championships')
+              .insert(pgData)
+              .select('id')
+              .single();
+          return response['id']?.toString();
+        }
+        rethrow;
+      }
+    } catch (e, stack) {
+      VSPLogger.e('Error creating championship', e, stack);
+      rethrow;
+    }
+  }
+
+  /// تفعيل ونشر البطولة للمالك (مجانية 100% بدون أي رسوم إنشاء)
+  Future<bool> activateChampionship(String championshipId) async {
+    try {
+      final currentUserId = _supabase.auth.currentUser?.id;
+      bool isApproved = false;
+      if (currentUserId != null) {
+        try {
+          final userDoc = await _supabase
+              .from('users')
+              .select('role')
+              .eq('id', currentUserId)
+              .maybeSingle();
+          final userRole = userDoc?['role']?.toString().toLowerCase();
+          if (userRole == 'admin' ||
+              userRole == 'co_founder' ||
+              userRole == 'super_admin' ||
+              userRole == 'cofounder') {
+            isApproved = true;
+          }
+        } catch (_) {}
+      }
+
+      final updateMap = <String, dynamic>{
+        'status': 'open',
+        'creation_fee_paid': true,
+      };
+      if (isApproved) {
+        updateMap['is_approved'] = true;
+      }
+      await _supabase.from('championships').update(updateMap).eq('id', championshipId);
+      VSPLogger.i('Championship $championshipId activated successfully.');
+      return true;
+    } catch (e, stack) {
+      VSPLogger.e('Error activating championship', e, stack);
+      return false;
+    }
+  }
 
  Future<bool> updateChampionship(String id, Map<String, dynamic> data) async {
  try {
