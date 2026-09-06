@@ -1536,6 +1536,13 @@ class Championship {
  // Entry Fee Tracking
  final List<String> paidTeams;
 
+ // Financial Prize Pool & Ledger
+ final double prizePool;
+ final bool prizeDelivered;
+ final DateTime? prizeDeliveredAt;
+ final String? prizeDeliveredBy;
+ final String? prizeDeliveryNotes;
+
  bool get isFull => joinedTeams.length >= maxTeams || status == 'full';
 
  Championship({
@@ -1571,6 +1578,11 @@ class Championship {
  this.championTeamId,
  this.championTeamName,
  this.paidTeams = const [],
+ this.prizePool = 0.0,
+ this.prizeDelivered = false,
+ this.prizeDeliveredAt,
+ this.prizeDeliveredBy,
+ this.prizeDeliveryNotes,
  });
 
  // SECURITY PATCH: Robust type parsing with crash prevention for malicious or corrupted data payloads.
@@ -1618,6 +1630,11 @@ class Championship {
  championTeamId: data['champion_team_id'] ?? data['championTeamId']?.toString(),
  championTeamName: data['champion_team_name'] ?? data['championTeamName']?.toString(),
  paidTeams: (data['paid_teams'] as List? ?? data['paidTeams'] as List?)?.map((e) => e.toString()).toList() ?? <String>[],
+ prizePool: double.tryParse((data['prize_pool'] ?? data['prizePool'] ?? 0).toString()) ?? 0.0,
+ prizeDelivered: data['prize_delivered'] == true || data['prizeDelivered'] == true,
+ prizeDeliveredAt: data['prize_delivered_at'] != null ? DateTime.tryParse(data['prize_delivered_at'].toString()) : null,
+ prizeDeliveredBy: (data['prize_delivered_by'] ?? data['prizeDeliveredBy'])?.toString(),
+ prizeDeliveryNotes: (data['prize_delivery_notes'] ?? data['prizeDeliveryNotes'])?.toString(),
  );
  } catch (e) {
  // كود أمان احتياطي لمنع انهيار التطبيق في حال وجود بيانات تالفة
@@ -1672,6 +1689,11 @@ class Championship {
  String? championTeamId,
  String? championTeamName,
  List<String>? paidTeams,
+ double? prizePool,
+ bool? prizeDelivered,
+ DateTime? prizeDeliveredAt,
+ String? prizeDeliveredBy,
+ String? prizeDeliveryNotes,
  }) {
  return Championship(
  id: id ?? this.id,
@@ -1706,6 +1728,11 @@ class Championship {
  championTeamId: championTeamId ?? this.championTeamId,
  championTeamName: championTeamName ?? this.championTeamName,
  paidTeams: paidTeams ?? this.paidTeams,
+ prizePool: prizePool ?? this.prizePool,
+ prizeDelivered: prizeDelivered ?? this.prizeDelivered,
+ prizeDeliveredAt: prizeDeliveredAt ?? this.prizeDeliveredAt,
+ prizeDeliveredBy: prizeDeliveredBy ?? this.prizeDeliveredBy,
+ prizeDeliveryNotes: prizeDeliveryNotes ?? this.prizeDeliveryNotes,
  );
  }
 
@@ -1728,6 +1755,11 @@ class Championship {
  'entryFee': entryFee,
  'grand_prize': grandPrize,
  'grandPrize': grandPrize,
+ 'prize_pool': prizePool,
+ 'prize_delivered': prizeDelivered,
+ 'prize_delivered_at': prizeDeliveredAt?.toIso8601String(),
+ 'prize_delivered_by': prizeDeliveredBy,
+ 'prize_delivery_notes': prizeDeliveryNotes,
  'max_teams': maxTeams,
  'maxTeams': maxTeams,
  'joined_teams': joinedTeams,

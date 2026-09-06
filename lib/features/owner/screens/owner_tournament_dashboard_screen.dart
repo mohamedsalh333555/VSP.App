@@ -1487,7 +1487,7 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
  _buildInfoItem(AppLocalizations.of(context)!.categoryLabel, currentChamp.type),
  ],
  ),
- const Divider(color: VSPColors.divider, height: 32),
+ const Divider(color: VSPColors.divider, height: 24),
  Row(
  mainAxisAlignment: MainAxisAlignment.spaceBetween,
  children: [
@@ -1502,6 +1502,49 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
  ),
  ],
  ),
+ const Divider(color: VSPColors.divider, height: 24),
+ Row(
+ mainAxisAlignment: MainAxisAlignment.spaceBetween,
+ children: [
+ _buildInfoItem(
+ Localizations.localeOf(context).languageCode == 'ar' ? 'وعاء الجوائز الفعلي' : 'Actual Prize Pool',
+ currentChamp.prizePool > 0
+ ? '${currentChamp.prizePool.toInt()} ${Localizations.localeOf(context).languageCode == 'ar' ? "ج.م" : "EGP"}'
+ : (currentChamp.grandPrize > 0
+ ? '${currentChamp.grandPrize.toInt()} ${Localizations.localeOf(context).languageCode == 'ar' ? "ج.م" : "EGP"}'
+ : (Localizations.localeOf(context).languageCode == 'ar' ? 'كأس وميداليات' : 'Cup & Medals')),
+ color: VSPColors.accent,
+ ),
+ if (currentChamp.status == 'completed')
+ _buildInfoItem(
+ Localizations.localeOf(context).languageCode == 'ar' ? 'حالة التسليم' : 'Delivery Status',
+ currentChamp.prizeDelivered
+ ? (Localizations.localeOf(context).languageCode == 'ar' ? 'تم التسليم' : 'Delivered')
+ : (Localizations.localeOf(context).languageCode == 'ar' ? 'بانتظار التسليم' : 'Pending'),
+ color: currentChamp.prizeDelivered ? const Color(0xFF10B981) : const Color(0xFFF59E0B),
+ ),
+ ],
+ ),
+ if (currentChamp.status == 'completed' && !currentChamp.prizeDelivered) ...[
+ const SizedBox(height: 12),
+ SizedBox(
+ width: double.infinity,
+ child: ElevatedButton.icon(
+ style: ElevatedButton.styleFrom(
+ backgroundColor: const Color(0xFF10B981).withValues(alpha: 0.15),
+ foregroundColor: const Color(0xFF10B981),
+ side: const BorderSide(color: Color(0xFF10B981)),
+ shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(VSPRadius.md)),
+ ),
+ icon: const Icon(Iconsax.award_copy, size: 16),
+ label: Text(
+ Localizations.localeOf(context).languageCode == 'ar' ? 'توثيق تسليم الجائزة للبطل' : 'Record Prize Delivery',
+ style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 12),
+ ),
+ onPressed: () => _showMarkPrizeDeliveredDialog(context, currentChamp),
+ ),
+ ),
+ ],
  ],
  ),
  ),
