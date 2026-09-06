@@ -12,6 +12,7 @@ import '../../../shared/widgets/custom_text_field.dart';
 import '../../../shared/widgets/vsp_empty_state.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/models/user_model.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/providers/auth_provider.dart';
 import '../../../data/models.dart';
 
@@ -134,8 +135,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // Live Metrics Header
  // ===========================================================================
  Widget _buildMetricsHeader(BuildContext context, bool isArabic) {
- return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _supabase
+          .from('users')
+          .stream(primaryKey: ['id'])
+          .eq('role', 'owner')
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .handleError((e) {
+            VSPLogger.w('Handled realtime error in admin metrics stream: $e');
+          }),
  builder: (context, userSnap) {
  final owners = userSnap.data ?? [];
  final totalOwners = owners.length;
@@ -173,8 +184,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // 1⃣ TAB 1: Owner Identity Approvals (توثيق المالكين)
  // ===========================================================================
  Widget _buildOwnerVerificationsTab(bool isArabic) {
- return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _supabase
+          .from('users')
+          .stream(primaryKey: ['id'])
+          .eq('role', 'owner')
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .handleError((e) {
+            VSPLogger.w('Handled realtime error in admin verifications stream: $e');
+          }),
  builder: (context, snapshot) {
  if (snapshot.hasError) {
  return VSPEmptyState(
@@ -291,8 +312,18 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // TAB 2: Owner Subscriptions Management (إدارة اشتراكات المالكين)
  // ===========================================================================
  Widget _buildOwnerSubscriptionsTab(bool isArabic) {
- return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
+    return StreamBuilder<List<Map<String, dynamic>>>(
+      stream: _supabase
+          .from('users')
+          .stream(primaryKey: ['id'])
+          .eq('role', 'owner')
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .handleError((e) {
+            VSPLogger.w('Handled realtime error in admin subscriptions stream: $e');
+          }),
  builder: (context, snapshot) {
  if (snapshot.hasError) {
  return VSPEmptyState(
@@ -489,7 +520,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // ===========================================================================
  Widget _buildDisputedMatchesTab(bool isArabic) {
  return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('bookings').stream(primaryKey: ['id']).eq('match_result_status', 'disputed'),
+ stream: _supabase
+     .from('bookings')
+     .stream(primaryKey: ['id'])
+     .eq('match_result_status', 'disputed')
+     .timeout(
+       const Duration(seconds: 10),
+       onTimeout: (sink) => sink.add([]),
+     )
+     .handleError((e) {
+       VSPLogger.w('Handled realtime error in admin disputes stream: $e');
+     }),
  builder: (context, snapshot) {
  if (snapshot.hasError) {
  return VSPEmptyState(
@@ -595,7 +636,17 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // ===========================================================================
  Widget _buildPayoutSettlementsTab(bool isArabic) {
  return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('users').stream(primaryKey: ['id']).eq('role', 'owner'),
+ stream: _supabase
+     .from('users')
+     .stream(primaryKey: ['id'])
+     .eq('role', 'owner')
+     .timeout(
+       const Duration(seconds: 10),
+       onTimeout: (sink) => sink.add([]),
+     )
+     .handleError((e) {
+       VSPLogger.w('Handled realtime error in admin payouts stream: $e');
+     }),
  builder: (context, snapshot) {
  if (snapshot.hasError) {
  return VSPEmptyState(
@@ -682,7 +733,16 @@ class _AdminDashboardScreenState extends State<AdminDashboardScreen> with Single
  // ===========================================================================
  Widget _buildReportsAndModerationTab(bool isArabic) {
  return StreamBuilder<List<Map<String, dynamic>>>(
- stream: _supabase.from('reports').stream(primaryKey: ['id']),
+ stream: _supabase
+     .from('reports')
+     .stream(primaryKey: ['id'])
+     .timeout(
+       const Duration(seconds: 10),
+       onTimeout: (sink) => sink.add([]),
+     )
+     .handleError((e) {
+       VSPLogger.w('Handled realtime error in admin reports stream: $e');
+     }),
  builder: (context, snapshot) {
  if (snapshot.hasError) {
  return VSPEmptyState(

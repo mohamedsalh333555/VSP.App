@@ -2,24 +2,225 @@ import 'dart:async';
 import 'package:flutter/foundation.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../data/models.dart';
+import '../constants/egypt_governorates.dart';
 
 class LeagueRepository {
   final SupabaseClient _supabase = Supabase.instance.client;
 
   LeagueRepository();
 
-  Stream<List<VSP1v1Player>> get1v1Standings() {
+  /// Stream of active 1v1 tournament (registration_open, in_progress, completed, published)
+  Stream<Map<String, dynamic>?> getActive1v1TournamentStream({String? governorate}) {
+    late StreamController<Map<String, dynamic>?> controller;
+    RealtimeChannel? tournamentChannel;
+
+    Future<void> fetchAndEmit() async {
+      try {
+        var query = _supabase
+            .from('vsp_1v1_tournaments')
+            .select()
+            .inFilter('status', ['registration_open', 'in_progress', 'completed', 'published']);
+
+        if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+          final stdGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+          query = query.eq('governorate', stdGov);
+        }
+
+        final response = await query
+            .order('created_at', ascending: false)
+            .limit(1);
+
+        final list = response as List<dynamic>;
+        if (list.isNotEmpty) {
+          if (!controller.isClosed) controller.add(list.first as Map<String, dynamic>);
+        } else {
+          if (!controller.isClosed) controller.add(null);
+        }
+      } catch (e) {
+        debugPrint('Error fetching active 1v1 tournament: $e');
+        if (!controller.isClosed) controller.add(null);
+      }
+    }
+
+    controller = StreamController<Map<String, dynamic>?>.broadcast(
+      onListen: () {
+        fetchAndEmit();
+        final tag = DateTime.now().millisecondsSinceEpoch;
+        final channelGovTag = (governorate != null && governorate.isNotEmpty) ? governorate.replaceAll(' ', '_') : 'all';
+        tournamentChannel = _supabase
+            .channel('realtime_1v1_tourney_${channelGovTag}_$tag')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'vsp_1v1_tournaments',
+              callback: (_) => fetchAndEmit(),
+            )
+            .subscribe();
+      },
+      onCancel: () {
+        tournamentChannel?.unsubscribe();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
+
+  /// Stream of players registered in a specific 1v1 tournament (strictly paid players)
+  Stream<List<Map<String, dynamic>>> getTournamentPlayersStream(String tournamentId, {bool isCompleted = false}) {
+    late StreamController<List<Map<String, dynamic>>> controller;
+    RealtimeChannel? playersChannel;
+
+    Future<void> fetchAndEmit() async {
+      try {
+        final List<dynamic> response = isCompleted
+            ? await _supabase
+                .from('vsp_1v1_tournament_players')
+                .select('*')
+                .eq('tournament_id', tournamentId)
+                .eq('payment_status', 'paid')
+                .order('total_points', ascending: false)
+            : await _supabase
+                .from('vsp_1v1_tournament_players')
+                .select('*')
+                .eq('tournament_id', tournamentId)
+                .eq('payment_status', 'paid')
+                .order('registered_at', ascending: true);
+
+        final list = List<Map<String, dynamic>>.from(response);
+        if (!controller.isClosed) controller.add(list);
+      } catch (e) {
+        debugPrint('Error fetching 1v1 tournament players: $e');
+        if (!controller.isClosed) controller.add([]);
+      }
+    }
+
+    controller = StreamController<List<Map<String, dynamic>>>.broadcast(
+      onListen: () {
+        fetchAndEmit();
+        final tag = DateTime.now().millisecondsSinceEpoch;
+        playersChannel = _supabase
+            .channel('realtime_1v1_tplayers_${tournamentId}_$tag')
+            .onPostgresChanges(
+              event: PostgresChangeEvent.all,
+              schema: 'public',
+              table: 'vsp_1v1_tournament_players',
+              callback: (_) => fetchAndEmit(),
+            )
+            .subscribe();
+      },
+      onCancel: () {
+        playersChannel?.unsubscribe();
+        controller.close();
+      },
+    );
+
+    return controller.stream;
+  }
+
+  /// Create pending 1v1 tournament payment order atomically
+  Future<Map<String, dynamic>> create1v1PaymentOrder(String tournamentId) async {
+    try {
+      final response = await _supabase.rpc(
+        'create_1v1_payment_order_atomic',
+        params: {'p_tournament_id': tournamentId},
+      );
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': false, 'error': 'استجابة غير متوقعة من الخادم'};
+    } catch (e) {
+      debugPrint('Error in create1v1PaymentOrder: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Instant atomic mobile registration for 1v1 tournament
+  Future<Map<String, dynamic>> join1v1Tournament(String tournamentId) async {
+    try {
+      final response = await _supabase.rpc(
+        'join_1v1_tournament_atomic',
+        params: {'p_tournament_id': tournamentId},
+      );
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e) {
+      debugPrint('Error in join1v1Tournament: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Atomic leave for 1v1 tournament
+  Future<Map<String, dynamic>> leave1v1Tournament(String tournamentId) async {
+    try {
+      final response = await _supabase.rpc(
+        'leave_1v1_tournament_atomic',
+        params: {'p_tournament_id': tournamentId},
+      );
+
+      if (response is Map) {
+        return Map<String, dynamic>.from(response);
+      }
+      return {'success': true};
+    } catch (e) {
+      debugPrint('Error in leave1v1Tournament: $e');
+      return {'success': false, 'error': e.toString()};
+    }
+  }
+
+  /// Check if user is registered and paid in tournament
+  Future<bool> isUserRegisteredIn1v1(String tournamentId, String userId) async {
+    try {
+      final response = await _supabase
+          .from('vsp_1v1_tournament_players')
+          .select('id')
+          .eq('tournament_id', tournamentId)
+          .eq('user_id', userId)
+          .eq('payment_status', 'paid')
+          .maybeSingle();
+
+      return response != null;
+    } catch (e) {
+      debugPrint('Error checking user 1v1 registration: $e');
+      return false;
+    }
+  }
+
+  /// Stream of 1v1 Standings for completed tournament (Podium and Full Table)
+  Stream<List<VSP1v1Player>> get1v1Standings({String? governorate, String? tournamentId}) {
     late StreamController<List<VSP1v1Player>> controller;
     RealtimeChannel? tournamentChannel;
     RealtimeChannel? playersChannel;
 
     Future<void> fetchAndEmit() async {
       try {
-        final tournament = await _supabase
-            .from('vsp_1v1_tournaments')
-            .select()
-            .eq('status', 'published')
-            .maybeSingle();
+        dynamic tournament;
+        if (tournamentId != null && tournamentId.isNotEmpty) {
+          tournament = await _supabase
+              .from('vsp_1v1_tournaments')
+              .select()
+              .eq('id', tournamentId)
+              .maybeSingle();
+        } else {
+          var query = _supabase
+              .from('vsp_1v1_tournaments')
+              .select()
+              .inFilter('status', ['completed', 'published']);
+
+          if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
+            final stdGov = EgyptGovernorates.resolveGoogleName(governorate) ?? governorate;
+            query = query.eq('governorate', stdGov);
+          }
+
+          tournament = await query
+              .order('published_at', ascending: false)
+              .limit(1)
+              .maybeSingle();
+        }
 
         if (tournament == null) {
           if (!controller.isClosed) controller.add([]);
@@ -57,7 +258,6 @@ class LeagueRepository {
       }
     }
 
-    // ignore: close_sinks
     controller = StreamController<List<VSP1v1Player>>.broadcast(
       onListen: () {
         fetchAndEmit();
@@ -69,16 +269,9 @@ class LeagueRepository {
               event: PostgresChangeEvent.all,
               schema: 'public',
               table: 'vsp_1v1_tournaments',
-              callback: (payload) {
-                fetchAndEmit();
-              },
+              callback: (_) => fetchAndEmit(),
             )
-            .subscribe((status, [error]) {
-              if (status == RealtimeSubscribeStatus.timedOut) {
-                debugPrint('1v1 tournaments channel timed out: $error');
-                fetchAndEmit();
-              }
-            });
+            .subscribe();
 
         playersChannel = _supabase
             .channel('realtime_1v1_players_$tag')
@@ -86,16 +279,9 @@ class LeagueRepository {
               event: PostgresChangeEvent.all,
               schema: 'public',
               table: 'vsp_1v1_tournament_players',
-              callback: (payload) {
-                fetchAndEmit();
-              },
+              callback: (_) => fetchAndEmit(),
             )
-            .subscribe((status, [error]) {
-              if (status == RealtimeSubscribeStatus.timedOut) {
-                debugPrint('1v1 players channel timed out: $error');
-                fetchAndEmit();
-              }
-            });
+            .subscribe();
       },
       onCancel: () {
         tournamentChannel?.unsubscribe();
@@ -106,6 +292,8 @@ class LeagueRepository {
 
     return controller.stream;
   }
+
+  // ==================== LEGACY COMPATIBILITY METHODS ====================
 
   Future<int> get1v1RegistrationsCount() async {
     try {
@@ -154,13 +342,16 @@ class LeagueRepository {
   }
 
   Stream<int> stream1v1RegistrationsCount() async* {
-    // 1. Immediate REST count
     yield await get1v1RegistrationsCount();
-
-    // 2. Realtime with safety timeout & error recovery
     yield* _supabase
         .from('vsp_1v1_registrations')
         .stream(primaryKey: ['id'])
+        .map((list) {
+          return list.where((item) {
+            final status = item['status'];
+            return status == 'pending' || status == 'approved';
+          }).length;
+        })
         .timeout(
           const Duration(seconds: 10),
           onTimeout: (sink) async {
@@ -168,12 +359,6 @@ class LeagueRepository {
             sink.add(freshCount);
           },
         )
-        .map((list) {
-          return list.where((item) {
-            final status = item['status'];
-            return status == 'pending' || status == 'approved';
-          }).length;
-        })
         .handleError((error) {
           debugPrint('Handled realtime error in stream1v1RegistrationsCount: $error');
         });

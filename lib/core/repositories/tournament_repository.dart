@@ -575,30 +575,37 @@ class TournamentRepository {
 
  // ==================== TOURNAMENT BRACKET ENGINE ====================
 
- Future<void> generateFixtures(String championshipId) async {
- try {
- try {
- await _supabase.rpc('prepare_tournament_bracket_atomic', params: {'p_championship_id': championshipId});
- } catch (e) {
- try {
- await _supabase.rpc('prepare_tournament_bracket', params: {'p_championship_id': championshipId});
- } catch (_) {
- try {
- await _supabase.from('tournament_matches').delete().eq('championship_id', championshipId);
- } catch (_) {}
- }
- }
+  Future<void> generateFixtures(String championshipId) async {
+    try {
+      // 1. First attempt atomic server-side generation
+      try {
+        final rpcRes = await _supabase.rpc('generate_tournament_bracket_atomic', params: {'p_championship_id': championshipId});
+        if (rpcRes is Map && rpcRes['success'] == true) {
+          VSPLogger.i('Tournament Fixtures generated via atomic server function: $rpcRes');
+          _sendDrawNotifications(championshipId);
+          return;
+        }
+      } catch (atomicErr) {
+        VSPLogger.w('generate_tournament_bracket_atomic fallback to client generator: $atomicErr');
+      }
 
- final champDoc = await _supabase
- .from('championships')
- .select()
- .eq('id', championshipId)
- .maybeSingle();
- if (champDoc == null) throw Exception('البطولة لا توجد.');
+      final champDoc = await _supabase
+          .from('championships')
+          .select()
+          .eq('id', championshipId)
+          .maybeSingle();
+      if (champDoc == null) throw Exception('البطولة لا توجد.');
 
- final List<String> teamIds = List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
- int totalTeams = teamIds.length;
- if (totalTeams < 2) throw Exception('يجب وجود فريقين على الأقل لبدء البطولة.');
+      final bool isPaidTourney = (champDoc['entry_fee'] != null && (champDoc['entry_fee'] as num) > 0);
+      final List<String> teamIds = isPaidTourney
+          ? List<String>.from(champDoc['paid_teams'] ?? [])
+          : List<String>.from(champDoc['joined_teams'] ?? champDoc['joinedTeams'] ?? []);
+      int totalTeams = teamIds.length;
+      if (totalTeams < 2) {
+        throw Exception(isPaidTourney
+            ? 'يجب وجود فريقين مسددين لرسوم الاشتراك على الأقل لبدء البطولة.'
+            : 'يجب وجود فريقين على الأقل لبدء البطولة.');
+      }
 
  final String? rawStartDate = champDoc['start_date'] ?? champDoc['startDate'];
  if (rawStartDate != null) {
@@ -1059,13 +1066,6 @@ class TournamentRepository {
     yield* _supabase
         .from('tournament_matches')
         .stream(primaryKey: ['id'])
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await getTournamentMatchesDirectly(championshipId);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           final matches = list
               .map((data) => TournamentMatch.fromFirestore(data, data['id'].toString()))
@@ -1077,6 +1077,13 @@ class TournamentRepository {
           });
           return matches;
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getTournamentMatchesDirectly(championshipId);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           debugPrint('Handled realtime error in getTournamentMatches: $error');
         });
@@ -2006,13 +2013,6 @@ class TournamentRepository {
         .from('championships')
         .stream(primaryKey: ['id'])
         .eq('id', championshipId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await getChampionshipById(championshipId);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           if (list.isEmpty) return null;
           try {
@@ -2022,6 +2022,13 @@ class TournamentRepository {
             return null;
           }
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getChampionshipById(championshipId);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           debugPrint('Handled realtime error in getSingleChampionshipStream: $error');
         });

@@ -655,7 +655,7 @@ class ChampionshipCard extends StatelessWidget {
  _buildDivider(),
  Builder(builder: (context) {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
- return _buildCompactInfo(Iconsax.cup_copy, isArabic ? 'الجائزة' : 'PRIZE', "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}");
+ return _buildCompactInfo(Iconsax.cup_copy, isArabic ? 'الجائزة' : 'PRIZE', championship.grandPrize > 0 ? "${championship.grandPrize.toInt()} ${AppLocalizations.of(context)!.egCurrency}" : (isArabic ? "كأس وميداليات" : "Cup & Medals"));
  }),
  _buildDivider(),
  Builder(builder: (context) {

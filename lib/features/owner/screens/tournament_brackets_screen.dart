@@ -56,7 +56,7 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  const Icon(Iconsax.refresh_2_copy, color: VSPColors.warning, size: 36),
+                  const Icon(Icons.refresh, color: VSPColors.warning, size: 36),
                   const SizedBox(height: 12),
                   const Text(
                     'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',

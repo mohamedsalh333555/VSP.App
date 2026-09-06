@@ -13,6 +13,7 @@ import '../../../shared/widgets/primary_button.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../core/services/sharing_service.dart';
 import '../../../core/repositories/report_repository.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/utils/vsp_match_invite_formatter.dart';
 
 class MatchDetailsScreen extends StatefulWidget {
@@ -233,10 +234,17 @@ class _MatchDetailsScreenState extends State<MatchDetailsScreen> {
  final currentUserId = Provider.of<AuthProvider>(context, listen: false).currentUser?.uid;
 
  return StreamBuilder<List<Map<String, dynamic>>>(
- stream: Supabase.instance.client
- .from('bookings')
- .stream(primaryKey: ['id'])
- .eq('id', widget.bookingId),
+      stream: Supabase.instance.client
+          .from('bookings')
+          .stream(primaryKey: ['id'])
+          .eq('id', widget.bookingId)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .handleError((e) {
+            VSPLogger.w('Handled realtime error in match details: $e');
+          }),
  builder: (context, snapshot) {
  if (snapshot.hasData && snapshot.data!.isNotEmpty) {
  _booking = Booking.fromFirestore(snapshot.data!.first, widget.bookingId);

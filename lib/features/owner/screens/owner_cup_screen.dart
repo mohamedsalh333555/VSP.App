@@ -597,7 +597,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  children: [
  _buildInfoColumn(isArabic ? 'التاريخ' : 'DATE', dateRange),
  _buildInfoColumn(isArabic ? 'رسوم الدخول' : 'ENTRY FEE', '${tournament.entryFee.toInt()} ${isArabic ? "ج.م" : "EGP"}'),
- _buildInfoColumn(isArabic ? 'الجائزة الكبرى' : 'GRAND PRIZE', '${tournament.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}'),
+ _buildInfoColumn(isArabic ? 'الجائزة الكبرى' : 'GRAND PRIZE', tournament.grandPrize > 0 ? '${tournament.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}' : (isArabic ? 'كأس وميداليات' : 'Cup & Medals')),
  ],
  ),
  

@@ -16,6 +16,7 @@ import '../../../data/models.dart';
 import 'tournament_brackets_screen.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/services/sharing_service.dart';
+import '../../../core/services/logger_service.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
 import '../../../shared/widgets/custom_text_field.dart';
@@ -96,11 +97,11 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
  const SizedBox(width: VSPSpacing.md),
  Expanded(
  child: PrimaryButton(
- text: l10n.proceedAnyway,
+                        text: _currentChampionship.entryFee > 0 ? (Localizations.localeOf(context).languageCode == 'ar' ? 'فهمت ذلك' : 'Understood') : l10n.proceedAnyway,
  height: 44,
  color: VSPColors.warning,
  textColor: Colors.black,
- onPressed: () => Navigator.pop(ctx, true),
+                        onPressed: () => Navigator.pop(ctx, _currentChampionship.entryFee <= 0),
  ),
  ),
  ],
@@ -1329,7 +1330,14 @@ class _OwnerTournamentDashboardScreenState extends State<OwnerTournamentDashboar
  stream: Supabase.instance.client
  .from('championships')
  .stream(primaryKey: ['id'])
- .eq('id', _currentChampionship.id),
+ .eq('id', _currentChampionship.id)
+ .timeout(
+ const Duration(seconds: 10),
+ onTimeout: (sink) => sink.add([]),
+ )
+ .handleError((e) {
+ VSPLogger.w('Handled realtime error in owner tournament dashboard: $e');
+ }),
  builder: (context, champSnapshot) {
  if (champSnapshot.hasData && champSnapshot.data!.isNotEmpty) {
  _currentChampionship = Championship.fromFirestore(champSnapshot.data!.first, _currentChampionship.id);

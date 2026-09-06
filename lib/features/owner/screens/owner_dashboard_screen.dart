@@ -13,6 +13,7 @@ import '../../../features/player/screens/notifications_center_screen.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
 import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
+import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
 import 'owner_bookings_screen.dart';
 import 'owner_ledger_screen.dart';

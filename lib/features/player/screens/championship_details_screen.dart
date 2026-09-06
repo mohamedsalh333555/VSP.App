@@ -493,7 +493,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                           icon: Iconsax.cup_copy,
                           iconColor: VSPColors.accent,
                           label: isArabic ? 'الجائزة الكبرى' : 'Grand Prize',
-                          value: '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}',
+                          value: championship.grandPrize > 0 ? '${championship.grandPrize.toInt()} ${isArabic ? "ج.م" : "EGP"}' : (isArabic ? 'كأس وميداليات' : 'Cup & Medals'),
                         ),
                         const SizedBox(width: 8),
                         _buildStatCard(

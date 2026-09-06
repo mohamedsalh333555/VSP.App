@@ -34,7 +34,7 @@ class NotificationRepository {
             .map((data) => AppNotification.fromFirestore(_mapToCamelCase(data), data['id'].toString()))
             .toList())
         .handleError((e) {
-          VSPLogger.w('Handled realtime error in getUserNotifications: $e');
+          debugPrint('Handled realtime error in getUserNotifications: $e');
         });
   }
 

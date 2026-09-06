@@ -14,6 +14,7 @@ import '../../../core/repositories/team_repository.dart';
 import '../../../core/services/logger_service.dart';
 import '../../../core/utils/app_date_formatter.dart';
 import '../../../core/utils/vsp_feedback.dart';
+import '../../../core/repositories/booking_repository.dart';
 import 'booking_success_screen.dart';
 import 'payment_gateway_screen.dart';
 
@@ -555,7 +556,7 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                     child: Center(
                       child: Column(
                         children: [
-                          const Icon(Iconsax.refresh_2_copy, color: VSPColors.warning, size: 28),
+                          const Icon(Icons.refresh, color: VSPColors.warning, size: 28),
                           const SizedBox(height: 8),
                           const Text(
                             'تعذر التحديث اللحظي، اسحب للأسفل للتحديث',
@@ -1138,10 +1139,8 @@ class _BookingConfirmationScreenState extends State<BookingConfirmationScreen> {
                 .first
                 .timeout(const Duration(seconds: 4));
           } catch (_) {
-            final repo = BookingRepository();
-            if (repo is SupabaseBookingRepository) {
-              currentBookings = await repo.fetchStadiumBookingsDirectly(widget.stadium.id, _selectedDate);
-            }
+            final repo = SupabaseBookingRepository();
+            currentBookings = await repo.fetchStadiumBookingsDirectly(widget.stadium.id, _selectedDate);
           }
           if (!mounted) return;
  final sortedCheck = List<String>.from(_selectedTimeSlots)

@@ -254,13 +254,6 @@ class SupabaseBookingRepository implements BookingRepository {
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('created_by_user_id', userId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await getUserBookingsDirectly(userId);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
@@ -268,6 +261,13 @@ class SupabaseBookingRepository implements BookingRepository {
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await getUserBookingsDirectly(userId);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           VSPLogger.w('Handled realtime error in getUserBookings: $error');
         });
@@ -333,13 +333,6 @@ class SupabaseBookingRepository implements BookingRepository {
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('owner_id', ownerId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           final bookings = list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
@@ -353,6 +346,13 @@ class SupabaseBookingRepository implements BookingRepository {
           bookings.sort((a, b) => b.startTime.compareTo(a.startTime));
           return bookings;
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchOwnerBookingsDirectly(ownerId, stadiumIds: stadiumIds);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           VSPLogger.w('Handled realtime error in getOwnerBookings: $error');
         });
@@ -707,13 +707,6 @@ class SupabaseBookingRepository implements BookingRepository {
         .from('bookings')
         .stream(primaryKey: ['id'])
         .eq('stadium_id', stadiumId)
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           return list
               .map((data) => Booking.fromFirestore(data, data['id'].toString()))
@@ -732,6 +725,13 @@ class SupabaseBookingRepository implements BookingRepository {
               })
               .toList();
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchStadiumBookingsDirectly(stadiumId, date);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           VSPLogger.w('Handled realtime error in getBookingsForStadium: $error');
         });

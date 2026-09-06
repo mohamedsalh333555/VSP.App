@@ -5,6 +5,7 @@ import 'package:flutter/services.dart';
 import 'package:webview_flutter/webview_flutter.dart';
 import 'package:url_launcher/url_launcher.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
+import 'package:supabase_flutter/supabase_flutter.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../core/repositories/booking_repository.dart';
 import '../../../data/models.dart';
@@ -104,25 +105,37 @@ class _PaymobWebViewScreenState extends State<PaymobWebViewScreen> {
  _showStillWaitingDialog();
  }
 
- Future<bool> _checkBookingStatusDb() async {
- if (widget.bookingId == null ||
- widget.bookingId!.isEmpty ||
- widget.bookingId!.startsWith('mock_')) {
- return false;
- }
- try {
- final booking = await SupabaseBookingRepository().getBookingById(widget.bookingId!);
- if (booking != null &&
- (booking.status == BookingStatus.confirmed ||
- booking.isPaid ||
- booking.paymentStatus == 'paid')) {
- return true;
- }
- } catch (e) {
- debugPrint('Notice checking booking DB status: $e');
- }
- return false;
- }
+  Future<bool> _checkBookingStatusDb() async {
+    if (widget.bookingId == null ||
+        widget.bookingId!.isEmpty ||
+        widget.bookingId!.startsWith('mock_')) {
+      return false;
+    }
+    try {
+      if (widget.bookingId!.startsWith('TOURN_1V1_')) {
+        final res = await Supabase.instance.client
+            .from('vsp_1v1_tournament_orders')
+            .select('payment_status')
+            .eq('order_reference', widget.bookingId!)
+            .maybeSingle();
+        if (res != null && res['payment_status'] == 'paid') {
+          return true;
+        }
+        return false;
+      }
+
+      final booking = await SupabaseBookingRepository().getBookingById(widget.bookingId!);
+      if (booking != null &&
+          (booking.status == BookingStatus.confirmed ||
+              booking.isPaid ||
+              booking.paymentStatus == 'paid')) {
+        return true;
+      }
+    } catch (e) {
+      debugPrint('Notice checking booking DB status: $e');
+    }
+    return false;
+  }
 
  void _start10sPolling() {
  _pollingTimer?.cancel();

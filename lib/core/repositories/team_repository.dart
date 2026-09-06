@@ -257,13 +257,6 @@ class TeamRepository {
     yield* _supabase
         .from('teams')
         .stream(primaryKey: ['id'])
-        .timeout(
-          const Duration(seconds: 10),
-          onTimeout: (sink) async {
-            final refreshed = await fetchTeamsDirectly(governorate: governorate);
-            sink.add(refreshed);
-          },
-        )
         .map((list) {
           return list.map((data) {
             if (governorate != null && governorate.isNotEmpty && governorate != 'All') {
@@ -281,6 +274,13 @@ class TeamRepository {
             return Team.fromFirestore(data, data['id'].toString());
           }).whereType<Team>().toList();
         })
+        .timeout(
+          const Duration(seconds: 10),
+          onTimeout: (sink) async {
+            final refreshed = await fetchTeamsDirectly(governorate: governorate);
+            sink.add(refreshed);
+          },
+        )
         .handleError((error) {
           debugPrint('Handled realtime error in getTeams: $error');
         });

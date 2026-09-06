@@ -136,7 +136,14 @@ class _StadiumDetailsScreenState extends State<StadiumDetailsScreen> with Single
       stream: Supabase.instance.client
           .from('stadiums')
           .stream(primaryKey: ['id'])
-          .eq('id', widget.stadium.id),
+          .eq('id', widget.stadium.id)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .handleError((e) {
+            VSPLogger.w('Handled realtime error in stadium details: $e');
+          }),
       builder: (context, snapshot) {
         Stadium stadium = widget.stadium;
         if (snapshot.hasData && snapshot.data!.isNotEmpty) {
@@ -964,11 +971,21 @@ class _RatingsTab extends StatelessWidget {
  final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
  return StreamBuilder<List<Map<String, dynamic>>>(
- stream: Supabase.instance.client.from('reviews').stream(primaryKey: ['id']).eq('stadium_id', stadium.id).map((list) {
- final sorted = List<Map<String, dynamic>>.from(list);
- sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
- return sorted;
- }),
+      stream: Supabase.instance.client
+          .from('reviews')
+          .stream(primaryKey: ['id'])
+          .eq('stadium_id', stadium.id)
+          .timeout(
+            const Duration(seconds: 10),
+            onTimeout: (sink) => sink.add([]),
+          )
+          .map((list) {
+        final sorted = List<Map<String, dynamic>>.from(list);
+        sorted.sort((a, b) => DateTime.parse(b['created_at'].toString()).compareTo(DateTime.parse(a['created_at'].toString())));
+        return sorted;
+      }).handleError((e) {
+        VSPLogger.w('Handled realtime error in stadium reviews: $e');
+      }),
  builder: (context, snapshot) {
  final docs = snapshot.data ?? [];
  final count = docs.length;
