@@ -971,10 +971,32 @@ class ChampionScreenState extends State<ChampionScreen>
         if (snapshot.connectionState == ConnectionState.waiting) {
           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
         }
-        if (snapshot.hasError) {
-          return VSPErrorState(
-            customMessage: snapshot.error?.toString(),
-            onRetry: () => setState(() {}),
+        if (snapshot.hasError && (!snapshot.hasData || snapshot.data!.isEmpty)) {
+          return Center(
+            child: Padding(
+              padding: const EdgeInsets.symmetric(vertical: 40, horizontal: 20),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  const Icon(Iconsax.refresh_2_copy, color: VSPColors.warning, size: 36),
+                  const SizedBox(height: 12),
+                  Text(
+                    isArabic ? 'تعذر التحديث اللحظي، اسحب للأسفل للتحديث' : 'Realtime update unavailable, pull to refresh',
+                    textAlign: TextAlign.center,
+                    style: const TextStyle(color: VSPColors.textSecondary, fontSize: 13),
+                  ),
+                  const SizedBox(height: 14),
+                  TextButton.icon(
+                    onPressed: () => setState(() {}),
+                    icon: const Icon(Icons.refresh, color: VSPColors.accent, size: 16),
+                    label: Text(
+                      isArabic ? 'إعادة المحاولة' : 'Retry',
+                      style: const TextStyle(color: VSPColors.accent, fontSize: 13),
+                    ),
+                  ),
+                ],
+              ),
+            ),
           );
         }
 
