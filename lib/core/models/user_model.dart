@@ -63,9 +63,9 @@ class UserModel {
     this.favoriteSport = 'Football',
   });
 
-  bool get isOwner => role == 'owner';
+  bool get isOwner => role == 'owner' || role == 'admin' || role == 'co_founder';
   bool get isPlayer => !isOwner;
-  bool get isOwnerRole => role == 'owner';
+  bool get isOwnerRole => role == 'owner' || role == 'admin' || role == 'co_founder';
   bool get isPlayerRole => !isOwnerRole;
 
   DateTime? get effectiveTrialEndsAt =>

@@ -980,33 +980,58 @@ class SupabaseBookingRepository implements BookingRepository {
  VSPLogger.e('Error in autoNudgePostMatchResults', e);
  }
  }
+  @override
+  Future<bool> updateManualBooking({
+    required String bookingId,
+    required String name,
+    required String phone,
+    required String notes,
+    required bool isDepositPaid,
+    required double depositPaid,
+    required String paymentStatus,
+  }) async {
+    try {
+      if (depositPaid < 0) {
+        throw Exception('لا يمكن إدخال عربون بقيمة سالبة.');
+      }
 
- @override
- Future<bool> updateManualBooking({
- required String bookingId,
- required String name,
- required String phone,
- required String notes,
- required bool isDepositPaid,
- required double depositPaid,
- required String paymentStatus,
- }) async {
- try {
- await _supabase.from('bookings').update({
- 'player_team_name': name,
- 'player_phone': phone,
- 'notes': notes,
- 'is_deposit_paid': isDepositPaid,
- 'deposit_paid': depositPaid,
- 'payment_status': paymentStatus,
- 'updated_at': DateTime.now().toUtc().toIso8601String(),
- }).eq('id', bookingId);
- return true;
- } catch (e) {
- VSPLogger.e('Error updating manual booking: $e', e);
- return false;
- }
- }
+      final booking = await getBookingById(bookingId);
+      if (booking != null && booking.totalPrice > 0 && depositPaid > booking.totalPrice) {
+        throw Exception('قيمة العربون (${depositPaid.toStringAsFixed(0)} ج.م) لا يمكن أن تتجاوز إجمالي سعر الحجز (${booking.totalPrice.toStringAsFixed(0)} ج.م).');
+      }
+
+      // ضبط تلقائي متسق لحالة الدفع لمنع التناقض المالي
+      String normalizedPaymentStatus = paymentStatus;
+      bool normalizedIsPaid = booking?.isPaid ?? false;
+      bool normalizedIsDepositPaid = isDepositPaid;
+
+      if (booking != null && booking.totalPrice > 0) {
+        if (depositPaid >= booking.totalPrice) {
+          normalizedPaymentStatus = 'paid';
+          normalizedIsPaid = true;
+          normalizedIsDepositPaid = true;
+        } else if (depositPaid > 0) {
+          normalizedPaymentStatus = 'deposit_paid';
+          normalizedIsDepositPaid = true;
+        }
+      }
+
+      await _supabase.from('bookings').update({
+        'player_team_name': name.trim(),
+        'player_phone': phone.trim(),
+        'notes': notes.trim(),
+        'is_deposit_paid': normalizedIsDepositPaid,
+        'deposit_paid': depositPaid,
+        'is_paid': normalizedIsPaid,
+        'payment_status': normalizedPaymentStatus,
+        'updated_at': DateTime.now().toUtc().toIso8601String(),
+      }).eq('id', bookingId);
+      return true;
+    } catch (e) {
+      VSPLogger.e('Error updating manual booking: $e', e);
+      rethrow;
+    }
+  }
 
  /// 2. طلب ترحيل الموعد من قِبل المالك
  @override

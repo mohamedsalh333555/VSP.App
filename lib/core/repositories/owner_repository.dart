@@ -45,24 +45,51 @@ class OwnerRepository {
  });
  }
 
- Future<double> calculateOwnerRevenue(String ownerId) async {
- try {
- final response = await _supabase
- .from('bookings')
- .select('total_price')
- .eq('owner_id', ownerId)
- .eq('payment_status', 'paid');
+  /// جلب الملخص المالي المحاسبي الشامل للمالك من الخادم (Zero-Trust Accounting)
+  Future<Map<String, dynamic>> getOwnerFinancialSummary(String ownerId) async {
+    try {
+      final res = await _supabase.rpc('get_owner_financial_summary', params: {
+        'p_owner_id': ownerId,
+      });
+      if (res is Map) {
+        return Map<String, dynamic>.from(res);
+      }
+      return {'success': false, 'available_balance': 0.0};
+    } catch (e, stack) {
+      VSPLogger.e('Error fetching financial summary for $ownerId', e, stack);
+      return {'success': false, 'available_balance': 0.0};
+    }
+  }
 
- double total = 0;
- for (var row in (response as List)) {
- total += (row['total_price'] ?? 0).toDouble();
- }
- return total;
- } catch (e, stack) {
- VSPLogger.e('Error calculating owner revenue for $ownerId', e, stack);
- return 0.0;
- }
- }
+  /// حساب صافي أرباح المالك من الحجوزات الإلكترونية بعد خصم رسوم المنصة
+  Future<double> calculateOwnerRevenue(String ownerId) async {
+    try {
+      final summary = await getOwnerFinancialSummary(ownerId);
+      if (summary['success'] == true && summary['net_online_earnings'] != null) {
+        return (summary['net_online_earnings'] as num).toDouble();
+      }
+
+      // Fallback: حساب احتياطي مؤمّن ومخصوم منه الرسوم للحجوزات الإلكترونية
+      final response = await _supabase
+          .from('bookings')
+          .select('total_price, platform_fee')
+          .eq('owner_id', ownerId)
+          .neq('payment_method', 'cash')
+          .or('payment_status.eq.paid,is_paid.eq.true')
+          .neq('status', 'cancelled');
+
+      double total = 0;
+      for (var row in (response as List)) {
+        final price = (row['total_price'] ?? 0).toDouble();
+        final fee = (row['platform_fee'] ?? 0).toDouble();
+        total += (price - fee);
+      }
+      return total;
+    } catch (e, stack) {
+      VSPLogger.e('Error calculating owner revenue for $ownerId', e, stack);
+      return 0.0;
+    }
+  }
 
  Future<double> calculateBookedHours(String ownerId) async {
  try {

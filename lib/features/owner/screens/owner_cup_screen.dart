@@ -28,6 +28,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  int _selectedTab = 0; // 0: Coming, 1: Ongoing, 2: Finished
  String _selectedSport = 'Football';
  String _selectedCategory = 'All';
+ bool _hasAnyChampionships = true;
 
  @override
  Widget build(BuildContext context) {
@@ -53,8 +54,12 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  
  return Scaffold(
  backgroundColor: VSPColors.background,
- floatingActionButton: Padding(
- padding: const EdgeInsets.only(bottom: 100.0),
+ floatingActionButton: !_hasAnyChampionships
+  ? null
+  : Padding(
+  padding: EdgeInsets.only(
+   bottom: VSPScrollPadding.bottom(context, hasFloatingNavBar: true, extra: 14.0),
+  ),
  child: FloatingActionButton(
  onPressed: () => _showTournamentTypeSheet(context, isArabic, l10n),
  backgroundColor: VSPColors.accent,
@@ -163,6 +168,16 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  }
  
  final championships = snapshot.data ?? [];
+ final hasAny = championships.isNotEmpty;
+ if (_hasAnyChampionships != hasAny) {
+  WidgetsBinding.instance.addPostFrameCallback((_) {
+   if (mounted) {
+    setState(() {
+     _hasAnyChampionships = hasAny;
+    });
+   }
+  });
+ }
  
  final filtered = championships.where((c) {
  final isRightCategory = _selectedCategory == 'All' || c.type.toLowerCase() == _selectedCategory.toLowerCase();
@@ -208,7 +223,7 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  subtitle: emptySubtitle,
  buttonText: hasAnyChampionships ? null : l10n.createYourFirst,
  onButtonPressed: hasAnyChampionships ? null : () {
- CreateTournamentWizard.open(context);
+ _showTournamentTypeSheet(context, isArabic, l10n);
  },
  );
  }

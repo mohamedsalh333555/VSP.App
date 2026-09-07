@@ -17,7 +17,6 @@ import '../../features/player/screens/player_home_screen.dart';
 import '../../features/player/screens/match_details_screen.dart';
 import '../../features/player/screens/team_profile_screen.dart';
 import '../../features/player/screens/notifications_center_screen.dart';
-import '../../features/admin/screens/admin_dashboard_screen.dart';
 import 'offline_error_screen.dart';
 import 'suspended_account_screen.dart';
 import 'root_screen.dart';
@@ -146,10 +145,6 @@ class AppRouter {
  path: '/notifications',
  builder: (context, state) => const NotificationsCenterScreen(),
  ),
- GoRoute(
- path: '/admin',
- builder: (context, state) => const AdminDashboardScreen(),
- ),
  ],
  redirect: (context, state) => redirectLogic(context, state, authProvider),
  );
@@ -217,16 +212,6 @@ class AppRouter {
  return null;
  }
  
- // 5.5 Admin role check & security boundary
- final bool isAdmin = userModel.role == 'admin' || userModel.role == 'co_founder';
- if (path == '/admin' && !isAdmin) {
- return '/';
- }
- if (isAdmin) {
- if (path == '/admin') return null;
- if (path == '/welcome' || path == '/splash' || path == '/login' || path.startsWith('/create-account') || path.startsWith('/signup') || path == '/onboarding-player' || path == '/onboarding-owner') return '/admin';
- }
-
  if (userModel.isBlocked) {
  // FIX: Both Owner and Player blocked accounts go to /suspended
  // Previously owners were allowed to stay in /owner (security gap)

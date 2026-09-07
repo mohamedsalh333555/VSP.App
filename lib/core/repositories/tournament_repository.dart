@@ -8,7 +8,6 @@ import '../repositories/team_repository.dart';
 import '../utils/app_date_formatter.dart';
 import '../constants/egypt_governorates.dart';
 import '../services/notification_handler.dart';
-import '../services/paymob_service.dart';
 import '../../data/models.dart';
 
 class TournamentRepository {
@@ -414,23 +413,6 @@ class TournamentRepository {
 
  if (rpcRes is Map && rpcRes['success'] == false) {
  throw Exception(rpcRes['message']?.toString() ?? 'فشل الانضمام للبطولة.');
- }
-
- // تسجيل المعاملة المالية في حال السداد (استخدام PaymobService الموحد)
- if (isPaid && champ.entryFee > 0) {
- try {
- final double fullAmount = totalPaidAmount ?? PaymobService.calculateTotalAmount(champ.entryFee);
-
- await _supabase.from('transactions').insert({
- 'championship_id': championshipId,
- 'user_id': _supabase.auth.currentUser?.id,
- 'amount': fullAmount,
- 'type': 'digital',
- 'created_at': DateTime.now().toUtc().toIso8601String(),
- });
- } catch (txErr) {
- VSPLogger.w(' Transaction logging notice: $txErr');
- }
  }
 
  // حفظ تشكيلة الفريق
