@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:math' as math;
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
@@ -9,9 +8,7 @@ import '../../../core/providers/auth_provider.dart';
 import '../../../core/providers/stadium_provider.dart';
 import '../../../core/providers/booking_provider.dart';
 import '../../../data/models.dart';
-import '../../../features/player/screens/notifications_center_screen.dart';
 import '../../../core/utils/vsp_launcher_utils.dart';
-import '../../../core/repositories/notification_repository.dart';
 import '../../../core/repositories/tournament_repository.dart';
 import '../../../core/services/logger_service.dart';
 import 'subscription_plans_screen.dart';
@@ -24,114 +21,10 @@ import '../../../core/utils/vsp_feedback.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/user_model.dart';
 
-/// كائن البيانات المالية المجمعة للوحة تحكم المالك
-class OwnerFinancialMetrics {
-  final double pitchCashRevenue;
-  final double digitalVspBalance;
-  final double pendingReceivables;
-  final double totalPipeline;
-  final double totalHours;
-  final int activeBookingsCount;
-  final List<Booking> periodBookings;
-
-  const OwnerFinancialMetrics({
-    required this.pitchCashRevenue,
-    required this.digitalVspBalance,
-    required this.pendingReceivables,
-    required this.totalPipeline,
-    required this.totalHours,
-    required this.activeBookingsCount,
-    required this.periodBookings,
-  });
-}
-
-/// محرك الحسابات المالية المفصول عن واجهة المستخدم
-class OwnerFinancialCalculator {
-  static OwnerFinancialMetrics calculate({
-    required List<Booking> allBookings,
-    required List<Championship> ownerChampionships,
-    required String timePeriod,
-    required String stadiumFilter,
-  }) {
-    final now = DateTime.now();
-    final yesterday = now.subtract(const Duration(days: 1));
-
-    final List<Booking> filteredBookings = allBookings.where((b) {
-      if (b.status == BookingStatus.cancelled) return false;
-      if (stadiumFilter != 'all' && b.stadiumId != stadiumFilter) return false;
-
-      final bStartLocal = b.startTime.toLocal();
-      final bDate = b.operationalDate ?? bStartLocal;
-
-      if (timePeriod == 'today') {
-        return bDate.year == now.year && bDate.month == now.month && bDate.day == now.day;
-      } else if (timePeriod == 'yesterday') {
-        return bDate.year == yesterday.year && bDate.month == yesterday.month && bDate.day == yesterday.day;
-      } else if (timePeriod == 'week') {
-        final startOfWeek = now.subtract(Duration(days: now.weekday - 1));
-        final endOfWeek = startOfWeek.add(const Duration(days: 7));
-        return bDate.isAfter(startOfWeek.subtract(const Duration(days: 1))) && bDate.isBefore(endOfWeek);
-      } else if (timePeriod == 'month') {
-        return bDate.year == now.year && bDate.month == now.month;
-      }
-      return true;
-    }).toList();
-
-    double pitchCashRevenue = 0.0;
-    double digitalVspBalance = 0.0;
-    double pendingReceivables = 0.0;
-    double totalPipeline = 0.0;
-    double totalHours = 0.0;
-
-    for (final b in filteredBookings) {
-      final double totalPrice = b.totalPrice > 0 ? b.totalPrice : b.depositPaid;
-      final bool isPaidInFull = b.isPaid || b.paymentStatus == 'paid' || (totalPrice > 0 && b.depositPaid >= totalPrice);
-      final double paidAmount = isPaidInFull ? totalPrice : (b.depositPaid > 0 ? b.depositPaid : 0.0);
-      final double remainingAmount = (totalPrice - paidAmount).clamp(0.0, 999999.0);
-
-      pendingReceivables += remainingAmount;
-      totalPipeline += totalPrice;
-
-      final String method = b.paymentMethod.toLowerCase().trim();
-      final bool isManual = (method == 'cash' || (b.paymentTransactionId?.startsWith('MANUAL') == true));
-
-      final bool isOnlinePayment = !isManual && (
-        method.contains('paymob') ||
-        method.contains('card') ||
-        method.contains('visa') ||
-        method.contains('mastercard') ||
-        method.contains('wallet') ||
-        method.contains('online') ||
-        method.contains('instapay') ||
-        method.contains('vodafone') ||
-        (b.paymentTransactionId?.startsWith('PAYMOB') == true) ||
-        b.isPaid == true ||
-        b.paymentStatus == 'paid'
-      );
-
-      if (isOnlinePayment) {
-        final onlinePaid = (b.depositPaid > 0 ? b.depositPaid : paidAmount);
-        digitalVspBalance += onlinePaid;
-        pitchCashRevenue += (paidAmount - onlinePaid).clamp(0.0, 999999.0);
-      } else {
-        pitchCashRevenue += paidAmount;
-      }
-
-      final diffMinutes = b.endTime.difference(b.startTime).inMinutes;
-      totalHours += (diffMinutes / 60.0);
-    }
-
-    return OwnerFinancialMetrics(
-      pitchCashRevenue: pitchCashRevenue,
-      digitalVspBalance: digitalVspBalance,
-      pendingReceivables: pendingReceivables,
-      totalPipeline: totalPipeline,
-      totalHours: totalHours,
-      activeBookingsCount: filteredBookings.length,
-      periodBookings: filteredBookings,
-    );
-  }
-}
+export '../../../core/utils/owner_financial_calculator.dart';
+import '../../../core/utils/owner_financial_calculator.dart';
+import '../widgets/radial_tick_gauge_painter.dart';
+import '../widgets/owner_notification_button.dart';
 
 /// لوحة تحكم المالك المتجاوبة مع باقات الاشتراك (Basic vs Pro)
 class OwnerDashboardScreen extends StatefulWidget {
@@ -487,7 +380,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
         const SizedBox(width: 10),
 
         // Notifications Button (Kept in place)
-                _OwnerNotificationButton(userId: auth.currentUser?.uid ?? ''),
+                OwnerNotificationButton(userId: auth.currentUser?.uid ?? ''),
       ],
     );
   }
@@ -1563,7 +1456,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 // Custom Radial Ticks Painter
                 CustomPaint(
                   size: const Size(172, 172),
-                  painter: _RadialTickGaugePainter(
+                  painter: RadialTickGaugePainter(
                     progress: ringProgress.clamp(0.0, 1.0),
                     activeColor: VSPColors.accent,
                     inactiveColor: const Color(0xFF27272A),
@@ -2747,131 +2640,6 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
           },
         ),
       ),
-    );
-  }
-}
-
-// ──────────────────────────────────────────────────────────────────────────
-// RADIAL TICK GAUGE PAINTER (دائرة المؤشرات الشعاعية الدقيقة)
-// ──────────────────────────────────────────────────────────────────────────
-class _RadialTickGaugePainter extends CustomPainter {
-  final double progress;
-  final Color activeColor;
-  final Color inactiveColor;
-  final int totalTicks;
-  final double tickLength;
-  final double strokeWidth;
-
-  _RadialTickGaugePainter({
-    required this.progress,
-    required this.activeColor,
-    required this.inactiveColor,
-    required this.totalTicks,
-    required this.tickLength,
-    required this.strokeWidth,
-  });
-
-  @override
-  void paint(Canvas canvas, Size size) {
-    final center = Offset(size.width / 2, size.height / 2);
-    final outerRadius = (size.width / 2) - 2;
-    final innerRadius = outerRadius - tickLength;
-    const startAngle = -math.pi / 2; // 12 o'clock
-    final angleStep = (2 * math.pi) / totalTicks;
-
-    final activeTicksCount = (progress * totalTicks).round().clamp(progress > 0 ? 1 : 0, totalTicks);
-
-    final inactivePaint = Paint()
-      ..color = inactiveColor
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    final activePaint = Paint()
-      ..color = activeColor
-      ..strokeWidth = strokeWidth
-      ..strokeCap = StrokeCap.round;
-
-    for (int i = 0; i < totalTicks; i++) {
-      final angle = startAngle + (i * angleStep);
-      final cosA = math.cos(angle);
-      final sinA = math.sin(angle);
-
-      final p1 = Offset(center.dx + innerRadius * cosA, center.dy + innerRadius * sinA);
-      final p2 = Offset(center.dx + outerRadius * cosA, center.dy + outerRadius * sinA);
-
-      final isTickActive = i < activeTicksCount;
-      canvas.drawLine(p1, p2, isTickActive ? activePaint : inactivePaint);
-    }
-  }
-
-  @override
-  bool shouldRepaint(covariant _RadialTickGaugePainter oldDelegate) {
-    return oldDelegate.progress != progress ||
-        oldDelegate.activeColor != activeColor ||
-        oldDelegate.inactiveColor != inactiveColor;
-  }
-}
-
-
-class _OwnerNotificationButton extends StatefulWidget {
-  final String userId;
-  const _OwnerNotificationButton({required this.userId});
-
-  @override
-  State<_OwnerNotificationButton> createState() => _OwnerNotificationButtonState();
-}
-
-class _OwnerNotificationButtonState extends State<_OwnerNotificationButton> {
-  late final Stream<int> _unreadStream;
-
-  @override
-  void initState() {
-    super.initState();
-    _unreadStream = NotificationRepository().getUnreadNotificationCount(widget.userId);
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return StreamBuilder<int>(
-      stream: _unreadStream,
-      builder: (context, snapshot) {
-        final unread = snapshot.data ?? 0;
-        return Stack(
-          clipBehavior: Clip.none,
-          children: [
-            Container(
-              decoration: BoxDecoration(
-                color: VSPColors.surface,
-                borderRadius: BorderRadius.circular(VSPRadius.md),
-                border: Border.all(color: Colors.white.withValues(alpha: 0.06)),
-              ),
-              child: IconButton(
-                icon: const Icon(Iconsax.notification_copy, color: VSPColors.textPrimary, size: 20),
-                onPressed: () {
-                  HapticFeedback.lightImpact();
-                  Navigator.push(
-                    context,
-                    MaterialPageRoute(builder: (_) => const NotificationsCenterScreen()),
-                  );
-                },
-              ),
-            ),
-            if (unread > 0)
-              Positioned(
-                top: 6,
-                right: 6,
-                child: Container(
-                  width: 8,
-                  height: 8,
-                  decoration: const BoxDecoration(
-                    color: VSPColors.accent,
-                    shape: BoxShape.circle,
-                  ),
-                ),
-              ),
-          ],
-        );
-      },
     );
   }
 }

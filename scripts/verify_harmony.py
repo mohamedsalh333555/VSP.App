@@ -1,13 +1,14 @@
-﻿import urllib.request, json, re
+import urllib.request, json, re
 
 with open("env.json", "r") as f:
     env = json.load(f)
 
 # 1. Fetch OpenAPI definitions from Supabase
 url = env["SUPABASE_URL"] + "/rest/v1/"
+api_key = env.get("SUPABASE_ANON_KEY") or env.get("SUPABASE_SERVICE_ROLE_KEY", "")
 headers = {
-    "apikey": env["SUPABASE_SERVICE_ROLE_KEY"],
-    "Authorization": "Bearer " + env["SUPABASE_SERVICE_ROLE_KEY"],
+    "apikey": api_key,
+    "Authorization": "Bearer " + api_key,
 }
 req = urllib.request.Request(url, headers=headers)
 with urllib.request.urlopen(req) as resp:

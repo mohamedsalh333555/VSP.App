@@ -1,7 +1,7 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:vsp_application/core/services/paymob_service.dart';
 import 'package:vsp_application/data/models.dart';
-import 'package:vsp_application/features/owner/screens/owner_dashboard_screen.dart';
+import 'package:vsp_application/core/utils/owner_financial_calculator.dart';
 
 void main() {
   group('OwnerFinancialCalculator & Platform Share Tests', () {
