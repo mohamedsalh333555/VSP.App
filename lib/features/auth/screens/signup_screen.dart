@@ -1,23 +1,22 @@
-import '../../../shared/widgets/vsp_terms_checkbox.dart';
-import '../../../shared/widgets/vsp_auth_header.dart';
-import '../../../shared/widgets/vsp_position_selector.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'dart:ui';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:provider/provider.dart';
-import '../../../core/ui/tokens/vsp_tokens.dart';
 import 'package:vsp_application/l10n/app_localizations.dart';
-import '../../../core/providers/language_provider.dart';
 import '../../../core/providers/auth_provider.dart';
-import '../../../shared/widgets/custom_text_field.dart';
-import '../../../core/utils/vsp_feedback.dart';
-import '../../../core/constants/egypt_governorates.dart';
-import '../../../shared/widgets/primary_button.dart';
-import '../../../shared/widgets/vsp_date_picker_dialog.dart';
-import '../../../core/services/secure_storage_service.dart';
-import '../../../core/utils/phone_utils.dart';
 import '../../../core/repositories/user_repository.dart';
+import '../../../core/services/secure_storage_service.dart';
+import '../../../core/ui/tokens/vsp_tokens.dart';
+import '../../../core/utils/vsp_feedback.dart';
+import '../../../shared/widgets/custom_text_field.dart';
+import '../../../shared/widgets/primary_button.dart';
+import '../../../shared/widgets/vsp_auth_header.dart';
+import '../../../shared/widgets/vsp_date_picker_dialog.dart';
+import '../../../shared/widgets/vsp_position_selector.dart';
+import '../../../shared/widgets/vsp_terms_checkbox.dart';
+import '../services/signup_validation_service.dart';
+import '../widgets/signup_governorate_dropdown.dart';
 
 /// Unified Registration Screen - collects name, phone, email, and password.
 class SignupScreen extends StatefulWidget {
@@ -86,124 +85,90 @@ class _SignupScreenState extends State<SignupScreen> {
  super.dispose();
  }
 
- Future<void> _handleSignup() async {
-    if (!_agreedToTerms) {
-      VSPFeedback.showError(context, AppLocalizations.of(context)!.pleaseAgreeToTerms);
+  Future<void> _handleSignup() async {
+    final l10n = AppLocalizations.of(context)!;
+    final validation = SignupValidationService.validateForm(
+      agreedToTerms: _agreedToTerms,
+      firstName: _firstNameController.text,
+      lastName: _lastNameController.text,
+      rawPhone: _phoneController.text,
+      email: _emailController.text,
+      password: _passwordController.text,
+      confirmPassword: _confirmPasswordController.text,
+      dateOfBirth: _dateOfBirth,
+    );
+
+    if (!validation.isValid) {
+      VSPFeedback.showError(context, SignupValidationService.getLocalizedErrorMessage(validation.error!, l10n));
       return;
     }
+
     if (_isLoading) return;
- final firstName = _firstNameController.text.trim();
- final lastName = _lastNameController.text.trim();
- final fullName = '$firstName $lastName';
- final rawPhone = _phoneController.text.trim();
- final normalizedPhone = PhoneUtils.normalize(rawPhone);
- final email = _emailController.text.trim();
- final password = _passwordController.text;
- final confirmPassword = _confirmPasswordController.text;
- if (firstName.isEmpty || lastName.isEmpty || rawPhone.isEmpty || email.isEmpty || password.isEmpty) {
- VSPFeedback.showError(
- context, 
- AppLocalizations.of(context)!.fillAllFields
- );
- return;
- }
- if (_dateOfBirth == null) {
- VSPFeedback.showError(context, AppLocalizations.of(context)!.pleaseEnterDob);
- return;
- }
 
- if (normalizedPhone == null || normalizedPhone.length != 11 || !normalizedPhone.startsWith("01")) {
- VSPFeedback.showError(
- context, 
- AppLocalizations.of(context)!.invalidPhone
- );
- return;
- }
+    final fullName = validation.fullName!;
+    final normalizedPhone = validation.normalizedPhone!;
+    final email = _emailController.text.trim();
+    final password = _passwordController.text;
 
- if (password != confirmPassword) {
- VSPFeedback.showError(
- context, 
- AppLocalizations.of(context)!.passwordMismatch
- );
- return;
- }
+    setState(() => _isLoading = true);
 
- if (password.length < 6) {
- VSPFeedback.showError(
- context, 
- AppLocalizations.of(context)!.passwordTooShort
- );
- return;
- }
-
- setState(() => _isLoading = true);
-
- // Pre-check phone uniqueness to give instant, friendly feedback
- try {
- final existingPhoneUser = await UserRepository().getUserByPhone(normalizedPhone);
- if (existingPhoneUser != null) {
- if (mounted) {
- setState(() => _isLoading = false);
- final isAr = Localizations.localeOf(context).languageCode == 'ar';
- VSPFeedback.showError(
- context,
- isAr ? 'رقم الهاتف مسجل مسبقاً بحساب آخر ' : 'This phone number is already registered to another account ',
- );
- }
- return;
- }
- } catch (_) {
- // Continue to signUp if network pre-check fails
- }
-
- if (!mounted) return;
-
- final authProvider = Provider.of<AuthProvider>(context, listen: false);
- 
- // Store email in provider for display purposes in verification screen
- authProvider.setEmail(email);
-
- final role = widget.isOwner ? 'owner' : 'player';
- 
- final success = await authProvider.signUp(
- email: email,
- password: password,
- role: role,
- userData: {
- 'name': fullName,
- 'phone': normalizedPhone,
- 'position': widget.isOwner ? null : (_selectedPosition ?? 'GK'),
- 'date_of_birth': _dateOfBirth?.toUtc().toIso8601String(),
- },
- );
-
- debugPrint("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
-
- if (!mounted) return;
-
- if (success) {
- await SecureStorageService.writeSecure('pending_verification_email', email);
- // GoRouter handles declarative navigation to /verify-email, /onboarding, or /
- // via authProvider's refreshListenable / redirectLogic once notifyListeners() fires.
- } else if (mounted) {
-        final isAr = Localizations.localeOf(context).languageCode == 'ar';
-        String errorMsg = authProvider.errorMessage ?? (isAr ? 'فشل إنشاء الحساب' : 'Account creation failed');
-        if (errorMsg.contains('confirmation email') || errorMsg.contains('unexpected_failure')) {
-          errorMsg = isAr
-              ? 'تعذر إرسال إيميل التأكيد. يرجى مراجعة إعدادات البريد.'
-              : 'Could not send confirmation email. Please check email settings.';
+    // Pre-check phone uniqueness to give instant, friendly feedback
+    try {
+      final existingPhoneUser = await UserRepository().getUserByPhone(normalizedPhone);
+      if (existingPhoneUser != null) {
+        if (mounted) {
+          setState(() => _isLoading = false);
+          final isAr = Localizations.localeOf(context).languageCode == 'ar';
+          VSPFeedback.showError(
+            context,
+            isAr ? 'رقم الهاتف مسجل مسبقاً بحساب آخر ' : 'This phone number is already registered to another account ',
+          );
         }
-        debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
-        VSPFeedback.showError(context, errorMsg);
+        return;
       }
- 
- if (mounted) setState(() => _isLoading = false);
- }
+    } catch (_) {
+      // Continue to signUp if network pre-check fails
+    }
+
+    if (!mounted) return;
+
+    final authProvider = Provider.of<AuthProvider>(context, listen: false);
+    authProvider.setEmail(email);
+
+    final role = widget.isOwner ? 'owner' : 'player';
+    final userData = SignupValidationService.buildUserDataPayload(
+      fullName: fullName,
+      normalizedPhone: normalizedPhone,
+      isOwner: widget.isOwner,
+      selectedPosition: _selectedPosition,
+      dateOfBirth: _dateOfBirth,
+    );
+
+    final success = await authProvider.signUp(
+      email: email,
+      password: password,
+      role: role,
+      userData: userData,
+    );
+
+    debugPrint("[DEBUG_SIGNUP] signUp result=$success error=${authProvider.errorMessage}");
+
+    if (!mounted) return;
+
+    if (success) {
+      await SecureStorageService.writeSecure('pending_verification_email', email);
+    } else if (mounted) {
+      final isAr = Localizations.localeOf(context).languageCode == 'ar';
+      final errorMsg = SignupValidationService.formatSignupError(authProvider.errorMessage, isArabic: isAr);
+      debugPrint("[DEBUG_SIGNUP] Showing error toast: $errorMsg");
+      VSPFeedback.showError(context, errorMsg);
+    }
+
+    if (mounted) setState(() => _isLoading = false);
+  }
 
  @override
  Widget build(BuildContext context) {
- final languageProvider = Provider.of<LanguageProvider>(context);
-
  return AnnotatedRegion<SystemUiOverlayStyle>(
  value: SystemUiOverlayStyle(
  statusBarColor: VSPColors.background.withValues(alpha: 0),
@@ -403,8 +368,8 @@ class _SignupScreenState extends State<SignupScreen> {
  ),
  ],
  ),
- const SizedBox(height: 8),
- _buildGovernorateDropdown(languageProvider),
+  const SizedBox(height: 8),
+  const SignupGovernorateDropdown(),
 
   // Position Selector (Players Only)
   if (!widget.isOwner) ...[
@@ -501,84 +466,38 @@ class _SignupScreenState extends State<SignupScreen> {
 );
 }
 
- Widget _buildPasswordStrengthBar() {
- final password = _passwordController.text;
- double strength = 0;
- 
- if (password.length >= 6) strength += 0.2;
- if (password.length >= 8) strength += 0.2;
- if (RegExp(r'[A-Z]').hasMatch(password)) strength += 0.2;
- if (RegExp(r'[0-9]').hasMatch(password)) strength += 0.2;
- if (RegExp(r'[!@#\$&*~]').hasMatch(password)) strength += 0.2;
+  Widget _buildPasswordStrengthBar() {
+    final strength = SignupValidationService.calculatePasswordStrength(_passwordController.text);
 
- Color color = Colors.red;
- String text = 'Weak';
- if (strength > 0.4) { color = Colors.orange; text = 'Medium'; }
- if (strength >= 0.8) { color = VSPColors.accent; text = 'Strong'; }
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Row(
+          mainAxisAlignment: MainAxisAlignment.spaceBetween,
+          children: [
+            Text(strength.label, style: TextStyle(color: strength.color, fontSize: 10, fontWeight: FontWeight.bold)),
+            Text('${(strength.score * 100).toInt()}%', style: TextStyle(color: strength.color, fontSize: 10)),
+          ],
+        ),
+        const SizedBox(height: 4),
+        LinearProgressIndicator(
+          value: strength.score,
+          backgroundColor: VSPColors.surfaceAlt,
+          valueColor: AlwaysStoppedAnimation<Color>(strength.color),
+          borderRadius: BorderRadius.circular(VSPRadius.xs),
+          minHeight: 4,
+        ),
+      ],
+    );
+  }
 
- return Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- mainAxisAlignment: MainAxisAlignment.spaceBetween,
- children: [
- Text(text, style: TextStyle(color: color, fontSize: 10, fontWeight: FontWeight.bold)),
- Text('${(strength * 100).toInt()}%', style: TextStyle(color: color, fontSize: 10)),
- ],
- ),
- const SizedBox(height: 4),
- LinearProgressIndicator(
- value: strength,
- backgroundColor: VSPColors.surfaceAlt,
- valueColor: AlwaysStoppedAnimation<Color>(color),
- borderRadius: BorderRadius.circular(VSPRadius.xs),
- minHeight: 4,
- ),
- ],
- );
- }
-
- Widget _buildLabel(String text) {
- return Padding(
- padding: const EdgeInsets.only(bottom: 8.0),
- child: Text(
- text,
- style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
- ),
- );
- }
-
- Widget _buildGovernorateDropdown(LanguageProvider lang) {
- final auth = Provider.of<AuthProvider>(context);
- const govs = EgyptGovernorates.allGovernorates;
- 
- return Container(
- padding: const EdgeInsets.symmetric(horizontal: 16),
- decoration: BoxDecoration(
- color: VSPColors.surface,
- borderRadius: BorderRadius.circular(VSPRadius.md),
- border: Border.all(color: VSPColors.borderLight),
- ),
- child: DropdownButtonHideUnderline(
- child: DropdownButton<String>(
- value: auth.governorate.isEmpty ? 'Cairo' : auth.governorate,
- dropdownColor: VSPColors.surface,
- icon: const Icon(Iconsax.arrow_down_1_copy, color: VSPColors.textSecondary),
- isExpanded: true,
- style: Theme.of(context).textTheme.bodyMedium,
- onChanged: (String? newValue) {
- if (newValue != null) {
- auth.setGovernorate(newValue);
- }
- },
- items: govs.map<DropdownMenuItem<String>>((String value) {
- return DropdownMenuItem<String>(
- value: value,
- child: Text(value, style: Theme.of(context).textTheme.bodyMedium?.copyWith(color: Colors.white)),
- );
- }).toList(),
- ),
- ),
- );
- }
+  Widget _buildLabel(String text) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 8.0),
+      child: Text(
+        text,
+        style: Theme.of(context).textTheme.labelMedium?.copyWith(fontWeight: FontWeight.w500),
+      ),
+    );
+  }
 }
