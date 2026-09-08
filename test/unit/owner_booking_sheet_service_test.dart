@@ -223,5 +223,55 @@ void main() {
         contains('Booking duration overlaps'),
       );
     });
+
+    test('buildManualBookingDraft constructs valid manual draft', () {
+      final start = DateTime(2026, 9, 10, 18, 0);
+      final end = DateTime(2026, 9, 10, 19, 0);
+      final draft = OwnerBookingSheetService.buildManualBookingDraft(
+        stadium: baseStadium,
+        uid: 'owner_user_1',
+        startTime: start,
+        endTime: end,
+        customerName: 'فريق النجوم',
+        customerPhone: '01012345678',
+        notes: 'حجز يدوي تجريبي',
+        totalPrice: 300.0,
+        collectedAmount: 300.0,
+        playerCount: 10,
+      );
+
+      expect(draft.stadiumId, baseStadium.id);
+      expect(draft.playerTeamName, 'فريق النجوم');
+      expect(draft.playerPhone, '01012345678');
+      expect(draft.totalPrice, 300.0);
+      expect(draft.isPaid, isTrue);
+      expect(draft.paymentStatus, 'paid');
+      expect(draft.paymentMethod, 'cash');
+      expect(draft.paymentTransactionId, startsWith('MANUAL_'));
+    });
+
+    test('buildBookingUpdateMap constructs expected payload', () {
+      final end = DateTime(2026, 9, 10, 20, 0);
+      final updateMap = OwnerBookingSheetService.buildBookingUpdateMap(
+        endTime: end,
+        customerName: 'فريق الصقور',
+        customerPhone: '01099999999',
+        notes: 'ملاحظة',
+        playerCount: 12,
+        collectedAmount: 150.0,
+        finalTotal: 300.0,
+        originalTotal: 250.0,
+      );
+
+      expect(updateMap['end_time'], end.toUtc().toIso8601String());
+      expect(updateMap['player_team_name'], 'فريق الصقور');
+      expect(updateMap['player_phone'], '01099999999');
+      expect(updateMap['current_players'], 12);
+      expect(updateMap['deposit_paid'], 150.0);
+      expect(updateMap['is_paid'], isFalse);
+      expect(updateMap['payment_status'], 'partially_paid');
+      expect(updateMap['total_price'], 300.0);
+    });
   });
 }
+

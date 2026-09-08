@@ -1,4 +1,5 @@
 import '../../../../core/utils/app_date_formatter.dart';
+import '../../../../core/utils/phone_utils.dart';
 import '../../../../data/models.dart';
 
 /// Pure domain helper and business logic service for the owner pitch booking sheet.
@@ -166,4 +167,78 @@ class OwnerBookingSheetService {
       return isArabic ? 'تفاصيل الحجز اليدوي' : 'Manual Booking Details';
     }
   }
+
+  /// Builds the BookingDraft model for a manual owner booking.
+  static BookingDraft buildManualBookingDraft({
+    required Stadium stadium,
+    required String uid,
+    required DateTime startTime,
+    required DateTime endTime,
+    required String customerName,
+    required String customerPhone,
+    required String notes,
+    required double totalPrice,
+    required double collectedAmount,
+    required int playerCount,
+  }) {
+    return BookingDraft(
+      stadiumId: stadium.id,
+      stadiumName: stadium.name,
+      stadiumImageUrl: stadium.imageUrl,
+      ownerId: stadium.ownerId.isNotEmpty ? stadium.ownerId : uid,
+      startTime: startTime,
+      endTime: endTime,
+      bookingType: BookingType.personal,
+      playerTeamName: customerName,
+      playerPhone: customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : '',
+      notes: notes,
+      isPrivate: true,
+      rentBall: false,
+      totalPrice: totalPrice,
+      currentPlayers: playerCount,
+      isPaid: collectedAmount >= totalPrice,
+      depositPaid: collectedAmount,
+      isDepositPaid: collectedAmount > 0,
+      paymentStatus: collectedAmount >= totalPrice
+          ? 'paid'
+          : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
+      paymentMethod: 'cash',
+      paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
+      needsDeposit: false,
+    );
+  }
+
+  /// Builds the update map for updating an existing booking.
+  static Map<String, dynamic> buildBookingUpdateMap({
+    required DateTime endTime,
+    required String customerName,
+    required String customerPhone,
+    required String notes,
+    required int playerCount,
+    required double collectedAmount,
+    required double finalTotal,
+    required double originalTotal,
+  }) {
+    final updateMap = <String, dynamic>{
+      'end_time': endTime.toUtc().toIso8601String(),
+      'player_team_name': customerName,
+      'player_phone': customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
+      'notes': notes,
+      'current_players': playerCount,
+      'deposit_paid': collectedAmount,
+      'is_deposit_paid': collectedAmount > 0,
+      'is_paid': collectedAmount >= finalTotal,
+      'payment_status': collectedAmount >= finalTotal
+          ? 'paid'
+          : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
+      'updated_at': DateTime.now().toUtc().toIso8601String(),
+    };
+
+    if (finalTotal != originalTotal) {
+      updateMap['total_price'] = finalTotal;
+    }
+
+    return updateMap;
+  }
 }
+

@@ -1,7 +1,5 @@
 import 'dart:ui';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
-import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:intl/intl.dart' hide TextDirection;
 import 'package:provider/provider.dart';
 import '../../../core/providers/auth_provider.dart';
@@ -13,39 +11,16 @@ import '../../../core/utils/vsp_feedback.dart';
 import '../../../data/models.dart';
 import '../../../l10n/app_localizations.dart';
 import 'booking_sheet/booking_sheet_actions.dart';
+import 'booking_sheet/booking_sheet_cancel_dialog.dart';
+import 'booking_sheet/booking_sheet_details_form.dart';
 import 'booking_sheet/booking_sheet_duration_selector.dart';
 import 'booking_sheet/booking_sheet_form_fields.dart';
+import 'booking_sheet/booking_sheet_header.dart';
+import 'booking_sheet/booking_sheet_time_stadium_card.dart';
 import 'booking_sheet/owner_booking_sheet_service.dart';
 
-/// Shows the dedicated bottom sheet modal for owner booking management.
-Future<void> showOwnerBookingModal({
-  required BuildContext context,
-  required bool isEdit,
-  required Map<String, dynamic> slot,
-  required Stadium selectedStadium,
-  DateTime? baseDate,
-  int? selectedDayIndex,
-  required BuildContext parentContext,
-}) {
-  final now = DateTime.now();
-  return showModalBottomSheet(
-    context: context,
-    isScrollControlled: true,
-    useSafeArea: true,
-    backgroundColor: Colors.transparent,
-    builder: (modalContext) => BackdropFilter(
-      filter: ImageFilter.blur(sigmaX: 8, sigmaY: 8),
-      child: OwnerBookingSheet(
-        isEdit: isEdit,
-        slot: slot,
-        selectedStadium: selectedStadium,
-        baseDate: baseDate ?? now,
-        selectedDayIndex: selectedDayIndex ?? 0,
-        parentContext: parentContext,
-      ),
-    ),
-  );
-}
+export 'booking_sheet/owner_booking_modal.dart';
+
 
 /// Dedicated bottom sheet modal allowing owners to manually create, inspect,
 /// extend, cash-confirm, or update pitch bookings.
@@ -264,28 +239,17 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
           collectedAmount: collectedAmount,
         );
 
-        final draft = BookingDraft(
-          stadiumId: stadium.id,
-          stadiumName: stadium.name,
-          stadiumImageUrl: stadium.imageUrl,
-          ownerId: stadium.ownerId.isNotEmpty ? stadium.ownerId : uid,
+        final draft = OwnerBookingSheetService.buildManualBookingDraft(
+          stadium: stadium,
+          uid: uid,
           startTime: startTime,
           endTime: endTime,
-          bookingType: BookingType.personal,
-          playerTeamName: customerName,
-          playerPhone: customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : '',
+          customerName: customerName,
+          customerPhone: customerPhone,
           notes: notes,
-          isPrivate: true,
-          rentBall: false,
           totalPrice: totalPrice,
-          currentPlayers: _playerCount,
-          isPaid: collectedAmount >= totalPrice,
-          depositPaid: collectedAmount,
-          isDepositPaid: collectedAmount > 0,
-          paymentStatus: collectedAmount >= totalPrice ? 'paid' : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
-          paymentMethod: 'cash',
-          paymentTransactionId: 'MANUAL_${DateTime.now().millisecondsSinceEpoch}',
-          needsDeposit: false,
+          collectedAmount: collectedAmount,
+          playerCount: _playerCount,
         );
 
         bool rpcSuccess = false;
@@ -352,22 +316,16 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
               ? (calculatedPrice > 0 ? calculatedPrice : booking.totalPrice)
               : (calculatedPrice > booking.totalPrice ? calculatedPrice : booking.totalPrice);
 
-          final updateMap = <String, dynamic>{
-            'end_time': endTime.toUtc().toIso8601String(),
-            'player_team_name': customerName,
-            'player_phone': customerPhone.isNotEmpty ? PhoneUtils.normalize(customerPhone) : null,
-            'notes': notes,
-            'current_players': _playerCount,
-            'deposit_paid': collectedAmount,
-            'is_deposit_paid': collectedAmount > 0,
-            'is_paid': collectedAmount >= finalTotal,
-            'payment_status': collectedAmount >= finalTotal ? 'paid' : (collectedAmount > 0 ? 'partially_paid' : 'pending'),
-            'updated_at': DateTime.now().toUtc().toIso8601String(),
-          };
-
-          if (finalTotal != booking.totalPrice) {
-            updateMap['total_price'] = finalTotal;
-          }
+          final updateMap = OwnerBookingSheetService.buildBookingUpdateMap(
+            endTime: endTime,
+            customerName: customerName,
+            customerPhone: customerPhone,
+            notes: notes,
+            playerCount: _playerCount,
+            collectedAmount: collectedAmount,
+            finalTotal: finalTotal,
+            originalTotal: booking.totalPrice,
+          );
 
           await OwnerRepository().updateBookingDetails(booking.id, updateMap);
           await bookingProvider.loadOwnerBookings(uid);
@@ -402,20 +360,12 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
   Future<void> _handleCancelBooking(Booking booking, AppLocalizations l10n, bool isArabic) async {
     final parentCtx = widget.parentContext;
     final nav = Navigator.of(context);
-    final confirm = await showDialog<bool>(
+    final confirm = await BookingSheetCancelDialog.show(
       context: context,
-      builder: (ctx) => AlertDialog(
-        backgroundColor: VSPColors.surface,
-        title: Text(l10n.cancelBooking),
-        content: Text(l10n.cancelBookingConfirm),
-        actions: [
-          TextButton(onPressed: () => Navigator.pop(ctx, false), child: Text(l10n.cancelBtn)),
-          TextButton(
-            onPressed: () => Navigator.pop(ctx, true),
-            child: Text(l10n.confirmBtn, style: const TextStyle(color: VSPColors.error)),
-          ),
-        ],
-      ),
+      title: l10n.cancelBooking,
+      content: l10n.cancelBookingConfirm,
+      cancelBtn: l10n.cancelBtn,
+      confirmBtn: l10n.confirmBtn,
     );
 
     if (confirm == true && mounted) {
@@ -473,6 +423,10 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
     final double keyboardPadding = MediaQuery.of(context).viewInsets.bottom;
     final int maxMins = _getMaxAvailableMinutes();
 
+    final formattedSlotTime = widget.isEdit && booking != null
+        ? '${DateFormat('hh:mm a').format(booking.startTime.toLocal())} - ${DateFormat('EEEE').format(booking.startTime.toLocal())}'
+        : '${DateFormat('hh:mm a').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)).add(Duration(hours: widget.slot['hour'] as int, minutes: widget.slot['minute'] as int)))} - ${DateFormat('EEEE').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)))}';
+
     return Container(
       constraints: BoxConstraints(
         maxHeight: MediaQuery.of(context).size.height * 0.88,
@@ -494,35 +448,11 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
         crossAxisAlignment: CrossAxisAlignment.start,
         mainAxisSize: MainAxisSize.min,
         children: [
-          Center(
-            child: Container(
-              width: 40,
-              height: 4,
-              decoration: BoxDecoration(
-                color: VSPColors.textSecondary.withValues(alpha: 0.3),
-                borderRadius: BorderRadius.circular(2),
-              ),
-            ),
-          ),
-          const SizedBox(height: 16),
-          Row(
-            mainAxisAlignment: MainAxisAlignment.spaceBetween,
-            children: [
-              Expanded(
-                child: Text(
-                  modalTitle,
-                  style: Theme.of(context).textTheme.displaySmall,
-                  overflow: TextOverflow.ellipsis,
-                ),
-              ),
-              if ((isOwnerManual && !isPastCompleted) || isUpcomingPendingCash)
-                IconButton(
-                  icon: const Icon(Iconsax.trash_copy, color: VSPColors.error),
-                  onPressed: _isDeleting
-                      ? null
-                      : () => _handleCancelBooking(booking, l10n, isArabic),
-                ),
-            ],
+          BookingSheetHeader(
+            title: modalTitle,
+            showDeleteButton: (isOwnerManual && !isPastCompleted) || isUpcomingPendingCash,
+            isDeleting: _isDeleting,
+            onDelete: () => _handleCancelBooking(booking!, l10n, isArabic),
           ),
           const SizedBox(height: 16),
           Expanded(
@@ -541,28 +471,7 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                       onExtendMatch: () => _handleExtendOngoingMatch(booking, isArabic),
                     ),
                   InputLabel(l10n.timeAndStadium),
-                  Container(
-                    padding: const EdgeInsets.all(12),
-                    decoration: BoxDecoration(
-                      color: VSPColors.surfaceAlt,
-                      borderRadius: BorderRadius.circular(VSPRadius.md),
-                      border: Border.all(color: VSPColors.divider, width: 0.5),
-                    ),
-                    child: Row(
-                      children: [
-                        const Icon(Iconsax.clock_copy, color: VSPColors.accent, size: 18),
-                        const SizedBox(width: 10),
-                        Expanded(
-                          child: Text(
-                            widget.isEdit && booking != null
-                                ? '${DateFormat('hh:mm a').format(booking.startTime.toLocal())} - ${DateFormat('EEEE').format(booking.startTime.toLocal())}'
-                                : '${DateFormat('hh:mm a').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)).add(Duration(hours: widget.slot['hour'] as int, minutes: widget.slot['minute'] as int)))} - ${DateFormat('EEEE').format(widget.baseDate.add(Duration(days: widget.selectedDayIndex)))}',
-                            style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
-                          ),
-                        ),
-                      ],
-                    ),
-                  ),
+                  BookingSheetTimeStadiumCard(formattedTime: formattedSlotTime),
                   const SizedBox(height: 14),
                   InputLabel(isArabic ? "مدة الحجز" : "Booking Duration"),
                   BookingSheetDurationSelector(
@@ -581,38 +490,15 @@ class _OwnerBookingSheetState extends State<OwnerBookingSheet> {
                     onDecrement: () => setState(() => _playerCount--),
                   ),
                   const SizedBox(height: 14),
-                  InputLabel(l10n.customerName),
-                  PillTextField(
-                    controller: _nameController,
-                    hint: isArabic ? 'اسم الفريق / اللاعب' : 'Customer / Team Name',
-                    keyboardType: TextInputType.name,
-                    enabled: !isReadOnly,
-                  ),
-                  const SizedBox(height: 14),
-                  InputLabel(isArabic ? "رقم الهاتف" : "Phone Number"),
-                  PillTextField(
-                    controller: _phoneController,
-                    hint: isArabic ? "رقم الهاتف (اختياري)" : "Phone Number (Optional)",
-                    keyboardType: TextInputType.phone,
-                    inputFormatters: [FilteringTextInputFormatter.digitsOnly],
-                    enabled: !isReadOnly,
-                  ),
-                  const SizedBox(height: 14),
-                  InputLabel(l10n.internalNotes),
-                  PillTextField(
-                    controller: _noteController,
-                    hint: isArabic ? 'أدخل أي ملاحظات إضافية عن الحجز...' : 'Enter internal notes...',
-                    keyboardType: TextInputType.text,
-                    enabled: !isReadOnly,
-                  ),
-                  const SizedBox(height: 14),
-                  InputLabel(isArabic ? "المبلغ المحصل (ج.م)" : "Collected Amount (EGP)"),
-                  PillTextField(
-                    controller: _collectedAmountController,
-                    hint: isArabic ? "أدخل المبلغ المحصل (0 للإيجار غير المدفوع)" : "Enter amount (0 for unpaid)",
-                    keyboardType: const TextInputType.numberWithOptions(decimal: true),
-                    inputFormatters: [FilteringTextInputFormatter.allow(RegExp(r'^\d+\.?\d*'))],
-                    enabled: !isReadOnly,
+                  BookingSheetDetailsForm(
+                    nameController: _nameController,
+                    phoneController: _phoneController,
+                    noteController: _noteController,
+                    collectedAmountController: _collectedAmountController,
+                    isReadOnly: isReadOnly,
+                    isArabic: isArabic,
+                    customerNameLabel: l10n.customerName,
+                    internalNotesLabel: l10n.internalNotes,
                   ),
                   const SizedBox(height: 16),
                 ],
