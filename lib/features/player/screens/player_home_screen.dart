@@ -1045,10 +1045,7 @@ class _HomeContent extends StatelessWidget {
  child: Column(
  mainAxisSize: MainAxisSize.min,
  children: [
- const Opacity(
- opacity: 0.3,
- child: Icon(Iconsax.location_copy, color: VSPColors.accent, size: 64),
- ),
+ Icon(Iconsax.location_copy, color: VSPColors.accent.withValues(alpha: 0.3), size: 64),
  const SizedBox(height: 16),
  Text(
  isAr ? 'لم نصل إلى $cityName بعد! ' : 'We haven\'t reached $cityName yet! ',

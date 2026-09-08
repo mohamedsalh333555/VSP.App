@@ -12,8 +12,21 @@ import '../../../core/utils/vsp_feedback.dart';
 import 'owner_account_management_screen.dart';
 
 /// شاشة السجل المالي والتسويات للمالك (Monochrome + Emerald Clean Ledger)
-class OwnerLedgerScreen extends StatelessWidget {
+class OwnerLedgerScreen extends StatefulWidget {
   const OwnerLedgerScreen({super.key});
+
+  @override
+  State<OwnerLedgerScreen> createState() => _OwnerLedgerScreenState();
+}
+
+class _OwnerLedgerScreenState extends State<OwnerLedgerScreen> {
+  late final Stream<List<Map<String, dynamic>>> _transactionsStream;
+
+  @override
+  void initState() {
+    super.initState();
+    _transactionsStream = OwnerRepository().getTransactionsStream();
+  }
 
   Future<void> _exportLedgerCsv(BuildContext context, bool isAr) async {
     HapticFeedback.lightImpact();
@@ -274,7 +287,7 @@ class OwnerLedgerScreen extends StatelessWidget {
         centerTitle: true,
       ),
       body: StreamBuilder<List<Map<String, dynamic>>>(
-        stream: OwnerRepository().getTransactionsStream(),
+        stream: _transactionsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

@@ -86,6 +86,15 @@ void main() async {
   // Global Crash Boundary & Logging Handlers
   FlutterError.onError = (FlutterErrorDetails details) {
     FlutterError.presentError(details);
+    final isFontError = details.exception.toString().contains('loadFont') ||
+        details.exception.toString().contains('GoogleFonts');
+    if (isFontError) {
+      VSPLogger.w('Font loader non-fatal notice: ${details.exception}');
+      try {
+        FirebaseCrashlytics.instance.recordFlutterError(details, fatal: false);
+      } catch (_) {}
+      return;
+    }
     VSPLogger.e('Uncaught Flutter Error: ${details.exception}', details.exception, details.stack);
     try {
       FirebaseCrashlytics.instance.recordFlutterFatalError(details);

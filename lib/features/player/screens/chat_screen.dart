@@ -30,6 +30,17 @@ class ChatScreen extends StatefulWidget {
 class _ChatScreenState extends State<ChatScreen> {
  final TextEditingController _messageController = TextEditingController();
  final ScrollController _scrollController = ScrollController();
+ Stream<List<ChatMessage>>? _messagesStream;
+ String? _lastUserId;
+
+ Stream<List<ChatMessage>> _getMessagesStream(String currentUserId) {
+   if (_messagesStream != null && _lastUserId == currentUserId) {
+     return _messagesStream!;
+   }
+   _lastUserId = currentUserId;
+   _messagesStream = ChatRepository().getChatMessages(widget.booking.id, currentUserId: currentUserId);
+   return _messagesStream!;
+ }
 
  @override
  void initState() {
@@ -406,7 +417,7 @@ class _ChatScreenState extends State<ChatScreen> {
  children: [
  Expanded(
  child: StreamBuilder<List<ChatMessage>>(
- stream: ChatRepository().getChatMessages(widget.booking.id, currentUserId: currentUserId),
+ stream: _getMessagesStream(currentUserId),
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting) {
  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

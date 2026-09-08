@@ -38,6 +38,20 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
  bool _isDeleting = false;
  bool _isLocating = false;
 
+ Stream<List<Stadium>>? _ownerStadiumsStream;
+ String? _lastStadiumsUid;
+
+ Stream<List<Stadium>> _getOwnerStadiumsStream(String uid) {
+   if (_ownerStadiumsStream != null && _lastStadiumsUid == uid) {
+     return _ownerStadiumsStream!;
+   }
+   _lastStadiumsUid = uid;
+   _ownerStadiumsStream = uid.isNotEmpty
+       ? StadiumRepository().getOwnerStadiums(uid)
+       : Stream.value([]);
+   return _ownerStadiumsStream!;
+ }
+
  @override
  void initState() {
  super.initState();
@@ -160,9 +174,7 @@ class _OwnerAccountManagementScreenState extends State<OwnerAccountManagementScr
  return SizedBox(
  height: 215,
  child: StreamBuilder<List<Stadium>>(
- stream: currentUid.isNotEmpty
- ? StadiumRepository().getOwnerStadiums(currentUid)
- : Stream.value([]),
+ stream: _getOwnerStadiumsStream(currentUid),
  builder: (context, snapshot) {
  final stadiums = snapshot.data ?? [];
  return ListView.builder(

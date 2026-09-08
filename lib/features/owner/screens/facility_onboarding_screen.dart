@@ -22,6 +22,18 @@ class FacilityOnboardingScreen extends StatefulWidget {
 }
 
 class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
+  Stream<List<Stadium>>? _stadiumsStream;
+  String? _cachedUid;
+
+  Stream<List<Stadium>> _getStadiumsStream(String uid) {
+    if (_stadiumsStream != null && _cachedUid == uid) {
+      return _stadiumsStream!;
+    }
+    _cachedUid = uid;
+    _stadiumsStream = StadiumRepository().getOwnerStadiums(uid);
+    return _stadiumsStream!;
+  }
+
  /// يتحقق من الباقة ويفتح Wizard أو يعرض Bottom Sheet الترقية
  Future<void> _onAddAnotherStadium(
  BuildContext context,
@@ -74,9 +86,9 @@ class _FacilityOnboardingScreenState extends State<FacilityOnboardingScreen> {
  return Scaffold(
  backgroundColor: VSPColors.background,
  body: SafeArea(
- child: StreamBuilder<List<Stadium>>(
- stream: StadiumRepository().getOwnerStadiums(uid),
- builder: (context, snapshot) {
+        child: StreamBuilder<List<Stadium>>(
+          stream: _getStadiumsStream(uid),
+          builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting && !snapshot.hasData) {
  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
  }

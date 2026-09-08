@@ -21,6 +21,17 @@ class MyStadiumsScreen extends StatefulWidget {
 
 class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
   final StadiumRepository _databaseService = StadiumRepository();
+  Stream<List<Stadium>>? _stadiumsStream;
+  String? _lastOwnerId;
+
+  Stream<List<Stadium>> _getStadiumsStream(String ownerId) {
+    if (_stadiumsStream != null && _lastOwnerId == ownerId) {
+      return _stadiumsStream!;
+    }
+    _lastOwnerId = ownerId;
+    _stadiumsStream = _databaseService.getOwnerStadiums(ownerId);
+    return _stadiumsStream!;
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -47,7 +58,7 @@ class _MyStadiumsScreenState extends State<MyStadiumsScreen> {
               child: ownerId == null
                   ? _buildEmptyState()
                   : StreamBuilder<List<Stadium>>(
-                      stream: _databaseService.getOwnerStadiums(ownerId),
+                      stream: _getStadiumsStream(ownerId),
                       builder: (context, snapshot) {
                         if (snapshot.connectionState == ConnectionState.waiting) {
                           return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

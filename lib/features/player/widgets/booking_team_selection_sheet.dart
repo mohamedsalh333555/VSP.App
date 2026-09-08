@@ -279,9 +279,7 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
   }) {
     final isSelected = _selectedOption == id;
 
-    return Opacity(
-      opacity: enabled ? 1.0 : 0.5,
-      child: InkWell(
+    final card = InkWell(
         onTap: !enabled ? () {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(AppLocalizations.of(context)!.createTeamFirstError)),
@@ -374,7 +372,10 @@ class _BookingTeamSelectionSheetState extends State<BookingTeamSelectionSheet> {
             ],
           ),
         ),
-      ),
-    );
+      );
+    if (!enabled) {
+      return Opacity(opacity: 0.5, child: card);
+    }
+    return card;
   }
 }

@@ -1,6 +1,7 @@
 import 'package:vsp_application/l10n/app_localizations.dart';
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import '../../../core/ui/tokens/vsp_tokens.dart';
 import '../../../shared/widgets/primary_button.dart';
@@ -29,16 +30,20 @@ class ChampionshipDetailsScreen extends StatefulWidget {
 }
 
 class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> with SingleTickerProviderStateMixin {
- late TabController _tabController;
- bool _isJoining = false;
- Team? _myTeam;
+  late TabController _tabController;
+  bool _isJoining = false;
+  Team? _myTeam;
+  late final Stream<Championship?> _singleChampionshipStream;
+  late final Stream<List<TournamentMatch>> _matchesStream;
 
- @override
- void initState() {
- super.initState();
- _tabController = TabController(length: 3, vsync: this);
- _checkUserTeamState();
- }
+  @override
+  void initState() {
+    super.initState();
+    _tabController = TabController(length: 3, vsync: this);
+    _singleChampionshipStream = TournamentRepository().getSingleChampionshipStream(widget.championship.id);
+    _matchesStream = TournamentRepository().getTournamentMatches(widget.championship.id);
+    _checkUserTeamState();
+  }
 
  Future<void> _checkUserTeamState() async {
  try {
@@ -341,7 +346,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
 
     return StreamBuilder<Championship?>(
-      stream: TournamentRepository().getSingleChampionshipStream(widget.championship.id),
+      stream: _singleChampionshipStream,
       initialData: widget.championship,
       builder: (context, snapshot) {
         final championship = snapshot.data ?? widget.championship;
@@ -427,10 +432,12 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
                                   border: Border.all(color: VSPColors.accent, width: 1.5),
                                 ),
                                 child: ClipOval(
-                                  child: Image.network(
-                                    championship.logoUrl,
+                                  child: CachedNetworkImage(
+                                    imageUrl: championship.logoUrl,
+                                    memCacheWidth: 150,
+                                    memCacheHeight: 150,
                                     fit: BoxFit.cover,
-                                    errorBuilder: (_, __, ___) => const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
+                                    errorWidget: (_, __, ___) => const VSPIconBadge(icon: Iconsax.cup_copy, color: VSPColors.accent, size: 50, iconSize: 24, hasBorder: true),
                                   ),
                                 ),
                               )
@@ -919,7 +926,7 @@ class _ChampionshipDetailsScreenState extends State<ChampionshipDetailsScreen> w
 
  // Live Match Fixtures Stream
  StreamBuilder<List<TournamentMatch>>(
- stream: TournamentRepository().getTournamentMatches(widget.championship.id),
+ stream: _matchesStream,
  builder: (context, snapshot) {
  if (!snapshot.hasData || snapshot.data!.isEmpty) {
  return Container(

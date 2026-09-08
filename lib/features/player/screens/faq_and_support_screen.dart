@@ -40,8 +40,7 @@ class _FAQAndSupportScreenState extends State<FAQAndSupportScreen> {
   @override
   Widget build(BuildContext context) {
     final isArabic = Localizations.localeOf(context).languageCode == 'ar';
-    final auth = Provider.of<AuthProvider>(context);
-    final isOwner = auth.isOwner;
+    final isOwner = context.select<AuthProvider, bool>((a) => a.isOwner);
 
     return Scaffold(
       backgroundColor: VSPColors.background,

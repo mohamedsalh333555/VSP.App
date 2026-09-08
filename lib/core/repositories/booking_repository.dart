@@ -299,15 +299,9 @@ class SupabaseBookingRepository implements BookingRepository {
 
  Future<List<Booking>> fetchOwnerBookingsDirectly(String ownerId, {List<String>? stadiumIds}) async {
  try {
- var query = _supabase.from('bookings').select();
- 
- if (stadiumIds != null && stadiumIds.isNotEmpty) {
- query = query.inFilter('stadium_id', stadiumIds);
- } else {
- query = query.eq('owner_id', ownerId);
- }
-
-    final response = await query.order('start_time', ascending: false).limit(100);
+ final response = await (stadiumIds != null && stadiumIds.isNotEmpty
+          ? _supabase.from('bookings').select().inFilter('stadium_id', stadiumIds).order('start_time', ascending: false).limit(100)
+          : _supabase.from('bookings').select().eq('owner_id', ownerId).order('start_time', ascending: false).limit(100));
  final bookings = (response as List)
  .map((data) => Booking.fromFirestore(data as Map<String, dynamic>, data['id'].toString()))
  .toList();

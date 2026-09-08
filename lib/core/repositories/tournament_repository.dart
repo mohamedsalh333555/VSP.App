@@ -25,28 +25,24 @@ class TournamentRepository {
  bool isOwner = false,
  String? ownerId,
  }) async* {
- // 1. Emit immediate results via REST API query with DB-level filtering
- try {
- dynamic query = _supabase.from('championships').select();
- if (isOwner && ownerId != null) {
- query = query.eq('owner_id', ownerId);
- } else if (!isOwner) {
- query = query.eq('is_approved', true);
- }
- if (sportType != null && sportType.isNotEmpty) {
- query = query.eq('sport_type', sportType);
- }
- if (governorate != null &&
-     governorate.isNotEmpty &&
-     governorate != 'All' &&
-     governorate != 'الكل') {
-   final stdGov = EgyptGovernorates.resolveGoogleName(governorate);
-   if (stdGov != null) {
-     query = query.eq('governorate', stdGov);
-   }
- }
- 
- final List<dynamic> response = await query;
+    // 1. Emit immediate results via REST API query with DB-level filtering
+    try {
+      final List<dynamic> response;
+      if (isOwner && ownerId != null) {
+        response = await _supabase
+            .from('championships')
+            .select()
+            .eq('owner_id', ownerId)
+            .order('created_at', ascending: false)
+            .limit(50);
+      } else {
+        response = await _supabase
+            .from('championships')
+            .select()
+            .eq('is_approved', true)
+            .order('created_at', ascending: false)
+            .limit(50);
+      }
  final items = _parseChampionshipsList(
  response,
  governorate: governorate,
@@ -1360,7 +1356,7 @@ class TournamentRepository {
  try {
  final uids = await TeamRepository().getTeamMemberUids(teamId);
  if (uids.isNotEmpty) {
- final userRows = await _supabase.from('users').select('name').inFilter('id', uids);
+ final userRows = await _supabase.from('users').select('name').inFilter('id', uids).limit(uids.length);
  for (var u in userRows) {
  final uName = u['name']?.toString().trim();
  if (uName != null && uName.isNotEmpty) {

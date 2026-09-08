@@ -21,7 +21,6 @@ import '../../../core/utils/app_date_formatter.dart';
 import 'package:cached_network_image/cached_network_image.dart';
 import '../../../core/services/image_pick_service.dart';
 import '../../../core/utils/vsp_feedback.dart';
-import 'package:google_fonts/google_fonts.dart';
 import 'package:go_router/go_router.dart';
 import '../../../core/models/user_model.dart';
 
@@ -1416,7 +1415,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         isArabic ? 'جميع الملاعب' : 'All Pitches',
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.tajawal(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
                       ),
                     ),
                     ...stadiums.map((s) => DropdownMenuItem<String>(
@@ -1425,7 +1424,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         s.name,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.tajawal(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
                       ),
                     )),
                   ];
@@ -1436,7 +1435,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     value: 'all',
                     child: Text(
                       isArabic ? 'جميع الملاعب' : 'All Pitches',
-                      style: GoogleFonts.tajawal(
+                      style: TextStyle(
+                        fontFamily: 'Tajawal',
                         color: _selectedStadiumFilter == 'all' ? VSPColors.accent : VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: _selectedStadiumFilter == 'all' ? FontWeight.w800 : FontWeight.w600,
@@ -1447,7 +1447,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     value: s.id,
                     child: Text(
                       s.name,
-                      style: GoogleFonts.tajawal(
+                      style: TextStyle(
+                        fontFamily: 'Tajawal',
                         color: _selectedStadiumFilter == s.id ? VSPColors.accent : VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: _selectedStadiumFilter == s.id ? FontWeight.w800 : FontWeight.w600,
@@ -1492,7 +1493,7 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                         p['label']!,
                         maxLines: 1,
                         overflow: TextOverflow.ellipsis,
-                        style: GoogleFonts.tajawal(color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
+                        style: const TextStyle(fontFamily: 'Tajawal', color: Colors.white, fontSize: 12.5, fontWeight: FontWeight.w700),
                       ),
                     );
                   }).toList();
@@ -1503,7 +1504,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                     value: p['key'],
                     child: Text(
                       p['label']!,
-                      style: GoogleFonts.tajawal(
+                      style: TextStyle(
+                        fontFamily: 'Tajawal',
                         color: isCurrent ? VSPColors.accent : VSPColors.textPrimary,
                         fontSize: 12.5,
                         fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,
@@ -2676,7 +2678,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
   }
 
   Widget _buildTimePeriodDropdown(bool isArabic) {
-    final itemStyle = GoogleFonts.tajawal(
+    const itemStyle = TextStyle(
+      fontFamily: 'Tajawal',
       color: VSPColors.textPrimary,
       fontSize: 12.5,
       fontWeight: FontWeight.w700,
@@ -2711,7 +2714,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
                 alignment: Alignment.centerRight,
                 child: Text(
                   p['label']!,
-                  style: GoogleFonts.tajawal(
+                  style: const TextStyle(
+                    fontFamily: 'Tajawal',
                     color: VSPColors.textPrimary,
                     fontSize: 12.5,
                     fontWeight: FontWeight.w700,
@@ -2726,7 +2730,8 @@ class _OwnerDashboardScreenState extends State<OwnerDashboardScreen> with Single
               value: p['key'],
               child: Text(
                 p['label']!,
-                style: GoogleFonts.tajawal(
+                style: TextStyle(
+                  fontFamily: 'Tajawal',
                   color: isCurrent ? VSPColors.accent : VSPColors.textPrimary,
                   fontSize: 13,
                   fontWeight: isCurrent ? FontWeight.w800 : FontWeight.w600,

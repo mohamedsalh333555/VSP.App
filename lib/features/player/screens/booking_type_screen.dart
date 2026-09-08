@@ -268,100 +268,99 @@ class _BookingTypeScreenState extends State<BookingTypeScreen> {
     final isSelected = _selectedType == id;
     final accentColor = isError ? VSPColors.error : VSPColors.accent;
     
-    return Padding(
-      padding: const EdgeInsets.only(bottom: VSPSpacing.md),
-      child: Opacity(
-        opacity: enabled ? 1.0 : 0.6,
-        child: Container(
-          decoration: BoxDecoration(
-            gradient: LinearGradient(
-              colors: isSelected 
-                  ? [accentColor.withValues(alpha: 0.15), VSPColors.surface] 
-                  : [VSPColors.surfaceAlt, VSPColors.surface], 
-              begin: Alignment.topLeft, 
-              end: Alignment.bottomRight
-            ),
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-            border: Border.all(color: isSelected ? accentColor : Colors.transparent, width: 1.5),
-          ),
-          child: ClipRRect(
-            borderRadius: BorderRadius.circular(VSPRadius.lg),
-            child: Material(
-              color: Colors.transparent,
-              child: InkWell(
-                onTap: () {
-                  if (!enabled) {
-                    if (id == 'Fair Play Banned') {
-                      ScaffoldMessenger.of(context).showSnackBar(
-                        SnackBar(
-                          content: Text(AppLocalizations.of(context)!.fairPlayBannedError), 
-                          backgroundColor: VSPColors.error
-                        )
-                      );
-                    }
-                    return;
-                  }
-                  setState(() { _selectedType = id; });
-                },
-                child: Padding(
-                  padding: const EdgeInsets.all(20.0),
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    crossAxisAlignment: CrossAxisAlignment.start,
+    final card = Container(
+      decoration: BoxDecoration(
+        gradient: LinearGradient(
+          colors: isSelected 
+              ? [accentColor.withValues(alpha: 0.15), VSPColors.surface] 
+              : [VSPColors.surfaceAlt, VSPColors.surface], 
+          begin: Alignment.topLeft, 
+          end: Alignment.bottomRight,
+        ),
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        border: Border.all(color: isSelected ? accentColor : Colors.transparent, width: 1.5),
+      ),
+      child: ClipRRect(
+        borderRadius: BorderRadius.circular(VSPRadius.lg),
+        child: Material(
+          color: Colors.transparent,
+          child: InkWell(
+            onTap: () {
+              if (!enabled) {
+                if (id == 'Fair Play Banned') {
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text(AppLocalizations.of(context)!.fairPlayBannedError), 
+                      backgroundColor: VSPColors.error,
+                    ),
+                  );
+                }
+                return;
+              }
+              setState(() { _selectedType = id; });
+            },
+            child: Padding(
+              padding: const EdgeInsets.all(20.0),
+              child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
                     children: [
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          Expanded(
-                            child: Row(
-                              children: [
-                                if (iconData != null) VSPIconBadge(icon: iconData, color: accentColor, size: 44, iconSize: 24),
-                                const SizedBox(width: 12),
-                                Expanded(
-                                  child: Text(
-                                    title, 
-                                    style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
-                                    maxLines: 2,
-                                    overflow: TextOverflow.ellipsis,
-                                  ),
-                                ),
-                              ],
+                      Expanded(
+                        child: Row(
+                          children: [
+                            if (iconData != null) VSPIconBadge(icon: iconData, color: accentColor, size: 44, iconSize: 24),
+                            const SizedBox(width: 12),
+                            Expanded(
+                              child: Text(
+                                title, 
+                                style: Theme.of(context).textTheme.titleLarge?.copyWith(fontWeight: FontWeight.bold),
+                                maxLines: 2,
+                                overflow: TextOverflow.ellipsis,
+                              ),
                             ),
-                          ),
-                          const SizedBox(width: 12),
-                          Container(
-                            width: 24, height: 24,
-                            decoration: BoxDecoration(
-                              shape: BoxShape.circle, 
-                              border: Border.all(
-                                color: isSelected ? accentColor : VSPColors.textSecondary, 
-                                width: 1.5
-                              )
-                            ),
-                            child: isSelected 
-                                ? Center(
-                                    child: Container(
-                                      width: 12, height: 12, 
-                                      decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle)
-                                    )
-                                  ) 
-                                : null,
-                          ),
-                        ],
+                          ],
+                        ),
                       ),
-                      const SizedBox(height: 12),
-                      Text(
-                        subtitle, 
-                        style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4)
+                      const SizedBox(width: 12),
+                      Container(
+                        width: 24, height: 24,
+                        decoration: BoxDecoration(
+                          shape: BoxShape.circle, 
+                          border: Border.all(
+                            color: isSelected ? accentColor : VSPColors.textSecondary, 
+                            width: 1.5,
+                          ),
+                        ),
+                        child: isSelected 
+                            ? Center(
+                                child: Container(
+                                  width: 12, height: 12, 
+                                  decoration: BoxDecoration(color: accentColor, shape: BoxShape.circle),
+                                ),
+                              ) 
+                            : null,
                       ),
                     ],
                   ),
-                ),
+                  const SizedBox(height: 12),
+                  Text(
+                    subtitle, 
+                    style: const TextStyle(color: Colors.white70, fontSize: 13, height: 1.4),
+                  ),
+                ],
               ),
             ),
           ),
         ),
       ),
+    );
+
+    return Padding(
+      padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+      child: enabled ? card : Opacity(opacity: 0.6, child: card),
     );
   }
 }

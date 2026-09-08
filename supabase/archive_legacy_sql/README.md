@@ -6,10 +6,12 @@
 > تشغيل هذه الملفات قد يلغي التحصينات الأمنية الحديثة وميزات الحساب التلقائي للسيرفر.
 
 ## المصدر الحقيقي الوحيد المعتمد لقاعدة البيانات (Single Source of Truth)
+
 جميع الـ Migrations المعتمدة والمحصنة موجودة في المجلد القياسي لـ Supabase:
 👉 `supabase/migrations/`
 
-### قائمة الملفات المؤرشفة:
+### قائمة الملفات المؤرشفة
+
 1. `VSP_MASTER_SUPABASE_MIGRATION.sql` (تاريخ الأرشفة: 16 أغسطس 2026)
 2. `VSP_SUPABASE_PHASE0_PRODUCTION.sql`
 3. `VSP_DATABASE_WIPE_AND_RESET.sql`

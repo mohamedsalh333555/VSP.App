@@ -26,11 +26,13 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
  bool _isRegistrationOpen = true;
  bool _isLoadingRegistration = true;
  bool _isSubmitting = false;
+ late final Stream<List<VSP1v1Player>> _standingsStream;
  StreamSubscription<int>? _registrationsSubscription;
 
  @override
  void initState() {
  super.initState();
+ _standingsStream = LeagueRepository().get1v1Standings();
  _loadRegistrationData();
  _subscribeToRegistrations();
  }
@@ -250,7 +252,7 @@ class _OfficialLeagueStandingsScreenState extends State<OfficialLeagueStandingsS
  centerTitle: true,
  ),
  body: StreamBuilder<List<VSP1v1Player>>(
- stream: LeagueRepository().get1v1Standings(),
+ stream: _standingsStream,
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting) {
  return const Center(child: CircularProgressIndicator(color: VSPColors.accent));

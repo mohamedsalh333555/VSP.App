@@ -125,56 +125,73 @@ class _TournamentBracketsScreenState extends State<TournamentBracketsScreen> {
  body: TabBarView(
  children: sortedRounds.map((roundIdx) {
  final roundMatches = groupedMatches[roundIdx]!;
- return ListView(
- padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
- children: [
- if (roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null) ...[
- Container(
- padding: const EdgeInsets.all(16),
- margin: const EdgeInsets.only(bottom: 16),
- decoration: BoxDecoration(
- color: VSPColors.accent.withValues(alpha: 0.18),
- borderRadius: BorderRadius.circular(VSPRadius.lg),
- border: Border.all(color: VSPColors.accent, width: 2),
- boxShadow: [
- BoxShadow(color: VSPColors.accent.withValues(alpha: 0.25), blurRadius: 12),
- ],
- ),
- child: Row(
- mainAxisAlignment: MainAxisAlignment.center,
- children: [
- const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
- const SizedBox(width: 12),
- Expanded(
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Text(
- Localizations.localeOf(context).languageCode == 'ar'
- ? 'بطل البطولة النهائي'
- : 'Final Tournament Champion',
- style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
- ),
- const SizedBox(height: 2),
- Text(
- roundMatches.first.winnerId == roundMatches.first.homeTeamId
- ? (roundMatches.first.homeTeamName ?? 'Winner')
- : (roundMatches.first.awayTeamName ?? 'Winner'),
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
- ),
- ],
- ),
- ),
- ],
- ),
- ),
- ],
- if (widget.isOwner) ...[
- _buildAutoScheduleBanner(context, roundIdx, roundMatches, sortedRounds.length),
- const SizedBox(height: 16),
- ],
- ...roundMatches.map((match) => _buildMatchCard(context, match)),
- ],
+ final showChampion = roundIdx == 0 && roundMatches.isNotEmpty && roundMatches.first.winnerId != null;
+ final showOwnerBanner = widget.isOwner;
+ final headerOffset = (showChampion ? 1 : 0) + (showOwnerBanner ? 1 : 0);
+ final totalItems = headerOffset + roundMatches.length;
+
+ return ListView.builder(
+   padding: EdgeInsets.fromLTRB(16, 16, 16, VSPScrollPadding.bottom(context, hasFloatingNavBar: true)),
+   itemCount: totalItems,
+   itemBuilder: (context, index) {
+     var currentIndex = index;
+     if (showChampion) {
+       if (currentIndex == 0) {
+         return Container(
+           padding: const EdgeInsets.all(16),
+           margin: const EdgeInsets.only(bottom: 16),
+           decoration: BoxDecoration(
+             color: VSPColors.accent.withValues(alpha: 0.18),
+             borderRadius: BorderRadius.circular(VSPRadius.lg),
+             border: Border.all(color: VSPColors.accent, width: 2),
+             boxShadow: [
+               BoxShadow(color: VSPColors.accent.withValues(alpha: 0.25), blurRadius: 12),
+             ],
+           ),
+           child: Row(
+             mainAxisAlignment: MainAxisAlignment.center,
+             children: [
+               const Icon(Iconsax.cup_copy, color: VSPColors.accent, size: 28),
+               const SizedBox(width: 12),
+               Expanded(
+                 child: Column(
+                   crossAxisAlignment: CrossAxisAlignment.start,
+                   children: [
+                     Text(
+                       Localizations.localeOf(context).languageCode == 'ar'
+                           ? 'بطل البطولة النهائي'
+                           : 'Final Tournament Champion',
+                       style: const TextStyle(color: VSPColors.accent, fontWeight: FontWeight.bold, fontSize: 13),
+                     ),
+                     const SizedBox(height: 2),
+                     Text(
+                       roundMatches.first.winnerId == roundMatches.first.homeTeamId
+                           ? (roundMatches.first.homeTeamName ?? 'Winner')
+                           : (roundMatches.first.awayTeamName ?? 'Winner'),
+                       style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 18),
+                     ),
+                   ],
+                 ),
+               ),
+             ],
+           ),
+         );
+       }
+       currentIndex--;
+     }
+
+     if (showOwnerBanner) {
+       if (currentIndex == 0) {
+         return Padding(
+           padding: const EdgeInsets.only(bottom: 16),
+           child: _buildAutoScheduleBanner(context, roundIdx, roundMatches, sortedRounds.length),
+         );
+       }
+       currentIndex--;
+     }
+
+     return _buildMatchCard(context, roundMatches[currentIndex]);
+   },
  );
  }).toList(),
  ),

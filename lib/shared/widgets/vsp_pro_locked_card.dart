@@ -40,10 +40,7 @@ class VSPProLockedCard extends StatelessWidget {
  children: [
  // البيانات خلف التغبيش
  IgnorePointer(
- child: Opacity(
- opacity: 0.5,
  child: child,
- ),
  ),
 
  // طبقة التغبيش الزجاجي

@@ -1,5 +1,6 @@
 import 'package:iconsax_flutter/iconsax_flutter.dart';
 import 'package:flutter/material.dart';
+import 'package:cached_network_image/cached_network_image.dart';
 import 'package:provider/provider.dart';
 import 'package:supabase_flutter/supabase_flutter.dart';
 import 'package:intl/intl.dart';
@@ -439,7 +440,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
  leading: CircleAvatar(
  backgroundColor: VSPColors.surfaceAlt,
  backgroundImage: (user.profileImageUrl != null && user.profileImageUrl!.isNotEmpty)
- ? NetworkImage(user.profileImageUrl!)
+ ? CachedNetworkImageProvider(user.profileImageUrl!)
  : null,
  child: (user.profileImageUrl == null || user.profileImageUrl!.isEmpty)
  ? const Icon(Iconsax.user_copy, color: VSPColors.accent)
@@ -469,7 +470,7 @@ class UserSearchDelegate extends SearchDelegate<UserModel?> {
  Future<List<UserModel>> _searchUsers(String query) async {
  try {
  final supabase = Supabase.instance.client;
- var dbQuery = supabase.from('users').select().neq('id', currentUserId);
+ var dbQuery = supabase.from('users').select('id, name, email, role, profile_image_url').neq('id', currentUserId);
 
  if (currentUserRole == 'owner') {
  dbQuery = dbQuery.eq('role', 'player');

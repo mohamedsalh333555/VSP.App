@@ -124,214 +124,229 @@ class _BookingsScreenState extends State<BookingsScreen> {
  final userId = authProvider.currentUser?.uid;
  if (userId != null) {
  Provider.of<BookingProvider>(context, listen: false).loadUserBookings(userId);
- await Future.delayed(const Duration(seconds: 1));
  }
  },
  color: VSPColors.accent,
  backgroundColor: VSPColors.surface,
- child: ListView(
- physics: const AlwaysScrollableScrollPhysics(),
- padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
- children: [
- // ⏱ 1. Pending Booking Auto-Recovery Banner
- if (data.pending.isNotEmpty) ...[
- ...data.pending.map((pendingBooking) {
- return Container(
- margin: const EdgeInsets.only(bottom: VSPSpacing.md),
- padding: const EdgeInsets.all(14),
- decoration: BoxDecoration(
- color: const Color(0xFF18181B),
- borderRadius: BorderRadius.circular(VSPRadius.xl),
- border: Border.all(color: Colors.amber, width: 1.2),
- ),
- child: Column(
- crossAxisAlignment: CrossAxisAlignment.start,
- children: [
- Row(
- children: [
- const Icon(Iconsax.timer_1_copy, color: Colors.amber, size: 20),
- const SizedBox(width: 8),
- Expanded(
- child: Text(
- isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment',
- style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
- ),
- ),
- IconButton(
- constraints: const BoxConstraints(),
- padding: EdgeInsets.zero,
- icon: const Icon(Iconsax.trash_copy, color: Colors.redAccent, size: 18),
- tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
- onPressed: () async {
- final bp = Provider.of<BookingProvider>(context, listen: false);
- await bp.cancelBooking(pendingBooking.id);
- if (context.mounted) {
- final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
- if (auth.currentUser?.uid != null) {
- bp.loadUserBookings(auth.currentUser!.uid);
- }
- }
- },
- ),
- ],
- ),
- const SizedBox(height: 6),
- Text(
- isArabic
- ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
- : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.',
- style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, height: 1.4),
- ),
- const SizedBox(height: 12),
- Row(
- children: [
- Expanded(
- child: ElevatedButton.icon(
- onPressed: () async {
- final bp = Provider.of<BookingProvider>(context, listen: false);
- final updated = await bp.getBookingById(pendingBooking.id);
- if (context.mounted) {
- if (updated != null && (updated.status == BookingStatus.confirmed || updated.isPaid)) {
- ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(
- content: Text(isArabic ? ' تم تأكيد حجزك بنجاح!' : ' Booking Confirmed!'),
- backgroundColor: VSPColors.accent,
- ),
- );
- } else {
- ScaffoldMessenger.of(context).showSnackBar(
- SnackBar(
- content: Text(isArabic ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.' : 'Payment pending. Complete checkout.'),
- backgroundColor: Colors.amber,
- ),
- );
- }
- }
- },
- icon: const Icon(Iconsax.refresh_copy, size: 14, color: Colors.white),
- label: Text(
- isArabic ? 'استعلم ' : 'Check Status ',
- style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
- ),
- style: ElevatedButton.styleFrom(
- backgroundColor: const Color(0xFF27272A),
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
- ),
- ),
- ),
- const SizedBox(width: 8),
- Expanded(
- child: ElevatedButton.icon(
- onPressed: () {
- final draft = BookingDraft(
- stadiumId: pendingBooking.stadiumId,
- stadiumName: pendingBooking.stadiumName,
- stadiumImageUrl: pendingBooking.stadiumImageUrl,
- ownerId: pendingBooking.ownerId,
- startTime: pendingBooking.startTime,
- endTime: pendingBooking.endTime,
- bookingType: pendingBooking.bookingType,
- totalPrice: pendingBooking.totalPrice,
- depositPaid: pendingBooking.depositPaid,
- needsDeposit: pendingBooking.depositPaid > 0,
- isPaid: false,
- isPrivate: pendingBooking.isPrivate,
- rentBall: pendingBooking.rentBall,
- );
- Navigator.push(
- context,
- MaterialPageRoute(
- builder: (ctx) => PaymentGatewayScreen(
- bookingDraft: draft,
- existingBookingId: pendingBooking.id,
- existingBooking: pendingBooking,
- ),
- ),
- );
- },
- icon: const Icon(Iconsax.card_copy, size: 14, color: Colors.black),
- label: Text(
- isArabic ? 'استكمل الدفع ' : 'Resume Checkout ',
- style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.bold),
- ),
- style: ElevatedButton.styleFrom(
- backgroundColor: VSPColors.accent,
- shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
- ),
- ),
- ),
- ],
- ),
- ],
- ),
- );
- }),
- ],
+ child: Builder(builder: (context) {
+    final pendingCount = data.pending.length;
+    final upcomingCount = data.upcoming.length;
+    final historyCount = data.history.length;
+    final hasUpcoming = upcomingCount > 0;
+    final hasHistory = historyCount > 0;
 
- if (data.upcoming.isNotEmpty) ...[
- Text(
- l10n.upcoming,
- style: Theme.of(context).textTheme.titleLarge,
- ),
- const SizedBox(height: VSPSpacing.md),
- ListView.builder(
- shrinkWrap: true,
- physics: const NeverScrollableScrollPhysics(),
- padding: EdgeInsets.zero,
- itemCount: data.upcoming.length,
- itemBuilder: (context, index) {
- final booking = data.upcoming[index];
- return VSPFadeInItem(
- index: index,
- child: Padding(
- padding: const EdgeInsets.only(bottom: VSPSpacing.md),
- child: _BookingCard(
- booking: booking, 
- isHistory: false,
- myTeamId: _myTeamId,
- ),
- ),
- );
- },
- ),
- const SizedBox(height: VSPSpacing.lg),
- ],
+    return ListView.builder(
+      physics: const AlwaysScrollableScrollPhysics(),
+      padding: VSPScrollPadding.forList(context, hasFloatingNavBar: true, top: VSPSpacing.md),
+      itemCount: pendingCount +
+          (hasUpcoming ? 1 + upcomingCount : 0) +
+          (hasHistory ? 1 + historyCount : 0),
+      itemBuilder: (context, index) {
+        var cursor = index;
+        if (cursor < pendingCount) {
+          return _buildPendingBookingCard(context, data.pending[cursor], isArabic);
+        }
+        cursor -= pendingCount;
 
- if (data.history.isNotEmpty) ...[
- Text(
- l10n.history,
- style: Theme.of(context).textTheme.titleLarge,
- ),
- const SizedBox(height: VSPSpacing.md),
- ListView.builder(
- shrinkWrap: true,
- physics: const NeverScrollableScrollPhysics(),
- padding: EdgeInsets.zero,
- itemCount: data.history.length,
- itemBuilder: (context, index) {
- final booking = data.history[index];
- return VSPFadeInItem(
- index: index + data.upcoming.length,
- child: Padding(
- padding: const EdgeInsets.only(bottom: VSPSpacing.md),
- child: _BookingCard(
- booking: booking, 
- isHistory: true,
- myTeamId: _myTeamId,
- ),
- ),
+        if (hasUpcoming) {
+          if (cursor == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+              child: Text(
+                l10n.upcoming,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            );
+          }
+          cursor -= 1;
+
+          if (cursor < upcomingCount) {
+            final booking = data.upcoming[cursor];
+            return VSPFadeInItem(
+              index: cursor,
+              child: Padding(
+                padding: EdgeInsets.only(
+                  bottom: cursor == upcomingCount - 1 && hasHistory ? VSPSpacing.lg : VSPSpacing.md,
+                ),
+                child: _BookingCard(
+                  booking: booking,
+                  isHistory: false,
+                  myTeamId: _myTeamId,
+                ),
+              ),
+            );
+          }
+          cursor -= upcomingCount;
+        }
+
+        if (hasHistory) {
+          if (cursor == 0) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+              child: Text(
+                l10n.history,
+                style: Theme.of(context).textTheme.titleLarge,
+              ),
+            );
+          }
+          cursor -= 1;
+
+          final booking = data.history[cursor];
+          return VSPFadeInItem(
+            index: cursor + upcomingCount,
+            child: Padding(
+              padding: const EdgeInsets.only(bottom: VSPSpacing.md),
+              child: _BookingCard(
+                booking: booking,
+                isHistory: true,
+                myTeamId: _myTeamId,
+              ),
+            ),
+          );
+        }
+
+        return const SizedBox.shrink();
+      },
+    );
+  }),
  );
  },
  ),
- ],
- ],
  ),
  );
- },
- ),
- ),
- );
- }
+  }
+
+  Widget _buildPendingBookingCard(BuildContext context, dynamic pendingBooking, bool isArabic) {
+    return Container(
+      margin: const EdgeInsets.only(bottom: VSPSpacing.md),
+      padding: const EdgeInsets.all(14),
+      decoration: BoxDecoration(
+        color: const Color(0xFF18181B),
+        borderRadius: BorderRadius.circular(VSPRadius.xl),
+        border: Border.all(color: Colors.amber, width: 1.2),
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Row(
+            children: [
+              const Icon(Iconsax.timer_1_copy, color: Colors.amber, size: 20),
+              const SizedBox(width: 8),
+              Expanded(
+                child: Text(
+                  isArabic ? 'لديك حجز معلق في انتظار السداد' : 'Pending Booking Awaiting Payment',
+                  style: const TextStyle(color: Colors.white, fontWeight: FontWeight.bold, fontSize: 14),
+                ),
+              ),
+              IconButton(
+                constraints: const BoxConstraints(),
+                padding: EdgeInsets.zero,
+                icon: const Icon(Iconsax.trash_copy, color: Colors.redAccent, size: 18),
+                tooltip: isArabic ? 'إلغاء الحجز المعلق' : 'Cancel Pending Booking',
+                onPressed: () async {
+                  final bp = Provider.of<BookingProvider>(context, listen: false);
+                  await bp.cancelBooking(pendingBooking.id);
+                  if (context.mounted) {
+                    final auth = Provider.of<app_auth.AuthProvider>(context, listen: false);
+                    if (auth.currentUser?.uid != null) {
+                      bp.loadUserBookings(auth.currentUser!.uid);
+                    }
+                  }
+                },
+              ),
+            ],
+          ),
+          const SizedBox(height: 6),
+          Text(
+            isArabic
+                ? 'الحجز لملعب "${pendingBooking.stadiumName}" مثبت لك مؤقتاً. يمكنك الاستعلام عن الدفع أو استكماله الآن.'
+                : 'Booking held for "${pendingBooking.stadiumName}". Verify status or complete checkout now.',
+            style: const TextStyle(color: Color(0xFFA1A1AA), fontSize: 12, height: 1.4),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () async {
+                    final bp = Provider.of<BookingProvider>(context, listen: false);
+                    final updated = await bp.getBookingById(pendingBooking.id);
+                    if (context.mounted) {
+                      if (updated != null && (updated.status == BookingStatus.confirmed || updated.isPaid)) {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic ? ' تم تأكيد حجزك بنجاح!' : ' Booking Confirmed!'),
+                            backgroundColor: VSPColors.accent,
+                          ),
+                        );
+                      } else {
+                        ScaffoldMessenger.of(context).showSnackBar(
+                          SnackBar(
+                            content: Text(isArabic ? 'لم يتم تأكيد السداد بعد، يرجى استكمال عملية التثبيت.' : 'Payment pending. Complete checkout.'),
+                            backgroundColor: Colors.amber,
+                          ),
+                        );
+                      }
+                    }
+                  },
+                  icon: const Icon(Iconsax.refresh_copy, size: 14, color: Colors.white),
+                  label: Text(
+                    isArabic ? 'استعلم ' : 'Check Status ',
+                    style: const TextStyle(color: Colors.white, fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: const Color(0xFF27272A),
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+              const SizedBox(width: 8),
+              Expanded(
+                child: ElevatedButton.icon(
+                  onPressed: () {
+                    final draft = BookingDraft(
+                      stadiumId: pendingBooking.stadiumId,
+                      stadiumName: pendingBooking.stadiumName,
+                      stadiumImageUrl: pendingBooking.stadiumImageUrl,
+                      ownerId: pendingBooking.ownerId,
+                      startTime: pendingBooking.startTime,
+                      endTime: pendingBooking.endTime,
+                      bookingType: pendingBooking.bookingType,
+                      totalPrice: pendingBooking.totalPrice,
+                      depositPaid: pendingBooking.depositPaid,
+                      needsDeposit: pendingBooking.depositPaid > 0,
+                      isPaid: false,
+                      isPrivate: pendingBooking.isPrivate,
+                      rentBall: pendingBooking.rentBall,
+                    );
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (ctx) => PaymentGatewayScreen(
+                          bookingDraft: draft,
+                          existingBookingId: pendingBooking.id,
+                          existingBooking: pendingBooking,
+                        ),
+                      ),
+                    );
+                  },
+                  icon: const Icon(Iconsax.card_copy, size: 14, color: Colors.black),
+                  label: Text(
+                    isArabic ? 'استكمل الدفع ' : 'Resume Checkout ',
+                    style: const TextStyle(color: Colors.black, fontSize: 11.5, fontWeight: FontWeight.bold),
+                  ),
+                  style: ElevatedButton.styleFrom(
+                    backgroundColor: VSPColors.accent,
+                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
 
   Widget _buildEmptyState() {
     final l10n = AppLocalizations.of(context)!;

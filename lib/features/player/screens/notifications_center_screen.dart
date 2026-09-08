@@ -12,13 +12,26 @@ import '../../../core/repositories/notification_repository.dart';
 import 'package:intl/intl.dart';
 import 'package:provider/provider.dart';
 
-class NotificationsCenterScreen extends StatelessWidget {
+class NotificationsCenterScreen extends StatefulWidget {
   const NotificationsCenterScreen({super.key});
 
   @override
-  Widget build(BuildContext context) {
-    final userId = context.read<AuthProvider>().currentUser?.uid ?? '';
+  State<NotificationsCenterScreen> createState() => _NotificationsCenterScreenState();
+}
 
+class _NotificationsCenterScreenState extends State<NotificationsCenterScreen> {
+  late final Stream<List<AppNotification>> _notificationsStream;
+  late final String _userId;
+
+  @override
+  void initState() {
+    super.initState();
+    _userId = context.read<AuthProvider>().currentUser?.uid ?? '';
+    _notificationsStream = NotificationRepository().getUserNotifications(_userId);
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: VSPColors.background,
       appBar: AppBar(
@@ -32,14 +45,14 @@ class NotificationsCenterScreen extends StatelessWidget {
         ),
         actions: [
           TextButton(
-            onPressed: () => NotificationRepository().markAllAsRead(userId),
+            onPressed: () => NotificationRepository().markAllAsRead(_userId),
             child: Text(AppLocalizations.of(context)!.markAll, style: const TextStyle(color: VSPColors.accent, fontSize: 13)),
           ),
           const SizedBox(width: 8),
         ],
       ),
       body: StreamBuilder<List<AppNotification>>(
-        stream: NotificationRepository().getUserNotifications(userId),
+        stream: _notificationsStream,
         builder: (context, snapshot) {
           if (snapshot.connectionState == ConnectionState.waiting) {
             return const Center(child: CircularProgressIndicator(color: VSPColors.accent));
@@ -80,9 +93,9 @@ class NotificationsCenterScreen extends StatelessWidget {
                     child: const Icon(Iconsax.trash_copy, color: VSPColors.error, size: 24),
                   ),
                   onDismissed: (_) {
-                    NotificationRepository().deleteNotification(userId, notification.id);
+                    NotificationRepository().deleteNotification(_userId, notification.id);
                   },
-                  child: _NotificationCard(notification: notification, userId: userId),
+                  child: _NotificationCard(notification: notification, userId: _userId),
                 ),
               );
             },

@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:google_fonts/google_fonts.dart';
 import '../tokens/vsp_tokens.dart';
 
 class VSPPrimaryButton extends StatelessWidget {
@@ -26,8 +25,8 @@ class VSPPrimaryButton extends StatelessWidget {
   Widget build(BuildContext context) {
     final double h = height ?? 56;
     final bool hasCustomColor = color != null;
-    final fontName = GoogleFonts.poppins().fontFamily;
-    final tajawalFamily = GoogleFonts.tajawal().fontFamily;
+    const fontName = 'Poppins';
+    const fallbackFonts = ['Tajawal', 'sans-serif'];
     
     return Container(
       height: h,
@@ -77,7 +76,7 @@ class VSPPrimaryButton extends StatelessWidget {
                   fontSize: 16,
                   fontWeight: FontWeight.bold,
                   fontFamily: fontName,
-                  fontFamilyFallback: [tajawalFamily ?? 'Tajawal', 'sans-serif'],
+                  fontFamilyFallback: fallbackFonts,
                   color: textColor ?? Colors.black,
                 ),
               ),

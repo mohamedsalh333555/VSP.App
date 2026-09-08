@@ -322,15 +322,13 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 					VSPFadeInItem(
 						index: 7,
 						child: Center(
-							child: Opacity(
-								opacity: 0.75,
-								child: RichText(
-									textAlign: TextAlign.center,
-									text: TextSpan(
-										style: Theme.of(context).textTheme.bodySmall?.copyWith(
-												color: VSPColors.textSecondary,
-												height: 1.5,
-											),
+							child: RichText(
+								textAlign: TextAlign.center,
+								text: TextSpan(
+									style: Theme.of(context).textTheme.bodySmall?.copyWith(
+											color: VSPColors.textSecondary.withValues(alpha: 0.75),
+											height: 1.5,
+										),
 										children: [
 											TextSpan(text: AppLocalizations.of(context)!.byUsingVsp),
 											TextSpan(
@@ -357,7 +355,6 @@ class _CreateAccountScreenState extends State<CreateAccountScreen> {
 								),
 							),
 						),
-					),
 					const SizedBox(height: 40),
  ],
  ),

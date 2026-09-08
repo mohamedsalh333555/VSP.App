@@ -25,12 +25,13 @@ class TeamDashboardScreen extends StatefulWidget {
 class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
   Team? _userTeam;
   final ScrollController _scrollController = ScrollController();
+  late final Stream<List<Booking>> _matchesStream;
 
   @override
   void initState() {
     super.initState();
+    _matchesStream = MatchRepository().getPublicMatches();
     _fetchUserTeam();
-    // Initial fetch not needed for StreamBuilder anymore
   }
 
   @override
@@ -77,7 +78,7 @@ class _TeamDashboardScreenState extends State<TeamDashboardScreen> {
         top: true,
         bottom: false,
         child: StreamBuilder<List<Booking>>(
-          stream: MatchRepository().getPublicMatches(),
+          stream: _matchesStream,
           builder: (context, snapshot) {
             if (snapshot.hasError) {
               return Center(

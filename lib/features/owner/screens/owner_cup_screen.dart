@@ -30,6 +30,24 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  String _selectedCategory = 'All';
  bool _hasAnyChampionships = true;
 
+ Stream<List<Championship>>? _championshipsStream;
+ String? _lastSport;
+ String? _lastOwnerId;
+
+ Stream<List<Championship>> _getChampionshipsStream(String sportType, String? ownerId) {
+   if (_championshipsStream != null && _lastSport == sportType && _lastOwnerId == ownerId) {
+     return _championshipsStream!;
+   }
+   _lastSport = sportType;
+   _lastOwnerId = ownerId;
+   _championshipsStream = TournamentRepository().getChampionshipsStream(
+     sportType: sportType,
+     isOwner: true,
+     ownerId: ownerId,
+   );
+   return _championshipsStream!;
+ }
+
  @override
  Widget build(BuildContext context) {
  final l10n = AppLocalizations.of(context)!;
@@ -157,10 +175,9 @@ class _OwnerCupScreenState extends State<OwnerCupScreen> {
  // 3. قائمة البطولات
  Expanded(
  child: StreamBuilder<List<Championship>>(
- stream: TournamentRepository().getChampionshipsStream(
- sportType: _selectedSport,
- isOwner: true,
- ownerId: Provider.of<AuthProvider>(context, listen: false).currentUser?.uid, // تمرير معرف المالك
+ stream: _getChampionshipsStream(
+ _selectedSport,
+ Provider.of<AuthProvider>(context, listen: false).currentUser?.uid,
  ),
  builder: (context, snapshot) {
  if (snapshot.connectionState == ConnectionState.waiting) {
